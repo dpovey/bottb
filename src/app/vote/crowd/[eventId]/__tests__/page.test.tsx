@@ -10,6 +10,24 @@ jest.mock("next/navigation", () => ({
 // Mock fetch
 global.fetch = jest.fn();
 
+// Mock the user context functions
+jest.mock("@/lib/user-context", () => ({
+  getClientUserContext: jest.fn(() => ({
+    screen_resolution: "1920x1080",
+    timezone: "America/New_York",
+    language: "en-US",
+  })),
+  hasVotingCookie: jest.fn(() => false),
+  setVotingCookie: jest.fn(),
+  getFingerprintJSData: jest.fn(() =>
+    Promise.resolve({
+      visitorId: "test-visitor-id",
+      confidence: 0.95,
+      components: {},
+    })
+  ),
+}));
+
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 describe("CrowdVotingPage", () => {
@@ -124,7 +142,7 @@ describe("CrowdVotingPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Vote Submitted!")).toBeInTheDocument();
       expect(
-        screen.getByText("Thank you for voting! Your vote has been recorded.")
+        screen.getByText("Your vote has been recorded. Thank you for participating!")
       ).toBeInTheDocument();
     });
   });
@@ -213,10 +231,7 @@ describe("CrowdVotingPage", () => {
     });
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error submitting vote:",
-        expect.any(Error)
-      );
+      expect(screen.getByText("Already Voted")).toBeInTheDocument();
     });
 
     consoleSpy.mockRestore();

@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import {
+  getClientUserContext,
+  setVotingCookie,
+  getFingerprintJSData,
+} from "@/lib/user-context";
 
 interface Band {
   id: string;
@@ -23,6 +28,7 @@ export default function JudgeVotingPage() {
   const [scores, setScores] = useState<Record<string, JudgeScores>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
 
   useEffect(() => {
     const fetchBands = async () => {
@@ -50,6 +56,9 @@ export default function JudgeVotingPage() {
         setBands([]);
       }
     };
+
+    // Note: We don't check for cookies here anymore
+    // Cookies allow vote updates, only fingerprints block voting
 
     fetchBands();
   }, [eventId]);
@@ -86,6 +95,18 @@ export default function JudgeVotingPage() {
 
     setIsSubmitting(true);
     try {
+      // Get client-side user context
+      const clientContext = getClientUserContext();
+
+      // Get FingerprintJS data
+      let fingerprintData;
+      try {
+        fingerprintData = await getFingerprintJSData();
+      } catch (error) {
+        console.warn("FingerprintJS failed, continuing without it:", error);
+        fingerprintData = null;
+      }
+
       const votes = bands.map((band) => ({
         event_id: eventId,
         band_id: band.id,
@@ -97,18 +118,42 @@ export default function JudgeVotingPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // Send client context as headers
+          "X-Screen-Resolution": clientContext.screen_resolution || "",
+          "X-Timezone": clientContext.timezone || "",
+          "X-Language": clientContext.language || "",
+          // Send FingerprintJS visitor ID and confidence as headers (small data)
+          "X-FingerprintJS-Visitor-ID": fingerprintData?.visitorId || "",
+          "X-FingerprintJS-Confidence":
+            fingerprintData?.confidence?.toString() || "",
+          "X-FingerprintJS-Confidence-Comment":
+            fingerprintData?.confidenceComment || "",
         },
-        body: JSON.stringify({ votes }),
+        body: JSON.stringify({
+          votes,
+          // Only send essential fingerprint data, not all components
+          fingerprintjs_visitor_id: fingerprintData?.visitorId,
+          fingerprintjs_confidence: fingerprintData?.confidence,
+          fingerprintjs_confidence_comment: fingerprintData?.confidenceComment,
+        }),
       });
 
       if (response.ok) {
+        // Set voting cookie to prevent future votes
+        setVotingCookie(eventId);
         setIsSubmitted(true);
       } else {
-        throw new Error("Failed to submit votes");
+        if (response.status === 409) {
+          setHasAlreadyVoted(true);
+          return; // Exit early for duplicate vote
+        } else {
+          setHasAlreadyVoted(true);
+          return; // Exit early for other errors
+        }
       }
     } catch (error) {
       console.error("Error submitting votes:", error);
-      alert("Failed to submit votes. Please try again.");
+      setHasAlreadyVoted(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +168,22 @@ export default function JudgeVotingPage() {
             Scores Submitted!
           </h2>
           <p className="text-gray-300">
-            Thank you for judging! Your scores have been recorded.
+            Your scores have been recorded. Thank you for participating!
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasAlreadyVoted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
+          <div className="text-6xl mb-4">🚫</div>
+          <h2 className="text-3xl font-bold text-white mb-4">Already Voted</h2>
+          <p className="text-gray-300">
+            It looks like you may have already voted for this event. Each judge
+            can only vote once.
           </p>
         </div>
       </div>

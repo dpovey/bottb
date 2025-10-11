@@ -29,6 +29,31 @@ CREATE TABLE IF NOT EXISTS votes (
   performance INTEGER CHECK (performance >= 0 AND performance <= 30),
   crowd_vibe INTEGER CHECK (crowd_vibe >= 0 AND crowd_vibe <= 30),
   crowd_vote INTEGER CHECK (crowd_vote >= 0 AND crowd_vote <= 20),
+  -- User context fields
+  ip_address INET,
+  user_agent TEXT,
+  browser_name VARCHAR(100),
+  browser_version VARCHAR(50),
+  os_name VARCHAR(100),
+  os_version VARCHAR(50),
+  device_type VARCHAR(50),
+  screen_resolution VARCHAR(20),
+  timezone VARCHAR(50),
+  language VARCHAR(10),
+  -- Tracking IDs
+  google_click_id VARCHAR(255),
+  facebook_pixel_id VARCHAR(255),
+  utm_source VARCHAR(100),
+  utm_medium VARCHAR(100),
+  utm_campaign VARCHAR(100),
+  utm_term VARCHAR(100),
+  utm_content VARCHAR(100),
+  -- Vote fingerprint for duplicate detection
+  vote_fingerprint VARCHAR(64) UNIQUE,
+          -- FingerprintJS fields
+          fingerprintjs_visitor_id VARCHAR(255),
+          fingerprintjs_confidence DECIMAL(3,2),
+          fingerprintjs_confidence_comment TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -37,4 +62,8 @@ CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_band_id ON votes(band_id);
 CREATE INDEX IF NOT EXISTS idx_votes_voter_type ON votes(voter_type);
+CREATE INDEX IF NOT EXISTS idx_votes_fingerprint ON votes(vote_fingerprint);
+CREATE INDEX IF NOT EXISTS idx_votes_ip_address ON votes(ip_address);
+CREATE INDEX IF NOT EXISTS idx_votes_created_at ON votes(created_at);
+CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
 

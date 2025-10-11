@@ -22,6 +22,7 @@
     "finalize-event": "tsx src/scripts/finalize-event.ts"
   },
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@vercel/postgres": "^0.10.0",
     "dotenv": "^17.2.3",
     "next": "^15.5.4",

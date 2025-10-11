@@ -4,9 +4,10 @@
 
 - Use conventional commits format: `<type>: <description>`
 - Common types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
+- Don't give every bit of detail, just the main thrust behind why something changed.
 - Do not use scopes for now
 - Examples:
-  - `feat: add user authentication`
+  - `feat: add user authentication` - Must be a user facing feature
   - `fix: resolve memory leak in data processing`
   - `docs: update API documentation`
   - `test: add unit tests for payment module`
@@ -38,6 +39,9 @@
 - Use meaningful variable names in tests
 - Keep tests focused and atomic
 - Avoid testing implementation details
+- Never use "any" to fix type errors
+- For unused variables in tests, prefix with underscore (e.g., `_mockUpdateVote`, `_error`)
+- Use underscore prefix for intentionally unused parameters (e.g., `catch (_error)`)
 
 ## File Organization
 

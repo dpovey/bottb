@@ -250,13 +250,34 @@ describe("Database Functions", () => {
 
       expect(mockSql).toHaveBeenCalledWith(
         expect.arrayContaining([expect.stringMatching(/INSERT INTO votes/)]),
-        voteData.event_id,
-        voteData.band_id,
-        voteData.voter_type,
-        voteData.song_choice,
-        voteData.performance,
-        voteData.crowd_vibe,
-        voteData.crowd_vote
+        "event-1", // event_id
+        "band-1", // band_id
+        "crowd", // voter_type
+        undefined, // song_choice
+        undefined, // performance
+        undefined, // crowd_vibe
+        20, // crowd_vote
+        undefined, // ip_address
+        undefined, // user_agent
+        undefined, // browser_name
+        undefined, // browser_version
+        undefined, // os_name
+        undefined, // os_version
+        undefined, // device_type
+        undefined, // screen_resolution
+        undefined, // timezone
+        undefined, // language
+        undefined, // google_click_id
+        undefined, // facebook_pixel_id
+        undefined, // utm_source
+        undefined, // utm_medium
+        undefined, // utm_campaign
+        undefined, // utm_term
+        undefined, // utm_content
+        undefined, // vote_fingerprint
+        undefined, // fingerprintjs_visitor_id
+        undefined, // fingerprintjs_confidence
+        undefined // fingerprintjs_confidence_comment
       );
       expect(result).toEqual(mockVote);
     });

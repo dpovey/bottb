@@ -1,11 +1,54 @@
 import { NextRequest } from "next/server";
 import { POST } from "../route";
-import { submitVote } from "@/lib/db";
+import { submitVote, updateVote as _updateVote } from "@/lib/db";
+import { sql as _sql } from "@vercel/postgres";
 
-// Mock the database function
+// Mock the database functions
 jest.mock("@/lib/db", () => ({
   submitVote: jest.fn(),
+  updateVote: jest.fn(),
 }));
+
+// Mock user context functions
+jest.mock("@/lib/user-context", () => ({
+  extractUserContext: jest.fn(() => ({
+    ip_address: "127.0.0.1",
+    user_agent: "test-agent",
+    vote_fingerprint: "test-fingerprint",
+  })),
+  hasUserVoted: jest.fn(() => Promise.resolve(false)),
+  hasUserVotedByFingerprintJS: jest.fn(() => Promise.resolve(false)),
+}));
+
+// Mock the database query
+jest.mock("@vercel/postgres", () => ({
+  sql: jest.fn(),
+}));
+
+// Mock NextResponse to handle cookie setting properly
+jest.mock("next/server", () => {
+  const actual = jest.requireActual("next/server");
+  return {
+    ...actual,
+    NextResponse: {
+      ...actual.NextResponse,
+      json: jest.fn((data, init) => {
+        const response = actual.NextResponse.json(data, init);
+        // Mock cookies methods by overriding the response object
+        Object.defineProperty(response, "cookies", {
+          value: {
+            set: jest.fn(),
+            get: jest.fn(),
+            delete: jest.fn(),
+          },
+          writable: true,
+          configurable: true,
+        });
+        return response;
+      }),
+    },
+  };
+});
 
 const mockSubmitVote = submitVote as jest.MockedFunction<typeof submitVote>;
 
@@ -65,8 +108,22 @@ describe("/api/votes/batch", () => {
       const response = await POST(request);
 
       expect(mockSubmitVote).toHaveBeenCalledTimes(2);
-      expect(mockSubmitVote).toHaveBeenCalledWith(votesData.votes[0]);
-      expect(mockSubmitVote).toHaveBeenCalledWith(votesData.votes[1]);
+      expect(mockSubmitVote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...votesData.votes[0],
+          ip_address: "127.0.0.1",
+          user_agent: "test-agent",
+          vote_fingerprint: "test-fingerprint",
+        })
+      );
+      expect(mockSubmitVote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...votesData.votes[1],
+          ip_address: "127.0.0.1",
+          user_agent: "test-agent",
+          vote_fingerprint: "test-fingerprint",
+        })
+      );
       expect(response.status).toBe(200);
 
       const data = await response.json();
