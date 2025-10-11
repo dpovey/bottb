@@ -1,0 +1,35 @@
+{
+  "name": "Battle of the Tech Bands - Sydney 2024",
+  "date": "2024-12-15T18:00:00Z",
+  "location": "Sydney Convention Centre",
+  "is_active": true,
+  "bands": [
+    {
+      "name": "The Code Rockers",
+      "description": "Frontend specialists who know how to make the crowd dance",
+      "order": 1
+    },
+    {
+      "name": "Database Divas",
+      "description": "Backend engineers with killer vocals",
+      "order": 2
+    },
+    {
+      "name": "API Avengers",
+      "description": "Full-stack superheroes of the tech world",
+      "order": 3
+    },
+    {
+      "name": "Cloud Crusaders",
+      "description": "DevOps warriors with epic stage presence",
+      "order": 4
+    },
+    {
+      "name": "Algorithm Angels",
+      "description": "Data scientists who rock the algorithms",
+      "order": 5
+    }
+  ]
+}
+
+

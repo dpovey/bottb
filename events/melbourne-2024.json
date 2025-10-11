@@ -1,0 +1,30 @@
+{
+  "name": "Battle of the Tech Bands - Melbourne 2024",
+  "date": "2024-11-20T19:00:00Z",
+  "location": "Melbourne Convention Centre",
+  "is_active": false,
+  "bands": [
+    {
+      "name": "React Rebels",
+      "description": "Component-based rockers with hooks for days",
+      "order": 1
+    },
+    {
+      "name": "Node Ninjas",
+      "description": "Server-side warriors with async superpowers",
+      "order": 2
+    },
+    {
+      "name": "Python Pirates",
+      "description": "Data science buccaneers with machine learning magic",
+      "order": 3
+    },
+    {
+      "name": "Java Jammers",
+      "description": "Enterprise rockers with enterprise-grade performances",
+      "order": 4
+    }
+  ]
+}
+
+
