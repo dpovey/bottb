@@ -29,11 +29,14 @@ export default function JudgeVotingPage() {
       try {
         const response = await fetch(`/api/bands/${eventId}`);
         const data = await response.json();
-        setBands(data);
+
+        // Ensure data is an array
+        const bandsData = Array.isArray(data) ? data : [];
+        setBands(bandsData);
 
         // Initialize scores
         const initialScores: Record<string, JudgeScores> = {};
-        data.forEach((band: Band) => {
+        bandsData.forEach((band: Band) => {
           initialScores[band.id] = {
             song_choice: 0,
             performance: 0,
@@ -43,6 +46,8 @@ export default function JudgeVotingPage() {
         setScores(initialScores);
       } catch (error) {
         console.error("Error fetching bands:", error);
+        // Set empty array on error to prevent map errors
+        setBands([]);
       }
     };
 
@@ -199,6 +204,7 @@ export default function JudgeVotingPage() {
                           )
                         }
                         className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        aria-label={`Song Choice for ${band.name}`}
                         style={{
                           background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
                             ((scores[band.id]?.song_choice || 0) / 20) * 100
@@ -230,6 +236,7 @@ export default function JudgeVotingPage() {
                           )
                         }
                         className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        aria-label={`Performance for ${band.name}`}
                         style={{
                           background: `linear-gradient(to right, #10b981 0%, #10b981 ${
                             ((scores[band.id]?.performance || 0) / 30) * 100
@@ -261,6 +268,7 @@ export default function JudgeVotingPage() {
                           )
                         }
                         className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        aria-label={`Crowd Vibe for ${band.name}`}
                         style={{
                           background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${
                             ((scores[band.id]?.crowd_vibe || 0) / 30) * 100

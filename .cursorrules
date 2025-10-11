@@ -1,0 +1,47 @@
+# Testing Preferences
+
+## Commit Message Format
+
+- Use conventional commits format: `<type>: <description>`
+- Common types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
+- Do not use scopes for now
+- Examples:
+  - `feat: add user authentication`
+  - `fix: resolve memory leak in data processing`
+  - `docs: update API documentation`
+  - `test: add unit tests for payment module`
+  - `chore: update dependencies`
+
+## Unit Testing Standards
+
+- Use React Testing Library (RTL) for all component testing
+- Prefer ARIA attributes for element selection over data-testid
+- Use semantic queries (getByRole, getByLabelText, getByText) when possible
+- Only use data-testid as a last resort when ARIA attributes are insufficient
+- Mock external dependencies (database, API calls) using MSW or Jest mocks
+- Test user interactions and behavior, not implementation details
+- Use userEvent for simulating user interactions
+- Write descriptive test names that explain the expected behavior
+
+## Test Structure
+
+- Group related tests using describe blocks
+- Use beforeEach/afterEach for setup and cleanup
+- Mock database calls and API requests
+- Test error states and loading states
+- Test both success and failure scenarios
+
+## Code Style
+
+- Use TypeScript for all test files
+- Follow the same code style as the main codebase
+- Use meaningful variable names in tests
+- Keep tests focused and atomic
+- Avoid testing implementation details
+
+## File Organization
+
+- Place test files next to the code they test (.test.tsx, .test.ts)
+- Use **tests** directories for complex test suites
+- Group test utilities in **tests**/utils/
+- Use **mocks** for shared mocks

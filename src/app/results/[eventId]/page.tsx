@@ -61,27 +61,41 @@ export default async function ResultsPage({
     .sort((a, b) => b.totalScore - a.totalScore);
 
   // Find category winners
-  const songChoiceWinner = bandResults.reduce((prev, current) =>
-    Number(current.avg_song_choice || 0) > Number(prev.avg_song_choice || 0)
-      ? current
-      : prev
-  );
+  const songChoiceWinner =
+    bandResults.length > 0
+      ? bandResults.reduce((prev, current) =>
+          Number(current.avg_song_choice || 0) >
+          Number(prev.avg_song_choice || 0)
+            ? current
+            : prev
+        )
+      : null;
 
-  const performanceWinner = bandResults.reduce((prev, current) =>
-    Number(current.avg_performance || 0) > Number(prev.avg_performance || 0)
-      ? current
-      : prev
-  );
+  const performanceWinner =
+    bandResults.length > 0
+      ? bandResults.reduce((prev, current) =>
+          Number(current.avg_performance || 0) >
+          Number(prev.avg_performance || 0)
+            ? current
+            : prev
+        )
+      : null;
 
-  const crowdVibeWinner = bandResults.reduce((prev, current) =>
-    Number(current.avg_crowd_vibe || 0) > Number(prev.avg_crowd_vibe || 0)
-      ? current
-      : prev
-  );
+  const crowdVibeWinner =
+    bandResults.length > 0
+      ? bandResults.reduce((prev, current) =>
+          Number(current.avg_crowd_vibe || 0) > Number(prev.avg_crowd_vibe || 0)
+            ? current
+            : prev
+        )
+      : null;
 
-  const crowdVoteWinner = bandResults.reduce((prev, current) =>
-    (current.crowdScore || 0) > (prev.crowdScore || 0) ? current : prev
-  );
+  const crowdVoteWinner =
+    bandResults.length > 0
+      ? bandResults.reduce((prev, current) =>
+          (current.crowdScore || 0) > (prev.crowdScore || 0) ? current : prev
+        )
+      : null;
 
   const overallWinner = bandResults[0];
 
@@ -143,10 +157,13 @@ export default async function ResultsPage({
               Song Choice
             </h3>
             <p className="text-xl font-bold text-green-400">
-              {songChoiceWinner.name}
+              {songChoiceWinner?.name || "N/A"}
             </p>
             <p className="text-sm text-gray-300">
-              {Number(songChoiceWinner.avg_song_choice || 0).toFixed(1)}/20
+              {songChoiceWinner
+                ? Number(songChoiceWinner.avg_song_choice || 0).toFixed(1) +
+                  "/20"
+                : "N/A"}
             </p>
           </div>
 
@@ -156,10 +173,13 @@ export default async function ResultsPage({
               Performance
             </h3>
             <p className="text-xl font-bold text-blue-400">
-              {performanceWinner.name}
+              {performanceWinner?.name || "N/A"}
             </p>
             <p className="text-sm text-gray-300">
-              {Number(performanceWinner.avg_performance || 0).toFixed(1)}/30
+              {performanceWinner
+                ? Number(performanceWinner.avg_performance || 0).toFixed(1) +
+                  "/30"
+                : "N/A"}
             </p>
           </div>
 
@@ -169,10 +189,12 @@ export default async function ResultsPage({
               Crowd Vibe
             </h3>
             <p className="text-xl font-bold text-red-400">
-              {crowdVibeWinner.name}
+              {crowdVibeWinner?.name || "N/A"}
             </p>
             <p className="text-sm text-gray-300">
-              {Number(crowdVibeWinner.avg_crowd_vibe || 0).toFixed(1)}/30
+              {crowdVibeWinner
+                ? Number(crowdVibeWinner.avg_crowd_vibe || 0).toFixed(1) + "/30"
+                : "N/A"}
             </p>
           </div>
 
@@ -182,10 +204,12 @@ export default async function ResultsPage({
               Crowd Vote
             </h3>
             <p className="text-xl font-bold text-slate-300">
-              {crowdVoteWinner.name}
+              {crowdVoteWinner?.name || "N/A"}
             </p>
             <p className="text-sm text-gray-300">
-              {Math.round(crowdVoteWinner.crowdScore || 0)}/20
+              {crowdVoteWinner
+                ? Math.round(crowdVoteWinner.crowdScore || 0) + "/20"
+                : "N/A"}
             </p>
           </div>
         </div>

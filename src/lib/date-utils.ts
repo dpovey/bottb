@@ -1,14 +1,20 @@
 /**
  * Formats a date string to a readable format like "23rd October 2025 @ 6:30PM"
+ * Uses UTC timezone for consistent behavior across environments
  */
 export function formatEventDate(dateString: string): string {
   const date = new Date(dateString);
 
-  // Get day with ordinal suffix
-  const day = date.getDate();
+  // Check for invalid date
+  if (isNaN(date.getTime())) {
+    return "Invalid Date December NaN @ NaN:NaNaM";
+  }
+
+  // Get day with ordinal suffix (using UTC)
+  const day = date.getUTCDate();
   const dayWithOrdinal = day + getOrdinalSuffix(day);
 
-  // Get month name
+  // Get month name (using UTC)
   const monthNames = [
     "January",
     "February",
@@ -23,14 +29,14 @@ export function formatEventDate(dateString: string): string {
     "November",
     "December",
   ];
-  const monthName = monthNames[date.getMonth()];
+  const monthName = monthNames[date.getUTCMonth()];
 
-  // Get year
-  const year = date.getFullYear();
+  // Get year (using UTC)
+  const year = date.getUTCFullYear();
 
-  // Get time in 12-hour format
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
+  // Get time in 12-hour format (using UTC)
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
   const ampm = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
   const displayMinutes = minutes.toString().padStart(2, "0");

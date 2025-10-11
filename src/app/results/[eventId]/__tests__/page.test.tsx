@@ -1,0 +1,476 @@
+import { render, screen } from "@testing-library/react";
+import ResultsPage from "../page";
+
+// Mock Next.js navigation
+jest.mock("next/navigation", () => ({
+  notFound: jest.fn(),
+  redirect: jest.fn(),
+}));
+
+// Mock the database functions
+jest.mock("@/lib/db", () => ({
+  getEventById: jest.fn(),
+  getBandsForEvent: jest.fn(),
+  getBandScores: jest.fn(),
+}));
+
+// Mock the date utils
+jest.mock("@/lib/date-utils", () => ({
+  formatEventDate: jest.fn((date) => `Formatted: ${date}`),
+}));
+
+import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
+import { notFound, redirect } from "next/navigation";
+
+const mockGetEventById = getEventById as jest.MockedFunction<
+  typeof getEventById
+>;
+const mockGetBandsForEvent = getBandsForEvent as jest.MockedFunction<
+  typeof getBandsForEvent
+>;
+const mockGetBandScores = getBandScores as jest.MockedFunction<
+  typeof getBandScores
+>;
+const mockNotFound = notFound as jest.MockedFunction<typeof notFound>;
+const mockRedirect = redirect as jest.MockedFunction<typeof redirect>;
+
+describe("ResultsPage", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("redirects non-finalized events to crowd voting", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: true,
+      status: "voting" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue([]);
+    mockGetBandScores.mockResolvedValue([]);
+
+    await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) });
+
+    expect(mockRedirect).toHaveBeenCalledWith("/vote/crowd/event-1");
+  });
+
+  it("shows not found when event does not exist", async () => {
+    (
+      mockGetEventById as unknown as jest.MockedFunction<
+        (eventId: string) => Promise<import("@/lib/db").Event | null>
+      >
+    ).mockResolvedValue(null);
+
+    try {
+      await ResultsPage({
+        params: Promise.resolve({ eventId: "nonexistent" }),
+      });
+    } catch {
+      // Expected to throw due to notFound() call
+    }
+
+    expect(mockNotFound).toHaveBeenCalled();
+  });
+
+  it("renders results for finalized event", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    const bands = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Band 1",
+        description: "Description 1",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "band-2",
+        event_id: "event-1",
+        name: "Band 2",
+        description: "Description 2",
+        order: 2,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Band 1",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+      },
+      {
+        id: "band-2",
+        name: "Band 2",
+        order: 2,
+        avg_song_choice: 12.0,
+        avg_performance: 20.0,
+        avg_crowd_vibe: 18.0,
+        avg_crowd_vote: 15.0,
+        crowd_vote_count: 8,
+        judge_vote_count: 2,
+        total_crowd_votes: 50,
+      },
+    ];
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue(bands);
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Battle Results" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Test Event")).toBeInTheDocument();
+    expect(
+      screen.getByText((content, element) => {
+        return (
+          element?.textContent ===
+          "Formatted: 2024-12-25T18:30:00Z • Test Venue"
+        );
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("displays overall winner", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    const bands = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Winning Band",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Winning Band",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+      },
+    ];
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue(bands);
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Overall Winner" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { name: "Winning Band" })
+    ).toHaveLength(2);
+    expect(screen.getByText("67.0 points")).toBeInTheDocument();
+  });
+
+  it("displays category winners", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    const bands = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Band 1",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "band-2",
+        event_id: "event-1",
+        name: "Band 2",
+        order: 2,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Band 1",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+      },
+      {
+        id: "band-2",
+        name: "Band 2",
+        order: 2,
+        avg_song_choice: 12.0,
+        avg_performance: 20.0,
+        avg_crowd_vibe: 18.0,
+        avg_crowd_vote: 15.0,
+        crowd_vote_count: 8,
+        judge_vote_count: 2,
+        total_crowd_votes: 50,
+      },
+    ];
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue(bands);
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Song Choice" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Performance" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Crowd Vibe" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Crowd Vote" })
+    ).toBeInTheDocument();
+  });
+
+  it("displays complete results table", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    const bands = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Band 1",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "band-2",
+        event_id: "event-1",
+        name: "Band 2",
+        order: 2,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Band 1",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+      },
+      {
+        id: "band-2",
+        name: "Band 2",
+        order: 2,
+        avg_song_choice: 12.0,
+        avg_performance: 20.0,
+        avg_crowd_vibe: 18.0,
+        avg_crowd_vote: 15.0,
+        crowd_vote_count: 8,
+        judge_vote_count: 2,
+        total_crowd_votes: 50,
+      },
+    ];
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue(bands);
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Complete Results" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByText("Rank")).toBeInTheDocument();
+    expect(screen.getByText("Band")).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Song Choice" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Performance" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Crowd Vibe" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Crowd Vote" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Total")).toBeInTheDocument();
+    expect(screen.getByText("Votes")).toBeInTheDocument();
+  });
+
+  it("shows no results message when no scores available", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue([]);
+    mockGetBandScores.mockResolvedValue([]);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "No Results Yet" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Voting hasn't started yet or no votes have been submitted."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("displays individual band links", async () => {
+    const event = {
+      id: "event-1",
+      name: "Test Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Test Venue",
+      is_active: false,
+      status: "finalized" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    const bands = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Band 1",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "band-2",
+        event_id: "event-1",
+        name: "Band 2",
+        order: 2,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Band 1",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+      },
+      {
+        id: "band-2",
+        name: "Band 2",
+        order: 2,
+        avg_song_choice: 12.0,
+        avg_performance: 20.0,
+        avg_crowd_vibe: 18.0,
+        avg_crowd_vote: 15.0,
+        crowd_vote_count: 8,
+        judge_vote_count: 2,
+        total_crowd_votes: 50,
+      },
+    ];
+
+    mockGetEventById.mockResolvedValue(event);
+    mockGetBandsForEvent.mockResolvedValue(bands);
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Individual Band Breakdowns" })
+    ).toBeInTheDocument();
+
+    const band1Link = screen.getByRole("link", { name: /Band 1/ });
+    const band2Link = screen.getByRole("link", { name: /Band 2/ });
+
+    expect(band1Link).toHaveAttribute("href", "/band/band-1");
+    expect(band2Link).toHaveAttribute("href", "/band/band-2");
+  });
+});

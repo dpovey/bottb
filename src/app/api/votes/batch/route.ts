@@ -1,38 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "@vercel/postgres";
+import { submitVote } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
     const { votes } = await request.json();
 
-    if (!Array.isArray(votes) || votes.length === 0) {
+    if (!Array.isArray(votes)) {
       return NextResponse.json(
         { error: "Invalid votes data" },
         { status: 400 }
       );
     }
 
-    // Insert all votes in a single transaction
-    const values = votes
-      .map(
-        (vote) =>
-          `('${vote.event_id}', '${vote.band_id}', '${vote.voter_type}', ${
-            vote.song_choice || "NULL"
-          }, ${vote.performance || "NULL"}, ${vote.crowd_vibe || "NULL"}, ${
-            vote.crowd_vote || "NULL"
-          })`
-      )
-      .join(",");
+    if (votes.length === 0) {
+      return NextResponse.json({ votes: [] });
+    }
 
-    const query = `
-      INSERT INTO votes (event_id, band_id, voter_type, song_choice, performance, crowd_vibe, crowd_vote)
-      VALUES ${values}
-      RETURNING *
-    `;
+    // Submit all votes
+    const submittedVotes = [];
+    for (const vote of votes) {
+      const submittedVote = await submitVote(vote);
+      submittedVotes.push(submittedVote);
+    }
 
-    const { rows } = await sql.query(query);
-
-    return NextResponse.json(rows);
+    return NextResponse.json({ votes: submittedVotes });
   } catch (error) {
     console.error("Error submitting batch votes:", error);
     return NextResponse.json(
@@ -41,5 +32,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

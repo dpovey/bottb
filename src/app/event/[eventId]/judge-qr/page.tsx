@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import QRCode from "qrcode";
 import { formatEventDate } from "@/lib/date-utils";
 
@@ -124,11 +125,12 @@ export default function JudgeQRPage() {
 
             {judgeQRCode ? (
               <div className="bg-white p-4 rounded-xl inline-block shadow-2xl">
-                <img
+                <Image
                   src={judgeQRCode}
                   alt="Judge Scoring QR Code"
-                  className="mx-auto max-w-full h-auto"
-                  style={{ maxWidth: "300px", maxHeight: "300px" }}
+                  width={300}
+                  height={300}
+                  className="mx-auto"
                 />
               </div>
             ) : (

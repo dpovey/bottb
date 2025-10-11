@@ -35,6 +35,10 @@ export default async function BandPage({
   }
 
   const band = bandData[0];
+  if (!band || !band.event_id) {
+    notFound();
+  }
+
   const eventId = band.event_id;
 
   const scores = (await getBandScores(eventId)) as BandScore[];
@@ -45,9 +49,9 @@ export default async function BandPage({
   }
 
   const judgeScore =
-    Number(bandScore.avg_song_choice || 0) +
-    Number(bandScore.avg_performance || 0) +
-    Number(bandScore.avg_crowd_vibe || 0);
+    Number(bandScore?.avg_song_choice || 0) +
+    Number(bandScore?.avg_performance || 0) +
+    Number(bandScore?.avg_crowd_vibe || 0);
 
   // Crowd score is the percentage of total crowd votes this band received
   const crowdScore =

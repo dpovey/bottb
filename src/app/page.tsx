@@ -8,25 +8,6 @@ import {
 } from "@/lib/db";
 import { formatEventDate } from "@/lib/date-utils";
 
-interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  is_active: boolean;
-  status: "upcoming" | "voting" | "finalized";
-  created_at: string;
-}
-
-interface Band {
-  id: string;
-  event_id: string;
-  name: string;
-  description?: string;
-  order: number;
-  created_at: string;
-}
-
 interface BandScore {
   id: string;
   name: string;
@@ -41,14 +22,6 @@ interface BandScore {
   judgeScore?: number;
   crowdScore?: number;
   totalScore?: number;
-}
-
-interface ScoreData {
-  avg_song_choice: number | null;
-  avg_performance: number | null;
-  avg_crowd_vibe: number | null;
-  avg_crowd_vote: number | null;
-  [key: string]: unknown;
 }
 
 // Force dynamic rendering - don't pre-render at build time
