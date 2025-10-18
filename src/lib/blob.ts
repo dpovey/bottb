@@ -35,7 +35,7 @@ export async function uploadImage(
 ): Promise<BlobUploadResult> {
   try {
     const blob = await put(filename, file, {
-      access: options?.access || "public",
+      access: "public", // Vercel blob only supports public access
       addRandomSuffix: options?.addRandomSuffix ?? true,
       cacheControlMaxAge: options?.cacheControlMaxAge || 31536000, // 1 year
     });
@@ -46,7 +46,7 @@ export async function uploadImage(
       pathname: blob.pathname,
       contentType: blob.contentType,
       contentDisposition: blob.contentDisposition,
-      size: blob.size,
+      size: 0, // Vercel blob doesn't return size in PutBlobResult
     };
   } catch (error) {
     console.error("Error uploading image to blob storage:", error);

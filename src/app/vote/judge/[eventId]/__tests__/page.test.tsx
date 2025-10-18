@@ -74,8 +74,8 @@ describe("JudgeVotingPage", () => {
     ).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
-      expect(screen.getByText("2. Test Band 2")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 2")).toBeInTheDocument();
     });
   });
 
@@ -91,8 +91,8 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
-      expect(screen.getByText("2. Test Band 2")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 2")).toBeInTheDocument();
     });
 
     // Check for sliders for each band
@@ -115,7 +115,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     const songChoiceSlider = screen.getAllByRole("slider", {
@@ -148,7 +148,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     const songChoiceSlider = screen.getAllByRole("slider", {
@@ -178,7 +178,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     const submitButton = screen.getByRole("button", {
@@ -241,7 +241,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     // Fill scores for all bands
@@ -296,7 +296,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     // Fill scores for all bands
@@ -335,7 +335,7 @@ describe("JudgeVotingPage", () => {
     render(<JudgeVotingPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("1. Test Band 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
     // Fill scores for all bands

@@ -29,7 +29,7 @@ export function withAdminAuth(handler: ProtectedApiHandler): ApiHandler {
       }
 
       return await handler(request, context, session);
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         { error: "Authentication failed" },
         { status: 500 }
@@ -54,7 +54,7 @@ export function withAuth(handler: ProtectedApiHandler): ApiHandler {
       }
 
       return await handler(request, context, session);
-    } catch (error) {
+    } catch (_error) {
       return NextResponse.json(
         { error: "Authentication failed" },
         { status: 500 }
@@ -198,4 +198,15 @@ export function withPublicRateLimit(handler: ApiHandler): ApiHandler {
  */
 export function withVoteRateLimit(handler: ApiHandler): ApiHandler {
   return withRateLimit(handler, "vote");
+}
+
+/**
+ * Direct admin authentication check (for use in API routes)
+ */
+export async function requireAdminAuth(_request: NextRequest): Promise<void> {
+  const session = await auth();
+
+  if (!session?.user || !session.user.isAdmin) {
+    throw new Error("Unauthorized - Admin access required");
+  }
 }

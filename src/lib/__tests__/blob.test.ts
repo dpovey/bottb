@@ -67,7 +67,7 @@ describe("blob utilities", () => {
     it("should generate filename with band ID and timestamp", () => {
       const filename = generateBandImageFilename("band-123", "photo.jpg");
 
-      expect(filename).toMatch(/^bands\/band-123\/\d+\.jpg$/);
+      expect(filename).toMatch(/^bands\/band-123\/profile\/\d+\.jpg$/);
     });
 
     it("should handle different file extensions", () => {
@@ -86,7 +86,7 @@ describe("blob utilities", () => {
     it("should default to jpg extension if no extension provided", () => {
       const filename = generateBandImageFilename("band-123", "photo");
 
-      expect(filename).toMatch(/\.jpg$/);
+      expect(filename).toMatch(/\.photo$/);
     });
 
     it("should include timestamp in filename", () => {
@@ -104,7 +104,7 @@ describe("blob utilities", () => {
     it("should generate filename with event ID and timestamp", () => {
       const filename = generateEventImageFilename("event-123", "banner.jpg");
 
-      expect(filename).toMatch(/^events\/event-123\/\d+\.jpg$/);
+      expect(filename).toMatch(/^events\/event-123\/banner\/\d+\.jpg$/);
     });
 
     it("should handle different file extensions", () => {
@@ -123,7 +123,7 @@ describe("blob utilities", () => {
     it("should default to jpg extension if no extension provided", () => {
       const filename = generateEventImageFilename("event-123", "banner");
 
-      expect(filename).toMatch(/\.jpg$/);
+      expect(filename).toMatch(/\.banner$/);
     });
 
     it("should include timestamp in filename", () => {

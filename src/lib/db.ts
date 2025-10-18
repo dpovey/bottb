@@ -27,7 +27,7 @@ export interface Band {
     };
     genre?: string;
     members?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
   created_at: string;
 }
@@ -185,6 +185,7 @@ export async function getBandScores(eventId: string) {
       b.id,
       b.name,
       b."order",
+      b.info,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.performance END) as avg_performance,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.crowd_vibe END) as avg_crowd_vibe,

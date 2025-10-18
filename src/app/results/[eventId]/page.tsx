@@ -7,6 +7,18 @@ interface BandScore {
   id: string;
   name: string;
   order: number;
+  info?: {
+    logo_url?: string;
+    website?: string;
+    social_media?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    };
+    genre?: string;
+    members?: string[];
+    [key: string]: unknown;
+  };
   avg_song_choice: number;
   avg_performance: number;
   avg_crowd_vibe: number;

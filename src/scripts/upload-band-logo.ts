@@ -37,7 +37,7 @@ async function uploadBandLogo(bandId: string, filePath: string) {
     console.log("📥 Reading file...");
     const fileBuffer = readFileSync(filePath);
     const fileExtension = extname(filePath);
-    const fileName = basename(filePath, fileExtension);
+    const _fileName = basename(filePath, fileExtension);
 
     // Determine MIME type based on extension
     const mimeTypes: { [key: string]: string } = {

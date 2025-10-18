@@ -15,6 +15,18 @@ interface Band {
   name: string;
   description?: string;
   order: number;
+  info?: {
+    logo_url?: string;
+    website?: string;
+    social_media?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    };
+    genre?: string;
+    members?: string[];
+    [key: string]: unknown;
+  };
 }
 
 export default function CrowdVotingPage() {

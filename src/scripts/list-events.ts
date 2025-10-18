@@ -90,7 +90,11 @@ async function listEvents(showBands = false) {
             }
           });
         } catch (error) {
-          console.log(`   ❌ Error fetching bands: ${error.message}`);
+          console.log(
+            `   ❌ Error fetching bands: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
         }
       }
 
