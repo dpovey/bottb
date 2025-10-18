@@ -73,6 +73,7 @@ export interface CrowdNoiseMeasurement {
   energy_level: number;
   peak_volume: number;
   recording_duration: number;
+  crowd_score: number;
   created_at: string;
 }
 
@@ -220,13 +221,14 @@ export async function submitCrowdNoiseMeasurement(
   measurement: Omit<CrowdNoiseMeasurement, "id" | "created_at">
 ) {
   const { rows } = await sql<CrowdNoiseMeasurement>`
-    INSERT INTO crowd_noise_measurements (event_id, band_id, energy_level, peak_volume, recording_duration)
-    VALUES (${measurement.event_id}, ${measurement.band_id}, ${measurement.energy_level}, ${measurement.peak_volume}, ${measurement.recording_duration})
+    INSERT INTO crowd_noise_measurements (event_id, band_id, energy_level, peak_volume, recording_duration, crowd_score)
+    VALUES (${measurement.event_id}, ${measurement.band_id}, ${measurement.energy_level}, ${measurement.peak_volume}, ${measurement.recording_duration}, ${measurement.crowd_score})
     ON CONFLICT (event_id, band_id) 
     DO UPDATE SET 
       energy_level = ${measurement.energy_level},
       peak_volume = ${measurement.peak_volume},
       recording_duration = ${measurement.recording_duration},
+      crowd_score = ${measurement.crowd_score},
       created_at = NOW()
     RETURNING *
   `;

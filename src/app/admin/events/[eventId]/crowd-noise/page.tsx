@@ -136,7 +136,7 @@ export default function CrowdNoisePage() {
 
     setCountdown(3);
 
-    // Use setTimeout for more precise timing
+    // Use setTimeout for precise timing
     const countdown3 = setTimeout(() => setCountdown(2), 1000);
     const countdown2 = setTimeout(() => setCountdown(1), 2000);
     const countdown1 = setTimeout(() => {
@@ -412,7 +412,7 @@ export default function CrowdNoisePage() {
           <div className="text-center">
             <h1 className="text-5xl font-bold text-white mb-8">🎉 All Done!</h1>
             <p className="text-2xl text-gray-300 mb-8">
-              Crowd noise measurements completed for all bands
+              Scream-o-meter completed for all bands
             </p>
             <Link
               href={`/admin/events/${eventId}`}
@@ -431,9 +431,7 @@ export default function CrowdNoisePage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Crowd Noise Measurement
-          </h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Scream-o-meter</h1>
           <div className="text-xl text-gray-300">
             Select a band to measure crowd noise
           </div>
@@ -463,14 +461,40 @@ export default function CrowdNoisePage() {
                   }`}
                 >
                   <button
-                    onClick={() => setSelectedBandId(band.id)}
+                    onClick={() => {
+                      if (hasMeasurement) {
+                        setSelectedBandId(band.id);
+                      } else {
+                        window.open(
+                          `/admin/events/${eventId}/crowd-noise/record/${band.id}`,
+                          "_blank"
+                        );
+                      }
+                    }}
                     disabled={isRecording || isSubmitting}
                     className="w-full text-left"
                   >
-                    <div className="font-bold text-lg">{band.name}</div>
-                    {hasMeasurement && (
-                      <div className="text-sm mt-1">✓ Measured</div>
-                    )}
+                    <div className="flex items-center space-x-3">
+                      {band.info?.logo_url ? (
+                        <img
+                          src={band.info.logo_url}
+                          alt={`${band.name} logo`}
+                          className="h-8 w-8 object-contain flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm text-white font-bold">
+                            {band.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-bold text-lg">{band.name}</div>
+                        {hasMeasurement && (
+                          <div className="text-sm mt-1">✓ Measured</div>
+                        )}
+                      </div>
+                    </div>
                   </button>
                   {hasMeasurement && selectedBandId === band.id && (
                     <button
@@ -493,19 +517,47 @@ export default function CrowdNoisePage() {
         {/* Selected Band Display */}
         {selectedBand && (
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
+            <div className="mb-4">
+              {selectedBand.info?.logo_url ? (
+                <img
+                  src={selectedBand.info.logo_url}
+                  alt={`${selectedBand.name} logo`}
+                  className="mx-auto h-16 w-auto object-contain mb-4"
+                />
+              ) : (
+                <div className="mx-auto h-16 w-16 bg-gray-600 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-2xl text-white font-bold">
+                    {selectedBand.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+            </div>
             <h2 className="text-3xl font-bold text-white mb-4">
               {selectedBand.name}
             </h2>
             {hasMeasurement && (
-              <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mb-4 flex items-center justify-between">
-                <span>✓ Measurement completed</span>
-                <button
-                  onClick={resetMeasurement}
-                  disabled={isResetting || isRecording || isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
-                >
-                  {isResetting ? "Resetting..." : "Reset"}
-                </button>
+              <div className="space-y-4 mb-4">
+                <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg flex items-center justify-between">
+                  <span>✓ Measurement completed</span>
+                  <button
+                    onClick={resetMeasurement}
+                    disabled={isResetting || isRecording || isSubmitting}
+                    className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                  >
+                    {isResetting ? "Resetting..." : "Reset"}
+                  </button>
+                </div>
+                <div className="bg-yellow-600/20 text-yellow-400 px-4 py-3 rounded-lg text-center">
+                  <div className="text-2xl font-bold">
+                    Crowd Score: {measurements[selectedBand.id]?.crowd_score || 'N/A'}/10
+                  </div>
+                  <div className="text-sm text-gray-300 mt-1">
+                    {measurements[selectedBand.id]?.crowd_score >= 8 ? "🔥 INCREDIBLE!" : 
+                     measurements[selectedBand.id]?.crowd_score >= 6 ? "🎉 AMAZING!" : 
+                     measurements[selectedBand.id]?.crowd_score >= 4 ? "👏 GREAT!" : 
+                     measurements[selectedBand.id]?.crowd_score >= 2 ? "👍 GOOD!" : "💪 KEEP TRYING!"}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -560,7 +612,15 @@ export default function CrowdNoisePage() {
                 )}
 
                 <button
-                  onClick={startCountdown}
+                  onClick={() => {
+                    if (hasMeasurement) {
+                      return;
+                    }
+                    window.open(
+                      `/admin/events/${eventId}/crowd-noise/record/${selectedBandId}`,
+                      "_blank"
+                    );
+                  }}
                   disabled={
                     !!hasMeasurement ||
                     isCheckingMic ||
@@ -593,7 +653,7 @@ export default function CrowdNoisePage() {
                     ? "Please enable microphone access to continue"
                     : microphonePermission === "unknown"
                     ? "Click to check microphone permission first"
-                    : "Click to start 3-2-1 countdown, then 5-second recording"}
+                    : "Click to open full-screen recording page"}
                 </p>
               </div>
             )}

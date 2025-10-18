@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS crowd_noise_measurements (
   energy_level DECIMAL(10,4) NOT NULL CHECK (energy_level >= 0),
   peak_volume DECIMAL(10,4) NOT NULL CHECK (peak_volume >= 0),
   recording_duration INTEGER NOT NULL CHECK (recording_duration > 0),
+  crowd_score INTEGER NOT NULL CHECK (crowd_score >= 1 AND crowd_score <= 10),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(event_id, band_id)
 );

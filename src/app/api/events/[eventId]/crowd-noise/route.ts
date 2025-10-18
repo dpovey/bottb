@@ -31,13 +31,14 @@ async function handleSubmitMeasurement(
     const { eventId } = await params.params;
     const body = await request.json();
 
-    const { band_id, energy_level, peak_volume, recording_duration } = body;
+    const { band_id, energy_level, peak_volume, recording_duration, crowd_score } = body;
 
     if (
       !band_id ||
       energy_level === undefined ||
       peak_volume === undefined ||
-      !recording_duration
+      !recording_duration ||
+      crowd_score === undefined
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -51,6 +52,7 @@ async function handleSubmitMeasurement(
       energy_level: Number(energy_level),
       peak_volume: Number(peak_volume),
       recording_duration: Number(recording_duration),
+      crowd_score: Number(crowd_score),
     });
 
     return NextResponse.json(measurement);
