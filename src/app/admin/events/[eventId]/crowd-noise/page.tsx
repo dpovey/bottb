@@ -39,6 +39,7 @@ export default function CrowdNoisePage() {
   const [peakVolume, setPeakVolume] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [microphonePermission, setMicrophonePermission] = useState<
     "unknown" | "granted" | "denied"
   >("unknown");
@@ -354,6 +355,41 @@ export default function CrowdNoisePage() {
     }
   };
 
+  const resetMeasurement = async () => {
+    if (!selectedBandId) return;
+
+    setIsResetting(true);
+    try {
+      const response = await fetch(
+        `/api/events/${eventId}/crowd-noise?band_id=${selectedBandId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        // Remove the measurement from local state
+        setMeasurements((prev) => {
+          const newMeasurements = { ...prev };
+          delete newMeasurements[selectedBandId];
+          return newMeasurements;
+        });
+
+        // Reset form state
+        setTotalEnergy(0);
+        setPeakVolume(0);
+        setIsSubmitted(false);
+      } else {
+        throw new Error("Failed to reset measurement");
+      }
+    } catch (error) {
+      console.error("Error resetting measurement:", error);
+      alert("Failed to reset measurement. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const selectedBand = bands.find((band) => band.id === selectedBandId);
   const hasMeasurement = selectedBand && measurements[selectedBand.id];
 
@@ -412,10 +448,8 @@ export default function CrowdNoisePage() {
             {bands.map((band) => {
               const hasMeasurement = measurements[band.id];
               return (
-                <button
+                <div
                   key={band.id}
-                  onClick={() => setSelectedBandId(band.id)}
-                  disabled={isRecording || isSubmitting}
                   className={`p-4 rounded-xl text-left transition-all ${
                     selectedBandId === band.id
                       ? "bg-blue-600 text-white"
@@ -428,11 +462,29 @@ export default function CrowdNoisePage() {
                       : ""
                   }`}
                 >
-                  <div className="font-bold text-lg">{band.name}</div>
-                  {hasMeasurement && (
-                    <div className="text-sm mt-1">✓ Measured</div>
+                  <button
+                    onClick={() => setSelectedBandId(band.id)}
+                    disabled={isRecording || isSubmitting}
+                    className="w-full text-left"
+                  >
+                    <div className="font-bold text-lg">{band.name}</div>
+                    {hasMeasurement && (
+                      <div className="text-sm mt-1">✓ Measured</div>
+                    )}
+                  </button>
+                  {hasMeasurement && selectedBandId === band.id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        resetMeasurement();
+                      }}
+                      disabled={isResetting || isRecording || isSubmitting}
+                      className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded text-xs transition-colors"
+                    >
+                      {isResetting ? "Resetting..." : "Reset"}
+                    </button>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -445,8 +497,15 @@ export default function CrowdNoisePage() {
               {selectedBand.name}
             </h2>
             {hasMeasurement && (
-              <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mb-4">
-                ✓ Measurement completed
+              <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg mb-4 flex items-center justify-between">
+                <span>✓ Measurement completed</span>
+                <button
+                  onClick={resetMeasurement}
+                  disabled={isResetting || isRecording || isSubmitting}
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                >
+                  {isResetting ? "Resetting..." : "Reset"}
+                </button>
               </div>
             )}
           </div>

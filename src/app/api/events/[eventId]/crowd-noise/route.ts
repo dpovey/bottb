@@ -3,6 +3,7 @@ import { withAdminProtection } from "@/lib/api-protection";
 import {
   submitCrowdNoiseMeasurement,
   getCrowdNoiseMeasurements,
+  deleteCrowdNoiseMeasurement,
 } from "@/lib/db";
 
 async function handleGetMeasurements(request: NextRequest, context?: unknown) {
@@ -62,5 +63,45 @@ async function handleSubmitMeasurement(
   }
 }
 
+async function handleDeleteMeasurement(
+  request: NextRequest,
+  context?: unknown
+) {
+  try {
+    const params = context as { params: Promise<{ eventId: string }> };
+    const { eventId } = await params.params;
+    const url = new URL(request.url);
+    const bandId = url.searchParams.get("band_id");
+
+    if (!bandId) {
+      return NextResponse.json(
+        { error: "Missing band_id parameter" },
+        { status: 400 }
+      );
+    }
+
+    const deletedMeasurement = await deleteCrowdNoiseMeasurement(
+      eventId,
+      bandId
+    );
+
+    if (!deletedMeasurement) {
+      return NextResponse.json(
+        { error: "Measurement not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, deleted: deletedMeasurement });
+  } catch (error) {
+    console.error("Error deleting crowd noise measurement:", error);
+    return NextResponse.json(
+      { error: "Failed to delete measurement" },
+      { status: 500 }
+    );
+  }
+}
+
 export const GET = withAdminProtection(handleGetMeasurements);
 export const POST = withAdminProtection(handleSubmitMeasurement);
+export const DELETE = withAdminProtection(handleDeleteMeasurement);

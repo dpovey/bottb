@@ -254,3 +254,15 @@ export async function getCrowdNoiseMeasurement(
   `;
   return rows[0] || null;
 }
+
+export async function deleteCrowdNoiseMeasurement(
+  eventId: string,
+  bandId: string
+) {
+  const { rows } = await sql<CrowdNoiseMeasurement>`
+    DELETE FROM crowd_noise_measurements 
+    WHERE event_id = ${eventId} AND band_id = ${bandId}
+    RETURNING *
+  `;
+  return rows[0] || null;
+}
