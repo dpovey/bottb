@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS events (
   location VARCHAR(255) NOT NULL,
   is_active BOOLEAN DEFAULT false,
   status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'voting', 'finalized')),
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -27,6 +28,8 @@ CREATE TABLE IF NOT EXISTS bands (
   name VARCHAR(255) NOT NULL,
   description TEXT,
   "order" INTEGER NOT NULL,
+  image_url TEXT,
+  info JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -79,4 +82,8 @@ CREATE INDEX IF NOT EXISTS idx_votes_fingerprint ON votes(vote_fingerprint);
 CREATE INDEX IF NOT EXISTS idx_votes_ip_address ON votes(ip_address);
 CREATE INDEX IF NOT EXISTS idx_votes_created_at ON votes(created_at);
 CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
+
+-- JSONB indexes for bands info
+CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING GIN (info);
+CREATE INDEX IF NOT EXISTS idx_bands_info_logo ON bands USING GIN ((info->>'logo_url'));
 

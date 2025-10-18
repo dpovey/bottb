@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 
 interface Event {
@@ -149,6 +150,25 @@ export default function EventPage() {
                       <div className="flex items-center space-x-4">
                         <div className="text-2xl font-bold text-white w-8">
                           {band.order}
+                        </div>
+                        {/* Band Logo */}
+                        <div className="w-16 h-16 flex-shrink-0">
+                          {band.info?.logo_url ? (
+                            <Image
+                              src={band.info.logo_url}
+                              alt={`${band.name} logo`}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-contain rounded-lg"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">
+                                No Logo
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <h4 className="text-xl font-semibold text-white">

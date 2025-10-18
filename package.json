@@ -19,12 +19,16 @@
     "cleanup-event": "tsx src/scripts/cleanup-event.ts",
     "generate-votes": "tsx src/scripts/generate-votes.ts",
     "migrate-add-status": "tsx src/scripts/migrate-add-status.ts",
+    "migrate-add-info-column": "tsx src/scripts/migrate-add-info-column.ts",
+    "upload-band-logo": "tsx src/scripts/upload-band-logo.ts",
     "finalize-event": "tsx src/scripts/finalize-event.ts",
-    "manage-users": "tsx src/scripts/manage-users.ts"
+    "manage-users": "tsx src/scripts/manage-users.ts",
+    "cleanup-temp-uploads": "tsx src/scripts/cleanup-temp-uploads.ts"
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@types/bcrypt": "^6.0.0",
+    "@vercel/blob": "^2.0.0",
     "@vercel/postgres": "^0.10.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",

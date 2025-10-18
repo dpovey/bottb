@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import {
   getClientUserContext,
   hasVotingCookie,
@@ -206,6 +207,23 @@ export default function CrowdVotingPage() {
                   <div className="flex items-center">
                     <div className="text-2xl font-bold text-white mr-4">
                       {index + 1}
+                    </div>
+                    {/* Band Logo */}
+                    <div className="w-12 h-12 flex-shrink-0 mr-4">
+                      {band.info?.logo_url ? (
+                        <Image
+                          src={band.info.logo_url}
+                          alt={`${band.name} logo`}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain rounded-lg"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No Logo</span>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold text-white">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import {
   getClientUserContext,
   setVotingCookie,
@@ -239,12 +240,36 @@ export default function JudgeVotingPage() {
             <div className="space-y-8">
               {bands.map((band, index) => (
                 <div key={band.id} className="bg-white/10 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4">
-                    {index + 1}. {band.name}
-                  </h3>
-                  {band.description && (
-                    <p className="text-gray-300 mb-4">{band.description}</p>
-                  )}
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="text-xl font-semibold text-white">
+                      {index + 1}.
+                    </div>
+                    {/* Band Logo */}
+                    <div className="w-16 h-16 flex-shrink-0">
+                      {band.info?.logo_url ? (
+                        <Image
+                          src={band.info.logo_url}
+                          alt={`${band.name} logo`}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-contain rounded-lg"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No Logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">
+                        {band.name}
+                      </h3>
+                      {band.description && (
+                        <p className="text-gray-300">{band.description}</p>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="grid md:grid-cols-3 gap-6">
                     <div>

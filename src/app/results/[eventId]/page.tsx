@@ -1,6 +1,7 @@
 import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
+import Image from "next/image";
 
 interface BandScore {
   id: string;
@@ -252,7 +253,28 @@ export default async function ResultsPage({
                         {index + 1}
                       </span>
                     </td>
-                    <td className="py-4 px-2 font-semibold">{band.name}</td>
+                    <td className="py-4 px-2 font-semibold">
+                      <div className="flex items-center space-x-3">
+                        {/* Band Logo */}
+                        <div className="w-8 h-8 flex-shrink-0">
+                          {band.info?.logo_url ? (
+                            <Image
+                              src={band.info.logo_url}
+                              alt={`${band.name} logo`}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-contain rounded"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-700 rounded flex items-center justify-center">
+                              <span className="text-gray-400 text-xs">?</span>
+                            </div>
+                          )}
+                        </div>
+                        <span>{band.name}</span>
+                      </div>
+                    </td>
                     <td className="py-4 px-2 text-center">
                       {Number(band.avg_song_choice || 0).toFixed(1)}
                     </td>
@@ -290,9 +312,28 @@ export default async function ResultsPage({
                 href={`/band/${band.id}`}
                 className="bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-xl p-4 transition-colors"
               >
-                <h3 className="text-lg font-semibold text-white">
-                  {band.name}
-                </h3>
+                <div className="flex items-center space-x-3 mb-2">
+                  {/* Band Logo */}
+                  <div className="w-12 h-12 flex-shrink-0">
+                    {band.info?.logo_url ? (
+                      <Image
+                        src={band.info.logo_url}
+                        alt={`${band.name} logo`}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-contain rounded-lg"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">No Logo</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {band.name}
+                  </h3>
+                </div>
                 <p className="text-gray-300 text-sm">View detailed breakdown</p>
               </a>
             ))}

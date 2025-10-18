@@ -16,6 +16,19 @@ export interface Band {
   name: string;
   description?: string;
   order: number;
+  image_url?: string;
+  info?: {
+    logo_url?: string;
+    website?: string;
+    social_media?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    };
+    genre?: string;
+    members?: string[];
+    [key: string]: any;
+  };
   created_at: string;
 }
 
