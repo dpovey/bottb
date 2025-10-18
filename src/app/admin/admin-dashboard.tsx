@@ -2,6 +2,7 @@
 
 import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface Event {
   id: string;
@@ -105,6 +106,12 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
                     >
                       {event.status}
                     </span>
+                    <Link
+                      href={`/event/${event.id}/admin`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                    >
+                      Manage Event
+                    </Link>
                   </div>
                 </div>
               ))}
