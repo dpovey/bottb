@@ -10,7 +10,13 @@ jest.mock("next-auth/react", () => ({
 
 // Mock Next.js Link component
 jest.mock("next/link", () => {
-  return function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
+  return function MockLink({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) {
     return <a href={href}>{children}</a>;
   };
 });
@@ -27,7 +33,7 @@ const mockEvents = [
     date: "2024-01-15",
   },
   {
-    id: "event-2", 
+    id: "event-2",
     name: "Melbourne Showdown",
     location: "Melbourne Exhibition Centre",
     status: "upcoming",
@@ -36,7 +42,7 @@ const mockEvents = [
   {
     id: "event-3",
     name: "Brisbane Finals",
-    location: "Brisbane Convention Centre", 
+    location: "Brisbane Convention Centre",
     status: "past",
     date: "2023-12-10",
   },
@@ -63,9 +69,13 @@ describe("AdminDashboard", () => {
   it("renders admin dashboard with header and sign out button", async () => {
     render(<AdminDashboard session={mockSession} />);
 
-    expect(screen.getByRole("heading", { name: "Admin Dashboard" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Admin Dashboard" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Welcome, Admin User")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sign Out" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign Out" })
+    ).toBeInTheDocument();
   });
 
   it("shows loading state initially", () => {
@@ -102,7 +112,7 @@ describe("AdminDashboard", () => {
       const activeStatus = screen.getByText("active");
       expect(activeStatus).toHaveClass("bg-green-500/20", "text-green-400");
 
-      // Upcoming event - blue badge  
+      // Upcoming event - blue badge
       const upcomingStatus = screen.getByText("upcoming");
       expect(upcomingStatus).toHaveClass("bg-blue-500/20", "text-blue-400");
 
@@ -116,7 +126,9 @@ describe("AdminDashboard", () => {
     render(<AdminDashboard session={mockSession} />);
 
     await waitFor(() => {
-      const manageButtons = screen.getAllByRole("link", { name: "Manage Event" });
+      const manageButtons = screen.getAllByRole("link", {
+        name: "Manage Event",
+      });
       expect(manageButtons).toHaveLength(3);
     });
   });
@@ -125,12 +137,14 @@ describe("AdminDashboard", () => {
     render(<AdminDashboard session={mockSession} />);
 
     await waitFor(() => {
-      const manageButtons = screen.getAllByRole("link", { name: "Manage Event" });
-      
+      const manageButtons = screen.getAllByRole("link", {
+        name: "Manage Event",
+      });
+
       // Check that each button links to the correct event admin page
-      expect(manageButtons[0]).toHaveAttribute("href", "/event/event-1/admin");
-      expect(manageButtons[1]).toHaveAttribute("href", "/event/event-2/admin");
-      expect(manageButtons[2]).toHaveAttribute("href", "/event/event-3/admin");
+      expect(manageButtons[0]).toHaveAttribute("href", "/admin/events/event-1");
+      expect(manageButtons[1]).toHaveAttribute("href", "/admin/events/event-2");
+      expect(manageButtons[2]).toHaveAttribute("href", "/admin/events/event-3");
     });
   });
 
@@ -158,6 +172,11 @@ describe("AdminDashboard", () => {
   });
 
   it("handles fetch error gracefully", async () => {
+    // Mock console.error to suppress output and verify it's called
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
     (fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
 
     render(<AdminDashboard session={mockSession} />);
@@ -165,6 +184,14 @@ describe("AdminDashboard", () => {
     await waitFor(() => {
       expect(screen.getByText("No events found")).toBeInTheDocument();
     });
+
+    // Verify console.error was called with the expected error
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error fetching events:",
+      expect.any(Error)
+    );
+
+    consoleSpy.mockRestore();
   });
 
   it("handles fetch response error", async () => {

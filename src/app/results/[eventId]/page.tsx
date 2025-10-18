@@ -26,6 +26,8 @@ interface BandScore {
   crowd_vote_count: number;
   judge_vote_count: number;
   total_crowd_votes: number;
+  crowd_noise_energy?: number;
+  crowd_noise_peak?: number;
 }
 
 export default async function ResultsPage({
@@ -62,12 +64,20 @@ export default async function ResultsPage({
               Number(score.total_crowd_votes || 1)) *
             20
           : 0;
-      const totalScore = judgeScore + crowdScore;
+
+      // Normalize crowd noise energy to 0-20 scale
+      // Assuming energy levels typically range from 0-10, we'll scale to 0-20
+      const crowdNoiseScore = score.crowd_noise_energy
+        ? Math.min(20, (Number(score.crowd_noise_energy) / 10) * 20)
+        : 0;
+
+      const totalScore = judgeScore + crowdScore + crowdNoiseScore;
 
       return {
         ...score,
         judgeScore,
         crowdScore,
+        crowdNoiseScore,
         totalScore,
       };
     })
@@ -107,6 +117,15 @@ export default async function ResultsPage({
     bandResults.length > 0
       ? bandResults.reduce((prev, current) =>
           (current.crowdScore || 0) > (prev.crowdScore || 0) ? current : prev
+        )
+      : null;
+
+  const crowdNoiseWinner =
+    bandResults.length > 0
+      ? bandResults.reduce((prev, current) =>
+          (current.crowdNoiseScore || 0) > (prev.crowdNoiseScore || 0)
+            ? current
+            : prev
         )
       : null;
 
@@ -163,7 +182,7 @@ export default async function ResultsPage({
         </div>
 
         {/* Category Winners */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
             <div className="text-3xl mb-3">🎵</div>
             <h3 className="text-lg font-semibold text-white mb-2">
@@ -225,6 +244,21 @@ export default async function ResultsPage({
                 : "N/A"}
             </p>
           </div>
+
+          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
+            <div className="text-3xl mb-3">🎤</div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Crowd Noise
+            </h3>
+            <p className="text-xl font-bold text-purple-400">
+              {crowdNoiseWinner?.name || "N/A"}
+            </p>
+            <p className="text-sm text-gray-300">
+              {crowdNoiseWinner
+                ? Math.round(crowdNoiseWinner.crowdNoiseScore || 0) + "/20"
+                : "N/A"}
+            </p>
+          </div>
         </div>
 
         {/* Full Results Table */}
@@ -243,6 +277,7 @@ export default async function ResultsPage({
                   <th className="text-center py-4 px-2">Performance</th>
                   <th className="text-center py-4 px-2">Crowd Vibe</th>
                   <th className="text-center py-4 px-2">Crowd Vote</th>
+                  <th className="text-center py-4 px-2">Crowd Noise</th>
                   <th className="text-center py-4 px-2">Total</th>
                   <th className="text-center py-4 px-2">Votes</th>
                 </tr>
@@ -298,6 +333,9 @@ export default async function ResultsPage({
                     </td>
                     <td className="py-4 px-2 text-center">
                       {Math.round(band.crowdScore || 0)}
+                    </td>
+                    <td className="py-4 px-2 text-center">
+                      {Math.round(band.crowdNoiseScore || 0)}
                     </td>
                     <td className="py-4 px-2 text-center font-bold">
                       {Number(band.totalScore || 0).toFixed(1)}

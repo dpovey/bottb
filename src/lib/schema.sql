@@ -81,6 +81,23 @@ CREATE INDEX IF NOT EXISTS idx_votes_voter_type ON votes(voter_type);
 CREATE INDEX IF NOT EXISTS idx_votes_fingerprint ON votes(vote_fingerprint);
 CREATE INDEX IF NOT EXISTS idx_votes_ip_address ON votes(ip_address);
 CREATE INDEX IF NOT EXISTS idx_votes_created_at ON votes(created_at);
+
+-- Crowd noise measurements table
+CREATE TABLE IF NOT EXISTS crowd_noise_measurements (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+  energy_level DECIMAL(10,4) NOT NULL CHECK (energy_level >= 0),
+  peak_volume DECIMAL(10,4) NOT NULL CHECK (peak_volume >= 0),
+  recording_duration INTEGER NOT NULL CHECK (recording_duration > 0),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(event_id, band_id)
+);
+
+-- Indexes for crowd noise measurements
+CREATE INDEX IF NOT EXISTS idx_crowd_noise_event_id ON crowd_noise_measurements(event_id);
+CREATE INDEX IF NOT EXISTS idx_crowd_noise_band_id ON crowd_noise_measurements(band_id);
+CREATE INDEX IF NOT EXISTS idx_crowd_noise_created_at ON crowd_noise_measurements(created_at);
 CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
 
 -- JSONB indexes for bands info

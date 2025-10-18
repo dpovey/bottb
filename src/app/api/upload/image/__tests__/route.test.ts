@@ -1,6 +1,13 @@
 import { NextRequest } from "next/server";
 import { POST, DELETE } from "../route";
-import { uploadImage, deleteImage, validateImageFile } from "@/lib/blob";
+import {
+  uploadImage,
+  deleteImage,
+  validateImageFile,
+  generateBandImageFilename,
+  generateEventImageFilename,
+  generateUserImageFilename,
+} from "@/lib/blob";
 import { requireAdminAuth } from "@/lib/api-protection";
 
 // Mock dependencies
@@ -15,6 +22,44 @@ const mockDeleteImage = deleteImage as jest.MockedFunction<typeof deleteImage>;
 const mockValidateImageFile = validateImageFile as jest.MockedFunction<
   typeof validateImageFile
 >;
+const mockGenerateBandImageFilename =
+  generateBandImageFilename as jest.MockedFunction<
+    typeof generateBandImageFilename
+  >;
+const mockGenerateEventImageFilename =
+  generateEventImageFilename as jest.MockedFunction<
+    typeof generateEventImageFilename
+  >;
+const _mockGenerateUserImageFilename =
+  generateUserImageFilename as jest.MockedFunction<
+    typeof generateUserImageFilename
+  >;
+
+// Helper function to create a mock NextRequest with formData
+const createMockRequest = (
+  formData: FormData,
+  url = "http://localhost:3000/api/upload/image"
+) => {
+  const mockRequest = {
+    formData: jest.fn().mockResolvedValue(formData),
+    url,
+  } as unknown as NextRequest;
+  return mockRequest;
+};
+
+// Helper function to create a mock NextRequest with searchParams
+const createMockRequestWithSearchParams = (
+  searchParams: URLSearchParams,
+  baseUrl = "http://localhost:3000/api/upload/image"
+) => {
+  const queryString = searchParams.toString();
+  const fullUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+
+  const mockRequest = {
+    url: fullUrl,
+  } as unknown as NextRequest;
+  return mockRequest;
+};
 
 describe("/api/upload/image", () => {
   beforeEach(() => {
@@ -28,6 +73,11 @@ describe("/api/upload/image", () => {
 
       // Mock file validation
       mockValidateImageFile.mockReturnValue({ valid: true });
+
+      // Mock filename generation
+      mockGenerateBandImageFilename.mockReturnValue(
+        "bands/band-123/profile-test.jpg"
+      );
 
       // Mock upload result
       const mockUploadResult = {
@@ -48,13 +98,7 @@ describe("/api/upload/image", () => {
       formData.append("type", "band");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
@@ -64,7 +108,7 @@ describe("/api/upload/image", () => {
       expect(data.url).toBe(mockUploadResult.url);
       expect(mockUploadImage).toHaveBeenCalledWith(
         file,
-        expect.stringContaining("bands/band-123/"),
+        "bands/band-123/profile-test.jpg",
         expect.objectContaining({
           access: "public",
           addRandomSuffix: true,
@@ -79,6 +123,11 @@ describe("/api/upload/image", () => {
 
       // Mock file validation
       mockValidateImageFile.mockReturnValue({ valid: true });
+
+      // Mock filename generation
+      mockGenerateEventImageFilename.mockReturnValue(
+        "events/event-123/banner-test.jpg"
+      );
 
       // Mock upload result
       const mockUploadResult = {
@@ -99,13 +148,7 @@ describe("/api/upload/image", () => {
       formData.append("type", "event");
       formData.append("entityId", "event-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
@@ -115,7 +158,7 @@ describe("/api/upload/image", () => {
       expect(data.url).toBe(mockUploadResult.url);
       expect(mockUploadImage).toHaveBeenCalledWith(
         file,
-        expect.stringContaining("events/event-123/"),
+        "events/event-123/banner-test.jpg",
         expect.objectContaining({
           access: "public",
           addRandomSuffix: true,
@@ -131,13 +174,7 @@ describe("/api/upload/image", () => {
       formData.append("type", "band");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
@@ -155,19 +192,15 @@ describe("/api/upload/image", () => {
       formData.append("type", "invalid");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe('Invalid type. Must be "band" or "event"');
+      expect(data.error).toBe(
+        'Invalid type. Must be "band", "event", or "user"'
+      );
     });
 
     it("should return 400 if file validation fails", async () => {
@@ -184,13 +217,7 @@ describe("/api/upload/image", () => {
       formData.append("type", "band");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
@@ -202,6 +229,11 @@ describe("/api/upload/image", () => {
     });
 
     it("should return 401 if not authenticated", async () => {
+      // Mock console.error to suppress output and verify it's called
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       mockRequireAdminAuth.mockRejectedValue(new Error("Unauthorized"));
 
       const formData = new FormData();
@@ -210,24 +242,34 @@ describe("/api/upload/image", () => {
       formData.append("type", "band");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(401);
       expect(data.error).toBe("Unauthorized");
+
+      // Verify console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Image upload error:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
 
     it("should return 500 if upload fails", async () => {
+      // Mock console.error to suppress output and verify it's called
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       mockRequireAdminAuth.mockResolvedValue(undefined);
       mockValidateImageFile.mockReturnValue({ valid: true });
+      mockGenerateBandImageFilename.mockReturnValue(
+        "bands/band-123/profile-test.jpg"
+      );
       mockUploadImage.mockRejectedValue(new Error("Upload failed"));
 
       const formData = new FormData();
@@ -236,19 +278,21 @@ describe("/api/upload/image", () => {
       formData.append("type", "band");
       formData.append("entityId", "band-123");
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const request = createMockRequest(formData);
 
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Failed to upload image");
+
+      // Verify console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Image upload error:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -257,12 +301,9 @@ describe("/api/upload/image", () => {
       mockRequireAdminAuth.mockResolvedValue(undefined);
       mockDeleteImage.mockResolvedValue(undefined);
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image?url=https://example.com/image.jpg",
-        {
-          method: "DELETE",
-        }
-      );
+      const searchParams = new URLSearchParams();
+      searchParams.set("url", "https://example.com/image.jpg");
+      const request = createMockRequestWithSearchParams(searchParams);
 
       const response = await DELETE(request);
       const data = await response.json();
@@ -277,12 +318,8 @@ describe("/api/upload/image", () => {
     it("should return 400 if no URL provided", async () => {
       mockRequireAdminAuth.mockResolvedValue(undefined);
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image",
-        {
-          method: "DELETE",
-        }
-      );
+      const searchParams = new URLSearchParams();
+      const request = createMockRequestWithSearchParams(searchParams);
 
       const response = await DELETE(request);
       const data = await response.json();
@@ -292,38 +329,58 @@ describe("/api/upload/image", () => {
     });
 
     it("should return 401 if not authenticated", async () => {
+      // Mock console.error to suppress output and verify it's called
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       mockRequireAdminAuth.mockRejectedValue(new Error("Unauthorized"));
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image?url=https://example.com/image.jpg",
-        {
-          method: "DELETE",
-        }
-      );
+      const searchParams = new URLSearchParams();
+      searchParams.set("url", "https://example.com/image.jpg");
+      const request = createMockRequestWithSearchParams(searchParams);
 
       const response = await DELETE(request);
       const data = await response.json();
 
       expect(response.status).toBe(401);
       expect(data.error).toBe("Unauthorized");
+
+      // Verify console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Image deletion error:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
 
     it("should return 500 if deletion fails", async () => {
+      // Mock console.error to suppress output and verify it's called
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       mockRequireAdminAuth.mockResolvedValue(undefined);
       mockDeleteImage.mockRejectedValue(new Error("Deletion failed"));
 
-      const request = new NextRequest(
-        "http://localhost:3000/api/upload/image?url=https://example.com/image.jpg",
-        {
-          method: "DELETE",
-        }
-      );
+      const searchParams = new URLSearchParams();
+      searchParams.set("url", "https://example.com/image.jpg");
+      const request = createMockRequestWithSearchParams(searchParams);
 
       const response = await DELETE(request);
       const data = await response.json();
 
       expect(response.status).toBe(500);
       expect(data.error).toBe("Failed to delete image");
+
+      // Verify console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Image deletion error:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });

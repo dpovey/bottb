@@ -342,6 +342,7 @@ describe("Database Functions", () => {
       expect(mockSql).toHaveBeenCalledWith(
         expect.arrayContaining([expect.stringMatching(/WITH total_votes AS/)]),
         eventId,
+        eventId,
         eventId
       );
       expect(result).toEqual(mockScores);

@@ -8,6 +8,5 @@ export default async function EventAdminPage({
   const { eventId } = await params;
 
   // Authentication is handled by middleware
-  // If we reach here, user is authenticated as admin
   return <EventAdminDashboard eventId={eventId} />;
 }

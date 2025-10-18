@@ -66,11 +66,6 @@ describe("User Context", () => {
 
   describe("extractUserContext", () => {
     it("should extract basic user context", () => {
-      // Suppress expected console.warn for URL parsing
-      const consoleSpy = jest
-        .spyOn(console, "warn")
-        .mockImplementation(() => {});
-
       const request = createMockRequest(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "192.168.1.1"
@@ -85,11 +80,36 @@ describe("User Context", () => {
       expect(context.os_version).toBe("10");
       expect(context.device_type).toBe("Desktop");
       expect(context.vote_fingerprint).toBeDefined();
+    });
+
+    it("should handle invalid URL and log warning", () => {
+      // Suppress expected console.warn for URL parsing
+      const consoleSpy = jest
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+
+      const request = {
+        ...createMockRequest(
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "192.168.1.1"
+        ),
+        url: "invalid-url", // This will cause URL parsing to fail
+      } as unknown as NextRequest;
+
+      const context = extractUserContext(request);
+
+      expect(context.ip_address).toBe("192.168.1.1");
+      expect(context.browser_name).toBe("Chrome");
+      expect(context.browser_version).toBe("91.0");
+      expect(context.os_name).toBe("Windows");
+      expect(context.os_version).toBe("10");
+      expect(context.device_type).toBe("Desktop");
+      expect(context.vote_fingerprint).toBeDefined();
 
       // Verify the warning was logged
       expect(consoleSpy).toHaveBeenCalledWith(
         "Invalid URL in request:",
-        expect.any(String)
+        "invalid-url"
       );
 
       consoleSpy.mockRestore();

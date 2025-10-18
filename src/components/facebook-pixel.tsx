@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import ReactPixel from "react-facebook-pixel";
 
 const FacebookPixel = () => {
   useEffect(() => {
@@ -9,8 +8,11 @@ const FacebookPixel = () => {
     const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
 
     if (pixelId && process.env.NODE_ENV === "production") {
-      ReactPixel.init(pixelId);
-      ReactPixel.pageView();
+      // Dynamically import to avoid SSR issues
+      import("react-facebook-pixel").then((ReactPixel) => {
+        ReactPixel.default.init(pixelId);
+        ReactPixel.default.pageView();
+      });
     }
   }, []);
 

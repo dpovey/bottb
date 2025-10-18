@@ -11,75 +11,11 @@ global.TextDecoder = TextDecoder
 global.ReadableStream = ReadableStream
 global.WritableStream = WritableStream
 
-// Polyfill for URL and URLSearchParams
-global.URL = class URL {
-  constructor(input, base) {
-    // Use native URL if available, otherwise create a simple implementation
-    if (typeof window !== 'undefined' && window.URL) {
-      const url = new window.URL(input, base)
-      this.href = url.href
-      this.protocol = url.protocol
-      this.hostname = url.hostname
-      this.port = url.port
-      this.pathname = url.pathname
-      this.search = url.search
-      this.hash = url.hash
-    } else {
-      // Simple fallback implementation
-      this.href = input
-      this.protocol = 'http:'
-      this.hostname = 'localhost'
-      this.port = ''
-      this.pathname = input
-      this.search = ''
-      this.hash = ''
-    }
-  }
-}
+// URL and URLSearchParams are available in jest-environment-jsdom
+// No polyfill needed
 
-global.URLSearchParams = class URLSearchParams {
-  constructor(init) {
-    this.params = new Map()
-    if (init) {
-      if (typeof init === 'string') {
-        init.split('&').forEach(pair => {
-          const [key, value] = pair.split('=')
-          if (key) this.params.set(decodeURIComponent(key), decodeURIComponent(value || ''))
-        })
-      } else if (Array.isArray(init)) {
-        init.forEach(([key, value]) => this.params.set(key, value))
-      } else if (init && typeof init === 'object') {
-        Object.entries(init).forEach(([key, value]) => this.params.set(key, value))
-      }
-    }
-  }
-  
-  get(name) {
-    return this.params.get(name)
-  }
-  
-  set(name, value) {
-    this.params.set(name, value)
-  }
-  
-  has(name) {
-    return this.params.has(name)
-  }
-  
-  delete(name) {
-    this.params.delete(name)
-  }
-  
-  forEach(callback) {
-    this.params.forEach(callback)
-  }
-  
-  toString() {
-    return Array.from(this.params.entries())
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join('&')
-  }
-}
+// URLSearchParams is also available in jest-environment-jsdom
+// No polyfill needed
 
 // Simple polyfill for Request and Response
 global.Request = class Request {
