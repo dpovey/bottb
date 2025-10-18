@@ -14,8 +14,12 @@ export default function AdminLoginPage() {
 
   // Redirect if already authenticated as admin
   useEffect(() => {
-    if (session?.user && session.user.isAdmin) {
-      router.push("/admin");
+    if (session?.user) {
+      if (session.user.isAdmin) {
+        router.push("/admin");
+      } else {
+        setError("Access denied. Admin privileges required.");
+      }
     }
   }, [session, router]);
 
@@ -34,12 +38,9 @@ export default function AdminLoginPage() {
       if (result?.error) {
         setError("Invalid email or password");
       } else if (result?.ok) {
-        // Check if user is admin after successful login
-        if (session?.user && session.user.isAdmin) {
-          router.push("/admin");
-        } else {
-          setError("Access denied. Admin privileges required.");
-        }
+        // Wait for session to update, then check admin status
+        // The useEffect will handle the redirect when session updates
+        // If not admin, the error will be shown by the useEffect
       }
     } catch (error) {
       console.error("Sign in error:", error);
