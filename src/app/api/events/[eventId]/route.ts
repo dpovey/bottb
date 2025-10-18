@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventById } from "@/lib/db";
+import { withPublicRateLimit } from "@/lib/api-protection";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ eventId: string }> }
-) {
+async function handleGetEvent(request: NextRequest, _context?: unknown) {
   try {
-    const { eventId } = await params;
+    // Extract eventId from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split("/");
+    const eventId = pathParts[pathParts.length - 1];
+
     const event = await getEventById(eventId);
 
     if (!event) {
@@ -22,3 +24,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withPublicRateLimit(handleGetEvent);

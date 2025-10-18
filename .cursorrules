@@ -18,7 +18,6 @@
 - Use React Testing Library (RTL) for all component testing
 - Prefer ARIA attributes for element selection over data-testid
 - Use semantic queries (getByRole, getByLabelText, getByText) when possible
-- Only use data-testid as a last resort when ARIA attributes are insufficient
 - Mock external dependencies (database, API calls) using MSW or Jest mocks
 - Test user interactions and behavior, not implementation details
 - Use userEvent for simulating user interactions
@@ -40,8 +39,7 @@
 - Keep tests focused and atomic
 - Avoid testing implementation details
 - Never use "any" to fix type errors
-- For unused variables in tests, prefix with underscore (e.g., `_mockUpdateVote`, `_error`)
-- Use underscore prefix for intentionally unused parameters (e.g., `catch (_error)`)
+- For unused variables or params prefix with underscore (e.g., `_mockUpdateVote`, `_error`, `catch (_error)`)
 
 ## File Organization
 

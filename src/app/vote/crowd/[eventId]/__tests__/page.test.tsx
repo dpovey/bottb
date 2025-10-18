@@ -1,4 +1,4 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CrowdVotingPage from "../page";
 
@@ -95,15 +95,11 @@ describe("CrowdVotingPage", () => {
     expect(band1Radio).not.toBeChecked();
     expect(band2Radio).not.toBeChecked();
 
-    await act(async () => {
-      await user.click(band1Radio);
-    });
+    await user.click(band1Radio);
     expect(band1Radio).toBeChecked();
     expect(band2Radio).not.toBeChecked();
 
-    await act(async () => {
-      await user.click(band2Radio);
-    });
+    await user.click(band2Radio);
     expect(band1Radio).not.toBeChecked();
     expect(band2Radio).toBeChecked();
   });
@@ -128,21 +124,19 @@ describe("CrowdVotingPage", () => {
     });
 
     const band1Radio = screen.getByRole("radio", { name: /Test Band 1/ });
-    await act(async () => {
-      await user.click(band1Radio);
-    });
+    await user.click(band1Radio);
 
     const submitButton = screen.getByRole("button", { name: "Submit Vote" });
     expect(submitButton).not.toBeDisabled();
 
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText("Vote Submitted!")).toBeInTheDocument();
       expect(
-        screen.getByText("Your vote has been recorded. Thank you for participating!")
+        screen.getByText(
+          "Your vote has been recorded. Thank you for participating!"
+        )
       ).toBeInTheDocument();
     });
   });
@@ -176,14 +170,10 @@ describe("CrowdVotingPage", () => {
     });
 
     const band1Radio = screen.getByRole("radio", { name: /Test Band 1/ });
-    await act(async () => {
-      await user.click(band1Radio);
-    });
+    await user.click(band1Radio);
 
     const submitButton = screen.getByRole("button", { name: "Submit Vote" });
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     expect(screen.getByText("Submitting...")).toBeInTheDocument();
     expect(submitButton).toBeDisabled();
@@ -221,14 +211,10 @@ describe("CrowdVotingPage", () => {
     });
 
     const band1Radio = screen.getByRole("radio", { name: /Test Band 1/ });
-    await act(async () => {
-      await user.click(band1Radio);
-    });
+    await user.click(band1Radio);
 
     const submitButton = screen.getByRole("button", { name: "Submit Vote" });
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText("Already Voted")).toBeInTheDocument();

@@ -162,3 +162,9 @@ npm run test:ci
 
 The testing suite is now ready to ensure code quality and prevent regressions as the application evolves.
 
+
+
+
+
+
+

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBandsForEvent } from "@/lib/db";
+import { withPublicRateLimit } from "@/lib/api-protection";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ eventId: string }> }
-) {
+async function handleGetBands(request: NextRequest, _context?: unknown) {
   try {
-    const { eventId } = await params;
+    // Extract eventId from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split("/");
+    const eventId = pathParts[pathParts.length - 1];
+
     const bands = await getBandsForEvent(eventId);
     return NextResponse.json(bands);
   } catch (error) {
@@ -17,3 +19,5 @@ export async function GET(
     );
   }
 }
+
+export const GET = withPublicRateLimit(handleGetBands);

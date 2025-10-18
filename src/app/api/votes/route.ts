@@ -6,8 +6,9 @@ import {
   hasUserVoted,
   hasUserVotedByFingerprintJS,
 } from "@/lib/user-context";
+import { withVoteRateLimit } from "@/lib/api-protection";
 
-export async function POST(request: NextRequest) {
+async function handleVote(request: NextRequest) {
   try {
     const {
       event_id,
@@ -114,3 +115,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withVoteRateLimit(handleVote);

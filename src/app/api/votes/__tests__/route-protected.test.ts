@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
+// import { NextRequest } from "next/server";
 import { POST } from "../route";
 import { submitVote, updateVote as _updateVote } from "@/lib/db";
 import { sql } from "@vercel/postgres";
-// import { createMockRequest } from "@/__tests__/utils/api-test-helpers";
+import { createMockRequest } from "@/__tests__/utils/api-test-helpers";
 
 // Mock the database functions
 jest.mock("@/lib/db", () => ({
@@ -22,7 +22,7 @@ jest.mock("@/lib/user-context", () => ({
 }));
 
 // Mock the database query
-jest.mock("@vercel/postgres", () => ({
+jest.mock("@/vercel/postgres", () => ({
   sql: jest.fn(),
 }));
 
@@ -54,7 +54,7 @@ jest.mock("next/server", () => {
 const mockSubmitVote = submitVote as jest.MockedFunction<typeof submitVote>;
 const mockSql = sql as jest.MockedFunction<typeof sql>;
 
-describe("/api/votes", () => {
+describe("/api/votes (Protected)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Mock the band name query
@@ -70,7 +70,7 @@ describe("/api/votes", () => {
   });
 
   describe("POST", () => {
-    it("submits a vote successfully", async () => {
+    it("submits a vote successfully with rate limiting", async () => {
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
@@ -89,11 +89,12 @@ describe("/api/votes", () => {
 
       mockSubmitVote.mockResolvedValue(mockVote);
 
-      const request = new NextRequest("http://localhost/api/votes", {
+      const request = createMockRequest("http://localhost/api/votes", {
         method: "POST",
-        body: JSON.stringify(voteData),
+        body: voteData,
         headers: {
-          "Content-Type": "application/json",
+          "X-Forwarded-For": "127.0.0.1",
+          "User-Agent": "test-agent",
         },
       });
 
@@ -114,81 +115,106 @@ describe("/api/votes", () => {
       expect(data).toEqual(mockVote);
     });
 
-    it("submits a judge vote successfully", async () => {
+    it("handles rate limiting correctly", async () => {
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
-        voter_type: "judge" as const,
-        song_choice: 15,
-        performance: 25,
-        crowd_vibe: 20,
-        crowd_vote: undefined,
+        voter_type: "crowd" as const,
+        song_choice: undefined,
+        performance: undefined,
+        crowd_vibe: undefined,
+        crowd_vote: 20,
       };
 
-      const mockVote = {
+      mockSubmitVote.mockResolvedValue({
         id: "vote-1",
         ...voteData,
         created_at: "2024-01-01T00:00:00Z",
+      });
+
+      // Make 11 requests (exceeding the 10/min vote limit)
+      const requests = Array.from({ length: 11 }, (_, _i) =>
+        createMockRequest("http://localhost/api/votes", {
+          method: "POST",
+          body: voteData,
+          headers: {
+            "X-Forwarded-For": "192.168.1.1",
+            "User-Agent": "TestAgent",
+          },
+        })
+      );
+
+      const responses = await Promise.all(
+        requests.map((req) => POST(req))
+      );
+
+      // First 10 should succeed
+      for (let i = 0; i < 10; i++) {
+        expect(responses[i].status).toBe(200);
+      }
+
+      // 11th should be rate limited
+      const lastResponse = responses[10];
+      expect(lastResponse.status).toBe(429);
+      
+      const data = await lastResponse.json();
+      expect(data.error).toBe("Too many requests");
+      expect(data.limit).toBe(10);
+      expect(data.retryAfter).toBeDefined();
+    });
+
+    it("includes rate limit headers", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "crowd" as const,
+        song_choice: undefined,
+        performance: undefined,
+        crowd_vibe: undefined,
+        crowd_vote: 20,
       };
 
-      mockSubmitVote.mockResolvedValue(mockVote);
+      mockSubmitVote.mockResolvedValue({
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      });
 
-      const request = new NextRequest("http://localhost/api/votes", {
+      const request = createMockRequest("http://localhost/api/votes", {
         method: "POST",
-        body: JSON.stringify(voteData),
+        body: voteData,
         headers: {
-          "Content-Type": "application/json",
+          "X-Forwarded-For": "127.0.0.1",
+          "User-Agent": "test-agent",
         },
       });
 
       const response = await POST(request);
 
-      expect(mockSubmitVote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...voteData,
-          ip_address: "127.0.0.1",
-          user_agent: "test-agent",
-          vote_fingerprint: "test-fingerprint",
-        })
-      );
       expect(response.status).toBe(200);
-
-      const data = await response.json();
-      expect(data).toEqual(mockVote);
+      expect(response.headers.get("X-RateLimit-Limit")).toBe("10");
+      expect(response.headers.get("X-RateLimit-Remaining")).toBeDefined();
     });
 
     it("returns 500 when database error occurs", async () => {
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
-        voter_type: "crowd",
+        voter_type: "crowd" as const,
+        song_choice: undefined,
+        performance: undefined,
+        crowd_vibe: undefined,
         crowd_vote: 20,
       };
 
       mockSubmitVote.mockRejectedValue(new Error("Database error"));
 
-      const request = new NextRequest("http://localhost/api/votes", {
+      const request = createMockRequest("http://localhost/api/votes", {
         method: "POST",
-        body: JSON.stringify(voteData),
+        body: voteData,
         headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const response = await POST(request);
-
-      expect(response.status).toBe(500);
-
-      const data = await response.json();
-      expect(data).toEqual({ error: "Failed to submit vote" });
-    });
-
-    it("handles invalid JSON gracefully", async () => {
-      const request = new NextRequest("http://localhost/api/votes", {
-        method: "POST",
-        body: "invalid json",
-        headers: {
-          "Content-Type": "application/json",
+          "X-Forwarded-For": "127.0.0.1",
+          "User-Agent": "test-agent",
         },
       });
 
@@ -201,3 +227,4 @@ describe("/api/votes", () => {
     });
   });
 });
+

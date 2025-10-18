@@ -5,8 +5,9 @@ import {
   hasUserVoted,
   hasUserVotedByFingerprintJS,
 } from "@/lib/user-context";
+import { withAdminProtection } from "@/lib/api-protection";
 
-export async function POST(request: NextRequest) {
+async function handleBatchVotes(request: NextRequest) {
   try {
     const {
       votes,
@@ -125,3 +126,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export const POST = withAdminProtection(handleBatchVotes);

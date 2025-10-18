@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBandScores } from "@/lib/db";
+import { withPublicRateLimit } from "@/lib/api-protection";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ eventId: string }> }
-) {
+async function handleGetScores(request: NextRequest, _context?: unknown) {
   try {
-    const { eventId } = await params;
+    // Extract eventId from the URL path
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split("/");
+    const eventId = pathParts[pathParts.length - 2]; // scores is the last part, eventId is before it
+
     const scores = await getBandScores(eventId);
     return NextResponse.json(scores);
   } catch (error) {
@@ -18,3 +20,4 @@ export async function GET(
   }
 }
 
+export const GET = withPublicRateLimit(handleGetScores);

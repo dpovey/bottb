@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { POST } from "../route";
 import { submitVote, updateVote as _updateVote } from "@/lib/db";
 import { sql as _sql } from "@vercel/postgres";
+import { mockAdminAuth } from "@/__tests__/utils/api-test-helpers";
 
 // Mock the database functions
 jest.mock("@/lib/db", () => ({
@@ -55,6 +56,7 @@ const mockSubmitVote = submitVote as jest.MockedFunction<typeof submitVote>;
 describe("/api/votes/batch", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAdminAuth();
   });
 
   describe("POST", () => {

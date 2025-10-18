@@ -8,6 +8,10 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
+    '^@/vercel/postgres$': '<rootDir>/node_modules/@vercel/postgres',
+    '^@vercel/postgres$': '<rootDir>/node_modules/@vercel/postgres',
+    '^@auth/core$': '<rootDir>/node_modules/@auth/core',
+    '^@auth/core/providers/credentials$': '<rootDir>/node_modules/@auth/core/providers/credentials',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [
@@ -31,12 +35,13 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
+    '<rootDir>/src/__tests__/utils/',
   ],
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
   transformIgnorePatterns: [
-    '/node_modules/',
+    '/node_modules/(?!(next-auth|@auth|@vercel)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
 }

@@ -1,3 +1,14 @@
+-- Users table for admin authentication
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  name VARCHAR(255),
+  is_admin BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_login TIMESTAMP WITH TIME ZONE
+);
+
 -- Events table
 CREATE TABLE IF NOT EXISTS events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,6 +69,8 @@ CREATE TABLE IF NOT EXISTS votes (
 );
 
 -- Indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin);
 CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_band_id ON votes(band_id);

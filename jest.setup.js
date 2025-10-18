@@ -229,6 +229,53 @@ jest.mock('next/link', () => {
   return MockLink
 })
 
+// Mock NextAuth
+jest.mock('next-auth', () => ({
+  default: jest.fn(() => ({
+    handlers: {
+      GET: jest.fn(),
+      POST: jest.fn(),
+    },
+    auth: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+  })),
+  getServerSession: jest.fn(),
+  __esModule: true,
+}))
+
+jest.mock('next-auth/next', () => ({
+  NextAuth: jest.fn(),
+}))
+
+jest.mock('@auth/core', () => ({
+  Auth: jest.fn(),
+  customFetch: jest.fn(),
+}))
+
+jest.mock('@auth/core/providers/credentials', () => ({
+  CredentialsProvider: jest.fn(),
+}))
+
+jest.mock('next-auth/providers/credentials', () => ({
+  default: jest.fn(() => ({
+    id: 'credentials',
+    name: 'Credentials',
+    type: 'credentials',
+  })),
+  __esModule: true,
+}))
+
+// Mock @vercel/postgres
+jest.mock('@vercel/postgres', () => ({
+  sql: jest.fn(),
+}))
+
+// Mock @/lib/auth
+jest.mock('@/lib/auth', () => ({
+  auth: jest.fn(),
+}))
+
 // Mock environment variables
 process.env.POSTGRES_URL = 'postgres://test:test@localhost:5432/test'
 

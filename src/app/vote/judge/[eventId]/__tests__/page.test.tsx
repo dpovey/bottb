@@ -161,11 +161,9 @@ describe("JudgeVotingPage", () => {
       name: /Crowd Vibe for/,
     })[0];
 
-    await act(async () => {
-      await user.type(songChoiceSlider, "15");
-      await user.type(performanceSlider, "25");
-      await user.type(crowdVibeSlider, "20");
-    });
+    await user.type(songChoiceSlider, "15");
+    await user.type(performanceSlider, "25");
+    await user.type(crowdVibeSlider, "20");
 
     // The total text is split across multiple elements, so we need to look for parts
     const totalElements = screen.getAllByText((content, element) => {
@@ -259,9 +257,7 @@ describe("JudgeVotingPage", () => {
     const submitButton = screen.getByRole("button", {
       name: "Submit All Scores",
     });
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText("Scores Submitted!")).toBeInTheDocument();
@@ -316,9 +312,7 @@ describe("JudgeVotingPage", () => {
     const submitButton = screen.getByRole("button", {
       name: "Submit All Scores",
     });
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     expect(screen.getByText("Submitting...")).toBeInTheDocument();
     expect(submitButton).toBeDisabled();
@@ -357,9 +351,7 @@ describe("JudgeVotingPage", () => {
     const submitButton = screen.getByRole("button", {
       name: "Submit All Scores",
     });
-    await act(async () => {
-      await user.click(submitButton);
-    });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText("Already Voted")).toBeInTheDocument();

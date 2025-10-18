@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getActiveEvent } from "@/lib/db";
+import { withPublicRateLimit } from "@/lib/api-protection";
 
-export async function GET() {
+async function handleGetActiveEvent(_request: NextRequest) {
   try {
     const activeEvent = await getActiveEvent();
     return NextResponse.json(activeEvent);
@@ -14,3 +15,4 @@ export async function GET() {
   }
 }
 
+export const GET = withPublicRateLimit(handleGetActiveEvent);
