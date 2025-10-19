@@ -58,12 +58,6 @@ export default function VolumeGraph({
     const x = progress * width;
     const y = height - rms * 2 * height; // Less sensitive scaling
 
-    // Draw a small dot for the current point
-    // ctx.fillStyle = "#00ff88";
-    // ctx.beginPath();
-    // ctx.arc(x, Math.max(0, Math.min(height, y)), 2, 0, 2 * Math.PI);
-    // ctx.fill();
-
     // Draw a line from the previous point to the current point
     if (canvas.dataset.lastX && canvas.dataset.lastY) {
       const lastX = parseFloat(canvas.dataset.lastX);

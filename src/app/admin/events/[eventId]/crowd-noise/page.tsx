@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface Band {
   id: string;
@@ -21,6 +22,7 @@ interface CrowdNoiseMeasurement {
   energy_level: number;
   peak_volume: number;
   recording_duration: number;
+  crowd_score: number;
   created_at: string;
 }
 
@@ -128,7 +130,7 @@ export default function CrowdNoisePage() {
     }
   };
 
-  const startCountdown = () => {
+  const _startCountdown = () => {
     if (microphonePermission !== "granted") {
       checkMicrophonePermission();
       return;
@@ -476,9 +478,11 @@ export default function CrowdNoisePage() {
                   >
                     <div className="flex items-center space-x-3">
                       {band.info?.logo_url ? (
-                        <img
+                        <Image
                           src={band.info.logo_url}
                           alt={`${band.name} logo`}
+                          width={32}
+                          height={32}
                           className="h-8 w-8 object-contain flex-shrink-0"
                         />
                       ) : (
@@ -519,9 +523,11 @@ export default function CrowdNoisePage() {
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
             <div className="mb-4">
               {selectedBand.info?.logo_url ? (
-                <img
+                <Image
                   src={selectedBand.info.logo_url}
                   alt={`${selectedBand.name} logo`}
+                  width={64}
+                  height={64}
                   className="mx-auto h-16 w-auto object-contain mb-4"
                 />
               ) : (

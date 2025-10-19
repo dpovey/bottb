@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   VUMeter,
   VolumeGraph,
@@ -147,7 +148,7 @@ export default function CrowdNoiseRecordPage() {
     } finally {
       setIsCheckingMic(false);
     }
-  }, []);
+  }, [setupAudioMonitoring]);
 
   useEffect(() => {
     const fetchBand = async () => {
@@ -276,7 +277,7 @@ export default function CrowdNoiseRecordPage() {
     }
   };
 
-  const setupAudioMonitoring = async (stream?: MediaStream) => {
+  const setupAudioMonitoring = useCallback(async (stream?: MediaStream) => {
     try {
       // Clean up any existing monitoring
       if (animationRef.current) {
@@ -345,7 +346,7 @@ export default function CrowdNoiseRecordPage() {
       console.error("Error setting up audio monitoring:", error);
       setIsMonitoring(false);
     }
-  };
+  }, [selectedMicrophoneId, isActiveRef, animationRef]);
 
   const startCountdown = async () => {
     if (microphonePermission !== "granted") {
@@ -618,9 +619,11 @@ export default function CrowdNoiseRecordPage() {
         <div className="text-center mb-1 sm:mb-2 flex-shrink-0">
           <div className="mb-1 sm:mb-2">
             {band.info?.logo_url ? (
-              <img
+              <Image
                 src={band.info.logo_url}
                 alt={`${band.name} logo`}
+                width={48}
+                height={48}
                 className="mx-auto h-8 sm:h-12 w-auto object-contain"
               />
             ) : (
