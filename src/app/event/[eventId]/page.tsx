@@ -157,8 +157,9 @@ export default function EventPage() {
             ) : (
               <div className="grid gap-4">
                 {bands.map((band) => (
-                  <div
+                  <Link
                     key={band.id}
+                    href={`/band/${band.id}`}
                     className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors"
                   >
                     <div className="flex items-center justify-between">
@@ -197,7 +198,7 @@ export default function EventPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

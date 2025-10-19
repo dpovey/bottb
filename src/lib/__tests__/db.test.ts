@@ -76,7 +76,7 @@ describe("Database Functions", () => {
   });
 
   describe("getActiveEvent", () => {
-    it("returns the active event", async () => {
+    it("returns the active event with voting status", async () => {
       const mockEvent = {
         id: "active-event-1",
         name: "Active Event",
@@ -92,16 +92,37 @@ describe("Database Functions", () => {
       const result = await getActiveEvent();
 
       expect(mockSql).toHaveBeenCalledWith([
-        "SELECT * FROM events WHERE is_active = true LIMIT 1",
+        "SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1",
       ]);
       expect(result).toEqual(mockEvent);
     });
 
-    it("returns null when no active event exists", async () => {
+    it("returns null when no active voting event exists", async () => {
       mockSql.mockResolvedValue(createMockQueryResult([]));
 
       const result = await getActiveEvent();
 
+      expect(result).toBeNull();
+    });
+
+    it("returns null when event is active but not in voting status", async () => {
+      const _mockEvent = {
+        id: "upcoming-event-1",
+        name: "Upcoming Event",
+        date: "2024-12-25T18:30:00Z",
+        location: "Upcoming Venue",
+        is_active: true,
+        status: "upcoming",
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSql.mockResolvedValue(createMockQueryResult([]));
+
+      const result = await getActiveEvent();
+
+      expect(mockSql).toHaveBeenCalledWith([
+        "SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1",
+      ]);
       expect(result).toBeNull();
     });
   });

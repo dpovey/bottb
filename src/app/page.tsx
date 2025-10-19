@@ -83,7 +83,7 @@ export default async function HomePage() {
         {/* TODO: Hero */}
 
         {/* Active Event Section */}
-        {activeEvent ? (
+        {activeEvent && (
           <div className="max-w-6xl mx-auto mb-12">
             <div className="bg-gradient-to-r from-neutral-900 via-amber-900 to-black rounded-2xl p-8 text-center">
               <h3 className="text-4xl font-bold text-white mb-4">
@@ -106,17 +106,6 @@ export default async function HomePage() {
                   Vote Now
                 </Link>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-6xl mx-auto mb-12">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center">
-              <h2 className="text-3xl font-bold text-white mb-4">
-                No Active Event
-              </h2>
-              <p className="text-gray-300 text-lg">
-                Check back later for upcoming battles!
-              </p>
             </div>
           </div>
         )}

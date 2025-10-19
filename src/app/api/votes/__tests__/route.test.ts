@@ -2,6 +2,7 @@
 
 import { vi } from "vitest";
 import { createRequest } from "node-mocks-http";
+import { NextRequest } from "next/server";
 import { POST } from "../route";
 import { submitVote, updateVote as _updateVote } from "@/lib/db";
 import {
@@ -60,6 +61,29 @@ const mockHasUserVotedByFingerprintJS =
 import { sql } from "@vercel/postgres";
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
+// Helper function to create NextRequest mock
+function createNextRequestMock(voteData: Record<string, unknown>, headers: Record<string, string> = {}) {
+  const request = createRequest({
+    method: "POST",
+    url: "/api/votes",
+    body: voteData,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+  });
+
+  // Add required NextRequest properties
+  request.json = vi.fn().mockResolvedValue(voteData);
+  request.cookies = {
+    get: vi.fn().mockReturnValue(undefined),
+    set: vi.fn(),
+    delete: vi.fn(),
+  };
+
+  return request as unknown as NextRequest;
+}
+
 describe("/api/votes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -94,26 +118,9 @@ describe("/api/votes", () => {
 
       mockSubmitVote.mockResolvedValue(mockVote);
 
-      const request = createRequest({
-        method: "POST",
-        url: "/api/votes",
-        body: voteData,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const request = createNextRequestMock(voteData);
 
-      // Add json() method to the mock request
-      request.json = vi.fn().mockResolvedValue(voteData);
-
-      // Add cookies property to the mock request
-      request.cookies = {
-        get: vi.fn().mockReturnValue(undefined),
-        set: vi.fn(),
-        delete: vi.fn(),
-      };
-
-      const response = await POST(request as unknown as Request);
+      const response = await POST(request);
 
       expect(mockSubmitVote).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -149,26 +156,9 @@ describe("/api/votes", () => {
 
       mockSubmitVote.mockResolvedValue(mockVote);
 
-      const request = createRequest({
-        method: "POST",
-        url: "/api/votes",
-        body: voteData,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const request = createNextRequestMock(voteData);
 
-      // Add json() method to the mock request
-      request.json = vi.fn().mockResolvedValue(voteData);
-
-      // Add cookies property to the mock request
-      request.cookies = {
-        get: vi.fn().mockReturnValue(undefined),
-        set: vi.fn(),
-        delete: vi.fn(),
-      };
-
-      const response = await POST(request as unknown as Request);
+      const response = await POST(request);
 
       expect(mockSubmitVote).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -203,26 +193,9 @@ describe("/api/votes", () => {
       // Mock submitVote to throw an error
       mockSubmitVote.mockRejectedValue(new Error("Database error"));
 
-      const request = createRequest({
-        method: "POST",
-        url: "/api/votes",
-        body: voteData,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const request = createNextRequestMock(voteData);
 
-      // Add json() method to the mock request
-      request.json = vi.fn().mockResolvedValue(voteData);
-
-      // Add cookies property to the mock request
-      request.cookies = {
-        get: vi.fn().mockReturnValue(undefined),
-        set: vi.fn(),
-        delete: vi.fn(),
-      };
-
-      const response = await POST(request as unknown as Request);
+      const response = await POST(request);
 
       expect(response.status).toBe(500);
 
@@ -250,23 +223,9 @@ describe("/api/votes", () => {
       mockHasUserVoted.mockResolvedValue(true);
       mockHasUserVotedByFingerprintJS.mockResolvedValue(true);
 
-      const request = createRequest({
-        method: "POST",
-        url: "/api/votes",
-        body: voteData,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const request = createNextRequestMock(voteData);
 
-      request.json = vi.fn().mockResolvedValue(voteData);
-      request.cookies = {
-        get: vi.fn().mockReturnValue(undefined),
-        set: vi.fn(),
-        delete: vi.fn(),
-      };
-
-      const response = await POST(request as unknown as Request);
+      const response = await POST(request);
 
       expect(response.status).toBe(409);
       const data = await response.json();

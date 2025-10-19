@@ -84,7 +84,7 @@ export async function getEvents() {
 
 export async function getActiveEvent() {
   const { rows } =
-    await sql<Event>`SELECT * FROM events WHERE is_active = true LIMIT 1`;
+    await sql<Event>`SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1`;
   return rows[0] || null;
 }
 

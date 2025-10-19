@@ -43,7 +43,7 @@ describe("HomePage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the main title and subtitle", async () => {
+  it("renders nothing when no active event exists", async () => {
     (
       mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
         (): Promise<import("@/lib/db").Event | null>;
@@ -54,12 +54,13 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
+    // Should not show "No Active Event" message
     expect(
-      screen.getByRole("heading", { name: "No Active Event" })
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "No Active Event" })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText("Check back later for upcoming battles!")
-    ).toBeInTheDocument();
+      screen.queryByText("Check back later for upcoming battles!")
+    ).not.toBeInTheDocument();
   });
 
   it("renders upcoming events when available", async () => {
@@ -274,7 +275,7 @@ describe("HomePage", () => {
     expect(resultsLink).toHaveAttribute("href", "/results/finalized-event");
   });
 
-  it("shows no upcoming events message when none exist", async () => {
+  it("shows nothing when no events exist", async () => {
     (
       mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
         (): Promise<import("@/lib/db").Event | null>;
@@ -285,12 +286,13 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
+    // Should not show any placeholder messages
     expect(
-      screen.getByRole("heading", { name: "No Active Event" })
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: "No Active Event" })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText("Check back later for upcoming battles!")
-    ).toBeInTheDocument();
+      screen.queryByText("Check back later for upcoming battles!")
+    ).not.toBeInTheDocument();
   });
 
   it("shows bands with more than 3 bands correctly", async () => {
