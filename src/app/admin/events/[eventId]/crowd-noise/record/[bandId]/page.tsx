@@ -3,7 +3,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { VUMeter, VolumeGraph, Oscilloscope } from "./components";
+import {
+  VUMeter,
+  VolumeGraph,
+  Oscilloscope,
+  CircularOscilloscope,
+} from "./components";
 
 interface Band {
   id: string;
@@ -63,6 +68,7 @@ export default function CrowdNoiseRecordPage() {
   const startTimeRef = useRef(0);
   const energyAccumulatorRef = useRef(0);
   const isActiveRef = useRef(false);
+  const countdownActiveRef = useRef(false);
 
   const checkMicrophonePermission = useCallback(async (): Promise<boolean> => {
     setIsCheckingMic(true);
@@ -162,6 +168,14 @@ export default function CrowdNoiseRecordPage() {
 
     fetchBand();
     checkMicrophonePermission();
+
+    // Cleanup function
+    return () => {
+      countdownActiveRef.current = false;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [eventId, bandId, router, checkMicrophonePermission]);
 
   // Calculate viewport scale based on screen size
@@ -363,6 +377,24 @@ export default function CrowdNoiseRecordPage() {
       const bufferLength = analyserRef.current.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
 
+      // Start monitoring audio during countdown for circular oscilloscope
+      countdownActiveRef.current = true;
+      const monitorCountdownAudio = () => {
+        if (
+          analyserRef.current &&
+          dataArrayRef.current &&
+          countdownActiveRef.current
+        ) {
+          analyserRef.current.getByteTimeDomainData(
+            dataArrayRef.current as Uint8Array<ArrayBuffer>
+          );
+          // Force re-render of circular oscilloscope
+          setOscilloscopeFrame((prev) => prev + 1);
+          requestAnimationFrame(monitorCountdownAudio);
+        }
+      };
+      monitorCountdownAudio();
+
       // Keep the stream active during countdown
       // Don't stop the stream - we'll use it when recording starts
     } catch (err) {
@@ -380,6 +412,7 @@ export default function CrowdNoiseRecordPage() {
         setCountdown(countdownValue);
       } else {
         setCountdown(0);
+        countdownActiveRef.current = false; // Stop countdown monitoring
         clearInterval(countdownInterval);
         // Start recording immediately after countdown - everything is already set up
         startRecording();
@@ -388,6 +421,7 @@ export default function CrowdNoiseRecordPage() {
 
     return () => {
       clearInterval(countdownInterval);
+      countdownActiveRef.current = false;
     };
   };
 
@@ -774,8 +808,17 @@ export default function CrowdNoiseRecordPage() {
               <div className="text-2xl sm:text-4xl text-gray-300 animate-bounce">
                 Get ready to scream!
               </div>
-              <div className="mt-4 sm:mt-8">
-                <div className="w-16 sm:w-32 h-16 sm:h-32 border-2 sm:border-4 border-white rounded-full animate-spin mx-auto"></div>
+              <div className="mt-4 sm:mt-8 flex justify-center">
+                {dataArrayRef.current && dataArrayRef.current.length > 0 ? (
+                  <CircularOscilloscope
+                    key={`countdown-oscilloscope-${oscilloscopeFrame}`}
+                    dataArray={dataArrayRef.current}
+                    size={256}
+                    className="animate-pulse"
+                  />
+                ) : (
+                  <div className="w-32 sm:w-64 h-32 sm:h-64 border-2 sm:border-4 border-white rounded-full animate-spin"></div>
+                )}
               </div>
             </div>
           </div>
