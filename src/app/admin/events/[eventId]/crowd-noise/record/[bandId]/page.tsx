@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { VUMeter, VolumeGraph, Oscilloscope } from "./components";
 
 interface Band {
   id: string;
@@ -47,6 +48,7 @@ export default function CrowdNoiseRecordPage() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [viewportScale, setViewportScale] = useState(1);
+  const [oscilloscopeFrame, setOscilloscopeFrame] = useState(0);
 
   const [availableMicrophones, setAvailableMicrophones] = useState<
     MediaDeviceInfo[]
@@ -61,10 +63,6 @@ export default function CrowdNoiseRecordPage() {
   const startTimeRef = useRef(0);
   const energyAccumulatorRef = useRef(0);
   const isActiveRef = useRef(false);
-
-  const vuCanvasRef = useRef<HTMLCanvasElement>(null);
-  const graphCanvasRef = useRef<HTMLCanvasElement>(null);
-  const oscilloscopeCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const checkMicrophonePermission = useCallback(async (): Promise<boolean> => {
     setIsCheckingMic(true);
@@ -195,86 +193,6 @@ export default function CrowdNoiseRecordPage() {
       window.removeEventListener("resize", calculateScale);
     };
   }, []);
-
-  // Simple canvas setup - just set internal dimensions to match display size
-  useEffect(() => {
-    const setupCanvas = () => {
-      const vuCanvas = vuCanvasRef.current;
-      const graphCanvas = graphCanvasRef.current;
-      const oscilloscopeCanvas = oscilloscopeCanvasRef.current;
-
-      if (vuCanvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = vuCanvas.getBoundingClientRect();
-        // Only setup if canvas has actual dimensions
-        if (rect.width > 0 && rect.height > 0) {
-          vuCanvas.width = rect.width * dpr;
-          vuCanvas.height = rect.height * dpr;
-          const ctx = vuCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-
-      if (graphCanvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = graphCanvas.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          graphCanvas.width = rect.width * dpr;
-          graphCanvas.height = rect.height * dpr;
-          const ctx = graphCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-
-      if (oscilloscopeCanvas) {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = oscilloscopeCanvas.getBoundingClientRect();
-        if (rect.width > 0 && rect.height > 0) {
-          oscilloscopeCanvas.width = rect.width * dpr;
-          oscilloscopeCanvas.height = rect.height * dpr;
-          const ctx = oscilloscopeCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-    };
-
-    // Try multiple times with increasing delays to catch the canvas when it's ready
-    const trySetup = () => {
-      setupCanvas();
-      // If any canvas still has 0 dimensions, try again
-      const vuCanvas = vuCanvasRef.current;
-      const graphCanvas = graphCanvasRef.current;
-      const oscilloscopeCanvas = oscilloscopeCanvasRef.current;
-
-      if (vuCanvas && vuCanvas.getBoundingClientRect().width === 0) {
-        setTimeout(trySetup, 50);
-      } else if (
-        graphCanvas &&
-        graphCanvas.getBoundingClientRect().width === 0
-      ) {
-        setTimeout(trySetup, 50);
-      } else if (
-        oscilloscopeCanvas &&
-        oscilloscopeCanvas.getBoundingClientRect().width === 0
-      ) {
-        setTimeout(trySetup, 50);
-      }
-    };
-
-    // Use requestAnimationFrame to ensure layout is complete
-    const setupAfterLayout = () => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(trySetup);
-      });
-    };
-
-    setupAfterLayout();
-    window.addEventListener("resize", setupCanvas);
-
-    return () => {
-      window.removeEventListener("resize", setupCanvas);
-    };
-  }, [viewportScale]); // Re-run when viewport scale changes
 
   const _getAvailableMicrophones = async () => {
     try {
@@ -525,57 +443,11 @@ export default function CrowdNoiseRecordPage() {
       setTimeLeft(10);
       setTotalEnergy(0);
       setPeakVolume(0);
-
-      // Reset graph canvas
-      if (graphCanvasRef.current) {
-        graphCanvasRef.current.dataset.initialized = "false";
-        graphCanvasRef.current.dataset.lastX = "";
-        graphCanvasRef.current.dataset.lastY = "";
-      }
+      setOscilloscopeFrame(0);
 
       startTimeRef.current = Date.now();
       energyAccumulatorRef.current = 0;
       isActiveRef.current = true;
-
-      // Setup canvas after recording interface is rendered
-      setTimeout(() => {
-        const vuCanvas = vuCanvasRef.current;
-        const graphCanvas = graphCanvasRef.current;
-        const oscilloscopeCanvas = oscilloscopeCanvasRef.current;
-
-        if (vuCanvas) {
-          const dpr = window.devicePixelRatio || 1;
-          const rect = vuCanvas.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            vuCanvas.width = rect.width * dpr;
-            vuCanvas.height = rect.height * dpr;
-            const ctx = vuCanvas.getContext("2d");
-            if (ctx) ctx.scale(dpr, dpr);
-          }
-        }
-
-        if (graphCanvas) {
-          const dpr = window.devicePixelRatio || 1;
-          const rect = graphCanvas.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            graphCanvas.width = rect.width * dpr;
-            graphCanvas.height = rect.height * dpr;
-            const ctx = graphCanvas.getContext("2d");
-            if (ctx) ctx.scale(dpr, dpr);
-          }
-        }
-
-        if (oscilloscopeCanvas) {
-          const dpr = window.devicePixelRatio || 1;
-          const rect = oscilloscopeCanvas.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            oscilloscopeCanvas.width = rect.width * dpr;
-            oscilloscopeCanvas.height = rect.height * dpr;
-            const ctx = oscilloscopeCanvas.getContext("2d");
-            if (ctx) ctx.scale(dpr, dpr);
-          }
-        }
-      }, 100);
 
       // Start visualization immediately
       visualize();
@@ -609,72 +481,6 @@ export default function CrowdNoiseRecordPage() {
     setShowResults(true);
   };
 
-  const resizeCanvasIfNeeded = () => {
-    const vuCanvas = vuCanvasRef.current;
-    const graphCanvas = graphCanvasRef.current;
-    const oscilloscopeCanvas = oscilloscopeCanvasRef.current;
-
-    if (vuCanvas) {
-      const rect = vuCanvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-
-      // Only resize if we have valid dimensions
-      if (rect.width > 0 && rect.height > 0) {
-        if (
-          vuCanvas.width !== rect.width * dpr ||
-          vuCanvas.height !== rect.height * dpr
-        ) {
-          vuCanvas.width = rect.width * dpr;
-          vuCanvas.height = rect.height * dpr;
-          vuCanvas.style.width = `${rect.width}px`;
-          vuCanvas.style.height = `${rect.height}px`;
-          const ctx = vuCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-    }
-
-    if (graphCanvas) {
-      const rect = graphCanvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-
-      // Only resize if we have valid dimensions
-      if (rect.width > 0 && rect.height > 0) {
-        if (
-          graphCanvas.width !== rect.width * dpr ||
-          graphCanvas.height !== rect.height * dpr
-        ) {
-          graphCanvas.width = rect.width * dpr;
-          graphCanvas.height = rect.height * dpr;
-          graphCanvas.style.width = `${rect.width}px`;
-          graphCanvas.style.height = `${rect.height}px`;
-          const ctx = graphCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-    }
-
-    if (oscilloscopeCanvas) {
-      const rect = oscilloscopeCanvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-
-      // Only resize if we have valid dimensions
-      if (rect.width > 0 && rect.height > 0) {
-        if (
-          oscilloscopeCanvas.width !== rect.width * dpr ||
-          oscilloscopeCanvas.height !== rect.height * dpr
-        ) {
-          oscilloscopeCanvas.width = rect.width * dpr;
-          oscilloscopeCanvas.height = rect.height * dpr;
-          oscilloscopeCanvas.style.width = `${rect.width}px`;
-          oscilloscopeCanvas.style.height = `${rect.height}px`;
-          const ctx = oscilloscopeCanvas.getContext("2d");
-          if (ctx) ctx.scale(dpr, dpr);
-        }
-      }
-    }
-  };
-
   const visualize = () => {
     if (!isActiveRef.current || !analyserRef.current || !dataArrayRef.current)
       return;
@@ -699,9 +505,8 @@ export default function CrowdNoiseRecordPage() {
 
     setPeakVolume((prev) => Math.max(prev, rms));
 
-    drawVUMeter(rms);
-    drawVolumeGraph(rms);
-    drawOscilloscope(dataArrayRef.current);
+    // Force oscilloscope update
+    setOscilloscopeFrame((prev) => prev + 1);
 
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
     const remaining = Math.max(0, 10 - elapsed);
@@ -713,160 +518,6 @@ export default function CrowdNoiseRecordPage() {
     } else {
       stopRecording();
     }
-  };
-
-  const drawVUMeter = (rms: number) => {
-    const canvas = vuCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const barWidth = width * Math.min(rms * 2, 1); // Less sensitive scaling
-    const gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradient.addColorStop(0, "#00ff00");
-    gradient.addColorStop(0.6, "#ffff00");
-    gradient.addColorStop(0.85, "#ff8800");
-    gradient.addColorStop(1, "#ff0000");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, barWidth, height);
-
-    const peakX = width * Math.min(peakVolume * 2, 1); // Less sensitive scaling
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(peakX - 2, 0, 4, height);
-
-    ctx.fillStyle = "#666";
-    for (let i = 0; i <= 10; i++) {
-      const x = (i / 10) * width;
-      ctx.fillRect(x, height - 10, 1, 10);
-    }
-  };
-
-  const drawVolumeGraph = (rms: number) => {
-    const canvas = graphCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
-
-    // Don't clear the canvas - we want to keep the previous lines
-    // Only clear on the first call
-    if (!graphCanvasRef.current?.dataset.initialized) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#1a1a1a";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      if (graphCanvasRef.current) {
-        graphCanvasRef.current.dataset.initialized = "true";
-      }
-    }
-
-    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const progress = Math.min(elapsed / 10, 1);
-    const x = progress * width;
-    const y = height - rms * 2 * height; // Less sensitive scaling
-
-    // Draw a small dot for the current point
-    ctx.fillStyle = "#00ff88";
-    ctx.beginPath();
-    ctx.arc(x, Math.max(0, Math.min(height, y)), 2, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Draw a line from the previous point to the current point
-    if (
-      graphCanvasRef.current?.dataset.lastX &&
-      graphCanvasRef.current?.dataset.lastY
-    ) {
-      const lastX = parseFloat(graphCanvasRef.current.dataset.lastX);
-      const lastY = parseFloat(graphCanvasRef.current.dataset.lastY);
-
-      ctx.strokeStyle = "#00ff88";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(x, Math.max(0, Math.min(height, y)));
-      ctx.stroke();
-    }
-
-    // Store current position for next line
-    if (graphCanvasRef.current) {
-      graphCanvasRef.current.dataset.lastX = x.toString();
-      graphCanvasRef.current.dataset.lastY = Math.max(
-        0,
-        Math.min(height, y)
-      ).toString();
-    }
-  };
-
-  const drawOscilloscope = (dataArray: Uint8Array) => {
-    const canvas = oscilloscopeCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid
-    ctx.strokeStyle = "#333333";
-    ctx.lineWidth = 1;
-
-    // Horizontal center line
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-    ctx.stroke();
-
-    // Vertical lines every 10% of width
-    for (let i = 0; i <= 10; i++) {
-      const x = (i / 10) * width;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-
-    // Draw oscilloscope trace
-    ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    const sliceWidth = width / dataArray.length;
-    let x = 0;
-
-    for (let i = 0; i < dataArray.length; i++) {
-      const v = (dataArray[i] - 128) / 128.0; // Normalize to -1 to 1, centered around 0
-      const y = (v * height) / 2 + height / 2; // Center vertically
-
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-
-      x += sliceWidth;
-    }
-
-    ctx.stroke();
   };
 
   const submitMeasurement = async () => {
@@ -1187,40 +838,30 @@ export default function CrowdNoiseRecordPage() {
             {/* Visualizations */}
             <div className="flex-1 flex flex-col space-y-1 sm:space-y-2 min-h-0 overflow-hidden">
               {/* VU Meter */}
-              <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex-shrink-0">
-                <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400">
-                  VU METER
-                </h3>
-                <div className="w-full h-8">
-                  <canvas ref={vuCanvasRef} className="w-full h-full rounded" />
-                </div>
-              </div>
+              <VUMeter rms={audioLevel} peakVolume={peakVolume} />
 
               {/* Side by side graphs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 flex-1 min-h-0">
-                <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex flex-col min-h-0">
-                  <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400 flex-shrink-0">
-                    VOLUME GRAPH
-                  </h3>
-                  <div className="flex-1 min-h-0 min-h-[120px]">
-                    <canvas
-                      ref={graphCanvasRef}
-                      className="w-full h-full rounded"
+              <div className="grid grid-cols-1 gap-1 flex-1 min-h-0">
+                {dataArrayRef.current && dataArrayRef.current.length > 0 ? (
+                  <>
+                    <VolumeGraph
+                      rms={audioLevel}
+                      startTime={startTimeRef.current}
+                      duration={10}
                     />
-                  </div>
-                </div>
-
-                <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex flex-col min-h-0">
-                  <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400 flex-shrink-0">
-                    OSCILLOSCOPE
-                  </h3>
-                  <div className="flex-1 min-h-0 min-h-[120px]">
-                    <canvas
-                      ref={oscilloscopeCanvasRef}
-                      className="w-full h-full rounded"
+                    <Oscilloscope
+                      key={`oscilloscope-${oscilloscopeFrame}`}
+                      dataArray={dataArrayRef.current || new Uint8Array(0)}
                     />
+                  </>
+                ) : (
+                  <div className="col-span-2 flex items-center justify-center text-gray-400">
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">🎵</div>
+                      <div>Waiting for audio data...</div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -1236,9 +877,9 @@ export default function CrowdNoiseRecordPage() {
               Recording Complete!
             </div>
 
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-8 mb-4 sm:mb-8 max-w-4xl mx-auto border border-green-400/30 shadow-2xl">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-8 mb-4 sm:mb-8 max-w-4xl mx-auto border border-green-400/30 shadow-2xl flex">
               {/* Crowd Score - Prominent Display */}
-              <div className="text-center mb-4 sm:mb-8">
+              <div className="flex-grow text-center mb-4 sm:mb-8">
                 <div className="text-gray-400 mb-2 sm:mb-4 text-lg sm:text-2xl">
                   Crowd Energy Score
                 </div>
@@ -1259,7 +900,7 @@ export default function CrowdNoiseRecordPage() {
               </div>
 
               {/* Technical Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 text-lg sm:text-3xl">
+              <div className="grid grid-cols-1 gap-4 text-lg sm:text-3xl">
                 <div className="bg-black/20 rounded-xl p-3 sm:p-6">
                   <div className="text-gray-400 mb-1 sm:mb-2 text-sm sm:text-base">
                     Energy Level
