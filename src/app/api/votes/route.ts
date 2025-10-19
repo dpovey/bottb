@@ -5,7 +5,7 @@ import {
   extractUserContext,
   hasUserVoted,
   hasUserVotedByFingerprintJS,
-} from "@/lib/user-context";
+} from "@/lib/user-context-server";
 import { withVoteRateLimit } from "@/lib/api-protection";
 
 async function handleVote(request: NextRequest) {

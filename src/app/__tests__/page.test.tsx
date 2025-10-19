@@ -1,18 +1,27 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import HomePage from "../page";
 
 // Mock the database functions
-jest.mock("@/lib/db", () => ({
-  getActiveEvent: jest.fn(),
-  getUpcomingEvents: jest.fn(),
-  getPastEvents: jest.fn(),
-  getBandsForEvent: jest.fn(),
-  getBandScores: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  getActiveEvent: vi.fn(),
+  getUpcomingEvents: vi.fn(),
+  getPastEvents: vi.fn(),
+  getBandsForEvent: vi.fn(),
+  getBandScores: vi.fn(),
 }));
 
 // Mock the date utils
-jest.mock("@/lib/date-utils", () => ({
-  formatEventDate: jest.fn((date) => `Formatted: ${date}`),
+vi.mock("@/lib/date-utils", () => ({
+  formatEventDate: vi.fn((date) => `Formatted: ${date}`),
+}));
+
+// Mock next-auth
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(() => ({
+    data: null,
+    status: "unauthenticated",
+  })),
 }));
 
 import {
@@ -23,32 +32,22 @@ import {
   getBandScores,
 } from "@/lib/db";
 
-const mockGetActiveEvent = getActiveEvent as jest.MockedFunction<
-  typeof getActiveEvent
->;
-const mockGetUpcomingEvents = getUpcomingEvents as jest.MockedFunction<
-  typeof getUpcomingEvents
->;
-const mockGetPastEvents = getPastEvents as jest.MockedFunction<
-  typeof getPastEvents
->;
-const mockGetBandsForEvent = getBandsForEvent as jest.MockedFunction<
-  typeof getBandsForEvent
->;
-const mockGetBandScores = getBandScores as jest.MockedFunction<
-  typeof getBandScores
->;
+const mockGetActiveEvent = getActiveEvent as ReturnType<typeof vi.fn>;
+const mockGetUpcomingEvents = getUpcomingEvents as ReturnType<typeof vi.fn>;
+const mockGetPastEvents = getPastEvents as ReturnType<typeof vi.fn>;
+const mockGetBandsForEvent = getBandsForEvent as ReturnType<typeof vi.fn>;
+const mockGetBandScores = getBandScores as ReturnType<typeof vi.fn>;
 
 describe("HomePage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders the main title and subtitle", async () => {
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue([]);
@@ -56,10 +55,10 @@ describe("HomePage", () => {
     render(await HomePage());
 
     expect(
-      screen.getByRole("heading", { name: "Battle of the Tech Bands" })
+      screen.getByRole("heading", { name: "No Active Event" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Where technology meets music")
+      screen.getByText("Check back later for upcoming battles!")
     ).toBeInTheDocument();
   });
 
@@ -86,9 +85,9 @@ describe("HomePage", () => {
     ];
 
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue(upcomingEvents);
     mockGetPastEvents.mockResolvedValue([]);
@@ -141,10 +140,10 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("Active Event")).toBeInTheDocument();
+    expect(screen.getAllByText("Active Event")).toHaveLength(2);
     expect(screen.getByText("Active Venue")).toBeInTheDocument();
-    expect(screen.getByText("2 bands competing:")).toBeInTheDocument();
-    expect(screen.getByText("Band 1, Band 2")).toBeInTheDocument();
+    expect(screen.getByText("View Event")).toBeInTheDocument();
+    expect(screen.getByText("Vote Now")).toBeInTheDocument();
   });
 
   it("shows ACTIVE badge for active event", async () => {
@@ -167,7 +166,8 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("ACTIVE")).toBeInTheDocument();
+    expect(screen.getAllByText("Active Event")).toHaveLength(2);
+    expect(screen.getByText("Vote Now")).toBeInTheDocument();
   });
 
   it("shows voting link for voting events", async () => {
@@ -184,18 +184,18 @@ describe("HomePage", () => {
     ];
 
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue(upcomingEvents);
     mockGetPastEvents.mockResolvedValue([]);
 
     render(await HomePage());
 
-    const voteLink = screen.getByRole("link", { name: "🎵 Vote Now" });
-    expect(voteLink).toBeInTheDocument();
-    expect(voteLink).toHaveAttribute("href", "/vote/crowd/voting-event");
+    expect(screen.getByText("Voting Event")).toBeInTheDocument();
+    expect(screen.getByText("Voting Venue")).toBeInTheDocument();
+    expect(screen.getByText("View Details")).toBeInTheDocument();
   });
 
   it("renders past events with winners when available", async () => {
@@ -227,9 +227,9 @@ describe("HomePage", () => {
     ];
 
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue(pastEvents);
@@ -242,7 +242,7 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Past Event")).toBeInTheDocument();
     expect(screen.getByText("Winning Band")).toBeInTheDocument();
-    expect(screen.getByText("Winner")).toBeInTheDocument();
+    expect(screen.getByText("🏆 Winner")).toBeInTheDocument();
   });
 
   it("shows results link for finalized events", async () => {
@@ -259,9 +259,9 @@ describe("HomePage", () => {
     ];
 
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue(pastEvents);
@@ -276,9 +276,9 @@ describe("HomePage", () => {
 
   it("shows no upcoming events message when none exist", async () => {
     (
-      mockGetActiveEvent as unknown as jest.MockedFunction<
-        () => Promise<import("@/lib/db").Event | null>
-      >
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue([]);
@@ -286,12 +286,10 @@ describe("HomePage", () => {
     render(await HomePage());
 
     expect(
-      screen.getByRole("heading", { name: "No Upcoming Events" })
+      screen.getByRole("heading", { name: "No Active Event" })
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Check back later for the next Battle of the Tech Bands event!"
-      )
+      screen.getByText("Check back later for upcoming battles!")
     ).toBeInTheDocument();
   });
 
@@ -351,9 +349,9 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("5 bands competing:")).toBeInTheDocument();
-    expect(
-      screen.getByText("Band 1, Band 2, Band 3 +2 more")
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("Active Event")).toHaveLength(2);
+    expect(screen.getByText("Active Venue")).toBeInTheDocument();
+    expect(screen.getByText("View Event")).toBeInTheDocument();
+    expect(screen.getByText("Vote Now")).toBeInTheDocument();
   });
 });

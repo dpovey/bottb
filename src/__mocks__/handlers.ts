@@ -2,8 +2,37 @@ import { http, HttpResponse } from "msw";
 
 export const handlers = [
   // Events API
+  http.get("/api/events", () => {
+    return HttpResponse.json([
+      {
+        id: "event-1",
+        name: "Test Event 1",
+        date: "2024-12-25T18:30:00Z",
+        location: "Test Venue 1",
+        status: "voting",
+        is_active: true,
+        created_at: "2024-01-01T00:00:00Z",
+      },
+      {
+        id: "event-2",
+        name: "Test Event 2",
+        date: "2024-12-26T18:30:00Z",
+        location: "Test Venue 2",
+        status: "upcoming",
+        is_active: false,
+        created_at: "2024-01-02T00:00:00Z",
+      },
+    ]);
+  }),
+
   http.get("/api/events/:eventId", ({ params }) => {
     const { eventId } = params;
+
+    // Return 404 for specific test cases
+    if (eventId === "not-found-event") {
+      return HttpResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     return HttpResponse.json({
       id: eventId,
       name: "Test Event",
@@ -58,6 +87,12 @@ export const handlers = [
   // Bands API
   http.get("/api/bands/:eventId", ({ params }) => {
     const { eventId } = params;
+
+    // Return empty array for specific test cases
+    if (eventId === "no-bands-event") {
+      return HttpResponse.json([]);
+    }
+
     return HttpResponse.json([
       {
         id: "band-1",
@@ -81,6 +116,12 @@ export const handlers = [
   // Votes API
   http.post("/api/votes", async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
+
+    // Simulate already voted error for specific test cases
+    if (body.event_id === "already-voted-event") {
+      return HttpResponse.json({ error: "Already Voted" }, { status: 400 });
+    }
+
     return HttpResponse.json({
       id: "vote-1",
       ...body,
@@ -90,6 +131,17 @@ export const handlers = [
 
   http.post("/api/votes/batch", async ({ request }) => {
     const body = (await request.json()) as { votes: Record<string, unknown>[] };
+
+    // Simulate already voted error for specific test cases
+    if (
+      body.votes.some(
+        (vote: Record<string, unknown>) =>
+          vote.event_id === "already-voted-event"
+      )
+    ) {
+      return HttpResponse.json({ error: "Already Voted" }, { status: 400 });
+    }
+
     return HttpResponse.json({
       votes: body.votes.map((vote: Record<string, unknown>, index: number) => ({
         id: `vote-${index + 1}`,

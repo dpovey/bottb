@@ -1,72 +1,77 @@
-// import { NextRequest } from "next/server";
+// @vitest-environment node
+
+import { vi } from "vitest";
+import { createRequest } from "node-mocks-http";
 import { POST } from "../route";
 import { submitVote, updateVote as _updateVote } from "@/lib/db";
-import { sql } from "@vercel/postgres";
-import { createMockRequest } from "@/__tests__/utils/api-test-helpers";
+import {
+  hasUserVoted,
+  hasUserVotedByFingerprintJS,
+} from "@/lib/user-context-server";
 
 // Mock the database functions
-jest.mock("@/lib/db", () => ({
-  submitVote: jest.fn(),
-  updateVote: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  submitVote: vi.fn(),
+  updateVote: vi.fn(),
 }));
 
 // Mock user context functions
-jest.mock("@/lib/user-context", () => ({
-  extractUserContext: jest.fn(() => ({
+vi.mock("@/lib/user-context-server", () => ({
+  extractUserContext: vi.fn(() => ({
     ip_address: "127.0.0.1",
     user_agent: "test-agent",
     vote_fingerprint: "test-fingerprint",
   })),
-  hasUserVoted: jest.fn(() => Promise.resolve(false)),
-  hasUserVotedByFingerprintJS: jest.fn(() => Promise.resolve(false)),
+  hasUserVoted: vi.fn(() => Promise.resolve(false)),
+  hasUserVotedByFingerprintJS: vi.fn(() => Promise.resolve(false)),
 }));
 
-// Mock the database query
-jest.mock("@/vercel/postgres", () => ({
-  sql: jest.fn(),
+// Mock the database query for band name lookup
+vi.mock("@vercel/postgres", () => ({
+  sql: vi.fn(),
 }));
 
-// Mock NextResponse to handle cookie setting properly
-jest.mock("next/server", () => {
-  const actual = jest.requireActual("next/server");
-  return {
-    ...actual,
-    NextResponse: {
-      ...actual.NextResponse,
-      json: jest.fn((data, init) => {
-        const response = actual.NextResponse.json(data, init);
-        // Mock cookies methods by overriding the response object
-        Object.defineProperty(response, "cookies", {
-          value: {
-            set: jest.fn(),
-            get: jest.fn(),
-            delete: jest.fn(),
-          },
-          writable: true,
-          configurable: true,
-        });
-        return response;
-      }),
-    },
-  };
-});
+// Mock NextResponse.json to return a response with cookies
+vi.mock("next/server", () => ({
+  NextResponse: {
+    json: vi.fn((data, init) => {
+      const response = {
+        json: () => Promise.resolve(data),
+        status: init?.status || 200,
+        headers: new Headers(init?.headers),
+        cookies: {
+          set: vi.fn(),
+          get: vi.fn(),
+          delete: vi.fn(),
+        },
+        ...init,
+      };
+      return response;
+    }),
+  },
+}));
 
-const mockSubmitVote = submitVote as jest.MockedFunction<typeof submitVote>;
-const mockSql = sql as jest.MockedFunction<typeof sql>;
+const mockSubmitVote = submitVote as ReturnType<typeof vi.fn>;
+const mockHasUserVoted = hasUserVoted as ReturnType<typeof vi.fn>;
+const mockHasUserVotedByFingerprintJS =
+  hasUserVotedByFingerprintJS as ReturnType<typeof vi.fn>;
+
+// Import sql after mocking
+import { sql } from "@vercel/postgres";
+const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
 describe("/api/votes (Protected)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
+
     // Mock the band name query
-    mockSql.mockImplementation(() =>
-      Promise.resolve({
-        rows: [{ name: "Test Band" }],
-        command: "SELECT",
-        rowCount: 1,
-        oid: 0,
-        fields: [],
-      })
-    );
+    mockSql.mockResolvedValue({
+      rows: [{ name: "Test Band" }],
+      command: "SELECT",
+      rowCount: 1,
+      oid: 0,
+      fields: [],
+    });
   });
 
   describe("POST", () => {
@@ -89,8 +94,9 @@ describe("/api/votes (Protected)", () => {
 
       mockSubmitVote.mockResolvedValue(mockVote);
 
-      const request = createMockRequest("http://localhost/api/votes", {
+      const request = createRequest({
         method: "POST",
+        url: "/api/votes",
         body: voteData,
         headers: {
           "X-Forwarded-For": "127.0.0.1",
@@ -98,7 +104,17 @@ describe("/api/votes (Protected)", () => {
         },
       });
 
-      const response = await POST(request);
+      // Add json() method to the mock request
+      request.json = vi.fn().mockResolvedValue(voteData);
+
+      // Add cookies property to the mock request
+      request.cookies = {
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      const response = await POST(request as unknown as Request);
 
       expect(mockSubmitVote).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -133,19 +149,32 @@ describe("/api/votes (Protected)", () => {
       });
 
       // Make 11 requests (exceeding the 10/min vote limit)
-      const requests = Array.from({ length: 11 }, (_, _i) =>
-        createMockRequest("http://localhost/api/votes", {
+      const requests = Array.from({ length: 11 }, (_, _i) => {
+        const req = createRequest({
           method: "POST",
+          url: "http://localhost/api/votes",
           body: voteData,
           headers: {
             "X-Forwarded-For": "192.168.1.1",
             "User-Agent": "TestAgent",
           },
-        })
-      );
+        });
+
+        // Add json() method to the mock request
+        req.json = vi.fn().mockResolvedValue(voteData);
+
+        // Add cookies property to the mock request
+        req.cookies = {
+          get: vi.fn().mockReturnValue(undefined),
+          set: vi.fn(),
+          delete: vi.fn(),
+        };
+
+        return req;
+      });
 
       const responses = await Promise.all(
-        requests.map((req) => POST(req))
+        requests.map((req) => POST(req as unknown as Request))
       );
 
       // First 10 should succeed
@@ -156,7 +185,7 @@ describe("/api/votes (Protected)", () => {
       // 11th should be rate limited
       const lastResponse = responses[10];
       expect(lastResponse.status).toBe(429);
-      
+
       const data = await lastResponse.json();
       expect(data.error).toBe("Too many requests");
       expect(data.limit).toBe(10);
@@ -180,8 +209,9 @@ describe("/api/votes (Protected)", () => {
         created_at: "2024-01-01T00:00:00Z",
       });
 
-      const request = createMockRequest("http://localhost/api/votes", {
+      const request = createRequest({
         method: "POST",
+        url: "/api/votes",
         body: voteData,
         headers: {
           "X-Forwarded-For": "127.0.0.1",
@@ -189,7 +219,17 @@ describe("/api/votes (Protected)", () => {
         },
       });
 
-      const response = await POST(request);
+      // Add json() method to the mock request
+      request.json = vi.fn().mockResolvedValue(voteData);
+
+      // Add cookies property to the mock request
+      request.cookies = {
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      const response = await POST(request as unknown as Request);
 
       expect(response.status).toBe(200);
       expect(response.headers.get("X-RateLimit-Limit")).toBe("10");
@@ -197,6 +237,10 @@ describe("/api/votes (Protected)", () => {
     });
 
     it("returns 500 when database error occurs", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
@@ -207,10 +251,16 @@ describe("/api/votes (Protected)", () => {
         crowd_vote: 20,
       };
 
+      // Mock the user context functions to return false for duplicate checks
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      // Mock submitVote to throw an error
       mockSubmitVote.mockRejectedValue(new Error("Database error"));
 
-      const request = createMockRequest("http://localhost/api/votes", {
+      const request = createRequest({
         method: "POST",
+        url: "/api/votes",
         body: voteData,
         headers: {
           "X-Forwarded-For": "127.0.0.1",
@@ -218,13 +268,30 @@ describe("/api/votes (Protected)", () => {
         },
       });
 
-      const response = await POST(request);
+      // Add json() method to the mock request
+      request.json = vi.fn().mockResolvedValue(voteData);
+
+      // Add cookies property to the mock request
+      request.cookies = {
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      const response = await POST(request as unknown as Request);
 
       expect(response.status).toBe(500);
 
       const data = await response.json();
       expect(data).toEqual({ error: "Failed to submit vote" });
+
+      // Assert that console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error submitting vote:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });
-

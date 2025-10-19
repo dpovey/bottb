@@ -1,4 +1,5 @@
 import { sql } from "@vercel/postgres";
+import { vi } from "vitest";
 import {
   getEvents,
   getActiveEvent,
@@ -21,15 +22,15 @@ const createMockQueryResult = <T>(rows: T[]) => ({
 });
 
 // Mock the @vercel/postgres module
-jest.mock("@vercel/postgres", () => ({
-  sql: jest.fn(),
+vi.mock("@vercel/postgres", () => ({
+  sql: vi.fn(),
 }));
 
-const mockSql = sql as jest.MockedFunction<typeof sql>;
+const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
 describe("Database Functions", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("getEvents", () => {

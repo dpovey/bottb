@@ -1,19 +1,18 @@
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 import { getEventById } from "@/lib/db";
+import { vi } from "vitest";
 
 // Mock the database function
-jest.mock("@/lib/db", () => ({
-  getEventById: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  getEventById: vi.fn(),
 }));
 
-const mockGetEventById = getEventById as jest.MockedFunction<
-  typeof getEventById
->;
+const mockGetEventById = getEventById as ReturnType<typeof vi.fn>;
 
 describe("/api/events/[eventId]", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("GET", () => {
@@ -63,6 +62,8 @@ describe("/api/events/[eventId]", () => {
     });
 
     it("returns 500 when database error occurs", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      
       const eventId = "event-1";
       mockGetEventById.mockRejectedValue(new Error("Database error"));
 
@@ -75,6 +76,14 @@ describe("/api/events/[eventId]", () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: "Internal server error" });
+
+      // Assert that console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error fetching event:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
+import { WebLayout } from "@/components/layouts";
 
 interface Event {
   id: string;
@@ -71,7 +72,7 @@ export default function EventPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
@@ -79,14 +80,14 @@ export default function EventPage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Event not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
+    <WebLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Event Header */}
         <div className="text-center mb-12">
@@ -98,7 +99,9 @@ export default function EventPage() {
               ← Back to Events
             </Link>
           </div>
-          <h1 className="text-5xl font-bold text-white mb-4">{event.name}</h1>
+          <h1 className="text-5xl font-display font-bold text-white mb-4">
+            {event.name}
+          </h1>
           <div className="text-2xl text-gray-300 mb-2">{event.location}</div>
           <div className="text-xl text-gray-400">
             {formatEventDate(event.date)}
@@ -201,6 +204,6 @@ export default function EventPage() {
           </div>
         </div>
       </div>
-    </div>
+    </WebLayout>
   );
 }

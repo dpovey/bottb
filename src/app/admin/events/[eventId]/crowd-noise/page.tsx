@@ -398,7 +398,7 @@ export default function CrowdNoisePage() {
   // Show loading while fetching bands
   if (bands.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading bands...</div>
       </div>
     );
@@ -409,339 +409,337 @@ export default function CrowdNoisePage() {
     bands.length > 0 && bands.every((band) => measurements[band.id]);
   if (allBandsMeasured) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-white mb-8">🎉 All Done!</h1>
-            <p className="text-2xl text-gray-300 mb-8">
-              Scream-o-meter completed for all bands
-            </p>
-            <Link
-              href={`/admin/events/${eventId}`}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
-            >
-              Back to Event Management
-            </Link>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-white mb-8">🎉 All Done!</h1>
+          <p className="text-2xl text-gray-300 mb-8">
+            Scream-o-meter completed for all bands
+          </p>
+          <Link
+            href={`/admin/events/${eventId}`}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
+          >
+            Back to Event Management
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Scream-o-meter</h1>
-          <div className="text-xl text-gray-300">
-            Select a band to measure crowd noise
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">Scream-o-meter</h1>
+        <div className="text-xl text-gray-300">
+          Select a band to measure crowd noise
         </div>
+      </div>
 
-        {/* Band Selection */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">
-            Select Band
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bands.map((band) => {
-              const hasMeasurement = measurements[band.id];
-              return (
-                <div
-                  key={band.id}
-                  className={`p-4 rounded-xl text-left transition-all ${
-                    selectedBandId === band.id
-                      ? "bg-blue-600 text-white"
-                      : hasMeasurement
-                      ? "bg-green-600/20 text-green-400 border-2 border-green-400"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  } ${
-                    isRecording || isSubmitting
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  <button
-                    onClick={() => {
-                      if (hasMeasurement) {
-                        setSelectedBandId(band.id);
-                      } else {
-                        window.open(
-                          `/admin/events/${eventId}/crowd-noise/record/${band.id}`,
-                          "_blank"
-                        );
-                      }
-                    }}
-                    disabled={isRecording || isSubmitting}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center space-x-3">
-                      {band.info?.logo_url ? (
-                        <Image
-                          src={band.info.logo_url}
-                          alt={`${band.name} logo`}
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 object-contain flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm text-white font-bold">
-                            {band.name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-bold text-lg">{band.name}</div>
-                        {hasMeasurement && (
-                          <div className="text-sm mt-1">✓ Measured</div>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                  {hasMeasurement && selectedBandId === band.id && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        resetMeasurement();
-                      }}
-                      disabled={isResetting || isRecording || isSubmitting}
-                      className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded text-xs transition-colors"
-                    >
-                      {isResetting ? "Resetting..." : "Reset"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Selected Band Display */}
-        {selectedBand && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
-            <div className="mb-4">
-              {selectedBand.info?.logo_url ? (
-                <Image
-                  src={selectedBand.info.logo_url}
-                  alt={`${selectedBand.name} logo`}
-                  width={64}
-                  height={64}
-                  className="mx-auto h-16 w-auto object-contain mb-4"
-                />
-              ) : (
-                <div className="mx-auto h-16 w-16 bg-gray-600 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-2xl text-white font-bold">
-                    {selectedBand.name.charAt(0)}
-                  </span>
-                </div>
-              )}
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {selectedBand.name}
-            </h2>
-            {hasMeasurement && (
-              <div className="space-y-4 mb-4">
-                <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg flex items-center justify-between">
-                  <span>✓ Measurement completed</span>
-                  <button
-                    onClick={resetMeasurement}
-                    disabled={isResetting || isRecording || isSubmitting}
-                    className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
-                  >
-                    {isResetting ? "Resetting..." : "Reset"}
-                  </button>
-                </div>
-                <div className="bg-yellow-600/20 text-yellow-400 px-4 py-3 rounded-lg text-center">
-                  <div className="text-2xl font-bold">
-                    Crowd Score: {measurements[selectedBand.id]?.crowd_score || 'N/A'}/10
-                  </div>
-                  <div className="text-sm text-gray-300 mt-1">
-                    {measurements[selectedBand.id]?.crowd_score >= 8 ? "🔥 INCREDIBLE!" : 
-                     measurements[selectedBand.id]?.crowd_score >= 6 ? "🎉 AMAZING!" : 
-                     measurements[selectedBand.id]?.crowd_score >= 4 ? "👏 GREAT!" : 
-                     measurements[selectedBand.id]?.crowd_score >= 2 ? "👍 GOOD!" : "💪 KEEP TRYING!"}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Countdown */}
-        {countdown > 0 && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-            <div className="text-center">
-              <div className="text-9xl font-bold text-white animate-pulse mb-4">
-                {countdown}
-              </div>
-              <div className="text-2xl text-gray-300">Get ready to record!</div>
-            </div>
-          </div>
-        )}
-
-        {/* Recording Interface - Only show when band is selected */}
-        {selectedBand && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
-            {!isRecording && !isSubmitted && (
-              <div className="text-center">
-                {/* Microphone Permission Status */}
-                {microphonePermission === "unknown" && (
-                  <div className="mb-4 p-4 bg-yellow-600/20 border border-yellow-400 rounded-lg">
-                    <p className="text-yellow-400 mb-2">
-                      Microphone access required
-                    </p>
-                    <p className="text-sm text-gray-300">
-                      Click &quot;Check Microphone&quot; to enable audio
-                      recording
-                    </p>
-                  </div>
-                )}
-
-                {microphonePermission === "denied" && (
-                  <div className="mb-4 p-4 bg-red-600/20 border border-red-400 rounded-lg">
-                    <p className="text-red-400 mb-2">
-                      Microphone access denied
-                    </p>
-                    <p className="text-sm text-gray-300">
-                      Please allow microphone access in your browser settings
-                      and refresh the page
-                    </p>
-                  </div>
-                )}
-
-                {microphonePermission === "granted" && (
-                  <div className="mb-4 p-4 bg-green-600/20 border border-green-400 rounded-lg">
-                    <p className="text-green-400">✓ Microphone ready</p>
-                  </div>
-                )}
-
+      {/* Band Selection */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+          Select Band
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {bands.map((band) => {
+            const hasMeasurement = measurements[band.id];
+            return (
+              <div
+                key={band.id}
+                className={`p-4 rounded-xl text-left transition-all ${
+                  selectedBandId === band.id
+                    ? "bg-blue-600 text-white"
+                    : hasMeasurement
+                    ? "bg-green-600/20 text-green-400 border-2 border-green-400"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                } ${
+                  isRecording || isSubmitting
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
                 <button
                   onClick={() => {
                     if (hasMeasurement) {
-                      return;
+                      setSelectedBandId(band.id);
+                    } else {
+                      window.open(
+                        `/live/events/${eventId}/crowd-noise/record/${band.id}`,
+                        "_blank"
+                      );
                     }
-                    window.open(
-                      `/admin/events/${eventId}/crowd-noise/record/${selectedBandId}`,
-                      "_blank"
-                    );
                   }}
-                  disabled={
-                    !!hasMeasurement ||
-                    isCheckingMic ||
-                    microphonePermission === "denied"
-                  }
-                  className={`px-8 py-4 rounded-xl text-2xl font-bold transition-colors ${
-                    hasMeasurement
-                      ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                      : microphonePermission === "denied"
-                      ? "bg-red-600 text-red-200 cursor-not-allowed"
-                      : isCheckingMic
-                      ? "bg-yellow-600 text-yellow-200 cursor-not-allowed"
-                      : "bg-green-600 hover:bg-green-700 text-white"
-                  }`}
+                  disabled={isRecording || isSubmitting}
+                  className="w-full text-left"
                 >
-                  {hasMeasurement
-                    ? "Already Measured"
-                    : isCheckingMic
-                    ? "Checking Microphone..."
-                    : microphonePermission === "denied"
-                    ? "Microphone Denied"
-                    : microphonePermission === "unknown"
-                    ? "Check Microphone"
-                    : "Start Recording"}
+                  <div className="flex items-center space-x-3">
+                    {band.info?.logo_url ? (
+                      <Image
+                        src={band.info.logo_url}
+                        alt={`${band.name} logo`}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 object-contain flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm text-white font-bold">
+                          {band.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <div className="font-bold text-lg">{band.name}</div>
+                      {hasMeasurement && (
+                        <div className="text-sm mt-1">✓ Measured</div>
+                      )}
+                    </div>
+                  </div>
                 </button>
-                <p className="text-gray-300 mt-4">
-                  {hasMeasurement
-                    ? "This band has already been measured"
-                    : microphonePermission === "denied"
-                    ? "Please enable microphone access to continue"
-                    : microphonePermission === "unknown"
-                    ? "Click to check microphone permission first"
-                    : "Click to open full-screen recording page"}
-                </p>
+                {hasMeasurement && selectedBandId === band.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      resetMeasurement();
+                    }}
+                    disabled={isResetting || isRecording || isSubmitting}
+                    className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded text-xs transition-colors"
+                  >
+                    {isResetting ? "Resetting..." : "Reset"}
+                  </button>
+                )}
               </div>
-            )}
+            );
+          })}
+        </div>
+      </div>
 
-            {isRecording && (
-              <div className="text-center">
-                <div className="text-6xl font-bold text-red-500 mb-4">
-                  🔴 RECORDING
-                </div>
-                <div className="text-4xl font-bold text-white mb-4">
-                  {timeLeft.toFixed(1)}s
-                </div>
-                <div className="text-xl text-gray-300">
-                  Energy: {totalEnergy.toFixed(4)} | Peak:{" "}
-                  {peakVolume.toFixed(3)}
-                </div>
-              </div>
-            )}
-
-            {isSubmitted && (
-              <div className="text-center">
-                <div className="text-6xl mb-4">✅</div>
-                <div className="text-2xl font-bold text-green-400 mb-4">
-                  Measurement Saved!
-                </div>
-                <div className="text-gray-300">Moving to next band...</div>
-              </div>
-            )}
-
-            {/* Visualizations */}
-            {(isRecording || isSubmitted) && (
-              <div className="mt-8 space-y-4">
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold mb-2 text-gray-400">
-                    VU METER
-                  </h3>
-                  <canvas
-                    ref={vuCanvasRef}
-                    width={800}
-                    height={60}
-                    className="w-full rounded"
-                  />
-                </div>
-
-                <div className="bg-gray-800 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold mb-2 text-gray-400">
-                    VOLUME GRAPH
-                  </h3>
-                  <canvas
-                    ref={graphCanvasRef}
-                    width={800}
-                    height={200}
-                    className="w-full rounded"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Submit Button */}
-            {!isRecording && !isSubmitted && totalEnergy > 0 && (
-              <div className="text-center mt-8">
-                <button
-                  onClick={submitMeasurement}
-                  disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
-                >
-                  {isSubmitting ? "Saving..." : "Save Measurement"}
-                </button>
+      {/* Selected Band Display */}
+      {selectedBand && (
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
+          <div className="mb-4">
+            {selectedBand.info?.logo_url ? (
+              <Image
+                src={selectedBand.info.logo_url}
+                alt={`${selectedBand.name} logo`}
+                width={64}
+                height={64}
+                className="mx-auto h-16 w-auto object-contain mb-4"
+              />
+            ) : (
+              <div className="mx-auto h-16 w-16 bg-gray-600 rounded-full flex items-center justify-center mb-4">
+                <span className="text-2xl text-white font-bold">
+                  {selectedBand.name.charAt(0)}
+                </span>
               </div>
             )}
           </div>
-        )}
-
-        {/* Navigation */}
-        <div className="flex justify-center">
-          <Link
-            href={`/admin/events/${eventId}`}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-          >
-            ← Back to Event Management
-          </Link>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            {selectedBand.name}
+          </h2>
+          {hasMeasurement && (
+            <div className="space-y-4 mb-4">
+              <div className="bg-green-600/20 text-green-400 px-4 py-2 rounded-lg flex items-center justify-between">
+                <span>✓ Measurement completed</span>
+                <button
+                  onClick={resetMeasurement}
+                  disabled={isResetting || isRecording || isSubmitting}
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                >
+                  {isResetting ? "Resetting..." : "Reset"}
+                </button>
+              </div>
+              <div className="bg-yellow-600/20 text-yellow-400 px-4 py-3 rounded-lg text-center">
+                <div className="text-2xl font-bold">
+                  Crowd Score:{" "}
+                  {measurements[selectedBand.id]?.crowd_score || "N/A"}/10
+                </div>
+                <div className="text-sm text-gray-300 mt-1">
+                  {measurements[selectedBand.id]?.crowd_score >= 8
+                    ? "🔥 INCREDIBLE!"
+                    : measurements[selectedBand.id]?.crowd_score >= 6
+                    ? "🎉 AMAZING!"
+                    : measurements[selectedBand.id]?.crowd_score >= 4
+                    ? "👏 GREAT!"
+                    : measurements[selectedBand.id]?.crowd_score >= 2
+                    ? "👍 GOOD!"
+                    : "💪 KEEP TRYING!"}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Countdown */}
+      {countdown > 0 && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="text-9xl font-bold text-white animate-pulse mb-4">
+              {countdown}
+            </div>
+            <div className="text-2xl text-gray-300">Get ready to record!</div>
+          </div>
+        </div>
+      )}
+
+      {/* Recording Interface - Only show when band is selected */}
+      {selectedBand && (
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
+          {!isRecording && !isSubmitted && (
+            <div className="text-center">
+              {/* Microphone Permission Status */}
+              {microphonePermission === "unknown" && (
+                <div className="mb-4 p-4 bg-yellow-600/20 border border-yellow-400 rounded-lg">
+                  <p className="text-yellow-400 mb-2">
+                    Microphone access required
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Click &quot;Check Microphone&quot; to enable audio recording
+                  </p>
+                </div>
+              )}
+
+              {microphonePermission === "denied" && (
+                <div className="mb-4 p-4 bg-red-600/20 border border-red-400 rounded-lg">
+                  <p className="text-red-400 mb-2">Microphone access denied</p>
+                  <p className="text-sm text-gray-300">
+                    Please allow microphone access in your browser settings and
+                    refresh the page
+                  </p>
+                </div>
+              )}
+
+              {microphonePermission === "granted" && (
+                <div className="mb-4 p-4 bg-green-600/20 border border-green-400 rounded-lg">
+                  <p className="text-green-400">✓ Microphone ready</p>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  if (hasMeasurement) {
+                    return;
+                  }
+                  window.open(
+                    `/live/events/${eventId}/crowd-noise/record/${selectedBandId}`,
+                    "_blank"
+                  );
+                }}
+                disabled={
+                  !!hasMeasurement ||
+                  isCheckingMic ||
+                  microphonePermission === "denied"
+                }
+                className={`px-8 py-4 rounded-xl text-2xl font-bold transition-colors ${
+                  hasMeasurement
+                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    : microphonePermission === "denied"
+                    ? "bg-red-600 text-red-200 cursor-not-allowed"
+                    : isCheckingMic
+                    ? "bg-yellow-600 text-yellow-200 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 text-white"
+                }`}
+              >
+                {hasMeasurement
+                  ? "Already Measured"
+                  : isCheckingMic
+                  ? "Checking Microphone..."
+                  : microphonePermission === "denied"
+                  ? "Microphone Denied"
+                  : microphonePermission === "unknown"
+                  ? "Check Microphone"
+                  : "Start Recording"}
+              </button>
+              <p className="text-gray-300 mt-4">
+                {hasMeasurement
+                  ? "This band has already been measured"
+                  : microphonePermission === "denied"
+                  ? "Please enable microphone access to continue"
+                  : microphonePermission === "unknown"
+                  ? "Click to check microphone permission first"
+                  : "Click to open full-screen recording page"}
+              </p>
+            </div>
+          )}
+
+          {isRecording && (
+            <div className="text-center">
+              <div className="text-6xl font-bold text-red-500 mb-4">
+                🔴 RECORDING
+              </div>
+              <div className="text-4xl font-bold text-white mb-4">
+                {timeLeft.toFixed(1)}s
+              </div>
+              <div className="text-xl text-gray-300">
+                Energy: {totalEnergy.toFixed(4)} | Peak: {peakVolume.toFixed(3)}
+              </div>
+            </div>
+          )}
+
+          {isSubmitted && (
+            <div className="text-center">
+              <div className="text-6xl mb-4">✅</div>
+              <div className="text-2xl font-bold text-green-400 mb-4">
+                Measurement Saved!
+              </div>
+              <div className="text-gray-300">Moving to next band...</div>
+            </div>
+          )}
+
+          {/* Visualizations */}
+          {(isRecording || isSubmitted) && (
+            <div className="mt-8 space-y-4">
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-sm font-semibold mb-2 text-gray-400">
+                  VU METER
+                </h3>
+                <canvas
+                  ref={vuCanvasRef}
+                  width={800}
+                  height={60}
+                  className="w-full rounded"
+                />
+              </div>
+
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-sm font-semibold mb-2 text-gray-400">
+                  VOLUME GRAPH
+                </h3>
+                <canvas
+                  ref={graphCanvasRef}
+                  width={800}
+                  height={200}
+                  className="w-full rounded"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          {!isRecording && !isSubmitted && totalEnergy > 0 && (
+            <div className="text-center mt-8">
+              <button
+                onClick={submitMeasurement}
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
+              >
+                {isSubmitting ? "Saving..." : "Save Measurement"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex justify-center">
+        <Link
+          href={`/admin/events/${eventId}`}
+          className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+        >
+          ← Back to Event Management
+        </Link>
       </div>
     </div>
   );

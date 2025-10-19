@@ -1,4 +1,4 @@
-export default async function AdminLayout({
+export default async function AdminLayoutWrapper({
   children,
 }: {
   children: React.ReactNode;

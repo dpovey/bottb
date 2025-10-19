@@ -1,19 +1,18 @@
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 import { getBandsForEvent } from "@/lib/db";
+import { vi } from "vitest";
 
 // Mock the database function
-jest.mock("@/lib/db", () => ({
-  getBandsForEvent: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  getBandsForEvent: vi.fn(),
 }));
 
-const mockGetBandsForEvent = getBandsForEvent as jest.MockedFunction<
-  typeof getBandsForEvent
->;
+const mockGetBandsForEvent = getBandsForEvent as ReturnType<typeof vi.fn>;
 
 describe("/api/bands/[eventId]", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("GET", () => {
@@ -68,6 +67,8 @@ describe("/api/bands/[eventId]", () => {
     });
 
     it("returns 500 when database error occurs", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      
       const eventId = "event-1";
       mockGetBandsForEvent.mockRejectedValue(new Error("Database error"));
 
@@ -80,9 +81,18 @@ describe("/api/bands/[eventId]", () => {
 
       const data = await response.json();
       expect(data).toEqual({ error: "Failed to fetch bands" });
+
+      // Assert that console.error was called with the expected error
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error fetching bands:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 });
+
 
 
 

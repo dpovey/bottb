@@ -1,15 +1,18 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
+import { server } from "@/__mocks__/server";
+import { http, HttpResponse } from "msw";
 import EventPage from "../page";
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ eventId: "test-event-id" }),
 }));
 
-// Mock fetch
-global.fetch = jest.fn();
-
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+// Mock next-auth/react
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: null, status: "unauthenticated" }),
+}));
 
 describe("EventPage", () => {
   const mockEvent = {
@@ -40,19 +43,18 @@ describe("EventPage", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders event details", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -66,15 +68,14 @@ describe("EventPage", () => {
   });
 
   it("shows status badge correctly", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -84,15 +85,14 @@ describe("EventPage", () => {
   });
 
   it("shows voting link for voting status", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -104,15 +104,14 @@ describe("EventPage", () => {
   });
 
   it("shows results link for finalized status", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ ...mockEvent, status: "finalized" }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json({ ...mockEvent, status: "finalized" });
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -124,15 +123,14 @@ describe("EventPage", () => {
   });
 
   it("displays bands list", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -148,15 +146,14 @@ describe("EventPage", () => {
   });
 
   it("shows band order numbers", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -167,15 +164,14 @@ describe("EventPage", () => {
   });
 
   it("shows no bands message when empty", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json([]);
+      })
+    );
 
     render(<EventPage />);
 
@@ -194,15 +190,14 @@ describe("EventPage", () => {
   });
 
   it("shows error when event not found", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json({ error: "Event not found" }, { status: 404 });
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 
@@ -212,9 +207,16 @@ describe("EventPage", () => {
   });
 
   it("handles fetch error gracefully", async () => {
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    mockFetch.mockRejectedValue(new Error("Network error"));
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.error();
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.error();
+      })
+    );
 
     render(<EventPage />);
 
@@ -229,15 +231,14 @@ describe("EventPage", () => {
   });
 
   it("shows back to events link", async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockEvent,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response);
+    server.use(
+      http.get("/api/events/test-event-id", () => {
+        return HttpResponse.json(mockEvent);
+      }),
+      http.get("/api/bands/test-event-id", () => {
+        return HttpResponse.json(mockBands);
+      })
+    );
 
     render(<EventPage />);
 

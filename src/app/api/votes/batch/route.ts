@@ -4,7 +4,7 @@ import {
   extractUserContext,
   hasUserVoted,
   hasUserVotedByFingerprintJS,
-} from "@/lib/user-context";
+} from "@/lib/user-context-server";
 import { withAdminProtection } from "@/lib/api-protection";
 
 async function handleBatchVotes(request: NextRequest) {

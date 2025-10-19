@@ -9,31 +9,22 @@ import {
   generateUserImageFilename,
 } from "@/lib/blob";
 import { requireAdminAuth } from "@/lib/api-protection";
+import { vi } from "vitest";
 
 // Mock dependencies
-jest.mock("@/lib/blob");
-jest.mock("@/lib/api-protection");
+vi.mock("@/lib/blob");
+vi.mock("@/lib/api-protection");
 
-const mockRequireAdminAuth = requireAdminAuth as jest.MockedFunction<
-  typeof requireAdminAuth
->;
-const mockUploadImage = uploadImage as jest.MockedFunction<typeof uploadImage>;
-const mockDeleteImage = deleteImage as jest.MockedFunction<typeof deleteImage>;
-const mockValidateImageFile = validateImageFile as jest.MockedFunction<
-  typeof validateImageFile
->;
+const mockRequireAdminAuth = requireAdminAuth as ReturnType<typeof vi.fn>;
+const mockUploadImage = uploadImage as ReturnType<typeof vi.fn>;
+const mockDeleteImage = deleteImage as ReturnType<typeof vi.fn>;
+const mockValidateImageFile = validateImageFile as ReturnType<typeof vi.fn>;
 const mockGenerateBandImageFilename =
-  generateBandImageFilename as jest.MockedFunction<
-    typeof generateBandImageFilename
-  >;
+  generateBandImageFilename as ReturnType<typeof vi.fn>;
 const mockGenerateEventImageFilename =
-  generateEventImageFilename as jest.MockedFunction<
-    typeof generateEventImageFilename
-  >;
+  generateEventImageFilename as ReturnType<typeof vi.fn>;
 const _mockGenerateUserImageFilename =
-  generateUserImageFilename as jest.MockedFunction<
-    typeof generateUserImageFilename
-  >;
+  generateUserImageFilename as ReturnType<typeof vi.fn>;
 
 // Helper function to create a mock NextRequest with formData
 const createMockRequest = (
@@ -41,7 +32,7 @@ const createMockRequest = (
   url = "http://localhost:3000/api/upload/image"
 ) => {
   const mockRequest = {
-    formData: jest.fn().mockResolvedValue(formData),
+    formData: vi.fn().mockResolvedValue(formData),
     url,
   } as unknown as NextRequest;
   return mockRequest;
@@ -63,7 +54,7 @@ const createMockRequestWithSearchParams = (
 
 describe("/api/upload/image", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("POST", () => {
@@ -230,7 +221,7 @@ describe("/api/upload/image", () => {
 
     it("should return 401 if not authenticated", async () => {
       // Mock console.error to suppress output and verify it's called
-      const consoleSpy = jest
+      const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
@@ -261,7 +252,7 @@ describe("/api/upload/image", () => {
 
     it("should return 500 if upload fails", async () => {
       // Mock console.error to suppress output and verify it's called
-      const consoleSpy = jest
+      const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
@@ -330,7 +321,7 @@ describe("/api/upload/image", () => {
 
     it("should return 401 if not authenticated", async () => {
       // Mock console.error to suppress output and verify it's called
-      const consoleSpy = jest
+      const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
 
@@ -357,7 +348,7 @@ describe("/api/upload/image", () => {
 
     it("should return 500 if deletion fails", async () => {
       // Mock console.error to suppress output and verify it's called
-      const consoleSpy = jest
+      const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
 

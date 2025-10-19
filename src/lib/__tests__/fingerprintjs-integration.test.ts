@@ -1,25 +1,28 @@
-import { getFingerprintJSData } from "../user-context";
+import { getFingerprintJSData } from "../user-context-client";
+import { vi } from "vitest";
 
 // Mock FingerprintJS
-jest.mock("@fingerprintjs/fingerprintjs", () => ({
-  load: jest.fn(() =>
-    Promise.resolve({
-      get: jest.fn(() =>
-        Promise.resolve({
-          visitorId: "test-visitor-id-123",
-          confidence: {
-            score: 0.95,
-            comment: "High confidence fingerprint",
-          },
-          components: {
-            canvas: { value: "canvas-fingerprint" },
-            webgl: { value: "webgl-fingerprint" },
-            audio: { value: "audio-fingerprint" },
-          },
-        })
-      ),
-    })
-  ),
+vi.mock("@fingerprintjs/fingerprintjs", () => ({
+  default: {
+    load: vi.fn(() =>
+      Promise.resolve({
+        get: vi.fn(() =>
+          Promise.resolve({
+            visitorId: "test-visitor-id-123",
+            confidence: {
+              score: 0.95,
+              comment: "High confidence fingerprint",
+            },
+            components: {
+              canvas: { value: "canvas-fingerprint" },
+              webgl: { value: "webgl-fingerprint" },
+              audio: { value: "audio-fingerprint" },
+            },
+          })
+        ),
+      })
+    ),
+  },
 }));
 
 describe("FingerprintJS Integration", () => {
@@ -57,13 +60,15 @@ describe("FingerprintJS Integration", () => {
   });
 
   it("should handle FingerprintJS errors gracefully", async () => {
-    const FingerprintJS = jest.requireMock("@fingerprintjs/fingerprintjs");
-    FingerprintJS.load.mockRejectedValueOnce(new Error("FingerprintJS failed"));
+    const FingerprintJS = vi.mocked(
+      await import("@fingerprintjs/fingerprintjs")
+    );
+    (FingerprintJS.default.load as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("FingerprintJS failed")
+    );
 
     // Suppress expected console.error for this test
-    const consoleSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const result = await getFingerprintJSData();
     expect(result).toBeNull();

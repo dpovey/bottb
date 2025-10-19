@@ -1,42 +1,37 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import ResultsPage from "../page";
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
-  notFound: jest.fn(),
-  redirect: jest.fn(),
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(),
+  redirect: vi.fn(),
 }));
 
 // Mock the database functions
-jest.mock("@/lib/db", () => ({
-  getEventById: jest.fn(),
-  getBandsForEvent: jest.fn(),
-  getBandScores: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  getEventById: vi.fn(),
+  getBandsForEvent: vi.fn(),
+  getBandScores: vi.fn(),
 }));
 
 // Mock the date utils
-jest.mock("@/lib/date-utils", () => ({
-  formatEventDate: jest.fn((date) => `Formatted: ${date}`),
+vi.mock("@/lib/date-utils", () => ({
+  formatEventDate: vi.fn((date) => `Formatted: ${date}`),
 }));
 
 import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 
-const mockGetEventById = getEventById as jest.MockedFunction<
-  typeof getEventById
->;
-const mockGetBandsForEvent = getBandsForEvent as jest.MockedFunction<
-  typeof getBandsForEvent
->;
-const mockGetBandScores = getBandScores as jest.MockedFunction<
-  typeof getBandScores
->;
-const mockNotFound = notFound as jest.MockedFunction<typeof notFound>;
-const mockRedirect = redirect as jest.MockedFunction<typeof redirect>;
+const mockGetEventById = getEventById as unknown as ReturnType<typeof vi.fn>;
+const mockGetBandsForEvent = getBandsForEvent as unknown as ReturnType<typeof vi.fn>;
+const mockGetBandScores = getBandScores as unknown as ReturnType<typeof vi.fn>;
+const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
+const mockRedirect = redirect as unknown as ReturnType<typeof vi.fn>;
 
 describe("ResultsPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("redirects non-finalized events to crowd voting", async () => {
@@ -60,11 +55,9 @@ describe("ResultsPage", () => {
   });
 
   it("shows not found when event does not exist", async () => {
-    (
-      mockGetEventById as unknown as jest.MockedFunction<
-        (eventId: string) => Promise<import("@/lib/db").Event | null>
-      >
-    ).mockResolvedValue(null);
+    (mockGetEventById as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      null
+    );
 
     try {
       await ResultsPage({

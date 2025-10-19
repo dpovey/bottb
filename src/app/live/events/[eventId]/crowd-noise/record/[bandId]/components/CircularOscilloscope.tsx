@@ -4,12 +4,14 @@ import { useRef, useEffect } from "react";
 
 interface CircularOscilloscopeProps {
   dataArray: Uint8Array;
+  frameCount: number;
   size?: number;
   className?: string;
 }
 
 export default function CircularOscilloscope({
   dataArray,
+  frameCount,
   size = 200,
   className = "",
 }: CircularOscilloscopeProps) {
@@ -87,7 +89,7 @@ export default function CircularOscilloscope({
     ctx.beginPath();
     ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
     ctx.fill();
-  }, [dataArray, size]);
+  }, [dataArray, frameCount, size]);
 
   return (
     <canvas

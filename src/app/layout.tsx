@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Rock_Salt, Lato } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FacebookPixel } from "@/components/facebook-pixel";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const rockSalt = Rock_Salt({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-rock-salt",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const lato = Lato({
+  weight: ["400", "700"],
   subsets: ["latin"],
+  variable: "--font-lato",
 });
 
 export const metadata: Metadata = {
@@ -26,13 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${rockSalt.variable} ${lato.variable} font-sans antialiased bg-bg text-text`}
         suppressHydrationWarning={true}
       >
         <Providers>{children}</Providers>
         <Analytics />
+        <SpeedInsights />
         <FacebookPixel />
       </body>
     </html>

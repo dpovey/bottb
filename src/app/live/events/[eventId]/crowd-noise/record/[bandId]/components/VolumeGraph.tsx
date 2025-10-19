@@ -78,9 +78,6 @@ export default function VolumeGraph({
 
   return (
     <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex flex-col min-h-0">
-      <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400 flex-shrink-0">
-        VOLUME GRAPH
-      </h3>
       <div className="flex-1 min-h-[120px]">
         <canvas ref={canvasRef} className="w-full h-full rounded" />
       </div>

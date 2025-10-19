@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import BandPage from "../page";
 
 // Helper function to create a proper QueryResult mock
@@ -11,38 +12,36 @@ const createMockQueryResult = <T,>(rows: T[]) => ({
 });
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
-  notFound: jest.fn(),
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(),
 }));
 
 // Mock the database functions
-jest.mock("@/lib/db", () => ({
-  getBandScores: jest.fn(),
+vi.mock("@/lib/db", () => ({
+  getBandScores: vi.fn(),
 }));
 
 // Mock the date utils
-jest.mock("@/lib/date-utils", () => ({
-  formatEventDate: jest.fn((date) => `Formatted: ${date}`),
+vi.mock("@/lib/date-utils", () => ({
+  formatEventDate: vi.fn((date) => `Formatted: ${date}`),
 }));
 
 // Mock @vercel/postgres
-jest.mock("@vercel/postgres", () => ({
-  sql: jest.fn(),
+vi.mock("@vercel/postgres", () => ({
+  sql: vi.fn(),
 }));
 
 import { getBandScores } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { sql } from "@vercel/postgres";
 
-const mockGetBandScores = getBandScores as jest.MockedFunction<
-  typeof getBandScores
->;
-const mockNotFound = notFound as jest.MockedFunction<typeof notFound>;
-const mockSql = sql as jest.MockedFunction<typeof sql>;
+const mockGetBandScores = getBandScores as unknown as ReturnType<typeof vi.fn>;
+const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
+const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
 describe("BandPage", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("renders band details and scores", async () => {

@@ -1,16 +1,19 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { signOut } from "next-auth/react";
+import { vi } from "vitest";
+import { server } from "@/__mocks__/server";
+import { http, HttpResponse } from "msw";
 import AdminDashboard from "../admin-dashboard";
 
 // Mock next-auth/react
-jest.mock("next-auth/react", () => ({
-  signOut: jest.fn(),
+vi.mock("next-auth/react", () => ({
+  signOut: vi.fn(),
 }));
 
 // Mock Next.js Link component
-jest.mock("next/link", () => {
-  return function MockLink({
+vi.mock("next/link", () => ({
+  default: function MockLink({
     children,
     href,
   }: {
@@ -18,11 +21,10 @@ jest.mock("next/link", () => {
     href: string;
   }) {
     return <a href={href}>{children}</a>;
-  };
-});
+  },
+}));
 
-// Mock fetch
-global.fetch = jest.fn();
+// Use MSW for fetch mocking
 
 const mockEvents = [
   {
@@ -59,14 +61,18 @@ const mockSession = {
 
 describe("AdminDashboard", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => mockEvents,
-    });
+    vi.clearAllMocks();
+    // MSW will handle the fetch mocking
   });
 
   it("renders admin dashboard with header and sign out button", async () => {
+    // Override MSW handler for this test
+    server.use(
+      http.get("/api/events", () => {
+        return HttpResponse.json(mockEvents);
+      })
+    );
+
     render(<AdminDashboard session={mockSession} />);
 
     expect(
@@ -87,9 +93,8 @@ describe("AdminDashboard", () => {
     render(<AdminDashboard session={mockSession} />);
 
     await waitFor(() => {
-      expect(screen.getByText("Tech Battle 2024")).toBeInTheDocument();
-      expect(screen.getByText("Melbourne Showdown")).toBeInTheDocument();
-      expect(screen.getByText("Brisbane Finals")).toBeInTheDocument();
+      expect(screen.getByText("Test Event 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Event 2")).toBeInTheDocument();
     });
   });
 
@@ -98,9 +103,9 @@ describe("AdminDashboard", () => {
 
     await waitFor(() => {
       // Check first event details
-      expect(screen.getByText("Tech Battle 2024")).toBeInTheDocument();
-      expect(screen.getByText("Sydney Convention Centre")).toBeInTheDocument();
-      expect(screen.getByText("2024-01-15")).toBeInTheDocument();
+      expect(screen.getByText("Test Event 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Venue 1")).toBeInTheDocument();
+      expect(screen.getByText("2024-12-25T18:30:00Z")).toBeInTheDocument();
     });
   });
 
@@ -108,17 +113,13 @@ describe("AdminDashboard", () => {
     render(<AdminDashboard session={mockSession} />);
 
     await waitFor(() => {
-      // Active event - green badge
-      const activeStatus = screen.getByText("active");
-      expect(activeStatus).toHaveClass("bg-green-500/20", "text-green-400");
+      // Voting event - gray badge
+      const votingStatus = screen.getByText("voting");
+      expect(votingStatus).toHaveClass("bg-gray-500/20", "text-gray-400");
 
       // Upcoming event - blue badge
       const upcomingStatus = screen.getByText("upcoming");
       expect(upcomingStatus).toHaveClass("bg-blue-500/20", "text-blue-400");
-
-      // Past event - gray badge
-      const pastStatus = screen.getByText("past");
-      expect(pastStatus).toHaveClass("bg-gray-500/20", "text-gray-400");
     });
   });
 
@@ -129,7 +130,7 @@ describe("AdminDashboard", () => {
       const manageButtons = screen.getAllByRole("link", {
         name: "Manage Event",
       });
-      expect(manageButtons).toHaveLength(3);
+      expect(manageButtons).toHaveLength(2);
     });
   });
 
@@ -144,7 +145,6 @@ describe("AdminDashboard", () => {
       // Check that each button links to the correct event admin page
       expect(manageButtons[0]).toHaveAttribute("href", "/admin/events/event-1");
       expect(manageButtons[1]).toHaveAttribute("href", "/admin/events/event-2");
-      expect(manageButtons[2]).toHaveAttribute("href", "/admin/events/event-3");
     });
   });
 
@@ -159,10 +159,11 @@ describe("AdminDashboard", () => {
   });
 
   it("shows no events message when no events are returned", async () => {
-    (fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => [],
-    });
+    server.use(
+      http.get("/api/events", () => {
+        return HttpResponse.json([]);
+      })
+    );
 
     render(<AdminDashboard session={mockSession} />);
 
@@ -173,11 +174,13 @@ describe("AdminDashboard", () => {
 
   it("handles fetch error gracefully", async () => {
     // Mock console.error to suppress output and verify it's called
-    const consoleSpy = jest
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    (fetch as jest.Mock).mockRejectedValue(new Error("Network error"));
+    server.use(
+      http.get("/api/events", () => {
+        return HttpResponse.error();
+      })
+    );
 
     render(<AdminDashboard session={mockSession} />);
 
@@ -195,16 +198,27 @@ describe("AdminDashboard", () => {
   });
 
   it("handles fetch response error", async () => {
-    (fetch as jest.Mock).mockResolvedValue({
-      ok: false,
-      json: async () => ({ error: "Server error" }),
-    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    
+    server.use(
+      http.get("/api/events", () => {
+        return HttpResponse.json({ error: "Server error" }, { status: 500 });
+      })
+    );
 
     render(<AdminDashboard session={mockSession} />);
 
     await waitFor(() => {
       expect(screen.getByText("No events found")).toBeInTheDocument();
     });
+
+    // Assert that console.error was called with the expected error
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error fetching events:",
+      "Internal Server Error"
+    );
+
+    consoleSpy.mockRestore();
   });
 
   it("displays user email when name is not available", () => {

@@ -67,7 +67,7 @@ export default function VotingQRPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
@@ -75,15 +75,14 @@ export default function VotingQRPage() {
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Event not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-      <div className="container mx-auto px-4 py-4">
+    <div className="container mx-auto px-4 py-4">
         {/* Event Header - Reduced size */}
         <div className="text-center mb-6">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
@@ -199,7 +198,6 @@ export default function VotingQRPage() {
             )}
           </div>
         </div>
-      </div>
     </div>
   );
 }

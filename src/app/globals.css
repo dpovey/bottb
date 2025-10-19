@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font selection and focus styles */
+::selection {
+  background-color: theme('colors.accent');
+  color: theme('colors.text');
+}
+
+::-moz-selection {
+  background-color: theme('colors.accent');
+  color: theme('colors.text');
+}
+
+/* Focus styles for better accessibility */
+*:focus-visible {
+  outline: 2px solid theme('colors.accent');
+  outline-offset: 2px;
+}
+
 /* Custom slider styles */
 .slider::-webkit-slider-thumb {
   appearance: none;

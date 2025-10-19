@@ -12,6 +12,24 @@ A voting and scoring system for tech band competitions, built with Next.js and N
 - **Double Voting Protection**: Multi-layered system to prevent double voting
 - **Admin Authentication**: Password-based admin authentication with user management
 
+## Architecture Notes
+
+### Server vs Client Code Separation
+
+This project uses a strict separation between server-side and client-side code to avoid browser compatibility issues:
+
+- **`src/lib/user-context.ts`**: Contains only shared TypeScript interfaces and types
+- **`src/lib/user-context-server.ts`**: Server-side functions that use Node.js APIs (crypto, database queries)
+- **`src/lib/user-context-client.ts`**: Client-side functions that use browser APIs (document, window, FingerprintJS)
+
+**Why this matters**: Next.js bundles all imported modules for the client, so mixing server-side code (like Node.js `crypto`) with client-side code causes runtime errors in the browser. The separation ensures clean bundling and prevents "Cannot read properties of undefined (reading 'crypto')" errors.
+
+**Import Guidelines**:
+
+- API routes and server components: Import from `user-context-server.ts`
+- Client components and browser code: Import from `user-context-client.ts`
+- Shared types: Import from `user-context.ts`
+
 ## Scoring System
 
 ### Judge Criteria (80 points total)

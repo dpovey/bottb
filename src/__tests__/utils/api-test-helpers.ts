@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Session } from "next-auth";
+import { vi } from "vitest";
 
 // Mock the auth function
-jest.mock("@/lib/auth", () => ({
-  auth: jest.fn(),
+vi.mock("@/lib/auth", () => ({
+  auth: vi.fn(),
 }));
 
 import { auth } from "@/lib/auth";
-const mockAuth = auth as jest.Mock;
+const mockAuth = auth as ReturnType<typeof vi.fn>;
 
 /**
  * Test helper to create a mock NextRequest
@@ -35,12 +36,12 @@ export function createMockRequest(
   // Mock cookies
   Object.defineProperty(request, "cookies", {
     value: {
-      get: jest.fn((name: string) => {
+      get: vi.fn((name: string) => {
         const cookie = cookies[name];
         return cookie ? { value: cookie } : undefined;
       }),
-      set: jest.fn(),
-      delete: jest.fn(),
+      set: vi.fn(),
+      delete: vi.fn(),
     },
     writable: true,
     configurable: true,

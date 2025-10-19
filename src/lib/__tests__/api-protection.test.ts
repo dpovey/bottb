@@ -1,3 +1,11 @@
+import { vi } from "vitest";
+
+// Mock the auth function - must be hoisted
+const mockAuth = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/auth", () => ({
+  auth: mockAuth,
+}));
+
 import { NextResponse } from "next/server";
 import {
   withAdminAuth,
@@ -11,25 +19,24 @@ import {
 } from "../api-protection";
 import {
   createMockRequest,
-  mockAdminAuth,
-  mockUserAuth,
-  mockNoAuth,
-  clearAuthMocks,
 } from "../../__tests__/utils/api-test-helpers";
-
-// Mock the auth function
-jest.mock("../auth", () => ({
-  auth: jest.fn(),
-}));
 
 describe("API Protection System", () => {
   beforeEach(() => {
-    clearAuthMocks();
+    vi.clearAllMocks();
+    clearRateLimitStore();
   });
 
   describe("withAdminAuth", () => {
     it("allows admin users", async () => {
-      mockAdminAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "admin-1",
+          email: "admin@test.com",
+          isAdmin: true,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withAdminAuth(async (_request, _context, session) => {
         return NextResponse.json({ success: true, userId: session?.user.id });
@@ -45,7 +52,14 @@ describe("API Protection System", () => {
     });
 
     it("blocks non-admin users", async () => {
-      mockUserAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "user-1",
+          email: "user@test.com",
+          isAdmin: false,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withAdminAuth(async () => {
         return NextResponse.json(
@@ -63,7 +77,7 @@ describe("API Protection System", () => {
     });
 
     it("blocks unauthenticated users", async () => {
-      mockNoAuth();
+      mockAuth.mockResolvedValue(null);
 
       const handler = withAdminAuth(async () => {
         return NextResponse.json(
@@ -83,7 +97,14 @@ describe("API Protection System", () => {
 
   describe("withAuth", () => {
     it("allows authenticated users", async () => {
-      mockUserAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "user-1",
+          email: "user@test.com",
+          isAdmin: false,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withAuth(async (_request, _context, session) => {
         return NextResponse.json({ success: true, userId: session?.user.id });
@@ -99,7 +120,7 @@ describe("API Protection System", () => {
     });
 
     it("blocks unauthenticated users", async () => {
-      mockNoAuth();
+      mockAuth.mockResolvedValue(null);
 
       const handler = withAuth(async () => {
         return NextResponse.json(
@@ -186,7 +207,14 @@ describe("API Protection System", () => {
 
   describe("withAdminProtection", () => {
     it("combines admin auth and rate limiting", async () => {
-      mockAdminAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "admin-1",
+          email: "admin@test.com",
+          isAdmin: true,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withAdminProtection(
         async (_request, _context, _session) => {
@@ -201,7 +229,14 @@ describe("API Protection System", () => {
     });
 
     it("blocks non-admin users even with rate limiting", async () => {
-      mockUserAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "user-1",
+          email: "user@test.com",
+          isAdmin: false,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withAdminProtection(async () => {
         return NextResponse.json(
@@ -219,7 +254,14 @@ describe("API Protection System", () => {
 
   describe("withUserProtection", () => {
     it("combines user auth and rate limiting", async () => {
-      mockUserAuth();
+      mockAuth.mockResolvedValue({
+        user: {
+          id: "user-1",
+          email: "user@test.com",
+          isAdmin: false,
+        },
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
 
       const handler = withUserProtection(
         async (_request, _context, _session) => {

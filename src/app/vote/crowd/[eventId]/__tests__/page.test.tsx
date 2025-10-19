@@ -1,25 +1,29 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { vi } from "vitest";
+import { server } from "@/__mocks__/server";
+import { http, HttpResponse } from "msw";
 import CrowdVotingPage from "../page";
 
 // Mock Next.js navigation
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useParams: () => ({ eventId: "test-event-id" }),
 }));
 
 // Mock fetch
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 // Mock the user context functions
-jest.mock("@/lib/user-context", () => ({
-  getClientUserContext: jest.fn(() => ({
+vi.mock("@/lib/user-context-client", () => ({
+  getClientUserContext: vi.fn(() => ({
     screen_resolution: "1920x1080",
     timezone: "America/New_York",
     language: "en-US",
   })),
-  hasVotingCookie: jest.fn(() => false),
-  setVotingCookie: jest.fn(),
-  getFingerprintJSData: jest.fn(() =>
+  hasVotingCookie: vi.fn(() => false),
+  setVotingCookie: vi.fn(),
+  getVoteFromCookie: vi.fn(() => null),
+  getFingerprintJSData: vi.fn(() =>
     Promise.resolve({
       visitorId: "test-visitor-id",
       confidence: 0.95,
@@ -28,7 +32,7 @@ jest.mock("@/lib/user-context", () => ({
   ),
 }));
 
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockFetch = fetch as ReturnType<typeof vi.fn>;
 
 describe("CrowdVotingPage", () => {
   const mockBands = [
@@ -47,7 +51,7 @@ describe("CrowdVotingPage", () => {
   ];
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => mockBands,
@@ -57,9 +61,13 @@ describe("CrowdVotingPage", () => {
   it("renders crowd voting form", async () => {
     render(<CrowdVotingPage />);
 
-    expect(
-      screen.getByRole("heading", { name: "Crowd Voting" })
-    ).toBeInTheDocument();
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Crowd Voting" })
+      ).toBeInTheDocument();
+    });
+
     expect(
       screen.getByText("Vote for your favorite band!")
     ).toBeInTheDocument();
@@ -107,16 +115,6 @@ describe("CrowdVotingPage", () => {
   it("submits vote successfully", async () => {
     const user = userEvent.setup();
 
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: "vote-1" }),
-      } as Response);
-
     render(<CrowdVotingPage />);
 
     await waitFor(() => {
@@ -144,24 +142,13 @@ describe("CrowdVotingPage", () => {
   it("shows loading state during submission", async () => {
     const user = userEvent.setup();
 
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response)
-      .mockImplementationOnce(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  ok: true,
-                  json: async () => ({ id: "vote-1" }),
-                } as Response),
-              100
-            )
-          )
-      );
+    // Override MSW handler to return a slow response
+    server.use(
+      http.post("/api/votes", async () => {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return HttpResponse.json({ success: true });
+      })
+    );
 
     render(<CrowdVotingPage />);
 
@@ -175,7 +162,13 @@ describe("CrowdVotingPage", () => {
     const submitButton = screen.getByRole("button", { name: "Submit Vote" });
     await user.click(submitButton);
 
-    expect(screen.getByText("Submitting...")).toBeInTheDocument();
+    // Wait for loading state to appear
+    await waitFor(
+      () => {
+        expect(screen.getByText("Submitting...")).toBeInTheDocument();
+      },
+      { timeout: 1000 }
+    );
     expect(submitButton).toBeDisabled();
   });
 
@@ -192,17 +185,14 @@ describe("CrowdVotingPage", () => {
 
   it("handles submission error", async () => {
     const user = userEvent.setup();
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBands,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-      } as Response);
+    // Override MSW handler to return an error response
+    server.use(
+      http.post("/api/votes", () => {
+        return new HttpResponse(null, { status: 409 });
+      })
+    );
 
     render(<CrowdVotingPage />);
 
@@ -224,9 +214,14 @@ describe("CrowdVotingPage", () => {
   });
 
   it("handles fetch bands error", async () => {
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    mockFetch.mockRejectedValue(new Error("Network error"));
+    // Override MSW handler to return an error response
+    server.use(
+      http.get("/api/bands/:eventId", () => {
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
 
     render(<CrowdVotingPage />);
 

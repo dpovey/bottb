@@ -4,9 +4,13 @@ import { useRef, useEffect } from "react";
 
 interface OscilloscopeProps {
   dataArray: Uint8Array;
+  frameCount: number;
 }
 
-export default function Oscilloscope({ dataArray }: OscilloscopeProps) {
+export default function Oscilloscope({
+  dataArray,
+  frameCount,
+}: OscilloscopeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -75,13 +79,10 @@ export default function Oscilloscope({ dataArray }: OscilloscopeProps) {
     }
 
     ctx.stroke();
-  }, [dataArray]);
+  }, [dataArray, frameCount]);
 
   return (
     <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex flex-col min-h-0">
-      <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400 flex-shrink-0">
-        OSCILLOSCOPE
-      </h3>
       <div className="flex-1 min-h-[120px]">
         <canvas ref={canvasRef} className="w-full h-full rounded" />
       </div>

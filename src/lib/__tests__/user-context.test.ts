@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
+import { vi } from "vitest";
 import {
   extractUserContext,
   parseUserAgent,
   generateVoteFingerprint,
-} from "../user-context";
+} from "../user-context-server";
 
 // Mock NextRequest
 const createMockRequest = (userAgent: string, ip?: string) =>
@@ -84,9 +85,7 @@ describe("User Context", () => {
 
     it("should handle invalid URL and log warning", () => {
       // Suppress expected console.warn for URL parsing
-      const consoleSpy = jest
-        .spyOn(console, "warn")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const request = {
         ...createMockRequest(

@@ -75,8 +75,7 @@ export default async function BandPage({
       : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -291,7 +290,6 @@ export default async function BandPage({
             </a>
           </div>
         </div>
-      </div>
     </div>
   );
 }
