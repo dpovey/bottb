@@ -167,6 +167,26 @@ export async function getEventBannerUrl(
 }
 
 /**
+ * Get event image URL from blob storage
+ */
+export async function getEventImageUrl(
+  eventId: string
+): Promise<string | null> {
+  try {
+    const result = await listImages(`events/${eventId}/image/`, 1);
+
+    if (result.blobs.length > 0) {
+      return result.blobs[0].url;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching image for event ${eventId}:`, error);
+    return null;
+  }
+}
+
+/**
  * Clean up old temporary uploads (older than 24 hours)
  */
 export async function cleanupTempUploads(): Promise<number> {
@@ -211,7 +231,7 @@ export function generateBandImageFilename(
 export function generateEventImageFilename(
   eventId: string,
   originalName: string,
-  category: "banner" | "flyer" | "gallery" | "sponsor" = "banner"
+  category: "banner" | "flyer" | "gallery" | "sponsor" | "image" = "banner"
 ): string {
   const timestamp = Date.now();
   const extension = originalName.split(".").pop() || "jpg";

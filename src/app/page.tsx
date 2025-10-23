@@ -4,9 +4,11 @@ import {
   getUpcomingEvents,
   getPastEvents,
   getBandScores,
+  getBandsForEvent,
 } from "@/lib/db";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
+import { EventCard } from "@/components/event-card";
 
 interface BandScore {
   id: string;
@@ -51,10 +53,19 @@ export default async function HomePage() {
   const upcomingEvents = await getUpcomingEvents();
   const pastEvents = await getPastEvents();
 
-  // Get past events with winners
+  // Get upcoming events with bands
+  const upcomingEventsWithBands = await Promise.all(
+    upcomingEvents.map(async (event) => {
+      const bands = await getBandsForEvent(event.id);
+      return { ...event, bands };
+    })
+  );
+
+  // Get past events with winners and bands
   const pastEventsWithWinners = await Promise.all(
     pastEvents.map(async (event) => {
       const scores = (await getBandScores(event.id)) as BandScore[];
+      const bands = await getBandsForEvent(event.id);
       const bandResults = scores
         .map((score) => {
           const judgeScore =
@@ -73,7 +84,7 @@ export default async function HomePage() {
         .sort((a, b) => b.totalScore - a.totalScore);
 
       const overallWinner = bandResults.length > 0 ? bandResults[0] : null;
-      return { ...event, overallWinner };
+      return { ...event, overallWinner, bands };
     })
   );
 
@@ -111,36 +122,22 @@ export default async function HomePage() {
         )}
 
         {/* Upcoming Events Section */}
-        {upcomingEvents.length > 0 && (
-          <div className="max-w-6xl mx-auto mb-12">
+        {upcomingEventsWithBands.length > 0 && (
+          <div className="max-w-[calc(100vw-2rem)] mx-auto mb-12">
             <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
               Upcoming Events
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingEvents.map((event) => {
+            <div className="">
+              {upcomingEventsWithBands.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
-                  <div
+                  <EventCard
                     key={event.id}
-                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition-colors"
-                  >
-                    <h3 className="text-2xl font-bold text-white mb-3">
-                      {event.name}
-                    </h3>
-                    <div className="text-gray-300 mb-2">
-                      {formatEventDate(event.date)}
-                    </div>
-                    <div className="text-gray-400 mb-4">{event.location}</div>
-                    <div className="text-blue-400 font-semibold mb-4">
-                      {relativeDate}
-                    </div>
-                    <Link
-                      href={`/event/${event.id}`}
-                      className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-center text-sm transition-colors block"
-                    >
-                      View Details
-                    </Link>
-                  </div>
+                    event={event}
+                    relativeDate={relativeDate}
+                    bands={event.bands}
+                    variant="upcoming"
+                  />
                 );
               })}
             </div>
@@ -149,61 +146,23 @@ export default async function HomePage() {
 
         {/* Past Events Section */}
         {pastEventsWithWinners.length > 0 && (
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-[calc(100vw-2rem)] mx-auto">
             <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
               Past Events
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="">
               {pastEventsWithWinners.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
-                  <div
+                  <EventCard
                     key={event.id}
-                    className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition-colors"
-                  >
-                    <h3 className="text-2xl font-bold text-white mb-3">
-                      {event.name}
-                    </h3>
-                    <div className="text-gray-300 mb-2">
-                      {formatEventDate(event.date)}
-                    </div>
-                    <div className="text-gray-400 mb-4">{event.location}</div>
-                    <div className="text-gray-500 text-sm mb-4">
-                      {relativeDate}
-                    </div>
-
-                    {event.overallWinner && (
-                      <div className="mb-4 p-3 bg-yellow-600/20 border border-yellow-400 rounded-lg">
-                        <div className="text-yellow-400 font-semibold text-sm mb-1">
-                          🏆 Winner
-                        </div>
-                        <div className="text-white font-bold">
-                          {event.overallWinner.name}
-                        </div>
-                        <div className="text-yellow-300 text-sm">
-                          Score: {event.overallWinner.totalScore?.toFixed(1)}
-                          /100
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-2">
-                      <Link
-                        href={`/event/${event.id}`}
-                        className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-center text-sm transition-colors"
-                      >
-                        📅 View Event
-                      </Link>
-                      {event.status === "finalized" && (
-                        <Link
-                          href={`/results/${event.id}`}
-                          className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg text-center text-sm transition-colors"
-                        >
-                          📊 View Results
-                        </Link>
-                      )}
-                    </div>
-                  </div>
+                    event={event}
+                    relativeDate={relativeDate}
+                    variant="past"
+                    showWinner={!!event.overallWinner}
+                    winner={event.overallWinner || undefined}
+                    bands={event.bands}
+                  />
                 );
               })}
             </div>

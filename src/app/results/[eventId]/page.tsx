@@ -239,7 +239,11 @@ export default async function ResultsPage({
           </p>
           <p className="text-sm text-gray-300">
             {crowdNoiseWinner
-              ? Math.round(crowdNoiseWinner.crowdNoiseScore || 0) + "/20"
+              ? `Score: ${Math.round(
+                  crowdNoiseWinner.crowdNoiseScore || 0
+                )} | Energy: ${Number(
+                  crowdNoiseWinner.crowd_noise_energy || 0
+                ).toFixed(2)}`
               : "N/A"}
           </p>
         </div>

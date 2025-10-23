@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Events table
 CREATE TABLE IF NOT EXISTS events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id VARCHAR(255) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
   location VARCHAR(255) NOT NULL,
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS events (
 
 -- Bands table
 CREATE TABLE IF NOT EXISTS bands (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  id VARCHAR(255) PRIMARY KEY,
+  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   "order" INTEGER NOT NULL,
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS bands (
 -- Votes table
 CREATE TABLE IF NOT EXISTS votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
   voter_type VARCHAR(10) NOT NULL CHECK (voter_type IN ('crowd', 'judge')),
   song_choice INTEGER CHECK (song_choice >= 0 AND song_choice <= 20),
   performance INTEGER CHECK (performance >= 0 AND performance <= 30),
@@ -85,8 +85,8 @@ CREATE INDEX IF NOT EXISTS idx_votes_created_at ON votes(created_at);
 -- Crowd noise measurements table
 CREATE TABLE IF NOT EXISTS crowd_noise_measurements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
   energy_level DECIMAL(10,4) NOT NULL CHECK (energy_level >= 0),
   peak_volume DECIMAL(10,4) NOT NULL CHECK (peak_volume >= 0),
   recording_duration INTEGER NOT NULL CHECK (recording_duration > 0),

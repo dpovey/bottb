@@ -553,7 +553,15 @@ export default function CrowdNoisePage() {
               <div className="bg-yellow-600/20 text-yellow-400 px-4 py-3 rounded-lg text-center">
                 <div className="text-2xl font-bold">
                   Crowd Score:{" "}
-                  {measurements[selectedBand.id]?.crowd_score || "N/A"}/10
+                  {measurements[selectedBand.id]?.crowd_score || "N/A"}
+                </div>
+                <div className="text-lg text-gray-300 mt-1">
+                  Energy Level:{" "}
+                  {measurements[selectedBand.id]?.energy_level
+                    ? Number(
+                        measurements[selectedBand.id].energy_level
+                      ).toFixed(2)
+                    : "N/A"}
                 </div>
                 <div className="text-sm text-gray-300 mt-1">
                   {measurements[selectedBand.id]?.crowd_score >= 8

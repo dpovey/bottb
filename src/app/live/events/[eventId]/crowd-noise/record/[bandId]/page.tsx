@@ -232,7 +232,7 @@ export default function CrowdNoiseRecordPage() {
     } finally {
       setIsCheckingMic(false);
     }
-  }, [setupAudioMonitoring]);
+  }, [setupAudioMonitoring, selectedMicrophoneId]);
 
   useEffect(() => {
     const fetchBand = async () => {
@@ -517,8 +517,11 @@ export default function CrowdNoiseRecordPage() {
     console.log("Debug - finalEnergy:", finalEnergy, "peakVolume:", peakVolume);
     const energyScore = Math.min(10, Math.max(1, Math.round(finalEnergy * 5)));
     console.log("Debug - calculated energyScore:", energyScore);
+
+    // Ensure crowd_score is always between 1 and 10
+    const crowdScore = Math.min(10, Math.max(1, energyScore));
     setTotalEnergy(finalEnergy); // Update the state to show correct value
-    setCrowdScore(energyScore);
+    setCrowdScore(crowdScore);
 
     setIsRecording(false);
     setTimeLeft(0);
@@ -590,11 +593,19 @@ export default function CrowdNoiseRecordPage() {
           router.push(`/admin/events/${eventId}/crowd-noise`);
         }, 2000);
       } else {
-        throw new Error("Failed to submit measurement");
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        throw new Error(
+          `Failed to submit measurement: ${errorData.error || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("Error submitting measurement:", error);
-      alert("Failed to submit measurement. Please try again.");
+      alert(
+        `Failed to submit measurement: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }. Please try again.`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -881,30 +892,9 @@ export default function CrowdNoiseRecordPage() {
                 Recording Complete!
               </div>
 
-              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-8 mb-4 sm:mb-8 max-w-4xl mx-auto border border-green-400/30 shadow-2xl flex">
-                {/* Crowd Score - Prominent Display */}
-                <div className="flex-grow text-center mb-4 sm:mb-8">
-                  <div className="text-gray-400 mb-2 sm:mb-4 text-lg sm:text-2xl">
-                    Crowd Energy Score
-                  </div>
-                  <div className="text-4xl sm:text-8xl font-bold text-yellow-400 drop-shadow-2xl animate-pulse">
-                    {crowdScore}/10
-                  </div>
-                  <div className="text-sm sm:text-lg text-gray-300 mt-2">
-                    {crowdScore >= 8
-                      ? "🔥 INCREDIBLE!"
-                      : crowdScore >= 6
-                      ? "🎉 AMAZING!"
-                      : crowdScore >= 4
-                      ? "👏 GREAT!"
-                      : crowdScore >= 2
-                      ? "👍 GOOD!"
-                      : "💪 KEEP TRYING!"}
-                  </div>
-                </div>
-
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 sm:p-8 mb-4 sm:mb-8 max-w-4xl mx-auto border border-green-400/30 shadow-2xl">
                 {/* Technical Details */}
-                <div className="grid grid-cols-1 gap-4 text-lg sm:text-3xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-lg sm:text-3xl">
                   <div className="bg-black/20 rounded-xl p-3 sm:p-6">
                     <div className="text-gray-400 mb-1 sm:mb-2 text-sm sm:text-base">
                       Energy Level

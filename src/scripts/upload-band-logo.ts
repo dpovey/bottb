@@ -102,11 +102,9 @@ async function main() {
     console.log("Usage: npm run upload-band-logo <band-id> <file-path>");
     console.log("");
     console.log("Example:");
+    console.log("npm run upload-band-logo canvanauts-sydney-2025 ./logo.png");
     console.log(
-      "npm run upload-band-logo cf383d47-eca4-4155-96e2-f0beaa4a8b8d ./logo.png"
-    );
-    console.log(
-      "npm run upload-band-logo cf383d47-eca4-4155-96e2-f0beaa4a8b8d /path/to/logo.jpg"
+      "npm run upload-band-logo the-agentics-sydney-2025 /path/to/logo.jpg"
     );
     process.exit(1);
   }

@@ -62,7 +62,10 @@ import { sql } from "@vercel/postgres";
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
 // Helper function to create NextRequest mock
-function createNextRequestMock(voteData: Record<string, unknown>, headers: Record<string, string> = {}) {
+function createNextRequestMock(
+  voteData: Record<string, unknown>,
+  headers: Record<string, string> = {}
+) {
   const request = createRequest({
     method: "POST",
     url: "/api/votes",

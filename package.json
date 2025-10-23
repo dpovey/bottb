@@ -20,10 +20,14 @@
     "generate-votes": "tsx src/scripts/generate-votes.ts",
     "migrate-add-status": "tsx src/scripts/migrate-add-status.ts",
     "migrate-add-info-column": "tsx src/scripts/migrate-add-info-column.ts",
+    "migrate-add-events-info-column": "tsx src/scripts/migrate-add-events-info-column.ts",
     "upload-band-logo": "tsx src/scripts/upload-band-logo.ts",
+    "upload-event-image": "tsx src/scripts/upload-event-image.ts",
     "finalize-event": "tsx src/scripts/finalize-event.ts",
     "manage-users": "tsx src/scripts/manage-users.ts",
-    "cleanup-temp-uploads": "tsx src/scripts/cleanup-temp-uploads.ts"
+    "cleanup-temp-uploads": "tsx src/scripts/cleanup-temp-uploads.ts",
+    "migrate-uuid-to-slugs": "tsx src/scripts/migrate-uuid-to-slugs.ts",
+    "check-db-schema": "tsx src/scripts/check-db-schema.ts"
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.6.2",

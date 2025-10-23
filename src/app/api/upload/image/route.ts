@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       filename = generateBandImageFilename(entityId, file.name, bandCategory);
     } else if (type === "event") {
       const eventCategory =
-        (category as "banner" | "flyer" | "gallery" | "sponsor") || "banner";
+        (category as "banner" | "flyer" | "gallery" | "sponsor" | "image") || "banner";
       filename = generateEventImageFilename(entityId, file.name, eventCategory);
     } else if (type === "user") {
       filename = generateUserImageFilename(entityId, file.name);

@@ -268,7 +268,11 @@ export default async function BandPage({
                     </span>
                     <span className="text-white font-bold">
                       {hasScreamOMeterMeasurement
-                        ? `${screamOMeterScore.toFixed(1)}/20`
+                        ? `Score: ${screamOMeterScore.toFixed(
+                            1
+                          )} | Energy: ${Number(
+                            bandScore!.crowd_noise_energy || 0
+                          ).toFixed(2)}`
                         : "No measurement"}
                     </span>
                   </div>

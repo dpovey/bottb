@@ -243,7 +243,9 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Past Event")).toBeInTheDocument();
     expect(screen.getByText("Winning Band")).toBeInTheDocument();
-    expect(screen.getByText("🏆 Winner")).toBeInTheDocument();
+    expect(screen.getAllByText((content, element) => {
+      return element?.textContent === "🏆 Winner: Winning Band";
+    })[0]).toBeInTheDocument();
   });
 
   it("shows results link for finalized events", async () => {

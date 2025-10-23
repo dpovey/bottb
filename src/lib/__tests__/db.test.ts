@@ -92,7 +92,7 @@ describe("Database Functions", () => {
       const result = await getActiveEvent();
 
       expect(mockSql).toHaveBeenCalledWith([
-        "SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1",
+        "\n    SELECT * FROM events \n    WHERE is_active = true AND status = 'voting' \n    LIMIT 1\n  ",
       ]);
       expect(result).toEqual(mockEvent);
     });
@@ -121,7 +121,7 @@ describe("Database Functions", () => {
       const result = await getActiveEvent();
 
       expect(mockSql).toHaveBeenCalledWith([
-        "SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1",
+        "\n    SELECT * FROM events \n    WHERE is_active = true AND status = 'voting' \n    LIMIT 1\n  ",
       ]);
       expect(result).toBeNull();
     });

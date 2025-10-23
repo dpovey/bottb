@@ -13,6 +13,19 @@ interface Event {
   date: string;
   location: string;
   status: string;
+  image_url?: string;
+  info?: {
+    image_url?: string;
+    description?: string;
+    website?: string;
+    social_media?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    };
+    venue_info?: string;
+    [key: string]: unknown;
+  };
 }
 
 interface Band {
@@ -99,6 +112,20 @@ export default function EventPage() {
               ← Back to Events
             </Link>
           </div>
+          
+          {/* Event Image */}
+          {event.info?.image_url && (
+            <div className="relative h-64 w-full max-w-2xl mx-auto mb-8 rounded-2xl overflow-hidden">
+              <Image
+                src={event.info.image_url}
+                alt={`${event.name} event image`}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+          )}
+          
           <h1 className="text-5xl font-display font-bold text-white mb-4">
             {event.name}
           </h1>

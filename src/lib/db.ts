@@ -7,6 +7,19 @@ export interface Event {
   location: string;
   is_active: boolean;
   status: "upcoming" | "voting" | "finalized";
+  image_url?: string;
+  info?: {
+    image_url?: string;
+    description?: string;
+    website?: string;
+    social_media?: {
+      twitter?: string;
+      instagram?: string;
+      facebook?: string;
+    };
+    venue_info?: string;
+    [key: string]: unknown;
+  };
   created_at: string;
 }
 
@@ -83,8 +96,11 @@ export async function getEvents() {
 }
 
 export async function getActiveEvent() {
-  const { rows } =
-    await sql<Event>`SELECT * FROM events WHERE is_active = true AND status = 'voting' LIMIT 1`;
+  const { rows } = await sql<Event>`
+    SELECT * FROM events 
+    WHERE is_active = true AND status = 'voting' 
+    LIMIT 1
+  `;
   return rows[0] || null;
 }
 
@@ -220,16 +236,16 @@ export async function getBandScores(eventId: string) {
 export async function submitCrowdNoiseMeasurement(
   measurement: Omit<CrowdNoiseMeasurement, "id" | "created_at">
 ) {
+  // First, delete any existing measurement for this event/band combination
+  await sql`
+    DELETE FROM crowd_noise_measurements 
+    WHERE event_id = ${measurement.event_id} AND band_id = ${measurement.band_id}
+  `;
+
+  // Then insert the new measurement
   const { rows } = await sql<CrowdNoiseMeasurement>`
     INSERT INTO crowd_noise_measurements (event_id, band_id, energy_level, peak_volume, recording_duration, crowd_score)
     VALUES (${measurement.event_id}, ${measurement.band_id}, ${measurement.energy_level}, ${measurement.peak_volume}, ${measurement.recording_duration}, ${measurement.crowd_score})
-    ON CONFLICT (event_id, band_id) 
-    DO UPDATE SET 
-      energy_level = ${measurement.energy_level},
-      peak_volume = ${measurement.peak_volume},
-      recording_duration = ${measurement.recording_duration},
-      crowd_score = ${measurement.crowd_score},
-      created_at = NOW()
     RETURNING *
   `;
   return rows[0];

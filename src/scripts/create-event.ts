@@ -7,6 +7,23 @@ import { readFileSync } from "fs";
 // Load environment variables from .env.local
 config({ path: ".env.local" });
 
+// Helper function to convert name to slug
+function nameToSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .trim();
+}
+
+// Helper function to generate band slug
+function generateBandSlug(bandName: string, eventName: string): string {
+  const bandSlug = nameToSlug(bandName);
+  const eventSlug = nameToSlug(eventName);
+  return `${bandSlug}-${eventSlug}`;
+}
+
 interface EventData {
   name: string;
   date: string;
@@ -28,12 +45,16 @@ async function createEventFromFile(filePath: string) {
 
     console.log(`Creating event: ${eventData.name}`);
 
-    // Create event
+    // Generate event slug
+    const eventSlug = nameToSlug(eventData.name);
+    console.log(`📝 Event slug: ${eventSlug}`);
+
+    // Create event with slug as ID
     const { rows: eventRows } = await sql`
-      INSERT INTO events (name, date, location, is_active, status)
-      VALUES (${eventData.name}, ${eventData.date}, ${eventData.location}, ${
-      eventData.is_active ?? true
-    }, ${eventData.status ?? "upcoming"})
+      INSERT INTO events (id, name, date, location, is_active, status)
+      VALUES (${eventSlug}, ${eventData.name}, ${eventData.date}, ${
+      eventData.location
+    }, ${eventData.is_active ?? true}, ${eventData.status ?? "upcoming"})
       RETURNING id, name
     `;
 
@@ -45,15 +66,21 @@ async function createEventFromFile(filePath: string) {
       console.log(`Creating ${eventData.bands.length} bands...`);
 
       for (const band of eventData.bands) {
+        // Generate band slug
+        const bandSlug = generateBandSlug(band.name, eventData.name);
+        console.log(`  📝 Band slug: ${bandSlug}`);
+
         const { rows: bandRows } = await sql`
-          INSERT INTO bands (event_id, name, description, "order")
-          VALUES (${event.id}, ${band.name}, ${band.description || null}, ${
-          band.order
-        })
+          INSERT INTO bands (id, event_id, name, description, "order")
+          VALUES (${bandSlug}, ${event.id}, ${band.name}, ${
+          band.description || null
+        }, ${band.order})
           RETURNING id, name
         `;
 
-        console.log(`  ✅ Band created: ${bandRows[0].name}`);
+        console.log(
+          `  ✅ Band created: ${bandRows[0].name} (${bandRows[0].id})`
+        );
       }
     }
 
