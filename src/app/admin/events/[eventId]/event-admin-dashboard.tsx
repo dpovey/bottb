@@ -21,6 +21,8 @@ export default function EventAdminDashboard({
 }: EventAdminDashboardProps) {
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -39,6 +41,29 @@ export default function EventAdminDashboard({
 
     fetchEvent();
   }, [eventId]);
+
+  const handleClearScores = async () => {
+    setIsClearing(true);
+    try {
+      const response = await fetch(`/api/events/${eventId}/clear-scores`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ ${result.message}`);
+        setShowClearConfirm(false);
+      } else {
+        const error = await response.json();
+        alert(`❌ Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error clearing scores:", error);
+      alert("❌ Failed to clear scores");
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -134,7 +159,7 @@ export default function EventAdminDashboard({
           <h3 className="text-2xl font-bold text-white mb-6 text-center">
             Event Management
           </h3>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               href={`/results/${eventId}`}
               className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
@@ -153,9 +178,56 @@ export default function EventAdminDashboard({
             >
               ⚖️ Test Judge Scoring
             </Link>
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+              disabled={isClearing}
+            >
+              {isClearing ? "⏳ Clearing..." : "🗑️ Clear Scores"}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Clear Scores Confirmation Dialog */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Clear All Scores?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              This will permanently delete all voting data for{" "}
+              <strong>{event?.name}</strong>:
+            </p>
+            <ul className="text-gray-600 mb-6 ml-4 list-disc">
+              <li>All judge votes (song choice, performance, crowd vibe)</li>
+              <li>All crowd votes</li>
+              <li>
+                All crowd noise measurements (energy levels, peak volume, crowd
+                scores)
+              </li>
+            </ul>
+            <p className="text-gray-600 mb-6">This action cannot be undone.</p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                disabled={isClearing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearScores}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
+                disabled={isClearing}
+              >
+                {isClearing ? "Clearing..." : "Yes, Clear All Scores"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
