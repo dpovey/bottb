@@ -1,6 +1,7 @@
 import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
+import { auth } from "@/lib/auth";
 import Image from "next/image";
 
 interface BandScore {
@@ -37,14 +38,18 @@ export default async function ResultsPage({
 }) {
   const { eventId } = await params;
 
+  // Check if user is admin
+  const session = await auth();
+  const isAdmin = session?.user?.isAdmin || false;
+
   const event = await getEventById(eventId);
 
   if (!event) {
     notFound();
   }
 
-  // Redirect to crowd voting if event is not finalized
-  if (event.status !== "finalized") {
+  // Redirect to crowd voting if event is not finalized and user is not admin
+  if (event.status !== "finalized" && !isAdmin) {
     redirect(`/vote/crowd/${eventId}`);
   }
 
