@@ -2,12 +2,26 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export function AdminBanner() {
   const { data: session, status } = useSession();
+  const [isHidden, setIsHidden] = useState(false);
 
-  // Don't show banner if not logged in or not admin
-  if (status === "loading" || !session?.user?.isAdmin) {
+  useEffect(() => {
+    const hidden = localStorage.getItem("admin-banner-hidden");
+    if (hidden === "true") {
+      setIsHidden(true);
+    }
+  }, []);
+
+  const handleHide = () => {
+    setIsHidden(true);
+    localStorage.setItem("admin-banner-hidden", "true");
+  };
+
+  // Don't show banner if not logged in, not admin, or hidden
+  if (status === "loading" || !session?.user?.isAdmin || isHidden) {
     return null;
   }
 
@@ -30,6 +44,13 @@ export function AdminBanner() {
           >
             Admin Dashboard
           </Link>
+          <button
+            onClick={handleHide}
+            className="hover:text-blue-200 transition-colors underline"
+            title="Hide banner"
+          >
+            ✕ Hide
+          </button>
           <button
             onClick={() => signOut()}
             className="hover:text-blue-200 transition-colors underline"

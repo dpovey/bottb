@@ -2,14 +2,28 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function AdminIndicator() {
   const { data: session } = useSession();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
 
-  // Don't show indicator if not logged in or not admin
-  if (!session?.user?.isAdmin) {
+  useEffect(() => {
+    const hidden = localStorage.getItem("admin-indicator-hidden");
+    if (hidden === "true") {
+      setIsHidden(true);
+    }
+  }, []);
+
+  const handleHide = () => {
+    setIsHidden(true);
+    localStorage.setItem("admin-indicator-hidden", "true");
+    setIsExpanded(false);
+  };
+
+  // Don't show indicator if not logged in, not admin, or hidden
+  if (!session?.user?.isAdmin || isHidden) {
     return null;
   }
 
@@ -51,6 +65,12 @@ export function AdminIndicator() {
                 >
                   📊 Dashboard
                 </Link>
+                <button
+                  onClick={handleHide}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  ✕ Hide Admin Panel
+                </button>
                 <button
                   onClick={() => {
                     signOut();

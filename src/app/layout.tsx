@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FacebookPixel } from "@/components/facebook-pixel";
+import { AdminToggle } from "@/components/admin-toggle";
 
 const rockSalt = Rock_Salt({
   weight: "400",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <FacebookPixel />
+        <AdminToggle />
       </body>
     </html>
   );
