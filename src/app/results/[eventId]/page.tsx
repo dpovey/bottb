@@ -29,6 +29,7 @@ interface BandScore {
   total_crowd_votes: number;
   crowd_noise_energy?: number;
   crowd_noise_peak?: number;
+  crowd_score?: number;
 }
 
 export default async function ResultsPage({
@@ -70,10 +71,9 @@ export default async function ResultsPage({
             20
           : 0;
 
-      // Normalize crowd noise energy to 0-20 scale
-      // Assuming energy levels typically range from 0-10, we'll scale to 0-20
-      const crowdNoiseScore = score.crowd_noise_energy
-        ? Math.min(20, (Number(score.crowd_noise_energy) / 10) * 20)
+      // Use stored crowd_score (1-10) and scale to 0-20 points
+      const crowdNoiseScore = score.crowd_score
+        ? Number(score.crowd_score) * 2
         : 0;
 
       const totalScore = judgeScore + crowdScore + crowdNoiseScore;

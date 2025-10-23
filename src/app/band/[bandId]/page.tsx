@@ -17,6 +17,7 @@ interface BandScore {
   total_crowd_votes: number;
   crowd_noise_energy?: number;
   crowd_noise_peak?: number;
+  crowd_score?: number;
 }
 
 export default async function BandPage({
@@ -83,12 +84,11 @@ export default async function BandPage({
 
   // Scream-o-meter score from crowd noise measurements (out of 20 points)
   const hasScreamOMeterMeasurement = bandScore
-    ? bandScore.crowd_noise_energy !== null &&
-      bandScore.crowd_noise_energy !== undefined
+    ? bandScore.crowd_score !== null && bandScore.crowd_score !== undefined
     : false;
   const screamOMeterScore = hasScreamOMeterMeasurement
-    ? Number(bandScore!.crowd_noise_energy) * 2
-    : 0; // Convert 0-10 scale to 0-20 points
+    ? Number(bandScore!.crowd_score) * 2
+    : 0; // Convert 1-10 scale to 0-20 points
   const totalScore = judgeScore + crowdScore + screamOMeterScore;
 
   // Calculate percentage scores
@@ -109,7 +109,7 @@ export default async function BandPage({
       : 0
     : 0;
   const screamOMeterPercent = hasScreamOMeterMeasurement
-    ? (Number(bandScore!.crowd_noise_energy) / 10) * 100
+    ? (Number(bandScore!.crowd_score) / 10) * 100
     : 0;
 
   return (

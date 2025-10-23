@@ -480,7 +480,7 @@ export default function CrowdNoiseRecordPage() {
 
       // Start recording state
       setIsRecording(true);
-      setTimeLeft(10);
+      setTimeLeft(7);
       setTotalEnergy(0);
       setPeakVolume(0);
 
@@ -557,7 +557,7 @@ export default function CrowdNoiseRecordPage() {
     setFrameCount((prev) => prev + 1);
 
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const remaining = Math.max(0, 10 - elapsed);
+    const remaining = Math.max(0, 7 - elapsed);
     setTimeLeft(remaining);
     setTotalEnergy(energyAccumulatorRef.current);
 
@@ -582,7 +582,7 @@ export default function CrowdNoiseRecordPage() {
           band_id: band.id,
           energy_level: totalEnergy,
           peak_volume: peakVolume,
-          recording_duration: 10,
+          recording_duration: 7,
           crowd_score: crowdScore,
         }),
       });
@@ -862,7 +862,7 @@ export default function CrowdNoiseRecordPage() {
                       <VolumeGraph
                         rms={audioLevel}
                         startTime={startTimeRef.current}
-                        duration={10}
+                        duration={7}
                       />
                       <Oscilloscope
                         dataArray={dataArrayRef.current || new Uint8Array(0)}

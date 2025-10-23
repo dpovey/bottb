@@ -158,14 +158,28 @@ export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
               fingerprintjs_visitor_id, fingerprintjs_confidence, fingerprintjs_confidence_comment, email, name, status
             )
             VALUES (
-              ${vote.event_id}, ${vote.band_id}, ${vote.voter_type}, ${vote.song_choice},
+              ${vote.event_id}, ${vote.band_id}, ${vote.voter_type}, ${
+    vote.song_choice
+  },
               ${vote.performance}, ${vote.crowd_vibe}, ${vote.crowd_vote},
-              ${vote.ip_address}, ${vote.user_agent}, ${vote.browser_name}, ${vote.browser_version},
-              ${vote.os_name}, ${vote.os_version}, ${vote.device_type}, ${vote.screen_resolution},
-              ${vote.timezone}, ${vote.language}, ${vote.google_click_id}, ${vote.facebook_pixel_id},
-              ${vote.utm_source}, ${vote.utm_medium}, ${vote.utm_campaign}, ${vote.utm_term},
-              ${vote.utm_content}, ${vote.vote_fingerprint}, ${vote.fingerprintjs_visitor_id},
-              ${vote.fingerprintjs_confidence}, ${vote.fingerprintjs_confidence_comment}, ${vote.email}, ${vote.name}, ${vote.status || 'approved'}
+              ${vote.ip_address}, ${vote.user_agent}, ${vote.browser_name}, ${
+    vote.browser_version
+  },
+              ${vote.os_name}, ${vote.os_version}, ${vote.device_type}, ${
+    vote.screen_resolution
+  },
+              ${vote.timezone}, ${vote.language}, ${vote.google_click_id}, ${
+    vote.facebook_pixel_id
+  },
+              ${vote.utm_source}, ${vote.utm_medium}, ${vote.utm_campaign}, ${
+    vote.utm_term
+  },
+              ${vote.utm_content}, ${vote.vote_fingerprint}, ${
+    vote.fingerprintjs_visitor_id
+  },
+              ${vote.fingerprintjs_confidence}, ${
+    vote.fingerprintjs_confidence_comment
+  }, ${vote.email}, ${vote.name}, ${vote.status || "approved"}
             )
     RETURNING *
   `;
@@ -200,10 +214,12 @@ export async function updateVote(vote: Omit<Vote, "id" | "created_at">) {
       vote_fingerprint = ${vote.vote_fingerprint},
       fingerprintjs_visitor_id = ${vote.fingerprintjs_visitor_id},
       fingerprintjs_confidence = ${vote.fingerprintjs_confidence},
-      fingerprintjs_confidence_comment = ${vote.fingerprintjs_confidence_comment},
+      fingerprintjs_confidence_comment = ${
+        vote.fingerprintjs_confidence_comment
+      },
       email = ${vote.email},
       name = ${vote.name},
-      status = ${vote.status || 'approved'}
+      status = ${vote.status || "approved"}
     WHERE event_id = ${vote.event_id} AND voter_type = ${vote.voter_type}
     RETURNING *
   `;
@@ -238,13 +254,14 @@ export async function getBandScores(eventId: string) {
       COUNT(CASE WHEN v.voter_type = 'judge' THEN 1 END) as judge_vote_count,
       tv.total_crowd_votes,
       cnm.energy_level as crowd_noise_energy,
-      cnm.peak_volume as crowd_noise_peak
+      cnm.peak_volume as crowd_noise_peak,
+      cnm.crowd_score
     FROM bands b
     LEFT JOIN votes v ON b.id = v.band_id
     LEFT JOIN crowd_noise_measurements cnm ON b.id = cnm.band_id AND cnm.event_id = ${eventId}
     CROSS JOIN total_votes tv
     WHERE b.event_id = ${eventId}
-    GROUP BY b.id, b.name, b."order", b.info, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume
+    GROUP BY b.id, b.name, b."order", b.info, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
     ORDER BY b."order"
   `;
   return rows;

@@ -186,7 +186,7 @@ export default function CrowdNoisePage() {
       isActiveRef.current = true;
 
       setIsRecording(true);
-      setTimeLeft(5);
+      setTimeLeft(7);
       setTotalEnergy(0);
       setPeakVolume(0);
 
@@ -240,7 +240,7 @@ export default function CrowdNoisePage() {
     drawVolumeGraph(rms);
 
     const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const remaining = Math.max(0, 5 - elapsed);
+    const remaining = Math.max(0, 7 - elapsed);
     setTimeLeft(remaining);
     setTotalEnergy(energyAccumulatorRef.current);
 
@@ -327,7 +327,7 @@ export default function CrowdNoisePage() {
           band_id: selectedBandId,
           energy_level: totalEnergy,
           peak_volume: peakVolume,
-          recording_duration: 5,
+          recording_duration: 7,
         }),
       });
 
