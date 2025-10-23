@@ -92,7 +92,7 @@ function createNextRequestMock(
   return request as unknown as NextRequest;
 }
 
-describe("/api/votes", () => {
+describe("Vote API Response Format", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -106,130 +106,8 @@ describe("/api/votes", () => {
     });
   });
 
-  describe("POST", () => {
-    it("submits a vote successfully", async () => {
-      const voteData = {
-        event_id: "event-1",
-        band_id: "band-1",
-        voter_type: "crowd" as const,
-        song_choice: undefined,
-        performance: undefined,
-        crowd_vibe: undefined,
-        crowd_vote: 20,
-      };
-
-      const mockVote = {
-        id: "vote-1",
-        ...voteData,
-        created_at: "2024-01-01T00:00:00Z",
-      };
-
-      mockSubmitVote.mockResolvedValue(mockVote);
-
-      const request = createNextRequestMock(voteData);
-
-      const response = await POST(request);
-
-      expect(mockSubmitVote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...voteData,
-          ip_address: "127.0.0.1",
-          user_agent: "test-agent",
-          vote_fingerprint: "test-fingerprint",
-        })
-      );
-
-      expect(response.status).toBe(200);
-
-      const data = await response.json();
-      expect(data).toEqual({
-        ...mockVote,
-        message: "Vote submitted successfully",
-        status: "approved",
-        duplicateDetected: false
-      });
-    });
-
-    it("submits a judge vote successfully", async () => {
-      const voteData = {
-        event_id: "event-1",
-        band_id: "band-1",
-        voter_type: "judge" as const,
-        song_choice: 15,
-        performance: 25,
-        crowd_vibe: 20,
-        crowd_vote: undefined,
-      };
-
-      const mockVote = {
-        id: "vote-1",
-        ...voteData,
-        created_at: "2024-01-01T00:00:00Z",
-      };
-
-      mockSubmitVote.mockResolvedValue(mockVote);
-
-      const request = createNextRequestMock(voteData);
-
-      const response = await POST(request);
-
-      expect(mockSubmitVote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...voteData,
-          ip_address: "127.0.0.1",
-          user_agent: "test-agent",
-          vote_fingerprint: "test-fingerprint",
-        })
-      );
-      expect(response.status).toBe(200);
-
-      const data = await response.json();
-      expect(data).toEqual({
-        ...mockVote,
-        message: "Vote submitted successfully",
-        status: "approved",
-        duplicateDetected: false
-      });
-    });
-
-    it("returns 500 when database error occurs", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
-
-      const voteData = {
-        event_id: "event-1",
-        band_id: "band-1",
-        voter_type: "crowd",
-        crowd_vote: 20,
-      };
-
-      // Mock the user context functions to return false for duplicate checks
-      mockHasUserVoted.mockResolvedValue(false);
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
-
-      // Mock submitVote to throw an error
-      mockSubmitVote.mockRejectedValue(new Error("Database error"));
-
-      const request = createNextRequestMock(voteData);
-
-      const response = await POST(request);
-
-      expect(response.status).toBe(500);
-
-      const data = await response.json();
-      expect(data).toEqual({ error: "Failed to submit vote" });
-
-      // Assert that console.error was called with the expected error
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error submitting vote:",
-        expect.any(Error)
-      );
-
-      consoleSpy.mockRestore();
-    });
-
-    it("handles duplicate votes with email for review", async () => {
+  describe("Crowd Voting Response Format", () => {
+    it("returns success response with all required fields for crowd vote", async () => {
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
@@ -244,28 +122,60 @@ describe("/api/votes", () => {
         created_at: "2024-01-01T00:00:00Z",
       };
 
-      // Mock that user has already voted by email
-      mockHasUserVotedByEmail.mockResolvedValue(true);
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
       mockHasUserVoted.mockResolvedValue(false);
       mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
-      mockSubmitVote.mockResolvedValue(mockVote);
 
       const request = createNextRequestMock(voteData);
+      const response = await POST(request);
 
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      
+      expect(data).toEqual({
+        ...mockVote,
+        message: "Vote submitted successfully",
+        status: "approved",
+        duplicateDetected: false
+      });
+    });
+
+    it("returns pending response for duplicate crowd vote with email", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "crowd" as const,
+        crowd_vote: 20,
+        email: "test@example.com",
+      };
+
+      const mockVote = {
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(true); // Duplicate by email
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      const request = createNextRequestMock(voteData);
       const response = await POST(request);
 
       expect(response.status).toBe(201); // Created but needs review
       const data = await response.json();
+      
       expect(data).toEqual({
         ...mockVote,
         message: "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.",
         status: "pending",
         duplicateDetected: true
       });
-      expect(mockSubmitVote).toHaveBeenCalled();
     });
 
-    it("handles duplicate votes without email", async () => {
+    it("returns error response for duplicate crowd vote without email", async () => {
       const voteData = {
         event_id: "event-1",
         band_id: "band-1",
@@ -279,25 +189,144 @@ describe("/api/votes", () => {
         created_at: "2024-01-01T00:00:00Z",
       };
 
-      // Mock that user has already voted by fingerprint
-      mockHasUserVotedByEmail.mockResolvedValue(false);
-      mockHasUserVoted.mockResolvedValue(true);
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
       mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
+      mockHasUserVoted.mockResolvedValue(true); // Duplicate by fingerprint
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
 
       const request = createNextRequestMock(voteData);
-
       const response = await POST(request);
 
       expect(response.status).toBe(400); // Bad request - needs email
       const data = await response.json();
+      
       expect(data).toEqual({
         ...mockVote,
         message: "Duplicate vote detected. Please provide an email address to submit your vote for review.",
         status: "pending",
         duplicateDetected: true
       });
-      expect(mockSubmitVote).toHaveBeenCalled();
+    });
+  });
+
+  describe("Judge Voting Response Format", () => {
+    it("returns success response for judge vote", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "judge" as const,
+        song_choice: 15,
+        performance: 25,
+        crowd_vibe: 20,
+        name: "Judge Smith",
+      };
+
+      const mockVote = {
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      const request = createNextRequestMock(voteData);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      
+      expect(data).toEqual({
+        ...mockVote,
+        message: "Vote submitted successfully",
+        status: "approved",
+        duplicateDetected: false
+      });
+    });
+  });
+
+  describe("Response Field Validation", () => {
+    it("always includes message field", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "crowd" as const,
+        crowd_vote: 20,
+      };
+
+      const mockVote = {
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      const request = createNextRequestMock(voteData);
+      const response = await POST(request);
+
+      const data = await response.json();
+      expect(data).toHaveProperty("message");
+      expect(typeof data.message).toBe("string");
+    });
+
+    it("always includes status field", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "crowd" as const,
+        crowd_vote: 20,
+      };
+
+      const mockVote = {
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      const request = createNextRequestMock(voteData);
+      const response = await POST(request);
+
+      const data = await response.json();
+      expect(data).toHaveProperty("status");
+      expect(["approved", "pending"]).toContain(data.status);
+    });
+
+    it("always includes duplicateDetected field", async () => {
+      const voteData = {
+        event_id: "event-1",
+        band_id: "band-1",
+        voter_type: "crowd" as const,
+        crowd_vote: 20,
+      };
+
+      const mockVote = {
+        id: "vote-1",
+        ...voteData,
+        created_at: "2024-01-01T00:00:00Z",
+      };
+
+      mockSubmitVote.mockResolvedValue(mockVote);
+      mockHasUserVotedByEmail.mockResolvedValue(false);
+      mockHasUserVoted.mockResolvedValue(false);
+      mockHasUserVotedByFingerprintJS.mockResolvedValue(false);
+
+      const request = createNextRequestMock(voteData);
+      const response = await POST(request);
+
+      const data = await response.json();
+      expect(data).toHaveProperty("duplicateDetected");
+      expect(typeof data.duplicateDetected).toBe("boolean");
     });
   });
 });

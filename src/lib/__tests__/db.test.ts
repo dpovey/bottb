@@ -299,7 +299,10 @@ describe("Database Functions", () => {
         undefined, // vote_fingerprint
         undefined, // fingerprintjs_visitor_id
         undefined, // fingerprintjs_confidence
-        undefined // fingerprintjs_confidence_comment
+        undefined, // fingerprintjs_confidence_comment
+        undefined, // email
+        undefined, // name
+        "approved" // status
       );
       expect(result).toEqual(mockVote);
     });

@@ -34,10 +34,15 @@ export default function CrowdVotingPage() {
   const eventId = params.eventId as string;
   const [bands, setBands] = useState<Band[]>([]);
   const [selectedBand, setSelectedBand] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [duplicateError, setDuplicateError] = useState<string>("");
+  const [voteStatus, setVoteStatus] = useState<"approved" | "pending">(
+    "approved"
+  );
   const [previousVote, setPreviousVote] = useState<{
     bandId: string;
     bandName: string;
@@ -114,6 +119,7 @@ export default function CrowdVotingPage() {
           band_id: selectedBand,
           voter_type: "crowd",
           crowd_vote: 20, // Crowd gets full points for crowd vote
+          email: email || undefined, // Only send email if provided
           // Only send essential fingerprint data, not all components
           fingerprintjs_visitor_id: fingerprintData?.visitorId,
           fingerprintjs_confidence: fingerprintData?.confidence,
@@ -121,13 +127,20 @@ export default function CrowdVotingPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         // Cookie is set by server with vote data
+        setVoteStatus(data.status || "approved");
         setIsSubmitted(true);
       } else {
-        if (response.status === 409) {
+        if (response.status === 400 && data.duplicateDetected) {
+          // Duplicate detected but no email provided
+          setDuplicateError(data.message);
+          return;
+        } else if (response.status === 409) {
           setHasAlreadyVoted(true);
-          return; // Exit early for duplicate vote
+          return; // Exit early for other duplicate vote scenarios
         } else {
           setHasAlreadyVoted(true);
           return; // Exit early for other errors
@@ -145,12 +158,16 @@ export default function CrowdVotingPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
-          <div className="text-6xl mb-4">✅</div>
+          <div className="text-6xl mb-4">
+            {voteStatus === "pending" ? "⏳" : "✅"}
+          </div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            Vote Submitted!
+            {voteStatus === "pending" ? "Vote Under Review" : "Vote Submitted!"}
           </h2>
           <p className="text-gray-300">
-            Your vote has been recorded. Thank you for participating!
+            {voteStatus === "pending"
+              ? "Your vote has been recorded and will be reviewed for approval. Thank you for participating!"
+              : "Your vote has been recorded. Thank you for participating!"}
           </p>
         </div>
       </div>
@@ -196,6 +213,19 @@ export default function CrowdVotingPage() {
           <h2 className="text-2xl font-bold text-white mb-6">
             Select Your Favorite Band
           </h2>
+
+          {duplicateError && (
+            <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <div className="text-yellow-400 mr-3">⚠️</div>
+                <div>
+                  <p className="text-yellow-100 font-medium">
+                    {duplicateError}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {previousVote && (
             <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-4 mb-6">
@@ -267,6 +297,28 @@ export default function CrowdVotingPage() {
                 </div>
               </label>
             ))}
+          </div>
+
+          {/* Email input field */}
+          <div className="mt-6">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
+              Email (Optional)
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email to receive updates"
+              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Providing your email is optional and helps us prevent duplicate
+              votes.
+            </p>
           </div>
 
           <button

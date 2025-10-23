@@ -15,6 +15,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protect judge voting routes
+  if (nextUrl.pathname.startsWith("/vote/judge")) {
+    if (!session?.user || !session.user.isAdmin) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+  }
+
   // Redirect from login page if already authenticated as admin
   if (
     nextUrl.pathname === "/admin/login" &&
@@ -28,5 +35,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/vote/judge/:path*"],
 };

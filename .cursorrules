@@ -19,6 +19,7 @@
 - Prefer ARIA attributes for element selection over data-testid
 - Use semantic queries (getByRole, getByLabelText, getByText) when possible
 - Mock external dependencies (database, API calls) using MSW or Jest mocks
+- Prefer MSW to global fetch mock
 - Test user interactions and behavior, not implementation details
 - Use userEvent for simulating user interactions
 - Write descriptive test names that explain the expected behavior

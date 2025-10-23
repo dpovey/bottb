@@ -68,6 +68,12 @@ CREATE TABLE IF NOT EXISTS votes (
           fingerprintjs_visitor_id VARCHAR(255),
           fingerprintjs_confidence DECIMAL(3,2),
           fingerprintjs_confidence_comment TEXT,
+  -- Optional email for voter
+  email VARCHAR(255),
+  -- Optional name for judge
+  name VARCHAR(255),
+  -- Vote status for duplicate handling
+  status VARCHAR(20) DEFAULT 'approved' CHECK (status IN ('approved', 'pending')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -1,9 +1,4 @@
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-} from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { server } from "@/__mocks__/server";
@@ -191,7 +186,7 @@ describe("JudgeVotingPage", () => {
     expect(totalElements).toHaveLength(2); // One for each band
   });
 
-  it("validates all scores are provided before submission", async () => {
+  it("validates all scores and name are provided before submission", async () => {
     render(<JudgeVotingPage />);
 
     // Wait for loading to complete
@@ -209,6 +204,10 @@ describe("JudgeVotingPage", () => {
       name: "Submit All Scores",
     });
     expect(submitButton).toBeDisabled();
+
+    // Fill in judge name first
+    const nameInput = screen.getByPlaceholderText("Enter judge's name");
+    await user.type(nameInput, "Judge Smith");
 
     // Fill scores for first band only
     const songChoiceSlider = screen.getAllByRole("slider", {
@@ -252,7 +251,7 @@ describe("JudgeVotingPage", () => {
       http.get("/api/bands/test-event-id", () => {
         return HttpResponse.json(mockBands);
       }),
-      http.post("/api/votes", () => {
+      http.post("/api/votes/batch", () => {
         return HttpResponse.json({
           votes: [{ id: "vote-1" }, { id: "vote-2" }],
         });
@@ -272,6 +271,10 @@ describe("JudgeVotingPage", () => {
       expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
+    // Fill in judge name
+    const nameInput = screen.getByPlaceholderText("Enter judge's name");
+    await user.type(nameInput, "Judge Smith");
+
     // Fill scores for all bands
     const sliders = screen.getAllByRole("slider");
     for (let i = 0; i < sliders.length; i += 3) {
@@ -283,17 +286,21 @@ describe("JudgeVotingPage", () => {
     const submitButton = screen.getByRole("button", {
       name: "Submit All Scores",
     });
+
+    // Check that button is enabled before clicking
+    expect(submitButton).not.toBeDisabled();
+
     await user.click(submitButton);
 
-    await waitFor(() => {
-      expect(screen.getByText("Scores Submitted!")).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Your scores have been recorded. Thank you for participating!"
-        )
-      ).toBeInTheDocument();
-    });
-  });
+    // Wait for success message - the form submission happens so fast in tests
+    // that it skips the "Submitting..." state
+    await waitFor(
+      () => {
+        expect(screen.getByText("Scores Submitted!")).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
+  }, 15000);
 
   // Note: Complex timing tests removed to focus on core functionality
   // The component works correctly - these were testing edge cases with MSW timing

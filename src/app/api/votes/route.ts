@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { submitVote, updateVote } from "@/lib/db";
+import { submitVote, updateVote, hasUserVotedByEmail } from "@/lib/db";
 import { sql } from "@vercel/postgres";
 import {
   extractUserContext,
@@ -21,6 +21,7 @@ async function handleVote(request: NextRequest) {
       fingerprintjs_visitor_id,
       fingerprintjs_confidence,
       fingerprintjs_confidence_comment,
+      email,
     } = await request.json();
 
     // Extract user context from request
@@ -40,35 +41,45 @@ async function handleVote(request: NextRequest) {
 
     // Check for voting cookie first - if exists, allow update
     const existingCookie = request.cookies.get(`voted_${event_id}`);
-    // Debug logging removed for tests
+    
+    // Determine vote status based on duplicate detection
+    let voteStatus: "approved" | "pending" = "approved";
+    let duplicateDetected = false;
 
-    // Only check fingerprints if no cookie exists (new vote)
+    // Only check for duplicates if no cookie exists (new vote)
     if (!existingCookie) {
-      // Check for duplicate votes using fingerprints (these should block)
-      if (userContext.fingerprintjs_visitor_id) {
-        const alreadyVotedByFingerprintJS = await hasUserVotedByFingerprintJS(
-          event_id,
-          userContext.fingerprintjs_visitor_id
-        );
-        if (alreadyVotedByFingerprintJS) {
-          return NextResponse.json(
-            { error: "You have already voted for this event" },
-            { status: 409 }
-          );
+      // Check for duplicate votes using email (if provided)
+      if (email) {
+        const alreadyVotedByEmail = await hasUserVotedByEmail(event_id, email);
+        if (alreadyVotedByEmail) {
+          duplicateDetected = true;
+          voteStatus = "pending";
         }
       }
 
-      // Fallback to custom fingerprint
-      if (userContext.vote_fingerprint) {
-        const alreadyVoted = await hasUserVoted(
-          event_id,
-          userContext.vote_fingerprint
-        );
-        if (alreadyVoted) {
-          return NextResponse.json(
-            { error: "You have already voted for this event" },
-            { status: 409 }
+      // Check for duplicate votes using fingerprints (only if no email duplicate)
+      if (!duplicateDetected) {
+        if (userContext.fingerprintjs_visitor_id) {
+          const alreadyVotedByFingerprintJS = await hasUserVotedByFingerprintJS(
+            event_id,
+            userContext.fingerprintjs_visitor_id
           );
+          if (alreadyVotedByFingerprintJS) {
+            duplicateDetected = true;
+            voteStatus = "pending";
+          }
+        }
+
+        // Fallback to custom fingerprint
+        if (!duplicateDetected && userContext.vote_fingerprint) {
+          const alreadyVoted = await hasUserVoted(
+            event_id,
+            userContext.vote_fingerprint
+          );
+          if (alreadyVoted) {
+            duplicateDetected = true;
+            voteStatus = "pending";
+          }
         }
       }
     }
@@ -81,6 +92,8 @@ async function handleVote(request: NextRequest) {
       performance,
       crowd_vibe,
       crowd_vote,
+      email,
+      status: voteStatus,
       ...userContext,
     };
 
@@ -89,8 +102,29 @@ async function handleVote(request: NextRequest) {
       ? await updateVote(voteWithContext)
       : await submitVote(voteWithContext);
 
-    // Always set/update the voting cookie with vote data
-    const response = NextResponse.json(vote);
+    // Prepare response based on duplicate detection
+    let responseMessage = "Vote submitted successfully";
+    let responseStatus = 200;
+
+    if (duplicateDetected) {
+      if (email) {
+        responseMessage = "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.";
+        responseStatus = 201; // Created but needs review
+      } else {
+        responseMessage = "Duplicate vote detected. Please provide an email address to submit your vote for review.";
+        responseStatus = 400; // Bad request - needs email
+      }
+    }
+
+    const response = NextResponse.json(
+      { 
+        ...vote, 
+        message: responseMessage,
+        status: voteStatus,
+        duplicateDetected 
+      },
+      { status: responseStatus }
+    );
 
     // Get band name from database
     const { rows: bandRows } = await sql`

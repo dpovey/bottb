@@ -3,11 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import {
-  getClientUserContext,
-  setVotingCookie,
-  getFingerprintJSData,
-} from "@/lib/user-context-client";
+// No fingerprinting needed for judge voting
 
 interface Band {
   id: string;
@@ -39,10 +35,11 @@ export default function JudgeVotingPage() {
   const eventId = params.eventId as string;
   const [bands, setBands] = useState<Band[]>([]);
   const [scores, setScores] = useState<Record<string, JudgeScores>>({});
+  const [name, setName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [duplicateError, setDuplicateError] = useState<string>("");
 
   useEffect(() => {
     const fetchBands = async () => {
@@ -94,15 +91,18 @@ export default function JudgeVotingPage() {
   };
 
   const isFormValid = () => {
-    return bands.every((band) => {
-      const bandScores = scores[band.id];
-      return (
-        bandScores &&
-        bandScores.song_choice > 0 &&
-        bandScores.performance > 0 &&
-        bandScores.crowd_vibe > 0
-      );
-    });
+    return (
+      name.trim() !== "" && // Name is required
+      bands.every((band) => {
+        const bandScores = scores[band.id];
+        return (
+          bandScores &&
+          bandScores.song_choice > 0 &&
+          bandScores.performance > 0 &&
+          bandScores.crowd_vibe > 0
+        );
+      })
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,22 +111,14 @@ export default function JudgeVotingPage() {
 
     setIsSubmitting(true);
     try {
-      // Get client-side user context
-      const clientContext = getClientUserContext();
-
-      // Get FingerprintJS data
-      let fingerprintData;
-      try {
-        fingerprintData = await getFingerprintJSData();
-      } catch (error) {
-        console.warn("FingerprintJS failed, continuing without it:", error);
-        fingerprintData = null;
-      }
+      // No fingerprinting needed for judge voting - admins can vote multiple times
 
       const votes = bands.map((band) => ({
         event_id: eventId,
         band_id: band.id,
         voter_type: "judge" as const,
+        name: name, // Name is required for judges
+        vote_fingerprint: `${eventId}-${name.toLowerCase().trim()}-${band.id}`, // Unique per event, judge, and band
         ...scores[band.id],
       }));
 
@@ -134,42 +126,30 @@ export default function JudgeVotingPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Send client context as headers
-          "X-Screen-Resolution": clientContext.screen_resolution || "",
-          "X-Timezone": clientContext.timezone || "",
-          "X-Language": clientContext.language || "",
-          // Send FingerprintJS visitor ID and confidence as headers (small data)
-          "X-FingerprintJS-Visitor-ID": fingerprintData?.visitorId || "",
-          "X-FingerprintJS-Confidence":
-            fingerprintData?.confidence?.toString() || "",
-          "X-FingerprintJS-Confidence-Comment":
-            fingerprintData?.confidenceComment || "",
         },
         body: JSON.stringify({
           votes,
-          // Only send essential fingerprint data, not all components
-          fingerprintjs_visitor_id: fingerprintData?.visitorId,
-          fingerprintjs_confidence: fingerprintData?.confidence,
-          fingerprintjs_confidence_comment: fingerprintData?.confidenceComment,
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        // Set voting cookie to prevent future votes
-        setVotingCookie(eventId);
+        // No cookie needed for judge voting - admins can vote multiple times
         setIsSubmitted(true);
       } else {
         if (response.status === 409) {
-          setHasAlreadyVoted(true);
-          return; // Exit early for duplicate vote
+          // Duplicate judge vote
+          setDuplicateError(data.error);
+          return;
         } else {
-          setHasAlreadyVoted(true);
-          return; // Exit early for other errors
+          console.error("Error submitting votes:", response.status);
+          // Show error but don't block future submissions
         }
       }
     } catch (error) {
       console.error("Error submitting votes:", error);
-      setHasAlreadyVoted(true);
+      // Show error but don't block future submissions
     } finally {
       setIsSubmitting(false);
     }
@@ -183,24 +163,21 @@ export default function JudgeVotingPage() {
           <h2 className="text-3xl font-bold text-white mb-4">
             Scores Submitted!
           </h2>
-          <p className="text-gray-300">
-            Your scores have been recorded. Thank you for participating!
+          <p className="text-gray-300 mb-6">
+            Your scores have been recorded. Thank you for judging!
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (hasAlreadyVoted) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
-          <div className="text-6xl mb-4">🚫</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Already Voted</h2>
-          <p className="text-gray-300">
-            It looks like you may have already voted for this event. Each judge
-            can only vote once.
-          </p>
+          <button
+            onClick={() => {
+              // Reset form for next judge
+              setName("");
+              setScores({});
+              setIsSubmitted(false);
+              setIsSubmitting(false);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition-colors"
+          >
+            Enter Next Judge&apos;s Scores
+          </button>
         </div>
       </div>
     );
@@ -233,6 +210,20 @@ export default function JudgeVotingPage() {
             <h2 className="text-2xl font-bold text-white mb-4">
               Judging Criteria
             </h2>
+
+            {duplicateError && (
+              <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 mb-6">
+                <div className="flex items-center">
+                  <div className="text-yellow-400 mr-3">⚠️</div>
+                  <div>
+                    <p className="text-yellow-100 font-medium">
+                      {duplicateError}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-3 gap-4 text-sm">
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
@@ -263,7 +254,25 @@ export default function JudgeVotingPage() {
             </div>
           </div>
 
-          <div className="space-y-8">
+          {/* Name input field */}
+          <div className="mt-6">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
+              Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter judge's name"
+              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="space-y-8 mt-8">
             {bands.map((band, index) => (
               <div key={band.id} className="bg-white/10 rounded-xl p-6">
                 <div className="flex items-center space-x-4 mb-4">

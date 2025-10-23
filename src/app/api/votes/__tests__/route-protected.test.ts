@@ -14,6 +14,7 @@ import {
 vi.mock("@/lib/db", () => ({
   submitVote: vi.fn(),
   updateVote: vi.fn(),
+  hasUserVotedByEmail: vi.fn(),
 }));
 
 // Mock user context functions
@@ -62,7 +63,10 @@ import { sql } from "@vercel/postgres";
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
 // Helper function to create NextRequest mock
-function createNextRequestMock(voteData: Record<string, unknown>, headers: Record<string, string> = {}) {
+function createNextRequestMock(
+  voteData: Record<string, unknown>,
+  headers: Record<string, string> = {}
+) {
   const request = createRequest({
     method: "POST",
     url: "/api/votes",
@@ -137,7 +141,12 @@ describe("/api/votes (Protected)", () => {
       expect(response.status).toBe(200);
 
       const data = await response.json();
-      expect(data).toEqual(mockVote);
+      expect(data).toEqual({
+        ...mockVote,
+        message: "Vote submitted successfully",
+        status: "approved",
+        duplicateDetected: false,
+      });
     });
 
     it("handles rate limiting correctly", async () => {
@@ -165,9 +174,7 @@ describe("/api/votes (Protected)", () => {
         });
       });
 
-      const responses = await Promise.all(
-        requests.map((req) => POST(req))
-      );
+      const responses = await Promise.all(requests.map((req) => POST(req)));
 
       // First 10 should succeed
       for (let i = 0; i < 10; i++) {
