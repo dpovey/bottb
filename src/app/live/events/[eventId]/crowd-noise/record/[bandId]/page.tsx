@@ -202,14 +202,15 @@ export default function CrowdNoiseRecordPage() {
       const bestMicrophoneId =
         sortedMicrophones.length > 0 ? sortedMicrophones[0].deviceId : null;
 
-      // Set the selected microphone ID
-      if (bestMicrophoneId) {
+      // Set the selected microphone ID only if none is currently selected
+      if (bestMicrophoneId && !selectedMicrophoneId) {
         setSelectedMicrophoneId(bestMicrophoneId);
       }
 
+      const microphoneId = selectedMicrophoneId || bestMicrophoneId;
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: bestMicrophoneId
-          ? { deviceId: { exact: bestMicrophoneId } }
+        audio: microphoneId
+          ? { deviceId: { exact: microphoneId } }
           : {
               echoCancellation: true,
               noiseSuppression: true,
