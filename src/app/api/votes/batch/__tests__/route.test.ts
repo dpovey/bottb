@@ -144,8 +144,19 @@ describe("/api/votes/batch", () => {
     it("returns 400 for invalid votes data", async () => {
       const voteData = { votes: "invalid" };
 
-      const request = createNextRequestMock(voteData as any);
-      const response = await POST(request);
+      const request = createRequest({
+        method: "POST",
+        url: "/api/votes/batch",
+        body: voteData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // Add required NextRequest properties
+      request.json = vi.fn().mockResolvedValue(voteData);
+
+      const response = await POST(request as unknown as NextRequest);
 
       expect(response.status).toBe(400);
       const data = await response.json();

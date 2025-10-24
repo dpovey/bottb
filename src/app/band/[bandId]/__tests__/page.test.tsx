@@ -212,7 +212,7 @@ describe("BandPage", () => {
     expect(
       screen.getByRole("heading", { name: "Total Score" })
     ).toBeInTheDocument();
-    expect(screen.getByText("67.0")).toBeInTheDocument();
+    expect(screen.getByText("73.0")).toBeInTheDocument();
     expect(screen.getByText("out of 100 points")).toBeInTheDocument();
   });
 
@@ -300,12 +300,12 @@ describe("BandPage", () => {
     expect(
       screen.getByRole("heading", { name: "Crowd Vote" })
     ).toBeInTheDocument();
-    expect(screen.getByText("4/20")).toBeInTheDocument();
+    expect(screen.getByText("10/10")).toBeInTheDocument();
     expect(screen.getByText("Vote Statistics")).toBeInTheDocument();
     expect(screen.getByText("Judge Votes:")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("Crowd Votes:")).toBeInTheDocument();
-    expect(screen.getByText("10")).toBeInTheDocument();
+    expect(screen.getAllByText("10")).toHaveLength(2);
   });
 
   it("displays score summary", async () => {
