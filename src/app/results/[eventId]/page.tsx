@@ -270,10 +270,10 @@ export default async function ResultsPage({
                 <th className="text-center py-4 px-2">Song Choice</th>
                 <th className="text-center py-4 px-2">Performance</th>
                 <th className="text-center py-4 px-2">Crowd Vibe</th>
-                <th className="text-center py-4 px-2">Crowd Vote</th>
+                <th className="text-center py-4 px-2">Crowd Vote Score</th>
+                <th className="text-center py-4 px-2">#Votes</th>
                 <th className="text-center py-4 px-2">Crowd Noise</th>
                 <th className="text-center py-4 px-2">Total</th>
-                <th className="text-center py-4 px-2">Votes</th>
               </tr>
             </thead>
             <tbody>
@@ -328,19 +328,25 @@ export default async function ResultsPage({
                   <td className="py-4 px-2 text-center">
                     {Math.round(band.crowdScore || 0)}
                   </td>
+                  <td className="py-4 px-2 text-center text-sm text-gray-400">
+                    {band.crowd_vote_count}
+                  </td>
                   <td className="py-4 px-2 text-center">
                     {Math.round(band.crowdNoiseScore || 0)}
                   </td>
                   <td className="py-4 px-2 text-center font-bold">
                     {Number(band.totalScore || 0).toFixed(1)}
                   </td>
-                  <td className="py-4 px-2 text-center text-sm text-gray-300">
-                    {band.judge_vote_count}J, {band.crowd_vote_count}C
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="mt-6 text-right">
+          <p className="text-sm text-gray-300">
+            👥 Total voters:{" "}
+            {bandResults.length > 0 ? bandResults[0].total_crowd_votes || 0 : 0}
+          </p>
         </div>
       </div>
 
