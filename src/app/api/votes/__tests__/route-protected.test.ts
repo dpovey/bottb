@@ -15,6 +15,7 @@ vi.mock("@/lib/db", () => ({
   submitVote: vi.fn(),
   updateVote: vi.fn(),
   hasUserVotedByEmail: vi.fn(),
+  getEventById: vi.fn(),
 }));
 
 // Mock user context functions
@@ -58,6 +59,10 @@ const mockHasUserVoted = hasUserVoted as ReturnType<typeof vi.fn>;
 const mockHasUserVotedByFingerprintJS =
   hasUserVotedByFingerprintJS as ReturnType<typeof vi.fn>;
 
+// Import and mock getEventById
+import { getEventById } from "@/lib/db";
+const mockGetEventById = getEventById as ReturnType<typeof vi.fn>;
+
 // Import sql after mocking
 import { sql } from "@vercel/postgres";
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
@@ -91,6 +96,14 @@ function createNextRequestMock(
 describe("/api/votes (Protected)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock getEventById to return a voting event by default
+    mockGetEventById.mockResolvedValue({
+      id: "event-1",
+      name: "Test Event",
+      status: "voting",
+      is_active: true,
+    });
 
     // Mock the band name query
     mockSql.mockResolvedValue({

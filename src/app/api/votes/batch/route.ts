@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { submitVote } from "@/lib/db";
+import { submitVote, getEventById } from "@/lib/db";
 import { sql } from "@vercel/postgres";
 import { withAdminProtection } from "@/lib/api-protection";
 
@@ -16,6 +16,23 @@ async function handleBatchVotes(request: NextRequest) {
 
     if (votes.length === 0) {
       return NextResponse.json({ votes: [] });
+    }
+
+    // Validate event status before allowing votes
+    const eventId = votes[0].event_id;
+    const event = await getEventById(eventId);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    if (event.status !== "voting") {
+      return NextResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: event.status,
+        },
+        { status: 403 }
+      );
     }
 
     // No fingerprinting for judge voting - admins can vote multiple times

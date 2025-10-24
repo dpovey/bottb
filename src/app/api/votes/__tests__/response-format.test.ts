@@ -15,6 +15,7 @@ vi.mock("@/lib/db", () => ({
   submitVote: vi.fn(),
   updateVote: vi.fn(),
   hasUserVotedByEmail: vi.fn(),
+  getEventById: vi.fn(),
 }));
 
 // Mock user context functions
@@ -58,9 +59,10 @@ const mockHasUserVoted = hasUserVoted as ReturnType<typeof vi.fn>;
 const mockHasUserVotedByFingerprintJS =
   hasUserVotedByFingerprintJS as ReturnType<typeof vi.fn>;
 
-// Import and mock hasUserVotedByEmail
-import { hasUserVotedByEmail } from "@/lib/db";
+// Import and mock hasUserVotedByEmail and getEventById
+import { hasUserVotedByEmail, getEventById } from "@/lib/db";
 const mockHasUserVotedByEmail = hasUserVotedByEmail as ReturnType<typeof vi.fn>;
+const mockGetEventById = getEventById as ReturnType<typeof vi.fn>;
 
 // Import sql after mocking
 import { sql } from "@vercel/postgres";
@@ -95,6 +97,14 @@ function createNextRequestMock(
 describe("Vote API Response Format", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock getEventById to return a voting event by default
+    mockGetEventById.mockResolvedValue({
+      id: "event-1",
+      name: "Test Event",
+      status: "voting",
+      is_active: true,
+    });
 
     // Mock the band name query
     mockSql.mockResolvedValue({
@@ -132,12 +142,12 @@ describe("Vote API Response Format", () => {
 
       expect(response.status).toBe(200);
       const data = await response.json();
-      
+
       expect(data).toEqual({
         ...mockVote,
         message: "Vote submitted successfully",
         status: "approved",
-        duplicateDetected: false
+        duplicateDetected: false,
       });
     });
 
@@ -166,12 +176,13 @@ describe("Vote API Response Format", () => {
 
       expect(response.status).toBe(201); // Created but needs review
       const data = await response.json();
-      
+
       expect(data).toEqual({
         ...mockVote,
-        message: "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.",
+        message:
+          "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.",
         status: "pending",
-        duplicateDetected: true
+        duplicateDetected: true,
       });
     });
 
@@ -199,12 +210,13 @@ describe("Vote API Response Format", () => {
 
       expect(response.status).toBe(400); // Bad request - needs email
       const data = await response.json();
-      
+
       expect(data).toEqual({
         ...mockVote,
-        message: "Duplicate vote detected. Please provide an email address to submit your vote for review.",
+        message:
+          "Duplicate vote detected. Please provide an email address to submit your vote for review.",
         status: "pending",
-        duplicateDetected: true
+        duplicateDetected: true,
       });
     });
   });
@@ -237,12 +249,12 @@ describe("Vote API Response Format", () => {
 
       expect(response.status).toBe(200);
       const data = await response.json();
-      
+
       expect(data).toEqual({
         ...mockVote,
         message: "Vote submitted successfully",
         status: "approved",
-        duplicateDetected: false
+        duplicateDetected: false,
       });
     });
   });

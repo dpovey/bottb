@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { submitVote, updateVote, hasUserVotedByEmail } from "@/lib/db";
+import {
+  submitVote,
+  updateVote,
+  hasUserVotedByEmail,
+  getEventById,
+} from "@/lib/db";
 import { sql } from "@vercel/postgres";
 import {
   extractUserContext,
@@ -24,6 +29,22 @@ async function handleVote(request: NextRequest) {
       email,
     } = await request.json();
 
+    // Validate event status before allowing votes
+    const event = await getEventById(event_id);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    if (event.status !== "voting") {
+      return NextResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: event.status,
+        },
+        { status: 403 }
+      );
+    }
+
     // Extract user context from request
     const userContext = extractUserContext(request);
 
@@ -41,7 +62,7 @@ async function handleVote(request: NextRequest) {
 
     // Check for voting cookie first - if exists, allow update
     const existingCookie = request.cookies.get(`voted_${event_id}`);
-    
+
     // Determine vote status based on duplicate detection
     let voteStatus: "approved" | "pending" = "approved";
     let duplicateDetected = false;
@@ -108,20 +129,22 @@ async function handleVote(request: NextRequest) {
 
     if (duplicateDetected) {
       if (email) {
-        responseMessage = "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.";
+        responseMessage =
+          "Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.";
         responseStatus = 201; // Created but needs review
       } else {
-        responseMessage = "Duplicate vote detected. Please provide an email address to submit your vote for review.";
+        responseMessage =
+          "Duplicate vote detected. Please provide an email address to submit your vote for review.";
         responseStatus = 400; // Bad request - needs email
       }
     }
 
     const response = NextResponse.json(
-      { 
-        ...vote, 
+      {
+        ...vote,
         message: responseMessage,
         status: voteStatus,
-        duplicateDetected 
+        duplicateDetected,
       },
       { status: responseStatus }
     );

@@ -33,6 +33,31 @@ export const handlers = [
       return HttpResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
+    // Return different statuses for testing
+    if (eventId === "upcoming-event") {
+      return HttpResponse.json({
+        id: eventId,
+        name: "Upcoming Event",
+        date: "2024-12-25T18:30:00Z",
+        location: "Test Venue",
+        status: "upcoming",
+        is_active: false,
+        created_at: "2024-01-01T00:00:00Z",
+      });
+    }
+
+    if (eventId === "finalized-event") {
+      return HttpResponse.json({
+        id: eventId,
+        name: "Finalized Event",
+        date: "2024-12-25T18:30:00Z",
+        location: "Test Venue",
+        status: "finalized",
+        is_active: false,
+        created_at: "2024-01-01T00:00:00Z",
+      });
+    }
+
     return HttpResponse.json({
       id: eventId,
       name: "Test Event",
@@ -122,6 +147,31 @@ export const handlers = [
       return HttpResponse.json({ error: "Already Voted" }, { status: 400 });
     }
 
+    // Simulate status validation errors
+    if (body.event_id === "upcoming-event") {
+      return HttpResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: "upcoming",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (body.event_id === "finalized-event") {
+      return HttpResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: "finalized",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (body.event_id === "not-found-event") {
+      return HttpResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
     return HttpResponse.json({
       id: "vote-1",
       ...body,
@@ -140,6 +190,43 @@ export const handlers = [
       )
     ) {
       return HttpResponse.json({ error: "Already Voted" }, { status: 400 });
+    }
+
+    // Simulate status validation errors
+    if (
+      body.votes.some(
+        (vote: Record<string, unknown>) => vote.event_id === "upcoming-event"
+      )
+    ) {
+      return HttpResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: "upcoming",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (
+      body.votes.some(
+        (vote: Record<string, unknown>) => vote.event_id === "finalized-event"
+      )
+    ) {
+      return HttpResponse.json(
+        {
+          error: "Voting is not currently open for this event",
+          eventStatus: "finalized",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (
+      body.votes.some(
+        (vote: Record<string, unknown>) => vote.event_id === "not-found-event"
+      )
+    ) {
+      return HttpResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     return HttpResponse.json({

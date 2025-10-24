@@ -138,7 +138,17 @@ export default function JudgeVotingPage() {
         // No cookie needed for judge voting - admins can vote multiple times
         setIsSubmitted(true);
       } else {
-        if (response.status === 409) {
+        if (response.status === 403) {
+          // Event status validation error
+          setDuplicateError(
+            data.error || "Voting is not currently open for this event"
+          );
+          return;
+        } else if (response.status === 404) {
+          // Event not found
+          setDuplicateError("Event not found");
+          return;
+        } else if (response.status === 409) {
           // Duplicate judge vote
           setDuplicateError(data.error);
           return;

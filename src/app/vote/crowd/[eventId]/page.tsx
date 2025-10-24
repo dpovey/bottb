@@ -138,6 +138,16 @@ export default function CrowdVotingPage() {
           // Duplicate detected but no email provided
           setDuplicateError(data.message);
           return;
+        } else if (response.status === 403) {
+          // Event status validation error
+          setDuplicateError(
+            data.message || "Voting is not currently open for this event"
+          );
+          return;
+        } else if (response.status === 404) {
+          // Event not found
+          setDuplicateError("Event not found");
+          return;
         } else if (response.status === 409) {
           setHasAlreadyVoted(true);
           return; // Exit early for other duplicate vote scenarios
