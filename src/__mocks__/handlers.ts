@@ -22,6 +22,15 @@ export const handlers = [
         is_active: false,
         created_at: "2024-01-02T00:00:00Z",
       },
+      {
+        id: "event-3",
+        name: "Test Event 3",
+        date: "2023-12-10T00:00:00Z",
+        location: "Test Venue 3",
+        status: "finalized",
+        is_active: false,
+        created_at: "2023-01-01T00:00:00Z",
+      },
     ]);
   }),
 
@@ -266,5 +275,52 @@ export const handlers = [
         total_crowd_votes: 50,
       },
     ]);
+  }),
+
+  // Event status update API
+  http.patch("/api/events/:eventId/status", async ({ request, params }) => {
+    const { eventId } = params;
+    const body = (await request.json()) as { status: string };
+
+    // Return 404 for specific test cases
+    if (eventId === "non-existent") {
+      return HttpResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Return 400 for invalid status
+    if (
+      !body.status ||
+      !["upcoming", "voting", "finalized"].includes(body.status)
+    ) {
+      return HttpResponse.json(
+        {
+          error: "Invalid status. Must be 'upcoming', 'voting', or 'finalized'",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Return success response
+    return HttpResponse.json({
+      success: true,
+      message: `Event status updated to ${body.status}`,
+      event: {
+        id: eventId,
+        name: "Test Event",
+        location: "Test Location",
+        status: body.status,
+        date: "2024-01-01T00:00:00Z",
+        is_active: body.status === "voting",
+        created_at: "2024-01-01T00:00:00Z",
+      },
+    });
+  }),
+
+  // Fallback handler for unhandled requests
+  http.all("*", () => {
+    return HttpResponse.json(
+      { error: "No handler found for this request" },
+      { status: 404 }
+    );
   }),
 ];

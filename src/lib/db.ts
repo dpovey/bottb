@@ -233,6 +233,19 @@ export async function getEventById(eventId: string) {
   return rows[0] || null;
 }
 
+export async function updateEventStatus(
+  eventId: string,
+  status: "upcoming" | "voting" | "finalized"
+) {
+  const { rows } = await sql<Event>`
+    UPDATE events 
+    SET status = ${status}
+    WHERE id = ${eventId}
+    RETURNING *
+  `;
+  return rows[0] || null;
+}
+
 export async function getBandScores(eventId: string) {
   const { rows } = await sql`
     WITH total_votes AS (

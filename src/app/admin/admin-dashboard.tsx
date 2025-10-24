@@ -8,7 +8,7 @@ interface Event {
   id: string;
   name: string;
   location: string;
-  status: string;
+  status: "upcoming" | "voting" | "finalized";
   date: string;
 }
 
@@ -28,6 +28,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ session }: AdminDashboardProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -42,7 +43,8 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
         const eventsData = Array.isArray(data) ? data : [];
         setEvents(eventsData);
       } else {
-        console.error("Error fetching events:", response.statusText);
+        const errorData = await response.json();
+        console.error("Error fetching events:", response.status, errorData);
         setEvents([]);
       }
     } catch (error) {
@@ -50,6 +52,43 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
       setEvents([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (eventId: string, newStatus: string) => {
+    setUpdatingStatus(eventId);
+    try {
+      const response = await fetch(`/api/events/${eventId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update the local state
+        setEvents((prevEvents) =>
+          prevEvents.map((event) =>
+            event.id === eventId
+              ? {
+                  ...event,
+                  status: newStatus as "upcoming" | "voting" | "finalized",
+                }
+              : event
+          )
+        );
+        alert(`✅ ${result.message}`);
+      } else {
+        const error = await response.json();
+        alert(`❌ Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error updating event status:", error);
+      alert("❌ Failed to update event status");
+    } finally {
+      setUpdatingStatus(null);
     }
   };
 
@@ -100,17 +139,33 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
                   <p className="text-sm text-gray-400">{event.date}</p>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      event.status === "active"
-                        ? "bg-green-500/20 text-green-400"
-                        : event.status === "upcoming"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {event.status}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={event.status}
+                      onChange={(e) =>
+                        handleStatusChange(event.id, e.target.value)
+                      }
+                      disabled={updatingStatus === event.id}
+                      className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 ${
+                        event.status === "voting"
+                          ? "bg-green-500/30 text-green-300 border-green-400 hover:bg-green-500/40"
+                          : event.status === "upcoming"
+                          ? "bg-blue-500/30 text-blue-300 border-blue-400 hover:bg-blue-500/40"
+                          : "bg-gray-500/30 text-gray-300 border-gray-400 hover:bg-gray-500/40"
+                      } ${
+                        updatingStatus === event.id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer transition-all duration-200 hover:scale-105"
+                      }`}
+                    >
+                      <option value="upcoming">Upcoming</option>
+                      <option value="voting">Voting</option>
+                      <option value="finalized">Finalized</option>
+                    </select>
+                    {updatingStatus === event.id && (
+                      <span className="text-xs text-gray-400">Updating...</span>
+                    )}
+                  </div>
                   <Link
                     href={`/admin/events/${event.id}`}
                     className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"

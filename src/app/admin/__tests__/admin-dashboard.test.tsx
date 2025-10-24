@@ -112,15 +112,29 @@ describe("AdminDashboard", () => {
   it("shows correct status badges for different event statuses", async () => {
     render(<AdminDashboard session={mockSession} />);
 
-    await waitFor(() => {
-      // Voting event - gray badge
-      const votingStatus = screen.getByText("voting");
-      expect(votingStatus).toHaveClass("bg-gray-500/20", "text-gray-400");
+    await waitFor(
+      () => {
+        // Check that status dropdowns are rendered with correct values
+        const statusSelects = screen.getAllByRole("combobox");
+        expect(statusSelects).toHaveLength(3);
 
-      // Upcoming event - blue badge
-      const upcomingStatus = screen.getByText("upcoming");
-      expect(upcomingStatus).toHaveClass("bg-blue-500/20", "text-blue-400");
-    });
+        // Check first event (voting) - green badge
+        const votingSelect = statusSelects[0];
+        expect(votingSelect).toHaveValue("voting");
+        expect(votingSelect).toHaveClass("bg-green-500/30", "text-green-300");
+
+        // Check second event (upcoming) - blue badge
+        const upcomingSelect = statusSelects[1];
+        expect(upcomingSelect).toHaveValue("upcoming");
+        expect(upcomingSelect).toHaveClass("bg-blue-500/30", "text-blue-300");
+
+        // Check third event (finalized) - gray badge
+        const finalizedSelect = statusSelects[2];
+        expect(finalizedSelect).toHaveValue("finalized");
+        expect(finalizedSelect).toHaveClass("bg-gray-500/30", "text-gray-300");
+      },
+      { timeout: 10000 }
+    );
   });
 
   it("renders Manage Event button for each event", async () => {
@@ -130,7 +144,7 @@ describe("AdminDashboard", () => {
       const manageButtons = screen.getAllByRole("link", {
         name: "Manage Event",
       });
-      expect(manageButtons).toHaveLength(2);
+      expect(manageButtons).toHaveLength(3);
     });
   });
 
@@ -199,7 +213,7 @@ describe("AdminDashboard", () => {
 
   it("handles fetch response error", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    
+
     server.use(
       http.get("/api/events", () => {
         return HttpResponse.json({ error: "Server error" }, { status: 500 });
@@ -213,10 +227,9 @@ describe("AdminDashboard", () => {
     });
 
     // Assert that console.error was called with the expected error
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Error fetching events:",
-      "Internal Server Error"
-    );
+    expect(consoleSpy).toHaveBeenCalledWith("Error fetching events:", 500, {
+      error: "Server error",
+    });
 
     consoleSpy.mockRestore();
   });
