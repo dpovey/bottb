@@ -64,17 +64,18 @@ export default async function ResultsPage({
         Number(score.avg_song_choice || 0) +
         Number(score.avg_performance || 0) +
         Number(score.avg_crowd_vibe || 0);
+
+      // Find the maximum vote count among all bands for normalization
+      const maxVoteCount = Math.max(
+        ...scores.map((s) => Number(s.crowd_vote_count || 0))
+      );
       const crowdScore =
-        score.total_crowd_votes > 0
-          ? (Number(score.crowd_vote_count || 0) /
-              Number(score.total_crowd_votes || 1)) *
-            20
+        maxVoteCount > 0
+          ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
           : 0;
 
-      // Use stored crowd_score (1-10) and scale to 0-20 points
-      const crowdNoiseScore = score.crowd_score
-        ? Number(score.crowd_score) * 2
-        : 0;
+      // Use stored crowd_score (1-10) and scale to 0-10 points
+      const crowdNoiseScore = score.crowd_score ? Number(score.crowd_score) : 0;
 
       const totalScore = judgeScore + crowdScore + crowdNoiseScore;
 
@@ -231,7 +232,7 @@ export default async function ResultsPage({
           </p>
           <p className="text-sm text-gray-300">
             {crowdVoteWinner
-              ? Math.round(crowdVoteWinner.crowdScore || 0) + "/20"
+              ? Math.round(crowdVoteWinner.crowdScore || 0) + "/10"
               : "N/A"}
           </p>
         </div>

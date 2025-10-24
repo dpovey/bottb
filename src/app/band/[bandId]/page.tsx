@@ -73,22 +73,26 @@ export default async function BandPage({
       Number(bandScore.avg_crowd_vibe || 0)
     : 0;
 
-  // Crowd score is the percentage of total crowd votes this band received
-  const crowdScore = bandScore
-    ? bandScore.total_crowd_votes > 0
-      ? (Number(bandScore.crowd_vote_count || 0) /
-          Number(bandScore.total_crowd_votes || 1)) *
-        20
-      : 0
-    : 0;
+  // Crowd score is normalized - band with most votes gets 20, others proportional
+  const crowdScore =
+    bandScore && scores.length > 0
+      ? (() => {
+          const maxVoteCount = Math.max(
+            ...scores.map((s) => Number(s.crowd_vote_count || 0))
+          );
+          return maxVoteCount > 0
+            ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
+            : 0;
+        })()
+      : 0;
 
-  // Scream-o-meter score from crowd noise measurements (out of 20 points)
+  // Scream-o-meter score from crowd noise measurements (out of 10 points)
   const hasScreamOMeterMeasurement = bandScore
     ? bandScore.crowd_score !== null && bandScore.crowd_score !== undefined
     : false;
   const screamOMeterScore = hasScreamOMeterMeasurement
-    ? Number(bandScore!.crowd_score) * 2
-    : 0; // Convert 1-10 scale to 0-20 points
+    ? Number(bandScore!.crowd_score)
+    : 0; // Use 1-10 scale as-is for 0-10 points
   const totalScore = judgeScore + crowdScore + screamOMeterScore;
 
   // Calculate percentage scores
@@ -247,18 +251,19 @@ export default async function BandPage({
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-white font-medium">Crowd Vote</span>
                     <span className="text-white font-bold">
-                      {Math.round(crowdScore)}/20
+                      {Math.round(crowdScore)}/10
                     </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-3">
                     <div
                       className="bg-slate-400 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${crowdVotePercent}%` }}
+                      style={{ width: `${(crowdScore / 10) * 100}%` }}
                     ></div>
                   </div>
-                  <p className="text-gray-300 text-sm mt-1">
-                    {crowdVotePercent.toFixed(1)}% - Direct crowd voting
-                  </p>
+                  <div className="flex justify-between text-gray-300 text-sm mt-1">
+                    <span>{bandScore?.crowd_vote_count || 0} votes</span>
+                    <span>{crowdVotePercent.toFixed(1)}% of total votes</span>
+                  </div>
                 </div>
 
                 <div>
