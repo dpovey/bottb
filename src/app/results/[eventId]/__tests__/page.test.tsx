@@ -13,6 +13,8 @@ vi.mock("@/lib/db", () => ({
   getEventById: vi.fn(),
   getBandsForEvent: vi.fn(),
   getBandScores: vi.fn(),
+  hasFinalizedResults: vi.fn(),
+  getFinalizedResults: vi.fn(),
 }));
 
 // Mock the date utils
@@ -20,18 +22,35 @@ vi.mock("@/lib/date-utils", () => ({
   formatEventDate: vi.fn((date) => `Formatted: ${date}`),
 }));
 
-import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
+import {
+  getEventById,
+  getBandsForEvent,
+  getBandScores,
+  hasFinalizedResults,
+  getFinalizedResults,
+} from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 
 const mockGetEventById = getEventById as unknown as ReturnType<typeof vi.fn>;
-const mockGetBandsForEvent = getBandsForEvent as unknown as ReturnType<typeof vi.fn>;
+const mockGetBandsForEvent = getBandsForEvent as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockGetBandScores = getBandScores as unknown as ReturnType<typeof vi.fn>;
+const mockHasFinalizedResults = hasFinalizedResults as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockGetFinalizedResults = getFinalizedResults as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
 const mockRedirect = redirect as unknown as ReturnType<typeof vi.fn>;
 
 describe("ResultsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no finalized results, use dynamic calculation
+    mockHasFinalizedResults.mockResolvedValue(false);
+    mockGetFinalizedResults.mockResolvedValue([]);
   });
 
   it("redirects non-finalized events to crowd voting", async () => {
@@ -461,7 +480,9 @@ describe("ResultsPage", () => {
     );
 
     // Should show only crowd vote count in the #Votes column (lighter text)
-    const votesColumn = screen.getByRole("table").querySelector('td[class*="text-gray-400"]');
+    const votesColumn = screen
+      .getByRole("table")
+      .querySelector('td[class*="text-gray-400"]');
     expect(votesColumn).toHaveTextContent("10");
     // Should NOT show the old format with judge votes
     expect(screen.queryByText("3J")).not.toBeInTheDocument();

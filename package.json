@@ -27,7 +27,9 @@
     "manage-users": "tsx src/scripts/manage-users.ts",
     "cleanup-temp-uploads": "tsx src/scripts/cleanup-temp-uploads.ts",
     "migrate-uuid-to-slugs": "tsx src/scripts/migrate-uuid-to-slugs.ts",
-    "check-db-schema": "tsx src/scripts/check-db-schema.ts"
+    "check-db-schema": "tsx src/scripts/check-db-schema.ts",
+    "backup-db": "tsx src/scripts/backup-db.ts",
+    "migrate-finalized-events": "tsx src/scripts/migrate-finalized-events.ts"
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs": "^4.6.2",

@@ -107,7 +107,41 @@ CREATE INDEX IF NOT EXISTS idx_crowd_noise_band_id ON crowd_noise_measurements(b
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_created_at ON crowd_noise_measurements(created_at);
 CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
 
+-- Finalized results table (snapshot of results when event is finalized)
+CREATE TABLE IF NOT EXISTS finalized_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+  band_name VARCHAR(255) NOT NULL,
+  final_rank INTEGER NOT NULL,
+  -- Raw judge averages
+  avg_song_choice DECIMAL(10,2),
+  avg_performance DECIMAL(10,2),
+  avg_crowd_vibe DECIMAL(10,2),
+  -- Vote counts
+  crowd_vote_count INTEGER DEFAULT 0,
+  judge_vote_count INTEGER DEFAULT 0,
+  total_crowd_votes INTEGER DEFAULT 0,
+  -- Crowd noise data
+  crowd_noise_energy DECIMAL(10,4),
+  crowd_noise_peak DECIMAL(10,4),
+  crowd_noise_score INTEGER,
+  -- Calculated scores
+  judge_score DECIMAL(10,2),
+  crowd_score DECIMAL(10,2),
+  total_score DECIMAL(10,2),
+  -- Metadata
+  finalized_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(event_id, band_id)
+);
+
+-- Indexes for finalized results
+CREATE INDEX IF NOT EXISTS idx_finalized_results_event_id ON finalized_results(event_id);
+CREATE INDEX IF NOT EXISTS idx_finalized_results_band_id ON finalized_results(band_id);
+CREATE INDEX IF NOT EXISTS idx_finalized_results_final_rank ON finalized_results(final_rank);
+
 -- JSONB indexes for bands info
 CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING GIN (info);
-CREATE INDEX IF NOT EXISTS idx_bands_info_logo ON bands USING GIN ((info->>'logo_url'));
+-- Use btree for text extraction instead of GIN
+CREATE INDEX IF NOT EXISTS idx_bands_info_logo ON bands ((info->>'logo_url'));
 

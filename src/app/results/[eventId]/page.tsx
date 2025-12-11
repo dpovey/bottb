@@ -1,4 +1,11 @@
-import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
+import {
+  getEventById,
+  getBandsForEvent,
+  getBandScores,
+  getFinalizedResults,
+  hasFinalizedResults,
+  FinalizedResult,
+} from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import { auth } from "@/lib/auth";
@@ -32,6 +39,23 @@ interface BandScore {
   crowd_score?: number;
 }
 
+// Common interface for display results (works with both finalized and dynamic)
+interface DisplayResult {
+  id: string;
+  name: string;
+  avg_song_choice: number;
+  avg_performance: number;
+  avg_crowd_vibe: number;
+  crowd_vote_count: number;
+  total_crowd_votes: number;
+  crowd_noise_energy?: number;
+  crowdNoiseScore: number;
+  judgeScore: number;
+  crowdScore: number;
+  totalScore: number;
+  info?: BandScore["info"];
+}
+
 export default async function ResultsPage({
   params,
 }: {
@@ -55,39 +79,74 @@ export default async function ResultsPage({
   }
 
   const bands = await getBandsForEvent(eventId);
-  const scores = (await getBandScores(eventId)) as BandScore[];
 
-  // Calculate final scores and rankings
-  const bandResults = scores
-    .map((score) => {
-      const judgeScore =
-        Number(score.avg_song_choice || 0) +
-        Number(score.avg_performance || 0) +
-        Number(score.avg_crowd_vibe || 0);
+  // Check if we have finalized results stored
+  const hasFinalized = await hasFinalizedResults(eventId);
+  let bandResults: DisplayResult[];
 
-      // Find the maximum vote count among all bands for normalization
-      const maxVoteCount = Math.max(
-        ...scores.map((s) => Number(s.crowd_vote_count || 0))
-      );
-      const crowdScore =
-        maxVoteCount > 0
-          ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+  if (hasFinalized && event.status === "finalized") {
+    // Use stored finalized results
+    const finalizedResults = await getFinalizedResults(eventId);
+    bandResults = finalizedResults.map((result: FinalizedResult) => ({
+      id: result.band_id,
+      name: result.band_name,
+      avg_song_choice: Number(result.avg_song_choice || 0),
+      avg_performance: Number(result.avg_performance || 0),
+      avg_crowd_vibe: Number(result.avg_crowd_vibe || 0),
+      crowd_vote_count: result.crowd_vote_count,
+      total_crowd_votes: result.total_crowd_votes,
+      crowd_noise_energy: result.crowd_noise_energy ?? undefined,
+      crowdNoiseScore: Number(result.crowd_noise_score || 0),
+      judgeScore: Number(result.judge_score || 0),
+      crowdScore: Number(result.crowd_score || 0),
+      totalScore: Number(result.total_score || 0),
+      // Get band info from bands table for logos
+      info: bands.find((b) => b.id === result.band_id)?.info,
+    }));
+  } else {
+    // Calculate scores dynamically (for admin preview or events not yet finalized)
+    const scores = (await getBandScores(eventId)) as BandScore[];
+    bandResults = scores
+      .map((score) => {
+        const judgeScore =
+          Number(score.avg_song_choice || 0) +
+          Number(score.avg_performance || 0) +
+          Number(score.avg_crowd_vibe || 0);
+
+        // Find the maximum vote count among all bands for normalization
+        const maxVoteCount = Math.max(
+          ...scores.map((s) => Number(s.crowd_vote_count || 0))
+        );
+        const crowdScore =
+          maxVoteCount > 0
+            ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+            : 0;
+
+        // Use stored crowd_score (1-10) and scale to 0-10 points
+        const crowdNoiseScore = score.crowd_score
+          ? Number(score.crowd_score)
           : 0;
 
-      // Use stored crowd_score (1-10) and scale to 0-10 points
-      const crowdNoiseScore = score.crowd_score ? Number(score.crowd_score) : 0;
+        const totalScore = judgeScore + crowdScore + crowdNoiseScore;
 
-      const totalScore = judgeScore + crowdScore + crowdNoiseScore;
-
-      return {
-        ...score,
-        judgeScore,
-        crowdScore,
-        crowdNoiseScore,
-        totalScore,
-      };
-    })
-    .sort((a, b) => b.totalScore - a.totalScore);
+        return {
+          id: score.id,
+          name: score.name,
+          avg_song_choice: Number(score.avg_song_choice || 0),
+          avg_performance: Number(score.avg_performance || 0),
+          avg_crowd_vibe: Number(score.avg_crowd_vibe || 0),
+          crowd_vote_count: Number(score.crowd_vote_count || 0),
+          total_crowd_votes: Number(score.total_crowd_votes || 0),
+          crowd_noise_energy: score.crowd_noise_energy,
+          info: score.info,
+          judgeScore,
+          crowdScore,
+          crowdNoiseScore,
+          totalScore,
+        };
+      })
+      .sort((a, b) => b.totalScore - a.totalScore);
+  }
 
   // Find category winners
   const songChoiceWinner =
