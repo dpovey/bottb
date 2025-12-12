@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Photo } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,13 @@ export function PhotoSlideshow({
 }: PhotoSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [direction, setDirection] = useState(0);
+  const thumbnailStripRef = useRef<HTMLDivElement>(null);
+  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const goToIndex = useCallback((index: number) => {
+    setDirection(index > currentIndex ? 1 : -1);
+    setCurrentIndex(index);
+  }, [currentIndex]);
 
   const goToNext = useCallback(() => {
     setDirection(1);
@@ -39,6 +46,18 @@ export function PhotoSlideshow({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, goToPrevious, goToNext]);
+
+  // Auto-scroll thumbnail strip to keep current photo visible
+  useEffect(() => {
+    const thumbnail = thumbnailRefs.current[currentIndex];
+    if (thumbnail && thumbnailStripRef.current) {
+      thumbnail.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [currentIndex]);
 
   const currentPhoto = photos[currentIndex];
 
@@ -77,14 +96,14 @@ export function PhotoSlideshow({
         {currentIndex + 1} / {photos.length}
       </div>
 
-      {/* Main image area */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      {/* Main image area - adjusted for thumbnail strip on desktop */}
+      <div className="absolute inset-0 bottom-0 md:bottom-28 flex items-center justify-center overflow-hidden">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.blob_url}
             alt={currentPhoto.original_filename || "Photo"}
-            className="absolute max-h-[85vh] max-w-[90vw] object-contain"
+            className="absolute max-h-[75vh] md:max-h-[70vh] max-w-[90vw] object-contain"
             custom={direction}
             variants={slideVariants}
             initial="enter"
@@ -119,16 +138,16 @@ export function PhotoSlideshow({
         </svg>
       </button>
 
-      {/* Metadata overlay */}
-      <div className="absolute bottom-0 left-0 right-0 z-50 p-6 bg-gradient-to-t from-black/80 to-transparent">
+      {/* Metadata overlay - shown on mobile, moved up on desktop */}
+      <div className="absolute bottom-0 md:bottom-28 left-0 right-0 z-40 p-4 md:p-6 bg-gradient-to-t from-black/80 to-transparent">
         <div className="max-w-3xl mx-auto">
           {currentPhoto.band_name && (
-            <h2 className="text-2xl font-bold text-white">{currentPhoto.band_name}</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white">{currentPhoto.band_name}</h2>
           )}
-          <div className="flex flex-wrap gap-4 mt-2 text-gray-300 text-sm">
+          <div className="flex flex-wrap gap-3 md:gap-4 mt-1 md:mt-2 text-gray-300 text-xs md:text-sm">
             {currentPhoto.event_name && (
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 {currentPhoto.event_name}
@@ -136,7 +155,7 @@ export function PhotoSlideshow({
             )}
             {currentPhoto.photographer && (
               <span className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -144,6 +163,36 @@ export function PhotoSlideshow({
               </span>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Thumbnail strip - hidden on mobile, shown on desktop */}
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 z-50 bg-black/90 border-t border-gray-800">
+        <div
+          ref={thumbnailStripRef}
+          className="flex gap-1 p-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent"
+          style={{ scrollbarWidth: "thin" }}
+        >
+          {photos.map((photo, index) => (
+            <button
+              key={photo.id}
+              ref={(el) => { thumbnailRefs.current[index] = el; }}
+              onClick={() => goToIndex(index)}
+              className={`flex-shrink-0 w-20 h-20 rounded overflow-hidden transition-all duration-200 ${
+                index === currentIndex
+                  ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-105"
+                  : "opacity-60 hover:opacity-100"
+              }`}
+              aria-label={`Go to photo ${index + 1}`}
+            >
+              <img
+                src={photo.thumbnail_url || photo.blob_url}
+                alt={photo.original_filename || `Photo ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </button>
+          ))}
         </div>
       </div>
     </div>
