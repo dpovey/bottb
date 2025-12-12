@@ -78,21 +78,21 @@ export function PhotoSlideshow({
       </div>
 
       {/* Main image area */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <AnimatePresence initial={false} custom={direction}>
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.blob_url}
             alt={currentPhoto.original_filename || "Photo"}
-            className="max-h-[85vh] max-w-[90vw] object-contain"
+            className="absolute max-h-[85vh] max-w-[90vw] object-contain"
             custom={direction}
             variants={slideVariants}
             initial="enter"
             animate="center"
             exit="exit"
             transition={{
-              x: { type: "spring", stiffness: 200, damping: 30 },
-              opacity: { duration: 0.3 },
+              x: { type: "spring", stiffness: 80, damping: 20 },
+              opacity: { duration: 0.4 },
             }}
           />
         </AnimatePresence>

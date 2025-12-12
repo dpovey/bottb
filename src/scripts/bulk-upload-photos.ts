@@ -15,6 +15,121 @@ import { processImage } from "../lib/image-processor";
 // Load environment variables
 config({ path: ".env.local" });
 
+interface EventRow {
+  id: string;
+  name: string;
+}
+
+interface BandRow {
+  id: string;
+  name: string;
+  event_id: string;
+}
+
+/**
+ * Validate that an event ID exists, with fuzzy matching suggestions
+ */
+async function validateEventId(eventId: string): Promise<{ valid: boolean; suggestion?: string }> {
+  // Check exact match
+  const { rows: exact } = await sql<EventRow>`
+    SELECT id, name FROM events WHERE id = ${eventId}
+  `;
+  if (exact.length > 0) {
+    return { valid: true };
+  }
+
+  // Try fuzzy match on ID or name
+  const { rows: allEvents } = await sql<EventRow>`SELECT id, name FROM events`;
+  
+  const normalizedInput = eventId.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let bestMatch: EventRow | null = null;
+  let bestScore = 0;
+
+  for (const event of allEvents) {
+    const normalizedId = event.id.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normalizedName = event.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    
+    // Check if input is contained in ID or name
+    if (normalizedId.includes(normalizedInput) || normalizedInput.includes(normalizedId)) {
+      const score = normalizedId === normalizedInput ? 1 : 0.8;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = event;
+      }
+    }
+    if (normalizedName.includes(normalizedInput) || normalizedInput.includes(normalizedName)) {
+      const score = 0.7;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = event;
+      }
+    }
+  }
+
+  if (bestMatch && bestScore >= 0.7) {
+    return { valid: false, suggestion: bestMatch.id };
+  }
+
+  return { valid: false };
+}
+
+/**
+ * Validate that a band ID exists, with fuzzy matching suggestions
+ */
+async function validateBandId(bandId: string, eventId?: string): Promise<{ valid: boolean; suggestion?: string }> {
+  // Check exact match
+  const { rows: exact } = await sql<BandRow>`
+    SELECT id, name, event_id FROM bands WHERE id = ${bandId}
+  `;
+  if (exact.length > 0) {
+    // If event specified, verify band belongs to that event
+    if (eventId && exact[0].event_id !== eventId) {
+      console.error(`⚠️  Warning: Band "${exact[0].name}" belongs to event "${exact[0].event_id}", not "${eventId}"`);
+    }
+    return { valid: true };
+  }
+
+  // Try fuzzy match
+  let allBands: BandRow[];
+  if (eventId) {
+    const { rows } = await sql<BandRow>`SELECT id, name, event_id FROM bands WHERE event_id = ${eventId}`;
+    allBands = rows;
+  } else {
+    const { rows } = await sql<BandRow>`SELECT id, name, event_id FROM bands`;
+    allBands = rows;
+  }
+  
+  const normalizedInput = bandId.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let bestMatch: BandRow | null = null;
+  let bestScore = 0;
+
+  for (const band of allBands) {
+    const normalizedId = band.id.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const normalizedName = band.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    
+    if (normalizedId.includes(normalizedInput) || normalizedInput.includes(normalizedId)) {
+      const score = normalizedId === normalizedInput ? 1 : 0.8;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = band;
+      }
+    }
+    if (normalizedName.includes(normalizedInput) || normalizedInput.includes(normalizedName)) {
+      const score = 0.7;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = band;
+      }
+    }
+  }
+
+  if (bestMatch && bestScore >= 0.7) {
+    return { valid: false, suggestion: bestMatch.id };
+  }
+
+  return { valid: false };
+}
+
 interface UploadResult {
   success: boolean;
   filename: string;
@@ -267,6 +382,50 @@ Examples:
   if (!stats.isDirectory()) {
     console.error(`❌ Not a directory: ${sourceDir}`);
     process.exit(1);
+  }
+
+  // Validate event ID if specified
+  if (values.event) {
+    const eventValidation = await validateEventId(values.event);
+    if (!eventValidation.valid) {
+      console.error(`❌ Event not found: "${values.event}"`);
+      if (eventValidation.suggestion) {
+        console.error(`   Did you mean: "${eventValidation.suggestion}"?`);
+        console.error(`   Run again with: --event ${eventValidation.suggestion}`);
+      } else {
+        // List available events
+        const { rows } = await sql<EventRow>`SELECT id, name FROM events ORDER BY name`;
+        console.error(`\n   Available events:`);
+        for (const event of rows) {
+          console.error(`     - ${event.id} (${event.name})`);
+        }
+      }
+      process.exit(1);
+    }
+  }
+
+  // Validate band ID if specified
+  if (values.band) {
+    const bandValidation = await validateBandId(values.band, values.event);
+    if (!bandValidation.valid) {
+      console.error(`❌ Band not found: "${values.band}"`);
+      if (bandValidation.suggestion) {
+        console.error(`   Did you mean: "${bandValidation.suggestion}"?`);
+        console.error(`   Run again with: --band ${bandValidation.suggestion}`);
+      } else {
+        // List available bands (for event if specified)
+        if (values.event) {
+          const { rows } = await sql<BandRow>`SELECT id, name FROM bands WHERE event_id = ${values.event} ORDER BY name`;
+          console.error(`\n   Available bands for event "${values.event}":`);
+          for (const band of rows) {
+            console.error(`     - ${band.id} (${band.name})`);
+          }
+        } else {
+          console.error(`   Tip: Specify --event first to see available bands for that event`);
+        }
+      }
+      process.exit(1);
+    }
   }
 
   console.log("🚀 Starting bulk photo upload...");
