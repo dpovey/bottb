@@ -93,25 +93,29 @@ export interface CrowdNoiseMeasurement {
   created_at: string;
 }
 
-export interface FinalizedResult {
+export interface Photo {
   id: string;
-  event_id: string;
-  band_id: string;
-  band_name: string;
-  final_rank: number;
-  avg_song_choice: number | null;
-  avg_performance: number | null;
-  avg_crowd_vibe: number | null;
-  crowd_vote_count: number;
-  judge_vote_count: number;
-  total_crowd_votes: number;
-  crowd_noise_energy: number | null;
-  crowd_noise_peak: number | null;
-  crowd_noise_score: number | null;
-  judge_score: number | null;
-  crowd_score: number | null;
-  total_score: number | null;
-  finalized_at: string;
+  event_id: string | null;
+  band_id: string | null;
+  photographer: string | null;
+  blob_url: string;
+  blob_pathname: string;
+  original_filename: string | null;
+  width: number | null;
+  height: number | null;
+  file_size: number | null;
+  content_type: string | null;
+  xmp_metadata: Record<string, unknown> | null;
+  matched_event_name: string | null;
+  matched_band_name: string | null;
+  match_confidence: "exact" | "fuzzy" | "manual" | "unmatched" | null;
+  uploaded_by: string | null;
+  uploaded_at: string;
+  created_at: string;
+  // Joined fields
+  event_name?: string;
+  band_name?: string;
+  thumbnail_url?: string;
 }
 
 export async function getEvents() {
@@ -264,15 +268,7 @@ export async function updateEventStatus(
     WHERE id = ${eventId}
     RETURNING *
   `;
-
-  const updatedEvent = rows[0] || null;
-
-  // If status is being set to finalized, capture the results
-  if (updatedEvent && status === "finalized") {
-    await finalizeEventResults(eventId);
-  }
-
-  return updatedEvent;
+  return rows[0] || null;
 }
 
 export async function getBandScores(eventId: string) {
@@ -361,107 +357,151 @@ export async function deleteCrowdNoiseMeasurement(
   return rows[0] || null;
 }
 
-// Finalized Results Functions
+// Photo functions
 
-interface BandScoreRow {
-  id: string;
-  name: string;
-  order: number;
-  avg_song_choice: string | null;
-  avg_performance: string | null;
-  avg_crowd_vibe: string | null;
-  crowd_vote_count: string;
-  judge_vote_count: string;
-  total_crowd_votes: string;
-  crowd_noise_energy: string | null;
-  crowd_noise_peak: string | null;
-  crowd_score: number | null;
+export interface GetPhotosOptions {
+  eventId?: string;
+  bandId?: string;
+  photographer?: string;
+  limit?: number;
+  offset?: number;
 }
 
-export async function finalizeEventResults(eventId: string) {
-  // Get the current scores
-  const scores = (await getBandScores(eventId)) as BandScoreRow[];
+export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]> {
+  const { eventId, bandId, photographer, limit = 50, offset = 0 } = options;
 
-  if (scores.length === 0) {
-    return [];
+  try {
+    // Build query based on filters
+    // Note: @vercel/postgres doesn't support query chaining, so we use separate queries
+    if (eventId && bandId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.event_id = ${eventId} AND p.band_id = ${bandId}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (eventId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.event_id = ${eventId}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (bandId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id = ${bandId}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (photographer) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.photographer = ${photographer}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    }
+  } catch (error) {
+    console.error("Error fetching photos:", error);
+    throw error;
   }
+}
 
-  // Calculate final scores and rankings (same logic as results page)
-  const bandResults = scores
-    .map((score) => {
-      const judgeScore =
-        Number(score.avg_song_choice || 0) +
-        Number(score.avg_performance || 0) +
-        Number(score.avg_crowd_vibe || 0);
-
-      // Find the maximum vote count among all bands for normalization
-      const maxVoteCount = Math.max(
-        ...scores.map((s) => Number(s.crowd_vote_count || 0))
-      );
-      const crowdScore =
-        maxVoteCount > 0
-          ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
-          : 0;
-
-      // Use stored crowd_score (1-10)
-      const crowdNoiseScore = score.crowd_score ? Number(score.crowd_score) : 0;
-
-      const totalScore = judgeScore + crowdScore + crowdNoiseScore;
-
-      return {
-        ...score,
-        judgeScore,
-        crowdScore,
-        crowdNoiseScore,
-        totalScore,
-      };
-    })
-    .sort((a, b) => b.totalScore - a.totalScore);
-
-  // Delete any existing finalized results for this event
-  await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`;
-
-  // Insert the finalized results
-  const results: FinalizedResult[] = [];
-  for (let i = 0; i < bandResults.length; i++) {
-    const band = bandResults[i];
-    const finalRank = i + 1;
-
-    const { rows } = await sql<FinalizedResult>`
-      INSERT INTO finalized_results (
-        event_id, band_id, band_name, final_rank,
-        avg_song_choice, avg_performance, avg_crowd_vibe,
-        crowd_vote_count, judge_vote_count, total_crowd_votes,
-        crowd_noise_energy, crowd_noise_peak, crowd_noise_score,
-        judge_score, crowd_score, total_score
-      ) VALUES (
-        ${eventId}, ${band.id}, ${band.name}, ${finalRank},
-        ${band.avg_song_choice}, ${band.avg_performance}, ${band.avg_crowd_vibe},
-        ${band.crowd_vote_count}, ${band.judge_vote_count}, ${band.total_crowd_votes},
-        ${band.crowd_noise_energy}, ${band.crowd_noise_peak}, ${band.crowd_score},
-        ${band.judgeScore}, ${band.crowdScore}, ${band.totalScore}
-      )
-      RETURNING *
+export async function getPhotoById(photoId: string): Promise<Photo | null> {
+  try {
+    const { rows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name,
+             REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE p.id = ${photoId}
     `;
-    results.push(rows[0]);
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching photo:", error);
+    throw error;
   }
-
-  return results;
 }
 
-export async function getFinalizedResults(eventId: string) {
-  const { rows } = await sql<FinalizedResult>`
-    SELECT * FROM finalized_results 
-    WHERE event_id = ${eventId}
-    ORDER BY final_rank ASC
-  `;
-  return rows;
+export async function getPhotoCount(options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}): Promise<number> {
+  const { eventId, bandId, photographer } = options;
+
+  try {
+    if (eventId && bandId) {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos WHERE event_id = ${eventId} AND band_id = ${bandId}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (eventId) {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos WHERE event_id = ${eventId}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (bandId) {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos WHERE band_id = ${bandId}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (photographer) {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos WHERE photographer = ${photographer}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    }
+  } catch (error) {
+    console.error("Error counting photos:", error);
+    throw error;
+  }
 }
 
-export async function hasFinalizedResults(eventId: string): Promise<boolean> {
-  const { rows } = await sql<{ count: number }>`
-    SELECT COUNT(*) as count FROM finalized_results 
-    WHERE event_id = ${eventId}
-  `;
-  return Number(rows[0]?.count) > 0;
+export async function getDistinctPhotographers(): Promise<string[]> {
+  try {
+    const { rows } = await sql<{ photographer: string }>`
+      SELECT DISTINCT photographer FROM photos 
+      WHERE photographer IS NOT NULL 
+      ORDER BY photographer
+    `;
+    return rows.map(r => r.photographer);
+  } catch (error) {
+    console.error("Error fetching photographers:", error);
+    throw error;
+  }
 }
