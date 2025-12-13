@@ -79,7 +79,12 @@ export default function PhotosPage() {
     fetchFilters();
   }, []);
 
-  // Fetch photos when filters change
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, [selectedEventId, selectedBandId, selectedPhotographer]);
+
+  // Fetch photos when filters or page change
   const fetchPhotos = useCallback(async () => {
     setLoading(true);
     try {
@@ -94,7 +99,11 @@ export default function PhotosPage() {
       if (res.ok) {
         const data: PhotosResponse = await res.json();
         setPhotos(data.photos);
-        setPagination(data.pagination);
+        setPagination((prev) => ({
+          ...prev,
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+        }));
         setPhotographers(data.photographers);
       }
     } catch (error) {
@@ -116,6 +125,17 @@ export default function PhotosPage() {
   // Handle slideshow close
   const handleSlideshowClose = () => {
     setSlideshowIndex(null);
+  };
+
+  // Handle photo deletion (called from slideshow)
+  const handlePhotoDeleted = (photoId: string) => {
+    // Remove the photo from local state
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    // Update pagination count
+    setPagination((prev) => ({
+      ...prev,
+      total: prev.total - 1,
+    }));
   };
 
   return (
@@ -204,7 +224,15 @@ export default function PhotosPage() {
         <PhotoSlideshow
           photos={photos}
           initialIndex={slideshowIndex}
+          totalPhotos={pagination.total}
+          currentPage={pagination.page}
+          filters={{
+            eventId: selectedEventId,
+            bandId: selectedBandId,
+            photographer: selectedPhotographer,
+          }}
           onClose={handleSlideshowClose}
+          onPhotoDeleted={handlePhotoDeleted}
         />
       )}
     </div>
