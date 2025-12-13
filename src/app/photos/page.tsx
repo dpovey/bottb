@@ -138,6 +138,16 @@ export default function PhotosPage() {
     }));
   };
 
+  // Handle photo crop (called from slideshow)
+  const handlePhotoCropped = (photoId: string, newThumbnailUrl: string) => {
+    // Update the thumbnail URL in local state
+    setPhotos((prev) =>
+      prev.map((p) =>
+        p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950">
       {/* Header */}
@@ -233,6 +243,7 @@ export default function PhotosPage() {
           }}
           onClose={handleSlideshowClose}
           onPhotoDeleted={handlePhotoDeleted}
+          onPhotoCropped={handlePhotoCropped}
         />
       )}
     </div>

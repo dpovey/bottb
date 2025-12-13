@@ -8,14 +8,17 @@ interface PhotoCardProps {
 }
 
 export function PhotoCard({ photo, onClick }: PhotoCardProps) {
+  const thumbSrc = photo.thumbnail_url || photo.blob_url;
+  
   return (
     <div
       className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-gray-900"
       onClick={onClick}
     >
-      {/* Thumbnail image */}
+      {/* Thumbnail image - key forces re-render when URL changes */}
       <img
-        src={photo.thumbnail_url || photo.blob_url}
+        key={thumbSrc}
+        src={thumbSrc}
         alt={photo.original_filename || "Photo"}
         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         loading="lazy"

@@ -23,6 +23,7 @@
 - Test user interactions and behavior, not implementation details
 - Use userEvent for simulating user interactions
 - Write descriptive test names that explain the expected behavior
+- When debugging test failures, consider if test is wrong or code is worong
 
 ## Test Structure
 

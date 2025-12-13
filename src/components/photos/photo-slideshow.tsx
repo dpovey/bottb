@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Photo } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
+import Cropper, { Area } from "react-easy-crop";
 
 interface PhotoSlideshowProps {
   photos: Photo[];
@@ -17,6 +18,7 @@ interface PhotoSlideshowProps {
   };
   onClose: () => void;
   onPhotoDeleted?: (photoId: string) => void;
+  onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void;
 }
 
 const PAGE_SIZE = 50;
@@ -30,6 +32,7 @@ export function PhotoSlideshow({
   filters,
   onClose,
   onPhotoDeleted,
+  onPhotoCropped,
 }: PhotoSlideshowProps) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin ?? false;
@@ -45,7 +48,83 @@ export function PhotoSlideshow({
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Track the most recently cropped photo to ensure immediate update
+  const [lastCroppedPhoto, setLastCroppedPhoto] = useState<{id: string, url: string} | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Crop state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isSavingCrop, setIsSavingCrop] = useState(false);
+  const [cropError, setCropError] = useState<string | null>(null);
+  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
+
+  // Generate cropped preview when crop area changes
+  const generateCropPreview = useCallback(async (pixelCrop: Area, imageSrc: string) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    
+    return new Promise<string>((resolve, reject) => {
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not get canvas context"));
+          return;
+        }
+
+        // Set canvas size to 80x80 for preview
+        canvas.width = 80;
+        canvas.height = 80;
+
+        // Draw the cropped region scaled to 80x80
+        ctx.drawImage(
+          image,
+          pixelCrop.x,
+          pixelCrop.y,
+          pixelCrop.width,
+          pixelCrop.height,
+          0,
+          0,
+          80,
+          80
+        );
+
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      image.onerror = () => reject(new Error("Failed to load image"));
+      image.src = imageSrc;
+    });
+  }, []);
+
+  // Update preview when crop changes (debounced)
+  useEffect(() => {
+    if (!showCropModal || !croppedAreaPixels) return;
+    
+    const currentPhoto = allPhotos[currentIndex];
+    if (!currentPhoto) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const previewUrl = await generateCropPreview(croppedAreaPixels, currentPhoto.blob_url);
+        setCropPreviewUrl(previewUrl);
+      } catch (_error) {
+        // Preview generation failed - not critical
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [croppedAreaPixels, showCropModal, currentIndex, allPhotos, generateCropPreview]);
+
+  // Clear preview when modal closes
+  useEffect(() => {
+    if (!showCropModal) {
+      setCropPreviewUrl(null);
+    }
+  }, [showCropModal]);
 
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -143,7 +222,7 @@ export function PhotoSlideshow({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showDeleteConfirm) return; // Don't navigate while delete modal is open
+      if (showDeleteConfirm || showCropModal) return; // Don't navigate while modals are open
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") goToNext();
       if (e.key === "ArrowLeft") goToPrevious();
@@ -151,7 +230,7 @@ export function PhotoSlideshow({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, goToPrevious, goToNext, showDeleteConfirm]);
+  }, [onClose, goToPrevious, goToNext, showDeleteConfirm, showCropModal]);
 
   // Auto-scroll thumbnail strip to keep current photo visible
   useEffect(() => {
@@ -207,6 +286,73 @@ export function PhotoSlideshow({
     }
   };
 
+  // Handle crop completion callback
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  // Handle saving the crop
+  const handleSaveCrop = async () => {
+    const photoToCrop = allPhotos[currentIndex];
+    if (!photoToCrop || !croppedAreaPixels) return;
+
+    setIsSavingCrop(true);
+    setCropError(null);
+
+    try {
+      // Get the image dimensions to calculate percentages
+      const img = new Image();
+      img.src = photoToCrop.blob_url;
+      await new Promise((resolve) => { img.onload = resolve; });
+
+      // Convert pixel coordinates to percentages
+      const cropArea = {
+        x: (croppedAreaPixels.x / img.naturalWidth) * 100,
+        y: (croppedAreaPixels.y / img.naturalHeight) * 100,
+        width: (croppedAreaPixels.width / img.naturalWidth) * 100,
+        height: (croppedAreaPixels.height / img.naturalHeight) * 100,
+      };
+
+      const response = await fetch(`/api/photos/${photoToCrop.id}/crop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cropArea }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save crop");
+      }
+
+      const result = await response.json();
+      const newUrl = result.thumbnailUrl; // This is a NEW unique URL, not the same path
+      const photoId = photoToCrop.id;
+
+      // Update the thumbnail URL in local state
+      setAllPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, thumbnail_url: newUrl } : p
+        )
+      );
+
+      // Track the just-cropped photo for immediate update
+      setLastCroppedPhoto({ id: photoId, url: newUrl });
+
+      // Notify parent to update gallery view
+      onPhotoCropped?.(photoId, newUrl);
+
+      // Close crop modal and reset state
+      setShowCropModal(false);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCroppedAreaPixels(null);
+    } catch (error) {
+      setCropError(error instanceof Error ? error.message : "Failed to save crop");
+    } finally {
+      setIsSavingCrop(false);
+    }
+  };
+
   const currentPhoto = allPhotos[currentIndex];
 
   // Safety check
@@ -259,18 +405,32 @@ export function PhotoSlideshow({
         )}
       </div>
 
-      {/* Admin delete button */}
+      {/* Admin buttons */}
       {isAdmin && (
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="absolute top-4 right-16 z-50 p-2 rounded-full bg-red-600/80 text-white hover:bg-red-600 transition-colors"
-          aria-label="Delete photo"
-          title="Delete photo"
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+        <div className="absolute top-4 right-16 z-50 flex gap-2">
+          {/* Crop button */}
+          <button
+            onClick={() => setShowCropModal(true)}
+            className="p-2 rounded-full bg-blue-600/80 text-white hover:bg-blue-600 transition-colors"
+            aria-label="Adjust thumbnail crop"
+            title="Adjust thumbnail crop"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h2m10 0h2a2 2 0 002-2v-2M4 8V6a2 2 0 012-2h2m10 0h2a2 2 0 012 2v2M9 12h6M12 9v6" />
+            </svg>
+          </button>
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 rounded-full bg-red-600/80 text-white hover:bg-red-600 transition-colors"
+            aria-label="Delete photo"
+            title="Delete photo"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {/* Main image area - adjusted for thumbnail strip on desktop */}
@@ -352,26 +512,32 @@ export function PhotoSlideshow({
           className="flex gap-1 p-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent"
           style={{ scrollbarWidth: "thin" }}
         >
-          {allPhotos.map((photo, index) => (
-            <button
-              key={photo.id}
-              ref={(el) => { thumbnailRefs.current[index] = el; }}
-              onClick={() => goToIndex(index)}
-              className={`flex-shrink-0 w-20 h-20 rounded overflow-hidden transition-all duration-200 ${
-                index === currentIndex
-                  ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-105"
-                  : "opacity-60 hover:opacity-100"
-              }`}
-              aria-label={`Go to photo ${index + 1}`}
-            >
-              <img
-                src={photo.thumbnail_url || photo.blob_url}
-                alt={photo.original_filename || `Photo ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </button>
-          ))}
+          {allPhotos.map((photo, index) => {
+            // Use freshly cropped URL if available, otherwise use stored thumbnail
+            const thumbSrc = lastCroppedPhoto?.id === photo.id 
+              ? lastCroppedPhoto.url 
+              : (photo.thumbnail_url || photo.blob_url);
+            return (
+              <button
+                key={`${photo.id}-${thumbSrc}`}
+                ref={(el) => { thumbnailRefs.current[index] = el; }}
+                onClick={() => goToIndex(index)}
+                className={`flex-shrink-0 w-20 h-20 rounded overflow-hidden transition-all duration-200 ${
+                  index === currentIndex
+                    ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-105"
+                    : "opacity-60 hover:opacity-100"
+                }`}
+                aria-label={`Go to photo ${index + 1}`}
+              >
+                <img
+                  src={thumbSrc}
+                  alt={photo.original_filename || `Photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            );
+          })}
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="flex-shrink-0 w-20 h-20 rounded bg-gray-800 flex items-center justify-center">
@@ -441,6 +607,141 @@ export function PhotoSlideshow({
                   "Delete Photo"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Crop modal */}
+      {showCropModal && currentPhoto && (
+        <div className="fixed inset-0 z-[60] bg-black">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
+            <h3 className="text-lg font-semibold text-white">Adjust Thumbnail Crop</h3>
+            <button
+              onClick={() => {
+                setShowCropModal(false);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1);
+                setCropError(null);
+              }}
+              className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Cropper */}
+          <div className="absolute inset-0 top-16 bottom-32">
+            <Cropper
+              image={currentPhoto.blob_url}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              showGrid={true}
+              cropShape="rect"
+              objectFit="contain"
+            />
+          </div>
+
+          {/* Preview & Controls */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
+            <div className="max-w-xl mx-auto">
+              {/* Thumbnail previews */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0">
+                  <p className="text-xs text-gray-400 mb-1">Current:</p>
+                  <img
+                    key={lastCroppedPhoto?.id === currentPhoto.id ? lastCroppedPhoto.url : currentPhoto.thumbnail_url}
+                    src={lastCroppedPhoto?.id === currentPhoto.id 
+                      ? lastCroppedPhoto.url 
+                      : (currentPhoto.thumbnail_url || currentPhoto.blob_url)}
+                    alt="Current thumbnail"
+                    className="w-20 h-20 rounded object-cover border border-gray-600"
+                  />
+                </div>
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <span className="text-gray-500 text-xl">→</span>
+                </div>
+                <div className="flex-shrink-0">
+                  <p className="text-xs text-gray-400 mb-1">New preview:</p>
+                  {cropPreviewUrl ? (
+                    <img
+                      src={cropPreviewUrl}
+                      alt="Crop preview"
+                      className="w-20 h-20 rounded object-cover border-2 border-blue-500"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded border border-gray-600 bg-gray-800 flex items-center justify-center">
+                      <span className="text-xs text-gray-500">Loading...</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 ml-2">
+                  <p className="text-sm text-gray-300">
+                    Drag to reposition the crop area.
+                  </p>
+                </div>
+              </div>
+
+              {/* Zoom slider */}
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-sm text-gray-400">Zoom:</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="text-sm text-gray-400 w-12">{zoom.toFixed(1)}x</span>
+              </div>
+
+              {cropError && (
+                <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 text-sm">
+                  {cropError}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setCrop({ x: 0, y: 0 });
+                    setZoom(1);
+                    setCropError(null);
+                  }}
+                  disabled={isSavingCrop}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveCrop}
+                  disabled={isSavingCrop || !croppedAreaPixels}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSavingCrop ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Crop"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

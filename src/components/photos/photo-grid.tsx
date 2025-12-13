@@ -49,7 +49,7 @@ export function PhotoGrid({ photos, onPhotoClick, loading }: PhotoGridProps) {
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
       {photos.map((photo, index) => (
         <PhotoCard
-          key={photo.id}
+          key={`${photo.id}-${photo.thumbnail_url}`}
           photo={photo}
           onClick={() => onPhotoClick(index)}
         />

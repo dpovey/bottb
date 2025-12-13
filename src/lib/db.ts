@@ -376,7 +376,7 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
     if (eventId && bandId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
-               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -388,7 +388,7 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
     } else if (eventId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
-               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -400,7 +400,7 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
     } else if (bandId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
-               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -412,7 +412,7 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
     } else if (photographer) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
-               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -424,7 +424,7 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
     } else {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
-               REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -443,7 +443,7 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
   try {
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name,
-             REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp') as thumbnail_url
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
