@@ -17,14 +17,14 @@ function nameToSlug(name: string): string {
     .trim();
 }
 
-// Helper function to generate band slug
-function generateBandSlug(bandName: string, eventName: string): string {
+// Helper function to generate band slug using event ID (not full name)
+function generateBandSlug(bandName: string, eventId: string): string {
   const bandSlug = nameToSlug(bandName);
-  const eventSlug = nameToSlug(eventName);
-  return `${bandSlug}-${eventSlug}`;
+  return `${bandSlug}-${eventId}`;
 }
 
 interface EventData {
+  id?: string; // Optional custom ID (e.g., "brisbane-2024" instead of auto-generated)
   name: string;
   date: string;
   location: string;
@@ -45,9 +45,9 @@ async function createEventFromFile(filePath: string) {
 
     console.log(`Creating event: ${eventData.name}`);
 
-    // Generate event slug
-    const eventSlug = nameToSlug(eventData.name);
-    console.log(`📝 Event slug: ${eventSlug}`);
+    // Use custom ID if provided, otherwise generate from name
+    const eventSlug = eventData.id || nameToSlug(eventData.name);
+    console.log(`📝 Event slug: ${eventSlug}${eventData.id ? " (custom)" : " (auto-generated)"}`);
 
     // Create event with slug as ID
     const { rows: eventRows } = await sql`
@@ -66,8 +66,8 @@ async function createEventFromFile(filePath: string) {
       console.log(`Creating ${eventData.bands.length} bands...`);
 
       for (const band of eventData.bands) {
-        // Generate band slug
-        const bandSlug = generateBandSlug(band.name, eventData.name);
+        // Generate band slug using event ID (not full name)
+        const bandSlug = generateBandSlug(band.name, eventSlug);
         console.log(`  📝 Band slug: ${bandSlug}`);
 
         const { rows: bandRows } = await sql`
