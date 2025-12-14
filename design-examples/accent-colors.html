@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accent Color Picker — BOTTB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Jost', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .dropdown-menu {
+      max-height: 400px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+    .dropdown-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+    .dropdown-menu::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .dropdown-menu::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+    }
+    .color-option {
+      transition: background-color 0.15s ease;
+    }
+    .color-option:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body class="bg-theme min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 glass border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <div class="flex items-center h-16">
+        <!-- Logo -->
+        <a href="home.html" class="shrink-0">
+          <img src="../public/images/logos/bottb-dark-square.png" alt="Battle of the Tech Bands" class="h-10 sm:hidden transition-transform duration-200 hover:scale-105">
+          <img src="../public/images/logos/bottb-horizontal.png" alt="Battle of the Tech Bands" class="h-10 hidden sm:block transition-transform duration-200 hover:scale-105">
+        </a>
+        
+        <!-- Nav Links (centered) -->
+        <div class="hidden md:flex items-center justify-center gap-8 flex-1">
+          <a href="home.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">Events</a>
+          <a href="photos.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">Photos</a>
+          <a href="about.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">About</a>
+        </div>
+        
+        <!-- Breadcrumbs (right) -->
+        <nav class="hidden md:flex items-center gap-2 text-sm shrink-0">
+          <span class="text-dim">Design Tools</span>
+          <svg class="w-3 h-3 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+          <span class="text-white">Accent Colors</span>
+        </nav>
+        
+        <!-- Mobile menu button -->
+        <button class="md:hidden ml-auto text-muted hover:text-white">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+
+    <!-- Color Selector -->
+    <section class="mb-12">
+      <h1 class="font-semibold text-4xl mb-2">Choose an Accent Color</h1>
+      <p class="text-muted mb-8">Select a color to see it applied to all elements below</p>
+      
+      <!-- Custom Dropdown -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start">
+        <div class="relative w-full max-w-sm">
+          <!-- Dropdown Trigger -->
+          <button id="dropdown-trigger" class="w-full flex items-center gap-3 px-4 py-3 bg-elevated border border-white/10 rounded-lg hover:border-white/20 transition-colors cursor-pointer">
+            <div id="selected-swatch" class="w-6 h-6 rounded shrink-0"></div>
+            <span id="selected-name" class="flex-1 text-left"></span>
+            <span id="selected-hex" class="text-dim text-sm font-mono"></span>
+            <svg class="w-5 h-5 text-muted transition-transform" id="dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          
+          <!-- Dropdown Menu -->
+          <div id="dropdown-menu" class="dropdown-menu absolute top-full left-0 right-0 mt-2 bg-elevated border border-white/10 rounded-lg shadow-2xl z-50 hidden">
+            <!-- Options will be inserted by JS -->
+          </div>
+        </div>
+        
+        <button id="copy-btn" class="btn-outline px-6 py-3 rounded-full text-xs tracking-widest uppercase whitespace-nowrap">
+          Copy CSS
+        </button>
+      </div>
+    </section>
+
+    <!-- Preview Elements -->
+    <section class="space-y-12">
+      
+      <!-- Buttons -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Buttons</h2>
+        <div class="flex flex-wrap gap-4">
+          <button class="btn-accent px-8 py-4 rounded-full text-sm tracking-widest uppercase font-medium">
+            Primary Action
+          </button>
+          <button class="btn-accent-outline px-8 py-4 rounded-full text-sm tracking-widest uppercase font-medium">
+            Secondary Action
+          </button>
+          <button class="btn-outline px-8 py-4 rounded-full text-sm tracking-widest uppercase">
+            Outline Button
+          </button>
+        </div>
+      </div>
+
+      <!-- Badges -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Badges & Labels</h2>
+        <div class="flex flex-wrap gap-3">
+          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">🏆 Winner</span>
+          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">Live Now</span>
+          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">Featured</span>
+          <span class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded text-xs tracking-widest uppercase">Upcoming</span>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Text & Links</h2>
+        <p class="text-muted mb-4">
+          Regular text with <span class="text-accent font-medium">accent highlighted words</span> and 
+          <a href="#" class="text-accent hover:underline">accent links</a> that stand out.
+        </p>
+        <p class="text-accent text-xl font-medium">The Agentics won Sydney Tech Battle 2024!</p>
+      </div>
+
+      <!-- Cards -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Cards</h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Event Card with Winner Badge -->
+          <div class="group relative rounded-lg overflow-hidden bg-elevated aspect-[4/3] cursor-pointer card-accent-hover">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-[var(--bg-muted)] to-amber-900/20"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/50 to-transparent"></div>
+            
+            <div class="absolute top-4 left-4">
+              <div class="glass rounded px-2 py-1 text-center min-w-[48px]">
+                <div class="text-[10px] tracking-wider uppercase text-muted">Oct</div>
+                <div class="text-xl font-semibold">23</div>
+              </div>
+            </div>
+            
+            <div class="absolute top-4 right-4">
+              <span class="badge-accent rounded px-3 py-1 text-xs tracking-wider uppercase">🏆 Winner</span>
+            </div>
+            
+            <div class="absolute bottom-0 left-0 right-0 p-5">
+              <h3 class="font-medium text-xl mb-1">Sydney Tech Battle</h3>
+              <p class="text-muted text-sm">Past event with winner</p>
+            </div>
+          </div>
+          
+          <!-- Simple Card -->
+          <div class="bg-elevated rounded-lg p-6 border border-white/5 card-accent-hover">
+            <h3 class="font-medium text-xl mb-2">Card Title</h3>
+            <p class="text-muted text-sm mb-4">A simple card with accent hover border effect.</p>
+            <a href="#" class="text-accent text-sm hover:underline">Learn more →</a>
+          </div>
+          
+          <!-- Stats Card -->
+          <div class="bg-elevated rounded-lg p-6 border border-white/5">
+            <p class="text-dim text-sm uppercase tracking-wider mb-1">Total Votes</p>
+            <p class="text-accent text-4xl font-semibold">1,247</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Selection -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Selection / Voting</h2>
+        <div class="max-w-md space-y-3">
+          <label class="flex items-center gap-4 p-4 bg-theme rounded-lg border border-white/10 cursor-pointer hover:border-white/20 transition-colors">
+            <div class="w-5 h-5 rounded-full border border-white/30"></div>
+            <div>
+              <p class="font-medium">Unselected Option</p>
+              <p class="text-dim text-sm">Description text</p>
+            </div>
+          </label>
+          <label class="flex items-center gap-4 p-4 rounded-lg cursor-pointer bg-accent-subtle" style="border: 1px solid rgba(var(--accent-rgb), 0.4)">
+            <div class="w-5 h-5 rounded-full selection-accent flex items-center justify-center">
+              <svg class="w-3 h-3" style="color: var(--bg)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium">Selected Option</p>
+              <p class="text-dim text-sm">This one is chosen</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Progress / Status -->
+      <div>
+        <h2 class="font-semibold text-2xl mb-6">Progress & Status</h2>
+        <div class="space-y-4 max-w-md">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span>The Agentics</span>
+              <span class="text-accent">42%</span>
+            </div>
+            <div class="h-2 bg-elevated rounded-full overflow-hidden">
+              <div class="h-full bg-accent rounded-full" style="width: 42%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span>Code Rockers</span>
+              <span class="text-muted">28%</span>
+            </div>
+            <div class="h-2 bg-elevated rounded-full overflow-hidden">
+              <div class="h-full bg-white/30 rounded-full" style="width: 28%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 py-8 mt-12">
+    <div class="max-w-7xl mx-auto px-6 text-center text-dim text-sm">
+      <a href="home.html" class="text-muted hover:text-white transition-colors">Home</a> • 
+      <a href="design-system.html" class="text-muted hover:text-white transition-colors">Design System</a> • 
+      <a href="event.html" class="text-muted hover:text-white transition-colors">Event</a> • 
+      <a href="voting.html" class="text-muted hover:text-white transition-colors">Voting</a>
+    </div>
+  </footer>
+
+  <script>
+    // Color palette - organized by category
+    const colors = [
+      // === VIBRANT ===
+      { category: 'Vibrant', name: 'Vibrant Gold', hex: '#F5A623', light: '#FFBE3D' },
+      { category: 'Vibrant', name: 'Electric Gold', hex: '#FFD700', light: '#FFE44D' },
+      { category: 'Vibrant', name: 'Amber', hex: '#F59E0B', light: '#FBBF24' },
+      { category: 'Vibrant', name: 'Orange', hex: '#F97316', light: '#FB923C' },
+      { category: 'Vibrant', name: 'Tangerine', hex: '#FF6B35', light: '#FF8C5A' },
+      { category: 'Vibrant', name: 'Hot Pink', hex: '#FF1493', light: '#FF69B4' },
+      { category: 'Vibrant', name: 'Magenta', hex: '#E91E8C', light: '#FF4DA6' },
+      { category: 'Vibrant', name: 'Fuchsia', hex: '#D946EF', light: '#E879F9' },
+      { category: 'Vibrant', name: 'Coral', hex: '#FF6B6B', light: '#FF8E8E' },
+      { category: 'Vibrant', name: 'Red', hex: '#EF4444', light: '#F87171' },
+      { category: 'Vibrant', name: 'Cyan', hex: '#00D4FF', light: '#4DE4FF' },
+      { category: 'Vibrant', name: 'Electric Blue', hex: '#00B4D8', light: '#48CAE4' },
+      { category: 'Vibrant', name: 'Sky Blue', hex: '#0EA5E9', light: '#38BDF8' },
+      { category: 'Vibrant', name: 'Teal', hex: '#14B8A6', light: '#2DD4BF' },
+      { category: 'Vibrant', name: 'Emerald', hex: '#10B981', light: '#34D399' },
+      { category: 'Vibrant', name: 'Lime', hex: '#84CC16', light: '#A3E635' },
+      { category: 'Vibrant', name: 'Purple', hex: '#8B5CF6', light: '#A78BFA' },
+      { category: 'Vibrant', name: 'Violet', hex: '#7C3AED', light: '#A78BFA' },
+      { category: 'Vibrant', name: 'Indigo', hex: '#6366F1', light: '#818CF8' },
+      { category: 'Vibrant', name: 'Blue', hex: '#3B82F6', light: '#60A5FA' },
+      
+      // === REDS & CRIMSONS ===
+      { category: 'Reds & Crimsons', name: 'Scarlet', hex: '#FF2400', light: '#FF4D33' },
+      { category: 'Reds & Crimsons', name: 'Crimson', hex: '#DC143C', light: '#E8405F' },
+      { category: 'Reds & Crimsons', name: 'Cherry', hex: '#DE3163', light: '#E8587F' },
+      { category: 'Reds & Crimsons', name: 'Claret', hex: '#800F2F', light: '#9A2945' },
+      { category: 'Reds & Crimsons', name: 'Oxblood', hex: '#4A0404', light: '#6B1A1A' },
+      { category: 'Reds & Crimsons', name: 'Carmine', hex: '#960018', light: '#B21A32' },
+      
+      // === PLUM & WINE ===
+      { category: 'Plum & Wine', name: 'Plum', hex: '#8E4585', light: '#A855A0' },
+      { category: 'Plum & Wine', name: 'Mulberry', hex: '#C54B8C', light: '#D66BA3' },
+      { category: 'Plum & Wine', name: 'Lipstick', hex: '#AB274F', light: '#C43D65' },
+      { category: 'Plum & Wine', name: 'Wine', hex: '#722F37', light: '#8B3A44' },
+      { category: 'Plum & Wine', name: 'Burgundy', hex: '#800020', light: '#9A1A3A' },
+      { category: 'Plum & Wine', name: 'Berry', hex: '#8E4585', light: '#A65B9C' },
+      { category: 'Plum & Wine', name: 'Raspberry', hex: '#E30B5C', light: '#F03D7A' },
+      { category: 'Plum & Wine', name: 'Mauve', hex: '#B784A7', light: '#C99ABB' },
+      
+      // === SUBDUED / MUTED ===
+      { category: 'Subdued', name: 'Muted Gold', hex: '#B8963B', light: '#D4B055' },
+      { category: 'Subdued', name: 'Dusty Rose', hex: '#C9A2A2', light: '#DCBCBC' },
+      { category: 'Subdued', name: 'Blush', hex: '#D4A5A5', light: '#E3BFBF' },
+      { category: 'Subdued', name: 'Terracotta', hex: '#C4785A', light: '#D69578' },
+      { category: 'Subdued', name: 'Copper', hex: '#B87333', light: '#D08A4A' },
+      { category: 'Subdued', name: 'Bronze', hex: '#CD7F32', light: '#DFA04D' },
+      { category: 'Subdued', name: 'Sage', hex: '#87A878', light: '#A1BE94' },
+      { category: 'Subdued', name: 'Slate Blue', hex: '#6A8EAE', light: '#89A8C3' },
+      { category: 'Subdued', name: 'Dusty Lavender', hex: '#967AA1', light: '#B199BB' },
+      { category: 'Subdued', name: 'Taupe', hex: '#8B7D6B', light: '#A69786' },
+      { category: 'Subdued', name: 'Pewter', hex: '#8F9EA4', light: '#AAB7BC' },
+      { category: 'Subdued', name: 'Storm', hex: '#6B7A8F', light: '#8A97A8' },
+      { category: 'Subdued', name: 'Peacock (Muted)', hex: '#006D6D', light: '#008B8B' },
+      { category: 'Subdued', name: 'Forest', hex: '#355E3B', light: '#4A7A52' },
+      
+      // === COREUI PALETTE ===
+      { category: 'CoreUI', name: 'Apple', hex: '#f10e34', light: '#f33f5d' },
+      { category: 'CoreUI', name: 'Raspberry', hex: '#ed1280', light: '#f58ed1' },
+      { category: 'CoreUI', name: 'Tangerine', hex: '#ff4400', light: '#ff6633' },
+      { category: 'CoreUI', name: 'Pineapple', hex: '#ffbf00', light: '#ffd24d' },
+      { category: 'CoreUI', name: 'Lime', hex: '#31eb14', light: '#98f58a' },
+      { category: 'CoreUI', name: 'Watermelon', hex: '#1dafaf', light: '#1ac3d5' },
+      { category: 'CoreUI', name: 'Ultramarine', hex: '#006fff', light: '#338bff' },
+      { category: 'CoreUI', name: 'Elderberry', hex: '#120af5', light: '#413bf7' },
+      { category: 'CoreUI', name: 'Plum', hex: '#7138c7', light: '#8e60d2' },
+      { category: 'CoreUI', name: 'Blueberry', hex: '#667b99', light: '#8a9bb5' },
+      { category: 'CoreUI', name: 'Coconut', hex: '#cc3300', light: '#e64d1a' },
+      
+      // === COREUI DATA VIZ ===
+      { category: 'CoreUI Data Viz', name: 'Ruby', hex: '#e44c49', light: '#fc9792' },
+      { category: 'CoreUI Data Viz', name: 'Gold', hex: '#de4d21', light: '#e8714a' },
+      { category: 'CoreUI Data Viz', name: 'Amber', hex: '#d7690f', light: '#ffa46b' },
+      { category: 'CoreUI Data Viz', name: 'Citrine', hex: '#a98519', light: '#c9a040' },
+      { category: 'CoreUI Data Viz', name: 'Emerald', hex: '#79ca16', light: '#98db45' },
+      { category: 'CoreUI Data Viz', name: 'Chrysolite', hex: '#17975f', light: '#2cb87a' },
+      { category: 'CoreUI Data Viz', name: 'Aquamarine', hex: '#178c8c', light: '#1ac3d5' },
+      { category: 'CoreUI Data Viz', name: 'Turquoise', hex: '#1e85b8', light: '#4aa0cc' },
+      { category: 'CoreUI Data Viz', name: 'Sapphire', hex: '#3f82de', light: '#82b5f2' },
+      { category: 'CoreUI Data Viz', name: 'Violet', hex: '#8268e8', light: '#a08eef' },
+      { category: 'CoreUI Data Viz', name: 'Amethyst', hex: '#d24bb3', light: '#f58ed1' },
+      
+      // === NEUTRAL ===
+      { category: 'Neutral', name: 'White', hex: '#FFFFFF', light: '#FFFFFF' },
+      { category: 'Neutral', name: 'Silver', hex: '#A1A1AA', light: '#D4D4D8' },
+      { category: 'Neutral', name: 'Warm Gray', hex: '#9A8F8F', light: '#B5ACAC' },
+    ];
+
+    // Current selected color (Indigo is the chosen accent)
+    let selectedColor = colors.find(c => c.name === 'Indigo');
+    let isDropdownOpen = false;
+
+    // Convert hex to RGB
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    }
+
+    // Update CSS variables
+    function updateAccentColor(color) {
+      selectedColor = color;
+      const rgb = hexToRgb(color.hex);
+      
+      document.documentElement.style.setProperty('--accent', color.hex);
+      document.documentElement.style.setProperty('--accent-light', color.light);
+      document.documentElement.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+      
+      // Update trigger display
+      document.getElementById('selected-swatch').style.backgroundColor = color.hex;
+      document.getElementById('selected-name').textContent = color.name;
+      document.getElementById('selected-hex').textContent = color.hex;
+    }
+
+    // Toggle dropdown
+    function toggleDropdown() {
+      isDropdownOpen = !isDropdownOpen;
+      const menu = document.getElementById('dropdown-menu');
+      const arrow = document.getElementById('dropdown-arrow');
+      
+      if (isDropdownOpen) {
+        menu.classList.remove('hidden');
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        menu.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // Close dropdown
+    function closeDropdown() {
+      isDropdownOpen = false;
+      document.getElementById('dropdown-menu').classList.add('hidden');
+      document.getElementById('dropdown-arrow').style.transform = 'rotate(0deg)';
+    }
+
+    // Build dropdown menu
+    function buildDropdown() {
+      const menu = document.getElementById('dropdown-menu');
+      menu.innerHTML = '';
+      
+      let currentCategory = '';
+      
+      colors.forEach((color, index) => {
+        // Add category header
+        if (color.category !== currentCategory) {
+          currentCategory = color.category;
+          const header = document.createElement('div');
+          header.className = 'px-4 py-2 text-xs uppercase tracking-wider text-dim border-b border-white/5';
+          if (index > 0) header.classList.add('mt-2');
+          header.textContent = currentCategory;
+          menu.appendChild(header);
+        }
+        
+        // Add color option
+        const option = document.createElement('button');
+        option.className = 'color-option w-full flex items-center gap-3 px-4 py-2 text-left';
+        option.innerHTML = `
+          <div class="w-5 h-5 rounded shrink-0" style="background-color: ${color.hex}"></div>
+          <span class="flex-1">${color.name}</span>
+          <span class="text-dim text-xs font-mono">${color.hex}</span>
+        `;
+        option.addEventListener('click', () => {
+          updateAccentColor(color);
+          closeDropdown();
+        });
+        menu.appendChild(option);
+      });
+    }
+
+    // Copy CSS to clipboard
+    function copyCss() {
+      const rgb = hexToRgb(selectedColor.hex);
+      const css = `/* ${selectedColor.name} */
+--accent: ${selectedColor.hex};
+--accent-light: ${selectedColor.light};
+--accent-rgb: ${rgb.r}, ${rgb.g}, ${rgb.b};`;
+      
+      navigator.clipboard.writeText(css).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.textContent = 'Copy CSS';
+        }, 2000);
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      buildDropdown();
+      updateAccentColor(selectedColor);
+      
+      // Dropdown toggle
+      document.getElementById('dropdown-trigger').addEventListener('click', toggleDropdown);
+      
+      // Copy button
+      document.getElementById('copy-btn').addEventListener('click', copyCss);
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        const dropdown = document.querySelector('.relative');
+        if (!dropdown.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+      
+      // Close dropdown on escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeDropdown();
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

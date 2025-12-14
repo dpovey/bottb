@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — BOTTB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Jost', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-theme min-h-screen">
+
+  <!-- Admin Layout: Sidebar + Content -->
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0">
+      <!-- Logo -->
+      <div class="p-6 border-b border-white/5">
+        <a href="home.html" class="flex items-center gap-3">
+          <img src="../public/images/logos/bottb-dark-square.png" alt="BOTTB" class="h-8">
+          <div>
+            <span class="font-semibold text-sm">BOTTB</span>
+            <span class="badge-accent px-1.5 py-0.5 rounded text-[9px] tracking-wider uppercase ml-2">Admin</span>
+          </div>
+        </a>
+      </div>
+      
+      <!-- Navigation -->
+      <nav class="flex-1 p-4">
+        <ul class="space-y-1">
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-accent/10 text-accent">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span class="text-sm font-medium">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span class="text-sm">Events</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <span class="text-sm">Bands</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span class="text-sm">Photos</span>
+              <span class="ml-auto bg-surface px-2 py-0.5 rounded text-xs text-dim">247</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span class="text-sm">Users</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span class="text-sm">Voting</span>
+            </a>
+          </li>
+        </ul>
+        
+        <div class="mt-8 pt-8 border-t border-white/5">
+          <ul class="space-y-1">
+            <li>
+              <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span class="text-sm">Settings</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      
+      <!-- User -->
+      <div class="p-4 border-t border-white/5">
+        <div class="flex items-center gap-3 px-4 py-3">
+          <div class="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+            <span class="text-accent text-sm font-medium">JD</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">John Doe</p>
+            <p class="text-xs text-dim truncate">Admin</p>
+          </div>
+          <a href="login.html" class="text-dim hover:text-white transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto">
+      <!-- Top Bar -->
+      <header class="sticky top-0 z-10 bg-theme/80 backdrop-blur-lg border-b border-white/5 px-8 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="font-semibold text-2xl">Dashboard</h1>
+            <p class="text-muted text-sm">Welcome back, John</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <a href="home.html" class="btn-outline px-4 py-2 rounded-full text-xs tracking-widest uppercase flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View Site
+            </a>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Content -->
+      <div class="p-8">
+        <!-- Stats Grid -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-elevated rounded-xl p-6 border border-white/5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs tracking-widest uppercase text-muted">Total Events</p>
+              <svg class="w-5 h-5 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p class="text-3xl font-semibold">12</p>
+            <p class="text-dim text-sm mt-1">3 upcoming</p>
+          </div>
+          
+          <div class="bg-elevated rounded-xl p-6 border border-white/5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs tracking-widest uppercase text-muted">Total Bands</p>
+              <svg class="w-5 h-5 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+            <p class="text-3xl font-semibold">54</p>
+            <p class="text-dim text-sm mt-1">8 in Sydney 2025</p>
+          </div>
+          
+          <div class="bg-elevated rounded-xl p-6 border border-white/5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs tracking-widest uppercase text-muted">Photos</p>
+              <svg class="w-5 h-5 text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p class="text-3xl font-semibold">247</p>
+            <p class="text-dim text-sm mt-1">36 this week</p>
+          </div>
+          
+          <div class="bg-elevated rounded-xl p-6 border border-white/5">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs tracking-widest uppercase text-muted">Total Raised</p>
+              <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <p class="text-3xl font-semibold text-accent">$157,420</p>
+            <p class="text-dim text-sm mt-1">For Youngcare</p>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mb-8">
+          <h2 class="font-semibold text-lg mb-4">Quick Actions</h2>
+          <div class="flex flex-wrap gap-3">
+            <button class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+              </svg>
+              New Event
+            </button>
+            <button class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Band
+            </button>
+            <button class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Upload Photos
+            </button>
+            <button class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              View Results
+            </button>
+          </div>
+        </div>
+        
+        <!-- Recent Events Table -->
+        <div class="bg-elevated rounded-xl border border-white/5 overflow-hidden">
+          <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+            <h2 class="font-semibold">Recent Events</h2>
+            <a href="#" class="text-accent text-sm hover:text-accent-light transition-colors">View all →</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-white/5 text-left">
+                  <th class="px-6 py-3 text-xs tracking-widest uppercase text-muted font-medium">Event</th>
+                  <th class="px-6 py-3 text-xs tracking-widest uppercase text-muted font-medium">Date</th>
+                  <th class="px-6 py-3 text-xs tracking-widest uppercase text-muted font-medium">Bands</th>
+                  <th class="px-6 py-3 text-xs tracking-widest uppercase text-muted font-medium">Status</th>
+                  <th class="px-6 py-3 text-xs tracking-widest uppercase text-muted font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded bg-gradient-to-br from-purple-900/50 to-indigo-900/50"></div>
+                      <div>
+                        <p class="font-medium">Sydney Tech Battle 2025</p>
+                        <p class="text-dim text-sm">The Metro Theatre</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Oct 23, 2025</td>
+                  <td class="px-6 py-4 text-muted">8</td>
+                  <td class="px-6 py-4">
+                    <span class="bg-white/10 border border-white/20 text-white px-2 py-0.5 rounded text-xs tracking-wider uppercase">Upcoming</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded bg-gradient-to-br from-amber-900/50 to-orange-900/50"></div>
+                      <div>
+                        <p class="font-medium">Brisbane Tech Battle 2025</p>
+                        <p class="text-dim text-sm">The Tivoli</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Mar 15, 2025</td>
+                  <td class="px-6 py-4 text-muted">6</td>
+                  <td class="px-6 py-4">
+                    <span class="badge-accent px-2 py-0.5 rounded text-xs tracking-wider uppercase">Complete</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="hover:bg-white/[0.02] transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-10 h-10 rounded bg-gradient-to-br from-cyan-900/50 to-teal-900/50"></div>
+                      <div>
+                        <p class="font-medium">Sydney Tech Battle 2024</p>
+                        <p class="text-dim text-sm">The Metro Theatre</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Nov 20, 2024</td>
+                  <td class="px-6 py-4 text-muted">8</td>
+                  <td class="px-6 py-4">
+                    <span class="badge-accent px-2 py-0.5 rounded text-xs tracking-wider uppercase">Complete</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button class="p-1.5 rounded hover:bg-white/10 transition-colors text-muted hover:text-white">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>
+
