@@ -20,7 +20,6 @@ export function WebLayout({
         showNav={true}
         breadcrumbs={breadcrumbs}
         variant="glass"
-        showAdminBanner={true}
         fixed={true}
       />
       <main className="flex-1">{children}</main>

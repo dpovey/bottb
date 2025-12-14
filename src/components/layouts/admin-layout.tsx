@@ -20,7 +20,6 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
         showNav={true}
         breadcrumbs={adminBreadcrumbs}
         variant="solid"
-        showAdminBanner={true}
         fixed={true}
       />
       <main className="flex-1">{children}</main>

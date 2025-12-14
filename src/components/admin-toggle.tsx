@@ -5,6 +5,7 @@ import { useEffect } from "react";
 export function AdminToggle() {
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      // Ctrl+Alt+A toggles admin toolbar
       if (
         event.ctrlKey &&
         event.altKey &&
@@ -12,27 +13,10 @@ export function AdminToggle() {
       ) {
         event.preventDefault();
 
-        // Get current states
-        const bannerHidden = localStorage.getItem("admin-banner-hidden");
-        const indicatorHidden = localStorage.getItem("admin-indicator-hidden");
-
-        // If both are hidden independently, sync them to banner's state
-        if (bannerHidden === "true" && indicatorHidden === "true") {
-          // Both hidden - show both (banner as truth)
-          localStorage.setItem("admin-banner-hidden", "false");
-          localStorage.setItem("admin-indicator-hidden", "false");
-        } else {
-          // Normal toggle - use banner as truth
-          const newBannerHidden = bannerHidden !== "true";
-          localStorage.setItem(
-            "admin-banner-hidden",
-            newBannerHidden.toString()
-          );
-          localStorage.setItem(
-            "admin-indicator-hidden",
-            newBannerHidden.toString()
-          );
-        }
+        // Toggle toolbar collapsed state
+        const isCollapsed = localStorage.getItem("admin-toolbar-collapsed");
+        const newState = isCollapsed !== "true";
+        localStorage.setItem("admin-toolbar-collapsed", String(newState));
 
         // Force page reload to update components
         window.location.reload();

@@ -30,7 +30,6 @@ export function PublicLayout({
           showNav={showNav}
           breadcrumbs={breadcrumbs}
           variant={headerVariant}
-          showAdminBanner={true}
           fixed={true}
         />
       )}

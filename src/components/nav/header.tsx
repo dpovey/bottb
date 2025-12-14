@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { AdminBanner } from "@/components/admin-banner";
 import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
 
 export interface HeaderProps {
@@ -14,8 +13,6 @@ export interface HeaderProps {
   breadcrumbs?: BreadcrumbItem[];
   /** Background style */
   variant?: "transparent" | "glass" | "solid";
-  /** Show admin banner (if user is admin) */
-  showAdminBanner?: boolean;
   /** Make header fixed/sticky */
   fixed?: boolean;
 }
@@ -30,16 +27,12 @@ export function Header({
   showNav = true,
   breadcrumbs,
   variant = "glass",
-  showAdminBanner = true,
   fixed = true,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
-      {/* Admin Banner */}
-      {showAdminBanner && <AdminBanner />}
-      
       {/* Main Header */}
       <header
         className={cn(
@@ -149,4 +142,3 @@ export function Header({
     </>
   );
 }
-
