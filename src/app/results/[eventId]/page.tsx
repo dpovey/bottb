@@ -2,9 +2,6 @@ import {
   getEventById,
   getBandsForEvent,
   getBandScores,
-  getFinalizedResults,
-  hasFinalizedResults,
-  FinalizedResult,
 } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
@@ -77,29 +74,10 @@ export default async function ResultsPage({
   }
 
   const bands = await getBandsForEvent(eventId);
-  const hasFinalized = await hasFinalizedResults(eventId);
-  let bandResults: DisplayResult[];
-
-  if (hasFinalized && event.status === "finalized") {
-    const finalizedResults = await getFinalizedResults(eventId);
-    bandResults = finalizedResults.map((result: FinalizedResult) => ({
-      id: result.band_id,
-      name: result.band_name,
-      avg_song_choice: Number(result.avg_song_choice || 0),
-      avg_performance: Number(result.avg_performance || 0),
-      avg_crowd_vibe: Number(result.avg_crowd_vibe || 0),
-      crowd_vote_count: result.crowd_vote_count,
-      total_crowd_votes: result.total_crowd_votes,
-      crowd_noise_energy: result.crowd_noise_energy ?? undefined,
-      crowdNoiseScore: Number(result.crowd_noise_score || 0),
-      judgeScore: Number(result.judge_score || 0),
-      crowdScore: Number(result.crowd_score || 0),
-      totalScore: Number(result.total_score || 0),
-      info: bands.find((b) => b.id === result.band_id)?.info,
-    }));
-  } else {
-    const scores = (await getBandScores(eventId)) as BandScore[];
-    bandResults = scores
+  
+  // Calculate scores dynamically from current vote data
+  const scores = (await getBandScores(eventId)) as BandScore[];
+  const bandResults: DisplayResult[] = scores
       .map((score) => {
         const judgeScore =
           Number(score.avg_song_choice || 0) +
@@ -137,7 +115,6 @@ export default async function ResultsPage({
         };
       })
       .sort((a, b) => b.totalScore - a.totalScore);
-  }
 
   // Find category winners
   const categoryWinners = bandResults.length > 0 ? {
