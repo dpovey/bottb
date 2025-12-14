@@ -11,11 +11,13 @@ import {
   CircularOscilloscope,
   LEDDisplay,
 } from "./components";
+import { BandThumbnail } from "@/components/ui";
 
 interface Band {
   id: string;
   name: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     [key: string]: unknown;
@@ -659,13 +661,12 @@ export default function CrowdNoiseRecordPage() {
               />
             </div>
             <div className="flex items-center justify-center">
-              {band.info?.logo_url ? (
-                <Image
-                  src={band.info.logo_url}
-                  alt={`${band.name} logo`}
-                  width={200}
-                  height={200}
-                  className="object-contain"
+              {(band.info?.logo_url || band.hero_thumbnail_url) ? (
+                <BandThumbnail
+                  logoUrl={band.info?.logo_url}
+                  heroThumbnailUrl={band.hero_thumbnail_url}
+                  bandName={band.name}
+                  size="xxl"
                 />
               ) : (
                 <h1 className="text-xl sm:text-3xl font-bold text-white mb-1">

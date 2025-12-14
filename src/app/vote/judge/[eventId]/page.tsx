@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
 // No fingerprinting needed for judge voting
+import { BandThumbnail } from "@/components/ui";
 
 interface Band {
   id: string;
   name: string;
   description?: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -290,22 +291,12 @@ export default function JudgeVotingPage() {
                     {index + 1}.
                   </div>
                   {/* Band Logo */}
-                  <div className="w-16 h-16 flex-shrink-0">
-                    {band.info?.logo_url ? (
-                      <Image
-                        src={band.info.logo_url}
-                        alt={`${band.name} logo`}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-contain rounded-lg"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Logo</span>
-                      </div>
-                    )}
-                  </div>
+                  <BandThumbnail
+                    logoUrl={band.info?.logo_url}
+                    heroThumbnailUrl={band.hero_thumbnail_url}
+                    bandName={band.name}
+                    size="lg"
+                  />
                   <div>
                     <h3 className="text-xl font-semibold text-white">
                       {band.name}

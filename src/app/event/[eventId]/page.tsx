@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
-import { Button, Badge, Card, DateBadge } from "@/components/ui";
+import { Button, Badge, Card, DateBadge, BandThumbnail } from "@/components/ui";
 import { PageHeader } from "@/components/hero";
 
 interface Event {
@@ -36,6 +36,7 @@ interface Band {
   name: string;
   description?: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -269,24 +270,12 @@ export default function EventPage() {
                       </div>
 
                       {/* Band Logo */}
-                      <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg overflow-hidden bg-bg-surface">
-                        {band.info?.logo_url ? (
-                          <Image
-                            src={band.info.logo_url}
-                            alt={`${band.name} logo`}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-contain"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-text-dim text-xs">
-                              No Logo
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      <BandThumbnail
+                        logoUrl={band.info?.logo_url}
+                        heroThumbnailUrl={band.hero_thumbnail_url}
+                        bandName={band.name}
+                        size="md"
+                      />
 
                       {/* Band Info */}
                       <div className="flex-1 min-w-0">

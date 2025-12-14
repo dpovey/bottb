@@ -30,6 +30,7 @@ export interface Band {
   description?: string;
   order: number;
   image_url?: string;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -169,8 +170,13 @@ export async function getPastEvents() {
 }
 
 export async function getBandsForEvent(eventId: string) {
-  const { rows } =
-    await sql<Band>`SELECT * FROM bands WHERE event_id = ${eventId} ORDER BY "order"`;
+  const { rows } = await sql<Band>`
+    SELECT b.*, 
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
+    FROM bands b 
+    WHERE event_id = ${eventId} 
+    ORDER BY "order"
+  `;
   return rows;
 }
 
@@ -302,6 +308,7 @@ export async function getBandScores(eventId: string) {
       b.name,
       b."order",
       b.info,
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.performance END) as avg_performance,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.crowd_vibe END) as avg_crowd_vibe,

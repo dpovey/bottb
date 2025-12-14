@@ -6,15 +6,15 @@ import {
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import { auth } from "@/lib/auth";
-import Image from "next/image";
 import Link from "next/link";
 import { WebLayout } from "@/components/layouts";
-import { Card, Badge, Button } from "@/components/ui";
+import { Card, Badge, Button, BandThumbnail } from "@/components/ui";
 
 interface BandScore {
   id: string;
   name: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -52,6 +52,7 @@ interface DisplayResult {
   judgeScore: number;
   crowdScore: number;
   totalScore: number;
+  hero_thumbnail_url?: string;
   info?: BandScore["info"];
 }
 
@@ -107,6 +108,7 @@ export default async function ResultsPage({
           crowd_vote_count: Number(score.crowd_vote_count || 0),
           total_crowd_votes: Number(score.total_crowd_votes || 0),
           crowd_noise_energy: score.crowd_noise_energy,
+          hero_thumbnail_url: score.hero_thumbnail_url,
           info: score.info,
           judgeScore,
           crowdScore,
@@ -268,22 +270,12 @@ export default async function ResultsPage({
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 shrink-0 rounded bg-bg-surface overflow-hidden">
-                            {band.info?.logo_url ? (
-                              <Image
-                                src={band.info.logo_url}
-                                alt={`${band.name} logo`}
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-contain"
-                                unoptimized
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-text-dim text-xs">?</span>
-                              </div>
-                            )}
-                          </div>
+                          <BandThumbnail
+                            logoUrl={band.info?.logo_url}
+                            heroThumbnailUrl={band.hero_thumbnail_url}
+                            bandName={band.name}
+                            size="xs"
+                          />
                           <span className="font-medium">{band.name}</span>
                         </div>
                       </td>
@@ -330,22 +322,12 @@ export default async function ResultsPage({
               <Link key={band.id} href={`/band/${band.id}`}>
                 <Card variant="interactive" className="h-full">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 shrink-0 rounded-lg bg-bg-surface overflow-hidden">
-                      {band.info?.logo_url ? (
-                        <Image
-                          src={band.info.logo_url}
-                          alt={`${band.name} logo`}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-contain"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-text-dim text-xs">No Logo</span>
-                        </div>
-                      )}
-                    </div>
+                    <BandThumbnail
+                      logoUrl={band.info?.logo_url}
+                      heroThumbnailUrl={band.hero_thumbnail_url}
+                      bandName={band.name}
+                      size="sm"
+                    />
                     <div>
                       <h4 className="font-semibold text-white">{band.name}</h4>
                       <p className="text-sm text-text-muted">View breakdown</p>

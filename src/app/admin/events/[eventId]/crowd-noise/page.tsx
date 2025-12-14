@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { BandThumbnail } from "@/components/ui";
 
 interface Band {
   id: string;
   name: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     [key: string]: unknown;
@@ -474,21 +475,12 @@ export default function CrowdNoisePage() {
                   className="w-full text-left"
                 >
                   <div className="flex items-center space-x-3">
-                    {band.info?.logo_url ? (
-                      <Image
-                        src={band.info.logo_url}
-                        alt={`${band.name} logo`}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 object-contain flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm text-white font-bold">
-                          {band.name.charAt(0)}
-                        </span>
-                      </div>
-                    )}
+                    <BandThumbnail
+                      logoUrl={band.info?.logo_url}
+                      heroThumbnailUrl={band.hero_thumbnail_url}
+                      bandName={band.name}
+                      size="xs"
+                    />
                     <div>
                       <div className="font-bold text-lg">{band.name}</div>
                       {hasMeasurement && (
@@ -518,22 +510,13 @@ export default function CrowdNoisePage() {
       {/* Selected Band Display */}
       {selectedBand && (
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
-          <div className="mb-4">
-            {selectedBand.info?.logo_url ? (
-              <Image
-                src={selectedBand.info.logo_url}
-                alt={`${selectedBand.name} logo`}
-                width={64}
-                height={64}
-                className="mx-auto h-16 w-auto object-contain mb-4"
-              />
-            ) : (
-              <div className="mx-auto h-16 w-16 bg-gray-600 rounded-full flex items-center justify-center mb-4">
-                <span className="text-2xl text-white font-bold">
-                  {selectedBand.name.charAt(0)}
-                </span>
-              </div>
-            )}
+          <div className="mb-4 flex justify-center">
+            <BandThumbnail
+              logoUrl={selectedBand.info?.logo_url}
+              heroThumbnailUrl={selectedBand.hero_thumbnail_url}
+              bandName={selectedBand.name}
+              size="lg"
+            />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
             {selectedBand.name}
