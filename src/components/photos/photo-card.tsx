@@ -12,7 +12,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
   
   return (
     <div
-      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-gray-900"
+      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
       onClick={onClick}
     >
       {/* Thumbnail image - key forces re-render when URL changes */}
@@ -20,28 +20,26 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
         key={thumbSrc}
         src={thumbSrc}
         alt={photo.original_filename || "Photo"}
-        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         loading="lazy"
       />
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      {/* Hover overlay with info */}
+      <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute bottom-0 left-0 right-0 p-3">
           {photo.band_name && (
-            <p className="text-sm font-semibold text-white truncate">
+            <p className="text-sm font-medium text-white truncate">
               {photo.band_name}
             </p>
           )}
           {photo.event_name && (
-            <p className="text-xs text-gray-300 truncate">{photo.event_name}</p>
-          )}
-          {photo.photographer && (
-            <p className="text-xs text-gray-400 truncate mt-1">
-              📷 {photo.photographer}
-            </p>
+            <p className="text-xs text-text-muted truncate">{photo.event_name}</p>
           )}
         </div>
       </div>
+
+      {/* Accent border on hover */}
+      <div className="absolute inset-0 rounded-lg border-2 border-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </div>
   );
 }

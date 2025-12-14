@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Photo, Event, Band } from "@/lib/db";
 import { PhotoGrid } from "@/components/photos/photo-grid";
 import { PhotoSlideshow } from "@/components/photos/photo-slideshow";
 import { PhotoFilters } from "@/components/photos/photo-filters";
+import { PublicLayout } from "@/components/layouts";
 
 interface PhotosResponse {
   photos: Photo[];
@@ -18,6 +20,7 @@ interface PhotosResponse {
 }
 
 export default function PhotosPage() {
+  const searchParams = useSearchParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [bands, setBands] = useState<Band[]>([]);
@@ -37,6 +40,30 @@ export default function PhotosPage() {
 
   // Slideshow
   const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null);
+  const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(null);
+
+  // Check for photo query param on mount
+  useEffect(() => {
+    const photoId = searchParams.get("photo");
+    if (photoId) {
+      setPendingPhotoId(photoId);
+    }
+  }, [searchParams]);
+
+  // Open slideshow when photos load and we have a pending photo ID
+  useEffect(() => {
+    if (pendingPhotoId && photos.length > 0 && !loading) {
+      const index = photos.findIndex((p) => p.id === pendingPhotoId);
+      if (index !== -1) {
+        setSlideshowIndex(index);
+        setPendingPhotoId(null);
+      } else {
+        // Photo not found in current page - clear the pending ID
+        // In a more advanced implementation, we could search for the photo
+        setPendingPhotoId(null);
+      }
+    }
+  }, [pendingPhotoId, photos, loading]);
 
   // Fetch events and bands on mount
   useEffect(() => {
@@ -125,6 +152,17 @@ export default function PhotosPage() {
   // Handle slideshow close
   const handleSlideshowClose = () => {
     setSlideshowIndex(null);
+    // Clear the photo param from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("photo");
+    window.history.replaceState({}, "", url.pathname + url.search);
+  };
+
+  // Handle photo change in slideshow (update URL)
+  const handlePhotoChange = (photoId: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("photo", photoId);
+    window.history.replaceState({}, "", url.pathname + url.search);
   };
 
   // Handle photo deletion (called from slideshow)
@@ -148,40 +186,57 @@ export default function PhotosPage() {
     );
   };
 
+  // Generate pagination numbers
+  const getPaginationNumbers = () => {
+    const pages: (number | "...")[] = [];
+    const total = pagination.totalPages;
+    const current = pagination.page;
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (current > 3) pages.push("...");
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+        pages.push(i);
+      }
+      if (current < total - 2) pages.push("...");
+      pages.push(total);
+    }
+    return pages;
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950">
-      {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-gray-950/80 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
-                Photo Gallery
-              </h1>
-              <p className="text-sm text-gray-400 mt-1">
-                {pagination.total} photo{pagination.total !== 1 ? "s" : ""}
-              </p>
-            </div>
-
-            {/* Slideshow button */}
-            {photos.length > 0 && (
-              <button
-                onClick={() => setSlideshowIndex(0)}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Slideshow
-              </button>
-            )}
+    <PublicLayout
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Photos" },
+      ]}
+      footerVariant="simple"
+    >
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
+            <p className="text-text-muted">
+              {pagination.total} photo{pagination.total !== 1 ? "s" : ""} from {events.length} event{events.length !== 1 ? "s" : ""}
+            </p>
           </div>
+          {photos.length > 0 && (
+            <button
+              onClick={() => setSlideshowIndex(0)}
+              className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Slideshow
+            </button>
+          )}
         </div>
-      </header>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Filters */}
         <PhotoFilters
           events={events}
@@ -197,7 +252,7 @@ export default function PhotosPage() {
         />
 
         {/* Photo grid */}
-        <div className="mt-6">
+        <div className="mt-8">
           <PhotoGrid
             photos={photos}
             onPhotoClick={handlePhotoClick}
@@ -207,23 +262,50 @@ export default function PhotosPage() {
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-2 mt-12">
+            {/* Previous button */}
             <button
               onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
               disabled={pagination.page <= 1}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-xs tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              Previous
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-            <span className="px-4 py-2 text-gray-400">
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
+
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {getPaginationNumbers().map((pageNum, idx) =>
+                pageNum === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="w-10 h-10 flex items-center justify-center text-text-dim">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPagination((p) => ({ ...p, page: pageNum as number }))}
+                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                      pagination.page === pageNum
+                        ? "bg-accent text-white"
+                        : "bg-bg-elevated text-text-muted hover:text-white hover:bg-bg-surface"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              )}
+            </div>
+
+            {/* Next button */}
             <button
               onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
               disabled={pagination.page >= pagination.totalPages}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-xs tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
-              Next
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
         )}
@@ -244,9 +326,10 @@ export default function PhotosPage() {
           onClose={handleSlideshowClose}
           onPhotoDeleted={handlePhotoDeleted}
           onPhotoCropped={handlePhotoCropped}
+          onPhotoChange={handlePhotoChange}
         />
       )}
-    </div>
+    </PublicLayout>
   );
 }
 
