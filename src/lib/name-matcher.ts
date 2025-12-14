@@ -120,7 +120,7 @@ export async function matchEventName(
 }
 
 /**
- * Fuzzy match a band name to existing bands in the database
+ * Fuzzy match a band name (or company/description) to existing bands in the database
  */
 export async function matchBandName(
   name: string,
@@ -128,14 +128,54 @@ export async function matchBandName(
 ): Promise<MatchResult<Band>> {
   const normalizedName = normalizeString(name);
 
+  // First, try direct case-insensitive database lookup if we have an event
+  if (eventId) {
+    // Check both name AND description (which stores company name)
+    const { rows: exactRows } = await sql<Band>`
+      SELECT id, name, description, event_id FROM bands 
+      WHERE event_id = ${eventId} 
+      AND (LOWER(name) = LOWER(${name}) OR LOWER(description) = LOWER(${name}))
+    `;
+    if (exactRows.length > 0) {
+      return {
+        id: exactRows[0].id,
+        name: exactRows[0].name,
+        confidence: "exact",
+        data: exactRows[0],
+      };
+    }
+
+    // Try ILIKE for partial matches on name or description
+    const { rows: likeRows } = await sql<Band>`
+      SELECT id, name, description, event_id FROM bands 
+      WHERE event_id = ${eventId} 
+      AND (
+        LOWER(name) LIKE LOWER(${'%' + name + '%'}) 
+        OR LOWER(${name}) LIKE '%' || LOWER(name) || '%'
+        OR LOWER(description) LIKE LOWER(${'%' + name + '%'})
+        OR LOWER(${name}) LIKE '%' || LOWER(description) || '%'
+      )
+    `;
+    if (likeRows.length === 1) {
+      // Only use if there's exactly one match to avoid ambiguity
+      return {
+        id: likeRows[0].id,
+        name: likeRows[0].name,
+        confidence: "fuzzy",
+        data: likeRows[0],
+      };
+    }
+  }
+
+  // Fall back to in-memory matching for fuzzy cases
   let bands: Band[];
   if (eventId) {
     const { rows } = await sql<Band>`
-      SELECT id, name, event_id FROM bands WHERE event_id = ${eventId}
+      SELECT id, name, description, event_id FROM bands WHERE event_id = ${eventId}
     `;
     bands = rows;
   } else {
-    const { rows } = await sql<Band>`SELECT id, name, event_id FROM bands`;
+    const { rows } = await sql<Band>`SELECT id, name, description, event_id FROM bands`;
     bands = rows;
   }
 
@@ -148,9 +188,20 @@ export async function matchBandName(
 
   for (const band of bands) {
     const normalizedBandName = normalizeString(band.name);
+    const normalizedDescription = band.description ? normalizeString(band.description) : "";
 
-    // Check for exact match
+    // Check for exact match on normalized band name
     if (normalizedBandName === normalizedName) {
+      return {
+        id: band.id,
+        name: band.name,
+        confidence: "exact",
+        data: band,
+      };
+    }
+
+    // Check for exact match on normalized description (company name)
+    if (normalizedDescription && normalizedDescription === normalizedName) {
       return {
         id: band.id,
         name: band.name,
@@ -169,7 +220,11 @@ export async function matchBandName(
       };
     }
 
-    const similarity = stringSimilarity(name, band.name);
+    // Check similarity against both name and description, take the better match
+    const nameSimilarity = stringSimilarity(name, band.name);
+    const descSimilarity = band.description ? stringSimilarity(name, band.description) : 0;
+    const similarity = Math.max(nameSimilarity, descSimilarity);
+    
     if (similarity > highestSimilarity) {
       highestSimilarity = similarity;
       bestMatch = {
@@ -188,3 +243,174 @@ export async function matchBandName(
   return { id: null, name: name, confidence: "unmatched" };
 }
 
+export interface DebugMatchResult extends MatchResult<Band> {
+  inputName: string;
+  normalizedInput: string;
+  bestScore: number;
+  candidates: Array<{ name: string; id: string; score: number }>;
+}
+
+/**
+ * Debug version of matchBandName that returns detailed matching info
+ */
+export async function debugMatchBandName(
+  name: string,
+  eventId?: string
+): Promise<DebugMatchResult> {
+  const normalizedName = normalizeString(name);
+
+  // First, try direct case-insensitive database lookup if we have an event
+  if (eventId) {
+    // Check both name AND description (which stores company name)
+    const { rows: exactRows } = await sql<Band>`
+      SELECT id, name, description, event_id FROM bands 
+      WHERE event_id = ${eventId} 
+      AND (LOWER(name) = LOWER(${name}) OR LOWER(description) = LOWER(${name}))
+    `;
+    if (exactRows.length > 0) {
+      return {
+        id: exactRows[0].id,
+        name: exactRows[0].name,
+        confidence: "exact",
+        data: exactRows[0],
+        inputName: name,
+        normalizedInput: normalizedName,
+        bestScore: 1.0,
+        candidates: [{ name: exactRows[0].name, id: exactRows[0].id, score: 1.0 }],
+      };
+    }
+
+    // Try ILIKE for partial matches on name or description
+    const { rows: likeRows } = await sql<Band>`
+      SELECT id, name, description, event_id FROM bands 
+      WHERE event_id = ${eventId} 
+      AND (
+        LOWER(name) LIKE LOWER(${'%' + name + '%'}) 
+        OR LOWER(${name}) LIKE '%' || LOWER(name) || '%'
+        OR LOWER(description) LIKE LOWER(${'%' + name + '%'})
+        OR LOWER(${name}) LIKE '%' || LOWER(description) || '%'
+      )
+    `;
+    if (likeRows.length === 1) {
+      return {
+        id: likeRows[0].id,
+        name: likeRows[0].name,
+        confidence: "fuzzy",
+        data: likeRows[0],
+        inputName: name,
+        normalizedInput: normalizedName,
+        bestScore: 0.8,
+        candidates: [{ name: likeRows[0].name, id: likeRows[0].id, score: 0.8 }],
+      };
+    }
+  }
+
+  // Fall back to in-memory matching
+  let bands: Band[];
+  if (eventId) {
+    const { rows } = await sql<Band>`
+      SELECT id, name, description, event_id FROM bands WHERE event_id = ${eventId}
+    `;
+    bands = rows;
+  } else {
+    const { rows } = await sql<Band>`SELECT id, name, description, event_id FROM bands`;
+    bands = rows;
+  }
+
+  const candidates: Array<{ name: string; id: string; score: number }> = [];
+  let bestMatch: MatchResult<Band> = {
+    id: null,
+    name: null,
+    confidence: "unmatched",
+  };
+  let highestSimilarity = 0;
+
+  for (const band of bands) {
+    const normalizedBandName = normalizeString(band.name);
+    const normalizedDescription = band.description ? normalizeString(band.description) : "";
+
+    // Check for exact match on normalized band name
+    if (normalizedBandName === normalizedName) {
+      return {
+        id: band.id,
+        name: band.name,
+        confidence: "exact",
+        data: band,
+        inputName: name,
+        normalizedInput: normalizedName,
+        bestScore: 1.0,
+        candidates: [{ name: band.name, id: band.id, score: 1.0 }],
+      };
+    }
+
+    // Check for exact match on normalized description (company name)
+    if (normalizedDescription && normalizedDescription === normalizedName) {
+      return {
+        id: band.id,
+        name: band.name,
+        confidence: "exact",
+        data: band,
+        inputName: name,
+        normalizedInput: normalizedName,
+        bestScore: 1.0,
+        candidates: [{ name: band.name, id: band.id, score: 1.0 }],
+      };
+    }
+
+    // Check for ID match
+    if (normalizeString(band.id) === normalizedName) {
+      return {
+        id: band.id,
+        name: band.name,
+        confidence: "exact",
+        data: band,
+        inputName: name,
+        normalizedInput: normalizedName,
+        bestScore: 1.0,
+        candidates: [{ name: band.name, id: band.id, score: 1.0 }],
+      };
+    }
+
+    // Check similarity against both name and description, take the better match
+    const nameSimilarity = stringSimilarity(name, band.name);
+    const descSimilarity = band.description ? stringSimilarity(name, band.description) : 0;
+    const similarity = Math.max(nameSimilarity, descSimilarity);
+    
+    // Show which field matched better in candidates
+    const matchedField = descSimilarity > nameSimilarity ? `${band.name} (${band.description})` : band.name;
+    candidates.push({ name: matchedField, id: band.id, score: similarity });
+    
+    if (similarity > highestSimilarity) {
+      highestSimilarity = similarity;
+      bestMatch = {
+        id: band.id,
+        name: band.name,
+        confidence: "fuzzy",
+        data: band,
+      };
+    }
+  }
+
+  // Sort candidates by score descending
+  candidates.sort((a, b) => b.score - a.score);
+
+  if (highestSimilarity >= FUZZY_MATCH_THRESHOLD) {
+    return {
+      ...bestMatch,
+      inputName: name,
+      normalizedInput: normalizedName,
+      bestScore: highestSimilarity,
+      candidates: candidates.slice(0, 5), // Top 5
+    };
+  }
+
+  return {
+    id: null,
+    name: name,
+    confidence: "unmatched",
+    inputName: name,
+    normalizedInput: normalizedName,
+    bestScore: highestSimilarity,
+    candidates: candidates.slice(0, 5), // Top 5
+  };
+}

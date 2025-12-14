@@ -9,7 +9,7 @@ import { existsSync } from "fs";
 import { parseArgs } from "util";
 
 import { extractPhotoMetadata } from "../lib/xmp-parser";
-import { matchEventName, matchBandName } from "../lib/name-matcher";
+import { matchEventName, matchBandName, debugMatchBandName } from "../lib/name-matcher";
 import { processImage } from "../lib/image-processor";
 
 // Load environment variables
@@ -137,6 +137,20 @@ interface UploadResult {
   error?: string;
   skipped?: boolean;
   reason?: string;
+  // Summary data for compact output
+  summary?: {
+    exists: boolean;
+    event?: string;
+    eventConfidence?: string;
+    band?: string;
+    bandConfidence?: string;
+    company?: string;
+    photographer?: string;
+    social: boolean;
+    // Debug info
+    bestScore?: number;
+    candidates?: Array<{ name: string; id: string; score: number }>;
+  };
 }
 
 interface PhotoRecord {
@@ -197,13 +211,18 @@ async function uploadPhoto(
     socialOnly: boolean;
     dryRun: boolean;
     verbose: boolean;
+    summary: boolean;
+    debug: boolean;
   }
 ): Promise<UploadResult> {
   const filename = basename(imagePath);
 
   try {
     // Check for duplicates
-    if (await photoExists(filename)) {
+    const exists = await photoExists(filename);
+    
+    // For summary mode, we still need to extract metadata even if file exists
+    if (exists && !options.summary) {
       return {
         success: false,
         filename,
@@ -229,6 +248,20 @@ async function uploadPhoto(
 
     // Check social filter
     if (options.socialOnly && !metadata.showOnSocial) {
+      if (options.summary) {
+        return {
+          success: false,
+          filename,
+          skipped: true,
+          reason: "Not marked for social",
+          summary: {
+            exists,
+            company: metadata.company,
+            photographer: metadata.photographer,
+            social: metadata.showOnSocial,
+          },
+        };
+      }
       return {
         success: false,
         filename,
@@ -257,16 +290,29 @@ async function uploadPhoto(
     let bandId = options.bandId;
     let matchedBandName: string | null = null;
     let bandConfidence: "exact" | "fuzzy" | "manual" | "unmatched" = "manual";
+    let debugBestScore: number | undefined;
+    let debugCandidates: Array<{ name: string; id: string; score: number }> | undefined;
 
     if (!bandId && (metadata.band || metadata.company)) {
-      const bandMatch = await matchBandName(
-        metadata.band || metadata.company || "",
-        eventId
-      );
-      if (bandMatch.id) {
-        bandId = bandMatch.id;
-        matchedBandName = bandMatch.name;
-        bandConfidence = bandMatch.confidence;
+      const bandNameToMatch = metadata.band || metadata.company || "";
+      
+      if (options.debug) {
+        // Use debug version for detailed matching info
+        const bandMatch = await debugMatchBandName(bandNameToMatch, eventId);
+        if (bandMatch.id) {
+          bandId = bandMatch.id;
+          matchedBandName = bandMatch.name;
+          bandConfidence = bandMatch.confidence;
+        }
+        debugBestScore = bandMatch.bestScore;
+        debugCandidates = bandMatch.candidates;
+      } else {
+        const bandMatch = await matchBandName(bandNameToMatch, eventId);
+        if (bandMatch.id) {
+          bandId = bandMatch.id;
+          matchedBandName = bandMatch.name;
+          bandConfidence = bandMatch.confidence;
+        }
       }
     } else if (bandId) {
       bandConfidence = "manual";
@@ -281,6 +327,28 @@ async function uploadPhoto(
           : eventConfidence === "fuzzy" || bandConfidence === "fuzzy"
             ? "fuzzy"
             : "exact";
+
+    // Summary mode - return compact data for single-line output
+    if (options.summary) {
+      return {
+        success: !exists,
+        filename,
+        skipped: exists,
+        reason: exists ? "Already uploaded" : undefined,
+        summary: {
+          exists,
+          event: eventId || undefined,
+          eventConfidence,
+          band: matchedBandName || bandId || undefined,
+          bandConfidence,
+          company: metadata.company,
+          photographer: metadata.photographer,
+          social: metadata.showOnSocial,
+          bestScore: debugBestScore,
+          candidates: debugCandidates,
+        },
+      };
+    }
 
     if (options.dryRun) {
       console.log(`  🧪 Would upload: ${filename}`);
@@ -340,6 +408,8 @@ async function main() {
       recursive: { type: "boolean", default: true },
       verbose: { type: "boolean", short: "v", default: false },
       "social-only": { type: "boolean", default: false },
+      summary: { type: "boolean", short: "s", default: false },
+      debug: { type: "boolean", short: "d", default: false },
       event: { type: "string" },
       band: { type: "string" },
       help: { type: "boolean", short: "h", default: false },
@@ -359,6 +429,8 @@ Options:
   --event <id>    Manually assign all photos to this event ID
   --band <id>     Manually assign all photos to this band ID
   --no-recursive  Don't scan subdirectories
+  -s, --summary   Compact one-line summary per photo (implies --dry-run)
+  -d, --debug     Show band matching debug info (use with --summary)
   -v, --verbose   Show detailed metadata for each file
   -h, --help      Show this help
 
@@ -367,6 +439,7 @@ Examples:
   npm run bulk-upload-photos -- /path/to/photos --social-only
   npm run bulk-upload-photos -- /path/to/photos --event sydney-2025 --band the-agentics
   npm run bulk-upload-photos -- /path/to/photos --dry-run --verbose
+  npm run bulk-upload-photos -- /path/to/photos --summary
 `);
     process.exit(0);
   }
@@ -428,23 +501,43 @@ Examples:
     }
   }
 
-  console.log("🚀 Starting bulk photo upload...");
-  console.log(`📁 Source: ${sourceDir}`);
-  console.log(`🔍 Recursive: ${values.recursive}`);
-  console.log(`🧪 Dry run: ${values["dry-run"]}`);
-  console.log(`📱 Social only: ${values["social-only"]}`);
-  if (values.event) console.log(`🎪 Event: ${values.event}`);
-  if (values.band) console.log(`🎸 Band: ${values.band}`);
-  console.log("");
+  const isSummary = values.summary || false;
+  const isDryRun = values["dry-run"] || isSummary; // summary implies dry-run
+
+  if (!isSummary) {
+    console.log("🚀 Starting bulk photo upload...");
+    console.log(`📁 Source: ${sourceDir}`);
+    console.log(`🔍 Recursive: ${values.recursive}`);
+    console.log(`🧪 Dry run: ${isDryRun}`);
+    console.log(`📱 Social only: ${values["social-only"]}`);
+    if (values.event) console.log(`🎪 Event: ${values.event}`);
+    if (values.band) console.log(`🎸 Band: ${values.band}`);
+    console.log("");
+    console.log("🔎 Scanning for images...");
+  }
 
   // Find all images
-  console.log("🔎 Scanning for images...");
   const imageFiles = await findImageFiles(sourceDir, values.recursive !== false);
-  console.log(`📷 Found ${imageFiles.length} image(s)\n`);
+  
+  if (!isSummary) {
+    console.log(`📷 Found ${imageFiles.length} image(s)\n`);
+  }
 
   if (imageFiles.length === 0) {
     console.log("No images found.");
     process.exit(0);
+  }
+
+  // Summary mode header
+  if (isSummary) {
+    console.log("# Photo Upload Summary");
+    console.log(`# Source: ${sourceDir}`);
+    console.log(`# Found: ${imageFiles.length} image(s)`);
+    if (values.event) console.log(`# Event override: ${values.event}`);
+    if (values.band) console.log(`# Band override: ${values.band}`);
+    console.log("#");
+    console.log("# STATUS | FILENAME | EVENT | BAND | COMPANY | SOCIAL");
+    console.log("# " + "-".repeat(70));
   }
 
   // Upload each photo
@@ -456,19 +549,51 @@ Examples:
   for (let i = 0; i < imageFiles.length; i++) {
     const imagePath = imageFiles[i];
     const filename = basename(imagePath);
-    console.log(`[${i + 1}/${imageFiles.length}] ${filename}`);
+    
+    if (!isSummary) {
+      console.log(`[${i + 1}/${imageFiles.length}] ${filename}`);
+    }
 
     const result = await uploadPhoto(imagePath, {
       eventId: values.event,
       bandId: values.band,
       socialOnly: values["social-only"] || false,
-      dryRun: values["dry-run"] || false,
+      dryRun: isDryRun,
       verbose: values.verbose || false,
+      summary: isSummary,
+      debug: values.debug || false,
     });
 
     results.push(result);
 
-    if (result.success && !result.skipped) {
+    if (isSummary) {
+      if (result.summary) {
+        // Compact single-line output
+        const s = result.summary;
+        const status = s.exists ? "EXISTS" : "NEW   ";
+        const event = s.event || "-";
+        const band = s.band || "-";
+        const company = s.company || "-";
+        const social = s.social ? "✓" : "-";
+        console.log(`${status} | ${filename} | ${event} | ${band} | ${company} | ${social}`);
+        
+        // Show debug info if available and no match was found
+        if (values.debug && s.candidates && s.candidates.length > 0 && !s.band) {
+          const scoreStr = s.bestScore !== undefined ? ` (best: ${(s.bestScore * 100).toFixed(0)}%)` : "";
+          console.log(`       └─ No match${scoreStr}. Candidates: ${s.candidates.map(c => `${c.name} (${(c.score * 100).toFixed(0)}%)`).join(", ")}`);
+        }
+        
+        if (s.exists) {
+          skipped++;
+        } else {
+          uploaded++;
+        }
+      } else if (result.error) {
+        // Error during processing
+        console.log(`ERROR  | ${filename} | ${result.error}`);
+        failed++;
+      }
+    } else if (result.success && !result.skipped) {
       uploaded++;
       console.log(`  ✅ Uploaded (${result.photoId})`);
     } else if (result.skipped) {
@@ -480,13 +605,18 @@ Examples:
     }
   }
 
-  // Summary
-  console.log("\n" + "=".repeat(50));
-  console.log("📊 Summary:");
-  console.log(`   ✅ Uploaded: ${uploaded}`);
-  console.log(`   ⏭️  Skipped: ${skipped}`);
-  console.log(`   ❌ Failed: ${failed}`);
-  console.log(`   📷 Total: ${imageFiles.length}`);
+  // Final summary
+  if (isSummary) {
+    console.log("#");
+    console.log(`# Total: ${imageFiles.length} | New: ${uploaded} | Exists: ${skipped} | Failed: ${failed}`);
+  } else {
+    console.log("\n" + "=".repeat(50));
+    console.log("📊 Summary:");
+    console.log(`   ✅ Uploaded: ${uploaded}`);
+    console.log(`   ⏭️  Skipped: ${skipped}`);
+    console.log(`   ❌ Failed: ${failed}`);
+    console.log(`   📷 Total: ${imageFiles.length}`);
+  }
 }
 
 main().catch((error) => {
