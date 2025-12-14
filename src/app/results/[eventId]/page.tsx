@@ -10,6 +10,9 @@ import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import { auth } from "@/lib/auth";
 import Image from "next/image";
+import Link from "next/link";
+import { WebLayout } from "@/components/layouts";
+import { Card, Badge, Button } from "@/components/ui";
 
 interface BandScore {
   id: string;
@@ -39,7 +42,6 @@ interface BandScore {
   crowd_score?: number;
 }
 
-// Common interface for display results (works with both finalized and dynamic)
 interface DisplayResult {
   id: string;
   name: string;
@@ -62,30 +64,23 @@ export default async function ResultsPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-
-  // Check if user is admin
   const session = await auth();
   const isAdmin = session?.user?.isAdmin || false;
-
   const event = await getEventById(eventId);
 
   if (!event) {
     notFound();
   }
 
-  // Redirect to crowd voting if event is not finalized and user is not admin
   if (event.status !== "finalized" && !isAdmin) {
     redirect(`/vote/crowd/${eventId}`);
   }
 
   const bands = await getBandsForEvent(eventId);
-
-  // Check if we have finalized results stored
   const hasFinalized = await hasFinalizedResults(eventId);
   let bandResults: DisplayResult[];
 
   if (hasFinalized && event.status === "finalized") {
-    // Use stored finalized results
     const finalizedResults = await getFinalizedResults(eventId);
     bandResults = finalizedResults.map((result: FinalizedResult) => ({
       id: result.band_id,
@@ -100,11 +95,9 @@ export default async function ResultsPage({
       judgeScore: Number(result.judge_score || 0),
       crowdScore: Number(result.crowd_score || 0),
       totalScore: Number(result.total_score || 0),
-      // Get band info from bands table for logos
       info: bands.find((b) => b.id === result.band_id)?.info,
     }));
   } else {
-    // Calculate scores dynamically (for admin preview or events not yet finalized)
     const scores = (await getBandScores(eventId)) as BandScore[];
     bandResults = scores
       .map((score) => {
@@ -113,7 +106,6 @@ export default async function ResultsPage({
           Number(score.avg_performance || 0) +
           Number(score.avg_crowd_vibe || 0);
 
-        // Find the maximum vote count among all bands for normalization
         const maxVoteCount = Math.max(
           ...scores.map((s) => Number(s.crowd_vote_count || 0))
         );
@@ -122,7 +114,6 @@ export default async function ResultsPage({
             ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
             : 0;
 
-        // Use stored crowd_score (1-10) and scale to 0-10 points
         const crowdNoiseScore = score.crowd_score
           ? Number(score.crowd_score)
           : 0;
@@ -149,305 +140,255 @@ export default async function ResultsPage({
   }
 
   // Find category winners
-  const songChoiceWinner =
-    bandResults.length > 0
-      ? bandResults.reduce((prev, current) =>
-          Number(current.avg_song_choice || 0) >
-          Number(prev.avg_song_choice || 0)
-            ? current
-            : prev
-        )
-      : null;
-
-  const performanceWinner =
-    bandResults.length > 0
-      ? bandResults.reduce((prev, current) =>
-          Number(current.avg_performance || 0) >
-          Number(prev.avg_performance || 0)
-            ? current
-            : prev
-        )
-      : null;
-
-  const crowdVibeWinner =
-    bandResults.length > 0
-      ? bandResults.reduce((prev, current) =>
-          Number(current.avg_crowd_vibe || 0) > Number(prev.avg_crowd_vibe || 0)
-            ? current
-            : prev
-        )
-      : null;
-
-  const crowdVoteWinner =
-    bandResults.length > 0
-      ? bandResults.reduce((prev, current) =>
-          (current.crowdScore || 0) > (prev.crowdScore || 0) ? current : prev
-        )
-      : null;
-
-  const crowdNoiseWinner =
-    bandResults.length > 0
-      ? bandResults.reduce((prev, current) =>
-          (current.crowdNoiseScore || 0) > (prev.crowdNoiseScore || 0)
-            ? current
-            : prev
-        )
-      : null;
+  const categoryWinners = bandResults.length > 0 ? {
+    songChoice: bandResults.reduce((prev, current) =>
+      Number(current.avg_song_choice || 0) > Number(prev.avg_song_choice || 0) ? current : prev
+    ),
+    performance: bandResults.reduce((prev, current) =>
+      Number(current.avg_performance || 0) > Number(prev.avg_performance || 0) ? current : prev
+    ),
+    crowdVibe: bandResults.reduce((prev, current) =>
+      Number(current.avg_crowd_vibe || 0) > Number(prev.avg_crowd_vibe || 0) ? current : prev
+    ),
+    crowdVote: bandResults.reduce((prev, current) =>
+      (current.crowdScore || 0) > (prev.crowdScore || 0) ? current : prev
+    ),
+    crowdNoise: bandResults.reduce((prev, current) =>
+      (current.crowdNoiseScore || 0) > (prev.crowdNoiseScore || 0) ? current : prev
+    ),
+  } : null;
 
   const overallWinner = bandResults[0];
 
-  // If no results, show message
+  const breadcrumbs = [
+    { label: "Events", href: "/" },
+    { label: event.name, href: `/event/${eventId}` },
+    { label: "Results" },
+  ];
+
   if (bandResults.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-4">Battle Results</h1>
-          <h2 className="text-2xl text-gray-300 mb-2">{event.name}</h2>
-          <p className="text-gray-400">
-            {formatEventDate(event.date)} • {event.location}
-          </p>
+      <WebLayout breadcrumbs={breadcrumbs}>
+        <div className="py-16">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+            <h1 className="text-4xl font-semibold text-white mb-4">Results</h1>
+            <p className="text-text-muted mb-8">{event.name}</p>
+            <Card className="max-w-md mx-auto py-12">
+              <h2 className="text-xl font-semibold text-white mb-2">No Results Yet</h2>
+              <p className="text-text-muted">
+                Voting hasn&apos;t started yet or no votes have been submitted.
+              </p>
+            </Card>
+          </div>
         </div>
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">No Results Yet</h2>
-          <p className="text-gray-300 text-lg">
-            Voting hasn&apos;t started yet or no votes have been submitted.
-          </p>
-        </div>
-      </div>
+      </WebLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-5xl font-display font-bold text-white mb-4">
-          Battle Results
-        </h1>
-        <h2 className="text-2xl text-gray-300 mb-2">{event.name}</h2>
-        <p className="text-gray-400">
-          {formatEventDate(event.date)} • {event.location}
-        </p>
-      </div>
+    <WebLayout breadcrumbs={breadcrumbs}>
+      {/* Page Header */}
+      <section className="py-12 border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <h1 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+            Battle Results
+          </h1>
+          <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-2">
+            {event.name}
+          </h2>
+          <p className="text-text-muted">
+            {formatEventDate(event.date)} • {event.location}
+          </p>
+        </div>
+      </section>
 
       {/* Overall Winner */}
-      <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-2xl p-8 mb-12 text-center">
-        <div className="text-6xl mb-4">🏆</div>
-        <h2 className="text-4xl font-bold text-white mb-2">Overall Winner</h2>
-        <h3 className="text-3xl font-semibold text-white mb-4">
-          {overallWinner.name}
-        </h3>
-        <div className="text-2xl font-bold text-white">
-          {(overallWinner.totalScore || 0).toFixed(1)} points
+      <section className="py-12 bg-bg-muted">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <Card
+            className="text-center py-12 bg-gradient-to-br from-warning/20 via-warning/10 to-transparent border-warning/30"
+          >
+            <Badge variant="warning" className="mb-4">Champion</Badge>
+            <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-2">
+              {overallWinner.name}
+            </h2>
+            <p className="text-2xl font-bold text-warning">
+              {(overallWinner.totalScore || 0).toFixed(1)} points
+            </p>
+          </Card>
         </div>
-      </div>
+      </section>
 
       {/* Category Winners */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-          <div className="text-3xl mb-3">🎵</div>
-          <h3 className="text-lg font-semibold text-white mb-2">Song Choice</h3>
-          <p className="text-xl font-bold text-green-400">
-            {songChoiceWinner?.name || "N/A"}
-          </p>
-          <p className="text-sm text-gray-300">
-            {songChoiceWinner
-              ? Number(songChoiceWinner.avg_song_choice || 0).toFixed(1) + "/20"
-              : "N/A"}
-          </p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-          <div className="text-3xl mb-3">🎤</div>
-          <h3 className="text-lg font-semibold text-white mb-2">Performance</h3>
-          <p className="text-xl font-bold text-blue-400">
-            {performanceWinner?.name || "N/A"}
-          </p>
-          <p className="text-sm text-gray-300">
-            {performanceWinner
-              ? Number(performanceWinner.avg_performance || 0).toFixed(1) +
-                "/30"
-              : "N/A"}
-          </p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-          <div className="text-3xl mb-3">🔥</div>
-          <h3 className="text-lg font-semibold text-white mb-2">Crowd Vibe</h3>
-          <p className="text-xl font-bold text-red-400">
-            {crowdVibeWinner?.name || "N/A"}
-          </p>
-          <p className="text-sm text-gray-300">
-            {crowdVibeWinner
-              ? Number(crowdVibeWinner.avg_crowd_vibe || 0).toFixed(1) + "/30"
-              : "N/A"}
-          </p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-          <div className="text-3xl mb-3">👥</div>
-          <h3 className="text-lg font-semibold text-white mb-2">Crowd Vote</h3>
-          <p className="text-xl font-bold text-slate-300">
-            {crowdVoteWinner?.name || "N/A"}
-          </p>
-          <p className="text-sm text-gray-300">
-            {crowdVoteWinner
-              ? Math.round(crowdVoteWinner.crowdScore || 0) + "/10"
-              : "N/A"}
-          </p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-center">
-          <div className="text-3xl mb-3">🎤</div>
-          <h3 className="text-lg font-semibold text-white mb-2">Crowd Noise</h3>
-          <p className="text-xl font-bold text-purple-400">
-            {crowdNoiseWinner?.name || "N/A"}
-          </p>
-          <p className="text-sm text-gray-300">
-            {crowdNoiseWinner
-              ? `Score: ${Math.round(
-                  crowdNoiseWinner.crowdNoiseScore || 0
-                )} | Energy: ${Number(
-                  crowdNoiseWinner.crowd_noise_energy || 0
-                ).toFixed(2)}`
-              : "N/A"}
-          </p>
-        </div>
-      </div>
+      {categoryWinners && (
+        <section className="py-12 border-b border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
+              Category Winners
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { label: "Song Choice", winner: categoryWinners.songChoice, score: `${Number(categoryWinners.songChoice.avg_song_choice || 0).toFixed(1)}/20` },
+                { label: "Performance", winner: categoryWinners.performance, score: `${Number(categoryWinners.performance.avg_performance || 0).toFixed(1)}/30` },
+                { label: "Crowd Vibe", winner: categoryWinners.crowdVibe, score: `${Number(categoryWinners.crowdVibe.avg_crowd_vibe || 0).toFixed(1)}/30` },
+                { label: "Crowd Vote", winner: categoryWinners.crowdVote, score: `${Math.round(categoryWinners.crowdVote.crowdScore || 0)}/10` },
+                { label: "Crowd Noise", winner: categoryWinners.crowdNoise, score: `${Math.round(categoryWinners.crowdNoise.crowdNoiseScore || 0)}/10` },
+              ].map((category) => (
+                <Card key={category.label} className="text-center">
+                  <p className="text-xs tracking-wider uppercase text-text-dim mb-2">
+                    {category.label}
+                  </p>
+                  <p className="font-semibold text-white truncate mb-1">
+                    {category.winner?.name || "N/A"}
+                  </p>
+                  <p className="text-sm text-text-muted">{category.score}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Full Results Table */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-        <h2 className="text-3xl font-bold text-white mb-8 text-center">
-          Complete Results
-        </h2>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-white">
-            <thead>
-              <tr className="border-b border-white/20">
-                <th className="text-left py-4 px-2">Rank</th>
-                <th className="text-left py-4 px-2">Band</th>
-                <th className="text-center py-4 px-2">Song Choice</th>
-                <th className="text-center py-4 px-2">Performance</th>
-                <th className="text-center py-4 px-2">Crowd Vibe</th>
-                <th className="text-center py-4 px-2">Crowd Vote Score</th>
-                <th className="text-center py-4 px-2">#Votes</th>
-                <th className="text-center py-4 px-2">Crowd Noise</th>
-                <th className="text-center py-4 px-2">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bandResults.map((band, index) => (
-                <tr key={band.id} className="border-b border-white/10">
-                  <td className="py-4 px-2">
-                    <span
-                      className={`text-2xl font-bold ${
-                        index === 0
-                          ? "text-yellow-400"
-                          : index === 1
-                          ? "text-gray-300"
-                          : index === 2
-                          ? "text-orange-400"
-                          : "text-gray-400"
-                      }`}
-                    >
-                      {index + 1}
-                    </span>
-                  </td>
-                  <td className="py-4 px-2 font-semibold">
-                    <div className="flex items-center space-x-3">
-                      {/* Band Logo */}
-                      <div className="w-8 h-8 flex-shrink-0">
-                        {band.info?.logo_url ? (
-                          <Image
-                            src={band.info.logo_url}
-                            alt={`${band.name} logo`}
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-contain rounded"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-700 rounded flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">?</span>
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6">
+            Complete Results
+          </h3>
+          
+          <Card padding="none" className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-white">
+                <thead>
+                  <tr className="border-b border-white/10 bg-bg-surface">
+                    <th className="text-left py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Rank</th>
+                    <th className="text-left py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Band</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Song</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Perf</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Vibe</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Vote</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Noise</th>
+                    <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bandResults.map((band, index) => (
+                    <tr key={band.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-4 px-4">
+                        <span
+                          className={`text-lg font-bold ${
+                            index === 0
+                              ? "text-warning"
+                              : index === 1
+                              ? "text-text-muted"
+                              : index === 2
+                              ? "text-warning/60"
+                              : "text-text-dim"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 shrink-0 rounded bg-bg-surface overflow-hidden">
+                            {band.info?.logo_url ? (
+                              <Image
+                                src={band.info.logo_url}
+                                alt={`${band.name} logo`}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-contain"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-text-dim text-xs">?</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <span>{band.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-2 text-center">
-                    {Number(band.avg_song_choice || 0).toFixed(1)}
-                  </td>
-                  <td className="py-4 px-2 text-center">
-                    {Number(band.avg_performance || 0).toFixed(1)}
-                  </td>
-                  <td className="py-4 px-2 text-center">
-                    {Number(band.avg_crowd_vibe || 0).toFixed(1)}
-                  </td>
-                  <td className="py-4 px-2 text-center">
-                    {Math.round(band.crowdScore || 0)}
-                  </td>
-                  <td className="py-4 px-2 text-center text-sm text-gray-400">
-                    {band.crowd_vote_count}
-                  </td>
-                  <td className="py-4 px-2 text-center">
-                    {Math.round(band.crowdNoiseScore || 0)}
-                  </td>
-                  <td className="py-4 px-2 text-center font-bold">
-                    {Number(band.totalScore || 0).toFixed(1)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                          <span className="font-medium">{band.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center text-text-muted">
+                        {Number(band.avg_song_choice || 0).toFixed(1)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-text-muted">
+                        {Number(band.avg_performance || 0).toFixed(1)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-text-muted">
+                        {Number(band.avg_crowd_vibe || 0).toFixed(1)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-text-muted">
+                        {Math.round(band.crowdScore || 0)}
+                      </td>
+                      <td className="py-4 px-4 text-center text-text-muted">
+                        {Math.round(band.crowdNoiseScore || 0)}
+                      </td>
+                      <td className="py-4 px-4 text-center font-bold">
+                        {Number(band.totalScore || 0).toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t border-white/5 text-right">
+              <p className="text-sm text-text-muted">
+                Total voters: {bandResults.length > 0 ? bandResults[0].total_crowd_votes || 0 : 0}
+              </p>
+            </div>
+          </Card>
         </div>
-        <div className="mt-6 text-right">
-          <p className="text-sm text-gray-300">
-            👥 Total voters:{" "}
-            {bandResults.length > 0 ? bandResults[0].total_crowd_votes || 0 : 0}
-          </p>
-        </div>
-      </div>
+      </section>
 
-      {/* Individual Band Links */}
-      <div className="mt-12 text-center">
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Individual Band Breakdowns
-        </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bands.map((band) => (
-            <a
-              key={band.id}
-              href={`/band/${band.id}`}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-xl p-4 transition-colors"
-            >
-              <div className="flex items-center space-x-3 mb-2">
-                {/* Band Logo */}
-                <div className="w-12 h-12 flex-shrink-0">
-                  {band.info?.logo_url ? (
-                    <Image
-                      src={band.info.logo_url}
-                      alt={`${band.name} logo`}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-contain rounded-lg"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No Logo</span>
+      {/* Band Links */}
+      <section className="py-12 bg-bg-muted">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
+            Band Details
+          </h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {bands.map((band) => (
+              <Link key={band.id} href={`/band/${band.id}`}>
+                <Card variant="interactive" className="h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 shrink-0 rounded-lg bg-bg-surface overflow-hidden">
+                      {band.info?.logo_url ? (
+                        <Image
+                          src={band.info.logo_url}
+                          alt={`${band.name} logo`}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-text-dim text-xs">No Logo</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <h3 className="text-lg font-semibold text-white">
-                  {band.name}
-                </h3>
-              </div>
-              <p className="text-gray-300 text-sm">View detailed breakdown</p>
-            </a>
-          ))}
+                    <div>
+                      <h4 className="font-semibold text-white">{band.name}</h4>
+                      <p className="text-sm text-text-muted">View breakdown</p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* Back to Event */}
+      <section className="py-8 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <Link href={`/event/${eventId}`}>
+            <Button variant="outline">Back to Event</Button>
+          </Link>
+        </div>
+      </section>
+    </WebLayout>
   );
 }

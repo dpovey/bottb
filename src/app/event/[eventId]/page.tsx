@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
+import { Button, Badge, Card, DateBadge } from "@/components/ui";
+import { PageHeader } from "@/components/hero";
 
 interface Event {
   id: string;
@@ -49,6 +51,19 @@ interface Band {
   created_at: string;
 }
 
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "voting":
+      return <Badge variant="success">Voting Open</Badge>;
+    case "finalized":
+      return <Badge variant="accent">Results Available</Badge>;
+    case "upcoming":
+      return <Badge variant="info">Upcoming</Badge>;
+    default:
+      return <Badge variant="default">{status}</Badge>;
+  }
+}
+
 export default function EventPage() {
   const params = useParams();
   const eventId = params.eventId as string;
@@ -85,153 +100,208 @@ export default function EventPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
+      <WebLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-text-muted text-xl">Loading...</div>
+        </div>
+      </WebLayout>
     );
   }
 
   if (!event) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white text-xl">Event not found</div>
-      </div>
+      <WebLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-text-muted text-xl">Event not found</div>
+        </div>
+      </WebLayout>
     );
   }
 
+  const breadcrumbs = [
+    { label: "Events", href: "/" },
+    { label: event.name },
+  ];
+
   return (
-    <WebLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Event Header */}
-        <div className="text-center mb-12">
-          <div className="mb-6">
-            <Link
-              href="/"
-              className="inline-flex items-center text-gray-400 hover:text-white transition-colors"
-            >
-              ← Back to Events
-            </Link>
-          </div>
-          
-          {/* Event Image */}
-          {event.info?.image_url && (
-            <div className="relative h-64 w-full max-w-2xl mx-auto mb-8 rounded-2xl overflow-hidden">
-              <Image
-                src={event.info.image_url}
-                alt={`${event.name} event image`}
-                fill
-                className="object-cover"
-                unoptimized
-              />
+    <WebLayout breadcrumbs={breadcrumbs}>
+      {/* Hero Section with Event Image */}
+      <section className="relative min-h-[40vh] flex items-end">
+        {/* Background Image */}
+        {event.info?.image_url ? (
+          <Image
+            src={event.info.image_url}
+            alt={`${event.name} event`}
+            fill
+            className="object-cover"
+            priority
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-bg-surface to-bg" />
+        )}
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
+
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end gap-6">
+            {/* Date Badge */}
+            <DateBadge date={event.date} size="lg" showYear />
+
+            {/* Event Info */}
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                {getStatusBadge(event.status)}
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
+                {event.name}
+              </h1>
+              <div className="text-text-muted text-lg">
+                {formatEventDate(event.date)} • {event.location}
+              </div>
             </div>
-          )}
-          
-          <h1 className="text-5xl font-display font-bold text-white mb-4">
-            {event.name}
-          </h1>
-          <div className="text-2xl text-gray-300 mb-2">{event.location}</div>
-          <div className="text-xl text-gray-400">
-            {formatEventDate(event.date)}
-          </div>
-          <div className="mt-4">
-            <span
-              className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                event.status === "voting"
-                  ? "bg-green-600 text-white"
-                  : event.status === "finalized"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-600 text-white"
-              }`}
-            >
-              {event.status.toUpperCase()}
-            </span>
           </div>
         </div>
+      </section>
 
-        {/* Conditional Content Based on Status */}
-        {event.status === "voting" && (
-          <div className="max-w-2xl mx-auto mb-12">
-            <Link
-              href={`/vote/crowd/${eventId}`}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-6 px-8 rounded-2xl text-center transition-colors block text-2xl"
-            >
-              🎵 Vote for Bands
-            </Link>
+      {/* Action Section */}
+      {(event.status === "voting" || event.status === "finalized") && (
+        <section className="py-8 border-b border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex flex-wrap gap-4">
+              {event.status === "voting" && (
+                <Link href={`/vote/crowd/${eventId}`}>
+                  <Button variant="accent" size="lg">
+                    Vote for Bands
+                  </Button>
+                </Link>
+              )}
+              {event.status === "finalized" && (
+                <Link href={`/results/${eventId}`}>
+                  <Button variant="accent" size="lg">
+                    View Results
+                  </Button>
+                </Link>
+              )}
+              <Link href="/photos">
+                <Button variant="outline" size="lg">
+                  View Photos
+                </Button>
+              </Link>
+            </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {event.status === "finalized" && (
-          <div className="max-w-2xl mx-auto mb-12">
-            <Link
-              href={`/results/${eventId}`}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-8 rounded-2xl text-center transition-colors block text-2xl"
-            >
-              📊 View Results
-            </Link>
+      {/* Description Section */}
+      {event.info?.description && (
+        <section className="py-12 border-b border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <p className="text-text-muted text-lg max-w-3xl">
+              {event.info.description}
+            </p>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Bands List */}
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-            <h3 className="text-3xl font-bold text-white mb-8 text-center">
-              Bands
-            </h3>
-            {bands.length === 0 ? (
-              <div className="text-center text-gray-400 text-lg">
+      {/* Bands Section */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="mb-8">
+            <h2 className="text-sm tracking-widest uppercase text-text-muted mb-2">
+              Performing
+            </h2>
+            <p className="text-2xl font-semibold text-white">
+              {bands.length} Band{bands.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          {bands.length === 0 ? (
+            <Card variant="elevated" className="text-center py-12">
+              <p className="text-text-muted">
                 No bands registered for this event yet.
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {bands.map((band) => (
-                  <Link
-                    key={band.id}
-                    href={`/band/${band.id}`}
-                    className="bg-white/5 rounded-xl p-6 hover:bg-white/10 transition-colors"
+              </p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {bands.map((band) => (
+                <Link key={band.id} href={`/band/${band.id}`}>
+                  <Card
+                    variant="interactive"
+                    padding="none"
+                    className="overflow-hidden"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-2xl font-bold text-white w-8">
+                    <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
+                      {/* Order Number */}
+                      <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg shrink-0">
+                        <span className="text-lg font-semibold text-text-muted">
                           {band.order}
-                        </div>
-                        {/* Band Logo */}
-                        <div className="w-16 h-16 flex-shrink-0">
-                          {band.info?.logo_url ? (
-                            <Image
-                              src={band.info.logo_url}
-                              alt={`${band.name} logo`}
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-contain rounded-lg"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">
-                                No Logo
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-xl font-semibold text-white">
-                            {band.name}
-                          </h4>
-                          {band.description && (
-                            <p className="text-gray-300 text-sm mt-1">
-                              {band.description}
-                            </p>
-                          )}
-                        </div>
+                        </span>
+                      </div>
+
+                      {/* Band Logo */}
+                      <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-lg overflow-hidden bg-bg-surface">
+                        {band.info?.logo_url ? (
+                          <Image
+                            src={band.info.logo_url}
+                            alt={`${band.name} logo`}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-contain"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-text-dim text-xs">
+                              No Logo
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Band Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-white truncate">
+                          {band.name}
+                        </h3>
+                        {band.description && (
+                          <p className="text-text-muted text-sm truncate mt-1">
+                            {band.description}
+                          </p>
+                        )}
+                        {band.info?.genre && (
+                          <p className="text-text-dim text-xs mt-1">
+                            {band.info.genre}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="shrink-0 text-text-dim">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </section>
     </WebLayout>
   );
 }

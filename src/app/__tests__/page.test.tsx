@@ -22,6 +22,7 @@ vi.mock("next-auth/react", () => ({
     data: null,
     status: "unauthenticated",
   })),
+  signOut: vi.fn(),
 }));
 
 import {
@@ -92,19 +93,16 @@ describe("HomePage", () => {
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue(upcomingEvents);
     mockGetPastEvents.mockResolvedValue([]);
+    mockGetBandsForEvent.mockResolvedValue([]);
 
     render(await HomePage());
 
-    expect(
-      screen.getByRole("heading", { name: "Upcoming Events" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Mark Your Calendar")).toBeInTheDocument();
     expect(screen.getByText("Upcoming Event 1")).toBeInTheDocument();
     expect(screen.getByText("Upcoming Event 2")).toBeInTheDocument();
-    expect(screen.getByText("Venue 1")).toBeInTheDocument();
-    expect(screen.getByText("Venue 2")).toBeInTheDocument();
   });
 
-  it("renders active event with bands when available", async () => {
+  it("renders active event with voting buttons", async () => {
     const activeEvent = {
       id: "active-event",
       name: "Active Event",
@@ -115,63 +113,41 @@ describe("HomePage", () => {
       created_at: "2024-01-01T00:00:00Z",
     };
 
-    const bands = [
-      {
-        id: "band-1",
-        event_id: "active-event",
-        name: "Band 1",
-        description: "Description 1",
-        order: 1,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "band-2",
-        event_id: "active-event",
-        name: "Band 2",
-        description: "Description 2",
-        order: 2,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-    ];
-
     mockGetActiveEvent.mockResolvedValue(activeEvent);
-    mockGetUpcomingEvents.mockResolvedValue([activeEvent]);
-    mockGetPastEvents.mockResolvedValue([]);
-    mockGetBandsForEvent.mockResolvedValue(bands);
-
-    render(await HomePage());
-
-    expect(screen.getAllByText("Active Event")).toHaveLength(2);
-    expect(screen.getByText("Active Venue")).toBeInTheDocument();
-    expect(screen.getByText("View Event")).toBeInTheDocument();
-    expect(screen.getByText("Vote Now")).toBeInTheDocument();
-  });
-
-  it("shows ACTIVE badge for active event", async () => {
-    const upcomingEvents = [
-      {
-        id: "active-event",
-        name: "Active Event",
-        date: "2024-12-25T18:30:00Z",
-        location: "Active Venue",
-        is_active: true,
-        status: "voting" as const,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-    ];
-
-    mockGetActiveEvent.mockResolvedValue(upcomingEvents[0]);
-    mockGetUpcomingEvents.mockResolvedValue(upcomingEvents);
+    mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue([]);
     mockGetBandsForEvent.mockResolvedValue([]);
 
     render(await HomePage());
 
-    expect(screen.getAllByText("Active Event")).toHaveLength(2);
-    expect(screen.getByText("Vote Now")).toBeInTheDocument();
+    // Hero section should have Vote Now and View Event buttons (may appear multiple times)
+    expect(screen.getAllByText("Vote Now").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("View Event").length).toBeGreaterThan(0);
   });
 
-  it("shows voting link for voting events", async () => {
+  it("shows Live Now badge for active event", async () => {
+    const activeEvent = {
+      id: "active-event",
+      name: "Active Event",
+      date: "2024-12-25T18:30:00Z",
+      location: "Active Venue",
+      is_active: true,
+      status: "voting" as const,
+      created_at: "2024-01-01T00:00:00Z",
+    };
+
+    mockGetActiveEvent.mockResolvedValue(activeEvent);
+    mockGetUpcomingEvents.mockResolvedValue([]);
+    mockGetPastEvents.mockResolvedValue([]);
+    mockGetBandsForEvent.mockResolvedValue([]);
+
+    render(await HomePage());
+
+    expect(screen.getByText("Happening Now")).toBeInTheDocument();
+    expect(screen.getByText("Live Now")).toBeInTheDocument();
+  });
+
+  it("shows View Details link for upcoming events", async () => {
     const upcomingEvents = [
       {
         id: "voting-event",
@@ -191,11 +167,11 @@ describe("HomePage", () => {
     ).mockResolvedValue(null);
     mockGetUpcomingEvents.mockResolvedValue(upcomingEvents);
     mockGetPastEvents.mockResolvedValue([]);
+    mockGetBandsForEvent.mockResolvedValue([]);
 
     render(await HomePage());
 
     expect(screen.getByText("Voting Event")).toBeInTheDocument();
-    expect(screen.getByText("Voting Venue")).toBeInTheDocument();
     expect(screen.getByText("View Details")).toBeInTheDocument();
   });
 
@@ -235,17 +211,13 @@ describe("HomePage", () => {
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue(pastEvents);
     mockGetBandScores.mockResolvedValue(bandScores);
+    mockGetBandsForEvent.mockResolvedValue([]);
 
     render(await HomePage());
 
-    expect(
-      screen.getByRole("heading", { name: "Past Events" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("Hall of Champions")).toBeInTheDocument();
     expect(screen.getByText("Past Event")).toBeInTheDocument();
     expect(screen.getByText("Winning Band")).toBeInTheDocument();
-    expect(screen.getAllByText((content, element) => {
-      return element?.textContent === "🏆 Winner: Winning Band";
-    })[0]).toBeInTheDocument();
   });
 
   it("shows results link for finalized events", async () => {
@@ -269,10 +241,11 @@ describe("HomePage", () => {
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue(pastEvents);
     mockGetBandScores.mockResolvedValue([]);
+    mockGetBandsForEvent.mockResolvedValue([]);
 
     render(await HomePage());
 
-    const resultsLink = screen.getByRole("link", { name: "📊 View Results" });
+    const resultsLink = screen.getByRole("link", { name: "View Results" });
     expect(resultsLink).toBeInTheDocument();
     expect(resultsLink).toHaveAttribute("href", "/results/finalized-event");
   });
@@ -297,65 +270,17 @@ describe("HomePage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows bands with more than 3 bands correctly", async () => {
-    const activeEvent = {
-      id: "active-event",
-      name: "Active Event",
-      date: "2024-12-25T18:30:00Z",
-      location: "Active Venue",
-      is_active: true,
-      status: "voting" as const,
-      created_at: "2024-01-01T00:00:00Z",
-    };
-
-    const bands = [
-      {
-        id: "band-1",
-        event_id: "active-event",
-        name: "Band 1",
-        order: 1,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "band-2",
-        event_id: "active-event",
-        name: "Band 2",
-        order: 2,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "band-3",
-        event_id: "active-event",
-        name: "Band 3",
-        order: 3,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "band-4",
-        event_id: "active-event",
-        name: "Band 4",
-        order: 4,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "band-5",
-        event_id: "active-event",
-        name: "Band 5",
-        order: 5,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-    ];
-
-    mockGetActiveEvent.mockResolvedValue(activeEvent);
-    mockGetUpcomingEvents.mockResolvedValue([activeEvent]);
+  it("renders hero section", async () => {
+    (
+      mockGetActiveEvent as unknown as ReturnType<typeof vi.fn> & {
+        (): Promise<import("@/lib/db").Event | null>;
+      }
+    ).mockResolvedValue(null);
+    mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetPastEvents.mockResolvedValue([]);
-    mockGetBandsForEvent.mockResolvedValue(bands);
 
     render(await HomePage());
 
-    expect(screen.getAllByText("Active Event")).toHaveLength(2);
-    expect(screen.getByText("Active Venue")).toBeInTheDocument();
-    expect(screen.getByText("View Event")).toBeInTheDocument();
-    expect(screen.getByText("Vote Now")).toBeInTheDocument();
+    expect(screen.getByText("Battle of the Tech Bands")).toBeInTheDocument();
   });
 });

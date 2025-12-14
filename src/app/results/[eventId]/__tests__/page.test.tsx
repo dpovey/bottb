@@ -8,6 +8,12 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+// Mock next-auth
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(() => ({ data: null, status: "unauthenticated" })),
+  signOut: vi.fn(),
+}));
+
 // Mock the database functions
 vi.mock("@/lib/db", () => ({
   getEventById: vi.fn(),
@@ -154,18 +160,10 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Battle Results" })
-    ).toBeInTheDocument();
-    expect(screen.getByText("Test Event")).toBeInTheDocument();
-    expect(
-      screen.getByText((content, element) => {
-        return (
-          element?.textContent ===
-          "Formatted: 2024-12-25T18:30:00Z • Test Venue"
-        );
-      })
-    ).toBeInTheDocument();
+    // Check for page title (section heading)
+    expect(screen.getByText("Battle Results")).toBeInTheDocument();
+    // Event name appears in breadcrumbs and title
+    expect(screen.getAllByText("Test Event").length).toBeGreaterThan(0);
   });
 
   it("displays overall winner", async () => {
@@ -212,9 +210,8 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Overall Winner" })
-    ).toBeInTheDocument();
+    // Check for champion badge
+    expect(screen.getByText("Champion")).toBeInTheDocument();
     expect(
       screen.getAllByRole("heading", { name: "Winning Band" })
     ).toHaveLength(2);
@@ -284,18 +281,12 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Song Choice" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Performance" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Crowd Vibe" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Crowd Vote" })
-    ).toBeInTheDocument();
+    // Check category winners are displayed
+    expect(screen.getByText("Category Winners")).toBeInTheDocument();
+    expect(screen.getByText("Song Choice")).toBeInTheDocument();
+    expect(screen.getByText("Performance")).toBeInTheDocument();
+    expect(screen.getByText("Crowd Vibe")).toBeInTheDocument();
+    expect(screen.getByText("Crowd Vote")).toBeInTheDocument();
   });
 
   it("displays complete results table", async () => {
@@ -361,30 +352,18 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Complete Results" })
-    ).toBeInTheDocument();
+    // Check for complete results section
+    expect(screen.getByText("Complete Results")).toBeInTheDocument();
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByText("Rank")).toBeInTheDocument();
     expect(screen.getByText("Band")).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Song Choice" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Performance" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Crowd Vibe" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Crowd Vote Score" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "#Votes" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("columnheader", { name: "Crowd Noise" })
-    ).toBeInTheDocument();
+    // Check for column headers (shortened in new design)
+    expect(screen.getByRole("columnheader", { name: "Song" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Perf" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Vibe" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Vote" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Noise" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Total" })).toBeInTheDocument();
     expect(screen.getByText("Total")).toBeInTheDocument();
   });
 
@@ -432,61 +411,7 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(screen.getByText("👥 Total voters: 50")).toBeInTheDocument();
-  });
-
-  it("displays only crowd vote count in votes column", async () => {
-    const event = {
-      id: "event-1",
-      name: "Test Event",
-      date: "2024-12-25T18:30:00Z",
-      location: "Test Venue",
-      is_active: false,
-      status: "finalized" as const,
-      created_at: "2024-01-01T00:00:00Z",
-    };
-
-    const bands = [
-      {
-        id: "band-1",
-        event_id: "event-1",
-        name: "Band 1",
-        order: 1,
-        created_at: "2024-01-01T00:00:00Z",
-      },
-    ];
-
-    const bandScores = [
-      {
-        id: "band-1",
-        name: "Band 1",
-        order: 1,
-        avg_song_choice: 15.5,
-        avg_performance: 25.0,
-        avg_crowd_vibe: 22.5,
-        avg_crowd_vote: 18.0,
-        crowd_vote_count: 10,
-        judge_vote_count: 3,
-        total_crowd_votes: 50,
-      },
-    ];
-
-    mockGetEventById.mockResolvedValue(event);
-    mockGetBandsForEvent.mockResolvedValue(bands);
-    mockGetBandScores.mockResolvedValue(bandScores);
-
-    render(
-      await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
-    );
-
-    // Should show only crowd vote count in the #Votes column (lighter text)
-    const votesColumn = screen
-      .getByRole("table")
-      .querySelector('td[class*="text-gray-400"]');
-    expect(votesColumn).toHaveTextContent("10");
-    // Should NOT show the old format with judge votes
-    expect(screen.queryByText("3J")).not.toBeInTheDocument();
-    expect(screen.queryByText("10C")).not.toBeInTheDocument();
+    expect(screen.getByText("Total voters: 50")).toBeInTheDocument();
   });
 
   it("shows no results message when no scores available", async () => {
@@ -508,9 +433,7 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "No Results Yet" })
-    ).toBeInTheDocument();
+    expect(screen.getByText("No Results Yet")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Voting hasn't started yet or no votes have been submitted."
@@ -581,9 +504,8 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Individual Band Breakdowns" })
-    ).toBeInTheDocument();
+    // Check for band details section
+    expect(screen.getByText("Band Details")).toBeInTheDocument();
 
     const band1Link = screen.getByRole("link", { name: /Band 1/ });
     const band2Link = screen.getByRole("link", { name: /Band 2/ });

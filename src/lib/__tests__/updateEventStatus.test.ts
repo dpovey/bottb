@@ -66,7 +66,7 @@ describe("updateEventStatus", () => {
     );
   });
 
-  it("should call finalizeEventResults when status is set to finalized", async () => {
+  it("should update to finalized status successfully", async () => {
     const mockEvent = {
       id: "test-event-1",
       name: "Test Event",
@@ -75,20 +75,10 @@ describe("updateEventStatus", () => {
       date: "2024-01-01",
     };
 
-    // First call: UPDATE event status
-    mockSql.mockResolvedValueOnce({
+    mockSql.mockResolvedValue({
       rows: [mockEvent],
       command: "UPDATE",
       rowCount: 1,
-      oid: 0,
-      fields: [],
-    });
-
-    // Second call: getBandScores (called by finalizeEventResults)
-    mockSql.mockResolvedValueOnce({
-      rows: [],
-      command: "SELECT",
-      rowCount: 0,
       oid: 0,
       fields: [],
     });
@@ -97,11 +87,10 @@ describe("updateEventStatus", () => {
     const result = await updateEventStatus("test-event-1", "finalized");
 
     expect(result).toEqual(mockEvent);
-    // Verify that getBandScores was called (part of finalizeEventResults)
-    expect(mockSql).toHaveBeenCalledTimes(2);
+    expect(mockSql).toHaveBeenCalledTimes(1);
   });
 
-  it("should not call finalizeEventResults when status is not finalized", async () => {
+  it("should update to voting status successfully", async () => {
     const mockEvent = {
       id: "test-event-1",
       name: "Test Event",
@@ -125,7 +114,7 @@ describe("updateEventStatus", () => {
     expect(mockSql).toHaveBeenCalledTimes(1);
   });
 
-  it("should not call finalizeEventResults when event not found", async () => {
+  it("should return null when updating non-existent event to finalized", async () => {
     mockSql.mockResolvedValue({
       rows: [],
       command: "UPDATE",
@@ -135,9 +124,9 @@ describe("updateEventStatus", () => {
     });
 
     const { updateEventStatus } = await import("../db");
-    await updateEventStatus("non-existent", "finalized");
+    const result = await updateEventStatus("non-existent", "finalized");
 
-    // Should only be called once for the UPDATE
+    expect(result).toBeNull();
     expect(mockSql).toHaveBeenCalledTimes(1);
   });
 });

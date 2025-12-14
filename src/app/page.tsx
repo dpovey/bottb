@@ -6,9 +6,10 @@ import {
   getBandScores,
   getBandsForEvent,
 } from "@/lib/db";
-import { formatEventDate } from "@/lib/date-utils";
-import { WebLayout } from "@/components/layouts";
+import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
+import { Hero } from "@/components/hero";
+import { Button } from "@/components/ui";
 
 interface BandScore {
   id: string;
@@ -89,45 +90,62 @@ export default async function HomePage() {
   );
 
   return (
-    <WebLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* TODO: Hero */}
+    <PublicLayout headerVariant="transparent" footerVariant="full">
+      {/* Hero Section */}
+      <Hero
+        title="Battle of the Tech Bands"
+        subtitle="Where technology meets rock 'n' roll. A community charity event supporting Youngcare."
+        backgroundImage="https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop"
+        size="lg"
+        overlay="heavy"
+        actions={[
+          ...(activeEvent
+            ? [
+                { label: "Vote Now", href: `/vote/crowd/${activeEvent.id}`, variant: "accent" as const },
+                { label: "View Event", href: `/event/${activeEvent.id}`, variant: "outline" as const },
+              ]
+            : []),
+          { label: "View Photos", href: "/photos", variant: "outline" as const },
+        ]}
+      />
 
-        {/* Active Event Section */}
-        {activeEvent && (
-          <div className="max-w-6xl mx-auto mb-12">
-            <div className="bg-gradient-to-r from-neutral-900 via-amber-900 to-black rounded-2xl p-8 text-center">
-              <h3 className="text-4xl font-bold text-white mb-4">
-                {activeEvent.name}
-              </h3>
-              <div className="text-2xl text-blue-100 mb-4">
-                {formatEventDate(activeEvent.date)} • {activeEvent.location}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href={`/event/${activeEvent.id}`}
-                  className="bg-white text-blue-600 font-bold py-3 px-8 rounded-xl text-lg hover:bg-blue-50 transition-colors"
-                >
-                  View Event
-                </Link>
-                <Link
-                  href={`/vote/crowd/${activeEvent.id}`}
-                  className="bg-blue-700 text-white font-bold py-3 px-8 rounded-xl text-lg hover:bg-blue-800 transition-colors"
-                >
-                  Vote Now
-                </Link>
-              </div>
+      {/* Active Event Section */}
+      {activeEvent && (
+        <section className="py-16 bg-bg">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-sm tracking-widest uppercase text-accent mb-3">
+                Happening Now
+              </h2>
+              <p className="text-text-muted text-lg">
+                Cast your vote and support your favorite band
+              </p>
             </div>
+            
+            <EventCard
+              event={activeEvent}
+              relativeDate="Live Now"
+              bands={[]} // Could fetch bands here if needed
+              variant="active"
+            />
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Upcoming Events Section */}
-        {upcomingEventsWithBands.length > 0 && (
-          <div className="max-w-[calc(100vw-2rem)] mx-auto mb-12">
-            <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
-              Upcoming Events
-            </h2>
-            <div className="">
+      {/* Upcoming Events Section */}
+      {upcomingEventsWithBands.length > 0 && (
+        <section className="py-16 bg-bg-muted">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+                Upcoming Events
+              </h2>
+              <p className="text-2xl font-semibold text-white">
+                Mark Your Calendar
+              </p>
+            </div>
+
+            <div className="space-y-6">
               {upcomingEventsWithBands.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -142,15 +160,23 @@ export default async function HomePage() {
               })}
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Past Events Section */}
-        {pastEventsWithWinners.length > 0 && (
-          <div className="max-w-[calc(100vw-2rem)] mx-auto">
-            <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
-              Past Events
-            </h2>
-            <div className="">
+      {/* Past Events Section */}
+      {pastEventsWithWinners.length > 0 && (
+        <section className="py-16 bg-bg">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+                Past Events
+              </h2>
+              <p className="text-2xl font-semibold text-white">
+                Hall of Champions
+              </p>
+            </div>
+
+            <div className="space-y-6">
               {pastEventsWithWinners.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -167,8 +193,33 @@ export default async function HomePage() {
               })}
             </div>
           </div>
-        )}
-      </div>
-    </WebLayout>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      <section className="py-20 bg-bg-muted border-t border-white/5">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-semibold text-white mb-4">
+            Join the Movement
+          </h2>
+          <p className="text-text-muted mb-8">
+            Battle of the Tech Bands brings together technology professionals for
+            an unforgettable night of rock, competition, and charity.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link href="/about">
+              <Button variant="outline" size="lg">
+                Learn More
+              </Button>
+            </Link>
+            <Link href="/photos">
+              <Button variant="ghost" size="lg">
+                View Gallery
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </PublicLayout>
   );
 }

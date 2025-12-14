@@ -78,3 +78,4 @@ const handleDeletePhoto: ProtectedApiHandler = async (
 // Only admins can delete photos
 export const DELETE = withAdminProtection(handleDeletePhoto);
 
+
