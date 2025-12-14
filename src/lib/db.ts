@@ -93,6 +93,11 @@ export interface CrowdNoiseMeasurement {
   created_at: string;
 }
 
+export interface HeroFocalPoint {
+  x: number; // 0-100 percentage from left
+  y: number; // 0-100 percentage from top
+}
+
 export interface Photo {
   id: string;
   event_id: string | null;
@@ -112,11 +117,24 @@ export interface Photo {
   uploaded_by: string | null;
   uploaded_at: string;
   created_at: string;
+  // Labels for hero images etc.
+  labels: string[];
+  // Focal point for hero image display
+  hero_focal_point: HeroFocalPoint;
   // Joined fields
   event_name?: string;
   band_name?: string;
   thumbnail_url?: string;
 }
+
+// Photo label constants
+export const PHOTO_LABELS = {
+  BAND_HERO: "band_hero",
+  EVENT_HERO: "event_hero",
+  GLOBAL_HERO: "global_hero",
+} as const;
+
+export type PhotoLabel = (typeof PHOTO_LABELS)[keyof typeof PHOTO_LABELS];
 
 export async function getEvents() {
   const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`;
@@ -502,6 +520,101 @@ export async function getDistinctPhotographers(): Promise<string[]> {
     return rows.map(r => r.photographer);
   } catch (error) {
     console.error("Error fetching photographers:", error);
+    throw error;
+  }
+}
+
+// Photo label functions
+
+export async function updatePhotoLabels(
+  photoId: string,
+  labels: string[]
+): Promise<Photo | null> {
+  try {
+    // Convert array to PostgreSQL array literal format
+    const labelsArrayLiteral = `{${labels.join(",")}}`;
+    const { rows } = await sql<Photo>`
+      UPDATE photos 
+      SET labels = ${labelsArrayLiteral}::text[]
+      WHERE id = ${photoId}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error updating photo labels:", error);
+    throw error;
+  }
+}
+
+export async function getPhotosByLabel(
+  label: string,
+  options?: { eventId?: string; bandId?: string }
+): Promise<Photo[]> {
+  try {
+    if (options?.bandId) {
+      // Get photos with this label for a specific band
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE ${label} = ANY(p.labels)
+          AND p.band_id = ${options.bandId}
+        ORDER BY p.uploaded_at DESC
+      `;
+      return rows;
+    } else if (options?.eventId) {
+      // Get photos with this label for a specific event
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE ${label} = ANY(p.labels)
+          AND p.event_id = ${options.eventId}
+        ORDER BY p.uploaded_at DESC
+      `;
+      return rows;
+    } else {
+      // Get all photos with this label
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE ${label} = ANY(p.labels)
+        ORDER BY p.uploaded_at DESC
+      `;
+      return rows;
+    }
+  } catch (error) {
+    console.error("Error fetching photos by label:", error);
+    throw error;
+  }
+}
+
+export async function updateHeroFocalPoint(
+  photoId: string,
+  focalPoint: HeroFocalPoint
+): Promise<Photo | null> {
+  try {
+    // Validate focal point values
+    const x = Math.max(0, Math.min(100, focalPoint.x));
+    const y = Math.max(0, Math.min(100, focalPoint.y));
+    const focalPointJson = JSON.stringify({ x, y });
+    
+    const { rows } = await sql<Photo>`
+      UPDATE photos 
+      SET hero_focal_point = ${focalPointJson}::jsonb
+      WHERE id = ${photoId}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error updating hero focal point:", error);
     throw error;
   }
 }

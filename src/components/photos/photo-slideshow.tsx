@@ -2,9 +2,29 @@
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { Photo } from "@/lib/db";
+import Link from "next/link";
+import { Photo, PHOTO_LABELS } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
 import Cropper, { Area } from "react-easy-crop";
+
+// Label display info
+const LABEL_INFO = {
+  [PHOTO_LABELS.BAND_HERO]: {
+    name: "Band Hero",
+    description: "Featured on band page",
+    icon: "🎸",
+  },
+  [PHOTO_LABELS.EVENT_HERO]: {
+    name: "Event Hero",
+    description: "Featured on event page",
+    icon: "🎪",
+  },
+  [PHOTO_LABELS.GLOBAL_HERO]: {
+    name: "Global Hero",
+    description: "Featured on home page",
+    icon: "🏠",
+  },
+} as const;
 
 interface PhotoSlideshowProps {
   photos: Photo[];
@@ -66,6 +86,17 @@ export function PhotoSlideshow({
 
   // Link copy state
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Hero labels state
+  const [showLabelsModal, setShowLabelsModal] = useState(false);
+  const [photoLabels, setPhotoLabels] = useState<string[]>([]);
+  const [heroFocalPoint, setHeroFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [isLoadingLabels, setIsLoadingLabels] = useState(false);
+  const [isSavingLabels, setIsSavingLabels] = useState(false);
+  const [isSavingFocalPoint, setIsSavingFocalPoint] = useState(false);
+  const [isDraggingFocalPoint, setIsDraggingFocalPoint] = useState(false);
+  const [labelsError, setLabelsError] = useState<string | null>(null);
+  const focalPointPreviewRef = useRef<HTMLDivElement>(null);
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(async (pixelCrop: Area, imageSrc: string) => {
@@ -400,6 +431,149 @@ export function PhotoSlideshow({
     }
   };
 
+  // Fetch photo labels and focal point when opening the labels modal
+  const fetchPhotoLabels = useCallback(async (photoId: string) => {
+    setIsLoadingLabels(true);
+    setLabelsError(null);
+    try {
+      const response = await fetch(`/api/photos/${photoId}/labels`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch labels");
+      }
+      const data = await response.json();
+      setPhotoLabels(data.labels || []);
+      setHeroFocalPoint(data.heroFocalPoint || { x: 50, y: 50 });
+    } catch (error) {
+      setLabelsError(error instanceof Error ? error.message : "Failed to load labels");
+    } finally {
+      setIsLoadingLabels(false);
+    }
+  }, []);
+
+  // Open labels modal and fetch current labels
+  const handleOpenLabelsModal = useCallback(() => {
+    const photo = allPhotos[currentIndex];
+    if (photo) {
+      setShowLabelsModal(true);
+      fetchPhotoLabels(photo.id);
+    }
+  }, [allPhotos, currentIndex, fetchPhotoLabels]);
+
+  // Calculate focal point position from mouse event
+  const calculateFocalPoint = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent, element: HTMLDivElement) => {
+    const rect = element.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    return { x, y };
+  }, []);
+
+  // Handle focal point drag start
+  const handleFocalPointMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingFocalPoint(true);
+    const newPoint = calculateFocalPoint(e, e.currentTarget);
+    setHeroFocalPoint(newPoint);
+  }, [calculateFocalPoint]);
+
+  // Handle focal point drag
+  useEffect(() => {
+    if (!isDraggingFocalPoint) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!focalPointPreviewRef.current) return;
+      const newPoint = calculateFocalPoint(e, focalPointPreviewRef.current);
+      setHeroFocalPoint(newPoint);
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingFocalPoint(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingFocalPoint, calculateFocalPoint]);
+
+  // Save focal point
+  const handleSaveFocalPoint = async () => {
+    const photo = allPhotos[currentIndex];
+    if (!photo) return;
+
+    setIsSavingFocalPoint(true);
+    setLabelsError(null);
+
+    try {
+      const response = await fetch(`/api/photos/${photo.id}/labels`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ heroFocalPoint: heroFocalPoint }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save focal point");
+      }
+
+      const result = await response.json();
+      setHeroFocalPoint(result.heroFocalPoint);
+
+      // Update the photo in local state
+      setAllPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photo.id ? { ...p, hero_focal_point: result.heroFocalPoint } : p
+        )
+      );
+    } catch (error) {
+      setLabelsError(error instanceof Error ? error.message : "Failed to save focal point");
+    } finally {
+      setIsSavingFocalPoint(false);
+    }
+  };
+
+  // Toggle a label on/off
+  const handleToggleLabel = async (label: string) => {
+    const photo = allPhotos[currentIndex];
+    if (!photo) return;
+
+    const newLabels = photoLabels.includes(label)
+      ? photoLabels.filter((l) => l !== label)
+      : [...photoLabels, label];
+
+    setIsSavingLabels(true);
+    setLabelsError(null);
+
+    try {
+      const response = await fetch(`/api/photos/${photo.id}/labels`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ labels: newLabels }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update labels");
+      }
+
+      const result = await response.json();
+      setPhotoLabels(result.labels);
+
+      // Update the photo in local state
+      setAllPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photo.id ? { ...p, labels: result.labels } : p
+        )
+      );
+    } catch (error) {
+      setLabelsError(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setIsSavingLabels(false);
+    }
+  };
+
   const currentPhoto = allPhotos[currentIndex];
 
   // Safety check
@@ -435,9 +609,16 @@ export function PhotoSlideshow({
         <div className="flex items-center justify-between px-6 py-4">
           {/* Photo Info */}
           <div>
-            {currentPhoto.band_name && (
+            {currentPhoto.band_name && currentPhoto.band_id ? (
+              <Link 
+                href={`/band/${currentPhoto.band_id}`}
+                className="font-medium text-lg hover:text-accent transition-colors"
+              >
+                {currentPhoto.band_name}
+              </Link>
+            ) : currentPhoto.band_name ? (
               <h2 className="font-medium text-lg">{currentPhoto.band_name}</h2>
-            )}
+            ) : null}
             <p className="text-sm text-text-muted">
               {currentPhoto.event_name && <span>{currentPhoto.event_name}</span>}
               {currentPhoto.event_name && currentPhoto.photographer && <span> • </span>}
@@ -490,6 +671,20 @@ export function PhotoSlideshow({
             {/* Admin Controls - accent colored to indicate admin-only */}
             {isAdmin && (
               <div className="flex items-center gap-2 pl-4 border-l border-accent/30">
+                <button
+                  onClick={handleOpenLabelsModal}
+                  className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors relative"
+                  aria-label="Set as hero image (Admin)"
+                  title="Hero Labels (Admin)"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                  {/* Indicator dot if photo has any hero labels */}
+                  {currentPhoto?.labels && currentPhoto.labels.length > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full" />
+                  )}
+                </button>
                 <button
                   onClick={() => setShowCropModal(true)}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors"
@@ -591,7 +786,7 @@ export function PhotoSlideshow({
               : (photo.thumbnail_url || photo.blob_url);
             return (
               <button
-                key={`${photo.id}-${thumbSrc}`}
+                key={`${index}-${photo.id}`}
                 ref={(el) => { thumbnailRefs.current[index] = el; }}
                 onClick={() => goToIndex(index)}
                 className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
@@ -765,6 +960,193 @@ export function PhotoSlideshow({
             {cropError && (
               <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
                 {cropError}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Hero Labels Modal */}
+      {showLabelsModal && currentPhoto && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="bg-bg-elevated rounded-xl p-6 max-w-3xl w-full border border-white/10 my-auto">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-xl mb-1">Hero Image Settings</h3>
+                <p className="text-text-muted text-sm">
+                  Configure how this photo appears as a hero image
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLabelsModal(false);
+                  setLabelsError(null);
+                }}
+                className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {isLoadingLabels ? (
+              <div className="flex items-center justify-center py-8">
+                <svg className="animate-spin w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Labels Section */}
+                <div>
+                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">Use as Hero For</h4>
+                  <div className="space-y-2">
+                    {Object.entries(LABEL_INFO).map(([label, info]) => {
+                      const isActive = photoLabels.includes(label);
+                      const isDisabled = isSavingLabels;
+                      
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => handleToggleLabel(label)}
+                          disabled={isDisabled}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                            isActive
+                              ? "border-accent bg-accent/10 text-white"
+                              : "border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10"
+                          } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <span className="text-xl">{info.icon}</span>
+                          <div className="flex-1 text-left">
+                            <div className="font-medium text-sm">{info.name}</div>
+                            <div className="text-xs text-text-dim">{info.description}</div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            isActive
+                              ? "border-accent bg-accent"
+                              : "border-white/30"
+                          }`}>
+                            {isActive && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Context info */}
+                  {currentPhoto.band_name && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <p className="text-xs text-text-dim">
+                        <span className="text-text-muted">Band:</span> {currentPhoto.band_name}
+                      </p>
+                      {currentPhoto.event_name && (
+                        <p className="text-xs text-text-dim mt-1">
+                          <span className="text-text-muted">Event:</span> {currentPhoto.event_name}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Focal Point Section */}
+                <div>
+                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">Focal Point</h4>
+                  <p className="text-xs text-text-dim mb-3">
+                    Click and drag to set where the image should center when cropped for hero display.
+                  </p>
+                  
+                  {/* Focal Point Picker */}
+                  <div 
+                    ref={focalPointPreviewRef}
+                    className={`relative w-full aspect-video rounded-lg overflow-hidden border transition-colors select-none ${
+                      isDraggingFocalPoint 
+                        ? "border-accent cursor-grabbing" 
+                        : "border-white/10 cursor-crosshair hover:border-white/30"
+                    }`}
+                    onMouseDown={handleFocalPointMouseDown}
+                  >
+                    <img
+                      src={currentPhoto.blob_url}
+                      alt="Focal point picker"
+                      className="w-full h-full object-cover pointer-events-none"
+                      draggable={false}
+                      style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+                    />
+                    
+                    {/* Focal point indicator */}
+                    <div 
+                      className={`absolute w-8 h-8 -ml-4 -mt-4 pointer-events-none transition-transform ${
+                        isDraggingFocalPoint ? "scale-125" : ""
+                      }`}
+                      style={{ left: `${heroFocalPoint.x}%`, top: `${heroFocalPoint.y}%` }}
+                    >
+                      <div className={`absolute inset-0 rounded-full border-2 border-white shadow-lg ${
+                        isDraggingFocalPoint ? "" : "animate-pulse"
+                      }`} />
+                      <div className="absolute inset-2 rounded-full bg-accent" />
+                    </div>
+
+                    {/* Crosshair guides */}
+                    <div 
+                      className="absolute inset-y-0 w-px bg-white/30 pointer-events-none"
+                      style={{ left: `${heroFocalPoint.x}%` }}
+                    />
+                    <div 
+                      className="absolute inset-x-0 h-px bg-white/30 pointer-events-none"
+                      style={{ top: `${heroFocalPoint.y}%` }}
+                    />
+                  </div>
+
+                  {/* Hero Preview */}
+                  <div className="mt-4">
+                    <p className="text-xs text-text-dim mb-2">Preview (wide hero crop):</p>
+                    <div className="relative w-full h-16 rounded-lg overflow-hidden border border-white/10">
+                      <img
+                        src={currentPhoto.blob_url}
+                        alt="Hero preview"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <button
+                    onClick={handleSaveFocalPoint}
+                    disabled={isSavingFocalPoint}
+                    className="mt-4 w-full bg-accent hover:bg-accent-light px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isSavingFocalPoint ? (
+                      <>
+                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Focal Point"
+                    )}
+                  </button>
+
+                  <p className="text-xs text-text-dim mt-2 text-center">
+                    Position: {Math.round(heroFocalPoint.x)}%, {Math.round(heroFocalPoint.y)}%
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {labelsError && (
+              <div className="mt-4 p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
+                {labelsError}
               </div>
             )}
           </div>

@@ -51,6 +51,12 @@ interface Band {
   created_at: string;
 }
 
+interface HeroPhoto {
+  id: string;
+  blob_url: string;
+  hero_focal_point?: { x: number; y: number };
+}
+
 function getStatusBadge(status: string) {
   switch (status) {
     case "voting":
@@ -69,14 +75,16 @@ export default function EventPage() {
   const eventId = params.eventId as string;
   const [event, setEvent] = useState<Event | null>(null);
   const [bands, setBands] = useState<Band[]>([]);
+  const [heroPhoto, setHeroPhoto] = useState<HeroPhoto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventResponse, bandsResponse] = await Promise.all([
+        const [eventResponse, bandsResponse, heroResponse] = await Promise.all([
           fetch(`/api/events/${eventId}`),
           fetch(`/api/bands/${eventId}`),
+          fetch(`/api/photos/heroes?label=event_hero&eventId=${eventId}`),
         ]);
 
         if (eventResponse.ok) {
@@ -87,6 +95,13 @@ export default function EventPage() {
         if (bandsResponse.ok) {
           const bandsData = await bandsResponse.json();
           setBands(bandsData);
+        }
+
+        if (heroResponse.ok) {
+          const heroData = await heroResponse.json();
+          if (heroData.photos && heroData.photos.length > 0) {
+            setHeroPhoto(heroData.photos[0]);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -127,8 +142,20 @@ export default function EventPage() {
     <WebLayout breadcrumbs={breadcrumbs}>
       {/* Hero Section with Event Image */}
       <section className="relative min-h-[40vh] flex items-end">
-        {/* Background Image */}
-        {event.info?.image_url ? (
+        {/* Background Image - prefer hero photo, fall back to event image_url */}
+        {heroPhoto ? (
+          <Image
+            src={heroPhoto.blob_url}
+            alt={`${event.name} event`}
+            fill
+            className="object-cover"
+            style={{ 
+              objectPosition: `${heroPhoto.hero_focal_point?.x ?? 50}% ${heroPhoto.hero_focal_point?.y ?? 50}%` 
+            }}
+            priority
+            unoptimized
+          />
+        ) : event.info?.image_url ? (
           <Image
             src={event.info.image_url}
             alt={`${event.name} event`}

@@ -1,8 +1,9 @@
-import { getBandScores } from "@/lib/db";
+import { getBandScores, getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
+import Link from "next/link";
 
 interface BandScore {
   id: string;
@@ -51,6 +52,12 @@ export default async function BandPage({
 
   const eventId = band.event_id;
   const eventStatus = band.status;
+
+  // Fetch band hero photos
+  const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, { bandId });
+  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
+  const heroPhotoUrl = heroPhoto?.blob_url ?? null;
+  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
 
   // Only fetch scores if event is finalized or user is admin
   let scores: BandScore[] = [];
@@ -117,36 +124,76 @@ export default async function BandPage({
     : 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          {/* Band Logo */}
-          {band.info?.logo_url && (
-            <div className="mb-6 flex justify-center">
-              <div className="w-32 h-32 relative">
+    <div>
+      {/* Hero Section */}
+      <section className="relative min-h-[40vh] flex items-end">
+        {/* Background Image */}
+        {heroPhotoUrl ? (
+          <Image
+            src={heroPhotoUrl}
+            alt={`${band.name}`}
+            fill
+            className="object-cover"
+            style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+            priority
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-bg-surface via-bg to-bg-elevated" />
+        )}
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-transparent" />
+
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-8 pb-8">
+          <div className="flex flex-col md:flex-row md:items-end gap-6">
+            {/* Band Logo */}
+            {band.info?.logo_url && (
+              <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-xl overflow-hidden bg-bg-surface border border-white/10">
                 <Image
                   src={band.info.logo_url}
                   alt={`${band.name} logo`}
                   width={128}
                   height={128}
-                  className="w-full h-full object-contain rounded-2xl"
+                  className="w-full h-full object-contain"
                   unoptimized
                 />
               </div>
+            )}
+
+            {/* Band Info */}
+            <div className="flex-1">
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
+                {band.name}
+              </h1>
+              <Link 
+                href={`/event/${eventId}`}
+                className="text-lg text-text-muted hover:text-accent transition-colors"
+              >
+                {band.event_name}
+              </Link>
+              <div className="text-text-dim mt-1">
+                {formatEventDate(band.date)} • {band.location}
+              </div>
             </div>
-          )}
-          <h1 className="text-5xl font-bold text-white mb-4">{band.name}</h1>
-          <div className="text-xl text-gray-300 mb-2">{band.event_name}</div>
-          <div className="text-gray-400">
-            {formatEventDate(band.date)} • {band.location}
           </div>
-          {band.description && (
-            <p className="text-gray-300 mt-4 max-w-2xl mx-auto">
+        </div>
+      </section>
+
+      {/* Description Section */}
+      {band.description && (
+        <section className="py-8 border-b border-white/5">
+          <div className="max-w-4xl mx-auto px-6 lg:px-8">
+            <p className="text-text-muted text-lg">
               {band.description}
             </p>
-          )}
-        </div>
+          </div>
+        </section>
+      )}
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
 
         {/* Total Score - Only show if event is finalized or user is admin */}
         {(eventStatus === "finalized" || isAdmin) && bandScore && (
@@ -406,14 +453,15 @@ export default async function BandPage({
         {/* Back to Results - Only show if event is finalized or user is admin */}
         {(eventStatus === "finalized" || isAdmin) && (
           <div className="text-center mt-12">
-            <a
+            <Link
               href={`/results/${eventId}`}
-              className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-4 px-8 rounded-xl text-lg transition-colors inline-block"
+              className="bg-accent hover:bg-accent-light text-white font-bold py-4 px-8 rounded-xl text-lg transition-colors inline-block"
             >
               ← Back to Full Results
-            </a>
+            </Link>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
+export interface HeroFocalPoint {
+  x: number; // 0-100 percentage from left
+  y: number; // 0-100 percentage from top
+}
+
 export interface HeroProps {
   /** Hero title */
   title: string;
@@ -12,6 +17,8 @@ export interface HeroProps {
   subtitle?: string;
   /** Background image URL (or placeholder gradient if not provided) */
   backgroundImage?: string;
+  /** Focal point for image positioning (0-100 for both x and y) */
+  focalPoint?: HeroFocalPoint;
   /** CTA buttons */
   actions?: {
     label: string;
@@ -31,6 +38,7 @@ export function Hero({
   title,
   subtitle,
   backgroundImage,
+  focalPoint = { x: 50, y: 50 },
   actions,
   size = "lg",
   overlay = "heavy",
@@ -56,8 +64,10 @@ export function Hero({
           src={backgroundImage}
           alt=""
           fill
-          className="object-cover object-center"
+          className="object-cover"
+          style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
           priority
+          unoptimized={backgroundImage.startsWith("http")}
         />
       ) : (
         // Gradient fallback

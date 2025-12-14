@@ -5,11 +5,16 @@ import {
   getPastEvents,
   getBandScores,
   getBandsForEvent,
+  getPhotosByLabel,
+  PHOTO_LABELS,
 } from "@/lib/db";
 import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
 import { Hero } from "@/components/hero";
 import { Button } from "@/components/ui";
+
+// Default fallback hero image
+const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop";
 
 interface BandScore {
   id: string;
@@ -54,6 +59,12 @@ export default async function HomePage() {
   const upcomingEvents = await getUpcomingEvents();
   const pastEvents = await getPastEvents();
 
+  // Fetch global hero photos
+  const globalHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO);
+  const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null;
+  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE;
+  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+
   // Get upcoming events with bands
   const upcomingEventsWithBands = await Promise.all(
     upcomingEvents.map(async (event) => {
@@ -95,7 +106,8 @@ export default async function HomePage() {
       <Hero
         title="Battle of the Tech Bands"
         subtitle="Where technology meets rock 'n' roll. A community charity event supporting Youngcare."
-        backgroundImage="https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop"
+        backgroundImage={heroImageUrl}
+        focalPoint={heroFocalPoint}
         size="lg"
         overlay="heavy"
         actions={[
