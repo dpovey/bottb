@@ -450,18 +450,6 @@ export interface GetPhotosOptions {
 }
 
 /**
- * Fisher-Yates shuffle for random ordering
- */
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-/**
  * Sort photos by capture date (oldest first for chronological viewing)
  * Uses filename as secondary sort for photos with the same timestamp
  * (e.g., when falling back to event date for photos without metadata)
@@ -480,6 +468,136 @@ function sortByDate(photos: Photo[]): Photo[] {
   });
 }
 
+/**
+ * Get photos in truly random order using SQL RANDOM()
+ * This mixes photos from all events/bands for better discovery
+ */
+async function getPhotosRandom(options: {
+  eventId?: string;
+  bandId?: string;
+  photographer?: string;
+  companySlug?: string;
+  limit: number;
+}): Promise<Photo[]> {
+  const { eventId, bandId, photographer, companySlug, limit } = options;
+
+  try {
+    // Build query based on filters - using ORDER BY RANDOM() for true randomness
+    if (companySlug === "none") {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (companySlug) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE b.company_slug = ${companySlug}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (bandId === "none" && eventId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id IS NULL AND p.event_id = ${eventId}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (bandId === "none") {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id IS NULL
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (eventId && bandId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.event_id = ${eventId} AND p.band_id = ${bandId}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (eventId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.event_id = ${eventId}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (bandId) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id = ${bandId}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else if (photographer) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.photographer = ${photographer}
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    } else {
+      // No filters - random from all photos
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        ORDER BY RANDOM()
+        LIMIT ${limit}
+      `;
+      return rows;
+    }
+  } catch (error) {
+    console.error("Error fetching random photos:", error);
+    throw error;
+  }
+}
+
 export async function getPhotos(
   options: GetPhotosOptions = {}
 ): Promise<Photo[]> {
@@ -493,17 +611,19 @@ export async function getPhotos(
     orderBy = "uploaded",
   } = options;
 
-  // Helper to apply ordering after fetch
+  // For random ordering, use SQL RANDOM() to get truly random photos across all data
+  // Note: pagination with random doesn't guarantee unique results across pages,
+  // but this gives better variety for discovery/browsing
+  if (orderBy === "random") {
+    return getPhotosRandom({ eventId, bandId, photographer, companySlug, limit });
+  }
+
+  // Helper to apply date sorting after fetch (for chronological slideshow viewing)
   const applyOrdering = (photos: Photo[]): Photo[] => {
-    switch (orderBy) {
-      case "random":
-        return shuffleArray(photos);
-      case "date":
-        return sortByDate(photos);
-      case "uploaded":
-      default:
-        return photos; // Already ordered by uploaded_at DESC from SQL
+    if (orderBy === "date") {
+      return sortByDate(photos);
     }
+    return photos; // Already ordered by uploaded_at DESC from SQL
   };
 
   try {
