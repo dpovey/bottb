@@ -121,6 +121,7 @@ export function PhotoStrip({
                 href={`${galleryLink}${galleryLink.includes('?') ? '&' : '?'}photo=${photo.id}`}
                 className="aspect-square rounded-lg overflow-hidden cursor-pointer group"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.thumbnail_url || photo.blob_url?.replace('/large.webp', '/thumbnail.webp')}
                   alt={photo.original_filename || "Photo"}
@@ -136,6 +137,7 @@ export function PhotoStrip({
                 href={galleryLink}
                 className="aspect-square rounded-lg overflow-hidden cursor-pointer relative group"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photos[maxPhotos - 1].thumbnail_url || photos[maxPhotos - 1].blob_url?.replace('/large.webp', '/thumbnail.webp')}
                   alt={photos[maxPhotos - 1].original_filename || "Photo"}

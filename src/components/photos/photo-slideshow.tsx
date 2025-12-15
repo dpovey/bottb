@@ -86,7 +86,7 @@ export function PhotoSlideshow({
 
   // Track the previous initialIndex to detect filter changes
   const prevInitialIndexRef = useRef(initialIndex);
-  
+
   // Sync photos from parent without resetting position (e.g., after crop updates)
   useEffect(() => {
     setAllPhotos(initialPhotos);
