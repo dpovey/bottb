@@ -769,31 +769,74 @@ export function PhotoSlideshow({
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col">
       {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
-        <div className="flex items-center justify-between px-6 py-4">
+      <div className="slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
+        <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
           {/* Photo Info */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 min-w-0">
             {currentPhoto.band_name && currentPhoto.band_id ? (
               <Link
                 href={`/band/${currentPhoto.band_id}`}
-                className="font-medium text-lg hover:text-accent transition-colors"
+                className="slideshow-band-name font-medium text-lg hover:text-accent transition-colors block truncate"
               >
                 {currentPhoto.band_name}
               </Link>
             ) : currentPhoto.band_name ? (
-              <h2 className="font-medium text-lg">{currentPhoto.band_name}</h2>
+              <h2 className="slideshow-band-name font-medium text-lg truncate">
+                {currentPhoto.band_name}
+              </h2>
             ) : null}
-            <p className="text-sm text-text-muted">
-              {currentPhoto.event_name && (
-                <span>{currentPhoto.event_name}</span>
+            {/* Metadata: stacked on mobile portrait, horizontal on sm+ and landscape */}
+            <div className="slideshow-info slideshow-meta text-sm text-text-muted flex flex-col sm:flex-row sm:items-center sm:gap-1">
+              {/* Company and Event */}
+              {(currentPhoto.company_name || currentPhoto.event_name) && (
+                <span className="flex items-center gap-1 truncate">
+                  {currentPhoto.company_name && currentPhoto.company_slug ? (
+                    <Link
+                      href={`/companies?company=${currentPhoto.company_slug}`}
+                      className="truncate hover:text-accent transition-colors"
+                    >
+                      {currentPhoto.company_name}
+                    </Link>
+                  ) : currentPhoto.company_name ? (
+                    <span className="truncate">{currentPhoto.company_name}</span>
+                  ) : null}
+                  {currentPhoto.company_name && currentPhoto.event_name && (
+                    <span className="slideshow-separator hidden sm:inline">•</span>
+                  )}
+                  {currentPhoto.event_name && currentPhoto.event_id ? (
+                    <Link
+                      href={`/event/${currentPhoto.event_id}`}
+                      className="truncate hover:text-accent transition-colors"
+                    >
+                      {currentPhoto.event_name}
+                    </Link>
+                  ) : currentPhoto.event_name ? (
+                    <span className="truncate">{currentPhoto.event_name}</span>
+                  ) : null}
+                </span>
               )}
-              {currentPhoto.event_name && currentPhoto.photographer && (
-                <span> • </span>
-              )}
+              {/* Photographer with camera icon */}
               {currentPhoto.photographer && (
-                <span>Photo by {currentPhoto.photographer}</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="slideshow-separator hidden sm:inline">•</span>
+                  <svg
+                    className="w-4 h-4 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                    />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                  <span className="truncate">{currentPhoto.photographer}</span>
+                </span>
               )}
-            </p>
+            </div>
           </div>
 
           {/* Active Filter Pills */}
@@ -863,12 +906,14 @@ export function PhotoSlideshow({
 
           {/* Counter & Controls */}
           <div className="flex items-center gap-4">
-            <span className="text-sm text-text-muted">
-              <span className="text-white font-medium">{displayPosition}</span>{" "}
-              / {totalCount}
+            {/* Photo counter - hidden on mobile */}
+            <span className="hidden sm:inline-flex items-center text-sm text-text-muted">
+              <span className="text-white font-medium">{displayPosition}</span>
+              <span className="mx-1">/</span>
+              <span>{totalCount}</span>
               {isLoadingMore && (
                 <svg
-                  className="inline-block ml-2 animate-spin w-4 h-4"
+                  className="ml-2 animate-spin w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -890,7 +935,7 @@ export function PhotoSlideshow({
             </span>
 
             {/* Public Controls - available to everyone */}
-            <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+            <div className="slideshow-controls flex items-center gap-2 pl-4 border-l border-white/10">
               <button
                 onClick={handleCopyLink}
                 className="p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors relative"
@@ -951,7 +996,7 @@ export function PhotoSlideshow({
 
             {/* Admin Controls - accent colored to indicate admin-only */}
             {isAdmin && (
-              <div className="flex items-center gap-2 pl-4 border-l border-accent/30">
+              <div className="slideshow-controls flex items-center gap-2 pl-4 border-l border-accent/30">
                 <button
                   onClick={handleOpenLabelsModal}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors relative"
@@ -1030,7 +1075,7 @@ export function PhotoSlideshow({
             {/* Close */}
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors ml-2"
+              className="slideshow-close p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors ml-2"
               aria-label="Close slideshow"
               title="Close"
             >
@@ -1053,12 +1098,12 @@ export function PhotoSlideshow({
       </div>
 
       {/* Main Image Area */}
-      <div className="flex-1 flex items-center justify-center px-4 md:px-20 pt-24 pb-8 md:pb-28">
+      <div className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-24 pb-8 md:pb-28">
         {/* Previous Button */}
         <button
           onClick={goToPrevious}
           disabled={currentIndex === 0 && minLoadedPage === 1}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous photo"
         >
           <svg
@@ -1082,7 +1127,7 @@ export function PhotoSlideshow({
             key={currentPhoto.id}
             src={currentPhoto.blob_url}
             alt={currentPhoto.original_filename || "Photo"}
-            className="max-w-[90vw] max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] object-contain rounded-lg shadow-2xl"
+            className="slideshow-image max-w-[90vw] max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] object-contain rounded-lg shadow-2xl"
             custom={direction}
             variants={slideVariants}
             initial="enter"
@@ -1099,7 +1144,7 @@ export function PhotoSlideshow({
         <button
           onClick={goToNext}
           disabled={displayPosition >= totalCount}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next photo"
         >
           <svg
@@ -1118,8 +1163,8 @@ export function PhotoSlideshow({
         </button>
       </div>
 
-      {/* Thumbnail Strip - hidden on mobile, shown on desktop */}
-      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6">
+      {/* Thumbnail Strip - hidden on mobile and landscape with limited height */}
+      <div className="slideshow-thumbnails hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6">
         <div
           ref={thumbnailStripRef}
           className="flex gap-3 overflow-x-auto py-3"
