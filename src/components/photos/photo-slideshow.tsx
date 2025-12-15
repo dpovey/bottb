@@ -254,7 +254,14 @@ export function PhotoSlideshow({
     try {
       const newPhotos = await fetchPage(nextPage);
       if (newPhotos.length > 0) {
-        setAllPhotos((prev) => [...prev, ...newPhotos]);
+        setAllPhotos((prev) => {
+          // Deduplicate by filtering out photos that already exist
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNewPhotos = newPhotos.filter(
+            (p) => !existingIds.has(p.id)
+          );
+          return [...prev, ...uniqueNewPhotos];
+        });
         setLoadedPages((prev) => new Set([...prev, nextPage]));
       }
     } finally {
@@ -272,10 +279,19 @@ export function PhotoSlideshow({
     try {
       const newPhotos = await fetchPage(prevPage);
       if (newPhotos.length > 0) {
-        setAllPhotos((prev) => [...newPhotos, ...prev]);
+        // Use functional updates that compute added count correctly
+        setAllPhotos((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNewPhotos = newPhotos.filter(
+            (p) => !existingIds.has(p.id)
+          );
+          // Also update currentIndex in the same render cycle
+          if (uniqueNewPhotos.length > 0) {
+            setCurrentIndex((prevIndex) => prevIndex + uniqueNewPhotos.length);
+          }
+          return [...uniqueNewPhotos, ...prev];
+        });
         setLoadedPages((prev) => new Set([...prev, prevPage]));
-        // Adjust current index since we prepended photos
-        setCurrentIndex((prev) => prev + newPhotos.length);
       }
     } finally {
       setIsLoadingMore(false);
@@ -325,7 +341,7 @@ export function PhotoSlideshow({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showDeleteConfirm || showCropModal) return; // Don't navigate while modals are open
+      if (showDeleteConfirm || showCropModal || showLabelsModal) return; // Don't navigate while modals are open
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") goToNext();
       if (e.key === "ArrowLeft") goToPrevious();
@@ -333,7 +349,59 @@ export function PhotoSlideshow({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, goToPrevious, goToNext, showDeleteConfirm, showCropModal]);
+  }, [
+    onClose,
+    goToPrevious,
+    goToNext,
+    showDeleteConfirm,
+    showCropModal,
+    showLabelsModal,
+  ]);
+
+  // Scroll wheel navigation (scroll up/left = previous, scroll down/right = next)
+  const lastScrollTime = useRef(0);
+  const SCROLL_DEBOUNCE_MS = 150; // Minimum time between scroll navigations
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (showDeleteConfirm || showCropModal || showLabelsModal) return; // Don't navigate while modals are open
+
+      // Check if the scroll is happening over the thumbnail strip - if so, let it scroll normally
+      const target = e.target as HTMLElement;
+      if (thumbnailStripRef.current?.contains(target)) return;
+
+      // Prevent default scrolling behavior on the slideshow
+      e.preventDefault();
+
+      // Use deltaY for vertical scroll, deltaX for horizontal scroll (trackpad)
+      const delta =
+        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+
+      // Ignore very small scroll movements
+      if (Math.abs(delta) < 10) return;
+
+      // Debounce rapid scroll events
+      const now = Date.now();
+      if (now - lastScrollTime.current < SCROLL_DEBOUNCE_MS) return;
+      lastScrollTime.current = now;
+
+      if (delta > 0) {
+        goToNext();
+      } else {
+        goToPrevious();
+      }
+    };
+
+    // Use passive: false to allow preventDefault
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [
+    goToPrevious,
+    goToNext,
+    showDeleteConfirm,
+    showCropModal,
+    showLabelsModal,
+  ]);
 
   // Auto-scroll thumbnail strip to keep current photo visible
   useEffect(() => {
@@ -1065,7 +1133,7 @@ export function PhotoSlideshow({
             const isSelected = index === currentIndex;
             return (
               <button
-                key={photo.id}
+                key={`${photo.id}-${index}`}
                 ref={(el) => {
                   thumbnailRefs.current[index] = el;
                 }}

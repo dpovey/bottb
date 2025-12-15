@@ -21,6 +21,11 @@ vi.mock("@/lib/db", () => ({
   getBandScores: vi.fn(),
   hasFinalizedResults: vi.fn(),
   getFinalizedResults: vi.fn(),
+  PHOTO_LABELS: {
+    BAND_HERO: "band_hero",
+    EVENT_HERO: "event_hero",
+    GLOBAL_HERO: "global_hero",
+  },
 }));
 
 // Mock the date utils

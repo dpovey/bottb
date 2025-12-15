@@ -177,7 +177,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
                 {pastEvents.map((event, index) => (
                   <Link
                     key={event.id}
-                    href={`/results/${event.id}`}
+                    href={`/event/${event.id}`}
                     onClick={() => setIsOpen(false)}
                     role="menuitem"
                     className={cn(
