@@ -119,24 +119,46 @@
       </div>
     </div>
 
-    <!-- Overall Winner - Hero -->
+    <!-- Overall Winner - Hero with Background Image -->
+    <!-- 
+      DESIGN NOTES:
+      - Hero image fills the entire card as background
+      - Gradient overlay fades from solid left to transparent right (via-40%)
+      - Text content is left-aligned and constrained to left portion
+      - Image uses object-position to honor focal point
+    -->
     <div class="relative mb-20">
       <div class="absolute inset-0 bg-gradient-to-r from-gold/20 via-gold/10 to-gold/20 rounded-3xl blur-3xl"></div>
-      <div class="relative bg-elevated rounded-3xl p-10 border border-gold/30 text-center winner-glow">
-        <div class="trophy-float text-8xl mb-4">🏆</div>
-        <p class="text-xs tracking-widest uppercase text-gold mb-2">Champion</p>
-        <h2 class="font-semibold text-5xl mb-4">The Agentics</h2>
-        <div class="flex items-center justify-center gap-2 mb-6">
-          <div class="w-12 h-12 rounded-xl bg-surface overflow-hidden">
-            <div class="w-full h-full bg-gradient-to-br from-indigo-600/30 to-purple-600/30 flex items-center justify-center">
-              <span class="text-lg font-bold text-white/80">TA</span>
-            </div>
-          </div>
-          <span class="text-muted">representing Salesforce</span>
+      <div class="relative bg-elevated rounded-3xl overflow-hidden border border-gold/30 winner-glow">
+        <!-- Hero Image Background -->
+        <div class="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200" 
+            alt="Band performing"
+            class="w-full h-full object-cover"
+            style="object-position: 70% 30%;"
+          >
+          <!-- Gradient overlay - solid left, transparent right -->
+          <div class="absolute inset-0 bg-gradient-to-r from-[var(--bg-elevated)] via-[var(--bg-elevated)]/80 via-40% to-transparent"></div>
         </div>
-        <div class="inline-flex items-baseline gap-1">
-          <span class="text-6xl font-bold text-gold">87.5</span>
-          <span class="text-xl text-muted">/ 100 points</span>
+        
+        <!-- Content - Left aligned -->
+        <div class="relative py-12 px-8 md:px-12 max-w-md lg:max-w-lg">
+          <div class="trophy-float text-6xl mb-4">🏆</div>
+          <span class="inline-block px-3 py-1 rounded-full text-xs tracking-widest uppercase bg-gold/20 text-gold border border-gold/30 mb-4">Champion</span>
+          <h2 class="font-semibold text-4xl mb-4">The Agentics</h2>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 rounded-xl bg-surface overflow-hidden shrink-0">
+              <div class="w-full h-full bg-gradient-to-br from-indigo-600/30 to-purple-600/30 flex items-center justify-center">
+                <span class="text-lg font-bold text-white/80">TA</span>
+              </div>
+            </div>
+            <span class="text-muted">representing Salesforce</span>
+          </div>
+          <div class="inline-flex items-baseline gap-1">
+            <span class="text-5xl lg:text-6xl font-bold text-gold">87.5</span>
+            <span class="text-xl text-muted">/ 100 points</span>
+          </div>
         </div>
       </div>
     </div>

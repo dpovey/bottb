@@ -99,45 +99,71 @@
           <p class="text-dim">September 5, 2024 • The Triffid, Brisbane</p>
         </div>
         
-        <!-- Winner Card -->
+        <!-- Winner Card with Optional Hero Image -->
+        <!-- 
+          DESIGN NOTES for 2022.1:
+          - Hero image is optional (older events may not have photos)
+          - When hero image exists: full background with gradient overlay, left-aligned text
+          - When no hero image: centered layout (fallback)
+          - No score shown (2022.1 had no detailed scoring)
+        -->
         <div class="relative">
           <div class="absolute inset-0 bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 rounded-3xl blur-3xl"></div>
-          <div class="relative bg-elevated rounded-3xl p-12 md:p-16 border border-warning/30 winner-glow">
+          <div class="relative bg-elevated rounded-3xl overflow-hidden border border-warning/30 winner-glow">
             
-            <!-- Trophy -->
-            <div class="trophy-float text-8xl md:text-9xl mb-8">🏆</div>
+            <!-- Hero Image Background (when available) -->
+            <div class="absolute inset-0">
+              <img 
+                src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1200" 
+                alt="Band performing"
+                class="w-full h-full object-cover"
+                style="object-position: 50% 30%;"
+              >
+              <!-- Gradient overlay - solid left, transparent right -->
+              <div class="absolute inset-0 bg-gradient-to-r from-[var(--bg-elevated)] via-[var(--bg-elevated)]/80 via-40% to-transparent"></div>
+            </div>
             
-            <!-- Winner Label -->
-            <p class="text-xs tracking-widest uppercase text-warning mb-4">Winner</p>
-            
-            <!-- Winner Name -->
-            <h2 class="font-semibold text-5xl md:text-7xl mb-6 text-white">The Fuggles</h2>
-            
-            <!-- Company -->
-            <div class="flex items-center justify-center gap-3 mb-8">
-              <div class="w-14 h-14 rounded-xl bg-surface overflow-hidden">
-                <div class="w-full h-full bg-gradient-to-br from-emerald-600/30 to-teal-600/30 flex items-center justify-center">
-                  <span class="text-xl font-bold text-white/80">TF</span>
+            <!-- Content - Left aligned -->
+            <div class="relative py-12 px-8 md:px-12 max-w-lg">
+              <!-- Trophy -->
+              <div class="trophy-float text-7xl mb-6">🏆</div>
+              
+              <!-- Winner Label -->
+              <span class="inline-block px-3 py-1 rounded-full text-xs tracking-widest uppercase bg-warning/20 text-warning border border-warning/30 mb-4">Winner</span>
+              
+              <!-- Winner Name -->
+              <h2 class="font-semibold text-4xl md:text-5xl mb-6 text-white">The Fuggles</h2>
+              
+              <!-- Company -->
+              <div class="flex items-center gap-3 mb-8">
+                <div class="w-14 h-14 rounded-xl bg-surface overflow-hidden shrink-0">
+                  <div class="w-full h-full bg-gradient-to-br from-emerald-600/30 to-teal-600/30 flex items-center justify-center">
+                    <span class="text-xl font-bold text-white/80">TF</span>
+                  </div>
                 </div>
+                <span class="text-lg text-muted">representing FoundU</span>
               </div>
-              <span class="text-xl text-muted">representing FoundU</span>
-            </div>
-            
-            <!-- Divider -->
-            <div class="w-24 h-px bg-white/10 mx-auto mb-8"></div>
-            
-            <!-- Participating Bands -->
-            <div class="text-muted">
-              <p class="text-sm mb-4">Competing bands:</p>
-              <div class="flex flex-wrap justify-center gap-3">
-                <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">The ShipRex</span>
-                <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">Jumbo Band</span>
-                <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">The Epsilon Band</span>
-                <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">Felix Band</span>
-                <span class="bg-warning/20 border border-warning/30 text-warning text-sm px-3 py-1.5 rounded-full font-medium">The Fuggles</span>
+              
+              <!-- Event Info -->
+              <div class="pt-6 border-t border-white/10">
+                <p class="text-muted">
+                  Brisbane Tech Battle 2024 • September 5, 2024 • The Triffid, Brisbane
+                </p>
               </div>
             </div>
             
+          </div>
+        </div>
+        
+        <!-- Participating Bands (separate section) -->
+        <div class="mt-12 text-center">
+          <p class="text-sm text-muted mb-4">Competing bands:</p>
+          <div class="flex flex-wrap justify-center gap-3">
+            <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">The ShipRex</span>
+            <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">Jumbo Band</span>
+            <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">The Epsilon Band</span>
+            <span class="bg-white/5 border border-white/10 text-white text-sm px-3 py-1.5 rounded-full">Felix Band</span>
+            <span class="bg-warning/20 border border-warning/30 text-warning text-sm px-3 py-1.5 rounded-full font-medium">🏆 The Fuggles</span>
           </div>
         </div>
         

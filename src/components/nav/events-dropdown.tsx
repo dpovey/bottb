@@ -119,11 +119,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
         "fixed left-0 right-0 z-40",
         "bg-bg/40 backdrop-blur-[40px] saturate-150",
         "border-b border-white/[0.08]",
-        "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]",
-        "transition-all duration-300 ease-out",
-        isOpen
-          ? "opacity-100 translate-y-0 visible"
-          : "opacity-0 -translate-y-2 invisible"
+        "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]"
       )}
       style={{ top: "64px" }} // Header height
     >
@@ -153,11 +149,10 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
                     className={cn(
                       "flex items-center gap-4 px-6 py-3 rounded-lg",
                       "hover:bg-white/5 transition-colors",
-                      "opacity-0 -translate-y-1",
-                      isOpen && "animate-dropdown-item"
+                      "opacity-0 -translate-y-1 animate-dropdown-item"
                     )}
                     style={{
-                      animationDelay: isOpen ? `${index * 30}ms` : "0ms",
+                      animationDelay: `${index * 30}ms`,
                       animationFillMode: "forwards",
                     }}
                   >
@@ -188,11 +183,10 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
                     className={cn(
                       "flex items-center gap-4 px-6 py-3 rounded-lg",
                       "hover:bg-white/5 transition-colors",
-                      "opacity-0 -translate-y-1",
-                      isOpen && "animate-dropdown-item"
+                      "opacity-0 -translate-y-1 animate-dropdown-item"
                     )}
                     style={{
-                      animationDelay: isOpen ? `${(upcomingEvents.length + index) * 30}ms` : "0ms",
+                      animationDelay: `${(upcomingEvents.length + index) * 30}ms`,
                       animationFillMode: "forwards",
                     }}
                   >
@@ -280,7 +274,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
       </button>
 
       {/* Dropdown Panel - rendered via portal outside header to avoid nested backdrop-filter */}
-      {mounted && createPortal(dropdownPanel, document.body)}
+      {mounted && isOpen && createPortal(dropdownPanel, document.body)}
     </>
   );
 }

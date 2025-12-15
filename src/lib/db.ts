@@ -46,6 +46,7 @@ export interface Band {
   order: number;
   image_url?: string;
   hero_thumbnail_url?: string;
+  hero_focal_point?: { x: number; y: number };
   info?: {
     logo_url?: string;
     website?: string;
@@ -71,6 +72,7 @@ export interface Vote {
   song_choice?: number;
   performance?: number;
   crowd_vibe?: number;
+  visuals?: number; // 2026.1 only
   crowd_vote?: number;
   // User context fields
   ip_address?: string;
@@ -213,7 +215,8 @@ export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`
     SELECT b.*, 
       c.name as company_name,
-      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
+      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point
     FROM bands b 
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.event_id = ${eventId} 
@@ -242,7 +245,7 @@ export async function hasUserVotedByEmail(
 export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
   const { rows } = await sql<Vote>`
             INSERT INTO votes (
-              event_id, band_id, voter_type, song_choice, performance, crowd_vibe, crowd_vote,
+              event_id, band_id, voter_type, song_choice, performance, crowd_vibe, visuals, crowd_vote,
               ip_address, user_agent, browser_name, browser_version, os_name, os_version, device_type,
               screen_resolution, timezone, language, google_click_id, facebook_pixel_id,
               utm_source, utm_medium, utm_campaign, utm_term, utm_content, vote_fingerprint,
@@ -252,7 +255,9 @@ export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
               ${vote.event_id}, ${vote.band_id}, ${vote.voter_type}, ${
     vote.song_choice
   },
-              ${vote.performance}, ${vote.crowd_vibe}, ${vote.crowd_vote},
+              ${vote.performance}, ${vote.crowd_vibe}, ${vote.visuals}, ${
+    vote.crowd_vote
+  },
               ${vote.ip_address}, ${vote.user_agent}, ${vote.browser_name}, ${
     vote.browser_version
   },
@@ -270,7 +275,8 @@ export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
   },
               ${vote.fingerprintjs_confidence}, ${
     vote.fingerprintjs_confidence_comment
-  }, ${vote.email}, ${vote.name}, ${vote.status || "approved"}
+  }, 
+              ${vote.email}, ${vote.name}, ${vote.status || "approved"}
             )
     RETURNING *
   `;
@@ -352,6 +358,7 @@ export async function getBandScores(eventId: string) {
       b.info,
       b.description,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
+      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.performance END) as avg_performance,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.crowd_vibe END) as avg_crowd_vibe,

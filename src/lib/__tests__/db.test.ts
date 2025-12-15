@@ -281,6 +281,7 @@ describe("Database Functions", () => {
         undefined, // song_choice
         undefined, // performance
         undefined, // crowd_vibe
+        undefined, // visuals (2026.1)
         20, // crowd_vote
         undefined, // ip_address
         undefined, // user_agent

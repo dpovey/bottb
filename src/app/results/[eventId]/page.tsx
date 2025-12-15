@@ -25,6 +25,7 @@ interface BandScore {
   name: string;
   order: number;
   hero_thumbnail_url?: string;
+  hero_focal_point?: { x: number; y: number };
   info?: {
     logo_url?: string;
     website?: string;
@@ -53,7 +54,8 @@ interface BandScore {
 
 interface EventInfo {
   scoring_version?: string;
-  winner?: string;
+  winner?: string; // Legacy: band name (deprecated)
+  winner_band_id?: string; // Preferred: band ID
   [key: string]: unknown;
 }
 
@@ -88,7 +90,22 @@ export default async function ResultsPage({
 
   // For 2022.1 events - just show the stored winner
   if (!showDetailedBreakdown) {
-    const winnerName = eventInfo?.winner || "Winner to be announced";
+    // Prefer winner_band_id, fall back to legacy winner name field
+    const winnerBandId = eventInfo?.winner_band_id;
+    const legacyWinnerName = eventInfo?.winner;
+
+    // Find the winning band - by ID first (preferred), then by name (legacy, case-insensitive)
+    const winnerBand = winnerBandId
+      ? bands.find((band) => band.id === winnerBandId)
+      : legacyWinnerName
+      ? bands.find(
+          (band) => band.name.toLowerCase() === legacyWinnerName.toLowerCase()
+        )
+      : undefined;
+
+    // Use the band's actual name if found, otherwise use the legacy value
+    const winnerName =
+      winnerBand?.name || legacyWinnerName || "Winner to be announced";
 
     return (
       <WebLayout breadcrumbs={breadcrumbs}>
@@ -108,10 +125,14 @@ export default async function ResultsPage({
         </section>
 
         {/* Overall Winner */}
-        <section className="py-12 bg-bg-muted">
-          <div className="max-w-4xl mx-auto px-6 lg:px-8">
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <WinnerDisplay
               winnerName={winnerName}
+              company={winnerBand?.description}
+              logoUrl={winnerBand?.info?.logo_url}
+              heroThumbnailUrl={winnerBand?.hero_thumbnail_url}
+              heroFocalPoint={winnerBand?.hero_focal_point}
               scoringVersion={scoringVersion}
               eventName={event.name}
               eventDate={formatEventDate(event.date, event.timezone)}
@@ -123,7 +144,7 @@ export default async function ResultsPage({
         {/* Participating Bands */}
         {bands.length > 0 && (
           <section className="py-12">
-            <div className="max-w-4xl mx-auto px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
               <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
                 Participating Bands
               </h3>
@@ -216,6 +237,7 @@ export default async function ResultsPage({
         visuals: Number(score.avg_visuals || 0),
         crowdNoiseEnergy: score.crowd_noise_energy,
         heroThumbnailUrl: score.hero_thumbnail_url,
+        heroFocalPoint: score.hero_focal_point,
         logoUrl: score.info?.logo_url,
         totalScore,
         rank: 0, // Will be set after sorting
@@ -341,7 +363,7 @@ export default async function ResultsPage({
       </section>
 
       {/* Overall Winner */}
-      <section className="py-12 bg-bg-muted">
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <WinnerDisplay
             winnerName={overallWinner.name}
@@ -349,6 +371,7 @@ export default async function ResultsPage({
             totalScore={overallWinner.totalScore}
             logoUrl={overallWinner.logoUrl}
             heroThumbnailUrl={overallWinner.heroThumbnailUrl}
+            heroFocalPoint={overallWinner.heroFocalPoint}
             scoringVersion={scoringVersion}
           />
         </div>

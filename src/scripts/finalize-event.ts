@@ -10,7 +10,8 @@ config({ path: ".env.local" });
 
 interface EventInfo {
   scoring_version?: string;
-  winner?: string;
+  winner?: string; // Legacy: band name (deprecated)
+  winner_band_id?: string; // Preferred: band ID
   [key: string]: unknown;
 }
 
@@ -47,12 +48,26 @@ async function finalizeEvent(eventId: string, force = false) {
 
     // For 2022.1 events, we don't calculate scores - just check for winner
     if (scoringVersion === "2022.1") {
-      if (!eventInfo?.winner) {
+      const hasWinner = eventInfo?.winner_band_id || eventInfo?.winner;
+      if (!hasWinner) {
         console.error(
           `\n❌ 2022.1 events require a winner to be set in the event info.`
         );
-        console.error(`   Please update the event's info.winner field first.`);
+        console.error(
+          `   Please set info.winner_band_id (preferred) or info.winner (legacy).`
+        );
         process.exit(1);
+      }
+
+      // Get the winner band name for display
+      let winnerDisplay = eventInfo?.winner || eventInfo?.winner_band_id;
+      if (eventInfo?.winner_band_id) {
+        const { rows: winnerBands } = await sql`
+          SELECT name FROM bands WHERE id = ${eventInfo.winner_band_id}
+        `;
+        if (winnerBands.length > 0) {
+          winnerDisplay = winnerBands[0].name;
+        }
       }
 
       // Set event status to finalized
@@ -64,9 +79,12 @@ async function finalizeEvent(eventId: string, force = false) {
 
       console.log(`\n✅ Event finalized successfully!`);
       console.log(`   Status: finalized`);
-      console.log(`   🏆 Winner: ${eventInfo.winner}`);
+      console.log(`   🏆 Winner: ${winnerDisplay}`);
+      if (eventInfo?.winner_band_id) {
+        console.log(`   Band ID: ${eventInfo.winner_band_id}`);
+      }
       console.log(
-        `\n📝 Note: 2022.1 events only store the winner name, no detailed scores.`
+        `\n📝 Note: 2022.1 events only store the winner, no detailed scores.`
       );
       return;
     }
