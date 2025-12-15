@@ -48,3 +48,19 @@
 .slider::-moz-range-track {
   background: transparent;
 }
+
+/* Dropdown menu item animation */
+@keyframes dropdown-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown-item {
+  animation: dropdown-item-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

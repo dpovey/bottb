@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
+import { EventsDropdown } from "./events-dropdown";
 
 export interface HeaderProps {
   /** Show main navigation links */
@@ -18,7 +19,6 @@ export interface HeaderProps {
 }
 
 const navLinks = [
-  { href: "/", label: "Events" },
   { href: "/photos", label: "Photos" },
   { href: "/about", label: "About" },
 ];
@@ -73,6 +73,10 @@ export function Header({
             {/* Desktop Navigation (centered) */}
             {showNav && (
               <nav className="hidden md:flex items-center justify-center gap-8 flex-1">
+                {/* Events Dropdown */}
+                <EventsDropdown />
+                
+                {/* Other nav links */}
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -115,6 +119,15 @@ export function Header({
         {mobileMenuOpen && showNav && (
           <div className="md:hidden bg-bg-elevated border-t border-white/5">
             <nav className="px-6 py-4 space-y-2">
+              {/* Events link for mobile - goes to homepage which shows all events */}
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+              >
+                Events
+              </Link>
+              
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
