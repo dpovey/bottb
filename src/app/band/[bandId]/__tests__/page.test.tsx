@@ -74,7 +74,9 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
+        event_info: { scoring_version: "2025.1" },
       },
     ];
 
@@ -98,16 +100,10 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(screen.getByText("Test Band")).toBeInTheDocument();
+    // Band name should be in the hero as h1
+    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
+    // Event name is a link in the hero
     expect(screen.getByText("Test Event")).toBeInTheDocument();
-    expect(
-      screen.getByText((content, element) => {
-        return (
-          element?.textContent ===
-          "Formatted: 2024-12-25T18:30:00Z • Test Venue"
-        );
-      })
-    ).toBeInTheDocument();
     expect(screen.getByText("A test band")).toBeInTheDocument();
   });
 
@@ -123,7 +119,9 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "upcoming",
+        event_info: { scoring_version: "2025.1" },
       },
     ];
 
@@ -132,12 +130,12 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(screen.getByText("Test Band")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
     expect(screen.getByText("Event Upcoming")).toBeInTheDocument();
     expect(
       screen.getByText("Scores will be available after the event is finalized")
     ).toBeInTheDocument();
-    // Should not show scores
+    // Should not show scores - check for "Total Score" text in quick stats
     expect(screen.queryByText("Total Score")).not.toBeInTheDocument();
   });
 
@@ -153,7 +151,9 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "upcoming",
+        event_info: { scoring_version: "2025.1" },
       },
     ];
 
@@ -178,12 +178,13 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(screen.getByText("Test Band")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
+    // Quick stats should show Total Score text
     expect(screen.getByText("Total Score")).toBeInTheDocument();
     expect(screen.queryByText("Event Upcoming")).not.toBeInTheDocument();
   });
 
-  it("displays total score", async () => {
+  it("displays total score in quick stats", async () => {
     const bandData = [
       {
         id: "band-1",
@@ -194,7 +195,9 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
+        event_info: { scoring_version: "2025.1" },
       },
     ];
 
@@ -218,11 +221,10 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(
-      screen.getByRole("heading", { name: "Total Score" })
-    ).toBeInTheDocument();
+    // Quick stats label
+    expect(screen.getByText("Total Score")).toBeInTheDocument();
+    // Total score value (15.5 + 25.0 + 22.5 + 10 (crowd vote max) + 0 (no scream-o-meter) = 73.0)
     expect(screen.getByText("73.0")).toBeInTheDocument();
-    expect(screen.getByText("out of 100 points")).toBeInTheDocument();
   });
 
   it("displays judge scores breakdown", async () => {
@@ -236,6 +238,7 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
         event_info: { scoring_version: "2025.1" },
       },
@@ -261,16 +264,14 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(
-      screen.getByRole("heading", { name: "Judge Scores" })
-    ).toBeInTheDocument();
-    // Text appears multiple times (with emoji in Judge Scores and without in Score Summary)
-    expect(screen.getAllByText(/Song Choice/).length).toBeGreaterThan(0);
-    expect(screen.getByText("15.5/20")).toBeInTheDocument();
-    expect(screen.getAllByText(/Performance/).length).toBeGreaterThan(0);
-    expect(screen.getByText("25.0/30")).toBeInTheDocument();
-    expect(screen.getAllByText(/Crowd Vibe/).length).toBeGreaterThan(0);
-    expect(screen.getByText("22.5/30")).toBeInTheDocument();
+    // Score Breakdown section heading
+    expect(screen.getByRole("heading", { level: 2, name: "Score Breakdown" })).toBeInTheDocument();
+    // Judge Scores card heading
+    expect(screen.getByText("Judge Scores")).toBeInTheDocument();
+    // Score rows with emoji labels
+    expect(screen.getByText("🎵 Song Choice")).toBeInTheDocument();
+    expect(screen.getByText("🎤 Performance")).toBeInTheDocument();
+    expect(screen.getByText("🔥 Crowd Vibe")).toBeInTheDocument();
   });
 
   it("displays crowd vote section", async () => {
@@ -284,6 +285,7 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
         event_info: { scoring_version: "2025.1" },
       },
@@ -309,17 +311,14 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    // Section is now "Crowd Scoring"
-    expect(
-      screen.getByRole("heading", { name: "Crowd Scoring" })
-    ).toBeInTheDocument();
-    // Crowd vote text appears multiple times
-    expect(screen.getAllByText(/Crowd Vote/).length).toBeGreaterThan(0);
-    expect(screen.getByText("10/10")).toBeInTheDocument();
-    expect(screen.getByText("10 votes")).toBeInTheDocument();
+    // Crowd Vote card heading
+    expect(screen.getByText("Crowd Vote")).toBeInTheDocument();
+    // Vote counts
+    expect(screen.getByText("votes received")).toBeInTheDocument();
+    expect(screen.getByText(/out of 50 total/)).toBeInTheDocument();
   });
 
-  it("displays score summary", async () => {
+  it("displays scream-o-meter for 2025.1 events", async () => {
     const bandData = [
       {
         id: "band-1",
@@ -330,6 +329,48 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
+        status: "finalized",
+        event_info: { scoring_version: "2025.1" },
+      },
+    ];
+
+    const bandScores = [
+      {
+        id: "band-1",
+        name: "Test Band",
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 50,
+        crowd_score: 7.5,
+      },
+    ];
+
+    mockSql.mockResolvedValue(createMockQueryResult(bandData));
+    mockGetBandScores.mockResolvedValue(bandScores);
+
+    render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
+
+    expect(screen.getByText("Scream-o-Meter")).toBeInTheDocument();
+  });
+
+  it("shows navigation links", async () => {
+    const bandData = [
+      {
+        id: "band-1",
+        event_id: "event-1",
+        name: "Test Band",
+        order: 1,
+        created_at: "2024-01-01T00:00:00Z",
+        event_name: "Test Event",
+        date: "2024-12-25T18:30:00Z",
+        location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
         event_info: { scoring_version: "2025.1" },
       },
@@ -355,62 +396,15 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(
-      screen.getByRole("heading", { name: "Score Summary" })
-    ).toBeInTheDocument();
-    expect(screen.getByText("Judge Score Breakdown")).toBeInTheDocument();
-    // Format is "Song Choice (20):" not percentage - use getAllByText to handle multiple matches
-    expect(screen.getAllByText(/Song Choice/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("15.5").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Performance/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("25.0").length).toBeGreaterThan(0);
-    // 2025.1 uses 30 for Crowd Vibe
-    expect(screen.getAllByText(/Crowd Vibe/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("22.5").length).toBeGreaterThan(0);
-    expect(screen.getByText("Judge Total:")).toBeInTheDocument();
-    expect(screen.getByText("63.0/80")).toBeInTheDocument();
-  });
+    // Event links - there are multiple (hero link and navigation button)
+    const eventLinks = screen.getAllByRole("link", { name: /Event/ });
+    expect(eventLinks.length).toBeGreaterThanOrEqual(1);
+    expect(eventLinks[0]).toHaveAttribute("href", "/event/event-1");
 
-  it("shows back to results link", async () => {
-    const bandData = [
-      {
-        id: "band-1",
-        event_id: "event-1",
-        name: "Test Band",
-        order: 1,
-        created_at: "2024-01-01T00:00:00Z",
-        event_name: "Test Event",
-        date: "2024-12-25T18:30:00Z",
-        location: "Test Venue",
-        status: "finalized",
-      },
-    ];
-
-    const bandScores = [
-      {
-        id: "band-1",
-        name: "Test Band",
-        order: 1,
-        avg_song_choice: 15.5,
-        avg_performance: 25.0,
-        avg_crowd_vibe: 22.5,
-        avg_crowd_vote: 18.0,
-        crowd_vote_count: 10,
-        judge_vote_count: 3,
-        total_crowd_votes: 50,
-      },
-    ];
-
-    mockSql.mockResolvedValue(createMockQueryResult(bandData));
-    mockGetBandScores.mockResolvedValue(bandScores);
-
-    render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
-
-    const backLink = screen.getByRole("link", {
-      name: "← Back to Full Results",
-    });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/results/event-1");
+    // Results link
+    const resultsLink = screen.getByRole("link", { name: /All Results/ });
+    expect(resultsLink).toBeInTheDocument();
+    expect(resultsLink).toHaveAttribute("href", "/results/event-1");
   });
 
   it("shows not found when band does not exist", async () => {
@@ -437,6 +431,7 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
         status: "finalized",
         event_info: { scoring_version: "2025.1" },
       },
@@ -448,7 +443,7 @@ describe("BandPage", () => {
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
     // Band page renders even without scores
-    expect(screen.getByText("Test Band")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
     expect(mockNotFound).not.toHaveBeenCalled();
   });
 
@@ -463,6 +458,9 @@ describe("BandPage", () => {
         event_name: "Test Event",
         date: "2024-12-25T18:30:00Z",
         location: "Test Venue",
+        timezone: "America/New_York",
+        status: "finalized",
+        event_info: { scoring_version: "2025.1" },
       },
     ];
 
@@ -486,7 +484,7 @@ describe("BandPage", () => {
 
     render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    expect(screen.getByText("Test Band")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
     expect(screen.queryByText("A test band")).not.toBeInTheDocument();
   });
 });

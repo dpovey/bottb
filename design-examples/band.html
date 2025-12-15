@@ -97,13 +97,15 @@
     <div class="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 pt-32">
       <div class="flex flex-col md:flex-row items-start gap-8">
         
-        <!-- Band Logo -->
-        <div class="shrink-0">
-          <div class="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-elevated/80 backdrop-blur border border-white/10 flex items-center justify-center overflow-hidden">
-            <div class="w-full h-full bg-gradient-to-br from-indigo-600/40 to-purple-600/40 flex items-center justify-center">
-              <span class="text-5xl md:text-6xl font-bold text-white/90">TA</span>
-            </div>
-          </div>
+        <!-- 
+          Band Logo - Uses shared BandThumbnail component with size="hero"
+          Fallback priority: 1) Logo URL, 2) Hero thumbnail, 3) Initials from band name
+        -->
+        <div class="shrink-0 w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-gradient-to-br from-accent/40 to-purple-600/40 border border-white/10 flex items-center justify-center overflow-hidden">
+          <!-- When logo_url or hero_thumbnail_url exists, show image -->
+          <!-- <img src="..." class="w-full h-full object-contain" /> -->
+          <!-- Otherwise show initials -->
+          <span class="text-5xl md:text-6xl font-bold text-white/90">TA</span>
         </div>
         
         <!-- Band Info -->
@@ -118,7 +120,13 @@
             The Agentics
           </h1>
           
-          <p class="text-xl text-muted mb-2">Representing <span class="text-white">Salesforce</span></p>
+          <!-- Company Badge - Links to company page -->
+          <a href="companies.html?company=salesforce" class="inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 text-muted hover:text-white hover:border-white/20 px-3 py-1 text-sm transition-colors mb-2">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span>Salesforce</span>
+          </a>
           
           <!-- Event Link -->
           <a href="event.html" class="inline-flex items-center gap-2 text-muted hover:text-white transition-colors mb-6">
@@ -159,22 +167,34 @@
     </div>
   </section>
 
-  <!-- Score Breakdown -->
+  <!-- 
+    ==========================================
+    SCORING VERSIONS:
+    - 2022.1: No detailed breakdown. Only show winner badge in hero if this band won.
+              Non-winners don't see any scoring section - just the band info.
+    - 2025.1: Song (20) + Performance (30) + Crowd Vibe (30) + Crowd Vote (10) + Scream-o-Meter (10) = 100
+    - 2026.1: Song (20) + Performance (30) + Crowd Vibe (20) + Crowd Vote (10) + Visuals (20) = 100
+    ==========================================
+  -->
+  
+  <!-- Score Breakdown (for 2025.1 and 2026.1 events with detailed scoring) -->
   <section class="py-16 bg-theme">
     <div class="max-w-7xl mx-auto px-6 lg:px-8">
       <h2 class="font-semibold text-3xl mb-8">Score Breakdown</h2>
       
       <div class="grid lg:grid-cols-3 gap-6">
         
-        <!-- Judge Scores -->
+        <!-- Judge Scores (2025.1 version - max 80 points) -->
+        <!-- For 2026.1: max is 90 points, includes Visuals (20), Crowd Vibe is 20 instead of 30 -->
         <div class="bg-elevated rounded-xl p-6 border border-white/5">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-xs tracking-widest uppercase text-muted">Judge Scores</h3>
-            <span class="text-2xl font-semibold text-accent">51.5<span class="text-sm text-dim">/60</span></span>
+            <!-- 2025.1: /80, 2026.1: /90 -->
+            <span class="text-2xl font-semibold text-accent">65.5<span class="text-sm text-dim">/80</span></span>
           </div>
           
           <div class="space-y-5">
-            <!-- Song Choice -->
+            <!-- Song Choice (always 20 max) -->
             <div>
               <div class="flex items-center justify-between text-sm mb-2">
                 <span class="text-muted">🎵 Song Choice</span>
@@ -185,27 +205,41 @@
               </div>
             </div>
             
-            <!-- Performance -->
+            <!-- Performance (always 30 max) -->
             <div>
               <div class="flex items-center justify-between text-sm mb-2">
                 <span class="text-muted">🎤 Performance</span>
-                <span class="font-medium">16.2<span class="text-dim">/20</span></span>
+                <span class="font-medium">24.2<span class="text-dim">/30</span></span>
               </div>
               <div class="h-2 bg-surface rounded-full overflow-hidden">
-                <div class="progress-fill h-full bg-accent rounded-full" style="width: 81%"></div>
+                <div class="progress-fill h-full bg-accent rounded-full" style="width: 80.7%"></div>
               </div>
             </div>
             
-            <!-- Crowd Vibe -->
+            <!-- Crowd Vibe (2025.1: 30 max, 2026.1: 20 max) -->
             <div>
               <div class="flex items-center justify-between text-sm mb-2">
                 <span class="text-muted">🔥 Crowd Vibe</span>
-                <span class="font-medium">16.8<span class="text-dim">/20</span></span>
+                <!-- 2025.1: /30, 2026.1: /20 -->
+                <span class="font-medium">22.8<span class="text-dim">/30</span></span>
               </div>
               <div class="h-2 bg-surface rounded-full overflow-hidden">
-                <div class="progress-fill h-full bg-accent rounded-full" style="width: 84%"></div>
+                <div class="progress-fill h-full bg-accent rounded-full" style="width: 76%"></div>
               </div>
             </div>
+            
+            <!-- Visuals (2026.1 only - 20 max) -->
+            <!-- Uncomment for 2026.1 events:
+            <div>
+              <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-muted">🎨 Visuals</span>
+                <span class="font-medium">17.5<span class="text-dim">/20</span></span>
+              </div>
+              <div class="h-2 bg-surface rounded-full overflow-hidden">
+                <div class="progress-fill h-full bg-accent rounded-full" style="width: 87.5%"></div>
+              </div>
+            </div>
+            -->
           </div>
           
           <div class="mt-6 pt-4 border-t border-white/5 text-sm text-dim">
@@ -245,7 +279,7 @@
           </div>
         </div>
         
-        <!-- Scream-o-Meter -->
+        <!-- Scream-o-Meter (for 2025.1 events) -->
         <div class="bg-elevated rounded-xl p-6 border border-white/5">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-xs tracking-widest uppercase text-muted">Scream-o-Meter</h3>
@@ -270,6 +304,37 @@
         </div>
         
       </div>
+      
+      <!-- 
+        ==========================================
+        ALTERNATE SCORING CARD FOR 2026.1 EVENTS
+        Replace Scream-o-Meter with Visuals card:
+        ==========================================
+      -->
+      <!--
+      <div class="bg-elevated rounded-xl p-6 border border-white/5">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xs tracking-widest uppercase text-muted">Visuals</h3>
+          <span class="text-2xl font-semibold text-accent">17.5<span class="text-sm text-dim">/20</span></span>
+        </div>
+        
+        <div class="mb-4">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="text-4xl">🎨</div>
+            <div class="flex-1">
+              <div class="h-4 bg-surface rounded-full overflow-hidden">
+                <div class="progress-fill h-full bg-accent rounded-full" style="width: 87.5%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="text-center text-muted text-sm">Exceptional stage presence</div>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-white/5 text-sm text-dim">
+          Costumes, backdrops &amp; themed presentation
+        </div>
+      </div>
+      -->
     </div>
   </section>
 
