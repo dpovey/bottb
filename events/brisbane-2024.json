@@ -1,0 +1,19 @@
+{
+  "id": "brisbane-2024",
+  "name": "Battle of the Tech Bands - Brisbane 2024",
+  "date": "2024-09-05T08:30:00Z",
+  "timezone": "Australia/Brisbane",
+  "location": "The Triffid",
+  "address": "7-9 Stratton Street, Newstead QLD 4006, Australia",
+  "is_active": false,
+  "status": "finalized",
+  "scoring_version": "2022.1",
+  "winner": "The Fuggles",
+  "bands": [
+    { "name": "The ShipRex", "description": "Rex Software", "order": 1 },
+    { "name": "Jumbo Band", "description": "Jumbo Interactive", "order": 2 },
+    { "name": "The Epsilon Band", "description": "Epsilon", "order": 3 },
+    { "name": "Felix Band", "description": "Felix Software", "order": 4 },
+    { "name": "The Fuggles", "description": "FoundU", "order": 5 }
+  ]
+}

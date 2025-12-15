@@ -1,27 +1,22 @@
 import type { Metadata } from "next";
-import { Rock_Salt, Lato } from "next/font/google";
+import { Jost } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FacebookPixel } from "@/components/facebook-pixel";
 import { AdminToggle } from "@/components/admin-toggle";
+import { AdminToolbar } from "@/components/admin-toolbar";
 
-const rockSalt = Rock_Salt({
-  weight: "400",
+const jost = Jost({
   subsets: ["latin"],
-  variable: "--font-rock-salt",
-});
-
-const lato = Lato({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-lato",
+  variable: "--font-jost",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "Battle of the Tech Bands",
-  description: "",
+  description: "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
 };
 
 export default function RootLayout({
@@ -32,10 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${rockSalt.variable} ${lato.variable} font-sans antialiased bg-bg text-text`}
+        className={`${jost.variable} font-sans antialiased bg-bg text-text`}
         suppressHydrationWarning={true}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <AdminToolbar />
+        </Providers>
         <Analytics />
         <SpeedInsights />
         <FacebookPixel />

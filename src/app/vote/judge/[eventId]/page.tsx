@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
 // No fingerprinting needed for judge voting
+import { BandThumbnail } from "@/components/ui";
+import { ScoringVersion, parseScoringVersion } from "@/lib/scoring";
 
 interface Band {
   id: string;
   name: string;
   description?: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -24,10 +26,16 @@ interface Band {
   };
 }
 
+interface EventInfo {
+  scoring_version?: string;
+  [key: string]: unknown;
+}
+
 interface JudgeScores {
   song_choice: number;
   performance: number;
   crowd_vibe: number;
+  visuals: number; // 2026.1 only
 }
 
 export default function JudgeVotingPage() {
@@ -40,10 +48,26 @@ export default function JudgeVotingPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [duplicateError, setDuplicateError] = useState<string>("");
+  const [scoringVersion, setScoringVersion] = useState<ScoringVersion>("2026.1");
+
+  // Scoring config based on version
+  const is2026 = scoringVersion === "2026.1";
+  const crowdVibeMax = is2026 ? 20 : 30;
+  const maxJudgeScore = is2026 ? 90 : 80; // 20+30+20+20 vs 20+30+30
 
   useEffect(() => {
-    const fetchBands = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch event to get scoring version
+        const eventResponse = await fetch(`/api/events/${eventId}`);
+        if (eventResponse.ok) {
+          const eventData = await eventResponse.json();
+          const eventInfo = eventData.info as EventInfo | null;
+          const version = parseScoringVersion(eventInfo);
+          setScoringVersion(version);
+        }
+
+        // Fetch bands
         const response = await fetch(`/api/bands/${eventId}`);
         const data = await response.json();
 
@@ -58,11 +82,12 @@ export default function JudgeVotingPage() {
             song_choice: 0,
             performance: 0,
             crowd_vibe: 0,
+            visuals: 0,
           };
         });
         setScores(initialScores);
       } catch (error) {
-        console.error("Error fetching bands:", error);
+        console.error("Error fetching data:", error);
         // Set empty array on error to prevent map errors
         setBands([]);
       } finally {
@@ -73,7 +98,7 @@ export default function JudgeVotingPage() {
     // Note: We don't check for cookies here anymore
     // Cookies allow vote updates, only fingerprints block voting
 
-    fetchBands();
+    fetchData();
   }, [eventId]);
 
   const handleScoreChange = (
@@ -95,12 +120,17 @@ export default function JudgeVotingPage() {
       name.trim() !== "" && // Name is required
       bands.every((band) => {
         const bandScores = scores[band.id];
-        return (
+        const baseValid =
           bandScores &&
           bandScores.song_choice > 0 &&
           bandScores.performance > 0 &&
-          bandScores.crowd_vibe > 0
-        );
+          bandScores.crowd_vibe > 0;
+        
+        // For 2026.1, visuals is also required
+        if (is2026) {
+          return baseValid && bandScores.visuals > 0;
+        }
+        return baseValid;
       })
     );
   };
@@ -113,14 +143,23 @@ export default function JudgeVotingPage() {
     try {
       // No fingerprinting needed for judge voting - admins can vote multiple times
 
-      const votes = bands.map((band) => ({
-        event_id: eventId,
-        band_id: band.id,
-        voter_type: "judge" as const,
-        name: name, // Name is required for judges
-        vote_fingerprint: `${eventId}-${name.toLowerCase().trim()}-${band.id}`, // Unique per event, judge, and band
-        ...scores[band.id],
-      }));
+      const votes = bands.map((band) => {
+        const voteData: Record<string, unknown> = {
+          event_id: eventId,
+          band_id: band.id,
+          voter_type: "judge" as const,
+          name: name, // Name is required for judges
+          vote_fingerprint: `${eventId}-${name.toLowerCase().trim()}-${band.id}`, // Unique per event, judge, and band
+          song_choice: scores[band.id].song_choice,
+          performance: scores[band.id].performance,
+          crowd_vibe: scores[band.id].crowd_vibe,
+        };
+        // Only include visuals for 2026.1
+        if (is2026) {
+          voteData.visuals = scores[band.id].visuals;
+        }
+        return voteData;
+      });
 
       const response = await fetch("/api/votes/batch", {
         method: "POST",
@@ -234,7 +273,7 @@ export default function JudgeVotingPage() {
               </div>
             )}
 
-            <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className={`grid gap-4 text-sm ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
                   Song Choice (20 points)
@@ -255,12 +294,22 @@ export default function JudgeVotingPage() {
               </div>
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
-                  Crowd Vibe (30 points)
+                  Crowd Vibe ({crowdVibeMax} points)
                 </h3>
                 <p className="text-gray-300 text-xs">
                   Getting crowd moving, singing, clapping, energy transfer
                 </p>
               </div>
+              {is2026 && (
+                <div className="bg-white/10 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">
+                    Visuals (20 points)
+                  </h3>
+                  <p className="text-gray-300 text-xs">
+                    Costumes, backdrops, set design, visual presentation
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -290,22 +339,12 @@ export default function JudgeVotingPage() {
                     {index + 1}.
                   </div>
                   {/* Band Logo */}
-                  <div className="w-16 h-16 flex-shrink-0">
-                    {band.info?.logo_url ? (
-                      <Image
-                        src={band.info.logo_url}
-                        alt={`${band.name} logo`}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-contain rounded-lg"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Logo</span>
-                      </div>
-                    )}
-                  </div>
+                  <BandThumbnail
+                    logoUrl={band.info?.logo_url}
+                    heroThumbnailUrl={band.hero_thumbnail_url}
+                    bandName={band.name}
+                    size="lg"
+                  />
                   <div>
                     <h3 className="text-xl font-semibold text-white">
                       {band.name}
@@ -316,7 +355,7 @@ export default function JudgeVotingPage() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className={`grid gap-6 ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
                   <div>
                     <label className="block text-white font-medium mb-2">
                       Song Choice: {scores[band.id]?.song_choice || 0}/20
@@ -383,12 +422,12 @@ export default function JudgeVotingPage() {
 
                   <div>
                     <label className="block text-white font-medium mb-2">
-                      Crowd Vibe: {scores[band.id]?.crowd_vibe || 0}/30
+                      Crowd Vibe: {scores[band.id]?.crowd_vibe || 0}/{crowdVibeMax}
                     </label>
                     <input
                       type="range"
                       min="0"
-                      max="30"
+                      max={crowdVibeMax}
                       value={scores[band.id]?.crowd_vibe || 0}
                       onChange={(e) =>
                         handleScoreChange(
@@ -401,17 +440,51 @@ export default function JudgeVotingPage() {
                       aria-label={`Crowd Vibe for ${band.name}`}
                       style={{
                         background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / 30) * 100
+                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) * 100
                         }%, #374151 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / 30) * 100
+                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) * 100
                         }%, #374151 100%)`,
                       }}
                     />
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
                       <span>0</span>
-                      <span>30</span>
+                      <span>{crowdVibeMax}</span>
                     </div>
                   </div>
+
+                  {is2026 && (
+                    <div>
+                      <label className="block text-white font-medium mb-2">
+                        Visuals: {scores[band.id]?.visuals || 0}/20
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="20"
+                        value={scores[band.id]?.visuals || 0}
+                        onChange={(e) =>
+                          handleScoreChange(
+                            band.id,
+                            "visuals",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        aria-label={`Visuals for ${band.name}`}
+                        style={{
+                          background: `linear-gradient(to right, #a855f7 0%, #a855f7 ${
+                            ((scores[band.id]?.visuals || 0) / 20) * 100
+                          }%, #374151 ${
+                            ((scores[band.id]?.visuals || 0) / 20) * 100
+                          }%, #374151 100%)`,
+                        }}
+                      />
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0</span>
+                        <span>20</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 text-right">
@@ -419,8 +492,9 @@ export default function JudgeVotingPage() {
                     Total:{" "}
                     {(scores[band.id]?.song_choice || 0) +
                       (scores[band.id]?.performance || 0) +
-                      (scores[band.id]?.crowd_vibe || 0)}
-                    /80
+                      (scores[band.id]?.crowd_vibe || 0) +
+                      (is2026 ? (scores[band.id]?.visuals || 0) : 0)}
+                    /{maxJudgeScore}
                   </span>
                 </div>
               </div>

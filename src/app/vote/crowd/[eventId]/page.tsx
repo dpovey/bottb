@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import Image from "next/image";
 import {
   getClientUserContext,
   hasVotingCookie,
   getFingerprintJSData,
   getVoteFromCookie,
 } from "@/lib/user-context-client";
+import { BandThumbnail } from "@/components/ui";
 
 interface Band {
   id: string;
   name: string;
   description?: string;
   order: number;
+  hero_thumbnail_url?: string;
   info?: {
     logo_url?: string;
     website?: string;
@@ -280,22 +281,13 @@ export default function CrowdVotingPage() {
                     {index + 1}
                   </div>
                   {/* Band Logo */}
-                  <div className="w-12 h-12 flex-shrink-0 mr-4">
-                    {band.info?.logo_url ? (
-                      <Image
-                        src={band.info.logo_url}
-                        alt={`${band.name} logo`}
-                        width={48}
-                        height={48}
-                        className="w-full h-full object-contain rounded-lg"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-700 rounded-lg flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Logo</span>
-                      </div>
-                    )}
-                  </div>
+                  <BandThumbnail
+                    logoUrl={band.info?.logo_url}
+                    heroThumbnailUrl={band.hero_thumbnail_url}
+                    bandName={band.name}
+                    size="sm"
+                    className="mr-4"
+                  />
                   <div>
                     <h3 className="text-xl font-semibold text-white">
                       {band.name}

@@ -4,18 +4,18 @@
 
 /* Font selection and focus styles */
 ::selection {
-  background-color: theme('colors.accent');
-  color: theme('colors.text');
+  background-color: theme('colors.accent.DEFAULT');
+  color: theme('colors.text.DEFAULT');
 }
 
 ::-moz-selection {
-  background-color: theme('colors.accent');
-  color: theme('colors.text');
+  background-color: theme('colors.accent.DEFAULT');
+  color: theme('colors.text.DEFAULT');
 }
 
 /* Focus styles for better accessibility */
 *:focus-visible {
-  outline: 2px solid theme('colors.accent');
+  outline: 2px solid theme('colors.accent.DEFAULT');
   outline-offset: 2px;
 }
 
@@ -47,4 +47,20 @@
 
 .slider::-moz-range-track {
   background: transparent;
+}
+
+/* Dropdown menu item animation */
+@keyframes dropdown-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown-item {
+  animation: dropdown-item-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

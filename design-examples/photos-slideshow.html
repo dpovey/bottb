@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Slideshow — BOTTB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Jost', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Thumbnail strip scrollbar */
+    .thumbnail-strip::-webkit-scrollbar {
+      height: 4px;
+    }
+    .thumbnail-strip::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .thumbnail-strip::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+    }
+    
+    /* Selected thumbnail ring */
+    .thumbnail-selected {
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+  </style>
+</head>
+<body class="bg-theme">
+
+  <!-- Slideshow Modal (Full Screen) -->
+  <div class="fixed inset-0 z-50 bg-theme flex flex-col">
+    
+    <!-- Top Bar -->
+    <div class="absolute top-0 left-0 right-0 z-10 glass border-b border-white/5">
+      <div class="flex items-center justify-between px-6 py-4">
+        <!-- Photo Info -->
+        <div>
+          <h2 class="font-medium text-lg">The Agentics</h2>
+          <p class="text-sm text-muted">Sydney Tech Battle 2025 • Photo by Eddy Hill</p>
+        </div>
+        
+        <!-- Counter & Controls -->
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-muted">
+            <span class="text-white font-medium">24</span> / 247
+          </span>
+          
+          <!-- Public Controls - available to everyone -->
+          <div class="flex items-center gap-2 pl-4 border-l border-white/10">
+            <button class="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-white transition-colors" title="Copy link">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-white transition-colors" title="Download">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Admin Controls - accent colored to indicate admin-only -->
+          <div class="flex items-center gap-2 pl-4 border-l border-accent/30">
+            <button class="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors" title="Edit crop (Admin)">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <!-- Corner brackets -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M4 16v2a2 2 0 002 2h2M16 20h2a2 2 0 002-2v-2" />
+                <!-- Centered + sign -->
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6M12 9v6" />
+              </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-error/10 text-error/70 hover:text-error transition-colors" title="Delete photo (Admin)">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Close -->
+          <button class="p-2 rounded-lg hover:bg-white/5 text-muted hover:text-white transition-colors ml-2" title="Close">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Image Area -->
+    <div class="flex-1 flex items-center justify-center px-20 py-24">
+      <!-- Previous Button -->
+      <button class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      <!-- Image -->
+      <img 
+        src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&h=800&fit=crop" 
+        alt="The Agentics performing"
+        class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+      >
+      
+      <!-- Next Button -->
+      <button class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full glass flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Thumbnail Strip -->
+    <div class="absolute bottom-0 left-0 right-0 glass border-t border-white/5 py-3 px-6">
+      <div class="thumbnail-strip flex gap-2 overflow-x-auto">
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden thumbnail-selected">
+          <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+        <button class="shrink-0 w-16 h-16 rounded-lg overflow-hidden opacity-50 hover:opacity-75 transition-opacity">
+          <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=100&h=100&fit=crop" class="w-full h-full object-cover">
+        </button>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- Delete Confirmation Modal (overlay) -->
+  <div class="hidden fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6">
+    <div class="bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10">
+      <div class="flex items-start gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center shrink-0">
+          <svg class="w-6 h-6 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-xl mb-1">Delete Photo?</h3>
+          <p class="text-muted text-sm">This action cannot be undone. The photo will be permanently removed from the gallery.</p>
+        </div>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button class="btn-outline px-5 py-2 rounded-lg text-sm">
+          Cancel
+        </button>
+        <button class="px-5 py-2 rounded-lg text-sm bg-error text-white hover:bg-error-light transition-colors">
+          Delete Photo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crop Modal (overlay) -->
+  <div class="hidden fixed inset-0 z-60 bg-black/90 flex flex-col">
+    <!-- Crop Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <h3 class="font-semibold text-xl">Adjust Thumbnail Crop</h3>
+      <div class="flex items-center gap-3">
+        <button class="btn-outline px-5 py-2 rounded-lg text-sm">
+          Cancel
+        </button>
+        <button class="btn-accent px-5 py-2 rounded-lg text-sm">
+          Save Crop
+        </button>
+      </div>
+    </div>
+    
+    <!-- Crop Area -->
+    <div class="flex-1 flex items-center justify-center p-8">
+      <div class="relative w-[600px] h-[400px] bg-surface rounded-lg overflow-hidden">
+        <!-- Image with crop overlay would go here -->
+        <img 
+          src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&fit=crop" 
+          alt="Crop preview"
+          class="w-full h-full object-contain"
+        >
+        <!-- Crop box overlay (visual only) -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-48 h-48 border-2 border-accent rounded-lg shadow-lg"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Crop Preview -->
+    <div class="flex items-center justify-center gap-8 px-6 py-4 border-t border-white/10">
+      <div class="text-center">
+        <p class="text-xs tracking-widest uppercase text-dim mb-2">Preview</p>
+        <div class="w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+          <img 
+            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=200&h=200&fit=crop" 
+            alt="Crop preview"
+            class="w-full h-full object-cover"
+          >
+        </div>
+      </div>
+      <div>
+        <p class="text-xs tracking-widest uppercase text-dim mb-2">Zoom</p>
+        <input type="range" min="1" max="3" step="0.1" value="1" class="w-32 accent-accent">
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+

@@ -1,0 +1,203 @@
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { socialLinks } from "@/lib/social-links";
+
+// Social media icon wrapper
+const SocialIcon = ({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={label}
+    className="text-text-dim hover:text-white transition-colors"
+  >
+    {children}
+  </a>
+);
+
+const sitemapLinks = {
+  main: [
+    { label: "Home", href: "/" },
+    { label: "Events", href: "/events" },
+    { label: "Photos", href: "/photos" },
+    { label: "About", href: "/about" },
+  ],
+  legal: [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Use", href: "/terms" },
+  ],
+};
+
+export interface FooterProps {
+  /** Footer variant */
+  variant?: "simple" | "full";
+  className?: string;
+}
+
+export function Footer({ variant = "simple", className }: FooterProps) {
+  const currentYear = new Date().getFullYear();
+
+  if (variant === "simple") {
+    return (
+      <footer className={cn("border-t border-white/5 py-8", className)}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Copyright */}
+            <p className="text-text-dim text-sm">
+              {currentYear} Battle of the Tech Bands. Supporting{" "}
+              <a
+                href="https://youngcare.com.au"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-text-muted hover:text-white transition-colors"
+              >
+                Youngcare
+              </a>
+            </p>
+
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              {socialLinks.map((social) => (
+                <SocialIcon
+                  key={social.label}
+                  href={social.href}
+                  label={social.label}
+                >
+                  {social.icon()}
+                </SocialIcon>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Full footer variant
+  return (
+    <footer className={cn("border-t border-white/5 pt-12 pb-8", className)}>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        {/* Main footer content */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+          {/* Logo and tagline */}
+          <div className="md:col-span-2">
+            <Link href="/" className="inline-block mb-4">
+              <Image
+                src="/images/logos/bottb-dark-square.png"
+                alt="BOTTB"
+                width={64}
+                height={64}
+                className="h-16 w-auto"
+              />
+            </Link>
+            <p className="text-text-muted max-w-md">
+              Where technology meets rock &apos;n&apos; roll. A community
+              charity event supporting Youngcare.
+            </p>
+
+            {/* Contact */}
+            <div className="mt-6 space-y-2">
+              <a
+                href="mailto:info@bottb.com"
+                className="flex items-center gap-2 text-text-dim hover:text-white transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                info@bottb.com
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
+              Quick Links
+            </h3>
+            <ul className="space-y-2">
+              {sitemapLinks.main.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-text-dim hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Social & Legal */}
+          <div>
+            <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
+              Connect
+            </h3>
+            <div className="flex items-center gap-4 mb-6">
+              {socialLinks.map((social) => (
+                <SocialIcon
+                  key={social.label}
+                  href={social.href}
+                  label={social.label}
+                >
+                  {social.icon()}
+                </SocialIcon>
+              ))}
+            </div>
+            <ul className="space-y-2">
+              {sitemapLinks.legal.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-text-dim hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-white/5 pt-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-text-dim text-sm">
+              © {currentYear} Battle of the Tech Bands
+            </p>
+            <p className="text-text-dim text-sm">
+              Proudly supporting{" "}
+              <a
+                href="https://youngcare.com.au"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:text-accent-light transition-colors"
+              >
+                Youngcare
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}

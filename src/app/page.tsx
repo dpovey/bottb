@@ -5,10 +5,24 @@ import {
   getPastEvents,
   getBandScores,
   getBandsForEvent,
+  getPhotosByLabel,
+  PHOTO_LABELS,
 } from "@/lib/db";
-import { formatEventDate } from "@/lib/date-utils";
-import { WebLayout } from "@/components/layouts";
+import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
+import { Hero } from "@/components/hero";
+import { Button } from "@/components/ui";
+import {
+  parseScoringVersion,
+  hasDetailedBreakdown,
+  calculateTotalScore,
+  type BandScoreData,
+} from "@/lib/scoring";
+import { PhotoStrip } from "@/components/photos/photo-strip";
+
+// Default fallback hero image
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop";
 
 interface BandScore {
   id: string;
@@ -17,13 +31,18 @@ interface BandScore {
   avg_song_choice: number;
   avg_performance: number;
   avg_crowd_vibe: number;
+  avg_visuals?: number;
   avg_crowd_vote: number;
   crowd_vote_count: number;
   judge_vote_count: number;
   total_crowd_votes: number;
-  judgeScore?: number;
-  crowdScore?: number;
-  totalScore?: number;
+  crowd_score?: number;
+}
+
+interface EventInfo {
+  scoring_version?: string;
+  winner?: string;
+  [key: string]: unknown;
 }
 
 // Force dynamic rendering - don't pre-render at build time
@@ -34,17 +53,33 @@ function getRelativeDate(dateString: string): string {
   const eventDate = new Date(dateString);
   const diffTime = eventDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const absDays = Math.abs(diffDays);
 
   if (diffDays === 0) {
     return "Today";
   } else if (diffDays === 1) {
     return "Tomorrow";
   } else if (diffDays > 1) {
+    if (diffDays >= 365) {
+      const years = Math.floor(diffDays / 365);
+      return years === 1 ? "In 1 year" : `In ${years} years`;
+    } else if (diffDays >= 30) {
+      const months = Math.floor(diffDays / 30);
+      return months === 1 ? "In 1 month" : `In ${months} months`;
+    }
     return `In ${diffDays} days`;
   } else if (diffDays === -1) {
     return "Yesterday";
   } else {
-    return `${Math.abs(diffDays)} days ago`;
+    // Past dates
+    if (absDays >= 365) {
+      const years = Math.floor(absDays / 365);
+      return years === 1 ? "1 year ago" : `${years} years ago`;
+    } else if (absDays >= 30) {
+      const months = Math.floor(absDays / 30);
+      return months === 1 ? "1 month ago" : `${months} months ago`;
+    }
+    return `${absDays} days ago`;
   }
 }
 
@@ -53,81 +88,162 @@ export default async function HomePage() {
   const upcomingEvents = await getUpcomingEvents();
   const pastEvents = await getPastEvents();
 
-  // Get upcoming events with bands
+  // Fetch global hero photos
+  const globalHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO);
+  const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null;
+  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE;
+  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+
+  // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
     upcomingEvents.map(async (event) => {
-      const bands = await getBandsForEvent(event.id);
-      return { ...event, bands };
+      const [bands, heroPhotos] = await Promise.all([
+        getBandsForEvent(event.id),
+        getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId: event.id }),
+      ]);
+      const heroPhoto = heroPhotos.length > 0 ? heroPhotos[0] : null;
+      return { ...event, bands, heroPhoto };
     })
   );
 
-  // Get past events with winners and bands
+  // Get past events with winners, bands, and hero photos
   const pastEventsWithWinners = await Promise.all(
     pastEvents.map(async (event) => {
+      const [bands, heroPhotos] = await Promise.all([
+        getBandsForEvent(event.id),
+        getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId: event.id }),
+      ]);
+      const heroPhoto = heroPhotos.length > 0 ? heroPhotos[0] : null;
+      const eventInfo = event.info as EventInfo | null;
+      const scoringVersion = parseScoringVersion(eventInfo);
+      const showDetailedScoring = hasDetailedBreakdown(scoringVersion);
+
+      // For 2022.1 events, use the stored winner name
+      if (!showDetailedScoring) {
+        const storedWinner = eventInfo?.winner;
+        if (storedWinner) {
+          return {
+            ...event,
+            overallWinner: { name: storedWinner, totalScore: 0 },
+            bands,
+            scoringVersion,
+            heroPhoto,
+          };
+        }
+        return {
+          ...event,
+          overallWinner: null,
+          bands,
+          scoringVersion,
+          heroPhoto,
+        };
+      }
+
+      // For 2025.1 and 2026.1, calculate scores
       const scores = (await getBandScores(event.id)) as BandScore[];
-      const bands = await getBandsForEvent(event.id);
+
       const bandResults = scores
         .map((score) => {
-          const judgeScore =
-            Number(score?.avg_song_choice || 0) +
-            Number(score?.avg_performance || 0) +
-            Number(score?.avg_crowd_vibe || 0);
-          const crowdScore =
-            score.total_crowd_votes > 0
-              ? (Number(score.crowd_vote_count || 0) /
-                  Number(score.total_crowd_votes || 1)) *
-                20
-              : 0;
-          const totalScore = judgeScore + crowdScore;
-          return { ...score, judgeScore, crowdScore, totalScore };
+          const scoreData: BandScoreData = {
+            avg_song_choice: score.avg_song_choice,
+            avg_performance: score.avg_performance,
+            avg_crowd_vibe: score.avg_crowd_vibe,
+            avg_visuals: score.avg_visuals,
+            crowd_vote_count: score.crowd_vote_count,
+            total_crowd_votes: score.total_crowd_votes,
+            crowd_score: score.crowd_score,
+          };
+
+          const totalScore = calculateTotalScore(
+            scoreData,
+            scoringVersion,
+            scores.map((s) => ({
+              avg_song_choice: s.avg_song_choice,
+              avg_performance: s.avg_performance,
+              avg_crowd_vibe: s.avg_crowd_vibe,
+              avg_visuals: s.avg_visuals,
+              crowd_vote_count: s.crowd_vote_count,
+              total_crowd_votes: s.total_crowd_votes,
+              crowd_score: s.crowd_score,
+            }))
+          );
+
+          return { ...score, totalScore };
         })
         .sort((a, b) => b.totalScore - a.totalScore);
 
       const overallWinner = bandResults.length > 0 ? bandResults[0] : null;
-      return { ...event, overallWinner, bands };
+      return { ...event, overallWinner, bands, scoringVersion, heroPhoto };
     })
   );
 
   return (
-    <WebLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* TODO: Hero */}
+    <PublicLayout headerVariant="transparent" footerVariant="full">
+      {/* Hero Section */}
+      <Hero
+        title="Battle of the Tech Bands"
+        subtitle="Where technology meets rock 'n' roll. A community charity event supporting Youngcare."
+        backgroundImage={heroImageUrl}
+        focalPoint={heroFocalPoint}
+        size="lg"
+        overlay="heavy"
+        actions={[
+          ...(activeEvent
+            ? [
+                {
+                  label: "Vote Now",
+                  href: `/vote/crowd/${activeEvent.id}`,
+                  variant: "accent" as const,
+                },
+                {
+                  label: "View Event",
+                  href: `/event/${activeEvent.id}`,
+                  variant: "outline" as const,
+                },
+              ]
+            : []),
+          {
+            label: "View Photos",
+            href: "/photos",
+            variant: "outline" as const,
+          },
+        ]}
+      />
 
-        {/* Active Event Section */}
-        {activeEvent && (
-          <div className="max-w-6xl mx-auto mb-12">
-            <div className="bg-gradient-to-r from-neutral-900 via-amber-900 to-black rounded-2xl p-8 text-center">
-              <h3 className="text-4xl font-bold text-white mb-4">
-                {activeEvent.name}
-              </h3>
-              <div className="text-2xl text-blue-100 mb-4">
-                {formatEventDate(activeEvent.date)} • {activeEvent.location}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href={`/event/${activeEvent.id}`}
-                  className="bg-white text-blue-600 font-bold py-3 px-8 rounded-xl text-lg hover:bg-blue-50 transition-colors"
-                >
-                  View Event
-                </Link>
-                <Link
-                  href={`/vote/crowd/${activeEvent.id}`}
-                  className="bg-blue-700 text-white font-bold py-3 px-8 rounded-xl text-lg hover:bg-blue-800 transition-colors"
-                >
-                  Vote Now
-                </Link>
-              </div>
+      {/* Active Event Section */}
+      {activeEvent && (
+        <section className="py-16 bg-bg">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <h2 className="text-sm tracking-widest uppercase text-accent mb-3">
+                Happening Now
+              </h2>
+              <p className="text-text-muted text-lg">
+                Cast your vote and support your favorite band
+              </p>
             </div>
-          </div>
-        )}
 
-        {/* Upcoming Events Section */}
-        {upcomingEventsWithBands.length > 0 && (
-          <div className="max-w-[calc(100vw-2rem)] mx-auto mb-12">
-            <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
-              Upcoming Events
-            </h2>
-            <div className="">
+            <EventCard
+              event={activeEvent}
+              relativeDate="Live Now"
+              bands={[]} // Could fetch bands here if needed
+              variant="active"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Upcoming Events Section */}
+      {upcomingEventsWithBands.length > 0 && (
+        <section className="py-16 bg-bg-muted">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="font-semibold text-3xl sm:text-4xl">
+                Upcoming Events
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEventsWithBands.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -137,20 +253,27 @@ export default async function HomePage() {
                     relativeDate={relativeDate}
                     bands={event.bands}
                     variant="upcoming"
+                    heroPhoto={event.heroPhoto}
+                    visual
                   />
                 );
               })}
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Past Events Section */}
-        {pastEventsWithWinners.length > 0 && (
-          <div className="max-w-[calc(100vw-2rem)] mx-auto">
-            <h2 className="text-3xl font-display font-bold text-white mb-8 text-center">
-              Past Events
-            </h2>
-            <div className="">
+      {/* Past Events Section */}
+      {pastEventsWithWinners.length > 0 && (
+        <section className="py-16 bg-bg-elevated">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="font-semibold text-3xl sm:text-4xl">
+                Past Events
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pastEventsWithWinners.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -162,13 +285,43 @@ export default async function HomePage() {
                     showWinner={!!event.overallWinner}
                     winner={event.overallWinner || undefined}
                     bands={event.bands}
+                    heroPhoto={event.heroPhoto}
+                    visual
                   />
                 );
               })}
             </div>
           </div>
-        )}
-      </div>
-    </WebLayout>
+        </section>
+      )}
+
+      {/* CTA Section */}
+      <section className="py-20 bg-bg-muted border-t border-white/5">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-semibold text-white mb-4">
+            Join the Movement
+          </h2>
+          <p className="text-text-muted mb-8">
+            Battle of the Tech Bands brings together technology professionals
+            for an unforgettable night of rock, competition, and charity.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link href="/about">
+              <Button variant="outline" size="lg">
+                Learn More
+              </Button>
+            </Link>
+            <Link href="/photos">
+              <Button variant="ghost" size="lg">
+                View Gallery
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Random Photo Strip */}
+      <PhotoStrip title="From the Archives" viewAllLink="/photos" />
+    </PublicLayout>
   );
 }

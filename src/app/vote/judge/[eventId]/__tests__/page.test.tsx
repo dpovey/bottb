@@ -82,9 +82,11 @@ describe("JudgeVotingPage", () => {
       ).toBeInTheDocument();
     });
 
+    // Default is 2026.1 scoring: Song(20) + Perf(30) + Vibe(20) + Visuals(20) = 90
     expect(screen.getByText("Song Choice (20 points)")).toBeInTheDocument();
     expect(screen.getByText("Performance (30 points)")).toBeInTheDocument();
-    expect(screen.getByText("Crowd Vibe (30 points)")).toBeInTheDocument();
+    expect(screen.getByText(/Crowd Vibe \(\d+ points\)/)).toBeInTheDocument();
+    expect(screen.getByText("Visuals (20 points)")).toBeInTheDocument();
   });
 
   it("displays bands with scoring sliders", async () => {
@@ -95,7 +97,7 @@ describe("JudgeVotingPage", () => {
       expect(screen.getByText("Test Band 2")).toBeInTheDocument();
     });
 
-    // Check for sliders for each band
+    // Check for sliders for each band (2026.1 has 4 categories)
     const songChoiceSliders = screen.getAllByRole("slider", {
       name: /Song Choice for/,
     });
@@ -105,10 +107,14 @@ describe("JudgeVotingPage", () => {
     const crowdVibeSliders = screen.getAllByRole("slider", {
       name: /Crowd Vibe for/,
     });
+    const visualsSliders = screen.getAllByRole("slider", {
+      name: /Visuals for/,
+    });
 
     expect(songChoiceSliders).toHaveLength(2);
     expect(performanceSliders).toHaveLength(2);
     expect(crowdVibeSliders).toHaveLength(2);
+    expect(visualsSliders).toHaveLength(2);
   });
 
   it("allows score input via sliders", async () => {
@@ -134,19 +140,25 @@ describe("JudgeVotingPage", () => {
     const crowdVibeSlider = screen.getAllByRole("slider", {
       name: /Crowd Vibe for/,
     })[0];
+    const visualsSlider = screen.getAllByRole("slider", {
+      name: /Visuals for/,
+    })[0];
 
     expect(songChoiceSlider).toHaveValue("0");
     expect(performanceSlider).toHaveValue("0");
     expect(crowdVibeSlider).toHaveValue("0");
+    expect(visualsSlider).toHaveValue("0");
 
     // Use fireEvent to properly set range input values
     fireEvent.change(songChoiceSlider, { target: { value: "15" } });
     fireEvent.change(performanceSlider, { target: { value: "25" } });
-    fireEvent.change(crowdVibeSlider, { target: { value: "20" } });
+    fireEvent.change(crowdVibeSlider, { target: { value: "18" } });
+    fireEvent.change(visualsSlider, { target: { value: "16" } });
 
     expect(songChoiceSlider).toHaveValue("15");
     expect(performanceSlider).toHaveValue("25");
-    expect(crowdVibeSlider).toHaveValue("20");
+    expect(crowdVibeSlider).toHaveValue("18");
+    expect(visualsSlider).toHaveValue("16");
   });
 
   it("shows total score for each band", async () => {
@@ -163,24 +175,11 @@ describe("JudgeVotingPage", () => {
       expect(screen.getByText("Test Band 1")).toBeInTheDocument();
     });
 
-    const songChoiceSlider = screen.getAllByRole("slider", {
-      name: /Song Choice for/,
-    })[0];
-    const performanceSlider = screen.getAllByRole("slider", {
-      name: /Performance for/,
-    })[0];
-    const crowdVibeSlider = screen.getAllByRole("slider", {
-      name: /Crowd Vibe for/,
-    })[0];
-
-    await user.type(songChoiceSlider, "15");
-    await user.type(performanceSlider, "25");
-    await user.type(crowdVibeSlider, "20");
-
     // The total text is split across multiple elements, so we need to look for parts
+    // For 2026.1: max is 90 points (20+30+20+20)
     const totalElements = screen.getAllByText((content, element) => {
       return (
-        element?.textContent === "Total: 0/80" && element?.tagName === "SPAN"
+        element?.textContent === "Total: 0/90" && element?.tagName === "SPAN"
       );
     });
     expect(totalElements).toHaveLength(2); // One for each band
@@ -209,37 +208,24 @@ describe("JudgeVotingPage", () => {
     const nameInput = screen.getByPlaceholderText("Enter judge's name");
     await user.type(nameInput, "Judge Smith");
 
-    // Fill scores for first band only
-    const songChoiceSlider = screen.getAllByRole("slider", {
-      name: /Song Choice for/,
-    })[0];
-    const performanceSlider = screen.getAllByRole("slider", {
-      name: /Performance for/,
-    })[0];
-    const crowdVibeSlider = screen.getAllByRole("slider", {
-      name: /Crowd Vibe for/,
-    })[0];
+    // Fill scores for first band only (need all 4 categories for 2026.1)
+    const songChoiceSliders = screen.getAllByRole("slider", { name: /Song Choice for/ });
+    const performanceSliders = screen.getAllByRole("slider", { name: /Performance for/ });
+    const crowdVibeSliders = screen.getAllByRole("slider", { name: /Crowd Vibe for/ });
+    const visualsSliders = screen.getAllByRole("slider", { name: /Visuals for/ });
 
-    fireEvent.change(songChoiceSlider, { target: { value: "15" } });
-    fireEvent.change(performanceSlider, { target: { value: "25" } });
-    fireEvent.change(crowdVibeSlider, { target: { value: "20" } });
+    fireEvent.change(songChoiceSliders[0], { target: { value: "15" } });
+    fireEvent.change(performanceSliders[0], { target: { value: "25" } });
+    fireEvent.change(crowdVibeSliders[0], { target: { value: "18" } });
+    fireEvent.change(visualsSliders[0], { target: { value: "16" } });
 
-    expect(submitButton).toBeDisabled();
+    expect(submitButton).toBeDisabled(); // Still disabled - second band not filled
 
     // Fill scores for second band
-    const songChoiceSlider2 = screen.getAllByRole("slider", {
-      name: /Song Choice for/,
-    })[1];
-    const performanceSlider2 = screen.getAllByRole("slider", {
-      name: /Performance for/,
-    })[1];
-    const crowdVibeSlider2 = screen.getAllByRole("slider", {
-      name: /Crowd Vibe for/,
-    })[1];
-
-    fireEvent.change(songChoiceSlider2, { target: { value: "12" } });
-    fireEvent.change(performanceSlider2, { target: { value: "22" } });
-    fireEvent.change(crowdVibeSlider2, { target: { value: "18" } });
+    fireEvent.change(songChoiceSliders[1], { target: { value: "12" } });
+    fireEvent.change(performanceSliders[1], { target: { value: "22" } });
+    fireEvent.change(crowdVibeSliders[1], { target: { value: "15" } });
+    fireEvent.change(visualsSliders[1], { target: { value: "14" } });
 
     expect(submitButton).not.toBeDisabled();
   });
@@ -275,12 +261,13 @@ describe("JudgeVotingPage", () => {
     const nameInput = screen.getByPlaceholderText("Enter judge's name");
     await user.type(nameInput, "Judge Smith");
 
-    // Fill scores for all bands
+    // Fill scores for all bands (4 sliders per band for 2026.1)
     const sliders = screen.getAllByRole("slider");
-    for (let i = 0; i < sliders.length; i += 3) {
+    for (let i = 0; i < sliders.length; i += 4) {
       fireEvent.change(sliders[i], { target: { value: "15" } }); // Song Choice
       fireEvent.change(sliders[i + 1], { target: { value: "25" } }); // Performance
-      fireEvent.change(sliders[i + 2], { target: { value: "20" } }); // Crowd Vibe
+      fireEvent.change(sliders[i + 2], { target: { value: "18" } }); // Crowd Vibe
+      fireEvent.change(sliders[i + 3], { target: { value: "16" } }); // Visuals
     }
 
     const submitButton = screen.getByRole("button", {

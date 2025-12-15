@@ -12,6 +12,7 @@ vi.mock("next/navigation", () => ({
 // Mock next-auth/react
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: null, status: "unauthenticated" }),
+  signOut: vi.fn(),
 }));
 
 describe("EventPage", () => {
@@ -58,13 +59,13 @@ describe("EventPage", () => {
 
     render(<EventPage />);
 
+    // Wait for loading to finish first
     await waitFor(() => {
-      expect(screen.getByText("Test Event")).toBeInTheDocument();
-      expect(screen.getByText("Test Venue")).toBeInTheDocument();
-      expect(
-        screen.getByText("25th December 2024 @ 6:30PM")
-      ).toBeInTheDocument();
+      expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
     });
+    
+    // Now check for event name in h1
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Test Event");
   });
 
   it("shows status badge correctly", async () => {
@@ -80,7 +81,7 @@ describe("EventPage", () => {
     render(<EventPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("VOTING")).toBeInTheDocument();
+      expect(screen.getByText("Voting Open")).toBeInTheDocument();
     });
   });
 
@@ -97,7 +98,7 @@ describe("EventPage", () => {
     render(<EventPage />);
 
     await waitFor(() => {
-      const voteLink = screen.getByRole("link", { name: "🎵 Vote for Bands" });
+      const voteLink = screen.getByRole("link", { name: "Vote for Bands" });
       expect(voteLink).toBeInTheDocument();
       expect(voteLink).toHaveAttribute("href", "/vote/crowd/test-event-id");
     });
@@ -116,7 +117,7 @@ describe("EventPage", () => {
     render(<EventPage />);
 
     await waitFor(() => {
-      const resultsLink = screen.getByRole("link", { name: "📊 View Results" });
+      const resultsLink = screen.getByRole("link", { name: "View Results" });
       expect(resultsLink).toBeInTheDocument();
       expect(resultsLink).toHaveAttribute("href", "/results/test-event-id");
     });
@@ -135,13 +136,9 @@ describe("EventPage", () => {
     render(<EventPage />);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: "Bands" })
-      ).toBeInTheDocument();
+      expect(screen.getByText("2 Bands")).toBeInTheDocument();
       expect(screen.getByText("Test Band 1")).toBeInTheDocument();
       expect(screen.getByText("Test Band 2")).toBeInTheDocument();
-      expect(screen.getByText("A test band")).toBeInTheDocument();
-      expect(screen.getByText("Another test band")).toBeInTheDocument();
     });
   });
 
@@ -183,7 +180,6 @@ describe("EventPage", () => {
   });
 
   it("shows loading state initially", () => {
-    // Don't mock fetch for this test - let it show loading state
     render(<EventPage />);
 
     expect(screen.getByText("Loading...")).toBeInTheDocument();
@@ -228,24 +224,5 @@ describe("EventPage", () => {
     });
 
     consoleSpy.mockRestore();
-  });
-
-  it("shows back to events link", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
-    );
-
-    render(<EventPage />);
-
-    await waitFor(() => {
-      const backLink = screen.getByRole("link", { name: "← Back to Events" });
-      expect(backLink).toBeInTheDocument();
-      expect(backLink).toHaveAttribute("href", "/");
-    });
   });
 });
