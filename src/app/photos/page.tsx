@@ -144,25 +144,28 @@ export default function PhotosPage() {
     (eventId: string | null) => {
       setSelectedEventId(eventId);
       setSelectedBandId(null); // Reset band when event changes
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ event: eventId, band: null });
     },
-    [updateUrlParams]
+    [updateUrlParams, slideshowIndex]
   );
 
   const handleBandChange = useCallback(
     (bandId: string | null) => {
       setSelectedBandId(bandId);
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ band: bandId });
     },
-    [updateUrlParams]
+    [updateUrlParams, slideshowIndex]
   );
 
   const handlePhotographerChange = useCallback(
     (photographer: string | null) => {
       setSelectedPhotographer(photographer);
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ photographer });
     },
-    [updateUrlParams]
+    [updateUrlParams, slideshowIndex]
   );
 
   const handleCompanyChange = useCallback(
@@ -171,9 +174,10 @@ export default function PhotosPage() {
       // Clear event/band when company changes
       setSelectedEventId(null);
       setSelectedBandId(null);
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ company, event: null, band: null });
     },
-    [updateUrlParams]
+    [updateUrlParams, slideshowIndex]
   );
 
   // Open slideshow when photos load and we have a pending photo ID

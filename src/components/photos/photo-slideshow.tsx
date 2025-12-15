@@ -84,6 +84,16 @@ export function PhotoSlideshow({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(totalPhotos);
 
+  // Reset internal state when photos/filters change from parent
+  // This happens when user changes filters via the pills in the slideshow
+  useEffect(() => {
+    setAllPhotos(initialPhotos);
+    setCurrentIndex(initialIndex);
+    setLoadedPages(new Set([currentPage]));
+    setTotalCount(totalPhotos);
+    setDirection(0);
+  }, [initialPhotos, initialIndex, currentPage, totalPhotos]);
+
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
