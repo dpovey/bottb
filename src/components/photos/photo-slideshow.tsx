@@ -1040,10 +1040,10 @@ export function PhotoSlideshow({
       </div>
 
       {/* Thumbnail Strip - hidden on mobile, shown on desktop */}
-      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 py-2 px-6">
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6">
         <div
           ref={thumbnailStripRef}
-          className="flex gap-3 overflow-x-auto py-1"
+          className="flex gap-3 overflow-x-auto py-3"
           style={{ scrollbarWidth: "thin" }}
         >
           {allPhotos.map((photo, index) => {
@@ -1061,7 +1061,7 @@ export function PhotoSlideshow({
                 onClick={() => goToIndex(index)}
                 className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
                   index === currentIndex
-                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90 scale-105"
+                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90"
                     : "opacity-50 hover:opacity-75"
                 }`}
                 aria-label={`Go to photo ${index + 1}`}
