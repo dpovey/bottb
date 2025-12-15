@@ -8,6 +8,7 @@
 
 - Always double-check to make sure the changes you are committing are not accidentally deleting
   existing functionality that was not intended.
+- Always question if you are overwriting unstaged files you do not expect.
 - Make sure tests, eslint and typecheck pass before committing code.
 - If in doubt ask before committing.
 
