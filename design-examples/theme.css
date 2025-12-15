@@ -8,11 +8,11 @@
 
 :root {
   /* ===========================================
-   * ACCENT COLOR - Indigo
+   * ACCENT COLOR - Vibrant Gold
    * =========================================== */
-  --accent: #6366F1;
-  --accent-light: #818CF8;
-  --accent-rgb: 99, 102, 241;
+  --accent: #F5A623;
+  --accent-light: #FFBE3D;
+  --accent-rgb: 245, 166, 35;
 
   /* ===========================================
    * SEMANTIC COLORS (Use sparingly)

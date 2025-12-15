@@ -25,10 +25,10 @@ module.exports = {
           muted: '#a0a0a0',
           dim: '#666666',
         },
-        // Accent color (Indigo - use sparingly)
+        // Accent color (Vibrant Gold - use sparingly)
         accent: {
-          DEFAULT: '#6366F1',
-          light: '#818CF8',
+          DEFAULT: '#F5A623',
+          light: '#FFBE3D',
         },
         // Semantic colors (use rarely, only for feedback)
         error: {
@@ -50,14 +50,14 @@ module.exports = {
         // Legacy colors for backwards compatibility during migration
         card: '#1a1a1a',
         'text-muted': '#a0a0a0',
-        'accent-hover': '#818CF8',
+        'accent-hover': '#FFBE3D',
       },
       letterSpacing: {
         'widest': '0.2em', // For ALL CAPS elements
       },
       boxShadow: {
-        'glow': '0 0 20px rgba(99, 102, 241, 0.3)',
-        'glow-accent': '0 0 30px rgba(99, 102, 241, 0.4)',
+        'glow': '0 0 20px rgba(245, 166, 35, 0.3)',
+        'glow-accent': '0 0 30px rgba(245, 166, 35, 0.4)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
