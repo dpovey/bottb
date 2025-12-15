@@ -377,19 +377,21 @@ async function uploadPhoto(
     );
 
     // Store in database
+    // Use dateCreated from metadata if available, otherwise fall back to NOW()
+    const capturedAt = metadata.dateCreated || null;
     await sql`
       INSERT INTO photos (
         id, event_id, band_id, photographer,
         blob_url, blob_pathname, original_filename,
         width, height, file_size, content_type,
         xmp_metadata, matched_event_name, matched_band_name, match_confidence,
-        uploaded_at
+        uploaded_at, captured_at
       ) VALUES (
         ${photoId}, ${eventId}, ${bandId}, ${metadata.photographer},
         ${largeBlob.url}, ${`photos/${photoId}/large.webp`}, ${filename},
         ${processed.width}, ${processed.height}, ${processed.fileSize}, ${`image/${processed.format}`},
         ${JSON.stringify(metadata.rawMetadata)}, ${matchedEventName}, ${matchedBandName}, ${matchConfidence},
-        NOW()
+        NOW(), ${capturedAt}::timestamp with time zone
       )
     `;
 

@@ -160,6 +160,8 @@ export interface Photo {
   uploaded_by: string | null;
   uploaded_at: string;
   created_at: string;
+  // Original capture timestamp from EXIF/XMP metadata
+  captured_at: string | null;
   // Labels for hero images etc.
   labels: string[];
   // Focal point for hero image display
@@ -435,6 +437,8 @@ export async function deleteCrowdNoiseMeasurement(
 
 // Photo functions
 
+export type PhotoOrderBy = "random" | "date" | "uploaded";
+
 export interface GetPhotosOptions {
   eventId?: string;
   bandId?: string;
@@ -442,6 +446,38 @@ export interface GetPhotosOptions {
   companySlug?: string;
   limit?: number;
   offset?: number;
+  orderBy?: PhotoOrderBy;
+}
+
+/**
+ * Fisher-Yates shuffle for random ordering
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+/**
+ * Sort photos by capture date (oldest first for chronological viewing)
+ * Uses filename as secondary sort for photos with the same timestamp
+ * (e.g., when falling back to event date for photos without metadata)
+ */
+function sortByDate(photos: Photo[]): Photo[] {
+  return [...photos].sort((a, b) => {
+    const dateA = a.captured_at ? new Date(a.captured_at).getTime() : 0;
+    const dateB = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+    if (dateA !== dateB) {
+      return dateA - dateB;
+    }
+    // Secondary sort by filename for photos with same timestamp
+    const filenameA = a.original_filename || "";
+    const filenameB = b.original_filename || "";
+    return filenameA.localeCompare(filenameB, undefined, { numeric: true });
+  });
 }
 
 export async function getPhotos(
@@ -454,7 +490,21 @@ export async function getPhotos(
     companySlug,
     limit = 50,
     offset = 0,
+    orderBy = "uploaded",
   } = options;
+
+  // Helper to apply ordering after fetch
+  const applyOrdering = (photos: Photo[]): Photo[] => {
+    switch (orderBy) {
+      case "random":
+        return shuffleArray(photos);
+      case "date":
+        return sortByDate(photos);
+      case "uploaded":
+      default:
+        return photos; // Already ordered by uploaded_at DESC from SQL
+    }
+  };
 
   try {
     // Build query based on filters
@@ -474,7 +524,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (companySlug) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -486,7 +536,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (bandId === "none" && eventId) {
       // Filter for photos without a band, for specific event
       const { rows } = await sql<Photo>`
@@ -499,7 +549,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (bandId === "none") {
       // Filter for photos without a band, all events
       const { rows } = await sql<Photo>`
@@ -512,7 +562,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (eventId && bandId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -524,7 +574,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (eventId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -536,7 +586,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (bandId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -548,7 +598,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else if (photographer) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -560,7 +610,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     } else {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
@@ -571,7 +621,7 @@ export async function getPhotos(
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
-      return rows;
+      return applyOrdering(rows);
     }
   } catch (error) {
     console.error("Error fetching photos:", error);

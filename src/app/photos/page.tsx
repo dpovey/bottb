@@ -260,6 +260,7 @@ export default function PhotosPage() {
       if (selectedCompanySlug) params.set("company", selectedCompanySlug);
       params.set("page", pagination.page.toString());
       params.set("limit", pagination.limit.toString());
+      params.set("order", "random"); // Random order for gallery browsing
 
       const res = await fetch(`/api/photos?${params.toString()}`);
       if (res.ok) {

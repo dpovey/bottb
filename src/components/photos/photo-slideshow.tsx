@@ -231,6 +231,7 @@ export function PhotoSlideshow({
       if (filters.companySlug) params.set("company", filters.companySlug);
       params.set("page", page.toString());
       params.set("limit", PAGE_SIZE.toString());
+      params.set("order", "date"); // Chronological order for slideshow viewing
 
       const res = await fetch(`/api/photos?${params.toString()}`);
       if (!res.ok) return [];

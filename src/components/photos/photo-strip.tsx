@@ -76,6 +76,7 @@ export function PhotoStrip({
     if (companySlug) params.set("company", companySlug);
     params.set("limit", PAGE_SIZE.toString());
     params.set("page", page.toString());
+    params.set("order", "random"); // Random order for browsing strips
 
     const res = await fetch(`/api/photos?${params.toString()}`);
     if (!res.ok) return [];
