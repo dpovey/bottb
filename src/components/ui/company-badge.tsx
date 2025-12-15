@@ -18,7 +18,7 @@ export interface CompanyBadgeProps {
 
 /**
  * Displays a company name as a badge or link
- * 
+ *
  * Variants:
  * - default: Subtle pill badge style
  * - inline: Text link style for inline use
@@ -33,7 +33,7 @@ export function CompanyBadge({
   asLink = true,
 }: CompanyBadgeProps) {
   const baseStyles = "transition-colors";
-  
+
   const variantStyles = {
     default: cn(
       "inline-flex items-center gap-1.5 rounded-full",
@@ -86,4 +86,3 @@ export function CompanyBadge({
 
   return <span className={combinedClassName}>{content}</span>;
 }
-

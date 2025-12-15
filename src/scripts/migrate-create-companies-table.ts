@@ -18,7 +18,9 @@ async function migrate() {
     `;
 
     if (tables.length > 0) {
-      console.log("✅ Table 'companies' already exists. Skipping table creation.");
+      console.log(
+        "✅ Table 'companies' already exists. Skipping table creation."
+      );
     } else {
       // Create companies table
       console.log("📝 Creating 'companies' table...");
@@ -35,8 +37,10 @@ async function migrate() {
     }
 
     // Populate companies from bands
-    console.log("\n📝 Populating companies from bands.company_slug and description...");
-    
+    console.log(
+      "\n📝 Populating companies from bands.company_slug and description..."
+    );
+
     // Get distinct company_slug values with their original description (name)
     const { rows: companyData } = await sql`
       SELECT DISTINCT ON (company_slug) company_slug, description
@@ -55,7 +59,9 @@ async function migrate() {
       `;
 
       if (existing.length > 0) {
-        console.log(`  - Skipping existing company: ${company.description} (${company.company_slug})`);
+        console.log(
+          `  - Skipping existing company: ${company.description} (${company.company_slug})`
+        );
         skippedCount++;
         continue;
       }
@@ -66,10 +72,14 @@ async function migrate() {
         VALUES (${company.company_slug}, ${company.description})
       `;
       insertedCount++;
-      console.log(`  - Added company: ${company.description} → ${company.company_slug}`);
+      console.log(
+        `  - Added company: ${company.description} → ${company.company_slug}`
+      );
     }
 
-    console.log(`\n✅ Inserted ${insertedCount} new companies, skipped ${skippedCount} existing.`);
+    console.log(
+      `\n✅ Inserted ${insertedCount} new companies, skipped ${skippedCount} existing.`
+    );
 
     // Create index on name for searching
     const { rows: indexes } = await sql`
@@ -79,7 +89,9 @@ async function migrate() {
     `;
 
     if (indexes.length > 0) {
-      console.log("✅ Index 'idx_companies_name' already exists. Skipping index creation.");
+      console.log(
+        "✅ Index 'idx_companies_name' already exists. Skipping index creation."
+      );
     } else {
       console.log("\n📝 Creating index on 'name' column...");
       await sql`
@@ -89,13 +101,12 @@ async function migrate() {
     }
 
     console.log("\n🎉 Migration completed successfully!");
-    
+
     // Show summary
     const { rows: summary } = await sql`
       SELECT COUNT(*) as count FROM companies
     `;
     console.log(`\n📊 Total companies in database: ${summary[0].count}`);
-
   } catch (error) {
     console.error("❌ Migration failed:", error);
     process.exit(1);
@@ -103,4 +114,3 @@ async function migrate() {
 }
 
 migrate();
-

@@ -12,4 +12,3 @@ export { Badge, type BadgeProps } from "./badge";
 export { DateBadge, type DateBadgeProps } from "./date-badge";
 export { BandThumbnail, type BandThumbnailProps } from "./band-thumbnail";
 export { CompanyBadge, type CompanyBadgeProps } from "./company-badge";
-

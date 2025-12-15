@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCompanies, getDistinctCompanies, getCompanyBySlug, getCompanyBands } from "@/lib/db";
+import {
+  getCompanies,
+  getDistinctCompanies,
+  getCompanyBySlug,
+  getCompanyBands,
+} from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,4 +43,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

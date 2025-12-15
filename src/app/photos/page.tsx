@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Photo, Event, Band } from "@/lib/db";
 import { PhotoGrid, type GridSize } from "@/components/photos/photo-grid";
@@ -37,7 +37,8 @@ interface PhotosResponse {
 
 type OrderMode = "random" | "date";
 
-export default function PhotosPage() {
+// Inner component that uses useSearchParams
+function PhotosContent() {
   const searchParams = useSearchParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
@@ -706,5 +707,36 @@ export default function PhotosPage() {
         />
       )}
     </PublicLayout>
+  );
+}
+
+// Loading fallback for Suspense
+function PhotosLoading() {
+  return (
+    <PublicLayout
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Photos" }]}
+      footerVariant="simple"
+    >
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex flex-col gap-4 mb-8">
+          <div>
+            <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
+            <p className="text-text-muted">Loading...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-text-muted">Loading photos...</div>
+        </div>
+      </main>
+    </PublicLayout>
+  );
+}
+
+// Main page component wraps content in Suspense for useSearchParams
+export default function PhotosPage() {
+  return (
+    <Suspense fallback={<PhotosLoading />}>
+      <PhotosContent />
+    </Suspense>
   );
 }

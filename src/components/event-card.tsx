@@ -34,7 +34,19 @@ interface EventCardProps {
   }[];
   variant?: "upcoming" | "past" | "active";
   heroPhoto?: HeroPhoto | null;
+  /** Use visual card style (4:3 aspect ratio with gradient background) */
+  visual?: boolean;
 }
+
+// Gradient presets for visual variety
+const GRADIENT_PRESETS = [
+  "from-purple-900/30 via-bg-muted to-amber-900/20",
+  "from-cyan-900/20 via-bg-muted to-purple-900/20",
+  "from-emerald-900/20 via-bg-muted to-cyan-900/20",
+  "from-amber-900/20 via-bg-muted to-purple-900/10",
+  "from-rose-900/20 via-bg-muted to-indigo-900/20",
+  "from-blue-900/20 via-bg-muted to-emerald-900/20",
+];
 
 export function EventCard({
   event,
@@ -44,6 +56,7 @@ export function EventCard({
   bands = [],
   variant = "upcoming",
   heroPhoto,
+  visual = false,
 }: EventCardProps) {
   const isPast = variant === "past";
   const isActive = variant === "active";
@@ -52,6 +65,74 @@ export function EventCard({
   const imageUrl = heroPhoto?.blob_url ?? event.info?.image_url;
   const focalPoint = heroPhoto?.hero_focal_point;
 
+  // Get a consistent gradient based on event id
+  const gradientIndex = event.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % GRADIENT_PRESETS.length;
+  const gradient = GRADIENT_PRESETS[gradientIndex];
+
+  // Visual card style (matches design mockups)
+  if (visual) {
+    return (
+      <Link href={`/event/${event.id}`}>
+        <div 
+          className={cn(
+            "group relative rounded-lg overflow-hidden bg-bg-elevated aspect-[4/3] cursor-pointer",
+            "border border-white/5 hover:border-accent/30 transition-colors duration-300"
+          )}
+        >
+          {/* Background gradient */}
+          <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
+          
+          {/* Image if available - zooms on hover */}
+          {imageUrl && (
+            <div className="absolute inset-0 overflow-hidden">
+              <Image
+                src={imageUrl}
+                alt={`${event.name} event image`}
+                fill
+                className="object-cover opacity-80 transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
+                style={focalPoint ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` } : undefined}
+                unoptimized
+              />
+            </div>
+          )}
+          
+          {/* Gradient overlay for content readability - lighter to show more image */}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent" />
+          
+          {/* Date Badge - Top Left */}
+          <div className="absolute top-4 left-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            <DateBadge date={event.date} timezone={event.timezone} size="sm" showYear />
+          </div>
+          
+          {/* Status/Winner Badge - Top Right */}
+          <div className="absolute top-4 right-4">
+            {isActive ? (
+              <span className="bg-accent/20 border border-accent/30 text-accent rounded px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                🎸 Live Now
+              </span>
+            ) : showWinner && winner ? (
+              <span className="bg-accent/20 border border-accent/30 text-accent rounded px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                🏆 {winner.name}
+              </span>
+            ) : null}
+          </div>
+          
+          {/* Content - Bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            <h3 className="font-medium text-xl mb-1 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{event.name}</h3>
+            <p className="text-white/80 text-sm mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{event.location}</p>
+            {!isPast && bands.length === 0 && (
+              <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                {formatEventDate(event.date, event.timezone)}
+              </p>
+            )}
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  // Original horizontal card style
   return (
     <Card
       variant="interactive"

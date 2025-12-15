@@ -77,9 +77,9 @@ export function Hero({
       {/* Overlay */}
       <div
         className={cn("absolute inset-0", {
-          "bg-bg/40": overlay === "light",
-          "bg-bg/60": overlay === "medium",
-          "bg-bg/80": overlay === "heavy",
+          "bg-bg/20": overlay === "light",
+          "bg-bg/40": overlay === "medium",
+          "bg-bg/55": overlay === "heavy",
         })}
       />
 
@@ -88,18 +88,18 @@ export function Hero({
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-6 tracking-tight">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-6 tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
           {title}
         </h1>
 
         {subtitle && (
-          <p className="text-lg sm:text-xl text-text-muted mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
             {subtitle}
           </p>
         )}
 
         {actions && actions.length > 0 && (
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             {actions.map((action, index) => (
               <Link key={index} href={action.href}>
                 <Button variant={action.variant || "outline"} size="lg">

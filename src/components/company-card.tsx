@@ -78,7 +78,8 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
           <div className="flex gap-4">
             <div className="flex items-center gap-2">
               <Badge variant="default" className="bg-white/5">
-                {company.event_count} event{company.event_count !== 1 ? "s" : ""}
+                {company.event_count} event
+                {company.event_count !== 1 ? "s" : ""}
               </Badge>
             </div>
             <div className="flex items-center gap-2">
@@ -114,4 +115,3 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
     </Link>
   );
 }
-

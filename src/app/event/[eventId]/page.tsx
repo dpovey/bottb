@@ -346,7 +346,7 @@ export default function EventPage() {
                               <Badge variant="warning" className="shrink-0">Champion</Badge>
                             )}
                           </div>
-                          {/* Company badge */}
+                          {/* Company badge - asLink=false to avoid nested <a> tags */}
                           {band.company_slug && band.company_name && (
                             <div className="mt-1">
                               <CompanyBadge
@@ -354,6 +354,7 @@ export default function EventPage() {
                                 name={band.company_name}
                                 variant="inline"
                                 size="sm"
+                                asLink={false}
                               />
                             </div>
                           )}

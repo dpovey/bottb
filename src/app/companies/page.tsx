@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layouts";
@@ -29,7 +29,8 @@ interface Band {
   };
 }
 
-export default function CompaniesPage() {
+// Inner component that uses useSearchParams
+function CompaniesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedCompanySlug = searchParams.get("company");
@@ -252,6 +253,40 @@ export default function CompaniesPage() {
         )}
       </main>
     </PublicLayout>
+  );
+}
+
+// Loading fallback for Suspense
+function CompaniesLoading() {
+  return (
+    <PublicLayout
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Companies" },
+      ]}
+      footerVariant="simple"
+    >
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-semibold text-4xl mb-2">Companies</h1>
+            <p className="text-text-muted">Loading...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-text-muted">Loading companies...</div>
+        </div>
+      </main>
+    </PublicLayout>
+  );
+}
+
+// Main page component wraps content in Suspense for useSearchParams
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={<CompaniesLoading />}>
+      <CompaniesContent />
+    </Suspense>
   );
 }
 

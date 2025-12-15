@@ -21,7 +21,9 @@ function slugify(text: string): string {
 }
 
 async function migrate() {
-  console.log("🚀 Starting migration: Add company_slug column to bands table...\n");
+  console.log(
+    "🚀 Starting migration: Add company_slug column to bands table...\n"
+  );
 
   try {
     // Check if column already exists
@@ -32,7 +34,9 @@ async function migrate() {
     `;
 
     if (columns.length > 0) {
-      console.log("✅ Column 'company_slug' already exists. Skipping column creation.");
+      console.log(
+        "✅ Column 'company_slug' already exists. Skipping column creation."
+      );
     } else {
       // Add company_slug column
       console.log("📝 Adding 'company_slug' column to bands table...");
@@ -44,8 +48,10 @@ async function migrate() {
     }
 
     // Populate company_slug from description
-    console.log("\n📝 Populating company_slug from existing description values...");
-    
+    console.log(
+      "\n📝 Populating company_slug from existing description values..."
+    );
+
     const { rows: bands } = await sql`
       SELECT id, description FROM bands WHERE description IS NOT NULL AND description != ''
     `;
@@ -71,7 +77,9 @@ async function migrate() {
     `;
 
     if (indexes.length > 0) {
-      console.log("✅ Index 'idx_bands_company_slug' already exists. Skipping index creation.");
+      console.log(
+        "✅ Index 'idx_bands_company_slug' already exists. Skipping index creation."
+      );
     } else {
       // Create index for efficient company queries
       console.log("\n📝 Creating index on 'company_slug' column...");
@@ -89,4 +97,3 @@ async function migrate() {
 }
 
 migrate();
-

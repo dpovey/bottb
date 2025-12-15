@@ -18,6 +18,7 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from "@/lib/scoring";
+import { PhotoStrip } from "@/components/photos/photo-strip";
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE =
@@ -52,17 +53,33 @@ function getRelativeDate(dateString: string): string {
   const eventDate = new Date(dateString);
   const diffTime = eventDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const absDays = Math.abs(diffDays);
 
   if (diffDays === 0) {
     return "Today";
   } else if (diffDays === 1) {
     return "Tomorrow";
   } else if (diffDays > 1) {
+    if (diffDays >= 365) {
+      const years = Math.floor(diffDays / 365);
+      return years === 1 ? "In 1 year" : `In ${years} years`;
+    } else if (diffDays >= 30) {
+      const months = Math.floor(diffDays / 30);
+      return months === 1 ? "In 1 month" : `In ${months} months`;
+    }
     return `In ${diffDays} days`;
   } else if (diffDays === -1) {
     return "Yesterday";
   } else {
-    return `${Math.abs(diffDays)} days ago`;
+    // Past dates
+    if (absDays >= 365) {
+      const years = Math.floor(absDays / 365);
+      return years === 1 ? "1 year ago" : `${years} years ago`;
+    } else if (absDays >= 30) {
+      const months = Math.floor(absDays / 30);
+      return months === 1 ? "1 month ago" : `${months} months ago`;
+    }
+    return `${absDays} days ago`;
   }
 }
 
@@ -220,16 +237,13 @@ export default async function HomePage() {
       {upcomingEventsWithBands.length > 0 && (
         <section className="py-16 bg-bg-muted">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="text-center mb-10">
-              <h2 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="font-semibold text-3xl sm:text-4xl">
                 Upcoming Events
               </h2>
-              <p className="text-2xl font-semibold text-white">
-                Mark Your Calendar
-              </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEventsWithBands.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -240,6 +254,7 @@ export default async function HomePage() {
                     bands={event.bands}
                     variant="upcoming"
                     heroPhoto={event.heroPhoto}
+                    visual
                   />
                 );
               })}
@@ -250,15 +265,15 @@ export default async function HomePage() {
 
       {/* Past Events Section */}
       {pastEventsWithWinners.length > 0 && (
-        <section className="py-16 bg-bg">
+        <section className="py-16 bg-bg-elevated">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="text-center mb-10">
-              <h2 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="font-semibold text-3xl sm:text-4xl">
                 Past Events
               </h2>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {pastEventsWithWinners.map((event) => {
                 const relativeDate = getRelativeDate(event.date);
                 return (
@@ -271,6 +286,7 @@ export default async function HomePage() {
                     winner={event.overallWinner || undefined}
                     bands={event.bands}
                     heroPhoto={event.heroPhoto}
+                    visual
                   />
                 );
               })}
@@ -303,6 +319,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Random Photo Strip */}
+      <PhotoStrip title="From the Archives" viewAllLink="/photos" />
     </PublicLayout>
   );
 }
