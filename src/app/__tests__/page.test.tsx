@@ -108,7 +108,7 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("Mark Your Calendar")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming Events")).toBeInTheDocument();
     expect(screen.getByText("Upcoming Event 1")).toBeInTheDocument();
     expect(screen.getByText("Upcoming Event 2")).toBeInTheDocument();
   });
@@ -158,7 +158,7 @@ describe("HomePage", () => {
     expect(screen.getByText("Live Now")).toBeInTheDocument();
   });
 
-  it("shows View Details link for upcoming events", async () => {
+  it("shows upcoming event card linking to event page", async () => {
     const upcomingEvents = [
       {
         id: "voting-event",
@@ -183,7 +183,9 @@ describe("HomePage", () => {
     render(await HomePage());
 
     expect(screen.getByText("Voting Event")).toBeInTheDocument();
-    expect(screen.getByText("View Details")).toBeInTheDocument();
+    // Visual cards link the entire card to the event page
+    const eventLink = screen.getByRole("link", { name: /Voting Event/i });
+    expect(eventLink).toHaveAttribute("href", "/event/voting-event");
   });
 
   it("renders past events with winners when available", async () => {
@@ -228,10 +230,11 @@ describe("HomePage", () => {
 
     expect(screen.getByText("Past Events")).toBeInTheDocument();
     expect(screen.getByText("Past Event")).toBeInTheDocument();
-    expect(screen.getByText("Winning Band")).toBeInTheDocument();
+    // Visual cards show winner with trophy emoji in a badge
+    expect(screen.getByText(/🏆.*Winning Band/)).toBeInTheDocument();
   });
 
-  it("shows results link for finalized events", async () => {
+  it("shows past event card linking to event page", async () => {
     const pastEvents = [
       {
         id: "finalized-event",
@@ -256,9 +259,10 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    const resultsLink = screen.getByRole("link", { name: "View Results" });
-    expect(resultsLink).toBeInTheDocument();
-    expect(resultsLink).toHaveAttribute("href", "/results/finalized-event");
+    // Visual cards link the entire card to the event page
+    const eventLink = screen.getByRole("link", { name: /Finalized Event/i });
+    expect(eventLink).toBeInTheDocument();
+    expect(eventLink).toHaveAttribute("href", "/event/finalized-event");
   });
 
   it("shows nothing when no events exist", async () => {

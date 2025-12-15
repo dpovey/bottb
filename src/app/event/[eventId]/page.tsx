@@ -150,7 +150,7 @@ export default function EventPage() {
   }
 
   const breadcrumbs = [
-    { label: "Events", href: "/" },
+    { label: "Events", href: "/events" },
     { label: event.name },
   ];
 

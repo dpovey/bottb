@@ -212,7 +212,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
         {hasEvents && (
           <div className="mt-6 pt-4 border-t border-white/5">
             <Link
-              href="/"
+              href="/events"
               onClick={() => setIsOpen(false)}
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-2 rounded-lg",
