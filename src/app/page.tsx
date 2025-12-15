@@ -20,7 +20,8 @@ import {
 } from "@/lib/scoring";
 
 // Default fallback hero image
-const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop";
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop";
 
 interface BandScore {
   id: string;
@@ -76,18 +77,26 @@ export default async function HomePage() {
   const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE;
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
 
-  // Get upcoming events with bands
+  // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
     upcomingEvents.map(async (event) => {
-      const bands = await getBandsForEvent(event.id);
-      return { ...event, bands };
+      const [bands, heroPhotos] = await Promise.all([
+        getBandsForEvent(event.id),
+        getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId: event.id }),
+      ]);
+      const heroPhoto = heroPhotos.length > 0 ? heroPhotos[0] : null;
+      return { ...event, bands, heroPhoto };
     })
   );
 
-  // Get past events with winners and bands
+  // Get past events with winners, bands, and hero photos
   const pastEventsWithWinners = await Promise.all(
     pastEvents.map(async (event) => {
-      const bands = await getBandsForEvent(event.id);
+      const [bands, heroPhotos] = await Promise.all([
+        getBandsForEvent(event.id),
+        getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId: event.id }),
+      ]);
+      const heroPhoto = heroPhotos.length > 0 ? heroPhotos[0] : null;
       const eventInfo = event.info as EventInfo | null;
       const scoringVersion = parseScoringVersion(eventInfo);
       const showDetailedScoring = hasDetailedBreakdown(scoringVersion);
@@ -101,14 +110,21 @@ export default async function HomePage() {
             overallWinner: { name: storedWinner, totalScore: 0 },
             bands,
             scoringVersion,
+            heroPhoto,
           };
         }
-        return { ...event, overallWinner: null, bands, scoringVersion };
+        return {
+          ...event,
+          overallWinner: null,
+          bands,
+          scoringVersion,
+          heroPhoto,
+        };
       }
 
       // For 2025.1 and 2026.1, calculate scores
       const scores = (await getBandScores(event.id)) as BandScore[];
-      
+
       const bandResults = scores
         .map((score) => {
           const scoreData: BandScoreData = {
@@ -140,7 +156,7 @@ export default async function HomePage() {
         .sort((a, b) => b.totalScore - a.totalScore);
 
       const overallWinner = bandResults.length > 0 ? bandResults[0] : null;
-      return { ...event, overallWinner, bands, scoringVersion };
+      return { ...event, overallWinner, bands, scoringVersion, heroPhoto };
     })
   );
 
@@ -157,11 +173,23 @@ export default async function HomePage() {
         actions={[
           ...(activeEvent
             ? [
-                { label: "Vote Now", href: `/vote/crowd/${activeEvent.id}`, variant: "accent" as const },
-                { label: "View Event", href: `/event/${activeEvent.id}`, variant: "outline" as const },
+                {
+                  label: "Vote Now",
+                  href: `/vote/crowd/${activeEvent.id}`,
+                  variant: "accent" as const,
+                },
+                {
+                  label: "View Event",
+                  href: `/event/${activeEvent.id}`,
+                  variant: "outline" as const,
+                },
               ]
             : []),
-          { label: "View Photos", href: "/photos", variant: "outline" as const },
+          {
+            label: "View Photos",
+            href: "/photos",
+            variant: "outline" as const,
+          },
         ]}
       />
 
@@ -177,7 +205,7 @@ export default async function HomePage() {
                 Cast your vote and support your favorite band
               </p>
             </div>
-            
+
             <EventCard
               event={activeEvent}
               relativeDate="Live Now"
@@ -211,6 +239,7 @@ export default async function HomePage() {
                     relativeDate={relativeDate}
                     bands={event.bands}
                     variant="upcoming"
+                    heroPhoto={event.heroPhoto}
                   />
                 );
               })}
@@ -227,9 +256,6 @@ export default async function HomePage() {
               <h2 className="text-sm tracking-widest uppercase text-text-muted mb-3">
                 Past Events
               </h2>
-              <p className="text-2xl font-semibold text-white">
-                Hall of Champions
-              </p>
             </div>
 
             <div className="space-y-6">
@@ -244,6 +270,7 @@ export default async function HomePage() {
                     showWinner={!!event.overallWinner}
                     winner={event.overallWinner || undefined}
                     bands={event.bands}
+                    heroPhoto={event.heroPhoto}
                   />
                 );
               })}
@@ -259,8 +286,8 @@ export default async function HomePage() {
             Join the Movement
           </h2>
           <p className="text-text-muted mb-8">
-            Battle of the Tech Bands brings together technology professionals for
-            an unforgettable night of rock, competition, and charity.
+            Battle of the Tech Bands brings together technology professionals
+            for an unforgettable night of rock, competition, and charity.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/about">

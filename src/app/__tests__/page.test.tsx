@@ -226,7 +226,7 @@ describe("HomePage", () => {
 
     render(await HomePage());
 
-    expect(screen.getByText("Hall of Champions")).toBeInTheDocument();
+    expect(screen.getByText("Past Events")).toBeInTheDocument();
     expect(screen.getByText("Past Event")).toBeInTheDocument();
     expect(screen.getByText("Winning Band")).toBeInTheDocument();
   });

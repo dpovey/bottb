@@ -4,6 +4,11 @@ import { formatEventDate } from "@/lib/date-utils";
 import { Card, Badge, DateBadge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
+interface HeroPhoto {
+  blob_url: string;
+  hero_focal_point?: { x: number; y: number };
+}
+
 interface EventCardProps {
   event: {
     id: string;
@@ -28,6 +33,7 @@ interface EventCardProps {
     order: number;
   }[];
   variant?: "upcoming" | "past" | "active";
+  heroPhoto?: HeroPhoto | null;
 }
 
 export function EventCard({
@@ -37,9 +43,14 @@ export function EventCard({
   winner,
   bands = [],
   variant = "upcoming",
+  heroPhoto,
 }: EventCardProps) {
   const isPast = variant === "past";
   const isActive = variant === "active";
+  
+  // Prefer heroPhoto over event.info.image_url
+  const imageUrl = heroPhoto?.blob_url ?? event.info?.image_url;
+  const focalPoint = heroPhoto?.hero_focal_point;
 
   return (
     <Card
@@ -142,13 +153,14 @@ export function EventCard({
         </div>
 
         {/* Event Image - Desktop only */}
-        {event.info?.image_url && (
+        {imageUrl && (
           <div className="hidden lg:block relative w-64 min-h-[200px]">
             <Image
-              src={event.info.image_url}
+              src={imageUrl}
               alt={`${event.name} event image`}
               fill
               className="object-cover"
+              style={focalPoint ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` } : undefined}
               unoptimized
             />
             {/* Gradient overlay to blend with card */}
