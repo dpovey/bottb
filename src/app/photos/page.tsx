@@ -405,8 +405,9 @@ export default function PhotosPage() {
             <div>
               <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
               <p className="text-text-muted">
-                {photos.length} of {totalCount} photo{totalCount !== 1 ? "s" : ""}{" "}
-                from {events.length} event{events.length !== 1 ? "s" : ""}
+                {photos.length} of {totalCount} photo
+                {totalCount !== 1 ? "s" : ""} from {events.length} event
+                {events.length !== 1 ? "s" : ""}
               </p>
             </div>
             {photos.length > 0 && (
@@ -451,8 +452,18 @@ export default function PhotosPage() {
                 }`}
                 title="Show photos in random order"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 <span className="hidden sm:inline">Random</span>
               </button>
@@ -465,8 +476,18 @@ export default function PhotosPage() {
                 }`}
                 title="Show photos by date"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 <span className="hidden sm:inline">By Date</span>
               </button>
@@ -477,22 +498,34 @@ export default function PhotosPage() {
               <button
                 onClick={() => setGridSize("xs")}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "xs" ? "bg-accent text-white" : "text-text-muted hover:text-white"
+                  gridSize === "xs"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
                 }`}
                 title="Extra large thumbnails (1 per row on mobile)"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
                   <rect x="2" y="2" width="12" height="12" rx="1" />
                 </svg>
               </button>
               <button
                 onClick={() => setGridSize("sm")}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "sm" ? "bg-accent text-white" : "text-text-muted hover:text-white"
+                  gridSize === "sm"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
                 }`}
                 title="Large thumbnails"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
                   <rect x="1" y="1" width="6" height="6" rx="1" />
                   <rect x="9" y="1" width="6" height="6" rx="1" />
                   <rect x="1" y="9" width="6" height="6" rx="1" />
@@ -502,11 +535,17 @@ export default function PhotosPage() {
               <button
                 onClick={() => setGridSize("md")}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "md" ? "bg-accent text-white" : "text-text-muted hover:text-white"
+                  gridSize === "md"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
                 }`}
                 title="Medium thumbnails (default)"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
                   <rect x="1" y="1" width="4" height="4" rx="0.5" />
                   <rect x="6" y="1" width="4" height="4" rx="0.5" />
                   <rect x="11" y="1" width="4" height="4" rx="0.5" />
@@ -521,11 +560,17 @@ export default function PhotosPage() {
               <button
                 onClick={() => setGridSize("lg")}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "lg" ? "bg-accent text-white" : "text-text-muted hover:text-white"
+                  gridSize === "lg"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
                 }`}
                 title="Small thumbnails (compact)"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
                   <rect x="1" y="1" width="3" height="3" rx="0.3" />
                   <rect x="5" y="1" width="3" height="3" rx="0.3" />
                   <rect x="9" y="1" width="3" height="3" rx="0.3" />
@@ -605,13 +650,11 @@ export default function PhotosPage() {
               <span className="text-sm">Loading more photos...</span>
             </div>
           )}
-          {!loadingMore &&
-            photos.length >= totalCount &&
-            photos.length > 0 && (
-              <p className="text-text-dim text-sm">
-                All {totalCount} photos loaded
-              </p>
-            )}
+          {!loadingMore && photos.length >= totalCount && photos.length > 0 && (
+            <p className="text-text-dim text-sm">
+              All {totalCount} photos loaded
+            </p>
+          )}
         </div>
       </main>
 
