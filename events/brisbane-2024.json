@@ -6,6 +6,8 @@
   "address": "7-9 Stratton Street, Newstead QLD 4006, Australia",
   "is_active": false,
   "status": "finalized",
+  "scoring_version": "2022.1",
+  "winner": "The Fuggles",
   "bands": [
     { "name": "The ShipRex", "description": "Rex Software", "order": 1 },
     { "name": "Jumbo Band", "description": "Jumbo Interactive", "order": 2 },
@@ -14,4 +16,3 @@
     { "name": "The Fuggles", "description": "FoundU", "order": 5 }
   ]
 }
-

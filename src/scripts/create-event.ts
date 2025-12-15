@@ -23,13 +23,24 @@ function generateBandSlug(bandName: string, eventId: string): string {
   return `${bandSlug}-${eventId}`;
 }
 
+// Valid scoring versions
+type ScoringVersion = "2022.1" | "2025.1" | "2026.1";
+
+function isValidScoringVersion(version: string): version is ScoringVersion {
+  return version === "2022.1" || version === "2025.1" || version === "2026.1";
+}
+
 interface EventData {
   id?: string; // Optional custom ID (e.g., "brisbane-2024" instead of auto-generated)
   name: string;
   date: string;
   location: string;
+  address?: string;
+  tickets?: string;
   is_active?: boolean;
   status?: "upcoming" | "voting" | "finalized";
+  scoring_version?: string; // Scoring version: "2022.1", "2025.1", "2026.1"
+  winner?: string; // Winner name (for 2022.1 events)
   bands: {
     name: string;
     description?: string;
@@ -49,12 +60,52 @@ async function createEventFromFile(filePath: string) {
     const eventSlug = eventData.id || nameToSlug(eventData.name);
     console.log(`📝 Event slug: ${eventSlug}${eventData.id ? " (custom)" : " (auto-generated)"}`);
 
-    // Create event with slug as ID
+    // Validate and set scoring version
+    const scoringVersion = eventData.scoring_version || "2026.1"; // Default to latest
+    if (!isValidScoringVersion(scoringVersion)) {
+      console.error(`❌ Invalid scoring_version: ${scoringVersion}`);
+      console.error("   Valid values: 2022.1, 2025.1, 2026.1");
+      process.exit(1);
+    }
+    console.log(`📊 Scoring version: ${scoringVersion}`);
+
+    // Build event info JSONB object
+    interface EventInfo {
+      scoring_version: string;
+      address?: string;
+      tickets?: string;
+      winner?: string;
+    }
+    
+    const eventInfo: EventInfo = {
+      scoring_version: scoringVersion,
+    };
+
+    if (eventData.address) {
+      eventInfo.address = eventData.address;
+    }
+    if (eventData.tickets) {
+      eventInfo.tickets = eventData.tickets;
+    }
+
+    // For 2022.1 events, store the winner in event info
+    if (scoringVersion === "2022.1" && eventData.winner) {
+      eventInfo.winner = eventData.winner;
+      console.log(`🏆 Winner: ${eventData.winner}`);
+    }
+
+    // Create event with slug as ID and info JSONB
     const { rows: eventRows } = await sql`
-      INSERT INTO events (id, name, date, location, is_active, status)
-      VALUES (${eventSlug}, ${eventData.name}, ${eventData.date}, ${
-      eventData.location
-    }, ${eventData.is_active ?? true}, ${eventData.status ?? "upcoming"})
+      INSERT INTO events (id, name, date, location, is_active, status, info)
+      VALUES (
+        ${eventSlug}, 
+        ${eventData.name}, 
+        ${eventData.date}, 
+        ${eventData.location}, 
+        ${eventData.is_active ?? true}, 
+        ${eventData.status ?? "upcoming"},
+        ${JSON.stringify(eventInfo)}::jsonb
+      )
       RETURNING id, name
     `;
 
@@ -86,6 +137,7 @@ async function createEventFromFile(filePath: string) {
 
     console.log(`\n🎉 Event "${eventData.name}" created successfully!`);
     console.log(`Event ID: ${event.id}`);
+    console.log(`Scoring Version: ${scoringVersion}`);
     console.log(`Bands: ${eventData.bands.length}`);
   } catch (error) {
     console.error("❌ Error creating event:", error);
@@ -99,6 +151,14 @@ const filePath = process.argv[2];
 if (!filePath) {
   console.error("Usage: tsx create-event.ts <path-to-json-file>");
   console.error("Example: tsx create-event.ts events/sydney-2024.json");
+  console.error("\nJSON file should include:");
+  console.error("  - id: event slug (e.g., 'sydney-2025')");
+  console.error("  - name: event name");
+  console.error("  - date: ISO date string");
+  console.error("  - location: venue name");
+  console.error("  - scoring_version: '2022.1' | '2025.1' | '2026.1' (default: '2026.1')");
+  console.error("  - winner: (for 2022.1 events only) winner band name");
+  console.error("  - bands: array of band objects");
   process.exit(1);
 }
 

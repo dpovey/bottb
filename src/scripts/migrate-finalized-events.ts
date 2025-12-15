@@ -2,7 +2,8 @@
 
 import { config } from "dotenv";
 import { sql } from "@vercel/postgres";
-import { finalizeEventResults } from "../lib/db";
+import { finalizeEventResults, hasFinalizedResults } from "../lib/db";
+import { parseScoringVersion } from "../lib/scoring";
 
 // Load environment variables from .env.local
 config({ path: ".env.local" });
@@ -12,6 +13,11 @@ interface EventRow {
   name: string;
   location: string;
   status: string;
+  info?: {
+    scoring_version?: string;
+    winner?: string;
+    [key: string]: unknown;
+  };
 }
 
 async function migrateFinalizedEvents() {
@@ -22,7 +28,7 @@ async function migrateFinalizedEvents() {
 
     // Find all finalized events
     const { rows: events } = await sql<EventRow>`
-      SELECT id, name, location, status 
+      SELECT id, name, location, status, info 
       FROM events 
       WHERE status = 'finalized'
       ORDER BY date DESC
@@ -43,21 +49,34 @@ async function migrateFinalizedEvents() {
       console.log(`   Processing: ${event.name} (${event.location})`);
       console.log(`   Event ID: ${event.id}`);
 
+      const scoringVersion = parseScoringVersion(event.info);
+      console.log(`   Scoring version: ${scoringVersion}`);
+
       try {
         // Check if results already exist
-        const { rows: existing } = await sql<{ count: number }>`
-          SELECT COUNT(*) as count FROM finalized_results 
-          WHERE event_id = ${event.id}
-        `;
+        const hasResults = await hasFinalizedResults(event.id);
 
-        if (Number(existing[0]?.count) > 0) {
+        if (hasResults) {
           console.log(`   ⏭️  Skipped - results already exist\n`);
           skipCount++;
           continue;
         }
 
+        // For 2022.1 events, don't calculate scores
+        if (scoringVersion === "2022.1") {
+          const winner = event.info?.winner;
+          if (winner) {
+            console.log(`   ✅ 2022.1 event - winner: ${winner}`);
+            console.log(`   📝 No detailed results to store\n`);
+          } else {
+            console.log(`   ⚠️  2022.1 event without winner set\n`);
+          }
+          skipCount++;
+          continue;
+        }
+
         // Finalize the event results
-        const results = await finalizeEventResults(event.id);
+        const results = await finalizeEventResults(event.id, scoringVersion);
 
         if (results.length > 0) {
           console.log(`   ✅ Created ${results.length} result entries`);
@@ -80,9 +99,8 @@ async function migrateFinalizedEvents() {
     console.log("─".repeat(50));
     console.log("\n📊 Migration Summary:");
     console.log(`   ✅ Successfully migrated: ${successCount}`);
-    console.log(`   ⏭️  Skipped (already exists): ${skipCount}`);
+    console.log(`   ⏭️  Skipped (already exists or 2022.1): ${skipCount}`);
     console.log(`   ❌ Errors: ${errorCount}`);
-    console.log(`   📋 Total events: ${events.length}`);
   } catch (error) {
     console.error("❌ Error during migration:", error);
     process.exit(1);

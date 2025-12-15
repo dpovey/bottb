@@ -9,6 +9,12 @@ vi.mock("@/lib/db", () => ({
   getPastEvents: vi.fn(),
   getBandsForEvent: vi.fn(),
   getBandScores: vi.fn(),
+  getPhotosByLabel: vi.fn(),
+  PHOTO_LABELS: {
+    BAND_HERO: "band_hero",
+    EVENT_HERO: "event_hero",
+    GLOBAL_HERO: "global_hero",
+  },
 }));
 
 // Mock the date utils
@@ -31,6 +37,7 @@ import {
   getPastEvents,
   getBandsForEvent,
   getBandScores,
+  getPhotosByLabel,
 } from "@/lib/db";
 
 const mockGetActiveEvent = getActiveEvent as ReturnType<typeof vi.fn>;
@@ -38,10 +45,13 @@ const mockGetUpcomingEvents = getUpcomingEvents as ReturnType<typeof vi.fn>;
 const mockGetPastEvents = getPastEvents as ReturnType<typeof vi.fn>;
 const mockGetBandsForEvent = getBandsForEvent as ReturnType<typeof vi.fn>;
 const mockGetBandScores = getBandScores as ReturnType<typeof vi.fn>;
+const mockGetPhotosByLabel = getPhotosByLabel as ReturnType<typeof vi.fn>;
 
 describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default to no photos
+    mockGetPhotosByLabel.mockResolvedValue([]);
   });
 
   it("renders nothing when no active event exists", async () => {

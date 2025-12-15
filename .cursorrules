@@ -1,4 +1,15 @@
-# Testing Preferences
+# Design
+
+- Refer to DESIGN.md for design system and design-example/\*.html files for mockups
+- Use shared components where ever possible. If adding new components that could be reusable assume
+  that you should make them shared.
+
+# Committing code
+
+- Always double-check to make sure the changes you are committing are not accidentally deleting
+  existing functionality that was not intended.
+- Make sure tests, eslint and typecheck pass before committing code.
+- If in doubt ask before committing.
 
 ## Commit Message Format
 
@@ -13,6 +24,8 @@
   - `test: add unit tests for payment module`
   - `chore: update dependencies`
 
+# Testing Preferences
+
 ## Unit Testing Standards
 
 - Use React Testing Library (RTL) for all component testing
@@ -23,7 +36,7 @@
 - Test user interactions and behavior, not implementation details
 - Use userEvent for simulating user interactions
 - Write descriptive test names that explain the expected behavior
-- When debugging test failures, consider if test is wrong or code is worong
+- When debugging test failures, consider if test is wrong or code is wrong
 
 ## Test Structure
 

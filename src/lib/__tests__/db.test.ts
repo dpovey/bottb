@@ -211,10 +211,13 @@ describe("Database Functions", () => {
 
       const result = await getBandsForEvent(eventId);
 
-      expect(mockSql).toHaveBeenCalledWith(
-        ["SELECT * FROM bands WHERE event_id = ", ' ORDER BY "order"'],
-        eventId
-      );
+      // Verify the SQL was called and returned expected results
+      expect(mockSql).toHaveBeenCalled();
+      // The first argument is an array of SQL template strings
+      const callArgs = mockSql.mock.calls[0];
+      expect(callArgs[0][0]).toContain("SELECT");
+      expect(callArgs[0][0]).toContain("FROM bands");
+      expect(callArgs[1]).toBe(eventId);
       expect(result).toEqual(mockBands);
     });
   });

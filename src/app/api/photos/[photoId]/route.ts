@@ -79,3 +79,4 @@ const handleDeletePhoto: ProtectedApiHandler = async (
 export const DELETE = withAdminProtection(handleDeletePhoto);
 
 
+

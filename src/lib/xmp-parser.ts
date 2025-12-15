@@ -90,7 +90,6 @@ function extractFieldsFromMetadata(metadata: Record<string, unknown>): {
   let company: string | undefined;
   let band: string | undefined;
   let showOnSocial = false;
-  let dateCreated: string | undefined;
 
   // Check for hierarchicalSubject (preferred source)
   const metadataRecord = metadata as Record<string, unknown>;
@@ -160,7 +159,7 @@ function extractFieldsFromMetadata(metadata: Record<string, unknown>): {
   // Get date created
   const xmpRecord = metadataRecord["xmp"] as Record<string, unknown> | undefined;
   const photoshopRecord = metadataRecord["photoshop"] as Record<string, unknown> | undefined;
-  dateCreated =
+  const dateCreated =
     (metadataRecord.CreateDate as string) ||
     (metadataRecord.DateCreated as string) ||
     (metadataRecord.DateTimeOriginal as string) ||

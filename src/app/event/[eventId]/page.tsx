@@ -7,7 +7,25 @@ import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
 import { Button, Badge, Card, DateBadge, BandThumbnail } from "@/components/ui";
-import { PageHeader } from "@/components/hero";
+import {
+  parseScoringVersion,
+  hasDetailedBreakdown,
+} from "@/lib/scoring";
+
+interface EventInfo {
+  image_url?: string;
+  description?: string;
+  website?: string;
+  social_media?: {
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+  };
+  venue_info?: string;
+  scoring_version?: string;
+  winner?: string;
+  [key: string]: unknown;
+}
 
 interface Event {
   id: string;
@@ -16,18 +34,7 @@ interface Event {
   location: string;
   status: string;
   image_url?: string;
-  info?: {
-    image_url?: string;
-    description?: string;
-    website?: string;
-    social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    venue_info?: string;
-    [key: string]: unknown;
-  };
+  info?: EventInfo;
 }
 
 interface Band {
@@ -58,12 +65,16 @@ interface HeroPhoto {
   hero_focal_point?: { x: number; y: number };
 }
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string, hasWinner: boolean) {
   switch (status) {
     case "voting":
       return <Badge variant="success">Voting Open</Badge>;
     case "finalized":
-      return <Badge variant="accent">Results Available</Badge>;
+      return hasWinner ? (
+        <Badge variant="warning">Completed</Badge>
+      ) : (
+        <Badge variant="accent">Results Available</Badge>
+      );
     case "upcoming":
       return <Badge variant="info">Upcoming</Badge>;
     default:
@@ -139,6 +150,15 @@ export default function EventPage() {
     { label: event.name },
   ];
 
+  // Get scoring version and winner info
+  const scoringVersion = parseScoringVersion(event.info);
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
+  const storedWinner = event.info?.winner;
+  const isFinalized = event.status === "finalized";
+
+  // For 2022.1 events, we show the stored winner prominently
+  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner;
+
   return (
     <WebLayout breadcrumbs={breadcrumbs}>
       {/* Hero Section with Event Image */}
@@ -181,7 +201,7 @@ export default function EventPage() {
             {/* Event Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                {getStatusBadge(event.status)}
+                {getStatusBadge(event.status, !!show2022Winner)}
               </div>
               <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}
@@ -194,8 +214,30 @@ export default function EventPage() {
         </div>
       </section>
 
+      {/* Winner Section - For 2022.1 finalized events */}
+      {show2022Winner && (
+        <section className="py-8 bg-gradient-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="text-4xl">🏆</span>
+                <div>
+                  <p className="text-sm text-warning uppercase tracking-widest">Champion</p>
+                  <p className="text-2xl font-semibold text-white">{storedWinner}</p>
+                </div>
+              </div>
+              <Link href={`/results/${eventId}`}>
+                <Button variant="outline" size="sm">
+                  View Results
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Action Section */}
-      {(event.status === "voting" || event.status === "finalized") && (
+      {(event.status === "voting" || (event.status === "finalized" && !show2022Winner)) && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-wrap gap-4">
@@ -239,7 +281,7 @@ export default function EventPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-sm tracking-widest uppercase text-text-muted mb-2">
-              Performing
+              {isFinalized ? "Competed" : "Performing"}
             </h2>
             <p className="text-2xl font-semibold text-white">
               {bands.length} Band{bands.length !== 1 ? "s" : ""}
@@ -254,66 +296,85 @@ export default function EventPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {bands.map((band) => (
-                <Link key={band.id} href={`/band/${band.id}`}>
-                  <Card
-                    variant="interactive"
-                    padding="none"
-                    className="overflow-hidden"
-                  >
-                    <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
-                      {/* Order Number */}
-                      <div className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg shrink-0">
-                        <span className="text-lg font-semibold text-text-muted">
-                          {band.order}
-                        </span>
-                      </div>
+              {bands.map((band) => {
+                const isWinner = show2022Winner && band.name === storedWinner;
+                
+                return (
+                  <Link key={band.id} href={`/band/${band.id}`}>
+                    <Card
+                      variant="interactive"
+                      padding="none"
+                      className={`overflow-hidden ${
+                        isWinner ? "border-warning/30 bg-warning/5" : ""
+                      }`}
+                    >
+                      <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
+                        {/* Order Number or Trophy */}
+                        <div className={`w-10 h-10 flex items-center justify-center rounded-lg shrink-0 ${
+                          isWinner ? "bg-warning/20" : "bg-white/5"
+                        }`}>
+                          {isWinner ? (
+                            <span className="text-lg">🏆</span>
+                          ) : (
+                            <span className="text-lg font-semibold text-text-muted">
+                              {band.order}
+                            </span>
+                          )}
+                        </div>
 
-                      {/* Band Logo */}
-                      <BandThumbnail
-                        logoUrl={band.info?.logo_url}
-                        heroThumbnailUrl={band.hero_thumbnail_url}
-                        bandName={band.name}
-                        size="md"
-                      />
+                        {/* Band Logo */}
+                        <BandThumbnail
+                          logoUrl={band.info?.logo_url}
+                          heroThumbnailUrl={band.hero_thumbnail_url}
+                          bandName={band.name}
+                          size="md"
+                        />
 
-                      {/* Band Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white truncate">
-                          {band.name}
-                        </h3>
-                        {band.description && (
-                          <p className="text-text-muted text-sm truncate mt-1">
-                            {band.description}
-                          </p>
-                        )}
-                        {band.info?.genre && (
-                          <p className="text-text-dim text-xs mt-1">
-                            {band.info.genre}
-                          </p>
-                        )}
-                      </div>
+                        {/* Band Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className={`text-lg font-semibold truncate ${
+                              isWinner ? "text-warning" : "text-white"
+                            }`}>
+                              {band.name}
+                            </h3>
+                            {isWinner && (
+                              <Badge variant="warning" className="shrink-0">Champion</Badge>
+                            )}
+                          </div>
+                          {band.description && (
+                            <p className="text-text-muted text-sm truncate mt-1">
+                              {band.description}
+                            </p>
+                          )}
+                          {band.info?.genre && (
+                            <p className="text-text-dim text-xs mt-1">
+                              {band.info.genre}
+                            </p>
+                          )}
+                        </div>
 
-                      {/* Arrow */}
-                      <div className="shrink-0 text-text-dim">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
+                        {/* Arrow */}
+                        <div className="shrink-0 text-text-dim">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>

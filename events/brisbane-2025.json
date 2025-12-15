@@ -6,6 +6,9 @@
   "address": "7-9 Stratton Street, Newstead QLD 4006, Australia",
   "tickets": "https://www.moshtix.com.au/v2/event/battle-of-the-tech-bands-%E2%80%93-powered-by-jumbo-interactive/182735",
   "is_active": false,
+  "status": "finalized",
+  "scoring_version": "2022.1",
+  "winner": "Off The Record",
   "bands": [
     {
       "name": "The ShipRex",
@@ -23,10 +26,9 @@
       "order": 3
     },
     {
-      "name": "Off the Record",
+      "name": "Off The Record",
       "description": "For the Record",
       "order": 4
     }
   ]
 }
-

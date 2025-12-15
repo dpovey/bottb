@@ -6,6 +6,7 @@
   "address": "105 Victoria Road MARRICKVILLE, NSW 2204 AUSTRALIA",
   "tickets": "https://aucentury.sales.ticketsearch.com/sales/salesevent/152438",
   "is_active": true,
+  "scoring_version": "2025.1",
   "bands": [
     {
       "name": "Canvanauts",

@@ -246,3 +246,4 @@ export function Footer({ variant = "simple", className }: FooterProps) {
   );
 }
 
+

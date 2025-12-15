@@ -39,8 +39,7 @@ const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
             "tracking-wider uppercase text-text-muted",
             {
               "text-[10px]": size === "sm",
-              "text-xs": size === "md",
-              "text-xs": size === "lg",
+              "text-xs": size === "md" || size === "lg",
             }
           )}
         >
@@ -83,4 +82,5 @@ const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
 DateBadge.displayName = "DateBadge";
 
 export { DateBadge };
+
 

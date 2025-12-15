@@ -4,6 +4,14 @@ import { formatEventDate } from "@/lib/date-utils";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
+import {
+  parseScoringVersion,
+  hasDetailedBreakdown,
+  calculateTotalScore,
+  getCategories,
+  getScoringFormula,
+  type BandScoreData,
+} from "@/lib/scoring";
 
 interface BandScore {
   id: string;
@@ -12,6 +20,7 @@ interface BandScore {
   avg_song_choice: number;
   avg_performance: number;
   avg_crowd_vibe: number;
+  avg_visuals?: number;
   avg_crowd_vote: number;
   crowd_vote_count: number;
   judge_vote_count: number;
@@ -19,6 +28,12 @@ interface BandScore {
   crowd_noise_energy?: number;
   crowd_noise_peak?: number;
   crowd_score?: number;
+}
+
+interface EventInfo {
+  scoring_version?: string;
+  winner?: string;
+  [key: string]: unknown;
 }
 
 export default async function BandPage({
@@ -35,7 +50,7 @@ export default async function BandPage({
   // Get all events to find which one contains this band
   const { sql } = await import("@vercel/postgres");
   const { rows: bandData } = await sql`
-    SELECT b.*, e.name as event_name, e.date, e.location, e.status
+    SELECT b.*, e.name as event_name, e.date, e.location, e.status, e.info as event_info
     FROM bands b
     JOIN events e ON b.event_id = e.id
     WHERE b.id = ${bandId}
@@ -52,6 +67,9 @@ export default async function BandPage({
 
   const eventId = band.event_id;
   const eventStatus = band.status;
+  const eventInfo = band.event_info as EventInfo | null;
+  const scoringVersion = parseScoringVersion(eventInfo);
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
 
   // Fetch band hero photos
   const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, { bandId });
@@ -68,39 +86,66 @@ export default async function BandPage({
     bandScore = scores.find((score) => score.id === bandId) || null;
   }
 
-  // If we need scores but don't have them, show not found
-  if ((eventStatus === "finalized" || isAdmin) && !bandScore) {
-    notFound();
-  }
+  // For 2022.1 events, check if this band is the winner
+  const isWinner = !showDetailedBreakdown && eventInfo?.winner === band.name;
 
-  // Calculate scores only if we have band score data
-  const judgeScore = bandScore
-    ? Number(bandScore.avg_song_choice || 0) +
-      Number(bandScore.avg_performance || 0) +
-      Number(bandScore.avg_crowd_vibe || 0)
-    : 0;
+  // Calculate scores only if we have band score data and detailed breakdown
+  let totalScore = 0;
+  let judgeScore = 0;
+  let crowdVoteScore = 0;
+  let screamOMeterScore = 0;
+  let visualsScore = 0;
 
-  // Crowd score is normalized - band with most votes gets 20, others proportional
-  const crowdScore =
-    bandScore && scores.length > 0
-      ? (() => {
-          const maxVoteCount = Math.max(
-            ...scores.map((s) => Number(s.crowd_vote_count || 0))
-          );
-          return maxVoteCount > 0
-            ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
-            : 0;
-        })()
+  if (showDetailedBreakdown && bandScore) {
+    const scoreData: BandScoreData = {
+      avg_song_choice: bandScore.avg_song_choice,
+      avg_performance: bandScore.avg_performance,
+      avg_crowd_vibe: bandScore.avg_crowd_vibe,
+      avg_visuals: bandScore.avg_visuals,
+      crowd_vote_count: bandScore.crowd_vote_count,
+      total_crowd_votes: bandScore.total_crowd_votes,
+      crowd_score: bandScore.crowd_score,
+    };
+
+    // Calculate normalized crowd vote score
+    const maxVoteCount = Math.max(
+      ...scores.map((s) => Number(s.crowd_vote_count || 0))
+    );
+    crowdVoteScore = maxVoteCount > 0
+      ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
       : 0;
 
-  // Scream-o-meter score from crowd noise measurements (out of 10 points)
-  const hasScreamOMeterMeasurement = bandScore
-    ? bandScore.crowd_score !== null && bandScore.crowd_score !== undefined
-    : false;
-  const screamOMeterScore = hasScreamOMeterMeasurement
-    ? Number(bandScore!.crowd_score)
-    : 0; // Use 1-10 scale as-is for 0-10 points
-  const totalScore = judgeScore + crowdScore + screamOMeterScore;
+    // Version-specific scores
+    if (scoringVersion === "2025.1") {
+      screamOMeterScore = bandScore.crowd_score ? Number(bandScore.crowd_score) : 0;
+    } else if (scoringVersion === "2026.1") {
+      visualsScore = Number(bandScore.avg_visuals || 0);
+    }
+
+    // Calculate total
+    totalScore = calculateTotalScore(
+      scoreData,
+      scoringVersion,
+      scores.map((s) => ({
+        avg_song_choice: s.avg_song_choice,
+        avg_performance: s.avg_performance,
+        avg_crowd_vibe: s.avg_crowd_vibe,
+        avg_visuals: s.avg_visuals,
+        crowd_vote_count: s.crowd_vote_count,
+        total_crowd_votes: s.total_crowd_votes,
+        crowd_score: s.crowd_score,
+      }))
+    );
+
+    judgeScore =
+      Number(bandScore.avg_song_choice || 0) +
+      Number(bandScore.avg_performance || 0) +
+      Number(bandScore.avg_crowd_vibe || 0);
+    
+    if (scoringVersion === "2026.1") {
+      judgeScore += visualsScore;
+    }
+  }
 
   // Calculate percentage scores
   const songChoicePercent = bandScore
@@ -109,8 +154,9 @@ export default async function BandPage({
   const performancePercent = bandScore
     ? (Number(bandScore.avg_performance || 0) / 30) * 100
     : 0;
+  const crowdVibeMax = scoringVersion === "2026.1" ? 20 : 30;
   const crowdVibePercent = bandScore
-    ? (Number(bandScore.avg_crowd_vibe || 0) / 30) * 100
+    ? (Number(bandScore.avg_crowd_vibe || 0) / crowdVibeMax) * 100
     : 0;
   const crowdVotePercent = bandScore
     ? bandScore.total_crowd_votes > 0
@@ -119,9 +165,16 @@ export default async function BandPage({
         100
       : 0
     : 0;
-  const screamOMeterPercent = hasScreamOMeterMeasurement
-    ? (Number(bandScore!.crowd_score) / 10) * 100
+  const visualsPercent = bandScore
+    ? (Number(bandScore.avg_visuals || 0) / 20) * 100
     : 0;
+  const screamOMeterPercent = bandScore?.crowd_score
+    ? (Number(bandScore.crowd_score) / 10) * 100
+    : 0;
+
+  const _categories = getCategories(scoringVersion);
+  const scoringFormula = getScoringFormula(scoringVersion);
+  const maxJudgePoints = scoringVersion === "2026.1" ? 90 : 80;
 
   return (
     <div>
@@ -164,6 +217,14 @@ export default async function BandPage({
 
             {/* Band Info */}
             <div className="flex-1">
+              {/* Winner badge for 2022.1 events */}
+              {isWinner && (
+                <div className="mb-2">
+                  <span className="bg-warning/20 border border-warning/30 text-warning px-3 py-1 rounded text-sm font-medium">
+                    🏆 Champion
+                  </span>
+                </div>
+              )}
               <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {band.name}
               </h1>
@@ -195,14 +256,33 @@ export default async function BandPage({
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
 
-        {/* Total Score - Only show if event is finalized or user is admin */}
-        {(eventStatus === "finalized" || isAdmin) && bandScore && (
+        {/* For 2022.1 events - Simple winner/participant display */}
+        {!showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && (
+          <div className={`rounded-2xl p-8 mb-12 text-center ${
+            isWinner 
+              ? "bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 border border-warning/30"
+              : "bg-white/5 border border-white/10"
+          }`}>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              {isWinner ? "🏆 Champion" : "Participant"}
+            </h2>
+            <div className="text-xl text-gray-200">
+              {isWinner 
+                ? `${band.name} won ${band.event_name}!`
+                : "Detailed scoring not available for this event"}
+            </div>
+          </div>
+        )}
+
+        {/* Total Score - Only show for detailed breakdown versions */}
+        {showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && bandScore && (
           <div className="bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl p-8 mb-12 text-center">
             <h2 className="text-3xl font-bold text-white mb-4">Total Score</h2>
             <div className="text-6xl font-bold text-white mb-2">
               {totalScore.toFixed(1)}
             </div>
             <div className="text-xl text-gray-200">out of 100 points</div>
+            <p className="text-sm text-gray-400 mt-2">{scoringFormula}</p>
           </div>
         )}
 
@@ -220,8 +300,8 @@ export default async function BandPage({
           </div>
         )}
 
-        {/* Score Breakdown - Only show if event is finalized or user is admin */}
-        {(eventStatus === "finalized" || isAdmin) && bandScore && (
+        {/* Score Breakdown - Only show for detailed breakdown versions */}
+        {showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && bandScore && (
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Judge Scores */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
@@ -231,7 +311,7 @@ export default async function BandPage({
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">Song Choice</span>
+                    <span className="text-white font-medium">🎵 Song Choice</span>
                     <span className="text-white font-bold">
                       {Number(bandScore.avg_song_choice || 0).toFixed(1)}/20
                     </span>
@@ -242,15 +322,11 @@ export default async function BandPage({
                       style={{ width: `${songChoicePercent}%` }}
                     ></div>
                   </div>
-                  <p className="text-gray-300 text-sm mt-1">
-                    {songChoicePercent.toFixed(1)}% - Engaging, recognizable,
-                    suited to style
-                  </p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">Performance</span>
+                    <span className="text-white font-medium">🎤 Performance</span>
                     <span className="text-white font-bold">
                       {Number(bandScore.avg_performance || 0).toFixed(1)}/30
                     </span>
@@ -261,17 +337,13 @@ export default async function BandPage({
                       style={{ width: `${performancePercent}%` }}
                     ></div>
                   </div>
-                  <p className="text-gray-300 text-sm mt-1">
-                    {performancePercent.toFixed(1)}% - Musical ability, stage
-                    presence, having fun
-                  </p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">Crowd Vibe</span>
+                    <span className="text-white font-medium">🔥 Crowd Vibe</span>
                     <span className="text-white font-bold">
-                      {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}/30
+                      {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}/{crowdVibeMax}
                     </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-3">
@@ -280,31 +352,45 @@ export default async function BandPage({
                       style={{ width: `${crowdVibePercent}%` }}
                     ></div>
                   </div>
-                  <p className="text-gray-300 text-sm mt-1">
-                    {crowdVibePercent.toFixed(1)}% - Getting crowd moving,
-                    energy transfer
-                  </p>
                 </div>
+
+                {/* Visuals - Only for 2026.1 */}
+                {scoringVersion === "2026.1" && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-white font-medium">🎨 Visuals</span>
+                      <span className="text-white font-bold">
+                        {visualsScore.toFixed(1)}/20
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-3">
+                      <div
+                        className="bg-purple-500 h-3 rounded-full transition-all duration-1000"
+                        style={{ width: `${visualsPercent}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Crowd Vote */}
+            {/* Crowd Vote & Special Category */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
               <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                Crowd Vote
+                Crowd Scoring
               </h3>
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">Crowd Vote</span>
+                    <span className="text-white font-medium">👥 Crowd Vote</span>
                     <span className="text-white font-bold">
-                      {Math.round(crowdScore)}/10
+                      {Math.round(crowdVoteScore)}/10
                     </span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-3">
                     <div
                       className="bg-slate-400 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${(crowdScore / 10) * 100}%` }}
+                      style={{ width: `${(crowdVoteScore / 10) * 100}%` }}
                     ></div>
                   </div>
                   <div className="flex justify-between text-gray-300 text-sm mt-1">
@@ -313,40 +399,36 @@ export default async function BandPage({
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">
-                      Scream-o-meter
-                    </span>
-                    <span className="text-white font-bold">
-                      {hasScreamOMeterMeasurement
-                        ? `Score: ${screamOMeterScore.toFixed(
-                            1
-                          )} | Energy: ${Number(
-                            bandScore!.crowd_noise_energy || 0
-                          ).toFixed(2)}`
-                        : "No measurement"}
-                    </span>
-                  </div>
-                  {hasScreamOMeterMeasurement ? (
-                    <>
-                      <div className="w-full bg-gray-700 rounded-full h-3">
-                        <div
-                          className="bg-purple-500 h-3 rounded-full transition-all duration-1000"
-                          style={{ width: `${screamOMeterPercent}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-gray-300 text-sm mt-1">
-                        {screamOMeterPercent.toFixed(1)}% - Crowd noise energy
-                        measurement
+                {/* Scream-o-meter - Only for 2025.1 */}
+                {scoringVersion === "2025.1" && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-white font-medium">🔊 Scream-o-meter</span>
+                      <span className="text-white font-bold">
+                        {bandScore.crowd_score
+                          ? `${screamOMeterScore.toFixed(1)}/10`
+                          : "No measurement"}
+                      </span>
+                    </div>
+                    {bandScore.crowd_score ? (
+                      <>
+                        <div className="w-full bg-gray-700 rounded-full h-3">
+                          <div
+                            className="bg-amber-500 h-3 rounded-full transition-all duration-1000"
+                            style={{ width: `${screamOMeterPercent}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-gray-300 text-sm mt-1">
+                          Energy: {Number(bandScore.crowd_noise_energy || 0).toFixed(2)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-gray-400 text-sm mt-1">
+                        No crowd noise measurement recorded
                       </p>
-                    </>
-                  ) : (
-                    <p className="text-gray-400 text-sm mt-1">
-                      No crowd noise measurement recorded
-                    </p>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="bg-white/10 rounded-xl p-4">
                   <h4 className="text-white font-semibold mb-2">
@@ -371,7 +453,7 @@ export default async function BandPage({
             </div>
 
             {/* Score Summary */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 md:col-span-2">
               <h3 className="text-2xl font-bold text-white mb-6 text-center">
                 Score Summary
               </h3>
@@ -382,28 +464,36 @@ export default async function BandPage({
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-300">Song Choice (20%):</span>
+                      <span className="text-gray-300">Song Choice (20):</span>
                       <span className="text-white">
                         {Number(bandScore.avg_song_choice || 0).toFixed(1)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-300">Performance (30%):</span>
+                      <span className="text-gray-300">Performance (30):</span>
                       <span className="text-white">
                         {Number(bandScore.avg_performance || 0).toFixed(1)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-300">Crowd Vibe (30%):</span>
+                      <span className="text-gray-300">Crowd Vibe ({crowdVibeMax}):</span>
                       <span className="text-white">
                         {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}
                       </span>
                     </div>
+                    {scoringVersion === "2026.1" && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Visuals (20):</span>
+                        <span className="text-white">
+                          {visualsScore.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
                     <div className="border-t border-white/20 pt-3">
                       <div className="flex justify-between font-bold">
                         <span className="text-white">Judge Total:</span>
                         <span className="text-white">
-                          {judgeScore.toFixed(1)}/80
+                          {judgeScore.toFixed(1)}/{maxJudgePoints}
                         </span>
                       </div>
                     </div>
@@ -424,17 +514,19 @@ export default async function BandPage({
                     <div className="flex justify-between">
                       <span className="text-gray-300">Crowd Vote:</span>
                       <span className="text-white">
-                        {Math.round(crowdScore)}
+                        {Math.round(crowdVoteScore)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Scream-o-meter:</span>
-                      <span className="text-white">
-                        {hasScreamOMeterMeasurement
-                          ? screamOMeterScore.toFixed(1)
-                          : "No measurement"}
-                      </span>
-                    </div>
+                    {scoringVersion === "2025.1" && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">Scream-o-meter:</span>
+                        <span className="text-white">
+                          {bandScore.crowd_score
+                            ? screamOMeterScore.toFixed(1)
+                            : "N/A"}
+                        </span>
+                      </div>
+                    )}
                     <div className="border-t border-white/20 pt-3">
                       <div className="flex justify-between font-bold text-xl">
                         <span className="text-white">Total Score:</span>

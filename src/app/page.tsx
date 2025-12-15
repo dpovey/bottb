@@ -12,6 +12,12 @@ import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
 import { Hero } from "@/components/hero";
 import { Button } from "@/components/ui";
+import {
+  parseScoringVersion,
+  hasDetailedBreakdown,
+  calculateTotalScore,
+  type BandScoreData,
+} from "@/lib/scoring";
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop";
@@ -23,13 +29,18 @@ interface BandScore {
   avg_song_choice: number;
   avg_performance: number;
   avg_crowd_vibe: number;
+  avg_visuals?: number;
   avg_crowd_vote: number;
   crowd_vote_count: number;
   judge_vote_count: number;
   total_crowd_votes: number;
-  judgeScore?: number;
-  crowdScore?: number;
-  totalScore?: number;
+  crowd_score?: number;
+}
+
+interface EventInfo {
+  scoring_version?: string;
+  winner?: string;
+  [key: string]: unknown;
 }
 
 // Force dynamic rendering - don't pre-render at build time
@@ -76,27 +87,60 @@ export default async function HomePage() {
   // Get past events with winners and bands
   const pastEventsWithWinners = await Promise.all(
     pastEvents.map(async (event) => {
-      const scores = (await getBandScores(event.id)) as BandScore[];
       const bands = await getBandsForEvent(event.id);
+      const eventInfo = event.info as EventInfo | null;
+      const scoringVersion = parseScoringVersion(eventInfo);
+      const showDetailedScoring = hasDetailedBreakdown(scoringVersion);
+
+      // For 2022.1 events, use the stored winner name
+      if (!showDetailedScoring) {
+        const storedWinner = eventInfo?.winner;
+        if (storedWinner) {
+          return {
+            ...event,
+            overallWinner: { name: storedWinner, totalScore: 0 },
+            bands,
+            scoringVersion,
+          };
+        }
+        return { ...event, overallWinner: null, bands, scoringVersion };
+      }
+
+      // For 2025.1 and 2026.1, calculate scores
+      const scores = (await getBandScores(event.id)) as BandScore[];
+      
       const bandResults = scores
         .map((score) => {
-          const judgeScore =
-            Number(score?.avg_song_choice || 0) +
-            Number(score?.avg_performance || 0) +
-            Number(score?.avg_crowd_vibe || 0);
-          const crowdScore =
-            score.total_crowd_votes > 0
-              ? (Number(score.crowd_vote_count || 0) /
-                  Number(score.total_crowd_votes || 1)) *
-                20
-              : 0;
-          const totalScore = judgeScore + crowdScore;
-          return { ...score, judgeScore, crowdScore, totalScore };
+          const scoreData: BandScoreData = {
+            avg_song_choice: score.avg_song_choice,
+            avg_performance: score.avg_performance,
+            avg_crowd_vibe: score.avg_crowd_vibe,
+            avg_visuals: score.avg_visuals,
+            crowd_vote_count: score.crowd_vote_count,
+            total_crowd_votes: score.total_crowd_votes,
+            crowd_score: score.crowd_score,
+          };
+
+          const totalScore = calculateTotalScore(
+            scoreData,
+            scoringVersion,
+            scores.map((s) => ({
+              avg_song_choice: s.avg_song_choice,
+              avg_performance: s.avg_performance,
+              avg_crowd_vibe: s.avg_crowd_vibe,
+              avg_visuals: s.avg_visuals,
+              crowd_vote_count: s.crowd_vote_count,
+              total_crowd_votes: s.total_crowd_votes,
+              crowd_score: s.crowd_score,
+            }))
+          );
+
+          return { ...score, totalScore };
         })
         .sort((a, b) => b.totalScore - a.totalScore);
 
       const overallWinner = bandResults.length > 0 ? bandResults[0] : null;
-      return { ...event, overallWinner, bands };
+      return { ...event, overallWinner, bands, scoringVersion };
     })
   );
 

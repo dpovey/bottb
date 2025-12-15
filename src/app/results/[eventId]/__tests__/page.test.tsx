@@ -175,6 +175,7 @@ describe("ResultsPage", () => {
       is_active: false,
       status: "finalized" as const,
       created_at: "2024-01-01T00:00:00Z",
+      info: { scoring_version: "2025.1" },
     };
 
     const bands = [
@@ -215,7 +216,9 @@ describe("ResultsPage", () => {
     expect(
       screen.getAllByRole("heading", { name: "Winning Band" })
     ).toHaveLength(2);
-    expect(screen.getByText("73.0 points")).toBeInTheDocument();
+    // Score appears in multiple places - check at least one exists
+    expect(screen.getAllByText("73.0").length).toBeGreaterThan(0);
+    expect(screen.getByText(/100 points/)).toBeInTheDocument();
   });
 
   it("displays category winners", async () => {
@@ -227,6 +230,7 @@ describe("ResultsPage", () => {
       is_active: false,
       status: "finalized" as const,
       created_at: "2024-01-01T00:00:00Z",
+      info: { scoring_version: "2025.1" },
     };
 
     const bands = [
@@ -281,15 +285,15 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    // Check category winners are displayed
+    // Check category winners are displayed (labels may appear in multiple places)
     expect(screen.getByText("Category Winners")).toBeInTheDocument();
-    expect(screen.getByText("Song Choice")).toBeInTheDocument();
-    expect(screen.getByText("Performance")).toBeInTheDocument();
-    expect(screen.getByText("Crowd Vibe")).toBeInTheDocument();
-    expect(screen.getByText("Crowd Vote")).toBeInTheDocument();
+    expect(screen.getAllByText("Song").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Perf").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Vibe").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Vote/).length).toBeGreaterThan(0);
   });
 
-  it("displays complete results table", async () => {
+  it("displays complete results table for 2025.1 scoring", async () => {
     const event = {
       id: "event-1",
       name: "Test Event",
@@ -298,6 +302,7 @@ describe("ResultsPage", () => {
       is_active: false,
       status: "finalized" as const,
       created_at: "2024-01-01T00:00:00Z",
+      info: { scoring_version: "2025.1" }, // 2025.1 has Noise column
     };
 
     const bands = [
@@ -362,7 +367,7 @@ describe("ResultsPage", () => {
     expect(screen.getByRole("columnheader", { name: "Perf" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Vibe" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Vote" })).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Noise" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Noise" })).toBeInTheDocument(); // 2025.1 has Noise
     expect(screen.getByRole("columnheader", { name: "Total" })).toBeInTheDocument();
     expect(screen.getByText("Total")).toBeInTheDocument();
   });
@@ -376,6 +381,7 @@ describe("ResultsPage", () => {
       is_active: false,
       status: "finalized" as const,
       created_at: "2024-01-01T00:00:00Z",
+      info: { scoring_version: "2025.1" }, // Need scoring version to show table
     };
 
     const bands = [
@@ -411,7 +417,8 @@ describe("ResultsPage", () => {
       await ResultsPage({ params: Promise.resolve({ eventId: "event-1" }) })
     );
 
-    expect(screen.getByText("Total voters: 50")).toBeInTheDocument();
+    expect(screen.getByText(/Total voters:/)).toBeInTheDocument();
+    expect(screen.getByText("50")).toBeInTheDocument();
   });
 
   it("shows no results message when no scores available", async () => {
