@@ -84,15 +84,25 @@ export function PhotoSlideshow({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(totalPhotos);
 
-  // Reset internal state when photos/filters change from parent
-  // This happens when user changes filters via the pills in the slideshow
+  // Track the previous initialIndex to detect filter changes
+  const prevInitialIndexRef = useRef(initialIndex);
+  
+  // Sync photos from parent without resetting position (e.g., after crop updates)
   useEffect(() => {
     setAllPhotos(initialPhotos);
-    setCurrentIndex(initialIndex);
-    setLoadedPages(new Set([currentPage]));
-    setTotalCount(totalPhotos);
-    setDirection(0);
-  }, [initialPhotos, initialIndex, currentPage, totalPhotos]);
+  }, [initialPhotos]);
+
+  // Only reset position when filters change (indicated by initialIndex changing to 0)
+  // This happens when parent explicitly resets slideshowIndex after a filter change
+  useEffect(() => {
+    if (prevInitialIndexRef.current !== initialIndex) {
+      setCurrentIndex(initialIndex);
+      setLoadedPages(new Set([currentPage]));
+      setTotalCount(totalPhotos);
+      setDirection(0);
+      prevInitialIndexRef.current = initialIndex;
+    }
+  }, [initialIndex, currentPage, totalPhotos]);
 
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
