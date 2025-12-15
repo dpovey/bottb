@@ -47,9 +47,7 @@ describe("EventPage", () => {
     vi.clearAllMocks();
   });
 
-  // Note: Tests for event rendering with API calls are timing out due to MSW/fetch issues
-  // TODO: Fix these tests when addressing test infrastructure
-  it.skip("renders event details", async () => {
+  it("renders event details", async () => {
     server.use(
       http.get("/api/events/test-event-id", () => {
         return HttpResponse.json(mockEvent);
@@ -61,12 +59,16 @@ describe("EventPage", () => {
 
     render(<EventPage />);
 
+    // Wait for loading to finish first
     await waitFor(() => {
-      expect(screen.getByText("Test Event")).toBeInTheDocument();
+      expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
     });
+    
+    // Now check for event name in h1
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Test Event");
   });
 
-  it.skip("shows status badge correctly", async () => {
+  it("shows status badge correctly", async () => {
     server.use(
       http.get("/api/events/test-event-id", () => {
         return HttpResponse.json(mockEvent);
@@ -83,7 +85,7 @@ describe("EventPage", () => {
     });
   });
 
-  it.skip("shows voting link for voting status", async () => {
+  it("shows voting link for voting status", async () => {
     server.use(
       http.get("/api/events/test-event-id", () => {
         return HttpResponse.json(mockEvent);
@@ -102,7 +104,7 @@ describe("EventPage", () => {
     });
   });
 
-  it.skip("shows results link for finalized status", async () => {
+  it("shows results link for finalized status", async () => {
     server.use(
       http.get("/api/events/test-event-id", () => {
         return HttpResponse.json({ ...mockEvent, status: "finalized" });
@@ -121,7 +123,7 @@ describe("EventPage", () => {
     });
   });
 
-  it.skip("displays bands list", async () => {
+  it("displays bands list", async () => {
     server.use(
       http.get("/api/events/test-event-id", () => {
         return HttpResponse.json(mockEvent);
