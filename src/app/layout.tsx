@@ -17,6 +17,36 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: "Battle of the Tech Bands",
   description: "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+  manifest: "/site.webmanifest",
+  themeColor: "#0a0a0a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "BOTTB",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      { rel: "mask-icon", url: "/favicon-32x32.png", color: "#F5A623" },
+    ],
+  },
+  openGraph: {
+    title: "Battle of the Tech Bands",
+    description: "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+    siteName: "Battle of the Tech Bands",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Battle of the Tech Bands",
+    description: "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+  },
 };
 
 export default function RootLayout({
