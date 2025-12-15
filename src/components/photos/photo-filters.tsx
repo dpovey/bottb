@@ -7,11 +7,21 @@ interface Company {
   name: string;
 }
 
+interface AvailableFilters {
+  companies: { slug: string; name: string; count: number }[];
+  events: { id: string; name: string; count: number }[];
+  bands: { id: string; name: string; count: number }[];
+  photographers: { name: string; count: number }[];
+  hasPhotosWithoutBand: boolean;
+  hasPhotosWithoutCompany: boolean;
+}
+
 interface PhotoFiltersProps {
   events: Event[];
   bands: Band[];
   photographers: string[];
   companies?: Company[];
+  availableFilters?: AvailableFilters;
   selectedEventId: string | null;
   selectedBandId: string | null;
   selectedPhotographer: string | null;
@@ -28,6 +38,7 @@ export function PhotoFilters({
   bands,
   photographers,
   companies = [],
+  availableFilters,
   selectedEventId,
   selectedBandId,
   selectedPhotographer,
@@ -43,23 +54,90 @@ export function PhotoFilters({
     ? bands.filter((b) => b.event_id === selectedEventId)
     : bands;
 
+  // Create sets of available IDs for quick lookup
+  const availableCompanySlugs = new Set(
+    availableFilters?.companies.map((c) => c.slug) || []
+  );
+  const availableEventIds = new Set(
+    availableFilters?.events.map((e) => e.id) || []
+  );
+  const availableBandIds = new Set(
+    availableFilters?.bands.map((b) => b.id) || []
+  );
+  const availablePhotographerNames = new Set(
+    availableFilters?.photographers.map((p) => p.name) || []
+  );
+
+  // Determine which filters have available options
+  const hasAvailableCompanies =
+    !availableFilters ||
+    availableFilters.companies.length > 0 ||
+    availableFilters.hasPhotosWithoutCompany;
+  const hasAvailableEvents =
+    !availableFilters || availableFilters.events.length > 0;
+  const hasAvailableBands =
+    !availableFilters ||
+    availableFilters.bands.length > 0 ||
+    availableFilters.hasPhotosWithoutBand;
+  const hasAvailablePhotographers =
+    !availableFilters || availableFilters.photographers.length > 0;
+
   // Get display names for active filters
   const selectedEventName = events.find((e) => e.id === selectedEventId)?.name;
-  const selectedBandName = filteredBands.find(
-    (b) => b.id === selectedBandId
-  )?.name;
-  const selectedCompanyName = companies.find(
-    (c) => c.slug === selectedCompanySlug
-  )?.name;
+  const selectedBandName =
+    selectedBandId === "none"
+      ? "No Band"
+      : filteredBands.find((b) => b.id === selectedBandId)?.name;
+  const selectedCompanyName =
+    selectedCompanySlug === "none"
+      ? "No Company"
+      : companies.find((c) => c.slug === selectedCompanySlug)?.name;
   const hasActiveFilters =
     selectedEventId ||
     selectedBandId ||
     selectedPhotographer ||
     selectedCompanySlug;
 
+  const selectClassName =
+    "w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat";
+
   return (
     <div className="bg-bg-elevated rounded-xl p-4 border border-white/5">
       <div className="flex flex-wrap gap-4">
+        {/* Company filter - first */}
+        {companies.length > 0 && (
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
+              Company
+            </label>
+            <select
+              value={selectedCompanySlug || ""}
+              onChange={(e) => onCompanyChange(e.target.value || null)}
+              disabled={loading || !hasAvailableCompanies}
+              className={selectClassName}
+            >
+              <option value="">All Companies</option>
+              {availableFilters?.hasPhotosWithoutCompany && (
+                <option value="none">No Company</option>
+              )}
+              {companies.map((company) => {
+                const isAvailable =
+                  !availableFilters || availableCompanySlugs.has(company.slug);
+                return (
+                  <option
+                    key={company.slug}
+                    value={company.slug}
+                    disabled={!isAvailable}
+                  >
+                    {company.name}
+                    {!isAvailable ? " (0)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+
         {/* Event filter */}
         <div className="flex-1 min-w-[180px]">
           <label className="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
@@ -68,15 +146,20 @@ export function PhotoFilters({
           <select
             value={selectedEventId || ""}
             onChange={(e) => onEventChange(e.target.value || null)}
-            disabled={loading}
-            className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
+            disabled={loading || !hasAvailableEvents}
+            className={selectClassName}
           >
             <option value="">All Events</option>
-            {events.map((event) => (
-              <option key={event.id} value={event.id}>
-                {event.name}
-              </option>
-            ))}
+            {events.map((event) => {
+              const isAvailable =
+                !availableFilters || availableEventIds.has(event.id);
+              return (
+                <option key={event.id} value={event.id} disabled={!isAvailable}>
+                  {event.name}
+                  {!isAvailable ? " (0)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -88,19 +171,27 @@ export function PhotoFilters({
           <select
             value={selectedBandId || ""}
             onChange={(e) => onBandChange(e.target.value || null)}
-            disabled={loading || filteredBands.length === 0}
-            className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
+            disabled={loading || !hasAvailableBands}
+            className={selectClassName}
           >
             <option value="">All Bands</option>
-            {filteredBands.map((band) => (
-              <option key={band.id} value={band.id}>
-                {band.name}
-              </option>
-            ))}
+            {availableFilters?.hasPhotosWithoutBand && (
+              <option value="none">No Band</option>
+            )}
+            {filteredBands.map((band) => {
+              const isAvailable =
+                !availableFilters || availableBandIds.has(band.id);
+              return (
+                <option key={band.id} value={band.id} disabled={!isAvailable}>
+                  {band.name}
+                  {!isAvailable ? " (0)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 
-        {/* Photographer filter */}
+        {/* Photographer filter - last */}
         <div className="flex-1 min-w-[180px]">
           <label className="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
             Photographer
@@ -108,39 +199,27 @@ export function PhotoFilters({
           <select
             value={selectedPhotographer || ""}
             onChange={(e) => onPhotographerChange(e.target.value || null)}
-            disabled={loading || photographers.length === 0}
-            className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
+            disabled={loading || !hasAvailablePhotographers}
+            className={selectClassName}
           >
             <option value="">All Photographers</option>
-            {photographers.map((photographer) => (
-              <option key={photographer} value={photographer}>
-                {photographer}
-              </option>
-            ))}
+            {photographers.map((photographer) => {
+              const isAvailable =
+                !availableFilters ||
+                availablePhotographerNames.has(photographer);
+              return (
+                <option
+                  key={photographer}
+                  value={photographer}
+                  disabled={!isAvailable}
+                >
+                  {photographer}
+                  {!isAvailable ? " (0)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
-
-        {/* Company filter */}
-        {companies.length > 0 && (
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
-              Company
-            </label>
-            <select
-              value={selectedCompanySlug || ""}
-              onChange={(e) => onCompanyChange(e.target.value || null)}
-              disabled={loading}
-              className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
-            >
-              <option value="">All Companies</option>
-              {companies.map((company) => (
-                <option key={company.slug} value={company.slug}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
 
         {/* Clear filters button */}
         <div className="flex items-end">
@@ -159,9 +238,21 @@ export function PhotoFilters({
         </div>
       </div>
 
-      {/* Active Filters Pills */}
+      {/* Active Filters Pills - order: Company > Event > Band > Photographer */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-white/5">
+          {selectedCompanyName && (
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+              {selectedCompanyName}
+              <button
+                onClick={() => onCompanyChange(null)}
+                className="hover:text-white transition-colors"
+                aria-label={`Remove ${selectedCompanyName} filter`}
+              >
+                ×
+              </button>
+            </span>
+          )}
           {selectedEventName && (
             <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
               {selectedEventName}
@@ -193,18 +284,6 @@ export function PhotoFilters({
                 onClick={() => onPhotographerChange(null)}
                 className="hover:text-white transition-colors"
                 aria-label={`Remove ${selectedPhotographer} filter`}
-              >
-                ×
-              </button>
-            </span>
-          )}
-          {selectedCompanyName && (
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
-              {selectedCompanyName}
-              <button
-                onClick={() => onCompanyChange(null)}
-                className="hover:text-white transition-colors"
-                aria-label={`Remove ${selectedCompanyName} filter`}
               >
                 ×
               </button>

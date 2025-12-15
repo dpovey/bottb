@@ -7,6 +7,7 @@ import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
 import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge } from "@/components/ui";
+import { PhotoStrip } from "@/components/photos/photo-strip";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -258,7 +259,7 @@ export default function EventPage() {
                   </Button>
                 </Link>
               )}
-              <Link href="/photos">
+              <Link href={`/photos?event=${eventId}`}>
                 <Button variant="outline" size="lg">
                   View Photos
                 </Button>
@@ -388,6 +389,9 @@ export default function EventPage() {
           )}
         </div>
       </section>
+
+      {/* Photos Section */}
+      <PhotoStrip eventId={eventId as string} />
     </WebLayout>
   );
 }

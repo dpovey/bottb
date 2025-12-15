@@ -26,6 +26,13 @@ const LABEL_INFO = {
   },
 } as const;
 
+interface FilterNames {
+  eventName?: string | null;
+  bandName?: string | null;
+  photographer?: string | null;
+  companyName?: string | null;
+}
+
 interface PhotoSlideshowProps {
   photos: Photo[];
   initialIndex: number;
@@ -37,10 +44,15 @@ interface PhotoSlideshowProps {
     photographer?: string | null;
     companySlug?: string | null;
   };
+  filterNames?: FilterNames;
   onClose: () => void;
   onPhotoDeleted?: (photoId: string) => void;
   onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void;
   onPhotoChange?: (photoId: string) => void;
+  onFilterChange?: (
+    filterType: "event" | "band" | "photographer" | "company",
+    value: string | null
+  ) => void;
 }
 
 const PAGE_SIZE = 50;
@@ -52,10 +64,12 @@ export function PhotoSlideshow({
   totalPhotos,
   currentPage,
   filters,
+  filterNames,
   onClose,
   onPhotoDeleted,
   onPhotoCropped,
   onPhotoChange,
+  onFilterChange,
 }: PhotoSlideshowProps) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin ?? false;
@@ -64,7 +78,9 @@ export function PhotoSlideshow({
   const [allPhotos, setAllPhotos] = useState<Photo[]>(initialPhotos);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [direction, setDirection] = useState(0);
-  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set([currentPage]));
+  const [loadedPages, setLoadedPages] = useState<Set<number>>(
+    new Set([currentPage])
+  );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(totalPhotos);
 
@@ -73,7 +89,10 @@ export function PhotoSlideshow({
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Track the most recently cropped photo to ensure immediate update
-  const [lastCroppedPhoto, setLastCroppedPhoto] = useState<{id: string, url: string} | null>(null);
+  const [lastCroppedPhoto, setLastCroppedPhoto] = useState<{
+    id: string;
+    url: string;
+  } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Crop state
@@ -91,7 +110,10 @@ export function PhotoSlideshow({
   // Hero labels state
   const [showLabelsModal, setShowLabelsModal] = useState(false);
   const [photoLabels, setPhotoLabels] = useState<string[]>([]);
-  const [heroFocalPoint, setHeroFocalPoint] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [heroFocalPoint, setHeroFocalPoint] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 50, y: 50 });
   const [isLoadingLabels, setIsLoadingLabels] = useState(false);
   const [isSavingLabels, setIsSavingLabels] = useState(false);
   const [isSavingFocalPoint, setIsSavingFocalPoint] = useState(false);
@@ -100,53 +122,59 @@ export function PhotoSlideshow({
   const focalPointPreviewRef = useRef<HTMLDivElement>(null);
 
   // Generate cropped preview when crop area changes
-  const generateCropPreview = useCallback(async (pixelCrop: Area, imageSrc: string) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    
-    return new Promise<string>((resolve, reject) => {
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Could not get canvas context"));
-          return;
-        }
+  const generateCropPreview = useCallback(
+    async (pixelCrop: Area, imageSrc: string) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
 
-        // Set canvas size to 80x80 for preview
-        canvas.width = 80;
-        canvas.height = 80;
+      return new Promise<string>((resolve, reject) => {
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Could not get canvas context"));
+            return;
+          }
 
-        // Draw the cropped region scaled to 80x80
-        ctx.drawImage(
-          image,
-          pixelCrop.x,
-          pixelCrop.y,
-          pixelCrop.width,
-          pixelCrop.height,
-          0,
-          0,
-          80,
-          80
-        );
+          // Set canvas size to 80x80 for preview
+          canvas.width = 80;
+          canvas.height = 80;
 
-        resolve(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      image.onerror = () => reject(new Error("Failed to load image"));
-      image.src = imageSrc;
-    });
-  }, []);
+          // Draw the cropped region scaled to 80x80
+          ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            80,
+            80
+          );
+
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        image.onerror = () => reject(new Error("Failed to load image"));
+        image.src = imageSrc;
+      });
+    },
+    []
+  );
 
   // Update preview when crop changes (debounced)
   useEffect(() => {
     if (!showCropModal || !croppedAreaPixels) return;
-    
+
     const currentPhoto = allPhotos[currentIndex];
     if (!currentPhoto) return;
 
     const timeoutId = setTimeout(async () => {
       try {
-        const previewUrl = await generateCropPreview(croppedAreaPixels, currentPhoto.blob_url);
+        const previewUrl = await generateCropPreview(
+          croppedAreaPixels,
+          currentPhoto.blob_url
+        );
         setCropPreviewUrl(previewUrl);
       } catch (_error) {
         // Preview generation failed - not critical
@@ -154,7 +182,13 @@ export function PhotoSlideshow({
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [croppedAreaPixels, showCropModal, currentIndex, allPhotos, generateCropPreview]);
+  }, [
+    croppedAreaPixels,
+    showCropModal,
+    currentIndex,
+    allPhotos,
+    generateCropPreview,
+  ]);
 
   // Clear preview when modal closes
   useEffect(() => {
@@ -167,28 +201,34 @@ export function PhotoSlideshow({
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Fetch a specific page of photos
-  const fetchPage = useCallback(async (page: number): Promise<Photo[]> => {
-    const params = new URLSearchParams();
-    if (filters.eventId) params.set("eventId", filters.eventId);
-    if (filters.bandId) params.set("bandId", filters.bandId);
-    if (filters.photographer) params.set("photographer", filters.photographer);
-    params.set("page", page.toString());
-    params.set("limit", PAGE_SIZE.toString());
+  const fetchPage = useCallback(
+    async (page: number): Promise<Photo[]> => {
+      const params = new URLSearchParams();
+      if (filters.eventId) params.set("event", filters.eventId);
+      if (filters.bandId) params.set("band", filters.bandId);
+      if (filters.photographer)
+        params.set("photographer", filters.photographer);
+      if (filters.companySlug) params.set("company", filters.companySlug);
+      params.set("page", page.toString());
+      params.set("limit", PAGE_SIZE.toString());
 
-    const res = await fetch(`/api/photos?${params.toString()}`);
-    if (!res.ok) return [];
+      const res = await fetch(`/api/photos?${params.toString()}`);
+      if (!res.ok) return [];
 
-    const data = await res.json();
-    setTotalCount(data.pagination.total);
-    return data.photos;
-  }, [filters]);
+      const data = await res.json();
+      setTotalCount(data.pagination.total);
+      return data.photos;
+    },
+    [filters]
+  );
 
   // Load next page
   const loadNextPage = useCallback(async () => {
     const nextPage = Math.max(...Array.from(loadedPages)) + 1;
     const maxPage = Math.ceil(totalCount / PAGE_SIZE);
 
-    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore) return;
+    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore)
+      return;
 
     setIsLoadingMore(true);
     try {
@@ -234,16 +274,22 @@ export function PhotoSlideshow({
     }
   }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage]);
 
-  const goToIndex = useCallback((index: number) => {
-    setDirection(index > currentIndex ? 1 : -1);
-    setCurrentIndex(index);
-  }, [currentIndex]);
+  const goToIndex = useCallback(
+    (index: number) => {
+      setDirection(index > currentIndex ? 1 : -1);
+      setCurrentIndex(index);
+    },
+    [currentIndex]
+  );
 
   const goToNext = useCallback(() => {
     if (currentIndex < allPhotos.length - 1) {
       setDirection(1);
       setCurrentIndex((prev) => prev + 1);
-    } else if (currentIndex === allPhotos.length - 1 && allPhotos.length < totalCount) {
+    } else if (
+      currentIndex === allPhotos.length - 1 &&
+      allPhotos.length < totalCount
+    ) {
       // At the end but more photos exist - they're loading
       // Could show a loading indicator
     }
@@ -366,9 +412,12 @@ export function PhotoSlideshow({
   };
 
   // Handle crop completion callback
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  const onCropComplete = useCallback(
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
   // Handle saving the crop
   const handleSaveCrop = async () => {
@@ -382,7 +431,9 @@ export function PhotoSlideshow({
       // Get the image dimensions to calculate percentages
       const img = new Image();
       img.src = photoToCrop.blob_url;
-      await new Promise((resolve) => { img.onload = resolve; });
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
 
       // Convert pixel coordinates to percentages
       const cropArea = {
@@ -426,7 +477,9 @@ export function PhotoSlideshow({
       setZoom(1);
       setCroppedAreaPixels(null);
     } catch (error) {
-      setCropError(error instanceof Error ? error.message : "Failed to save crop");
+      setCropError(
+        error instanceof Error ? error.message : "Failed to save crop"
+      );
     } finally {
       setIsSavingCrop(false);
     }
@@ -445,7 +498,9 @@ export function PhotoSlideshow({
       setPhotoLabels(data.labels || []);
       setHeroFocalPoint(data.heroFocalPoint || { x: 50, y: 50 });
     } catch (error) {
-      setLabelsError(error instanceof Error ? error.message : "Failed to load labels");
+      setLabelsError(
+        error instanceof Error ? error.message : "Failed to load labels"
+      );
     } finally {
       setIsLoadingLabels(false);
     }
@@ -461,20 +516,35 @@ export function PhotoSlideshow({
   }, [allPhotos, currentIndex, fetchPhotoLabels]);
 
   // Calculate focal point position from mouse event
-  const calculateFocalPoint = useCallback((e: React.MouseEvent<HTMLDivElement> | MouseEvent, element: HTMLDivElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-    return { x, y };
-  }, []);
+  const calculateFocalPoint = useCallback(
+    (
+      e: React.MouseEvent<HTMLDivElement> | MouseEvent,
+      element: HTMLDivElement
+    ) => {
+      const rect = element.getBoundingClientRect();
+      const x = Math.max(
+        0,
+        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
+      );
+      const y = Math.max(
+        0,
+        Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
+      );
+      return { x, y };
+    },
+    []
+  );
 
   // Handle focal point drag start
-  const handleFocalPointMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingFocalPoint(true);
-    const newPoint = calculateFocalPoint(e, e.currentTarget);
-    setHeroFocalPoint(newPoint);
-  }, [calculateFocalPoint]);
+  const handleFocalPointMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDraggingFocalPoint(true);
+      const newPoint = calculateFocalPoint(e, e.currentTarget);
+      setHeroFocalPoint(newPoint);
+    },
+    [calculateFocalPoint]
+  );
 
   // Handle focal point drag
   useEffect(() => {
@@ -525,11 +595,15 @@ export function PhotoSlideshow({
       // Update the photo in local state
       setAllPhotos((prev) =>
         prev.map((p) =>
-          p.id === photo.id ? { ...p, hero_focal_point: result.heroFocalPoint } : p
+          p.id === photo.id
+            ? { ...p, hero_focal_point: result.heroFocalPoint }
+            : p
         )
       );
     } catch (error) {
-      setLabelsError(error instanceof Error ? error.message : "Failed to save focal point");
+      setLabelsError(
+        error instanceof Error ? error.message : "Failed to save focal point"
+      );
     } finally {
       setIsSavingFocalPoint(false);
     }
@@ -609,9 +683,9 @@ export function PhotoSlideshow({
       <div className="absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Photo Info */}
-          <div>
+          <div className="flex-shrink-0">
             {currentPhoto.band_name && currentPhoto.band_id ? (
-              <Link 
+              <Link
                 href={`/band/${currentPhoto.band_id}`}
                 className="font-medium text-lg hover:text-accent transition-colors"
               >
@@ -621,20 +695,107 @@ export function PhotoSlideshow({
               <h2 className="font-medium text-lg">{currentPhoto.band_name}</h2>
             ) : null}
             <p className="text-sm text-text-muted">
-              {currentPhoto.event_name && <span>{currentPhoto.event_name}</span>}
-              {currentPhoto.event_name && currentPhoto.photographer && <span> • </span>}
-              {currentPhoto.photographer && <span>Photo by {currentPhoto.photographer}</span>}
+              {currentPhoto.event_name && (
+                <span>{currentPhoto.event_name}</span>
+              )}
+              {currentPhoto.event_name && currentPhoto.photographer && (
+                <span> • </span>
+              )}
+              {currentPhoto.photographer && (
+                <span>Photo by {currentPhoto.photographer}</span>
+              )}
             </p>
           </div>
+
+          {/* Active Filter Pills */}
+          {(filterNames?.companyName ||
+            filterNames?.eventName ||
+            filterNames?.bandName ||
+            filterNames?.photographer) && (
+            <div className="hidden md:flex flex-wrap gap-2 mx-4 flex-1 justify-center">
+              {filterNames?.companyName && (
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+                  {filterNames.companyName}
+                  {onFilterChange && (
+                    <button
+                      onClick={() => onFilterChange("company", null)}
+                      className="hover:text-white transition-colors"
+                      aria-label={`Remove ${filterNames.companyName} filter`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              )}
+              {filterNames?.eventName && (
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+                  {filterNames.eventName}
+                  {onFilterChange && (
+                    <button
+                      onClick={() => onFilterChange("event", null)}
+                      className="hover:text-white transition-colors"
+                      aria-label={`Remove ${filterNames.eventName} filter`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              )}
+              {filterNames?.bandName && (
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+                  {filterNames.bandName}
+                  {onFilterChange && (
+                    <button
+                      onClick={() => onFilterChange("band", null)}
+                      className="hover:text-white transition-colors"
+                      aria-label={`Remove ${filterNames.bandName} filter`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              )}
+              {filterNames?.photographer && (
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+                  {filterNames.photographer}
+                  {onFilterChange && (
+                    <button
+                      onClick={() => onFilterChange("photographer", null)}
+                      className="hover:text-white transition-colors"
+                      aria-label={`Remove ${filterNames.photographer} filter`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Counter & Controls */}
           <div className="flex items-center gap-4">
             <span className="text-sm text-text-muted">
-              <span className="text-white font-medium">{displayPosition}</span> / {totalCount}
+              <span className="text-white font-medium">{displayPosition}</span>{" "}
+              / {totalCount}
               {isLoadingMore && (
-                <svg className="inline-block ml-2 animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="inline-block ml-2 animate-spin w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               )}
             </span>
@@ -648,12 +809,32 @@ export function PhotoSlideshow({
                 title="Copy link"
               >
                 {linkCopied ? (
-                  <svg className="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-5 h-5 text-success"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
                   </svg>
                 )}
               </button>
@@ -663,8 +844,18 @@ export function PhotoSlideshow({
                 aria-label="Download high-resolution image"
                 title="Download"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
                 </svg>
               </button>
             </div>
@@ -678,8 +869,18 @@ export function PhotoSlideshow({
                   aria-label="Set as hero image (Admin)"
                   title="Hero Labels (Admin)"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    />
                   </svg>
                   {/* Indicator dot if photo has any hero labels */}
                   {currentPhoto?.labels && currentPhoto.labels.length > 0 && (
@@ -692,11 +893,26 @@ export function PhotoSlideshow({
                   aria-label="Adjust thumbnail crop (Admin)"
                   title="Edit crop (Admin)"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
                     {/* Corner brackets */}
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M4 16v2a2 2 0 002 2h2M16 20h2a2 2 0 002-2v-2" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M4 16v2a2 2 0 002 2h2M16 20h2a2 2 0 002-2v-2"
+                    />
                     {/* Centered + sign */}
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6M12 9v6" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 12h6M12 9v6"
+                    />
                   </svg>
                 </button>
                 <button
@@ -705,8 +921,18 @@ export function PhotoSlideshow({
                   aria-label="Delete photo (Admin)"
                   title="Delete photo (Admin)"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </button>
               </div>
@@ -719,8 +945,18 @@ export function PhotoSlideshow({
               aria-label="Close slideshow"
               title="Close"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -736,8 +972,18 @@ export function PhotoSlideshow({
           className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous photo"
         >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
 
@@ -767,32 +1013,45 @@ export function PhotoSlideshow({
           className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next photo"
         >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </button>
       </div>
 
       {/* Thumbnail Strip - hidden on mobile, shown on desktop */}
-      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 py-3 px-6">
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 py-2 px-6">
         <div
           ref={thumbnailStripRef}
-          className="flex gap-2 overflow-x-auto"
+          className="flex gap-3 overflow-x-auto py-1"
           style={{ scrollbarWidth: "thin" }}
         >
           {allPhotos.map((photo, index) => {
             // Use freshly cropped URL if available, otherwise use stored thumbnail
-            const thumbSrc = lastCroppedPhoto?.id === photo.id 
-              ? lastCroppedPhoto.url 
-              : (photo.thumbnail_url || photo.blob_url);
+            const thumbSrc =
+              lastCroppedPhoto?.id === photo.id
+                ? lastCroppedPhoto.url
+                : photo.thumbnail_url || photo.blob_url;
             return (
               <button
                 key={`${index}-${photo.id}`}
-                ref={(el) => { thumbnailRefs.current[index] = el; }}
+                ref={(el) => {
+                  thumbnailRefs.current[index] = el;
+                }}
                 onClick={() => goToIndex(index)}
-                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
                   index === currentIndex
-                    ? "ring-2 ring-accent ring-offset-2 ring-offset-black"
+                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90 scale-105"
                     : "opacity-50 hover:opacity-75"
                 }`}
                 aria-label={`Go to photo ${index + 1}`}
@@ -811,9 +1070,24 @@ export function PhotoSlideshow({
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="shrink-0 w-16 h-16 rounded-lg bg-bg-elevated flex items-center justify-center">
-              <svg className="animate-spin w-5 h-5 text-text-dim" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin w-5 h-5 text-text-dim"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
             </div>
           )}
@@ -826,13 +1100,26 @@ export function PhotoSlideshow({
           <div className="bg-bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-6 h-6 text-error"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 className="font-semibold text-xl mb-1">Delete Photo?</h3>
-                <p className="text-text-muted text-sm">This action cannot be undone. The photo will be permanently removed from the gallery.</p>
+                <p className="text-text-muted text-sm">
+                  This action cannot be undone. The photo will be permanently
+                  removed from the gallery.
+                </p>
               </div>
             </div>
 
@@ -860,9 +1147,24 @@ export function PhotoSlideshow({
               >
                 {isDeleting ? (
                   <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg
+                      className="animate-spin w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Deleting...
                   </>
@@ -901,9 +1203,24 @@ export function PhotoSlideshow({
               >
                 {isSavingCrop ? (
                   <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg
+                      className="animate-spin w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Saving...
                   </>
@@ -933,7 +1250,9 @@ export function PhotoSlideshow({
           {/* Crop Preview */}
           <div className="flex items-center justify-center gap-8 px-6 py-4 border-t border-white/10">
             <div className="text-center">
-              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">Preview</p>
+              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">
+                Preview
+              </p>
               <div className="w-20 h-20 rounded-lg overflow-hidden border border-white/10">
                 {cropPreviewUrl ? (
                   /* Using <img> for client-side generated data URL from canvas crop */
@@ -951,7 +1270,9 @@ export function PhotoSlideshow({
               </div>
             </div>
             <div>
-              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">Zoom</p>
+              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">
+                Zoom
+              </p>
               <input
                 type="range"
                 min={1}
@@ -977,7 +1298,9 @@ export function PhotoSlideshow({
           <div className="bg-bg-elevated rounded-xl p-6 max-w-3xl w-full border border-white/10 my-auto">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="font-semibold text-xl mb-1">Hero Image Settings</h3>
+                <h3 className="font-semibold text-xl mb-1">
+                  Hero Image Settings
+                </h3>
                 <p className="text-text-muted text-sm">
                   Configure how this photo appears as a hero image
                 </p>
@@ -990,29 +1313,56 @@ export function PhotoSlideshow({
                 className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
                 aria-label="Close"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
 
             {isLoadingLabels ? (
               <div className="flex items-center justify-center py-8">
-                <svg className="animate-spin w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin w-6 h-6 text-accent"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Labels Section */}
                 <div>
-                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">Use as Hero For</h4>
+                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">
+                    Use as Hero For
+                  </h4>
                   <div className="space-y-2">
                     {Object.entries(LABEL_INFO).map(([label, info]) => {
                       const isActive = photoLabels.includes(label);
                       const isDisabled = isSavingLabels;
-                      
+
                       return (
                         <button
                           key={label}
@@ -1022,21 +1372,39 @@ export function PhotoSlideshow({
                             isActive
                               ? "border-accent bg-accent/10 text-white"
                               : "border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10"
-                          } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                          } ${
+                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
                         >
                           <span className="text-xl">{info.icon}</span>
                           <div className="flex-1 text-left">
-                            <div className="font-medium text-sm">{info.name}</div>
-                            <div className="text-xs text-text-dim">{info.description}</div>
+                            <div className="font-medium text-sm">
+                              {info.name}
+                            </div>
+                            <div className="text-xs text-text-dim">
+                              {info.description}
+                            </div>
                           </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            isActive
-                              ? "border-accent bg-accent"
-                              : "border-white/30"
-                          }`}>
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              isActive
+                                ? "border-accent bg-accent"
+                                : "border-white/30"
+                            }`}
+                          >
                             {isActive && (
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
                               </svg>
                             )}
                           </div>
@@ -1049,11 +1417,13 @@ export function PhotoSlideshow({
                   {currentPhoto.band_name && (
                     <div className="mt-4 pt-4 border-t border-white/10">
                       <p className="text-xs text-text-dim">
-                        <span className="text-text-muted">Band:</span> {currentPhoto.band_name}
+                        <span className="text-text-muted">Band:</span>{" "}
+                        {currentPhoto.band_name}
                       </p>
                       {currentPhoto.event_name && (
                         <p className="text-xs text-text-dim mt-1">
-                          <span className="text-text-muted">Event:</span> {currentPhoto.event_name}
+                          <span className="text-text-muted">Event:</span>{" "}
+                          {currentPhoto.event_name}
                         </p>
                       )}
                     </div>
@@ -1062,17 +1432,20 @@ export function PhotoSlideshow({
 
                 {/* Focal Point Section */}
                 <div>
-                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">Focal Point</h4>
+                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">
+                    Focal Point
+                  </h4>
                   <p className="text-xs text-text-dim mb-3">
-                    Click and drag to set where the image should center when cropped for hero display.
+                    Click and drag to set where the image should center when
+                    cropped for hero display.
                   </p>
-                  
+
                   {/* Focal Point Picker */}
-                  <div 
+                  <div
                     ref={focalPointPreviewRef}
                     className={`relative w-full aspect-video rounded-lg overflow-hidden border transition-colors select-none ${
-                      isDraggingFocalPoint 
-                        ? "border-accent cursor-grabbing" 
+                      isDraggingFocalPoint
+                        ? "border-accent cursor-grabbing"
                         : "border-white/10 cursor-crosshair hover:border-white/30"
                     }`}
                     onMouseDown={handleFocalPointMouseDown}
@@ -1084,28 +1457,35 @@ export function PhotoSlideshow({
                       alt="Focal point picker"
                       className="w-full h-full object-cover pointer-events-none"
                       draggable={false}
-                      style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+                      style={{
+                        objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
+                      }}
                     />
-                    
+
                     {/* Focal point indicator */}
-                    <div 
+                    <div
                       className={`absolute w-8 h-8 -ml-4 -mt-4 pointer-events-none transition-transform ${
                         isDraggingFocalPoint ? "scale-125" : ""
                       }`}
-                      style={{ left: `${heroFocalPoint.x}%`, top: `${heroFocalPoint.y}%` }}
+                      style={{
+                        left: `${heroFocalPoint.x}%`,
+                        top: `${heroFocalPoint.y}%`,
+                      }}
                     >
-                      <div className={`absolute inset-0 rounded-full border-2 border-white shadow-lg ${
-                        isDraggingFocalPoint ? "" : "animate-pulse"
-                      }`} />
+                      <div
+                        className={`absolute inset-0 rounded-full border-2 border-white shadow-lg ${
+                          isDraggingFocalPoint ? "" : "animate-pulse"
+                        }`}
+                      />
                       <div className="absolute inset-2 rounded-full bg-accent" />
                     </div>
 
                     {/* Crosshair guides */}
-                    <div 
+                    <div
                       className="absolute inset-y-0 w-px bg-white/30 pointer-events-none"
                       style={{ left: `${heroFocalPoint.x}%` }}
                     />
-                    <div 
+                    <div
                       className="absolute inset-x-0 h-px bg-white/30 pointer-events-none"
                       style={{ top: `${heroFocalPoint.y}%` }}
                     />
@@ -1113,7 +1493,9 @@ export function PhotoSlideshow({
 
                   {/* Hero Preview */}
                   <div className="mt-4">
-                    <p className="text-xs text-text-dim mb-2">Preview (wide hero crop):</p>
+                    <p className="text-xs text-text-dim mb-2">
+                      Preview (wide hero crop):
+                    </p>
                     <div className="relative w-full h-16 rounded-lg overflow-hidden border border-white/10">
                       {/* Using <img> for dynamic object-position styling */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1121,7 +1503,9 @@ export function PhotoSlideshow({
                         src={currentPhoto.blob_url}
                         alt="Hero preview"
                         className="w-full h-full object-cover"
-                        style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+                        style={{
+                          objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     </div>
@@ -1135,9 +1519,24 @@ export function PhotoSlideshow({
                   >
                     {isSavingFocalPoint ? (
                       <>
-                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        <svg
+                          className="animate-spin w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
                         </svg>
                         Saving...
                       </>
@@ -1147,7 +1546,8 @@ export function PhotoSlideshow({
                   </button>
 
                   <p className="text-xs text-text-dim mt-2 text-center">
-                    Position: {Math.round(heroFocalPoint.x)}%, {Math.round(heroFocalPoint.y)}%
+                    Position: {Math.round(heroFocalPoint.x)}%,{" "}
+                    {Math.round(heroFocalPoint.y)}%
                   </p>
                 </div>
               </div>

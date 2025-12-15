@@ -120,16 +120,16 @@ export interface FinalizedResult {
   avg_song_choice: number | null;
   avg_performance: number | null;
   avg_crowd_vibe: number | null;
-  avg_visuals: number | null;  // 2026.1 scoring
+  avg_visuals: number | null; // 2026.1 scoring
   crowd_vote_count: number;
   judge_vote_count: number;
   total_crowd_votes: number;
-  crowd_noise_energy: number | null;  // 2025.1 scoring
-  crowd_noise_peak: number | null;    // 2025.1 scoring
-  crowd_noise_score: number | null;   // 2025.1 scoring
+  crowd_noise_energy: number | null; // 2025.1 scoring
+  crowd_noise_peak: number | null; // 2025.1 scoring
+  crowd_noise_score: number | null; // 2025.1 scoring
   judge_score: number | null;
   crowd_score: number | null;
-  visuals_score: number | null;  // 2026.1 scoring
+  visuals_score: number | null; // 2026.1 scoring
   total_score: number | null;
   finalized_at: string;
 }
@@ -437,15 +437,38 @@ export interface GetPhotosOptions {
   offset?: number;
 }
 
-export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]> {
-  const { eventId, bandId, photographer, companySlug, limit = 50, offset = 0 } = options;
+export async function getPhotos(
+  options: GetPhotosOptions = {}
+): Promise<Photo[]> {
+  const {
+    eventId,
+    bandId,
+    photographer,
+    companySlug,
+    limit = 50,
+    offset = 0,
+  } = options;
 
   try {
     // Build query based on filters
     // Note: @vercel/postgres doesn't support query chaining, so we use separate queries
-    
-    // Company filter - photos from bands belonging to a company
-    if (companySlug) {
+    // Special value "none" means filter for NULL values
+
+    // Company filter - photos from bands belonging to a company (or no company)
+    if (companySlug === "none") {
+      // Filter for photos without a company (band has no company OR photo has no band)
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (companySlug) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
@@ -453,6 +476,32 @@ export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
         WHERE b.company_slug = ${companySlug}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (bandId === "none" && eventId) {
+      // Filter for photos without a band, for specific event
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id IS NULL AND p.event_id = ${eventId}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (bandId === "none") {
+      // Filter for photos without a band, all events
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE p.band_id IS NULL
         ORDER BY p.uploaded_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `;
@@ -540,17 +589,41 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
   }
 }
 
-export async function getPhotoCount(options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}): Promise<number> {
+export async function getPhotoCount(
+  options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
+): Promise<number> {
   const { eventId, bandId, photographer, companySlug } = options;
 
   try {
-    // Company filter - count photos from bands belonging to a company
-    if (companySlug) {
+    // Company filter - count photos from bands belonging to a company (or no company)
+    if (companySlug === "none") {
+      // Filter for photos without a company
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count 
+        FROM photos p
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (companySlug) {
       const { rows } = await sql<{ count: string }>`
         SELECT COUNT(*) as count 
         FROM photos p
         JOIN bands b ON p.band_id = b.id
         WHERE b.company_slug = ${companySlug}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (bandId === "none" && eventId) {
+      // Filter for photos without a band, for specific event
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos 
+        WHERE band_id IS NULL AND event_id = ${eventId}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (bandId === "none") {
+      // Filter for photos without a band, all events
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count FROM photos WHERE band_id IS NULL
       `;
       return parseInt(rows[0]?.count || "0", 10);
     } else if (eventId && bandId) {
@@ -592,9 +665,119 @@ export async function getDistinctPhotographers(): Promise<string[]> {
       WHERE photographer IS NOT NULL 
       ORDER BY photographer
     `;
-    return rows.map(r => r.photographer);
+    return rows.map((r) => r.photographer);
   } catch (error) {
     console.error("Error fetching photographers:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get available filter options based on current filters.
+ * Returns options that have matching photos given the current filter context.
+ */
+export interface AvailablePhotoFilters {
+  companies: { slug: string; name: string; count: number }[];
+  events: { id: string; name: string; count: number }[];
+  bands: { id: string; name: string; count: number }[];
+  photographers: { name: string; count: number }[];
+  hasPhotosWithoutBand: boolean;
+  hasPhotosWithoutCompany: boolean;
+}
+
+export async function getAvailablePhotoFilters(
+  _options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
+): Promise<AvailablePhotoFilters> {
+  try {
+    // Run all queries in parallel for better performance
+    // Note: We return all available options and let the UI handle filtering
+    // This is simpler and avoids complex dynamic SQL that @vercel/postgres doesn't support well
+
+    const [
+      companiesResult,
+      eventsResult,
+      bandsResult,
+      photographersResult,
+      noBandResult,
+      noCompanyResult,
+    ] = await Promise.all([
+      // Get all companies that have photos
+      sql<{ slug: string; name: string; count: string }>`
+        SELECT c.slug, c.name, COUNT(DISTINCT p.id)::text as count
+        FROM photos p
+        INNER JOIN bands b ON p.band_id = b.id
+        INNER JOIN companies c ON b.company_slug = c.slug
+        GROUP BY c.slug, c.name
+        ORDER BY c.name
+      `,
+
+      // Get all events that have photos
+      sql<{ id: string; name: string; count: string }>`
+        SELECT e.id, e.name, COUNT(p.id)::text as count
+        FROM photos p
+        INNER JOIN events e ON p.event_id = e.id
+        GROUP BY e.id, e.name
+        ORDER BY e.name
+      `,
+
+      // Get all bands that have photos
+      sql<{ id: string; name: string; count: string }>`
+        SELECT b.id, b.name, COUNT(p.id)::text as count
+        FROM photos p
+        INNER JOIN bands b ON p.band_id = b.id
+        GROUP BY b.id, b.name
+        ORDER BY b.name
+      `,
+
+      // Get all photographers that have photos
+      sql<{ name: string; count: string }>`
+        SELECT photographer as name, COUNT(*)::text as count
+        FROM photos
+        WHERE photographer IS NOT NULL
+        GROUP BY photographer
+        ORDER BY photographer
+      `,
+
+      // Check if there are photos without a band
+      sql<{ count: string }>`
+        SELECT COUNT(*)::text as count FROM photos WHERE band_id IS NULL
+      `,
+
+      // Check if there are photos without a company (via band)
+      sql<{ count: string }>`
+        SELECT COUNT(*)::text as count FROM photos p
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE b.company_slug IS NULL OR p.band_id IS NULL
+      `,
+    ]);
+
+    return {
+      companies: companiesResult.rows.map((r) => ({
+        slug: r.slug,
+        name: r.name,
+        count: parseInt(r.count, 10),
+      })),
+      events: eventsResult.rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        count: parseInt(r.count, 10),
+      })),
+      bands: bandsResult.rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        count: parseInt(r.count, 10),
+      })),
+      photographers: photographersResult.rows.map((r) => ({
+        name: r.name,
+        count: parseInt(r.count, 10),
+      })),
+      hasPhotosWithoutBand:
+        parseInt(noBandResult.rows[0]?.count || "0", 10) > 0,
+      hasPhotosWithoutCompany:
+        parseInt(noCompanyResult.rows[0]?.count || "0", 10) > 0,
+    };
+  } catch (error) {
+    console.error("Error fetching available photo filters:", error);
     throw error;
   }
 }
@@ -680,7 +863,7 @@ export async function updateHeroFocalPoint(
     const x = Math.max(0, Math.min(100, focalPoint.x));
     const y = Math.max(0, Math.min(100, focalPoint.y));
     const focalPointJson = JSON.stringify({ x, y });
-    
+
     const { rows } = await sql<Photo>`
       UPDATE photos 
       SET hero_focal_point = ${focalPointJson}::jsonb
@@ -729,7 +912,9 @@ export async function hasFinalizedResults(eventId: string): Promise<boolean> {
 /**
  * Get finalized results for an event
  */
-export async function getFinalizedResults(eventId: string): Promise<FinalizedResult[]> {
+export async function getFinalizedResults(
+  eventId: string
+): Promise<FinalizedResult[]> {
   const { rows } = await sql<FinalizedResult>`
     SELECT * FROM finalized_results 
     WHERE event_id = ${eventId}
@@ -828,10 +1013,18 @@ export async function finalizeEventResults(
         judge_score, crowd_score, visuals_score, total_score
       ) VALUES (
         ${eventId}, ${band.id}, ${band.name}, ${finalRank},
-        ${band.songChoice}, ${band.performance}, ${band.crowdVibe}, ${band.visuals || null},
-        ${Number(band.crowd_vote_count || 0)}, ${Number(band.judge_vote_count || 0)}, ${Number(band.total_crowd_votes || 0)},
-        ${band.crowd_noise_energy || null}, ${band.crowd_noise_peak || null}, ${band.screamOMeterScore || null},
-        ${band.judgeScore}, ${band.crowdVoteScore}, ${band.visualsScore || null}, ${band.totalScore}
+        ${band.songChoice}, ${band.performance}, ${band.crowdVibe}, ${
+      band.visuals || null
+    },
+        ${Number(band.crowd_vote_count || 0)}, ${Number(
+      band.judge_vote_count || 0
+    )}, ${Number(band.total_crowd_votes || 0)},
+        ${band.crowd_noise_energy || null}, ${band.crowd_noise_peak || null}, ${
+      band.screamOMeterScore || null
+    },
+        ${band.judgeScore}, ${band.crowdVoteScore}, ${
+      band.visualsScore || null
+    }, ${band.totalScore}
       )
       RETURNING *
     `;
@@ -882,7 +1075,9 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
 /**
  * Get all bands for a company, with event info
  */
-export async function getCompanyBands(companySlug: string): Promise<(Band & { event_name: string; event_date: string })[]> {
+export async function getCompanyBands(
+  companySlug: string
+): Promise<(Band & { event_name: string; event_date: string })[]> {
   const { rows } = await sql<Band & { event_name: string; event_date: string }>`
     SELECT 
       b.*,
@@ -900,7 +1095,9 @@ export async function getCompanyBands(companySlug: string): Promise<(Band & { ev
 /**
  * Get distinct companies from bands (for filters)
  */
-export async function getDistinctCompanies(): Promise<{ slug: string; name: string }[]> {
+export async function getDistinctCompanies(): Promise<
+  { slug: string; name: string }[]
+> {
   const { rows } = await sql<{ slug: string; name: string }>`
     SELECT DISTINCT c.slug, c.name
     FROM companies c

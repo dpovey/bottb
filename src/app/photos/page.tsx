@@ -13,6 +13,15 @@ interface Company {
   name: string;
 }
 
+interface AvailableFilters {
+  companies: { slug: string; name: string; count: number }[];
+  events: { id: string; name: string; count: number }[];
+  bands: { id: string; name: string; count: number }[];
+  photographers: { name: string; count: number }[];
+  hasPhotosWithoutBand: boolean;
+  hasPhotosWithoutCompany: boolean;
+}
+
 interface PhotosResponse {
   photos: Photo[];
   pagination: {
@@ -23,6 +32,7 @@ interface PhotosResponse {
   };
   photographers: string[];
   companies: Company[];
+  availableFilters?: AvailableFilters;
 }
 
 export default function PhotosPage() {
@@ -32,6 +42,9 @@ export default function PhotosPage() {
   const [bands, setBands] = useState<Band[]>([]);
   const [photographers, setPhotographers] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [availableFilters, setAvailableFilters] = useState<
+    AvailableFilters | undefined
+  >();
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -62,8 +75,9 @@ export default function PhotosPage() {
     if (initializedFromUrl.current) return;
     initializedFromUrl.current = true;
 
-    const eventId = searchParams.get("eventId");
-    const bandId = searchParams.get("bandId");
+    // Support both new (event, band) and legacy (eventId, bandId) param names
+    const eventId = searchParams.get("event") || searchParams.get("eventId");
+    const bandId = searchParams.get("band") || searchParams.get("bandId");
     const photographer = searchParams.get("photographer");
     const company = searchParams.get("company");
     const photoId = searchParams.get("photo");
@@ -78,26 +92,30 @@ export default function PhotosPage() {
   // Update URL when filters change
   const updateUrlParams = useCallback(
     (params: {
-      eventId?: string | null;
-      bandId?: string | null;
+      event?: string | null;
+      band?: string | null;
       photographer?: string | null;
       company?: string | null;
     }) => {
       const url = new URL(window.location.href);
 
-      // Update each param
-      if (params.eventId !== undefined) {
-        if (params.eventId) {
-          url.searchParams.set("eventId", params.eventId);
+      // Update each param using new cleaner names
+      if (params.event !== undefined) {
+        // Remove legacy param if present
+        url.searchParams.delete("eventId");
+        if (params.event) {
+          url.searchParams.set("event", params.event);
         } else {
-          url.searchParams.delete("eventId");
+          url.searchParams.delete("event");
         }
       }
-      if (params.bandId !== undefined) {
-        if (params.bandId) {
-          url.searchParams.set("bandId", params.bandId);
+      if (params.band !== undefined) {
+        // Remove legacy param if present
+        url.searchParams.delete("bandId");
+        if (params.band) {
+          url.searchParams.set("band", params.band);
         } else {
-          url.searchParams.delete("bandId");
+          url.searchParams.delete("band");
         }
       }
       if (params.photographer !== undefined) {
@@ -126,7 +144,7 @@ export default function PhotosPage() {
     (eventId: string | null) => {
       setSelectedEventId(eventId);
       setSelectedBandId(null); // Reset band when event changes
-      updateUrlParams({ eventId, bandId: null });
+      updateUrlParams({ event: eventId, band: null });
     },
     [updateUrlParams]
   );
@@ -134,7 +152,7 @@ export default function PhotosPage() {
   const handleBandChange = useCallback(
     (bandId: string | null) => {
       setSelectedBandId(bandId);
-      updateUrlParams({ bandId });
+      updateUrlParams({ band: bandId });
     },
     [updateUrlParams]
   );
@@ -153,7 +171,7 @@ export default function PhotosPage() {
       // Clear event/band when company changes
       setSelectedEventId(null);
       setSelectedBandId(null);
-      updateUrlParams({ company, eventId: null, bandId: null });
+      updateUrlParams({ company, event: null, band: null });
     },
     [updateUrlParams]
   );
@@ -231,11 +249,11 @@ export default function PhotosPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedEventId) params.set("eventId", selectedEventId);
-      if (selectedBandId) params.set("bandId", selectedBandId);
+      if (selectedEventId) params.set("event", selectedEventId);
+      if (selectedBandId) params.set("band", selectedBandId);
       if (selectedPhotographer)
         params.set("photographer", selectedPhotographer);
-      if (selectedCompanySlug) params.set("companySlug", selectedCompanySlug);
+      if (selectedCompanySlug) params.set("company", selectedCompanySlug);
       params.set("page", pagination.page.toString());
       params.set("limit", pagination.limit.toString());
 
@@ -250,6 +268,7 @@ export default function PhotosPage() {
         }));
         setPhotographers(data.photographers);
         setCompanies(data.companies || []);
+        setAvailableFilters(data.availableFilters);
       }
     } catch (error) {
       console.error("Failed to fetch photos:", error);
@@ -385,6 +404,7 @@ export default function PhotosPage() {
           bands={bands}
           photographers={photographers}
           companies={companies}
+          availableFilters={availableFilters}
           selectedEventId={selectedEventId}
           selectedBandId={selectedBandId}
           selectedPhotographer={selectedPhotographer}
@@ -493,6 +513,34 @@ export default function PhotosPage() {
             bandId: selectedBandId,
             photographer: selectedPhotographer,
             companySlug: selectedCompanySlug,
+          }}
+          filterNames={{
+            eventName: events.find((e) => e.id === selectedEventId)?.name,
+            bandName:
+              selectedBandId === "none"
+                ? "No Band"
+                : bands.find((b) => b.id === selectedBandId)?.name,
+            photographer: selectedPhotographer,
+            companyName:
+              selectedCompanySlug === "none"
+                ? "No Company"
+                : companies.find((c) => c.slug === selectedCompanySlug)?.name,
+          }}
+          onFilterChange={(filterType, value) => {
+            switch (filterType) {
+              case "event":
+                handleEventChange(value);
+                break;
+              case "band":
+                handleBandChange(value);
+                break;
+              case "photographer":
+                handlePhotographerChange(value);
+                break;
+              case "company":
+                handleCompanyChange(value);
+                break;
+            }
           }}
           onClose={handleSlideshowClose}
           onPhotoDeleted={handlePhotoDeleted}

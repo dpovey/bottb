@@ -149,9 +149,12 @@ export default async function ResultsPage({
 
         {/* Back to Event */}
         <section className="py-8 border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-center gap-4">
             <Link href={`/event/${eventId}`}>
               <Button variant="outline">Back to Event</Button>
+            </Link>
+            <Link href={`/photos?event=${eventId}`}>
+              <Button variant="outline">View Photos</Button>
             </Link>
           </div>
         </section>
@@ -395,9 +398,12 @@ export default async function ResultsPage({
 
       {/* Back to Event */}
       <section className="py-8 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-center gap-4">
           <Link href={`/event/${eventId}`}>
             <Button variant="outline">Back to Event</Button>
+          </Link>
+          <Link href={`/photos?event=${eventId}`}>
+            <Button variant="outline">View Photos</Button>
           </Link>
         </div>
       </section>

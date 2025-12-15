@@ -5,6 +5,7 @@ import Image from "next/image";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { CompanyBadge } from "@/components/ui";
+import { PhotoStrip } from "@/components/photos/photo-strip";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -75,7 +76,9 @@ export default async function BandPage({
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
 
   // Fetch band hero photos
-  const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, { bandId });
+  const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {
+    bandId,
+  });
   const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
   const heroPhotoUrl = heroPhoto?.blob_url ?? null;
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
@@ -114,13 +117,16 @@ export default async function BandPage({
     const maxVoteCount = Math.max(
       ...scores.map((s) => Number(s.crowd_vote_count || 0))
     );
-    crowdVoteScore = maxVoteCount > 0
-      ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
-      : 0;
+    crowdVoteScore =
+      maxVoteCount > 0
+        ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
+        : 0;
 
     // Version-specific scores
     if (scoringVersion === "2025.1") {
-      screamOMeterScore = bandScore.crowd_score ? Number(bandScore.crowd_score) : 0;
+      screamOMeterScore = bandScore.crowd_score
+        ? Number(bandScore.crowd_score)
+        : 0;
     } else if (scoringVersion === "2026.1") {
       visualsScore = Number(bandScore.avg_visuals || 0);
     }
@@ -144,7 +150,7 @@ export default async function BandPage({
       Number(bandScore.avg_song_choice || 0) +
       Number(bandScore.avg_performance || 0) +
       Number(bandScore.avg_crowd_vibe || 0);
-    
+
     if (scoringVersion === "2026.1") {
       judgeScore += visualsScore;
     }
@@ -190,7 +196,9 @@ export default async function BandPage({
             alt={`${band.name}`}
             fill
             className="object-cover"
-            style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+            style={{
+              objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
+            }}
             priority
             unoptimized
           />
@@ -242,7 +250,7 @@ export default async function BandPage({
                   />
                 </div>
               )}
-              <Link 
+              <Link
                 href={`/event/${eventId}`}
                 className="text-lg text-text-muted hover:text-accent transition-colors"
               >
@@ -260,313 +268,348 @@ export default async function BandPage({
       {band.description && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-4xl mx-auto px-6 lg:px-8">
-            <p className="text-text-muted text-lg">
-              {band.description}
-            </p>
+            <p className="text-text-muted text-lg">{band.description}</p>
           </div>
         </section>
       )}
 
+      {/* Photos Section */}
+      <PhotoStrip bandId={bandId} />
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-
-        {/* For 2022.1 events - Simple winner/participant display */}
-        {!showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && (
-          <div className={`rounded-2xl p-8 mb-12 text-center ${
-            isWinner 
-              ? "bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 border border-warning/30"
-              : "bg-white/5 border border-white/10"
-          }`}>
-            <h2 className="text-3xl font-bold text-white mb-4">
-              {isWinner ? "🏆 Champion" : "Participant"}
-            </h2>
-            <div className="text-xl text-gray-200">
-              {isWinner 
-                ? `${band.name} won ${band.event_name}!`
-                : "Detailed scoring not available for this event"}
-            </div>
-          </div>
-        )}
-
-        {/* Total Score - Only show for detailed breakdown versions */}
-        {showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && bandScore && (
-          <div className="bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl p-8 mb-12 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">Total Score</h2>
-            <div className="text-6xl font-bold text-white mb-2">
-              {totalScore.toFixed(1)}
-            </div>
-            <div className="text-xl text-gray-200">out of 100 points</div>
-            <p className="text-sm text-gray-400 mt-2">{scoringFormula}</p>
-          </div>
-        )}
-
-        {/* Event Status Message for Non-Admin Users */}
-        {eventStatus !== "finalized" && !isAdmin && (
-          <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-2xl p-8 mb-12 text-center">
-            <h2 className="text-3xl font-bold text-yellow-400 mb-4">
-              {eventStatus === "upcoming"
-                ? "Event Upcoming"
-                : "Event In Progress"}
-            </h2>
-            <div className="text-xl text-yellow-200">
-              Scores will be available after the event is finalized
-            </div>
-          </div>
-        )}
-
-        {/* Score Breakdown - Only show for detailed breakdown versions */}
-        {showDetailedBreakdown && (eventStatus === "finalized" || isAdmin) && bandScore && (
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Judge Scores */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                Judge Scores
-              </h3>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">🎵 Song Choice</span>
-                    <span className="text-white font-bold">
-                      {Number(bandScore.avg_song_choice || 0).toFixed(1)}/20
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-3">
-                    <div
-                      className="bg-green-500 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${songChoicePercent}%` }}
-                    ></div>
-                  </div>
+          {/* For 2022.1 events - Simple winner/participant display */}
+          {!showDetailedBreakdown &&
+            (eventStatus === "finalized" || isAdmin) && (
+              <div
+                className={`rounded-2xl p-8 mb-12 text-center ${
+                  isWinner
+                    ? "bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 border border-warning/30"
+                    : "bg-white/5 border border-white/10"
+                }`}
+              >
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  {isWinner ? "🏆 Champion" : "Participant"}
+                </h2>
+                <div className="text-xl text-gray-200">
+                  {isWinner
+                    ? `${band.name} won ${band.event_name}!`
+                    : "Detailed scoring not available for this event"}
                 </div>
+              </div>
+            )}
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">🎤 Performance</span>
-                    <span className="text-white font-bold">
-                      {Number(bandScore.avg_performance || 0).toFixed(1)}/30
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-3">
-                    <div
-                      className="bg-blue-500 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${performancePercent}%` }}
-                    ></div>
-                  </div>
+          {/* Total Score - Only show for detailed breakdown versions */}
+          {showDetailedBreakdown &&
+            (eventStatus === "finalized" || isAdmin) &&
+            bandScore && (
+              <div className="bg-gradient-to-r from-slate-600 to-slate-700 rounded-2xl p-8 mb-12 text-center">
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  Total Score
+                </h2>
+                <div className="text-6xl font-bold text-white mb-2">
+                  {totalScore.toFixed(1)}
                 </div>
+                <div className="text-xl text-gray-200">out of 100 points</div>
+                <p className="text-sm text-gray-400 mt-2">{scoringFormula}</p>
+              </div>
+            )}
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">🔥 Crowd Vibe</span>
-                    <span className="text-white font-bold">
-                      {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}/{crowdVibeMax}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-3">
-                    <div
-                      className="bg-red-500 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${crowdVibePercent}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Visuals - Only for 2026.1 */}
-                {scoringVersion === "2026.1" && (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-medium">🎨 Visuals</span>
-                      <span className="text-white font-bold">
-                        {visualsScore.toFixed(1)}/20
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-3">
-                      <div
-                        className="bg-purple-500 h-3 rounded-full transition-all duration-1000"
-                        style={{ width: `${visualsPercent}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
+          {/* Event Status Message for Non-Admin Users */}
+          {eventStatus !== "finalized" && !isAdmin && (
+            <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-2xl p-8 mb-12 text-center">
+              <h2 className="text-3xl font-bold text-yellow-400 mb-4">
+                {eventStatus === "upcoming"
+                  ? "Event Upcoming"
+                  : "Event In Progress"}
+              </h2>
+              <div className="text-xl text-yellow-200">
+                Scores will be available after the event is finalized
               </div>
             </div>
+          )}
 
-            {/* Crowd Vote & Special Category */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                Crowd Scoring
-              </h3>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-white font-medium">👥 Crowd Vote</span>
-                    <span className="text-white font-bold">
-                      {Math.round(crowdVoteScore)}/10
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-3">
-                    <div
-                      className="bg-slate-400 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${(crowdVoteScore / 10) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-gray-300 text-sm mt-1">
-                    <span>{bandScore?.crowd_vote_count || 0} votes</span>
-                    <span>{crowdVotePercent.toFixed(1)}% of total votes</span>
-                  </div>
-                </div>
-
-                {/* Scream-o-meter - Only for 2025.1 */}
-                {scoringVersion === "2025.1" && (
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-medium">🔊 Scream-o-meter</span>
-                      <span className="text-white font-bold">
-                        {bandScore.crowd_score
-                          ? `${screamOMeterScore.toFixed(1)}/10`
-                          : "No measurement"}
-                      </span>
+          {/* Score Breakdown - Only show for detailed breakdown versions */}
+          {showDetailedBreakdown &&
+            (eventStatus === "finalized" || isAdmin) &&
+            bandScore && (
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
+                {/* Judge Scores */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
+                  <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                    Judge Scores
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-medium">
+                          🎵 Song Choice
+                        </span>
+                        <span className="text-white font-bold">
+                          {Number(bandScore.avg_song_choice || 0).toFixed(1)}/20
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div
+                          className="bg-green-500 h-3 rounded-full transition-all duration-1000"
+                          style={{ width: `${songChoicePercent}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    {bandScore.crowd_score ? (
-                      <>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-medium">
+                          🎤 Performance
+                        </span>
+                        <span className="text-white font-bold">
+                          {Number(bandScore.avg_performance || 0).toFixed(1)}/30
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div
+                          className="bg-blue-500 h-3 rounded-full transition-all duration-1000"
+                          style={{ width: `${performancePercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-medium">
+                          🔥 Crowd Vibe
+                        </span>
+                        <span className="text-white font-bold">
+                          {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}/
+                          {crowdVibeMax}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div
+                          className="bg-red-500 h-3 rounded-full transition-all duration-1000"
+                          style={{ width: `${crowdVibePercent}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Visuals - Only for 2026.1 */}
+                    {scoringVersion === "2026.1" && (
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-white font-medium">
+                            🎨 Visuals
+                          </span>
+                          <span className="text-white font-bold">
+                            {visualsScore.toFixed(1)}/20
+                          </span>
+                        </div>
                         <div className="w-full bg-gray-700 rounded-full h-3">
                           <div
-                            className="bg-amber-500 h-3 rounded-full transition-all duration-1000"
-                            style={{ width: `${screamOMeterPercent}%` }}
+                            className="bg-purple-500 h-3 rounded-full transition-all duration-1000"
+                            style={{ width: `${visualsPercent}%` }}
                           ></div>
                         </div>
-                        <p className="text-gray-300 text-sm mt-1">
-                          Energy: {Number(bandScore.crowd_noise_energy || 0).toFixed(2)}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-gray-400 text-sm mt-1">
-                        No crowd noise measurement recorded
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="bg-white/10 rounded-xl p-4">
-                  <h4 className="text-white font-semibold mb-2">
-                    Vote Statistics
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Judge Votes:</span>
-                      <span className="text-white">
-                        {bandScore.judge_vote_count}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Crowd Votes:</span>
-                      <span className="text-white">
-                        {bandScore.crowd_vote_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Score Summary */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 md:col-span-2">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">
-                Score Summary
-              </h3>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-lg font-semibold text-white mb-4">
-                    Judge Score Breakdown
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Song Choice (20):</span>
-                      <span className="text-white">
-                        {Number(bandScore.avg_song_choice || 0).toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Performance (30):</span>
-                      <span className="text-white">
-                        {Number(bandScore.avg_performance || 0).toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Crowd Vibe ({crowdVibeMax}):</span>
-                      <span className="text-white">
-                        {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}
-                      </span>
-                    </div>
-                    {scoringVersion === "2026.1" && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Visuals (20):</span>
-                        <span className="text-white">
-                          {visualsScore.toFixed(1)}
-                        </span>
                       </div>
                     )}
-                    <div className="border-t border-white/20 pt-3">
-                      <div className="flex justify-between font-bold">
-                        <span className="text-white">Judge Total:</span>
-                        <span className="text-white">
-                          {judgeScore.toFixed(1)}/{maxJudgePoints}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-lg font-semibold text-white mb-4">
-                    Final Calculation
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Judge Score:</span>
-                      <span className="text-white">
-                        {judgeScore.toFixed(1)}
-                      </span>
+                {/* Crowd Vote & Special Category */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
+                  <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                    Crowd Scoring
+                  </h3>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-white font-medium">
+                          👥 Crowd Vote
+                        </span>
+                        <span className="text-white font-bold">
+                          {Math.round(crowdVoteScore)}/10
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div
+                          className="bg-slate-400 h-3 rounded-full transition-all duration-1000"
+                          style={{ width: `${(crowdVoteScore / 10) * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-gray-300 text-sm mt-1">
+                        <span>{bandScore?.crowd_vote_count || 0} votes</span>
+                        <span>
+                          {crowdVotePercent.toFixed(1)}% of total votes
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Crowd Vote:</span>
-                      <span className="text-white">
-                        {Math.round(crowdVoteScore)}
-                      </span>
-                    </div>
+
+                    {/* Scream-o-meter - Only for 2025.1 */}
                     {scoringVersion === "2025.1" && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Scream-o-meter:</span>
-                        <span className="text-white">
-                          {bandScore.crowd_score
-                            ? screamOMeterScore.toFixed(1)
-                            : "N/A"}
-                        </span>
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-white font-medium">
+                            🔊 Scream-o-meter
+                          </span>
+                          <span className="text-white font-bold">
+                            {bandScore.crowd_score
+                              ? `${screamOMeterScore.toFixed(1)}/10`
+                              : "No measurement"}
+                          </span>
+                        </div>
+                        {bandScore.crowd_score ? (
+                          <>
+                            <div className="w-full bg-gray-700 rounded-full h-3">
+                              <div
+                                className="bg-amber-500 h-3 rounded-full transition-all duration-1000"
+                                style={{ width: `${screamOMeterPercent}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-gray-300 text-sm mt-1">
+                              Energy:{" "}
+                              {Number(
+                                bandScore.crowd_noise_energy || 0
+                              ).toFixed(2)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-gray-400 text-sm mt-1">
+                            No crowd noise measurement recorded
+                          </p>
+                        )}
                       </div>
                     )}
-                    <div className="border-t border-white/20 pt-3">
-                      <div className="flex justify-between font-bold text-xl">
-                        <span className="text-white">Total Score:</span>
-                        <span className="text-white">
-                          {totalScore.toFixed(1)}/100
-                        </span>
+
+                    <div className="bg-white/10 rounded-xl p-4">
+                      <h4 className="text-white font-semibold mb-2">
+                        Vote Statistics
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Judge Votes:</span>
+                          <span className="text-white">
+                            {bandScore.judge_vote_count}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Crowd Votes:</span>
+                          <span className="text-white">
+                            {bandScore.crowd_vote_count}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score Summary */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 md:col-span-2">
+                  <h3 className="text-2xl font-bold text-white mb-6 text-center">
+                    Score Summary
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-4">
+                        Judge Score Breakdown
+                      </h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">
+                            Song Choice (20):
+                          </span>
+                          <span className="text-white">
+                            {Number(bandScore.avg_song_choice || 0).toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">
+                            Performance (30):
+                          </span>
+                          <span className="text-white">
+                            {Number(bandScore.avg_performance || 0).toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">
+                            Crowd Vibe ({crowdVibeMax}):
+                          </span>
+                          <span className="text-white">
+                            {Number(bandScore.avg_crowd_vibe || 0).toFixed(1)}
+                          </span>
+                        </div>
+                        {scoringVersion === "2026.1" && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">Visuals (20):</span>
+                            <span className="text-white">
+                              {visualsScore.toFixed(1)}
+                            </span>
+                          </div>
+                        )}
+                        <div className="border-t border-white/20 pt-3">
+                          <div className="flex justify-between font-bold">
+                            <span className="text-white">Judge Total:</span>
+                            <span className="text-white">
+                              {judgeScore.toFixed(1)}/{maxJudgePoints}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-white mb-4">
+                        Final Calculation
+                      </h4>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Judge Score:</span>
+                          <span className="text-white">
+                            {judgeScore.toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Crowd Vote:</span>
+                          <span className="text-white">
+                            {Math.round(crowdVoteScore)}
+                          </span>
+                        </div>
+                        {scoringVersion === "2025.1" && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-300">
+                              Scream-o-meter:
+                            </span>
+                            <span className="text-white">
+                              {bandScore.crowd_score
+                                ? screamOMeterScore.toFixed(1)
+                                : "N/A"}
+                            </span>
+                          </div>
+                        )}
+                        <div className="border-t border-white/20 pt-3">
+                          <div className="flex justify-between font-bold text-xl">
+                            <span className="text-white">Total Score:</span>
+                            <span className="text-white">
+                              {totalScore.toFixed(1)}/100
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* Back to Results - Only show if event is finalized or user is admin */}
-        {(eventStatus === "finalized" || isAdmin) && (
-          <div className="text-center mt-12">
-            <Link
-              href={`/results/${eventId}`}
-              className="bg-accent hover:bg-accent-light text-white font-bold py-4 px-8 rounded-xl text-lg transition-colors inline-block"
-            >
-              ← Back to Full Results
-            </Link>
-          </div>
-        )}
+          {/* Back to Results - Only show if event is finalized or user is admin */}
+          {(eventStatus === "finalized" || isAdmin) && (
+            <div className="text-center mt-12">
+              <Link
+                href={`/results/${eventId}`}
+                className="bg-accent hover:bg-accent-light text-white font-bold py-4 px-8 rounded-xl text-lg transition-colors inline-block"
+              >
+                ← Back to Full Results
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

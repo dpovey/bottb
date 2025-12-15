@@ -1,23 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPhotos, getPhotoCount, getDistinctPhotographers, getDistinctCompanies } from "@/lib/db";
+import {
+  getPhotos,
+  getPhotoCount,
+  getDistinctPhotographers,
+  getDistinctCompanies,
+  getAvailablePhotoFilters,
+} from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const eventId = searchParams.get("eventId") || undefined;
-    const bandId = searchParams.get("bandId") || undefined;
+    // Support both new (event, band) and legacy (eventId, bandId) param names
+    const eventId =
+      searchParams.get("event") || searchParams.get("eventId") || undefined;
+    const bandId =
+      searchParams.get("band") || searchParams.get("bandId") || undefined;
     const photographer = searchParams.get("photographer") || undefined;
-    const companySlug = searchParams.get("companySlug") || undefined;
+    // Support both company and companySlug for backwards compatibility
+    const companySlug =
+      searchParams.get("company") ||
+      searchParams.get("companySlug") ||
+      undefined;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = (page - 1) * limit;
 
-    const [photos, total, photographers, companies] = await Promise.all([
-      getPhotos({ eventId, bandId, photographer, companySlug, limit, offset }),
-      getPhotoCount({ eventId, bandId, photographer, companySlug }),
-      getDistinctPhotographers(),
-      getDistinctCompanies(),
-    ]);
+    const [photos, total, photographers, companies, availableFilters] =
+      await Promise.all([
+        getPhotos({
+          eventId,
+          bandId,
+          photographer,
+          companySlug,
+          limit,
+          offset,
+        }),
+        getPhotoCount({ eventId, bandId, photographer, companySlug }),
+        getDistinctPhotographers(),
+        getDistinctCompanies(),
+        getAvailablePhotoFilters({
+          eventId,
+          bandId,
+          photographer,
+          companySlug,
+        }),
+      ]);
 
     return NextResponse.json({
       photos,
@@ -29,6 +56,7 @@ export async function GET(request: NextRequest) {
       },
       photographers,
       companies,
+      availableFilters,
     });
   } catch (error) {
     console.error("Error fetching photos:", error);
@@ -38,4 +66,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
