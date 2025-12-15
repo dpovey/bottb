@@ -1,4 +1,9 @@
-import { getBandScores, getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
+import {
+  getBandScores,
+  getBandsForEvent,
+  getPhotosByLabel,
+  PHOTO_LABELS,
+} from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import Image from "next/image";
@@ -175,6 +180,15 @@ export default async function BandPage({
   const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
   const heroPhotoUrl = heroPhoto?.blob_url ?? null;
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+
+  // Fetch all bands for the event to enable navigation
+  const allBands = await getBandsForEvent(eventId);
+  const currentBandIndex = allBands.findIndex((b) => b.id === bandId);
+  const prevBand = currentBandIndex > 0 ? allBands[currentBandIndex - 1] : null;
+  const nextBand =
+    currentBandIndex < allBands.length - 1
+      ? allBands[currentBandIndex + 1]
+      : null;
 
   // Only fetch scores if event is finalized or user is admin
   let scores: BandScore[] = [];
@@ -583,6 +597,11 @@ export default async function BandPage({
       {/* Photos Section */}
       <PhotoStrip bandId={bandId} />
 
+      {/* Band Navigation (Previous/Next) */}
+      {(prevBand || nextBand) && (
+        <BandNavigation prevBand={prevBand} nextBand={nextBand} />
+      )}
+
       {/* Navigation/Actions Section */}
       <section className="py-16 bg-bg">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -814,5 +833,81 @@ function VisualsSummaryCard({
         {judgeCount ? ` • ${judgeCount} judges` : ""}
       </div>
     </div>
+  );
+}
+
+// Band Navigation Component (Previous/Next)
+interface BandNavigationProps {
+  prevBand: { id: string; name: string } | null;
+  nextBand: { id: string; name: string } | null;
+}
+
+function BandNavigation({ prevBand, nextBand }: BandNavigationProps) {
+  return (
+    <section className="py-8 bg-bg border-t border-white/5">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex items-center justify-between">
+          {/* Previous Band */}
+          {prevBand ? (
+            <Link
+              href={`/band/${prevBand.id}`}
+              className="group flex items-center gap-3 py-4 pr-4 text-left hover:text-accent transition-colors max-w-[45%]"
+            >
+              <svg
+                className="w-5 h-5 shrink-0 text-text-muted group-hover:text-accent transition-colors"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              <div className="min-w-0">
+                <div className="text-xs tracking-widest uppercase text-text-dim mb-1">
+                  Previous
+                </div>
+                <div className="font-medium truncate">{prevBand.name}</div>
+              </div>
+            </Link>
+          ) : (
+            <div />
+          )}
+
+          {/* Next Band */}
+          {nextBand ? (
+            <Link
+              href={`/band/${nextBand.id}`}
+              className="group flex items-center gap-3 py-4 pl-4 text-right hover:text-accent transition-colors max-w-[45%]"
+            >
+              <div className="min-w-0">
+                <div className="text-xs tracking-widest uppercase text-text-dim mb-1">
+                  Next
+                </div>
+                <div className="font-medium truncate">{nextBand.name}</div>
+              </div>
+              <svg
+                className="w-5 h-5 shrink-0 text-text-muted group-hover:text-accent transition-colors"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

@@ -19,6 +19,7 @@ vi.mock("next/navigation", () => ({
 // Mock the database functions
 vi.mock("@/lib/db", () => ({
   getBandScores: vi.fn(),
+  getBandsForEvent: vi.fn(),
   getPhotosByLabel: vi.fn(),
   PHOTO_LABELS: {
     BAND_HERO: "band_hero",
@@ -42,12 +43,13 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
 
-import { getBandScores, getPhotosByLabel } from "@/lib/db";
+import { getBandScores, getBandsForEvent, getPhotosByLabel } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { sql } from "@vercel/postgres";
 import { auth } from "@/lib/auth";
 
 const mockGetBandScores = getBandScores as unknown as ReturnType<typeof vi.fn>;
+const mockGetBandsForEvent = getBandsForEvent as unknown as ReturnType<typeof vi.fn>;
 const mockGetPhotosByLabel = getPhotosByLabel as unknown as ReturnType<typeof vi.fn>;
 const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
@@ -60,6 +62,10 @@ describe("BandPage", () => {
     mockAuth.mockResolvedValue({ user: { isAdmin: false } });
     // Default to no photos
     mockGetPhotosByLabel.mockResolvedValue([]);
+    // Default to single band (no navigation)
+    mockGetBandsForEvent.mockResolvedValue([
+      { id: "band-1", name: "Test Band", order: 1 },
+    ]);
   });
 
   it("renders band details and scores for finalized event", async () => {
@@ -486,5 +492,147 @@ describe("BandPage", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
     expect(screen.queryByText("A test band")).not.toBeInTheDocument();
+  });
+
+  describe("Band Navigation", () => {
+    it("shows both previous and next navigation when band is in the middle", async () => {
+      const bandData = [
+        {
+          id: "band-2",
+          event_id: "event-1",
+          name: "Middle Band",
+          order: 2,
+          created_at: "2024-01-01T00:00:00Z",
+          event_name: "Test Event",
+          date: "2024-12-25T18:30:00Z",
+          location: "Test Venue",
+          timezone: "America/New_York",
+          status: "finalized",
+          event_info: { scoring_version: "2025.1" },
+        },
+      ];
+
+      mockSql.mockResolvedValue(createMockQueryResult(bandData));
+      mockGetBandScores.mockResolvedValue([]);
+      mockGetBandsForEvent.mockResolvedValue([
+        { id: "band-1", name: "First Band", order: 1 },
+        { id: "band-2", name: "Middle Band", order: 2 },
+        { id: "band-3", name: "Last Band", order: 3 },
+      ]);
+
+      render(await BandPage({ params: Promise.resolve({ bandId: "band-2" }) }));
+
+      // Check for Previous navigation
+      expect(screen.getByText("Previous")).toBeInTheDocument();
+      expect(screen.getByText("First Band")).toBeInTheDocument();
+      const prevLink = screen.getByRole("link", { name: /Previous.*First Band/i });
+      expect(prevLink).toHaveAttribute("href", "/band/band-1");
+
+      // Check for Next navigation
+      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(screen.getByText("Last Band")).toBeInTheDocument();
+      const nextLink = screen.getByRole("link", { name: /Next.*Last Band/i });
+      expect(nextLink).toHaveAttribute("href", "/band/band-3");
+    });
+
+    it("hides previous navigation when on the first band", async () => {
+      const bandData = [
+        {
+          id: "band-1",
+          event_id: "event-1",
+          name: "First Band",
+          order: 1,
+          created_at: "2024-01-01T00:00:00Z",
+          event_name: "Test Event",
+          date: "2024-12-25T18:30:00Z",
+          location: "Test Venue",
+          timezone: "America/New_York",
+          status: "finalized",
+          event_info: { scoring_version: "2025.1" },
+        },
+      ];
+
+      mockSql.mockResolvedValue(createMockQueryResult(bandData));
+      mockGetBandScores.mockResolvedValue([]);
+      mockGetBandsForEvent.mockResolvedValue([
+        { id: "band-1", name: "First Band", order: 1 },
+        { id: "band-2", name: "Second Band", order: 2 },
+        { id: "band-3", name: "Third Band", order: 3 },
+      ]);
+
+      render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
+
+      // Should not show Previous
+      expect(screen.queryByText("Previous")).not.toBeInTheDocument();
+
+      // Should show Next
+      expect(screen.getByText("Next")).toBeInTheDocument();
+      expect(screen.getByText("Second Band")).toBeInTheDocument();
+    });
+
+    it("hides next navigation when on the last band", async () => {
+      const bandData = [
+        {
+          id: "band-3",
+          event_id: "event-1",
+          name: "Third Band",
+          order: 3,
+          created_at: "2024-01-01T00:00:00Z",
+          event_name: "Test Event",
+          date: "2024-12-25T18:30:00Z",
+          location: "Test Venue",
+          timezone: "America/New_York",
+          status: "finalized",
+          event_info: { scoring_version: "2025.1" },
+        },
+      ];
+
+      mockSql.mockResolvedValue(createMockQueryResult(bandData));
+      mockGetBandScores.mockResolvedValue([]);
+      mockGetBandsForEvent.mockResolvedValue([
+        { id: "band-1", name: "First Band", order: 1 },
+        { id: "band-2", name: "Second Band", order: 2 },
+        { id: "band-3", name: "Third Band", order: 3 },
+      ]);
+
+      render(await BandPage({ params: Promise.resolve({ bandId: "band-3" }) }));
+
+      // Should show Previous
+      expect(screen.getByText("Previous")).toBeInTheDocument();
+      expect(screen.getByText("Second Band")).toBeInTheDocument();
+
+      // Should not show Next
+      expect(screen.queryByText("Next")).not.toBeInTheDocument();
+    });
+
+    it("hides navigation section when there is only one band", async () => {
+      const bandData = [
+        {
+          id: "band-1",
+          event_id: "event-1",
+          name: "Only Band",
+          order: 1,
+          created_at: "2024-01-01T00:00:00Z",
+          event_name: "Test Event",
+          date: "2024-12-25T18:30:00Z",
+          location: "Test Venue",
+          timezone: "America/New_York",
+          status: "finalized",
+          event_info: { scoring_version: "2025.1" },
+        },
+      ];
+
+      mockSql.mockResolvedValue(createMockQueryResult(bandData));
+      mockGetBandScores.mockResolvedValue([]);
+      mockGetBandsForEvent.mockResolvedValue([
+        { id: "band-1", name: "Only Band", order: 1 },
+      ]);
+
+      render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
+
+      // Should not show navigation labels
+      expect(screen.queryByText("Previous")).not.toBeInTheDocument();
+      expect(screen.queryByText("Next")).not.toBeInTheDocument();
+    });
   });
 });
