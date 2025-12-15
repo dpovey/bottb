@@ -1052,16 +1052,17 @@ export function PhotoSlideshow({
               lastCroppedPhoto?.id === photo.id
                 ? lastCroppedPhoto.url
                 : photo.thumbnail_url || photo.blob_url;
+            const isSelected = index === currentIndex;
             return (
               <button
-                key={`${index}-${photo.id}`}
+                key={photo.id}
                 ref={(el) => {
                   thumbnailRefs.current[index] = el;
                 }}
                 onClick={() => goToIndex(index)}
-                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
-                  index === currentIndex
-                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90"
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
+                  isSelected
+                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100"
                     : "opacity-50 hover:opacity-75"
                 }`}
                 aria-label={`Go to photo ${index + 1}`}
