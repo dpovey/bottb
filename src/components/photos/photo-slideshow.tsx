@@ -35,6 +35,7 @@ interface PhotoSlideshowProps {
     eventId?: string | null;
     bandId?: string | null;
     photographer?: string | null;
+    companySlug?: string | null;
   };
   onClose: () => void;
   onPhotoDeleted?: (photoId: string) => void;

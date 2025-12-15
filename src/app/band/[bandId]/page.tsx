@@ -4,6 +4,7 @@ import { formatEventDate } from "@/lib/date-utils";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
+import { CompanyBadge } from "@/components/ui";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -50,9 +51,11 @@ export default async function BandPage({
   // Get all events to find which one contains this band
   const { sql } = await import("@vercel/postgres");
   const { rows: bandData } = await sql`
-    SELECT b.*, e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info
+    SELECT b.*, e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
+           c.name as company_name, c.slug as company_slug
     FROM bands b
     JOIN events e ON b.event_id = e.id
+    LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.id = ${bandId}
   `;
 
@@ -228,6 +231,17 @@ export default async function BandPage({
               <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {band.name}
               </h1>
+              {/* Company badge */}
+              {band.company_slug && band.company_name && (
+                <div className="mb-2">
+                  <CompanyBadge
+                    slug={band.company_slug}
+                    name={band.company_name}
+                    variant="default"
+                    size="md"
+                  />
+                </div>
+              )}
               <Link 
                 href={`/event/${eventId}`}
                 className="text-lg text-text-muted hover:text-accent transition-colors"

@@ -2,16 +2,24 @@
 
 import { Event, Band } from "@/lib/db";
 
+interface Company {
+  slug: string;
+  name: string;
+}
+
 interface PhotoFiltersProps {
   events: Event[];
   bands: Band[];
   photographers: string[];
+  companies?: Company[];
   selectedEventId: string | null;
   selectedBandId: string | null;
   selectedPhotographer: string | null;
+  selectedCompanySlug: string | null;
   onEventChange: (eventId: string | null) => void;
   onBandChange: (bandId: string | null) => void;
   onPhotographerChange: (photographer: string | null) => void;
+  onCompanyChange: (companySlug: string | null) => void;
   loading?: boolean;
 }
 
@@ -19,12 +27,15 @@ export function PhotoFilters({
   events,
   bands,
   photographers,
+  companies = [],
   selectedEventId,
   selectedBandId,
   selectedPhotographer,
+  selectedCompanySlug,
   onEventChange,
   onBandChange,
   onPhotographerChange,
+  onCompanyChange,
   loading,
 }: PhotoFiltersProps) {
   // Filter bands by selected event
@@ -34,8 +45,17 @@ export function PhotoFilters({
 
   // Get display names for active filters
   const selectedEventName = events.find((e) => e.id === selectedEventId)?.name;
-  const selectedBandName = filteredBands.find((b) => b.id === selectedBandId)?.name;
-  const hasActiveFilters = selectedEventId || selectedBandId || selectedPhotographer;
+  const selectedBandName = filteredBands.find(
+    (b) => b.id === selectedBandId
+  )?.name;
+  const selectedCompanyName = companies.find(
+    (c) => c.slug === selectedCompanySlug
+  )?.name;
+  const hasActiveFilters =
+    selectedEventId ||
+    selectedBandId ||
+    selectedPhotographer ||
+    selectedCompanySlug;
 
   return (
     <div className="bg-bg-elevated rounded-xl p-4 border border-white/5">
@@ -47,10 +67,7 @@ export function PhotoFilters({
           </label>
           <select
             value={selectedEventId || ""}
-            onChange={(e) => {
-              onEventChange(e.target.value || null);
-              onBandChange(null); // Reset band when event changes
-            }}
+            onChange={(e) => onEventChange(e.target.value || null)}
             disabled={loading}
             className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
           >
@@ -103,6 +120,28 @@ export function PhotoFilters({
           </select>
         </div>
 
+        {/* Company filter */}
+        {companies.length > 0 && (
+          <div className="flex-1 min-w-[180px]">
+            <label className="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
+              Company
+            </label>
+            <select
+              value={selectedCompanySlug || ""}
+              onChange={(e) => onCompanyChange(e.target.value || null)}
+              disabled={loading}
+              className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')] bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat"
+            >
+              <option value="">All Companies</option>
+              {companies.map((company) => (
+                <option key={company.slug} value={company.slug}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Clear filters button */}
         <div className="flex items-end">
           <button
@@ -110,6 +149,7 @@ export function PhotoFilters({
               onEventChange(null);
               onBandChange(null);
               onPhotographerChange(null);
+              onCompanyChange(null);
             }}
             disabled={!hasActiveFilters}
             className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-3 rounded-lg text-xs tracking-widest uppercase transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
@@ -126,10 +166,7 @@ export function PhotoFilters({
             <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
               {selectedEventName}
               <button
-                onClick={() => {
-                  onEventChange(null);
-                  onBandChange(null); // Reset band too since it depends on event
-                }}
+                onClick={() => onEventChange(null)}
                 className="hover:text-white transition-colors"
                 aria-label={`Remove ${selectedEventName} filter`}
               >
@@ -161,9 +198,20 @@ export function PhotoFilters({
               </button>
             </span>
           )}
+          {selectedCompanyName && (
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+              {selectedCompanyName}
+              <button
+                onClick={() => onCompanyChange(null)}
+                className="hover:text-white transition-colors"
+                aria-label={`Remove ${selectedCompanyName} filter`}
+              >
+                ×
+              </button>
+            </span>
+          )}
         </div>
       )}
     </div>
   );
 }
-

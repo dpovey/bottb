@@ -20,6 +20,7 @@ export interface HeaderProps {
 
 const navLinks = [
   { href: "/photos", label: "Photos" },
+  { href: "/companies", label: "Companies" },
   { href: "/about", label: "About" },
 ];
 

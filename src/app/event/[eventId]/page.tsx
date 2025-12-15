@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
-import { Button, Badge, Card, DateBadge, BandThumbnail } from "@/components/ui";
+import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge } from "@/components/ui";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -43,6 +43,8 @@ interface Band {
   event_id: string;
   name: string;
   description?: string;
+  company_slug?: string;
+  company_name?: string;
   order: number;
   hero_thumbnail_url?: string;
   info?: {
@@ -343,10 +345,16 @@ export default function EventPage() {
                               <Badge variant="warning" className="shrink-0">Champion</Badge>
                             )}
                           </div>
-                          {band.description && (
-                            <p className="text-text-muted text-sm truncate mt-1">
-                              {band.description}
-                            </p>
+                          {/* Company badge */}
+                          {band.company_slug && band.company_name && (
+                            <div className="mt-1">
+                              <CompanyBadge
+                                slug={band.company_slug}
+                                name={band.company_name}
+                                variant="inline"
+                                size="sm"
+                              />
+                            </div>
                           )}
                           {band.info?.genre && (
                             <p className="text-text-dim text-xs mt-1">

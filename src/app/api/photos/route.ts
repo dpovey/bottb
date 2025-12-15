@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPhotos, getPhotoCount, getDistinctPhotographers } from "@/lib/db";
+import { getPhotos, getPhotoCount, getDistinctPhotographers, getDistinctCompanies } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,14 +7,16 @@ export async function GET(request: NextRequest) {
     const eventId = searchParams.get("eventId") || undefined;
     const bandId = searchParams.get("bandId") || undefined;
     const photographer = searchParams.get("photographer") || undefined;
+    const companySlug = searchParams.get("companySlug") || undefined;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = (page - 1) * limit;
 
-    const [photos, total, photographers] = await Promise.all([
-      getPhotos({ eventId, bandId, photographer, limit, offset }),
-      getPhotoCount({ eventId, bandId, photographer }),
+    const [photos, total, photographers, companies] = await Promise.all([
+      getPhotos({ eventId, bandId, photographer, companySlug, limit, offset }),
+      getPhotoCount({ eventId, bandId, photographer, companySlug }),
       getDistinctPhotographers(),
+      getDistinctCompanies(),
     ]);
 
     return NextResponse.json({
@@ -26,6 +28,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
       photographers,
+      companies,
     });
   } catch (error) {
     console.error("Error fetching photos:", error);

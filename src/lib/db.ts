@@ -24,11 +24,25 @@ export interface Event {
   created_at: string;
 }
 
+export interface Company {
+  slug: string;
+  name: string;
+  logo_url?: string;
+  website?: string;
+  created_at: string;
+}
+
+export interface CompanyWithStats extends Company {
+  band_count: number;
+  event_count: number;
+}
+
 export interface Band {
   id: string;
   event_id: string;
   name: string;
   description?: string;
+  company_slug?: string;
   order: number;
   image_url?: string;
   hero_thumbnail_url?: string;
@@ -45,6 +59,8 @@ export interface Band {
     [key: string]: unknown;
   };
   created_at: string;
+  // Joined fields
+  company_name?: string;
 }
 
 export interface Vote {
@@ -196,10 +212,12 @@ export async function getPastEvents() {
 export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`
     SELECT b.*, 
+      c.name as company_name,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
     FROM bands b 
-    WHERE event_id = ${eventId} 
-    ORDER BY "order"
+    LEFT JOIN companies c ON b.company_slug = c.slug
+    WHERE b.event_id = ${eventId} 
+    ORDER BY b."order"
   `;
   return rows;
 }
@@ -414,17 +432,32 @@ export interface GetPhotosOptions {
   eventId?: string;
   bandId?: string;
   photographer?: string;
+  companySlug?: string;
   limit?: number;
   offset?: number;
 }
 
 export async function getPhotos(options: GetPhotosOptions = {}): Promise<Photo[]> {
-  const { eventId, bandId, photographer, limit = 50, offset = 0 } = options;
+  const { eventId, bandId, photographer, companySlug, limit = 50, offset = 0 } = options;
 
   try {
     // Build query based on filters
     // Note: @vercel/postgres doesn't support query chaining, so we use separate queries
-    if (eventId && bandId) {
+    
+    // Company filter - photos from bands belonging to a company
+    if (companySlug) {
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE b.company_slug = ${companySlug}
+        ORDER BY p.uploaded_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+      return rows;
+    } else if (eventId && bandId) {
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
@@ -508,10 +541,19 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
 }
 
 export async function getPhotoCount(options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}): Promise<number> {
-  const { eventId, bandId, photographer } = options;
+  const { eventId, bandId, photographer, companySlug } = options;
 
   try {
-    if (eventId && bandId) {
+    // Company filter - count photos from bands belonging to a company
+    if (companySlug) {
+      const { rows } = await sql<{ count: string }>`
+        SELECT COUNT(*) as count 
+        FROM photos p
+        JOIN bands b ON p.band_id = b.id
+        WHERE b.company_slug = ${companySlug}
+      `;
+      return parseInt(rows[0]?.count || "0", 10);
+    } else if (eventId && bandId) {
       const { rows } = await sql<{ count: string }>`
         SELECT COUNT(*) as count FROM photos WHERE event_id = ${eventId} AND band_id = ${bandId}
       `;
@@ -804,4 +846,66 @@ export async function finalizeEventResults(
  */
 export async function deleteFinalizedResults(eventId: string): Promise<void> {
   await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`;
+}
+
+// ============================================================
+// Company Functions
+// ============================================================
+
+/**
+ * Get all companies with band and event counts
+ */
+export async function getCompanies(): Promise<CompanyWithStats[]> {
+  const { rows } = await sql<CompanyWithStats>`
+    SELECT 
+      c.*,
+      COUNT(DISTINCT b.id) as band_count,
+      COUNT(DISTINCT b.event_id) as event_count
+    FROM companies c
+    LEFT JOIN bands b ON c.slug = b.company_slug
+    GROUP BY c.slug, c.name, c.logo_url, c.website, c.created_at
+    ORDER BY c.name ASC
+  `;
+  return rows;
+}
+
+/**
+ * Get a single company by slug
+ */
+export async function getCompanyBySlug(slug: string): Promise<Company | null> {
+  const { rows } = await sql<Company>`
+    SELECT * FROM companies WHERE slug = ${slug}
+  `;
+  return rows[0] || null;
+}
+
+/**
+ * Get all bands for a company, with event info
+ */
+export async function getCompanyBands(companySlug: string): Promise<(Band & { event_name: string; event_date: string })[]> {
+  const { rows } = await sql<Band & { event_name: string; event_date: string }>`
+    SELECT 
+      b.*,
+      e.name as event_name,
+      e.date as event_date,
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
+    FROM bands b
+    JOIN events e ON b.event_id = e.id
+    WHERE b.company_slug = ${companySlug}
+    ORDER BY e.date DESC, b."order" ASC
+  `;
+  return rows;
+}
+
+/**
+ * Get distinct companies from bands (for filters)
+ */
+export async function getDistinctCompanies(): Promise<{ slug: string; name: string }[]> {
+  const { rows } = await sql<{ slug: string; name: string }>`
+    SELECT DISTINCT c.slug, c.name
+    FROM companies c
+    INNER JOIN bands b ON c.slug = b.company_slug
+    ORDER BY c.name ASC
+  `;
+  return rows;
 }

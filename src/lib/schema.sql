@@ -22,12 +22,22 @@ CREATE TABLE IF NOT EXISTS events (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Companies table
+CREATE TABLE IF NOT EXISTS companies (
+  slug VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  logo_url TEXT,
+  website TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Bands table
 CREATE TABLE IF NOT EXISTS bands (
   id VARCHAR(255) PRIMARY KEY,
   event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   description TEXT,
+  company_slug VARCHAR(255) REFERENCES companies(slug),
   "order" INTEGER NOT NULL,
   image_url TEXT,
   info JSONB DEFAULT '{}',
@@ -83,7 +93,9 @@ CREATE TABLE IF NOT EXISTS votes (
 -- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin);
+CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
 CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
+CREATE INDEX IF NOT EXISTS idx_bands_company_slug ON bands(company_slug);
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_band_id ON votes(band_id);
 CREATE INDEX IF NOT EXISTS idx_votes_voter_type ON votes(voter_type);
