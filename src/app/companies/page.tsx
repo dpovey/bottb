@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { PublicLayout } from "@/components/layouts";
 import { CompanyCard } from "@/components/company-card";
-import { Card, Button } from "@/components/ui";
+import { Card, Button, BandThumbnail } from "@/components/ui";
 
 interface Company {
   slug: string;
@@ -210,34 +209,12 @@ export default function CompaniesPage() {
                           <Card variant="interactive" padding="none" className="overflow-hidden">
                             <div className="p-4 flex items-center gap-4">
                               {/* Band Logo/Image */}
-                              {band.info?.logo_url ? (
-                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0">
-                                  <Image
-                                    src={band.info.logo_url}
-                                    alt={`${band.name} logo`}
-                                    width={48}
-                                    height={48}
-                                    className="w-full h-full object-contain"
-                                    unoptimized
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                  <svg
-                                    className="w-6 h-6 text-text-dim"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={1.5}
-                                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
+                              <BandThumbnail
+                                logoUrl={band.info?.logo_url}
+                                heroThumbnailUrl={band.hero_thumbnail_url}
+                                bandName={band.name}
+                                size="sm"
+                              />
 
                               {/* Band Info */}
                               <div className="flex-1 min-w-0">
