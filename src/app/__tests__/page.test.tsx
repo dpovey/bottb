@@ -20,6 +20,7 @@ vi.mock("@/lib/db", () => ({
 // Mock the date utils
 vi.mock("@/lib/date-utils", () => ({
   formatEventDate: vi.fn((date) => `Formatted: ${date}`),
+  getDatePartsInTimezone: vi.fn(() => ({ day: 25, month: "Dec", year: 2024 })),
 }));
 
 // Mock next-auth
