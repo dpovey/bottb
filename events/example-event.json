@@ -1,6 +1,7 @@
 {
   "name": "Battle of the Tech Bands - Sydney 2024",
-  "date": "2024-12-15T18:00:00Z",
+  "date": "2024-12-15T07:00:00Z",
+  "timezone": "Australia/Sydney",
   "location": "Sydney Convention Centre",
   "is_active": true,
   "bands": [

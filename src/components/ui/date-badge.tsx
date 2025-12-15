@@ -1,19 +1,17 @@
 import { forwardRef, HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { getDatePartsInTimezone } from "@/lib/date-utils";
 
 export interface DateBadgeProps extends HTMLAttributes<HTMLDivElement> {
   date: Date | string;
   size?: "sm" | "md" | "lg";
   showYear?: boolean;
+  timezone?: string; // IANA timezone name (e.g., "Australia/Brisbane")
 }
 
 const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
-  ({ className, date, size = "md", showYear = false, ...props }, ref) => {
-    const dateObj = typeof date === "string" ? new Date(date) : date;
-    
-    const month = dateObj.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-    const day = dateObj.getDate();
-    const year = dateObj.getFullYear();
+  ({ className, date, size = "md", showYear = false, timezone, ...props }, ref) => {
+    const { day, month, year } = getDatePartsInTimezone(date, timezone);
     
     return (
       <div

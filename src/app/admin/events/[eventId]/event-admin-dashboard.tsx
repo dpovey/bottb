@@ -9,6 +9,7 @@ interface Event {
   name: string;
   date: string;
   location: string;
+  timezone: string;
   status: string;
 }
 
@@ -88,7 +89,7 @@ export default function EventAdminDashboard({
         <h1 className="text-5xl font-bold text-white mb-4">{event.name}</h1>
         <div className="text-2xl text-gray-300 mb-2">{event.location}</div>
         <div className="text-xl text-gray-400">
-          {formatEventDate(event.date)}
+          {formatEventDate(event.date, event.timezone)}
         </div>
         <div className="mt-4">
           <span

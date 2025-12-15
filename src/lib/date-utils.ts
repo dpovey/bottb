@@ -1,8 +1,9 @@
 /**
  * Formats a date string to a readable format like "23rd October 2025 @ 6:30PM"
- * Uses UTC timezone for consistent behavior across environments
+ * Displays the date in the specified timezone (IANA timezone name)
+ * Falls back to UTC if no timezone is specified
  */
-export function formatEventDate(dateString: string): string {
+export function formatEventDate(dateString: string, timezone?: string): string {
   const date = new Date(dateString);
 
   // Check for invalid date
@@ -10,38 +11,45 @@ export function formatEventDate(dateString: string): string {
     return "Invalid Date December NaN @ NaN:NaNaM";
   }
 
-  // Get day with ordinal suffix (using UTC)
-  const day = date.getUTCDate();
+  // Use Intl.DateTimeFormat to get date parts in the specified timezone
+  const tz = timezone || "UTC";
+  
+  const dayFormatter = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    timeZone: tz,
+  });
+  const monthFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    timeZone: tz,
+  });
+  const yearFormatter = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    timeZone: tz,
+  });
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    hour12: false,
+    timeZone: tz,
+  });
+  const minuteFormatter = new Intl.DateTimeFormat("en-US", {
+    minute: "numeric",
+    timeZone: tz,
+  });
+
+  const day = parseInt(dayFormatter.format(date), 10);
   const dayWithOrdinal = day + getOrdinalSuffix(day);
-
-  // Get month name (using UTC)
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const monthName = monthNames[date.getUTCMonth()];
-
-  // Get year (using UTC)
-  const year = date.getUTCFullYear();
-
-  // Get time in 12-hour format (using UTC)
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
+  const monthName = monthFormatter.format(date);
+  const year = yearFormatter.format(date);
+  
+  // Get hours and minutes in the timezone
+  const hours = parseInt(hourFormatter.format(date), 10);
+  const minutesNum = parseInt(minuteFormatter.format(date), 10);
+  const minutes = minutesNum.toString().padStart(2, "0");
+  
   const ampm = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
-  const displayMinutes = minutes.toString().padStart(2, "0");
 
-  return `${dayWithOrdinal} ${monthName} ${year} @ ${displayHours}:${displayMinutes}${ampm}`;
+  return `${dayWithOrdinal} ${monthName} ${year} @ ${displayHours}:${minutes}${ampm}`;
 }
 
 /**
@@ -62,4 +70,35 @@ function getOrdinalSuffix(day: number): string {
     default:
       return "th";
   }
+}
+
+/**
+ * Gets date parts (day, month, year) in a specific timezone
+ * Useful for DateBadge component
+ */
+export function getDatePartsInTimezone(
+  dateString: string | Date,
+  timezone?: string
+): { day: number; month: string; year: number } {
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  const tz = timezone || "UTC";
+
+  const dayFormatter = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    timeZone: tz,
+  });
+  const monthFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    timeZone: tz,
+  });
+  const yearFormatter = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    timeZone: tz,
+  });
+
+  return {
+    day: parseInt(dayFormatter.format(date), 10),
+    month: monthFormatter.format(date).toUpperCase(),
+    year: parseInt(yearFormatter.format(date), 10),
+  };
 }

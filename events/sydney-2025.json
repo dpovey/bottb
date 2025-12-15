@@ -2,6 +2,7 @@
   "id": "sydney-2025",
   "name": "Battle of the Tech Bands - Sydney 2025",
   "date": "2025-10-23T08:30:00Z",
+  "timezone": "Australia/Sydney",
   "location": "The Factory Theatre",
   "address": "105 Victoria Road MARRICKVILLE, NSW 2204 AUSTRALIA",
   "tickets": "https://aucentury.sales.ticketsearch.com/sales/salesevent/152438",

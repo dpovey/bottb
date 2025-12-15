@@ -50,7 +50,7 @@ export default async function BandPage({
   // Get all events to find which one contains this band
   const { sql } = await import("@vercel/postgres");
   const { rows: bandData } = await sql`
-    SELECT b.*, e.name as event_name, e.date, e.location, e.status, e.info as event_info
+    SELECT b.*, e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info
     FROM bands b
     JOIN events e ON b.event_id = e.id
     WHERE b.id = ${bandId}
@@ -235,7 +235,7 @@ export default async function BandPage({
                 {band.event_name}
               </Link>
               <div className="text-text-dim mt-1">
-                {formatEventDate(band.date)} • {band.location}
+                {formatEventDate(band.date, band.timezone)} • {band.location}
               </div>
             </div>
           </div>

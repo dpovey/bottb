@@ -32,6 +32,7 @@ interface Event {
   name: string;
   date: string;
   location: string;
+  timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
   status: string;
   image_url?: string;
   info?: EventInfo;
@@ -196,7 +197,7 @@ export default function EventPage() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
             {/* Date Badge */}
-            <DateBadge date={event.date} size="lg" showYear />
+            <DateBadge date={event.date} timezone={event.timezone} size="lg" showYear />
 
             {/* Event Info */}
             <div className="flex-1">
@@ -207,7 +208,7 @@ export default function EventPage() {
                 {event.name}
               </h1>
               <div className="text-text-muted text-lg">
-                {formatEventDate(event.date)} • {event.location}
+                {formatEventDate(event.date, event.timezone)} • {event.location}
               </div>
             </div>
           </div>

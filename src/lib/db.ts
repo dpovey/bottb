@@ -5,6 +5,7 @@ export interface Event {
   name: string;
   date: string;
   location: string;
+  timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
   is_active: boolean;
   status: "upcoming" | "voting" | "finalized";
   image_url?: string;

@@ -10,6 +10,7 @@ interface EventCardProps {
     name: string;
     date: string;
     location: string;
+    timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
     info?: {
       image_url?: string;
     };
@@ -52,7 +53,7 @@ export function EventCard({
       <div className="flex flex-col md:flex-row">
         {/* Date Badge Column */}
         <div className="hidden md:flex items-start p-6 border-r border-white/5">
-          <DateBadge date={event.date} size="lg" showYear />
+          <DateBadge date={event.date} timezone={event.timezone} size="lg" showYear />
         </div>
 
         {/* Main Content */}
@@ -65,7 +66,7 @@ export function EventCard({
                   {event.name}
                 </h3>
                 <div className="text-text-muted text-sm">
-                  {formatEventDate(event.date)} • {event.location}
+                  {formatEventDate(event.date, event.timezone)} • {event.location}
                 </div>
               </div>
               

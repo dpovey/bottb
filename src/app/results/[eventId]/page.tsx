@@ -102,7 +102,7 @@ export default async function ResultsPage({
               {event.name}
             </h2>
             <p className="text-text-muted">
-              {formatEventDate(event.date)} • {event.location}
+              {formatEventDate(event.date, event.timezone)} • {event.location}
             </p>
           </div>
         </section>
@@ -114,7 +114,7 @@ export default async function ResultsPage({
               winnerName={winnerName}
               scoringVersion={scoringVersion}
               eventName={event.name}
-              eventDate={formatEventDate(event.date)}
+              eventDate={formatEventDate(event.date, event.timezone)}
               eventLocation={event.location}
             />
           </div>
@@ -332,7 +332,7 @@ export default async function ResultsPage({
             {event.name}
           </h2>
           <p className="text-text-muted">
-            {formatEventDate(event.date)} • {event.location}
+            {formatEventDate(event.date, event.timezone)} • {event.location}
           </p>
         </div>
       </section>

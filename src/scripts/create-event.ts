@@ -35,6 +35,7 @@ interface EventData {
   name: string;
   date: string;
   location: string;
+  timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
   address?: string;
   tickets?: string;
   is_active?: boolean;
@@ -94,14 +95,23 @@ async function createEventFromFile(filePath: string) {
       console.log(`🏆 Winner: ${eventData.winner}`);
     }
 
+    // Validate timezone
+    if (!eventData.timezone) {
+      console.error("❌ Missing required field: timezone");
+      console.error("   Example: \"Australia/Brisbane\"");
+      process.exit(1);
+    }
+    console.log(`🌏 Timezone: ${eventData.timezone}`);
+
     // Create event with slug as ID and info JSONB
     const { rows: eventRows } = await sql`
-      INSERT INTO events (id, name, date, location, is_active, status, info)
+      INSERT INTO events (id, name, date, location, timezone, is_active, status, info)
       VALUES (
         ${eventSlug}, 
         ${eventData.name}, 
         ${eventData.date}, 
-        ${eventData.location}, 
+        ${eventData.location},
+        ${eventData.timezone},
         ${eventData.is_active ?? true}, 
         ${eventData.status ?? "upcoming"},
         ${JSON.stringify(eventInfo)}::jsonb
@@ -154,8 +164,9 @@ if (!filePath) {
   console.error("\nJSON file should include:");
   console.error("  - id: event slug (e.g., 'sydney-2025')");
   console.error("  - name: event name");
-  console.error("  - date: ISO date string");
+  console.error("  - date: ISO date string (UTC)");
   console.error("  - location: venue name");
+  console.error("  - timezone: IANA timezone (e.g., 'Australia/Brisbane', 'Australia/Sydney')");
   console.error("  - scoring_version: '2022.1' | '2025.1' | '2026.1' (default: '2026.1')");
   console.error("  - winner: (for 2022.1 events only) winner band name");
   console.error("  - bands: array of band objects");

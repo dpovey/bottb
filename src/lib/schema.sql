@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS events (
   name VARCHAR(255) NOT NULL,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
   location VARCHAR(255) NOT NULL,
+  timezone VARCHAR(64) NOT NULL DEFAULT 'Australia/Brisbane', -- IANA timezone name
   is_active BOOLEAN DEFAULT false,
   status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'voting', 'finalized')),
   image_url TEXT,

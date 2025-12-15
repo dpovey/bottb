@@ -11,6 +11,7 @@ interface Event {
   name: string;
   date: string;
   location: string;
+  timezone: string;
   status: string;
 }
 
@@ -92,7 +93,7 @@ export default function JudgeQRPage() {
           {event.location}
         </div>
         <div className="text-base md:text-lg text-gray-400">
-          {formatEventDate(event.date)}
+          {formatEventDate(event.date, event.timezone)}
         </div>
         <div className="mt-3">
           <span

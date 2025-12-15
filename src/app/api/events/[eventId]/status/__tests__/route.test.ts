@@ -59,6 +59,7 @@ describe("/api/events/[eventId]/status", () => {
       id: "test-event-1",
       name: "Test Event",
       location: "Test Location",
+      timezone: "Australia/Brisbane",
       status: "voting" as const,
       date: "2024-01-01",
       is_active: true,
