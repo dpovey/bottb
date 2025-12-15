@@ -3,16 +3,29 @@
 import { Photo } from "@/lib/db";
 import { PhotoCard } from "./photo-card";
 
+export type GridSize = "xs" | "sm" | "md" | "lg";
+
+// Grid classes for each size - designed for mobile-first
+const gridClasses: Record<GridSize, string> = {
+  xs: "grid-cols-1 sm:grid-cols-2 gap-4",           // 1 col mobile, 2 tablet+
+  sm: "grid-cols-2 sm:grid-cols-3 gap-3",           // 2 col mobile, 3 tablet+
+  md: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3",  // Default
+  lg: "grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2",  // Compact
+};
+
 interface PhotoGridProps {
   photos: Photo[];
   onPhotoClick: (index: number) => void;
   loading?: boolean;
+  size?: GridSize;
 }
 
-export function PhotoGrid({ photos, onPhotoClick, loading }: PhotoGridProps) {
+export function PhotoGrid({ photos, onPhotoClick, loading, size = "md" }: PhotoGridProps) {
+  const gridClass = gridClasses[size];
+
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className={`grid ${gridClass}`}>
         {Array.from({ length: 20 }).map((_, i) => (
           <div
             key={i}
@@ -48,7 +61,7 @@ export function PhotoGrid({ photos, onPhotoClick, loading }: PhotoGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div className={`grid ${gridClass}`}>
       {photos.map((photo, index) => (
         <PhotoCard
           key={`${photo.id}-${photo.thumbnail_url}`}
