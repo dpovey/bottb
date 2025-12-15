@@ -364,7 +364,7 @@ async function uploadPhoto(
     const photoId = crypto.randomUUID();
 
     // Upload to blob storage
-    const thumbnailBlob = await put(
+    const _thumbnailBlob = await put(
       `photos/${photoId}/thumbnail.webp`,
       processed.thumbnail,
       { access: "public", contentType: "image/webp" }

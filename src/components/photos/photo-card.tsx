@@ -16,6 +16,8 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
       onClick={onClick}
     >
       {/* Thumbnail image - key forces re-render when URL changes */}
+      {/* Using <img> for dynamic blob URLs with lazy loading; Next.js Image requires remote pattern config */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         key={thumbSrc}
         src={thumbSrc}

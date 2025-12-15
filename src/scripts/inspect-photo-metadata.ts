@@ -19,7 +19,7 @@ async function inspectPhoto(imagePath: string) {
     process.exit(1);
   }
 
-  const filename = basename(imagePath);
+  const _filename = basename(imagePath);
   const ext = extname(imagePath).toLowerCase();
 
   if (![".jpg", ".jpeg", ".png", ".tiff", ".tif"].includes(ext)) {

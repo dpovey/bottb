@@ -796,6 +796,8 @@ export function PhotoSlideshow({
                 }`}
                 aria-label={`Go to photo ${index + 1}`}
               >
+                {/* Using <img> for dynamic blob URLs; small fixed-size thumbnails */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={thumbSrc}
                   alt={photo.original_filename || `Photo ${index + 1}`}
@@ -933,6 +935,8 @@ export function PhotoSlideshow({
               <p className="text-xs tracking-widest uppercase text-text-dim mb-2">Preview</p>
               <div className="w-20 h-20 rounded-lg overflow-hidden border border-white/10">
                 {cropPreviewUrl ? (
+                  /* Using <img> for client-side generated data URL from canvas crop */
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={cropPreviewUrl}
                     alt="Crop preview"
@@ -1072,6 +1076,8 @@ export function PhotoSlideshow({
                     }`}
                     onMouseDown={handleFocalPointMouseDown}
                   >
+                    {/* Using <img> for dynamic object-position styling */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={currentPhoto.blob_url}
                       alt="Focal point picker"
@@ -1108,6 +1114,8 @@ export function PhotoSlideshow({
                   <div className="mt-4">
                     <p className="text-xs text-text-dim mb-2">Preview (wide hero crop):</p>
                     <div className="relative w-full h-16 rounded-lg overflow-hidden border border-white/10">
+                      {/* Using <img> for dynamic object-position styling */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={currentPhoto.blob_url}
                         alt="Hero preview"

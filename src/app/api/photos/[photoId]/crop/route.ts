@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@vercel/postgres";
-import { put, del } from "@vercel/blob";
+import { put } from "@vercel/blob";
 import sharp from "sharp";
 import { withAdminProtection, ProtectedApiHandler } from "@/lib/api-protection";
 

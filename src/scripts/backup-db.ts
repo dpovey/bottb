@@ -45,7 +45,7 @@ async function backupDatabase() {
         const { rows } = await sql.query(`SELECT * FROM ${table}`);
         backup[table] = rows;
         console.log(`      ✓ ${rows.length} rows`);
-      } catch (error) {
+      } catch (_error) {
         // Table might not exist
         console.log(`      ⚠ Table ${table} not found or empty`);
         backup[table] = [];
