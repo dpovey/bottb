@@ -35,6 +35,8 @@ interface PhotosResponse {
   availableFilters?: AvailableFilters;
 }
 
+type OrderMode = "random" | "date";
+
 export default function PhotosPage() {
   const searchParams = useSearchParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -46,15 +48,16 @@ export default function PhotosPage() {
     AvailableFilters | undefined
   >();
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 50,
-    total: 0,
-    totalPages: 0,
-  });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [orderMode, setOrderMode] = useState<OrderMode>("random");
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const PAGE_SIZE = 50;
 
   // Track if we've initialized from URL params
   const initializedFromUrl = useRef(false);
+  // Track loaded photo IDs to prevent duplicates in random mode
+  const loadedPhotoIds = useRef<Set<string>>(new Set());
 
   // Filters - initialize from URL params
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -69,6 +72,9 @@ export default function PhotosPage() {
   // Slideshow
   const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null);
   const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(null);
+  
+  // Track current page for ordered mode
+  const currentPage = useRef(1);
 
   // Initialize filters from URL params on mount
   useEffect(() => {
@@ -238,19 +244,28 @@ export default function PhotosPage() {
     fetchFilters();
   }, []);
 
-  // Reset to page 1 when filters change
+  // Reset photos when filters or order mode change
   useEffect(() => {
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPhotos([]);
+    loadedPhotoIds.current = new Set();
+    currentPage.current = 1;
+    setLoading(true);
   }, [
     selectedEventId,
     selectedBandId,
     selectedPhotographer,
     selectedCompanySlug,
+    orderMode,
   ]);
 
-  // Fetch photos when filters or page change
-  const fetchPhotos = useCallback(async () => {
-    setLoading(true);
+  // Fetch photos - initial load or load more
+  const fetchPhotos = useCallback(async (isLoadMore = false) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
       const params = new URLSearchParams();
       if (selectedEventId) params.set("event", selectedEventId);
@@ -258,40 +273,74 @@ export default function PhotosPage() {
       if (selectedPhotographer)
         params.set("photographer", selectedPhotographer);
       if (selectedCompanySlug) params.set("company", selectedCompanySlug);
-      params.set("page", pagination.page.toString());
-      params.set("limit", pagination.limit.toString());
-      params.set("order", "random"); // Random order for gallery browsing
+      params.set("limit", PAGE_SIZE.toString());
+      params.set("order", orderMode);
+      
+      // For ordered mode, use pagination; for random, always fetch fresh
+      if (orderMode === "date") {
+        params.set("page", currentPage.current.toString());
+      }
 
       const res = await fetch(`/api/photos?${params.toString()}`);
       if (res.ok) {
         const data: PhotosResponse = await res.json();
-        setPhotos(data.photos);
-        setPagination((prev) => ({
-          ...prev,
-          total: data.pagination.total,
-          totalPages: data.pagination.totalPages,
-        }));
+        setTotalCount(data.pagination.total);
         setPhotographers(data.photographers);
         setCompanies(data.companies || []);
         setAvailableFilters(data.availableFilters);
+        
+        if (isLoadMore) {
+          // Filter out duplicates (important for random mode)
+          const newPhotos = data.photos.filter(p => !loadedPhotoIds.current.has(p.id));
+          newPhotos.forEach(p => loadedPhotoIds.current.add(p.id));
+          setPhotos(prev => [...prev, ...newPhotos]);
+          if (orderMode === "date") {
+            currentPage.current += 1;
+          }
+        } else {
+          // Initial load
+          loadedPhotoIds.current = new Set(data.photos.map(p => p.id));
+          setPhotos(data.photos);
+          currentPage.current = 2; // Next load will be page 2
+        }
       }
     } catch (error) {
       console.error("Failed to fetch photos:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [
     selectedEventId,
     selectedBandId,
     selectedPhotographer,
     selectedCompanySlug,
-    pagination.page,
-    pagination.limit,
+    orderMode,
   ]);
 
+  // Initial fetch when filters change
   useEffect(() => {
-    fetchPhotos();
+    fetchPhotos(false);
   }, [fetchPhotos]);
+
+  // Infinite scroll - load more when reaching bottom
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !loading && !loadingMore && photos.length < totalCount) {
+          fetchPhotos(true);
+        }
+      },
+      { threshold: 0.1, rootMargin: "200px" }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loading, loadingMore, photos.length, totalCount, fetchPhotos]);
 
   // Handle photo click
   const handlePhotoClick = (index: number) => {
@@ -318,11 +367,9 @@ export default function PhotosPage() {
   const handlePhotoDeleted = (photoId: string) => {
     // Remove the photo from local state
     setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    // Update pagination count
-    setPagination((prev) => ({
-      ...prev,
-      total: prev.total - 1,
-    }));
+    loadedPhotoIds.current.delete(photoId);
+    // Update total count
+    setTotalCount((prev) => prev - 1);
   };
 
   // Handle photo crop (called from slideshow)
@@ -333,30 +380,6 @@ export default function PhotosPage() {
         p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
       )
     );
-  };
-
-  // Generate pagination numbers
-  const getPaginationNumbers = () => {
-    const pages: (number | "...")[] = [];
-    const total = pagination.totalPages;
-    const current = pagination.page;
-
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (current > 3) pages.push("...");
-      for (
-        let i = Math.max(2, current - 1);
-        i <= Math.min(total - 1, current + 1);
-        i++
-      ) {
-        pages.push(i);
-      }
-      if (current < total - 2) pages.push("...");
-      pages.push(total);
-    }
-    return pages;
   };
 
   return (
@@ -370,7 +393,7 @@ export default function PhotosPage() {
           <div>
             <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
             <p className="text-text-muted">
-              {pagination.total} photo{pagination.total !== 1 ? "s" : ""} from{" "}
+              {photos.length} of {totalCount} photo{totalCount !== 1 ? "s" : ""} from{" "}
               {events.length} event{events.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -430,80 +453,60 @@ export default function PhotosPage() {
           />
         </div>
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-12">
-            {/* Previous button */}
-            <button
-              onClick={() => setPagination((p) => ({ ...p, page: p.page - 1 }))}
-              disabled={pagination.page <= 1}
-              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-xs tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
-            {/* Page numbers */}
-            <div className="flex items-center gap-1">
-              {getPaginationNumbers().map((pageNum, idx) =>
-                pageNum === "..." ? (
-                  <span
-                    key={`ellipsis-${idx}`}
-                    className="w-10 h-10 flex items-center justify-center text-text-dim"
-                  >
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    key={pageNum}
-                    onClick={() =>
-                      setPagination((p) => ({ ...p, page: pageNum as number }))
-                    }
-                    className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                      pagination.page === pageNum
-                        ? "bg-accent text-white"
-                        : "bg-bg-elevated text-text-muted hover:text-white hover:bg-bg-surface"
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                )
-              )}
-            </div>
-
-            {/* Next button */}
-            <button
-              onClick={() => setPagination((p) => ({ ...p, page: p.page + 1 }))}
-              disabled={pagination.page >= pagination.totalPages}
-              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-xs tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+        {/* Infinite scroll trigger & Order toggle */}
+        <div className="mt-12 flex flex-col items-center gap-6">
+          {/* Loading more indicator */}
+          <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
+            {loadingMore && (
+              <div className="flex items-center gap-3 text-text-muted">
+                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span className="text-sm">Loading more photos...</span>
+              </div>
+            )}
+            {!loadingMore && photos.length >= totalCount && photos.length > 0 && (
+              <p className="text-text-dim text-sm">All {totalCount} photos loaded</p>
+            )}
           </div>
-        )}
+
+          {/* Order mode toggle */}
+          {totalCount > 0 && (
+            <div className="flex items-center gap-3 bg-bg-elevated rounded-full p-1">
+              <button
+                onClick={() => setOrderMode("random")}
+                className={`px-4 py-2 rounded-full text-xs tracking-widest uppercase font-medium transition-colors ${
+                  orderMode === "random"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Random
+                </span>
+              </button>
+              <button
+                onClick={() => setOrderMode("date")}
+                className={`px-4 py-2 rounded-full text-xs tracking-widest uppercase font-medium transition-colors ${
+                  orderMode === "date"
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:text-white"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  By Date
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Slideshow modal */}
@@ -511,8 +514,8 @@ export default function PhotosPage() {
         <PhotoSlideshow
           photos={photos}
           initialIndex={slideshowIndex}
-          totalPhotos={pagination.total}
-          currentPage={pagination.page}
+          totalPhotos={totalCount}
+          currentPage={1}
           filters={{
             eventId: selectedEventId,
             bandId: selectedBandId,

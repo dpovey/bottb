@@ -615,7 +615,13 @@ export async function getPhotos(
   // Note: pagination with random doesn't guarantee unique results across pages,
   // but this gives better variety for discovery/browsing
   if (orderBy === "random") {
-    return getPhotosRandom({ eventId, bandId, photographer, companySlug, limit });
+    return getPhotosRandom({
+      eventId,
+      bandId,
+      photographer,
+      companySlug,
+      limit,
+    });
   }
 
   // Helper to apply date sorting after fetch (for chronological slideshow viewing)
