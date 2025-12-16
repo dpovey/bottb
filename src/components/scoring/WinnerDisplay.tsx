@@ -1,13 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { Card, Badge, BandThumbnail } from "@/components/ui";
+import { Card, Badge, BandThumbnail, CompanyBadge } from "@/components/ui";
 import { ScoringVersion, hasDetailedBreakdown } from "@/lib/scoring";
 
 export interface WinnerDisplayProps {
   /** Name of the winning band */
   winnerName: string;
-  /** Company/organization the band represents */
+  /** Company slug for linking */
+  companySlug?: string;
+  /** Company name */
+  companyName?: string;
+  /** Company icon URL */
+  companyIconUrl?: string;
+  /** @deprecated Use companySlug/companyName instead */
   company?: string;
   /** Total score (only shown for detailed breakdown versions) */
   totalScore?: number;
@@ -29,6 +35,9 @@ export interface WinnerDisplayProps {
 
 export function WinnerDisplay({
   winnerName,
+  companySlug,
+  companyName,
+  companyIconUrl,
   company,
   totalScore,
   logoUrl,
@@ -83,7 +92,7 @@ export function WinnerDisplay({
           </h2>
           
           {/* Company/Logo */}
-          {(company || logoUrl) && (
+          {(companySlug || company || logoUrl) && (
             <div className="flex items-center gap-3 mb-6">
               {logoUrl && (
                 <BandThumbnail
@@ -92,7 +101,18 @@ export function WinnerDisplay({
                   size="md"
                 />
               )}
-              {company && (
+              {companySlug && companyName ? (
+                <span className="text-text-muted flex items-center gap-2">
+                  representing{" "}
+                  <CompanyBadge
+                    slug={companySlug}
+                    name={companyName}
+                    iconUrl={companyIconUrl}
+                    variant="default"
+                    size="md"
+                  />
+                </span>
+              ) : company && (
                 <span className="text-text-muted">representing {company}</span>
               )}
             </div>

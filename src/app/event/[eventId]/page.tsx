@@ -46,6 +46,7 @@ interface Band {
   description?: string;
   company_slug?: string;
   company_name?: string;
+  company_icon_url?: string;
   order: number;
   hero_thumbnail_url?: string;
   info?: {
@@ -352,7 +353,8 @@ export default function EventPage() {
                               <CompanyBadge
                                 slug={band.company_slug}
                                 name={band.company_name}
-                                variant="inline"
+                                iconUrl={band.company_icon_url}
+                                variant="default"
                                 size="sm"
                                 asLink={false}
                               />

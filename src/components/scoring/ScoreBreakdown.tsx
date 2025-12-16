@@ -1,12 +1,14 @@
 "use client";
 
-import { Card, BandThumbnail } from "@/components/ui";
+import { Card, BandThumbnail, CompanyBadge } from "@/components/ui";
 import { ScoringVersion, getCategories, getScoringFormula } from "@/lib/scoring";
 
 export interface BandResultData {
   id: string;
   name: string;
-  company?: string;
+  companySlug?: string;
+  companyName?: string;
+  companyIconUrl?: string;
   rank: number;
   logoUrl?: string;
   heroThumbnailUrl?: string;
@@ -127,9 +129,15 @@ export function ScoreBreakdown({
                         />
                         <div>
                           <span className="font-medium">{band.name}</span>
-                          {band.company && (
-                            <div className="text-xs text-text-dim">
-                              {band.company}
+                          {band.companySlug && band.companyName && (
+                            <div className="mt-0.5">
+                              <CompanyBadge
+                                slug={band.companySlug}
+                                name={band.companyName}
+                                iconUrl={band.companyIconUrl}
+                                variant="default"
+                                size="sm"
+                              />
                             </div>
                           )}
                         </div>

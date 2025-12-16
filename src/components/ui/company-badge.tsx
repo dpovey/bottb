@@ -6,6 +6,8 @@ export interface CompanyBadgeProps {
   slug: string;
   /** Company display name */
   name: string;
+  /** Company icon URL (optional - falls back to building icon) */
+  iconUrl?: string | null;
   /** Visual style variant */
   variant?: "default" | "inline" | "pill";
   /** Size variant */
@@ -27,6 +29,7 @@ export interface CompanyBadgeProps {
 export function CompanyBadge({
   slug,
   name,
+  iconUrl,
   variant = "default",
   size = "md",
   className,
@@ -42,6 +45,7 @@ export function CompanyBadge({
       size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm"
     ),
     inline: cn(
+      "inline-flex items-center gap-1.5",
       "text-text-muted hover:text-accent",
       size === "sm" ? "text-xs" : "text-sm"
     ),
@@ -53,22 +57,35 @@ export function CompanyBadge({
     ),
   };
 
+  const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
+  // Show icon for non-inline variants, OR for inline if iconUrl is provided
+  const showIcon = variant !== "inline" || !!iconUrl;
+  
   const content = (
     <>
-      {variant !== "inline" && (
-        <svg
-          className={cn("shrink-0", size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5")}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+      {showIcon && (
+        iconUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={iconUrl}
+            alt=""
+            className={cn("shrink-0 object-contain", iconSize)}
           />
-        </svg>
+        ) : (
+          <svg
+            className={cn("shrink-0", iconSize)}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
+          </svg>
+        )
       )}
       <span className="truncate">{name}</span>
     </>
@@ -86,3 +103,4 @@ export function CompanyBadge({
 
   return <span className={combinedClassName}>{content}</span>;
 }
+

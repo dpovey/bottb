@@ -28,6 +28,7 @@ export interface Company {
   slug: string;
   name: string;
   logo_url?: string;
+  icon_url?: string;
   website?: string;
   created_at: string;
 }
@@ -62,6 +63,7 @@ export interface Band {
   created_at: string;
   // Joined fields
   company_name?: string;
+  company_icon_url?: string;
 }
 
 export interface Vote {
@@ -172,6 +174,7 @@ export interface Photo {
   thumbnail_url?: string;
   company_name?: string;
   company_slug?: string;
+  company_icon_url?: string;
 }
 
 // Photo label constants
@@ -219,6 +222,7 @@ export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`
     SELECT b.*, 
       c.name as company_name,
+      c.icon_url as company_icon_url,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
       (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point
     FROM bands b 
@@ -361,6 +365,9 @@ export async function getBandScores(eventId: string) {
       b."order",
       b.info,
       b.description,
+      b.company_slug,
+      c.name as company_name,
+      c.icon_url as company_icon_url,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
       (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,
@@ -375,11 +382,12 @@ export async function getBandScores(eventId: string) {
       cnm.peak_volume as crowd_noise_peak,
       cnm.crowd_score
     FROM bands b
+    LEFT JOIN companies c ON b.company_slug = c.slug
     LEFT JOIN votes v ON b.id = v.band_id
     LEFT JOIN crowd_noise_measurements cnm ON b.id = cnm.band_id AND cnm.event_id = ${eventId}
     CROSS JOIN total_votes tv
     WHERE b.event_id = ${eventId}
-    GROUP BY b.id, b.name, b."order", b.info, b.description, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
+    GROUP BY b.id, b.name, b."order", b.info, b.description, b.company_slug, c.name, c.icon_url, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
     ORDER BY b."order"
   `;
   return rows;
@@ -487,7 +495,7 @@ async function getPhotosRandom(options: {
     // Build query based on filters - using ORDER BY RANDOM() for true randomness
     if (companySlug === "none") {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -500,7 +508,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (companySlug) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -513,7 +521,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (bandId === "none" && eventId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -526,7 +534,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (bandId === "none") {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -539,7 +547,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (eventId && bandId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -552,7 +560,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (eventId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -565,7 +573,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (bandId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -578,7 +586,7 @@ async function getPhotosRandom(options: {
       return rows;
     } else if (photographer) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -592,7 +600,7 @@ async function getPhotosRandom(options: {
     } else {
       // No filters - random from all photos
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -652,7 +660,7 @@ export async function getPhotos(
     if (companySlug === "none") {
       // Filter for photos without a company (band has no company OR photo has no band)
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -665,7 +673,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else if (companySlug) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -679,7 +687,7 @@ export async function getPhotos(
     } else if (bandId === "none" && eventId) {
       // Filter for photos without a band, for specific event
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -693,7 +701,7 @@ export async function getPhotos(
     } else if (bandId === "none") {
       // Filter for photos without a band, all events
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -706,7 +714,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else if (eventId && bandId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -719,7 +727,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else if (eventId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -732,7 +740,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else if (bandId) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -745,7 +753,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else if (photographer) {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -758,7 +766,7 @@ export async function getPhotos(
       return applyOrdering(rows);
     } else {
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -778,7 +786,7 @@ export async function getPhotos(
 export async function getPhotoById(photoId: string): Promise<Photo | null> {
   try {
     const { rows } = await sql<Photo>`
-      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
@@ -1016,7 +1024,7 @@ export async function getPhotosByLabel(
     if (options?.bandId) {
       // Get photos with this label for a specific band
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -1030,7 +1038,7 @@ export async function getPhotosByLabel(
     } else if (options?.eventId) {
       // Get photos with this label for a specific event
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -1044,7 +1052,7 @@ export async function getPhotosByLabel(
     } else {
       // Get all photos with this label
       const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug,
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id

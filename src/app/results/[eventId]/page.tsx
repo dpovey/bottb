@@ -51,6 +51,9 @@ interface BandScore {
   crowd_noise_peak?: number;
   crowd_score?: number;
   description?: string;
+  company_slug?: string;
+  company_name?: string;
+  company_icon_url?: string;
 }
 
 interface EventInfo {
@@ -130,7 +133,9 @@ export default async function ResultsPage({
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <WinnerDisplay
               winnerName={winnerName}
-              company={winnerBand?.description}
+              companySlug={winnerBand?.company_slug}
+              companyName={winnerBand?.company_name}
+              companyIconUrl={winnerBand?.company_icon_url}
               logoUrl={winnerBand?.info?.logo_url}
               heroThumbnailUrl={winnerBand?.hero_thumbnail_url}
               heroFocalPoint={winnerBand?.hero_focal_point}
@@ -227,7 +232,9 @@ export default async function ResultsPage({
       return {
         id: score.id,
         name: score.name,
-        company: score.description,
+        companySlug: score.company_slug,
+        companyName: score.company_name,
+        companyIconUrl: score.company_icon_url,
         songChoice: Number(score.avg_song_choice || 0),
         performance: Number(score.avg_performance || 0),
         crowdVibe: Number(score.avg_crowd_vibe || 0),
@@ -332,7 +339,9 @@ export default async function ResultsPage({
   const breakdownData: BandResultData[] = bandResults.map((band) => ({
     id: band.id,
     name: band.name,
-    company: band.company,
+    companySlug: band.companySlug,
+    companyName: band.companyName,
+    companyIconUrl: band.companyIconUrl,
     rank: band.rank,
     logoUrl: band.logoUrl,
     heroThumbnailUrl: band.heroThumbnailUrl,
@@ -368,7 +377,9 @@ export default async function ResultsPage({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <WinnerDisplay
             winnerName={overallWinner.name}
-            company={overallWinner.company}
+            companySlug={overallWinner.companySlug}
+            companyName={overallWinner.companyName}
+            companyIconUrl={overallWinner.companyIconUrl}
             totalScore={overallWinner.totalScore}
             logoUrl={overallWinner.logoUrl}
             heroThumbnailUrl={overallWinner.heroThumbnailUrl}

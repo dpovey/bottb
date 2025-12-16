@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Card, Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +7,7 @@ interface CompanyCardProps {
     slug: string;
     name: string;
     logo_url?: string | null;
+    icon_url?: string | null;
     website?: string | null;
     band_count: number;
     event_count: number;
@@ -21,6 +21,10 @@ interface CompanyCardProps {
  * Used on the Companies listing page
  */
 export function CompanyCard({ company, selected = false }: CompanyCardProps) {
+  const hasLogo = !!company.logo_url;
+  // Use icon for the square, fallback to logo
+  const iconUrl = company.icon_url || company.logo_url;
+
   return (
     <Link href={`/companies?company=${company.slug}`}>
       <Card
@@ -32,23 +36,22 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
         )}
       >
         <div className="p-6">
-          {/* Logo and Name */}
-          <div className="flex items-start gap-4 mb-4">
-            {company.logo_url ? (
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0">
-                <Image
-                  src={company.logo_url}
-                  alt={`${company.name} logo`}
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-            ) : (
-              <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+          {hasLogo ? (
+            /* Logo - centered, full width */
+            <div className="h-16 mb-4 flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={company.logo_url!}
+                alt={`${company.name} logo`}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ) : (
+            /* No logo - show placeholder icon + name */
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                 <svg
-                  className="w-6 h-6 text-text-dim"
+                  className="w-7 h-7 text-text-dim"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -61,41 +64,50 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                   />
                 </svg>
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-white truncate">
-                {company.name}
-              </h3>
-              {company.website && (
-                <p className="text-text-dim text-xs truncate mt-0.5">
-                  {company.website.replace(/^https?:\/\//, "")}
-                </p>
-              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-white truncate">
+                  {company.name}
+                </h3>
+                {company.website && (
+                  <p className="text-text-dim text-xs truncate mt-0.5">
+                    {company.website.replace(/^https?:\/\//, "")}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Stats */}
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-white/5">
-                {company.event_count} event
-                {company.event_count !== 1 ? "s" : ""}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-white/5">
-                {company.band_count} band{company.band_count !== 1 ? "s" : ""}
-              </Badge>
-            </div>
+          <div className={cn("flex gap-3", hasLogo && "justify-center")}>
+            <Badge variant="default" className="bg-white/5">
+              {company.event_count} event
+              {company.event_count !== 1 ? "s" : ""}
+            </Badge>
+            <Badge variant="default" className="bg-white/5">
+              {company.band_count} band{company.band_count !== 1 ? "s" : ""}
+            </Badge>
           </div>
         </div>
 
-        {/* Action hint */}
+        {/* Action hint with icon */}
         <div className="px-6 py-3 border-t border-white/5 bg-white/[0.02]">
           <div className="flex items-center justify-between">
-            <span className="text-text-dim text-xs tracking-wider uppercase">
-              View bands & photos
-            </span>
+            <div className="flex items-center gap-3">
+              {/* Icon in action bar */}
+              {iconUrl && hasLogo && (
+                <div className="w-8 h-8 rounded-md overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center p-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={iconUrl}
+                    alt={`${company.name} icon`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              )}
+              <span className="text-text-dim text-xs tracking-wider uppercase">
+                View bands & photos
+              </span>
+            </div>
             <svg
               className="w-4 h-4 text-text-dim"
               fill="none"
@@ -115,3 +127,4 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
     </Link>
   );
 }
+
