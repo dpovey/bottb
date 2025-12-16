@@ -979,7 +979,7 @@ src/
 
 ## Design Examples
 
-See `design-examples/` folder for standalone HTML previews:
+See `design/` folder for standalone HTML previews:
 
 - `design-system.html` - Typography, colors, components
 - `home.html` - Home page layout

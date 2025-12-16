@@ -60,7 +60,7 @@ Based on the actual Tomorrowland website:
 | **Warning** | Vibrant Gold | `#F5A623` | Warning states, caution notices |
 | **Info** | Blue | `#3B82F6` | Informational messages |
 
-See `design-examples/` folder for HTML mockups and `design-examples/theme.css` for the CSS variables.
+See `design/` folder for HTML mockups and `design/theme.css` for the CSS variables.
 
 ---
 
@@ -121,7 +121,7 @@ All components are in `src/components/`:
 
 ## Design Examples
 
-Review the HTML mockups in `design-examples/`:
+Review the HTML mockups in `design/`:
 - `design-system.html` — Typography, colors, all components
 - `home.html` — Home page layout
 - `event.html` — Event detail page  

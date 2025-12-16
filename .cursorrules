@@ -1,6 +1,6 @@
 # Design
 
-- Refer to DESIGN.md for design system and design-example/\*.html files for mockups
+- Refer to DESIGN.md for design system and design/\*.html files for mockups
 - Use shared components where ever possible. If adding new components that could be reusable assume
   that you should make them shared.
 
@@ -9,7 +9,9 @@
 - Always double-check to make sure the changes you are committing are not accidentally deleting
   existing functionality that was not intended.
 - Always question if you are overwriting unstaged files you do not expect.
-- Make sure tests, eslint and typecheck pass before committing code.
+- Consider whether appropriate tests have been added before commiting
+- Make sure tests, eslint and typecheck pass before committing code. This includes failures
+  unrelated to the change.
 - If in doubt ask before committing.
 
 ## Commit Message Format
@@ -21,9 +23,6 @@
 - Examples:
   - `feat: add user authentication` - Must be a user facing feature
   - `fix: resolve memory leak in data processing`
-  - `docs: update API documentation`
-  - `test: add unit tests for payment module`
-  - `chore: update dependencies`
 
 # Testing Preferences
 
@@ -43,13 +42,13 @@
 
 - Group related tests using describe blocks
 - Use beforeEach/afterEach for setup and cleanup
-- Mock database calls and API requests
+- Mock database calls and API requests using msw
 - Test error states and loading states
 - Test both success and failure scenarios
 
 ## Code Style
 
-- Use TypeScript for all test files
+- Use TypeScript for all files
 - Follow the same code style as the main codebase
 - Use meaningful variable names in tests
 - Keep tests focused and atomic
