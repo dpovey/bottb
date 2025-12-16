@@ -11,32 +11,32 @@
   "bands": [
     {
       "name": "Canvanauts",
-      "description": "Canva",
+      "description": "The Canvanauts delivered a high-energy, joy-forward set that jumped effortlessly from Jet and Queen to Taylor Swift and Elton John. Their genre-hopping worked because they committed fully to each song, keeping the room buzzing with momentum and colour. It felt playful, inclusive and very on-brand.",
       "order": 1
     },
     {
       "name": "Bandlassian",
-      "description": "Atlassian",
+      "description": "Bandlassian leaned hard into polished crowd-pleasers, moving confidently from Toto and Foo Fighters through to Keane and Earth, Wind & Fire. Their set felt deliberately constructed for sing-alongs and big moments, balancing technical tightness with pure feel-good nostalgia. It was clean, professional and unapologetically fun.",
       "order": 2
     },
     {
       "name": "The Special Guests",
-      "description": "Banjo - Business Loans",
+      "description": "The Special Guests hit the sweet spot between Aussie pub rock and global anthems, ripping through Divinyls, Noiseworks and The Killers before closing with Rebel Yell and Boys of Summer. Their set felt confident and lived-in, driven by strong song choices and tight chemistry rather than gimmicks. Classic, loud and crowd-approved.",
       "order": 3
     },
     {
       "name": "Jamazon",
-      "description": "Amazon",
+      "description": "Jamazon brought maximalist chaos in the best possible way, opening with a full Jump medley before swinging through Tainted Love, Umbrella and a heartfelt Stand By Me. The set constantly reinvented itself, blending mashups and covers into something bigger than the individual songs. It was bold, theatrical and relentlessly entertaining.",
       "order": 4
     },
     {
       "name": "The Agentics",
-      "description": "Salesforce",
+      "description": "The Agentics played with a sense of intention, blending groove-driven arrangements with smart dynamics and a cool, modern stage presence. Their set felt cohesive and deliberate, less about chaos and more about flow, locking the room into a steady, infectious rhythm. Smooth, confident and quietly commanding.",
       "order": 5
     },
     {
       "name": "The Incident Commanders",
-      "description": "Google",
+      "description": "Dressed in high-viz and fully committed to the bit, the Incident Commanders delivered a love-hate letter to SRE life and living on pager duty. Their set mixed punchy, familiar tracks with sharp transitions, keeping everything tight and controlled while still having fun with the theme. It was disciplined, self-aware and surprisingly heavy.",
       "order": 6
     }
   ]

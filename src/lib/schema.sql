@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS companies (
   slug VARCHAR(255) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   logo_url TEXT,
+  icon_url TEXT,
   website TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

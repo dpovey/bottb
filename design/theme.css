@@ -245,11 +245,30 @@ body {
   border-color: var(--accent);
 }
 
-/* Glass effect */
+/* Glass Effect
+ * Semi-transparent background with blur for overlays, headers, modals.
+ * 
+ * Variants:
+ * - .glass: General use with border on all sides (badges, cards, modals)
+ * - .glass-nav: Navigation headers (bottom border only)
+ * 
+ * In the React app, the header uses scroll-aware glass:
+ * - variant="transparent": Starts fully transparent, becomes glass on scroll (50px threshold)
+ * - variant="glass": Always shows glass effect
+ * - variant="solid": Solid background, no blur
+ */
 .glass {
   background: rgba(10, 10, 10, 0.8);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
+}
+
+.glass-nav {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* ===========================================

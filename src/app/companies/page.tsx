@@ -11,6 +11,7 @@ interface Company {
   slug: string;
   name: string;
   logo_url?: string | null;
+  icon_url?: string | null;
   website?: string | null;
   band_count: number;
   event_count: number;
@@ -124,24 +125,29 @@ function CompaniesContent() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="font-semibold text-4xl mb-2">
-              {selectedCompany ? selectedCompany.name : "Companies"}
-            </h1>
-            <p className="text-text-muted">
-              {selectedCompany ? (
-                <>
-                  {selectedCompany.event_count} event
-                  {selectedCompany.event_count !== 1 ? "s" : ""} •{" "}
-                  {selectedCompany.band_count} band
-                  {selectedCompany.band_count !== 1 ? "s" : ""}
-                </>
+            {selectedCompany ? (
+              /* Selected company - show logo or name */
+              selectedCompany.logo_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={selectedCompany.logo_url}
+                  alt={selectedCompany.name}
+                  className="h-16 max-w-xs object-contain"
+                />
               ) : (
-                <>
+                <h1 className="font-semibold text-4xl">
+                  {selectedCompany.name}
+                </h1>
+              )
+            ) : (
+              <>
+                <h1 className="font-semibold text-4xl mb-2">Companies</h1>
+                <p className="text-text-muted">
                   {companies.length} compan{companies.length !== 1 ? "ies" : "y"} have
                   participated in Battle of the Tech Bands
-                </>
-              )}
-            </p>
+                </p>
+              </>
+            )}
           </div>
           {selectedCompany && (
             <div className="flex gap-3">

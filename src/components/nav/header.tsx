@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
 import { EventsDropdown } from "./events-dropdown";
@@ -12,7 +12,7 @@ export interface HeaderProps {
   showNav?: boolean;
   /** Optional breadcrumbs to display */
   breadcrumbs?: BreadcrumbItem[];
-  /** Background style */
+  /** Background style - "transparent" starts clear and becomes glass on scroll */
   variant?: "transparent" | "glass" | "solid";
   /** Make header fixed/sticky */
   fixed?: boolean;
@@ -31,23 +31,43 @@ export function Header({
   fixed = true,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position for transparent variant auto-glass effect
+  useEffect(() => {
+    if (variant !== "transparent") return;
+
+    const handleScroll = () => {
+      // Trigger glass effect after scrolling 50px
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [variant]);
+
+  // Determine if we should show the glass effect
+  const showGlass = variant === "glass" || (variant === "transparent" && isScrolled);
 
   return (
     <>
       {/* Main Header */}
       <header
         className={cn(
-          "z-50 transition-colors duration-300",
+          "z-50 transition-all duration-300",
           {
             "fixed top-0 left-0 right-0": fixed,
             relative: !fixed,
           },
-          {
-            "bg-transparent": variant === "transparent",
-            "bg-bg/80 backdrop-blur-lg border-b border-white/5":
-              variant === "glass",
-            "bg-bg border-b border-white/5": variant === "solid",
-          }
+          // Glass effect styles (uses glass-nav for bottom-border only variant)
+          showGlass && "glass-nav",
+          // Transparent state (before scroll or when variant is transparent and not scrolled)
+          variant === "transparent" && !isScrolled && "bg-transparent",
+          // Solid variant
+          variant === "solid" && "bg-bg border-b border-white/5"
         )}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">

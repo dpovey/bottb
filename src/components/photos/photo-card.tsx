@@ -1,6 +1,7 @@
 "use client";
 
 import { Photo } from "@/lib/db";
+import { CompanyIcon } from "@/components/ui";
 
 interface PhotoCardProps {
   photo: Photo;
@@ -26,13 +27,36 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
         loading="lazy"
       />
 
+      {/* Company icon badge - always visible in top right if available */}
+      {photo.company_icon_url && (
+        <div className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
+          <CompanyIcon
+            iconUrl={photo.company_icon_url}
+            companyName={photo.company_name || "Company"}
+            size="sm"
+            showFallback={false}
+          />
+        </div>
+      )}
+
       {/* Hover overlay with info */}
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute bottom-0 left-0 right-0 p-3">
           {photo.band_name && (
-            <p className="text-sm font-medium text-white truncate">
-              {photo.band_name}
-            </p>
+            <div className="flex items-center gap-2">
+              {/* Show company icon next to band name if no top-right icon */}
+              {!photo.company_icon_url && photo.company_name && (
+                <CompanyIcon
+                  iconUrl={photo.company_icon_url}
+                  companyName={photo.company_name}
+                  size="xs"
+                  showFallback={false}
+                />
+              )}
+              <p className="text-sm font-medium text-white truncate">
+                {photo.band_name}
+              </p>
+            </div>
           )}
           {photo.event_name && (
             <p className="text-xs text-text-muted truncate">{photo.event_name}</p>

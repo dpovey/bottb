@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Photo, PHOTO_LABELS } from "@/lib/db";
+import { CompanyIcon } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import Cropper, { Area } from "react-easy-crop";
 
@@ -793,12 +794,32 @@ export function PhotoSlideshow({
                   {currentPhoto.company_name && currentPhoto.company_slug ? (
                     <Link
                       href={`/companies?company=${currentPhoto.company_slug}`}
-                      className="truncate hover:text-accent transition-colors"
+                      className="flex items-center gap-1.5 truncate hover:text-accent transition-colors"
                     >
-                      {currentPhoto.company_name}
+                      {currentPhoto.company_icon_url && (
+                        <CompanyIcon
+                          iconUrl={currentPhoto.company_icon_url}
+                          companyName={currentPhoto.company_name}
+                          size="xs"
+                          showFallback={false}
+                          className="shrink-0"
+                        />
+                      )}
+                      <span className="truncate">{currentPhoto.company_name}</span>
                     </Link>
                   ) : currentPhoto.company_name ? (
-                    <span className="truncate">{currentPhoto.company_name}</span>
+                    <span className="flex items-center gap-1.5 truncate">
+                      {currentPhoto.company_icon_url && (
+                        <CompanyIcon
+                          iconUrl={currentPhoto.company_icon_url}
+                          companyName={currentPhoto.company_name}
+                          size="xs"
+                          showFallback={false}
+                          className="shrink-0"
+                        />
+                      )}
+                      <span className="truncate">{currentPhoto.company_name}</span>
+                    </span>
                   ) : null}
                   {currentPhoto.company_name && currentPhoto.event_name && (
                     <span className="slideshow-separator hidden sm:inline">•</span>

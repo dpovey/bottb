@@ -80,3 +80,4 @@ export const DELETE = withAdminProtection(handleDeletePhoto);
 
 
 
+

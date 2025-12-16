@@ -150,7 +150,7 @@ export default async function BandPage({
   const { rows: bandData } = await sql`
     SELECT b.*, 
            e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
-           c.name as company_name, c.slug as company_slug,
+           c.name as company_name, c.slug as company_slug, c.icon_url as company_icon_url,
            (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
     FROM bands b
     JOIN events e ON b.event_id = e.id
@@ -384,6 +384,7 @@ export default async function BandPage({
                   <CompanyBadge
                     slug={band.company_slug}
                     name={band.company_name}
+                    iconUrl={band.company_icon_url}
                     variant="default"
                     size="md"
                   />

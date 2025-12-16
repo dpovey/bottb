@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================
+ * Glass Effect Utilities
+ * Semi-transparent background with blur for overlays, headers, modals
+ * 
+ * .glass: General use with border on all sides (badges, cards, modals)
+ * .glass-nav: Navigation headers (bottom border only)
+ * =========================================== */
+@layer utilities {
+  .glass {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-nav {
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
 /* Font selection and focus styles */
 ::selection {
   background-color: theme('colors.accent.DEFAULT');

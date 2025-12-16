@@ -187,6 +187,59 @@ export async function getEventImageUrl(
 }
 
 /**
+ * Get company logo URL from blob storage
+ */
+export async function getCompanyLogoUrl(
+  companySlug: string
+): Promise<string | null> {
+  try {
+    const result = await listImages(`companies/${companySlug}/logo`, 1);
+
+    if (result.blobs.length > 0) {
+      return result.blobs[0].url;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching logo for company ${companySlug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get company icon URL from blob storage
+ */
+export async function getCompanyIconUrl(
+  companySlug: string
+): Promise<string | null> {
+  try {
+    const result = await listImages(`companies/${companySlug}/icon`, 1);
+
+    if (result.blobs.length > 0) {
+      return result.blobs[0].url;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching icon for company ${companySlug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Generate a unique filename for company images
+ */
+export function generateCompanyImageFilename(
+  companySlug: string,
+  originalName: string,
+  category: "logo" | "icon" = "logo"
+): string {
+  const timestamp = Date.now();
+  const extension = originalName.split(".").pop() || "png";
+  return `companies/${companySlug}/${category}/${timestamp}.${extension}`;
+}
+
+/**
  * Clean up old temporary uploads (older than 24 hours)
  */
 export async function cleanupTempUploads(): Promise<number> {
