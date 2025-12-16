@@ -854,7 +854,12 @@ export function PhotoSlideshow({
                     />
                     <circle cx="12" cy="13" r="3" />
                   </svg>
-                  <span className="truncate">{currentPhoto.photographer}</span>
+                  <Link
+                    href={`/photographer/${currentPhoto.photographer.toLowerCase().replace(/\s+/g, "-")}`}
+                    className="truncate hover:text-accent transition-colors"
+                  >
+                    {currentPhoto.photographer}
+                  </Link>
                 </span>
               )}
             </div>
