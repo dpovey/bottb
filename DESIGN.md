@@ -27,15 +27,15 @@ Key visual references:
 
 ## Color Palette
 
-Primarily monochromatic with an Indigo accent used sparingly for emphasis. Semantic colors (error, success, warning, info) reserved for user feedback only.
+Primarily monochromatic with a Vibrant Gold accent used sparingly for emphasis. Semantic colors (error, success, warning, info) reserved for user feedback only.
 
 ### Color Usage Hierarchy
 
-| Percentage | Category        | Purpose                                               |
-| ---------- | --------------- | ----------------------------------------------------- |
-| **90%**    | Monochromatic   | White/gray text on black backgrounds — the foundation |
-| **8%**     | Accent (Indigo) | Selected states, primary CTAs, links, winner badges   |
-| **2%**     | Semantic        | Error/success/warning/info — only for user feedback   |
+| Percentage | Category              | Purpose                                               |
+| ---------- | --------------------- | ----------------------------------------------------- |
+| **90%**    | Monochromatic         | White/gray text on black backgrounds — the foundation |
+| **8%**     | Accent (Vibrant Gold) | Selected states, primary CTAs, links, winner badges   |
+| **2%**     | Semantic              | Error/success/warning/info — only for user feedback   |
 
 ### Background Scale
 
@@ -54,13 +54,13 @@ Primarily monochromatic with an Indigo accent used sparingly for emphasis. Seman
 | `--color-text-muted` | `#a0a0a0` | Secondary text, descriptions   |
 | `--color-text-dim`   | `#666666` | Tertiary text, metadata, hints |
 
-### Accent Color (Indigo)
+### Accent Color (Vibrant Gold)
 
 | Token                  | Hex                        | Usage                                       |
 | ---------------------- | -------------------------- | ------------------------------------------- |
-| `--color-accent`       | `#6366F1`                  | Winner badges, live indicators, key CTAs    |
-| `--color-accent-light` | `#818CF8`                  | Hover states on accent elements             |
-| `--color-accent-muted` | `rgba(99, 102, 241, 0.15)` | Subtle accent backgrounds (badges, borders) |
+| `--color-accent`       | `#F5A623`                  | Winner badges, live indicators, key CTAs    |
+| `--color-accent-light` | `#FFBE3D`                  | Hover states on accent elements             |
+| `--color-accent-muted` | `rgba(245, 166, 35, 0.15)` | Subtle accent backgrounds (badges, borders) |
 
 ### Semantic Colors (Use Sparingly)
 
@@ -105,9 +105,9 @@ module.exports = {
           surface: "#222222",
         },
         accent: {
-          DEFAULT: "#6366F1", // Indigo
-          light: "#818CF8",
-          muted: "rgba(99, 102, 241, 0.15)",
+          DEFAULT: "#F5A623", // Vibrant Gold
+          light: "#FFBE3D",
+          muted: "rgba(245, 166, 35, 0.15)",
         },
         text: {
           DEFAULT: "#ffffff",
@@ -982,6 +982,19 @@ src/
 See `design/` folder for standalone HTML previews:
 
 - `design-system.html` - Typography, colors, components
+- `theme.css` - Shared CSS variables and component styles
 - `home.html` - Home page layout
 - `event.html` - Event detail page
+- `band.html` - Band page layout
+- `results.html` - Results page (2025.1 scoring)
+- `results-2022.html` - Results page (legacy winner-only)
+- `results-2025.html` - Results page (with scream-o-meter)
+- `results-2026.html` - Results page (with visuals category)
 - `voting.html` - Voting interface
+- `photos.html` - Photo gallery
+- `photos-slideshow.html` - Full-screen photo slideshow
+- `about.html` - About page
+- `login.html` - Authentication page
+- `404.html` - Not found page
+- `admin.html` - Admin interface with toolbar
+- `accent-colors.html` - Interactive color picker
