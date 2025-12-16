@@ -114,7 +114,7 @@ export function VideoCarousel({
           <div className="flex items-center gap-3">
             {/* Subscribe link */}
             <a
-              href="https://youtube.com/@battleofthetechbands?sub_confirmation=1"
+              href="https://youtube.com/@battleofthetechbands?sub_confirmation=1&utm_source=bottb&utm_medium=website&utm_campaign=video-carousel"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-text-muted hover:text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all"
