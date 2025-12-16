@@ -120,7 +120,12 @@ export function PhotoStrip({
     try {
       const newPhotos = await fetchPage(nextPage);
       if (newPhotos.length > 0) {
-        setPhotos(prev => [...prev, ...newPhotos]);
+        // Filter out duplicates (can happen with random ordering)
+        setPhotos(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const uniqueNew = newPhotos.filter(p => !existingIds.has(p.id));
+          return [...prev, ...uniqueNew];
+        });
         setLoadedPages(prev => new Set([...prev, nextPage]));
       }
     } finally {
