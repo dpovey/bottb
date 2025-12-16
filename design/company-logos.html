@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Logos Marquee - Design</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="theme.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Jost', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Marquee animation */
+    @keyframes marquee-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    
+    .marquee-track {
+      animation: marquee-scroll 45s linear infinite;
+    }
+    
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
+    
+    /* Reduced motion - disable animation */
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track {
+        animation: none;
+      }
+    }
+    
+    /* Gradient fade masks on edges */
+    .marquee-container {
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 10%,
+        black 90%,
+        transparent 100%
+      );
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        black 10%,
+        black 90%,
+        transparent 100%
+      );
+    }
+    
+    /* Logo hover effects */
+    .logo-item {
+      filter: grayscale(100%);
+      opacity: 0.5;
+      transition: all 0.3s ease;
+    }
+    
+    .logo-item:hover {
+      filter: grayscale(0%);
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    
+    /* Tooltip */
+    .logo-tooltip {
+      opacity: 0;
+      transform: translateX(-50%) translateY(4px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+    
+    .logo-wrapper:hover .logo-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body class="bg-theme min-h-screen">
+
+  <!-- Context: Section between Past Events and CTA -->
+  <section class="py-12 bg-theme" style="background: var(--bg-muted);">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <p class="text-dim text-sm text-center">↑ Past Events section above</p>
+    </div>
+  </section>
+
+  <!-- Company Logos Marquee Section -->
+  <section class="py-16 bg-theme border-t border-white/5">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <!-- Section Header -->
+      <div class="flex items-center justify-between mb-10">
+        <div class="text-center flex-1">
+          <h2 class="text-sm tracking-widest uppercase text-accent mb-2">
+            Companies Who've Competed
+          </h2>
+          <p class="text-muted text-sm">
+            Tech companies bringing the rock since 2022
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Full-width marquee container -->
+    <div class="marquee-container overflow-hidden">
+      <div class="marquee-track flex items-center gap-16 py-4" style="width: max-content;">
+        <!-- First set of logos (duplicated for seamless loop) -->
+        
+        <!-- Atlassian -->
+        <a href="/companies?company=atlassian" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-12 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://wac-cdn.atlassian.com/misc-assets/webp-images/Atlassian-horizontal-blue-rgb.webp" 
+              alt="Atlassian" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Atlassian
+          </span>
+        </a>
+        
+        <!-- Salesforce -->
+        <a href="/companies?company=salesforce" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/1280px-Salesforce.com_logo.svg.png" 
+              alt="Salesforce" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Salesforce
+          </span>
+        </a>
+        
+        <!-- Microsoft -->
+        <a href="/companies?company=microsoft" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1280px-Microsoft_logo_%282012%29.svg.png" 
+              alt="Microsoft" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Microsoft
+          </span>
+        </a>
+        
+        <!-- AWS -->
+        <a href="/companies?company=aws" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png" 
+              alt="AWS" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Amazon Web Services
+          </span>
+        </a>
+        
+        <!-- Google -->
+        <a href="/companies?company=google" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1280px-Google_2015_logo.svg.png" 
+              alt="Google" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Google
+          </span>
+        </a>
+        
+        <!-- Canva -->
+        <a href="/companies?company=canva" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Canva_Logo.svg/1280px-Canva_Logo.svg.png" 
+              alt="Canva" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Canva
+          </span>
+        </a>
+        
+        <!-- Slack -->
+        <a href="/companies?company=slack" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Slack_icon_2019.svg/2048px-Slack_icon_2019.svg.png" 
+              alt="Slack" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Slack
+          </span>
+        </a>
+        
+        <!-- Stripe -->
+        <a href="/companies?company=stripe" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png" 
+              alt="Stripe" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Stripe
+          </span>
+        </a>
+        
+        <!-- DUPLICATE SET FOR SEAMLESS LOOP -->
+        
+        <!-- Atlassian -->
+        <a href="/companies?company=atlassian" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-12 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://wac-cdn.atlassian.com/misc-assets/webp-images/Atlassian-horizontal-blue-rgb.webp" 
+              alt="Atlassian" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Atlassian
+          </span>
+        </a>
+        
+        <!-- Salesforce -->
+        <a href="/companies?company=salesforce" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/1280px-Salesforce.com_logo.svg.png" 
+              alt="Salesforce" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Salesforce
+          </span>
+        </a>
+        
+        <!-- Microsoft -->
+        <a href="/companies?company=microsoft" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1280px-Microsoft_logo_%282012%29.svg.png" 
+              alt="Microsoft" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Microsoft
+          </span>
+        </a>
+        
+        <!-- AWS -->
+        <a href="/companies?company=aws" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png" 
+              alt="AWS" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Amazon Web Services
+          </span>
+        </a>
+        
+        <!-- Google -->
+        <a href="/companies?company=google" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1280px-Google_2015_logo.svg.png" 
+              alt="Google" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Google
+          </span>
+        </a>
+        
+        <!-- Canva -->
+        <a href="/companies?company=canva" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Canva_Logo.svg/1280px-Canva_Logo.svg.png" 
+              alt="Canva" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Canva
+          </span>
+        </a>
+        
+        <!-- Slack -->
+        <a href="/companies?company=slack" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Slack_icon_2019.svg/2048px-Slack_icon_2019.svg.png" 
+              alt="Slack" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Slack
+          </span>
+        </a>
+        
+        <!-- Stripe -->
+        <a href="/companies?company=stripe" class="logo-wrapper relative shrink-0 group">
+          <div class="logo-item h-10 w-auto flex items-center justify-center px-4">
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png" 
+              alt="Stripe" 
+              class="h-full w-auto object-contain"
+            >
+          </div>
+          <span class="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap">
+            Stripe
+          </span>
+        </a>
+        
+      </div>
+    </div>
+    
+    <!-- View All Link -->
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 mt-8 text-center">
+      <a href="/companies" class="btn-outline px-6 py-3 rounded-full text-xs tracking-widest uppercase inline-flex items-center gap-2">
+        View All Companies
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Context: CTA Section below -->
+  <section class="py-12 bg-theme" style="background: var(--bg-muted);">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+      <p class="text-dim text-sm text-center">↓ CTA section below</p>
+    </div>
+  </section>
+
+  <!-- Alternative: Compact Version (no subtitle, smaller) -->
+  <section class="py-12 bg-theme border-t border-white/5 mt-20">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 mb-6">
+      <h3 class="text-xs tracking-widest uppercase text-muted text-center">
+        Companies Who've Competed
+      </h3>
+    </div>
+    
+    <div class="marquee-container overflow-hidden">
+      <div class="marquee-track flex items-center gap-12 py-2" style="width: max-content;">
+        <!-- Smaller logos for compact version -->
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-3">
+            <img src="https://wac-cdn.atlassian.com/misc-assets/webp-images/Atlassian-horizontal-blue-rgb.webp" alt="Atlassian" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/1280px-Salesforce.com_logo.svg.png" alt="Salesforce" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1280px-Microsoft_logo_%282012%29.svg.png" alt="Microsoft" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-5 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png" alt="AWS" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1280px-Google_2015_logo.svg.png" alt="Google" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-5 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Canva_Logo.svg/1280px-Canva_Logo.svg.png" alt="Canva" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <!-- Duplicate for loop -->
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-8 w-auto flex items-center justify-center px-3">
+            <img src="https://wac-cdn.atlassian.com/misc-assets/webp-images/Atlassian-horizontal-blue-rgb.webp" alt="Atlassian" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Salesforce.com_logo.svg/1280px-Salesforce.com_logo.svg.png" alt="Salesforce" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/1280px-Microsoft_logo_%282012%29.svg.png" alt="Microsoft" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-5 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/1280px-Amazon_Web_Services_Logo.svg.png" alt="AWS" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-6 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1280px-Google_2015_logo.svg.png" alt="Google" class="h-full w-auto object-contain">
+          </div>
+        </a>
+        <a href="#" class="logo-wrapper relative shrink-0">
+          <div class="logo-item h-5 w-auto flex items-center justify-center px-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Canva_Logo.svg/1280px-Canva_Logo.svg.png" alt="Canva" class="h-full w-auto object-contain">
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
+

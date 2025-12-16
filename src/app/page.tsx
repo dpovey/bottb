@@ -19,6 +19,7 @@ import {
   type BandScoreData,
 } from "@/lib/scoring";
 import { PhotoStrip } from "@/components/photos/photo-strip";
+import { CompanyLogoMarquee } from "@/components/company-logo-marquee";
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE =
@@ -295,6 +296,12 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Random Photo Strip */}
+      <PhotoStrip title="From the Archives" viewAllLink="/photos" />
+
+      {/* Company Logo Marquee */}
+      <CompanyLogoMarquee />
+
       {/* CTA Section */}
       <section className="py-20 bg-bg-muted border-t border-white/5">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
@@ -319,9 +326,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Random Photo Strip */}
-      <PhotoStrip title="From the Archives" viewAllLink="/photos" />
     </PublicLayout>
   );
 }

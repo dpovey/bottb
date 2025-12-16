@@ -10,6 +10,7 @@ vi.mock("@/lib/db", () => ({
   getBandsForEvent: vi.fn(),
   getBandScores: vi.fn(),
   getPhotosByLabel: vi.fn(),
+  getCompanies: vi.fn(),
   PHOTO_LABELS: {
     BAND_HERO: "band_hero",
     EVENT_HERO: "event_hero",
@@ -32,6 +33,11 @@ vi.mock("next-auth/react", () => ({
   signOut: vi.fn(),
 }));
 
+// Mock async server components that don't work well in test environment
+vi.mock("@/components/company-logo-marquee", () => ({
+  CompanyLogoMarquee: () => null,
+}));
+
 import {
   getActiveEvent,
   getUpcomingEvents,
@@ -39,6 +45,7 @@ import {
   getBandsForEvent,
   getBandScores,
   getPhotosByLabel,
+  getCompanies,
 } from "@/lib/db";
 
 const mockGetActiveEvent = getActiveEvent as ReturnType<typeof vi.fn>;
@@ -47,12 +54,14 @@ const mockGetPastEvents = getPastEvents as ReturnType<typeof vi.fn>;
 const mockGetBandsForEvent = getBandsForEvent as ReturnType<typeof vi.fn>;
 const mockGetBandScores = getBandScores as ReturnType<typeof vi.fn>;
 const mockGetPhotosByLabel = getPhotosByLabel as ReturnType<typeof vi.fn>;
+const mockGetCompanies = getCompanies as ReturnType<typeof vi.fn>;
 
 describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default to no photos
+    // Default to no photos and no companies (marquee won't render)
     mockGetPhotosByLabel.mockResolvedValue([]);
+    mockGetCompanies.mockResolvedValue([]);
   });
 
   it("renders nothing when no active event exists", async () => {

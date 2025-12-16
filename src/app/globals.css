@@ -88,6 +88,79 @@
   animation: dropdown-item-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* ===========================================
+ * Logo Marquee Animation
+ * Infinite horizontal scroll for company logos
+ * =========================================== */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee-scroll 45s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Gradient fade masks on edges */
+.marquee-container {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+}
+
+/* Logo item states */
+.logo-item {
+  filter: grayscale(100%);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.logo-item:hover {
+  filter: grayscale(0%);
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+/* Logo tooltip */
+.logo-tooltip {
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.logo-wrapper:hover .logo-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Reduced motion - show static grid instead */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  
+  .logo-item {
+    filter: grayscale(0%);
+    opacity: 0.7;
+  }
+}
+
 /* Landscape mobile optimizations - when vertical space is limited */
 @media (max-height: 500px) {
   /* Hide thumbnail strip */
