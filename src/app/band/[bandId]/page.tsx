@@ -2,6 +2,7 @@ import {
   getBandScores,
   getBandsForEvent,
   getPhotosByLabel,
+  getVideos,
   PHOTO_LABELS,
 } from "@/lib/db";
 import { notFound } from "next/navigation";
@@ -11,6 +12,7 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import { CompanyBadge, BandThumbnail } from "@/components/ui";
 import { PhotoStrip } from "@/components/photos/photo-strip";
+import { VideoCarousel } from "@/components/video-carousel";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -189,6 +191,9 @@ export default async function BandPage({
     currentBandIndex < allBands.length - 1
       ? allBands[currentBandIndex + 1]
       : null;
+
+  // Fetch videos for this band
+  const videos = await getVideos({ bandId });
 
   // Only fetch scores if event is finalized or user is admin
   let scores: BandScore[] = [];
@@ -597,6 +602,15 @@ export default async function BandPage({
 
       {/* Photos Section */}
       <PhotoStrip bandId={bandId} />
+
+      {/* Videos Section */}
+      {videos.length > 0 && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <VideoCarousel videos={videos} title="Videos" showBandInfo={false} />
+          </div>
+        </section>
+      )}
 
       {/* Band Navigation (Previous/Next) */}
       {(prevBand || nextBand) && (

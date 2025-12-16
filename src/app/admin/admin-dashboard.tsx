@@ -110,6 +110,28 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
         </button>
       </div>
 
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Link
+          href="/admin/videos"
+          className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/15 transition-colors group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Manage Videos
+              </h3>
+              <p className="text-sm text-gray-400">Add YouTube videos to events</p>
+            </div>
+          </div>
+        </Link>
+      </div>
+
       {/* Events List */}
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
         <div className="flex justify-between items-center mb-6">

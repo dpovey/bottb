@@ -8,6 +8,8 @@ import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
 import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge } from "@/components/ui";
 import { PhotoStrip } from "@/components/photos/photo-strip";
+import { VideoCarousel } from "@/components/video-carousel";
+import { Video } from "@/lib/db";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -93,15 +95,17 @@ export default function EventPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [bands, setBands] = useState<Band[]>([]);
   const [heroPhoto, setHeroPhoto] = useState<HeroPhoto | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventResponse, bandsResponse, heroResponse] = await Promise.all([
+        const [eventResponse, bandsResponse, heroResponse, videosResponse] = await Promise.all([
           fetch(`/api/events/${eventId}`),
           fetch(`/api/bands/${eventId}`),
           fetch(`/api/photos/heroes?label=event_hero&eventId=${eventId}`),
+          fetch(`/api/videos?event=${eventId}`),
         ]);
 
         if (eventResponse.ok) {
@@ -119,6 +123,11 @@ export default function EventPage() {
           if (heroData.photos && heroData.photos.length > 0) {
             setHeroPhoto(heroData.photos[0]);
           }
+        }
+
+        if (videosResponse.ok) {
+          const videosData = await videosResponse.json();
+          setVideos(videosData.videos || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -395,6 +404,15 @@ export default function EventPage() {
 
       {/* Photos Section */}
       <PhotoStrip eventId={eventId as string} />
+
+      {/* Videos Section */}
+      {videos.length > 0 && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <VideoCarousel videos={videos} title="Videos" showBandInfo={true} />
+          </div>
+        </section>
+      )}
     </WebLayout>
   );
 }

@@ -12,6 +12,8 @@ interface PhotoStripProps {
   bandId?: string;
   /** Filter by company slug */
   companySlug?: string;
+  /** Filter by photographer name */
+  photographer?: string;
   /** Custom title for the section (default: "Photos") */
   title?: string;
   /** Link to full gallery with filters applied */
@@ -39,6 +41,7 @@ export function PhotoStrip({
   eventId,
   bandId,
   companySlug,
+  photographer,
   title = "Photos",
   viewAllLink,
   className = "",
@@ -65,6 +68,7 @@ export function PhotoStrip({
     if (eventId) params.set("event", eventId);
     if (bandId) params.set("band", bandId);
     if (companySlug) params.set("company", companySlug);
+    if (photographer) params.set("photographer", photographer);
     return `/photos${params.toString() ? `?${params.toString()}` : ''}`;
   })();
 
@@ -74,6 +78,7 @@ export function PhotoStrip({
     if (eventId) params.set("event", eventId);
     if (bandId) params.set("band", bandId);
     if (companySlug) params.set("company", companySlug);
+    if (photographer) params.set("photographer", photographer);
     params.set("limit", PAGE_SIZE.toString());
     params.set("page", page.toString());
     params.set("order", "random"); // Random order for browsing strips
@@ -84,7 +89,7 @@ export function PhotoStrip({
     const data: PhotosResponse = await res.json();
     setTotalCount(data.pagination.total);
     return data.photos;
-  }, [eventId, bandId, companySlug]);
+  }, [eventId, bandId, companySlug, photographer]);
 
   // Initial fetch
   useEffect(() => {
@@ -340,6 +345,7 @@ export function PhotoStrip({
             eventId: eventId || null,
             bandId: bandId || null,
             companySlug: companySlug || null,
+            photographer: photographer || null,
           }}
           onClose={handleSlideshowClose}
           onPhotoDeleted={handlePhotoDeleted}

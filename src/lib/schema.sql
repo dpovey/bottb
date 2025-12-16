@@ -32,6 +32,18 @@ CREATE TABLE IF NOT EXISTS companies (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Photographers table
+CREATE TABLE IF NOT EXISTS photographers (
+  slug VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  bio TEXT,
+  location VARCHAR(255),
+  website TEXT,
+  instagram TEXT,
+  email TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Bands table
 CREATE TABLE IF NOT EXISTS bands (
   id VARCHAR(255) PRIMARY KEY,
@@ -95,6 +107,7 @@ CREATE TABLE IF NOT EXISTS votes (
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin);
 CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
+CREATE INDEX IF NOT EXISTS idx_photographers_name ON photographers(name);
 CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
 CREATE INDEX IF NOT EXISTS idx_bands_company_slug ON bands(company_slug);
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
@@ -162,4 +175,24 @@ CREATE INDEX IF NOT EXISTS idx_finalized_results_final_rank ON finalized_results
 CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING GIN (info);
 -- Use btree for text extraction instead of GIN
 CREATE INDEX IF NOT EXISTS idx_bands_info_logo ON bands ((info->>'logo_url'));
+
+-- Videos table for YouTube video embeds
+CREATE TABLE IF NOT EXISTS videos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  youtube_video_id VARCHAR(20) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  event_id VARCHAR(255) REFERENCES events(id) ON DELETE SET NULL,
+  band_id VARCHAR(255) REFERENCES bands(id) ON DELETE SET NULL,
+  duration_seconds INTEGER,
+  thumbnail_url TEXT,
+  published_at TIMESTAMP WITH TIME ZONE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for videos table
+CREATE INDEX IF NOT EXISTS idx_videos_event_id ON videos(event_id);
+CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id);
+CREATE INDEX IF NOT EXISTS idx_videos_youtube_id ON videos(youtube_video_id);
+CREATE INDEX IF NOT EXISTS idx_videos_sort_order ON videos(sort_order);
 

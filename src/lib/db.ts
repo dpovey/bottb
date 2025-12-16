@@ -38,6 +38,21 @@ export interface CompanyWithStats extends Company {
   event_count: number;
 }
 
+export interface Photographer {
+  slug: string;
+  name: string;
+  bio: string | null;
+  location: string | null;
+  website: string | null;
+  instagram: string | null;
+  email: string | null;
+  created_at: string;
+}
+
+export interface PhotographerWithStats extends Photographer {
+  photo_count: number;
+}
+
 export interface Band {
   id: string;
   event_id: string;
@@ -138,6 +153,25 @@ export interface FinalizedResult {
   finalized_at: string;
 }
 
+export interface Video {
+  id: string;
+  youtube_video_id: string;
+  title: string;
+  event_id: string | null;
+  band_id: string | null;
+  duration_seconds: number | null;
+  thumbnail_url: string | null;
+  published_at: string | null;
+  sort_order: number;
+  created_at: string;
+  // Joined fields
+  event_name?: string;
+  band_name?: string;
+  company_name?: string;
+  company_slug?: string;
+  company_icon_url?: string;
+}
+
 export interface HeroFocalPoint {
   x: number; // 0-100 percentage from left
   y: number; // 0-100 percentage from top
@@ -182,6 +216,7 @@ export const PHOTO_LABELS = {
   BAND_HERO: "band_hero",
   EVENT_HERO: "event_hero",
   GLOBAL_HERO: "global_hero",
+  PHOTOGRAPHER_HERO: "photographer_hero",
 } as const;
 
 export type PhotoLabel = (typeof PHOTO_LABELS)[keyof typeof PHOTO_LABELS];
@@ -481,6 +516,7 @@ function sortByDate(photos: Photo[]): Photo[] {
 /**
  * Get photos in truly random order using SQL RANDOM()
  * This mixes photos from all events/bands for better discovery
+ * All filters are combined with AND for proper filtering
  */
 async function getPhotosRandom(options: {
   eventId?: string;
@@ -492,125 +528,33 @@ async function getPhotosRandom(options: {
   const { eventId, bandId, photographer, companySlug, limit } = options;
 
   try {
-    // Build query based on filters - using ORDER BY RANDOM() for true randomness
-    if (companySlug === "none") {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (companySlug) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE b.company_slug = ${companySlug}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (bandId === "none" && eventId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id IS NULL AND p.event_id = ${eventId}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (bandId === "none") {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id IS NULL
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (eventId && bandId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.event_id = ${eventId} AND p.band_id = ${bandId}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (eventId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.event_id = ${eventId}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (bandId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id = ${bandId}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else if (photographer) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.photographer = ${photographer}
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    } else {
-      // No filters - random from all photos
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-      return rows;
-    }
+    // Use conditional SQL to combine all filters with AND
+    // Each condition is: (param IS NULL OR column = param) which passes when filter not set
+    // Special handling for "none" values which mean "filter for NULL"
+    const { rows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (
+          ${bandId || null}::text IS NULL 
+          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
+          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+        )
+        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+        AND (
+          ${companySlug || null}::text IS NULL 
+          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+      ORDER BY RANDOM()
+      LIMIT ${limit}
+    `;
+    return rows;
   } catch (error) {
     console.error("Error fetching random photos:", error);
     throw error;
@@ -652,131 +596,33 @@ export async function getPhotos(
   };
 
   try {
-    // Build query based on filters
-    // Note: @vercel/postgres doesn't support query chaining, so we use separate queries
-    // Special value "none" means filter for NULL values
-
-    // Company filter - photos from bands belonging to a company (or no company)
-    if (companySlug === "none") {
-      // Filter for photos without a company (band has no company OR photo has no band)
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (companySlug) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE b.company_slug = ${companySlug}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (bandId === "none" && eventId) {
-      // Filter for photos without a band, for specific event
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id IS NULL AND p.event_id = ${eventId}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (bandId === "none") {
-      // Filter for photos without a band, all events
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id IS NULL
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (eventId && bandId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.event_id = ${eventId} AND p.band_id = ${bandId}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (eventId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.event_id = ${eventId}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (bandId) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.band_id = ${bandId}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else if (photographer) {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        WHERE p.photographer = ${photographer}
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    } else {
-      const { rows } = await sql<Photo>`
-        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
-        FROM photos p
-        LEFT JOIN events e ON p.event_id = e.id
-        LEFT JOIN bands b ON p.band_id = b.id
-        LEFT JOIN companies c ON b.company_slug = c.slug
-        ORDER BY p.uploaded_at DESC
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-      return applyOrdering(rows);
-    }
+    // Use conditional SQL to combine all filters with AND
+    // Each condition is: (param IS NULL OR column = param) which passes when filter not set
+    // Special handling for "none" values which mean "filter for NULL"
+    const { rows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (
+          ${bandId || null}::text IS NULL 
+          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
+          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+        )
+        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+        AND (
+          ${companySlug || null}::text IS NULL 
+          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+      ORDER BY p.uploaded_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    return applyOrdering(rows);
   } catch (error) {
     console.error("Error fetching photos:", error);
     throw error;
@@ -807,63 +653,26 @@ export async function getPhotoCount(
   const { eventId, bandId, photographer, companySlug } = options;
 
   try {
-    // Company filter - count photos from bands belonging to a company (or no company)
-    if (companySlug === "none") {
-      // Filter for photos without a company
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count 
-        FROM photos p
-        LEFT JOIN bands b ON p.band_id = b.id
-        WHERE (b.company_slug IS NULL OR p.band_id IS NULL)
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (companySlug) {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count 
-        FROM photos p
-        JOIN bands b ON p.band_id = b.id
-        WHERE b.company_slug = ${companySlug}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (bandId === "none" && eventId) {
-      // Filter for photos without a band, for specific event
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos 
-        WHERE band_id IS NULL AND event_id = ${eventId}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (bandId === "none") {
-      // Filter for photos without a band, all events
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos WHERE band_id IS NULL
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (eventId && bandId) {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos WHERE event_id = ${eventId} AND band_id = ${bandId}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (eventId) {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos WHERE event_id = ${eventId}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (bandId) {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos WHERE band_id = ${bandId}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else if (photographer) {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos WHERE photographer = ${photographer}
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    } else {
-      const { rows } = await sql<{ count: string }>`
-        SELECT COUNT(*) as count FROM photos
-      `;
-      return parseInt(rows[0]?.count || "0", 10);
-    }
+    // Use conditional SQL to combine all filters with AND
+    const { rows } = await sql<{ count: string }>`
+      SELECT COUNT(*) as count 
+      FROM photos p
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE 
+        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (
+          ${bandId || null}::text IS NULL 
+          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
+          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+        )
+        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+        AND (
+          ${companySlug || null}::text IS NULL 
+          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+    `;
+    return parseInt(rows[0]?.count || "0", 10);
   } catch (error) {
     console.error("Error counting photos:", error);
     throw error;
@@ -1320,4 +1129,272 @@ export async function getDistinctCompanies(): Promise<
     ORDER BY c.name ASC
   `;
   return rows;
+}
+
+// ============================================================
+// Photographer Functions
+// ============================================================
+
+/**
+ * Get all photographers with photo counts
+ */
+export async function getPhotographers(): Promise<PhotographerWithStats[]> {
+  const { rows } = await sql<PhotographerWithStats>`
+    SELECT 
+      p.*,
+      COALESCE(pc.photo_count, 0)::int as photo_count
+    FROM photographers p
+    LEFT JOIN (
+      SELECT photographer as name, COUNT(*)::int as photo_count
+      FROM photos
+      WHERE photographer IS NOT NULL
+      GROUP BY photographer
+    ) pc ON p.name = pc.name
+    ORDER BY p.name ASC
+  `;
+  return rows;
+}
+
+/**
+ * Get a single photographer by slug
+ */
+export async function getPhotographerBySlug(
+  slug: string
+): Promise<PhotographerWithStats | null> {
+  const { rows } = await sql<PhotographerWithStats>`
+    SELECT 
+      p.*,
+      COALESCE(pc.photo_count, 0)::int as photo_count
+    FROM photographers p
+    LEFT JOIN (
+      SELECT photographer as name, COUNT(*)::int as photo_count
+      FROM photos
+      WHERE photographer IS NOT NULL
+      GROUP BY photographer
+    ) pc ON p.name = pc.name
+    WHERE p.slug = ${slug}
+  `;
+  return rows[0] || null;
+}
+
+/**
+ * Get hero photo for a photographer (by name match and label)
+ */
+export async function getPhotographerHeroPhoto(
+  photographerName: string
+): Promise<Photo | null> {
+  const { rows } = await sql<Photo>`
+    SELECT p.*, e.name as event_name, b.name as band_name,
+           COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+    FROM photos p
+    LEFT JOIN events e ON p.event_id = e.id
+    LEFT JOIN bands b ON p.band_id = b.id
+    WHERE p.photographer = ${photographerName}
+      AND 'photographer_hero' = ANY(p.labels)
+    ORDER BY p.uploaded_at DESC
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+/**
+ * Get a random photo from a photographer (fallback for hero)
+ */
+export async function getPhotographerRandomPhoto(
+  photographerName: string
+): Promise<Photo | null> {
+  const { rows } = await sql<Photo>`
+    SELECT p.*, e.name as event_name, b.name as band_name,
+           COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+    FROM photos p
+    LEFT JOIN events e ON p.event_id = e.id
+    LEFT JOIN bands b ON p.band_id = b.id
+    WHERE p.photographer = ${photographerName}
+    ORDER BY RANDOM()
+    LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+// ============================================================
+// Video Functions
+// ============================================================
+
+export interface GetVideosOptions {
+  eventId?: string;
+  bandId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * Get videos with optional filters
+ */
+export async function getVideos(options: GetVideosOptions = {}): Promise<Video[]> {
+  const { eventId, bandId, limit = 50, offset = 0 } = options;
+
+  try {
+    const { rows } = await sql<Video>`
+      SELECT v.*, 
+             e.name as event_name, 
+             b.name as band_name,
+             c.name as company_name,
+             b.company_slug as company_slug,
+             c.icon_url as company_icon_url
+      FROM videos v
+      LEFT JOIN events e ON v.event_id = e.id
+      LEFT JOIN bands b ON v.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
+        AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
+      ORDER BY v.sort_order ASC, v.published_at DESC NULLS LAST, v.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    return rows;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a single video by ID
+ */
+export async function getVideoById(videoId: string): Promise<Video | null> {
+  try {
+    const { rows } = await sql<Video>`
+      SELECT v.*, 
+             e.name as event_name, 
+             b.name as band_name,
+             c.name as company_name,
+             b.company_slug as company_slug,
+             c.icon_url as company_icon_url
+      FROM videos v
+      LEFT JOIN events e ON v.event_id = e.id
+      LEFT JOIN bands b ON v.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE v.id = ${videoId}
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching video:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a video by YouTube video ID
+ */
+export async function getVideoByYoutubeId(youtubeVideoId: string): Promise<Video | null> {
+  try {
+    const { rows } = await sql<Video>`
+      SELECT v.*, 
+             e.name as event_name, 
+             b.name as band_name,
+             c.name as company_name,
+             b.company_slug as company_slug,
+             c.icon_url as company_icon_url
+      FROM videos v
+      LEFT JOIN events e ON v.event_id = e.id
+      LEFT JOIN bands b ON v.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE v.youtube_video_id = ${youtubeVideoId}
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching video by YouTube ID:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get video count with optional filters
+ */
+export async function getVideoCount(
+  options: Omit<GetVideosOptions, "limit" | "offset"> = {}
+): Promise<number> {
+  const { eventId, bandId } = options;
+
+  try {
+    const { rows } = await sql<{ count: string }>`
+      SELECT COUNT(*) as count 
+      FROM videos v
+      WHERE 
+        (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
+        AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
+    `;
+    return parseInt(rows[0]?.count || "0", 10);
+  } catch (error) {
+    console.error("Error counting videos:", error);
+    throw error;
+  }
+}
+
+/**
+ * Create a new video
+ */
+export async function createVideo(
+  video: Omit<Video, "id" | "created_at" | "event_name" | "band_name" | "company_name" | "company_slug" | "company_icon_url">
+): Promise<Video> {
+  try {
+    const { rows } = await sql<Video>`
+      INSERT INTO videos (
+        youtube_video_id, title, event_id, band_id, 
+        duration_seconds, thumbnail_url, published_at, sort_order
+      )
+      VALUES (
+        ${video.youtube_video_id}, ${video.title}, ${video.event_id}, ${video.band_id},
+        ${video.duration_seconds}, ${video.thumbnail_url}, ${video.published_at}, ${video.sort_order}
+      )
+      RETURNING *
+    `;
+    return rows[0];
+  } catch (error) {
+    console.error("Error creating video:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update an existing video
+ */
+export async function updateVideo(
+  videoId: string,
+  video: Partial<Omit<Video, "id" | "created_at" | "event_name" | "band_name" | "company_name" | "company_slug" | "company_icon_url">>
+): Promise<Video | null> {
+  try {
+    const { rows } = await sql<Video>`
+      UPDATE videos SET
+        title = COALESCE(${video.title || null}, title),
+        event_id = ${video.event_id === undefined ? null : video.event_id},
+        band_id = ${video.band_id === undefined ? null : video.band_id},
+        duration_seconds = COALESCE(${video.duration_seconds || null}, duration_seconds),
+        thumbnail_url = COALESCE(${video.thumbnail_url || null}, thumbnail_url),
+        published_at = COALESCE(${video.published_at || null}, published_at),
+        sort_order = COALESCE(${video.sort_order ?? null}, sort_order)
+      WHERE id = ${videoId}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error updating video:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a video
+ */
+export async function deleteVideo(videoId: string): Promise<Video | null> {
+  try {
+    const { rows } = await sql<Video>`
+      DELETE FROM videos WHERE id = ${videoId}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error("Error deleting video:", error);
+    throw error;
+  }
 }

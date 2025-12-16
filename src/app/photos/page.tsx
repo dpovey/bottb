@@ -56,8 +56,8 @@ function PhotosContent() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 50;
 
-  // Track if we've initialized from URL params
-  const initializedFromUrl = useRef(false);
+  // Track if we've initialized from URL params - use state so it triggers re-render
+  const [isInitialized, setIsInitialized] = useState(false);
   // Track loaded photo IDs to prevent duplicates in random mode
   const loadedPhotoIds = useRef<Set<string>>(new Set());
 
@@ -80,8 +80,7 @@ function PhotosContent() {
 
   // Initialize filters from URL params on mount
   useEffect(() => {
-    if (initializedFromUrl.current) return;
-    initializedFromUrl.current = true;
+    if (isInitialized) return;
 
     // Support both new (event, band) and legacy (eventId, bandId) param names
     const eventId = searchParams.get("event") || searchParams.get("eventId");
@@ -95,7 +94,10 @@ function PhotosContent() {
     if (photographer) setSelectedPhotographer(photographer);
     if (company) setSelectedCompanySlug(company);
     if (photoId) setPendingPhotoId(photoId);
-  }, [searchParams]);
+
+    // Mark as initialized - this will trigger the fetch with correct filters
+    setIsInitialized(true);
+  }, [searchParams, isInitialized]);
 
   // Update URL when filters change
   const updateUrlParams = useCallback(
@@ -325,10 +327,11 @@ function PhotosContent() {
     ]
   );
 
-  // Initial fetch when filters change
+  // Initial fetch when filters change - only after URL params are initialized
   useEffect(() => {
+    if (!isInitialized) return;
     fetchPhotos(false);
-  }, [fetchPhotos]);
+  }, [fetchPhotos, isInitialized]);
 
   // Infinite scroll - load more when reaching bottom
   useEffect(() => {

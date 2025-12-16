@@ -21,6 +21,7 @@ vi.mock("@/lib/db", () => ({
   getBandScores: vi.fn(),
   getBandsForEvent: vi.fn(),
   getPhotosByLabel: vi.fn(),
+  getVideos: vi.fn(),
   PHOTO_LABELS: {
     BAND_HERO: "band_hero",
     EVENT_HERO: "event_hero",
@@ -43,7 +44,7 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
 
-import { getBandScores, getBandsForEvent, getPhotosByLabel } from "@/lib/db";
+import { getBandScores, getBandsForEvent, getPhotosByLabel, getVideos } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { sql } from "@vercel/postgres";
 import { auth } from "@/lib/auth";
@@ -51,6 +52,7 @@ import { auth } from "@/lib/auth";
 const mockGetBandScores = getBandScores as unknown as ReturnType<typeof vi.fn>;
 const mockGetBandsForEvent = getBandsForEvent as unknown as ReturnType<typeof vi.fn>;
 const mockGetPhotosByLabel = getPhotosByLabel as unknown as ReturnType<typeof vi.fn>;
+const mockGetVideos = getVideos as unknown as ReturnType<typeof vi.fn>;
 const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
@@ -62,6 +64,8 @@ describe("BandPage", () => {
     mockAuth.mockResolvedValue({ user: { isAdmin: false } });
     // Default to no photos
     mockGetPhotosByLabel.mockResolvedValue([]);
+    // Default to no videos
+    mockGetVideos.mockResolvedValue([]);
     // Default to single band (no navigation)
     mockGetBandsForEvent.mockResolvedValue([
       { id: "band-1", name: "Test Band", order: 1 },
