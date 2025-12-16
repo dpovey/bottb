@@ -97,7 +97,14 @@ export function PhotoStrip({
       setLoading(true);
       try {
         const initialPhotos = await fetchPage(1);
-        setPhotos(initialPhotos);
+        // Deduplicate by ID (can happen with random ordering)
+        const seen = new Set<string>();
+        const uniquePhotos = initialPhotos.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        setPhotos(uniquePhotos);
         setLoadedPages(new Set([1]));
       } catch (error) {
         console.error("Failed to fetch photos for strip:", error);
@@ -291,7 +298,7 @@ export function PhotoStrip({
               >
                 {photos.map((photo, index) => (
                   <button
-                    key={photo.id}
+                    key={`${photo.id}-${index}`}
                     ref={(el) => { photoRefs.current[index] = el; }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
