@@ -19,6 +19,7 @@ import {
   type BandScoreData,
 } from "@/lib/scoring";
 import { PhotoStrip } from "@/components/photos/photo-strip";
+import { VideoStrip } from "@/components/videos/video-strip";
 import { CompanyLogoMarquee } from "@/components/company-logo-marquee";
 
 // Default fallback hero image
@@ -298,6 +299,9 @@ export default async function HomePage() {
 
       {/* Random Photo Strip */}
       <PhotoStrip title="From the Archives" viewAllLink="/photos" />
+
+      {/* Video Strip */}
+      <VideoStrip title="From the Archives" />
 
       {/* Company Logo Marquee */}
       <CompanyLogoMarquee />
