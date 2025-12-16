@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { PublicLayout } from "@/components/layouts";
 import { Button } from "@/components/ui";
 import { getSocialLinks } from "@/lib/social-links";
+import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
+import { HeroCarousel } from "@/components/hero-carousel";
 
 export const metadata: Metadata = {
   title: "About | Battle of the Tech Bands",
@@ -20,24 +21,18 @@ export const metadata: Metadata = {
 // Social links with fill-current class for hero section styling
 const socialLinks = getSocialLinks("w-5 h-5 fill-current");
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  // Fetch all event hero photos
+  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO);
+  const heroImages = eventHeroPhotos.map((photo) => ({
+    url: photo.blob_url,
+    focalPoint: photo.hero_focal_point,
+  }));
+
   return (
     <PublicLayout headerVariant="transparent" footerVariant="full">
-      {/* Hero Section */}
-      <section className="relative min-h-[70vh] flex items-end">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <Image
-            src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80"
-            alt="Concert crowd"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
-        </div>
-
+      {/* Hero Section with rotating event images */}
+      <HeroCarousel images={heroImages} interval={6000}>
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-text-muted mb-4">
             Est. 2022 • Community Charity Event
@@ -74,10 +69,10 @@ export default function AboutPage() {
             </a>
           </div>
         </div>
-      </section>
+      </HeroCarousel>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 lg:px-8 pb-24">
+      <main className="max-w-4xl mx-auto px-6 lg:px-8 pt-16 pb-24">
         {/* Mission Statement */}
         <section className="mb-20">
           <div className="bg-bg-elevated rounded-2xl p-8 md:p-12 border border-white/5">

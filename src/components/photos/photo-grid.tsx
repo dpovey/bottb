@@ -18,9 +18,10 @@ interface PhotoGridProps {
   onPhotoClick: (index: number) => void;
   loading?: boolean;
   size?: GridSize;
+  showCompanyLogos?: boolean;
 }
 
-export function PhotoGrid({ photos, onPhotoClick, loading, size = "md" }: PhotoGridProps) {
+export function PhotoGrid({ photos, onPhotoClick, loading, size = "md", showCompanyLogos = true }: PhotoGridProps) {
   const gridClass = gridClasses[size];
 
   if (loading) {
@@ -67,6 +68,7 @@ export function PhotoGrid({ photos, onPhotoClick, loading, size = "md" }: PhotoG
           key={`${photo.id}-${photo.thumbnail_url}`}
           photo={photo}
           onClick={() => onPhotoClick(index)}
+          showCompanyLogo={showCompanyLogos}
         />
       ))}
     </div>

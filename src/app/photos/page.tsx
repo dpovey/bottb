@@ -53,6 +53,7 @@ function PhotosContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [orderMode, setOrderMode] = useState<OrderMode>("random");
   const [gridSize, setGridSize] = useState<GridSize>("md");
+  const [showCompanyLogos, setShowCompanyLogos] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 50;
 
@@ -594,6 +595,39 @@ function PhotosContent() {
                 </svg>
               </button>
             </div>
+
+            {/* Company logos toggle */}
+            <div className="flex items-center bg-bg-elevated rounded-full h-10 px-3">
+              <label className="flex items-center gap-2 cursor-pointer" title={showCompanyLogos ? "Hide company logos" : "Show company logos"}>
+                <svg
+                  className="w-4 h-4 text-text-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"
+                  />
+                </svg>
+                <button
+                  role="switch"
+                  aria-checked={showCompanyLogos}
+                  onClick={() => setShowCompanyLogos(!showCompanyLogos)}
+                  className={`relative w-9 h-5 rounded-full transition-colors ${
+                    showCompanyLogos ? "bg-accent" : "bg-bg-surface"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                      showCompanyLogos ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -622,6 +656,7 @@ function PhotosContent() {
             onPhotoClick={handlePhotoClick}
             loading={loading}
             size={gridSize}
+            showCompanyLogos={showCompanyLogos}
           />
         </div>
 

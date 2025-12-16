@@ -6,9 +6,10 @@ import { CompanyIcon } from "@/components/ui";
 interface PhotoCardProps {
   photo: Photo;
   onClick: () => void;
+  showCompanyLogo?: boolean;
 }
 
-export function PhotoCard({ photo, onClick }: PhotoCardProps) {
+export function PhotoCard({ photo, onClick, showCompanyLogo = true }: PhotoCardProps) {
   const thumbSrc = photo.thumbnail_url || photo.blob_url;
   
   return (
@@ -28,7 +29,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
       />
 
       {/* Company icon badge - always visible in top right if available */}
-      {photo.company_icon_url && (
+      {showCompanyLogo && photo.company_icon_url && (
         <div className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
           <CompanyIcon
             iconUrl={photo.company_icon_url}
