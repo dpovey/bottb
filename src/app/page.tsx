@@ -301,7 +301,7 @@ export default async function HomePage() {
       <PhotoStrip title="From the Archives" viewAllLink="/photos" />
 
       {/* Video Strip */}
-      <VideoStrip title="From the Archives" />
+      <VideoStrip title="Standout Performances" />
 
       {/* Company Logo Marquee */}
       <CompanyLogoMarquee />
