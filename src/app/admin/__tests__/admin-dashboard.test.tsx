@@ -1,15 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { signOut } from "next-auth/react";
 import { vi } from "vitest";
 import { server } from "@/__mocks__/server";
 import { http, HttpResponse } from "msw";
 import AdminDashboard from "../admin-dashboard";
-
-// Mock next-auth/react
-vi.mock("next-auth/react", () => ({
-  signOut: vi.fn(),
-}));
 
 // Mock Next.js Link component
 vi.mock("next/link", () => ({
@@ -26,30 +19,6 @@ vi.mock("next/link", () => ({
 
 // Use MSW for fetch mocking
 
-const mockEvents = [
-  {
-    id: "event-1",
-    name: "Tech Battle 2024",
-    location: "Sydney Convention Centre",
-    status: "active",
-    date: "2024-01-15",
-  },
-  {
-    id: "event-2",
-    name: "Melbourne Showdown",
-    location: "Melbourne Exhibition Centre",
-    status: "upcoming",
-    date: "2024-02-20",
-  },
-  {
-    id: "event-3",
-    name: "Brisbane Finals",
-    location: "Brisbane Convention Centre",
-    status: "past",
-    date: "2023-12-10",
-  },
-];
-
 const mockSession = {
   user: {
     id: "admin-1",
@@ -65,23 +34,13 @@ describe("AdminDashboard", () => {
     // MSW will handle the fetch mocking
   });
 
-  it("renders admin dashboard with header and sign out button", async () => {
-    // Override MSW handler for this test
-    server.use(
-      http.get("/api/events", () => {
-        return HttpResponse.json(mockEvents);
-      })
-    );
-
+  it("renders dashboard with quick action cards", async () => {
     render(<AdminDashboard session={mockSession} />);
 
-    expect(
-      screen.getByRole("heading", { name: "Admin Dashboard" })
-    ).toBeInTheDocument();
-    expect(screen.getByText("Welcome, Admin User")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Sign Out" })
-    ).toBeInTheDocument();
+    // Check quick action cards are rendered
+    expect(screen.getByText("Manage Videos")).toBeInTheDocument();
+    expect(screen.getByText("Social Accounts")).toBeInTheDocument();
+    expect(screen.getByText("Photo Gallery")).toBeInTheDocument();
   });
 
   it("shows loading state initially", () => {
@@ -162,16 +121,6 @@ describe("AdminDashboard", () => {
     });
   });
 
-  it("handles sign out button click", async () => {
-    const user = userEvent.setup();
-    render(<AdminDashboard session={mockSession} />);
-
-    const signOutButton = screen.getByRole("button", { name: "Sign Out" });
-    await user.click(signOutButton);
-
-    expect(signOut).toHaveBeenCalledTimes(1);
-  });
-
   it("shows no events message when no events are returned", async () => {
     server.use(
       http.get("/api/events", () => {
@@ -234,17 +183,20 @@ describe("AdminDashboard", () => {
     consoleSpy.mockRestore();
   });
 
-  it("displays user email when name is not available", () => {
-    const sessionWithEmail = {
-      user: {
-        id: "admin-1",
-        name: null,
-        email: "admin@example.com",
-        isAdmin: true,
-      },
-    };
+  it("links to correct quick action pages", () => {
+    render(<AdminDashboard session={mockSession} />);
 
-    render(<AdminDashboard session={sessionWithEmail} />);
-    expect(screen.getByText("Welcome, admin@example.com")).toBeInTheDocument();
+    // Check quick action links
+    expect(screen.getByRole("link", { name: /Manage Videos/i })).toHaveAttribute(
+      "href",
+      "/admin/videos"
+    );
+    expect(
+      screen.getByRole("link", { name: /Social Accounts/i })
+    ).toHaveAttribute("href", "/admin/social");
+    expect(screen.getByRole("link", { name: /Photo Gallery/i })).toHaveAttribute(
+      "href",
+      "/photos"
+    );
   });
 });

@@ -410,35 +410,26 @@ export default function CrowdNoisePage() {
     bands.length > 0 && bands.every((band) => measurements[band.id]);
   if (allBandsMeasured) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-5xl font-bold text-white mb-8">🎉 All Done!</h1>
-          <p className="text-2xl text-gray-300 mb-8">
-            Scream-o-meter completed for all bands
-          </p>
-          <Link
-            href={`/admin/events/${eventId}`}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
-          >
-            Back to Event Management
-          </Link>
-        </div>
+      <div className="text-center py-12">
+        <div className="text-8xl mb-8">🎉</div>
+        <h2 className="text-4xl font-bold text-white mb-4">All Done!</h2>
+        <p className="text-xl text-muted mb-8">
+          Scream-o-meter completed for all bands
+        </p>
+        <Link
+          href={`/admin/events/${eventId}`}
+          className="bg-accent hover:bg-accent-light text-white font-bold py-3 px-6 rounded-xl transition-colors"
+        >
+          Back to Event Management
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-4">Scream-o-meter</h1>
-        <div className="text-xl text-gray-300">
-          Select a band to measure crowd noise
-        </div>
-      </div>
-
+    <div className="space-y-8">
       {/* Band Selection */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
+      <div className="bg-elevated rounded-2xl p-8 border border-white/5">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
           Select Band
         </h2>
@@ -509,7 +500,7 @@ export default function CrowdNoisePage() {
 
       {/* Selected Band Display */}
       {selectedBand && (
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8 text-center">
+        <div className="bg-elevated rounded-2xl p-8 border border-white/5 text-center">
           <div className="mb-4 flex justify-center">
             <BandThumbnail
               logoUrl={selectedBand.info?.logo_url}
@@ -577,7 +568,7 @@ export default function CrowdNoisePage() {
 
       {/* Recording Interface - Only show when band is selected */}
       {selectedBand && (
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-8">
+        <div className="bg-elevated rounded-2xl p-8 border border-white/5">
           {!isRecording && !isSubmitted && (
             <div className="text-center">
               {/* Microphone Permission Status */}
@@ -722,16 +713,6 @@ export default function CrowdNoisePage() {
           )}
         </div>
       )}
-
-      {/* Navigation */}
-      <div className="flex justify-center">
-        <Link
-          href={`/admin/events/${eventId}`}
-          className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-        >
-          ← Back to Event Management
-        </Link>
-      </div>
     </div>
   );
 }

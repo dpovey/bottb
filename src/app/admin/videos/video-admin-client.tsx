@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Video } from "@/lib/db";
-import Link from "next/link";
 
 interface VideoAdminClientProps {
   initialVideos: Video[];
@@ -118,32 +117,20 @@ export function VideoAdminClient({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Video Management</h1>
-          <p className="text-gray-300">Manage YouTube videos for events and bands</p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href="/admin"
-            className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            ← Back to Admin
-          </Link>
-          <button
-            onClick={() => setIsAddingVideo(true)}
-            className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors"
-          >
-            + Add Video
-          </button>
-        </div>
+    <div className="space-y-8">
+      {/* Add Video Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setIsAddingVideo(true)}
+          className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors"
+        >
+          + Add Video
+        </button>
       </div>
 
       {/* Add Video Form */}
       {isAddingVideo && (
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8">
+        <div className="bg-elevated rounded-2xl p-6 border border-white/5">
           <h2 className="text-xl font-bold text-white mb-4">Add New Video</h2>
           <form onSubmit={handleAddVideo} className="space-y-4">
             <div>
@@ -246,7 +233,7 @@ export function VideoAdminClient({
       )}
 
       {/* Videos List */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
         <h2 className="text-2xl font-bold text-white mb-6">
           Videos ({videos.length})
         </h2>
@@ -313,7 +300,7 @@ function VideoRow({
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-lg rounded-xl p-4 flex gap-4">
+    <div className="bg-surface rounded-xl p-4 flex gap-4">
       {/* Thumbnail */}
       <a
         href={`https://www.youtube.com/watch?v=${video.youtube_video_id}`}
