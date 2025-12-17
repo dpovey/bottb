@@ -622,6 +622,164 @@ For date ranges, stack multiple badges horizontally:
 </div>
 ```
 
+### Filter Bar System
+
+A composable system for building filter interfaces. Used in Photos page and Songs page.
+
+**Components:** `FilterBar`, `FilterSelect`, `FilterSearch`, `FilterPill`, `FilterPills`, `FilterClearButton`
+
+**Location:** `src/components/ui/filter-bar.tsx`
+
+#### FilterBar Container
+
+Wraps all filter elements with consistent styling.
+
+```html
+<div class="bg-bg-elevated rounded-xl p-4 border border-white/5">
+  <div class="flex flex-wrap gap-4">
+    <!-- Filter components go here -->
+  </div>
+</div>
+```
+
+#### FilterSelect
+
+Styled dropdown with custom arrow indicator.
+
+```html
+<div class="flex-1 min-w-[180px]">
+  <label class="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
+    Event
+  </label>
+  <select
+    class="
+      w-full px-4 py-3
+      bg-bg border border-white/10 rounded-lg
+      text-white text-sm
+      focus:outline-none focus:border-accent
+      hover:border-white/20 transition-colors
+      disabled:opacity-50 appearance-none
+      bg-[url('data:image/svg+xml,...')] bg-no-repeat
+      bg-[length:1.25em] bg-[right_0.75rem_center]
+    "
+  >
+    <option>All Events</option>
+    <option>Sydney Tech Battle 2025</option>
+  </select>
+</div>
+```
+
+#### FilterSearch
+
+Search input with icon and optional clear button.
+
+```html
+<div class="flex-1 min-w-[240px]">
+  <label class="block text-[10px] tracking-widest uppercase text-text-dim mb-2">
+    Search
+  </label>
+  <div class="relative">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim pointer-events-none">
+      <!-- search icon -->
+    </svg>
+    <input
+      type="text"
+      placeholder="Search songs..."
+      class="
+        w-full pl-10 pr-10 py-3
+        bg-bg border border-white/10 rounded-lg
+        text-white text-sm placeholder:text-text-dim
+        focus:outline-none focus:border-accent
+        hover:border-white/20 transition-colors
+      "
+    />
+    <!-- Optional clear button -->
+    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-white">
+      <svg class="w-4 h-4"><!-- x icon --></svg>
+    </button>
+  </div>
+</div>
+```
+
+#### FilterPill
+
+Removable pill showing active filter.
+
+```html
+<span class="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+  Sydney Tech Battle 2025
+  <button class="hover:text-white transition-colors" aria-label="Remove filter">×</button>
+</span>
+```
+
+#### FilterClearButton
+
+Clear all filters button.
+
+```html
+<div class="flex items-end">
+  <button
+    class="
+      border border-white/30 hover:border-white/60 hover:bg-white/5
+      px-4 py-3 rounded-lg text-xs tracking-widest uppercase
+      transition-colors disabled:opacity-30 disabled:cursor-not-allowed
+    "
+  >
+    Clear
+  </button>
+</div>
+```
+
+#### React Component API
+
+```tsx
+import {
+  FilterBar,
+  FilterSelect,
+  FilterSearch,
+  FilterPill,
+  FilterPills,
+  FilterClearButton,
+} from "@/components/ui";
+
+// Basic usage
+<FilterBar>
+  <FilterSearch
+    label="Search"
+    placeholder="Search songs..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    onClear={() => setSearch("")}
+  />
+
+  <FilterSelect
+    label="Event"
+    value={selectedEvent}
+    onChange={(e) => setSelectedEvent(e.target.value)}
+  >
+    <option value="">All Events</option>
+    {events.map((e) => (
+      <option key={e.id} value={e.id}>{e.name}</option>
+    ))}
+  </FilterSelect>
+
+  <FilterClearButton
+    disabled={!hasActiveFilters}
+    onClick={handleClearAll}
+  />
+
+  {hasActiveFilters && (
+    <FilterPills className="w-full">
+      {selectedEventName && (
+        <FilterPill onRemove={() => setSelectedEvent(null)}>
+          {selectedEventName}
+        </FilterPill>
+      )}
+    </FilterPills>
+  )}
+</FilterBar>
+```
+
 ### Voting Selection
 
 ```html
@@ -651,6 +809,230 @@ For date ranges, stack multiple badges horizontally:
   </div>
 </label>
 ```
+
+### Song Type Badges
+
+Indicate the arrangement type of songs in setlists. Each type has a distinct color for quick visual differentiation.
+
+| Type       | Color   | Use Case                                   |
+| ---------- | ------- | ------------------------------------------ |
+| Cover      | Muted   | Standard cover of a single song            |
+| Mashup     | Accent  | Two songs/artists blended together         |
+| Medley     | Info    | Multiple songs combined into one set piece |
+| Transition | Success | One song flows/transitions into another    |
+
+```html
+<!-- Cover (default/muted) -->
+<span class="song-type-badge song-type-cover">Cover</span>
+
+<!-- Mashup (accent) -->
+<span class="song-type-badge song-type-mashup">Mashup</span>
+
+<!-- Medley (info/blue) -->
+<span class="song-type-badge song-type-medley">Medley</span>
+
+<!-- Transition (success/green) -->
+<span class="song-type-badge song-type-transition">Transition</span>
+```
+
+**React Component**: `<SongTypeBadge type="cover|mashup|medley|transition" />`
+
+### Status Badges
+
+Workflow state indicators for admin interfaces.
+
+| Status   | Color   | Use Case                      |
+| -------- | ------- | ----------------------------- |
+| Pending  | Muted   | Awaiting confirmation         |
+| Locked   | Success | Confirmed/finalized           |
+| Conflict | Warning | Needs attention (e.g., dupe)  |
+
+```html
+<!-- Pending -->
+<span class="status-badge status-pending">Pending</span>
+
+<!-- Locked -->
+<span class="status-badge status-locked">Locked</span>
+
+<!-- Conflict -->
+<span class="status-badge status-conflict">Conflict</span>
+```
+
+**React Component**: `<StatusBadge status="pending|locked|conflict" />`
+
+### NumberedIndicator
+
+Displays a number in a styled container. Use for ordered lists, rankings, and positions.
+
+**Component:** `src/components/ui/numbered-indicator.tsx`
+
+#### When to Use
+
+| Context | Shape | Size | Variant | Example |
+|---------|-------|------|---------|---------|
+| Band order in event list | `square` | `lg` | `muted` | Event page band cards |
+| Setlist song positions | `circle` | `md` | `default` | Setlist display |
+| Table rankings | Plain text | - | - | ScoreBreakdown (no container) |
+| Winner position | `square` | `lg` | `winner` | Gold highlight |
+
+#### Variants
+
+| Variant | Background | Text Color | Use Case |
+|---------|------------|------------|----------|
+| `default` | `bg-bg-surface` | `text-text-muted` | Standard ordered list |
+| `muted` | `bg-white/5` | `text-text-muted` | Subtle background |
+| `winner` | `bg-warning/20` | `text-warning` | Gold/winner highlight |
+| `accent` | `bg-accent/20` | `text-accent` | Accent highlight |
+| `rank-1` | `bg-warning/20` | `text-warning` | 1st place |
+| `rank-2` | `bg-white/10` | `text-text-muted` | 2nd place |
+| `rank-3` | `bg-amber-900/30` | `text-amber-600` | 3rd place |
+
+#### Sizes
+
+| Size | Dimensions | Font Size |
+|------|------------|-----------|
+| `xs` | 20×20px | 0.75rem |
+| `sm` | 24×24px | 0.75rem |
+| `md` | 32×32px | 0.875rem |
+| `lg` | 40×40px | 1rem |
+| `xl` | 48×48px | 1.125rem |
+
+#### HTML Examples
+
+```html
+<!-- Circle (default) -->
+<div class="numbered-indicator">1</div>
+
+<!-- Square -->
+<div class="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-white/5 font-medium text-text-muted">
+  1
+</div>
+
+<!-- With size variants -->
+<div class="numbered-indicator numbered-indicator-sm">1</div>
+<div class="numbered-indicator numbered-indicator-lg">1</div>
+```
+
+#### React Component API
+
+```tsx
+import { NumberedIndicator } from "@/components/ui";
+
+// Band order in event list (square, muted)
+<NumberedIndicator number={band.order} shape="square" size="lg" variant="muted" />
+
+// Setlist position (circle, default)
+<NumberedIndicator number={position} shape="circle" size="md" variant="default" />
+
+// Ranking with podium colors
+<NumberedIndicator number={1} shape="circle" size="md" variant="rank-1" />
+<NumberedIndicator number={2} shape="circle" size="md" variant="rank-2" />
+<NumberedIndicator number={3} shape="circle" size="md" variant="rank-3" />
+
+// Full props
+interface NumberedIndicatorProps {
+  number: number | string;
+  shape?: "circle" | "square";           // default: "circle"
+  size?: "xs" | "sm" | "md" | "lg" | "xl"; // default: "md"
+  variant?: "default" | "muted" | "winner" | "accent" | "rank-1" | "rank-2" | "rank-3";
+}
+```
+
+#### When NOT to Use
+
+- **Table cells**: Use plain text with color (e.g., `getRankColor(rank)`) for cleaner tables
+- **Inline text**: Just use the number directly
+
+### Video Link Button
+
+Small icon button for linking to YouTube videos.
+
+```html
+<a href="#" class="video-link-btn" title="Watch video">
+  <svg fill="currentColor" viewBox="0 0 24 24">
+    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+  </svg>
+</a>
+```
+
+**React Component**: `<VideoLinkButton videoId={string} />`
+
+### Transition Arrow
+
+Inline arrow for showing song transitions (A → B).
+
+```html
+<div class="font-medium flex items-center gap-2">
+  <span>If You Were The Rain</span>
+  <span class="transition-arrow">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+    </svg>
+  </span>
+  <span>Umbrella</span>
+</div>
+```
+
+**React Component**: `<TransitionArrow />`
+
+### Data Table
+
+Sortable table for displaying lists of data (e.g., all songs page).
+
+```html
+<div class="bg-elevated rounded-xl border border-white/5 overflow-hidden">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th class="sortable">Song</th>
+        <th class="sortable">Artist</th>
+        <th>Type</th>
+        <th>Band</th>
+        <th>Event</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="font-medium">Africa</span></td>
+        <td class="text-muted">Toto</td>
+        <td><span class="song-type-badge song-type-cover">Cover</span></td>
+        <td>Bandlassian</td>
+        <td>Sydney 2025</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+**React Component**: `<DataTable columns={...} data={...} onSort={...} />`
+
+### Filter Bar
+
+Search input with dropdown filters for filtering data tables.
+
+```html
+<div class="filter-bar">
+  <!-- Search -->
+  <div class="filter-search">
+    <svg class="filter-search-icon"><!-- search icon --></svg>
+    <input type="text" placeholder="Search songs, artists...">
+  </div>
+  
+  <!-- Filters -->
+  <select class="filter-select">
+    <option value="">All Events</option>
+    <option value="sydney-2025">Sydney 2025</option>
+  </select>
+  
+  <select class="filter-select">
+    <option value="">All Types</option>
+    <option value="cover">Cover</option>
+    <option value="mashup">Mashup</option>
+  </select>
+</div>
+```
+
+**React Component**: `<FilterBar filters={...} onFilterChange={...} />`
 
 ---
 
@@ -998,3 +1380,6 @@ See `design/` folder for standalone HTML previews:
 - `404.html` - Not found page
 - `admin.html` - Admin interface with toolbar
 - `accent-colors.html` - Interactive color picker
+- `setlist.html` - Setlist display component (covers, mashups, medleys, transitions)
+- `admin-setlist.html` - Admin setlist editor with conflict detection
+- `songs.html` - All songs page with sortable/filterable table

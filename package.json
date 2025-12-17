@@ -30,6 +30,8 @@
     "check-db-schema": "tsx src/scripts/check-db-schema.ts",
     "backup-db": "tsx src/scripts/backup-db.ts",
     "migrate-finalized-events": "tsx src/scripts/migrate-finalized-events.ts",
+    "migrate-add-setlist-songs": "tsx src/scripts/migrate-add-setlist-songs.ts",
+    "seed-sydney-2025-setlists": "tsx src/scripts/seed-sydney-2025-setlists.ts",
     "delete-all-photos": "tsx src/scripts/delete-all-photos.ts",
     "bulk-upload-photos": "tsx src/scripts/bulk-upload-photos.ts",
     "inspect-photo": "tsx src/scripts/inspect-photo-metadata.ts"

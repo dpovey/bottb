@@ -196,3 +196,48 @@ CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id);
 CREATE INDEX IF NOT EXISTS idx_videos_youtube_id ON videos(youtube_video_id);
 CREATE INDEX IF NOT EXISTS idx_videos_sort_order ON videos(sort_order);
 
+-- Setlist songs table
+-- Stores songs performed by bands at events (covers, mashups, medleys, transitions)
+CREATE TABLE IF NOT EXISTS setlist_songs (
+  id UUID PRIMARY KEY,  -- UUIDv7 generated in application
+  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  
+  -- Song type: cover (single song), mashup (2+ blended), medley (2+ sequential), transition (A flows into B)
+  song_type VARCHAR(20) NOT NULL DEFAULT 'cover' CHECK (song_type IN ('cover', 'mashup', 'medley', 'transition')),
+  
+  -- Primary song info (always required)
+  title VARCHAR(255) NOT NULL,
+  artist VARCHAR(255) NOT NULL,
+  
+  -- For mashup/medley: additional songs as JSONB array
+  -- e.g., [{"title": "Song B", "artist": "Artist B"}]
+  additional_songs JSONB DEFAULT '[]',
+  
+  -- For transition: the target song it transitions into
+  transition_to_title VARCHAR(255),
+  transition_to_artist VARCHAR(255),
+  
+  -- Optional YouTube video ID for the performance recording
+  youtube_video_id VARCHAR(20),
+  
+  -- Status for admin workflow
+  -- pending: not yet confirmed, locked: confirmed/finalized, conflict: duplicate song detected
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'locked', 'conflict')),
+  
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Ensure unique position per band's setlist
+  UNIQUE(band_id, position)
+);
+
+-- Indexes for setlist_songs table
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_band_id ON setlist_songs(band_id);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_title ON setlist_songs(title);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_artist ON setlist_songs(artist);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_song_type ON setlist_songs(song_type);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_status ON setlist_songs(status);
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_youtube ON setlist_songs(youtube_video_id);
+

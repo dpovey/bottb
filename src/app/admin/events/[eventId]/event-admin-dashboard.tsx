@@ -107,7 +107,7 @@ export default function EventAdminDashboard({
       </div>
 
       {/* Action Cards */}
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
         {/* Crowd Voting */}
         <Link
           href={`/live/events/${eventId}/voting-qr`}
@@ -150,6 +150,21 @@ export default function EventAdminDashboard({
           </p>
           <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
             Start Measurement
+          </div>
+        </Link>
+
+        {/* Setlist Management */}
+        <Link
+          href={`/admin/events/${eventId}/setlists`}
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center hover:bg-white/20 transition-colors group"
+        >
+          <div className="text-6xl mb-4">🎵</div>
+          <h2 className="text-3xl font-bold text-white mb-4">Setlists</h2>
+          <p className="text-gray-300 text-lg mb-6">
+            Manage band setlists and detect conflicts
+          </p>
+          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+            Manage Setlists
           </div>
         </Link>
       </div>

@@ -13,3 +13,21 @@ export { DateBadge, type DateBadgeProps } from "./date-badge";
 export { BandThumbnail, type BandThumbnailProps } from "./band-thumbnail";
 export { CompanyBadge, type CompanyBadgeProps } from "./company-badge";
 export { CompanyIcon } from "./company-icon";
+export {
+  FilterBar,
+  FilterSelect,
+  FilterSearch,
+  FilterPill,
+  FilterPills,
+  FilterClearButton,
+  type FilterBarProps,
+  type FilterSelectProps,
+  type FilterSearchProps,
+  type FilterPillProps,
+  type FilterPillsProps,
+  type FilterClearButtonProps,
+} from "./filter-bar";
+export {
+  NumberedIndicator,
+  type NumberedIndicatorProps,
+} from "./numbered-indicator";

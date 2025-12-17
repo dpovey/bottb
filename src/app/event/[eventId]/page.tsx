@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
-import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge } from "@/components/ui";
+import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIndicator } from "@/components/ui";
 import { PhotoStrip } from "@/components/photos/photo-strip";
 import { VideoCarousel } from "@/components/video-carousel";
 import { Video } from "@/lib/db";
@@ -324,17 +324,18 @@ export default function EventPage() {
                     >
                       <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
                         {/* Order Number or Trophy */}
-                        <div className={`w-10 h-10 flex items-center justify-center rounded-lg shrink-0 ${
-                          isWinner ? "bg-warning/20" : "bg-white/5"
-                        }`}>
-                          {isWinner ? (
+                        {isWinner ? (
+                          <div className="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-warning/20">
                             <span className="text-lg">🏆</span>
-                          ) : (
-                            <span className="text-lg font-semibold text-text-muted">
-                              {band.order}
-                            </span>
-                          )}
-                        </div>
+                          </div>
+                        ) : (
+                          <NumberedIndicator
+                            number={band.order}
+                            shape="square"
+                            size="lg"
+                            variant="muted"
+                          />
+                        )}
 
                         {/* Band Logo */}
                         <BandThumbnail

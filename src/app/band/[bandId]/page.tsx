@@ -3,7 +3,9 @@ import {
   getBandsForEvent,
   getPhotosByLabel,
   getVideos,
+  getSetlistForBand,
   PHOTO_LABELS,
+  SetlistSong,
 } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
@@ -136,6 +138,99 @@ function CircularProgress({ percent }: { percent: number }) {
   );
 }
 
+// Setlist Section Component
+function SetlistSection({ songs }: { songs: SetlistSong[] }) {
+  if (songs.length === 0) return null;
+
+  const getSongTypeLabel = (type: string) => {
+    const labels: Record<string, { text: string; className: string }> = {
+      cover: { text: "Cover", className: "bg-white/10 text-text-muted" },
+      mashup: { text: "Mashup", className: "bg-accent/20 text-accent" },
+      medley: { text: "Medley", className: "bg-info/20 text-info" },
+      transition: { text: "Transition", className: "bg-success/20 text-success" },
+    };
+    return labels[type] || labels.cover;
+  };
+
+  return (
+    <section className="py-12 border-t border-white/5">
+      <div className="max-w-4xl mx-auto px-6 lg:px-8">
+        <h2 className="text-sm tracking-widest uppercase text-text-muted mb-6">
+          Setlist
+        </h2>
+        <div className="bg-bg-elevated rounded-xl border border-white/5 overflow-hidden">
+          {songs.map((song, index) => {
+            const typeLabel = getSongTypeLabel(song.song_type);
+            const isLast = index === songs.length - 1;
+
+            return (
+              <div
+                key={song.id}
+                className={`flex items-center gap-4 p-4 ${
+                  !isLast ? "border-b border-white/5" : ""
+                }`}
+              >
+                {/* Position number */}
+                <div className="w-8 h-8 rounded-full bg-bg-surface flex items-center justify-center text-text-muted font-semibold text-sm shrink-0">
+                  {song.position}
+                </div>
+
+                {/* Song info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-white">{song.title}</span>
+                    {song.song_type === "transition" && song.transition_to_title && (
+                      <>
+                        <span className="text-text-dim">→</span>
+                        <span className="font-medium text-white">
+                          {song.transition_to_title}
+                        </span>
+                      </>
+                    )}
+                    {song.song_type !== "cover" && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider ${typeLabel.className}`}
+                      >
+                        {typeLabel.text}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm text-text-muted mt-0.5">
+                    {song.artist}
+                    {song.song_type === "transition" && song.transition_to_artist && (
+                      <> / {song.transition_to_artist}</>
+                    )}
+                    {song.additional_songs && song.additional_songs.length > 0 && (
+                      <>
+                        {" "}+ {song.additional_songs.map((s) => `${s.title} (${s.artist})`).join(", ")}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* YouTube link */}
+                {song.youtube_video_id && (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${song.youtube_video_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-dim hover:text-accent transition-colors p-2"
+                    title="Watch on YouTube"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function BandPage({
   params,
 }: {
@@ -194,6 +289,12 @@ export default async function BandPage({
 
   // Fetch videos for this band
   const videos = await getVideos({ bandId });
+
+  // Fetch setlist for this band (only shown when event is finalized)
+  let setlist: SetlistSong[] = [];
+  if (eventStatus === "finalized" || isAdmin) {
+    setlist = await getSetlistForBand(bandId);
+  }
 
   // Only fetch scores if event is finalized or user is admin
   let scores: BandScore[] = [];
@@ -455,6 +556,9 @@ export default async function BandPage({
           </div>
         </section>
       )}
+
+      {/* Setlist Section - Only shown after event is finalized */}
+      {canShowScores && <SetlistSection songs={setlist} />}
 
       {/* Score Breakdown - For detailed scoring versions (2025.1, 2026.1) */}
       {showDetailedBreakdown && canShowScores && bandScore && (
