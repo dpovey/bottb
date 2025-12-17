@@ -21,3 +21,6 @@ export {
   generateEncryptionKey,
 } from "./encryption";
 
+// Platform clients
+export * from "./linkedin";
+
