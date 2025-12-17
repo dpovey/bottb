@@ -241,3 +241,153 @@ CREATE INDEX IF NOT EXISTS idx_setlist_songs_song_type ON setlist_songs(song_typ
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_status ON setlist_songs(status);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_youtube ON setlist_songs(youtube_video_id);
 
+-- ============================================================================
+-- Social Sharing Tables
+-- ============================================================================
+
+-- Social accounts - OAuth connections to LinkedIn, Meta (Facebook + Instagram)
+CREATE TABLE IF NOT EXISTS social_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Provider info
+  provider VARCHAR(50) NOT NULL CHECK (provider IN ('linkedin', 'meta')),
+  provider_account_id VARCHAR(255) NOT NULL,
+  provider_account_name VARCHAR(255),
+  
+  -- For LinkedIn: organization URN; For Meta: page_id + ig_business_id
+  organization_urn VARCHAR(255),
+  page_id VARCHAR(255),
+  ig_business_account_id VARCHAR(255),
+  
+  -- Encrypted OAuth tokens (AES-256-GCM encrypted, base64 encoded)
+  access_token_encrypted TEXT NOT NULL,
+  refresh_token_encrypted TEXT,
+  
+  -- Token expiry
+  access_token_expires_at TIMESTAMP WITH TIME ZONE,
+  refresh_token_expires_at TIMESTAMP WITH TIME ZONE,
+  
+  -- OAuth scopes granted
+  scopes TEXT[],
+  
+  -- Account status
+  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'expired', 'revoked', 'error')),
+  last_error TEXT,
+  
+  -- Metadata
+  connected_by VARCHAR(255),
+  connected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- One account per provider
+  UNIQUE(provider)
+);
+
+-- Social post templates - reusable templates for quick posting
+CREATE TABLE IF NOT EXISTS social_post_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Template info
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  
+  -- Template content with placeholders like {band}, {event}, {photographer}
+  title_template TEXT,
+  caption_template TEXT,
+  
+  -- Default settings
+  include_photographer_credit BOOLEAN DEFAULT true,
+  include_event_link BOOLEAN DEFAULT true,
+  default_hashtags TEXT[],
+  
+  -- Ordering
+  sort_order INTEGER DEFAULT 0,
+  
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Social posts - the actual post requests
+CREATE TABLE IF NOT EXISTS social_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Target platforms (array of providers to post to)
+  platforms TEXT[] NOT NULL,
+  
+  -- Content
+  title TEXT,
+  caption TEXT NOT NULL,
+  
+  -- Photo references (array of photo IDs)
+  photo_ids UUID[] NOT NULL,
+  
+  -- Context (for AI suggestions and auditing)
+  event_id VARCHAR(255) REFERENCES events(id) ON DELETE SET NULL,
+  band_id VARCHAR(255) REFERENCES bands(id) ON DELETE SET NULL,
+  
+  -- Template used (if any)
+  template_id UUID REFERENCES social_post_templates(id) ON DELETE SET NULL,
+  
+  -- Settings
+  include_photographer_credit BOOLEAN DEFAULT true,
+  include_event_link BOOLEAN DEFAULT true,
+  hashtags TEXT[],
+  
+  -- Instagram-specific: photographer handles for @mentions
+  ig_collaborator_handles TEXT[],
+  
+  -- For multi-photo Instagram: crop rectangles per photo (JSON)
+  ig_crop_info JSONB DEFAULT '{}',
+  
+  -- Overall status
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'partial', 'failed')),
+  
+  -- Who created this post
+  created_by VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Social post results - per-platform results for each post
+CREATE TABLE IF NOT EXISTS social_post_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Parent post
+  post_id UUID NOT NULL REFERENCES social_posts(id) ON DELETE CASCADE,
+  
+  -- Platform
+  platform VARCHAR(50) NOT NULL CHECK (platform IN ('linkedin', 'facebook', 'instagram')),
+  
+  -- Result
+  status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'success', 'failed')),
+  
+  -- External post ID/URL (if successful)
+  external_post_id VARCHAR(255),
+  external_post_url TEXT,
+  
+  -- Error info (if failed)
+  error_code VARCHAR(100),
+  error_message TEXT,
+  
+  -- Response data (full API response for debugging)
+  response_data JSONB,
+  
+  -- Timestamps
+  attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- One result per platform per post
+  UNIQUE(post_id, platform)
+);
+
+-- Indexes for social tables
+CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider);
+CREATE INDEX IF NOT EXISTS idx_social_accounts_status ON social_accounts(status);
+CREATE INDEX IF NOT EXISTS idx_social_post_templates_sort ON social_post_templates(sort_order);
+CREATE INDEX IF NOT EXISTS idx_social_posts_status ON social_posts(status);
+CREATE INDEX IF NOT EXISTS idx_social_posts_event ON social_posts(event_id);
+CREATE INDEX IF NOT EXISTS idx_social_posts_created ON social_posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_social_post_results_post ON social_post_results(post_id);
+CREATE INDEX IF NOT EXISTS idx_social_post_results_platform ON social_post_results(platform);
+CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results(status);
+
