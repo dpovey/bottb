@@ -13,11 +13,12 @@ import { cookies } from "next/headers";
 import {
   exchangeLinkedInCode,
   getLinkedInOrganizations,
+  getBaseUrl,
 } from "@/lib/social/linkedin";
 import { connectSocialAccount } from "@/lib/social/db";
 
 export async function GET(request: NextRequest) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  const baseUrl = getBaseUrl();
   const redirectUrl = `${baseUrl}/admin/social`;
 
   // Check admin auth

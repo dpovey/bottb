@@ -187,16 +187,14 @@ describe("AdminDashboard", () => {
     render(<AdminDashboard session={mockSession} />);
 
     // Check quick action links
-    expect(screen.getByRole("link", { name: /Manage Videos/i })).toHaveAttribute(
-      "href",
-      "/admin/videos"
-    );
+    expect(
+      screen.getByRole("link", { name: /Manage Videos/i })
+    ).toHaveAttribute("href", "/admin/videos");
     expect(
       screen.getByRole("link", { name: /Social Accounts/i })
     ).toHaveAttribute("href", "/admin/social");
-    expect(screen.getByRole("link", { name: /Photo Gallery/i })).toHaveAttribute(
-      "href",
-      "/photos"
-    );
+    expect(
+      screen.getByRole("link", { name: /Photo Gallery/i })
+    ).toHaveAttribute("href", "/photos");
   });
 });

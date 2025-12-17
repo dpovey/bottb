@@ -11,11 +11,36 @@
  * Environment variables:
  * - LINKEDIN_CLIENT_ID
  * - LINKEDIN_CLIENT_SECRET
- * - NEXT_PUBLIC_BASE_URL (for OAuth redirect)
+ * - NEXT_PUBLIC_BASE_URL (for OAuth redirect, auto-detected on Vercel)
  */
 
 const LINKEDIN_API_BASE = "https://api.linkedin.com";
 const LINKEDIN_AUTH_URL = "https://www.linkedin.com/oauth/v2";
+
+/**
+ * Get the base URL for OAuth redirects.
+ * Prioritizes NEXT_PUBLIC_BASE_URL, falls back to Vercel URL.
+ */
+export function getBaseUrl(): string {
+  // Explicit base URL takes priority
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+
+  // Vercel production URL
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  // Vercel preview/branch URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  throw new Error(
+    "No base URL configured. Set NEXT_PUBLIC_BASE_URL environment variable."
+  );
+}
 
 // ============================================================================
 // Types
@@ -82,14 +107,12 @@ export interface LinkedInPostResponse {
  */
 export function getLinkedInAuthUrl(state: string): string {
   const clientId = process.env.LINKEDIN_CLIENT_ID;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-  if (!clientId || !baseUrl) {
-    throw new Error(
-      "LINKEDIN_CLIENT_ID and NEXT_PUBLIC_BASE_URL environment variables are required"
-    );
+  if (!clientId) {
+    throw new Error("LINKEDIN_CLIENT_ID environment variable is required");
   }
 
+  const baseUrl = getBaseUrl();
   const redirectUri = `${baseUrl}/api/admin/social/linkedin/callback`;
   const scopes = ["w_organization_social", "r_organization_social"].join(" ");
 
@@ -112,14 +135,14 @@ export async function exchangeLinkedInCode(
 ): Promise<LinkedInTokenResponse> {
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-  if (!clientId || !clientSecret || !baseUrl) {
+  if (!clientId || !clientSecret) {
     throw new Error(
-      "LinkedIn OAuth environment variables are required (LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, NEXT_PUBLIC_BASE_URL)"
+      "LinkedIn OAuth environment variables are required (LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET)"
     );
   }
 
+  const baseUrl = getBaseUrl();
   const redirectUri = `${baseUrl}/api/admin/social/linkedin/callback`;
 
   const response = await fetch(`${LINKEDIN_AUTH_URL}/accessToken`, {
