@@ -2,8 +2,10 @@
  * Types for social sharing functionality
  */
 
-// Supported platforms
-export type SocialProvider = "linkedin" | "meta";
+// Supported platforms/providers
+// Provider = account type stored in DB
+// Platform = where posts are published
+export type SocialProvider = "linkedin" | "facebook" | "instagram";
 export type SocialPlatform = "linkedin" | "facebook" | "instagram";
 
 // Account status
@@ -187,6 +189,9 @@ export interface ConnectSocialAccountInput {
 
   scopes?: string[];
   connected_by?: string;
+
+  // Additional metadata (JSON)
+  metadata?: Record<string, unknown>;
 }
 
 /**

@@ -542,11 +542,11 @@ export function applyTemplatePlaceholders(
 }
 
 /**
- * Check if Instagram is configured (has connected Meta account with IG)
+ * Check if Instagram is configured (has connected Instagram account)
  */
 export async function isInstagramConfigured(): Promise<boolean> {
-  const account = await getSocialAccountByProvider("meta");
-  return !!(account?.ig_business_account_id && account.status === "active");
+  const account = await getSocialAccountByProvider("instagram");
+  return !!(account && account.status === "active");
 }
 
 /**
@@ -563,9 +563,12 @@ export async function getAvailablePlatforms(): Promise<SocialPlatform[]> {
       platforms.push("linkedin");
     }
 
-    if (account.provider === "meta") {
-      if (account.page_id) platforms.push("facebook");
-      if (account.ig_business_account_id) platforms.push("instagram");
+    if (account.provider === "facebook") {
+      platforms.push("facebook");
+    }
+
+    if (account.provider === "instagram") {
+      platforms.push("instagram");
     }
   }
 

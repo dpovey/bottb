@@ -16,6 +16,12 @@ import {
 } from "@/lib/social/db";
 import { getPhotoById } from "@/lib/db";
 import { postToLinkedIn } from "@/lib/social/linkedin";
+import {
+  postToFacebookPage,
+  postMultipleToFacebookPage,
+  postToInstagram,
+  postCarouselToInstagram,
+} from "@/lib/social/meta";
 import type { SocialPlatform, CreateSocialPostInput } from "@/lib/social/types";
 
 interface PostRequestBody {
@@ -142,18 +148,99 @@ export async function POST(request: NextRequest) {
 
           results.linkedin = { success: true, postUrl: result.postUrl };
           hasSuccess = true;
-        } else if (platform === "facebook" || platform === "instagram") {
-          // Meta platforms - to be implemented
+        } else if (platform === "facebook") {
+          const account = await getSocialAccountWithTokens("facebook");
+
+          if (!account || account.status !== "active") {
+            throw new Error("Facebook Page not connected or inactive");
+          }
+
+          let postId: string;
+
+          if (photoUrls.length === 1) {
+            // Single photo post
+            const result = await postToFacebookPage(
+              account.provider_account_id,
+              account.access_token,
+              photoUrls[0],
+              body.caption
+            );
+            postId = result.id;
+          } else {
+            // Multi-photo post
+            const result = await postMultipleToFacebookPage(
+              account.provider_account_id,
+              account.access_token,
+              photoUrls,
+              body.caption
+            );
+            postId = result.id;
+          }
+
+          const postUrl = `https://www.facebook.com/${postId}`;
+
           await createSocialPostResult({
             post_id: post.id,
-            platform,
-            status: "failed",
-            error_code: "NOT_IMPLEMENTED",
-            error_message: "Meta posting not yet implemented",
+            platform: "facebook",
+            status: "success",
+            external_post_id: postId,
+            external_post_url: postUrl,
           });
 
-          results[platform] = { success: false, error: "Not yet implemented" };
-          hasFailure = true;
+          results.facebook = { success: true, postUrl };
+          hasSuccess = true;
+        } else if (platform === "instagram") {
+          const account = await getSocialAccountWithTokens("instagram");
+
+          if (!account || account.status !== "active") {
+            throw new Error("Instagram account not connected or inactive");
+          }
+
+          // Build caption with optional collaborator mentions
+          let caption = body.caption;
+          if (body.ig_collaborator_handles && body.ig_collaborator_handles.length > 0) {
+            const mentions = body.ig_collaborator_handles
+              .map((h) => (h.startsWith("@") ? h : `@${h}`))
+              .join(" ");
+            caption = `${caption}\n\n📸 ${mentions}`;
+          }
+
+          let postId: string;
+
+          if (photoUrls.length === 1) {
+            // Single photo post
+            const result = await postToInstagram(
+              account.provider_account_id,
+              account.access_token,
+              photoUrls[0],
+              caption
+            );
+            postId = result.id;
+          } else {
+            // Carousel post (2-10 photos)
+            const result = await postCarouselToInstagram(
+              account.provider_account_id,
+              account.access_token,
+              photoUrls,
+              caption
+            );
+            postId = result.id;
+          }
+
+          // Note: Instagram doesn't provide direct post URLs via API
+          // The post ID can be used to construct a URL but it's not always reliable
+          const postUrl = `https://www.instagram.com/p/${postId}/`;
+
+          await createSocialPostResult({
+            post_id: post.id,
+            platform: "instagram",
+            status: "success",
+            external_post_id: postId,
+            external_post_url: postUrl,
+          });
+
+          results.instagram = { success: true, postUrl };
+          hasSuccess = true;
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";

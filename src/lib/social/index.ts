@@ -23,4 +23,5 @@ export {
 
 // Platform clients
 export * from "./linkedin";
+export * from "./meta";
 

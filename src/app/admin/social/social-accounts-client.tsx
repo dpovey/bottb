@@ -104,7 +104,8 @@ export function SocialAccountsClient({
     accounts.find((a) => a.provider === provider);
 
   const linkedinAccount = getAccountByProvider("linkedin");
-  const _metaAccount = getAccountByProvider("meta"); // For future Meta integration
+  const facebookAccount = getAccountByProvider("facebook");
+  const instagramAccount = getAccountByProvider("instagram");
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-AU", {
@@ -282,7 +283,7 @@ export function SocialAccountsClient({
           </div>
 
           {/* Meta (Facebook + Instagram) */}
-          <div className="bg-elevated rounded-xl border border-white/5 p-5 opacity-60">
+          <div className="bg-elevated rounded-xl border border-white/5 p-5">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0866FF]/20 to-[#E4405F]/20 flex items-center justify-center shrink-0">
                 <svg
@@ -296,20 +297,85 @@ export function SocialAccountsClient({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold">Meta (Facebook + Instagram)</h3>
-                  <span className="bg-white/10 border border-white/20 text-muted px-2 py-0.5 rounded text-[10px]">
-                    Coming Soon
-                  </span>
+                  {(facebookAccount || instagramAccount) && (
+                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-[10px]">
+                      Connected
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm text-muted">
-                  Connect a Facebook Page and Instagram Business account
-                </p>
+                {facebookAccount || instagramAccount ? (
+                  <div className="space-y-2">
+                    {facebookAccount && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span style={{ color: platformInfo.facebook.color }}>
+                          {platformInfo.facebook.icon}
+                        </span>
+                        <span className="text-muted">
+                          {facebookAccount.provider_account_name} (Page)
+                        </span>
+                      </div>
+                    )}
+                    {instagramAccount && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span style={{ color: platformInfo.instagram.color }}>
+                          {platformInfo.instagram.icon}
+                        </span>
+                        <span className="text-muted">
+                          @{instagramAccount.provider_account_name} (Business)
+                        </span>
+                      </div>
+                    )}
+                    {facebookAccount && (
+                      <p className="text-xs text-dim mt-2">
+                        Connected {formatDate(facebookAccount.connected_at)}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">
+                    Connect a Facebook Page and Instagram Business account
+                  </p>
+                )}
               </div>
-              <button
-                disabled
-                className="px-4 py-2 rounded-lg text-sm border border-white/20 opacity-50 cursor-not-allowed"
-              >
-                Connect
-              </button>
+              <div className="flex items-center gap-2">
+                {facebookAccount || instagramAccount ? (
+                  <>
+                    <a
+                      href="/api/admin/social/meta/connect"
+                      className="px-3 py-1.5 rounded text-xs border border-white/20 hover:bg-white/5 transition-colors"
+                    >
+                      Reconnect
+                    </a>
+                    <button
+                      onClick={() => handleDisconnect("meta")}
+                      disabled={disconnecting === "meta"}
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50"
+                      title="Disconnect"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.5"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </>
+                ) : (
+                  <a
+                    href="/api/admin/social/meta/connect"
+                    className="px-4 py-2 rounded-lg text-sm bg-accent hover:bg-accent-light transition-colors"
+                  >
+                    Connect
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
