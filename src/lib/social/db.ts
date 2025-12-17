@@ -528,6 +528,8 @@ export function applyTemplatePlaceholders(
   context: {
     band?: string;
     event?: string;
+    date?: string;
+    location?: string;
     photographer?: string;
     company?: string;
   }
@@ -535,6 +537,8 @@ export function applyTemplatePlaceholders(
   let result = template;
   if (context.band) result = result.replace(/{band}/g, context.band);
   if (context.event) result = result.replace(/{event}/g, context.event);
+  if (context.date) result = result.replace(/{date}/g, context.date);
+  if (context.location) result = result.replace(/{location}/g, context.location);
   if (context.photographer)
     result = result.replace(/{photographer}/g, context.photographer);
   if (context.company) result = result.replace(/{company}/g, context.company);
