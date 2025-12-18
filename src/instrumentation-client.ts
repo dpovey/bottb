@@ -44,6 +44,11 @@ if (typeof window !== "undefined") {
     posthog.init(posthogKey, {
       api_host: posthogHost,
       person_profiles: "identified_only", // Only create profiles for identified users
+      capture_exceptions: {
+        capture_unhandled_errors: true,
+        capture_unhandled_rejections: true,
+        capture_console_errors: false,
+      },
       loaded: (posthog) => {
         // Enable debug mode in development for easier debugging
         if (nodeEnv === "development") {
