@@ -10,8 +10,16 @@
   existing functionality that was not intended.
 - Always question if you are overwriting unstaged files you do not expect.
 - Consider whether appropriate tests have been added before commiting
-- Make sure tests, eslint and typecheck pass before committing code. This includes failures
-  unrelated to the change.
+
+## Pre-commit Checklist
+
+**MUST run these commands and verify they pass before committing:**
+- `npm run typecheck` - TypeScript type checking
+- `npm run lint` - ESLint (do not rely on read_lints tool alone, must run the actual command)
+- `npm test` - All tests (if tests cannot run due to environment, note this but still verify typecheck and lint)
+
+**All three must pass with exit code 0 before committing.** This includes failures unrelated to your change.
+
 - If in doubt ask before committing.
 
 ## Commit Message Format
