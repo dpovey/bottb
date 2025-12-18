@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Photo } from "@/lib/db";
 import { PhotoSlideshow } from "./photo-slideshow";
+import { trackPhotoClick } from "@/lib/analytics";
 
 interface PhotoStripProps {
   /** Filter by event ID */
@@ -188,9 +189,22 @@ export function PhotoStrip({
   // Handle photo click - open slideshow
   const handlePhotoClick = useCallback((index: number) => {
     if (!enableSlideshow) return;
+    
+    // Track photo click
+    const photo = photos[index];
+    if (photo) {
+      trackPhotoClick({
+        photo_id: photo.id,
+        event_id: photo.event_id || null,
+        band_id: photo.band_id || null,
+        event_name: photo.event_name || null,
+        band_name: photo.band_name || null,
+      });
+    }
+    
     setSelectedIndex(index);
     setSlideshowIndex(index);
-  }, [enableSlideshow]);
+  }, [enableSlideshow, photos]);
 
   // Keyboard navigation - works when strip or any of its children has focus
   useEffect(() => {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicLayout } from "@/components/layouts";
 import { PhotoStrip } from "@/components/photos/photo-strip";
+import { SocialIconLink } from "@/components/ui";
 import {
   getPhotographerBySlug,
   getPhotographerHeroPhoto,
@@ -232,35 +233,40 @@ export default async function PhotographerPage({ params }: Props) {
             {/* Social Links */}
             <div className="flex flex-wrap gap-3">
               {photographer.instagram && (
-                <a
+                <SocialIconLink
                   href={photographer.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  platform="instagram"
+                  label="Instagram"
+                  location="photographer_page"
                   className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-3 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <InstagramIcon className="w-5 h-5" />
                   Instagram
-                </a>
+                </SocialIconLink>
               )}
               {photographer.website && (
-                <a
+                <SocialIconLink
                   href={photographer.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  platform="website"
+                  label="Website"
+                  location="photographer_page"
                   className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-3 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <WebsiteIcon className="w-5 h-5" />
                   Website
-                </a>
+                </SocialIconLink>
               )}
               {photographer.email && (
-                <a
+                <SocialIconLink
                   href={`mailto:${photographer.email}`}
+                  platform="email"
+                  label="Contact"
+                  location="photographer_page"
                   className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-3 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <EmailIcon className="w-5 h-5" />
                   Contact
-                </a>
+                </SocialIconLink>
               )}
             </div>
 

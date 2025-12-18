@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layouts";
-import { Button } from "@/components/ui";
+import { Button, SocialIconLink } from "@/components/ui";
 import { getSocialLinks } from "@/lib/social-links";
 import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -49,16 +49,16 @@ export default async function AboutPage() {
           {/* Social Icons */}
           <div className="flex items-center gap-4">
             {socialLinks.map((social) => (
-              <a
+              <SocialIconLink
                 key={social.label}
                 href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.label}
+                platform={social.platform}
+                label={social.label}
+                location="about_hero"
                 className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
               >
                 {social.icon()}
-              </a>
+              </SocialIconLink>
             ))}
             <span className="text-text-dim mx-2">|</span>
             <a

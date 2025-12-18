@@ -7,6 +7,7 @@ import { PhotoGrid, type GridSize } from "@/components/photos/photo-grid";
 import { PhotoSlideshow } from "@/components/photos/photo-slideshow";
 import { PhotoFilters } from "@/components/photos/photo-filters";
 import { PublicLayout } from "@/components/layouts";
+import { trackPhotoClick, trackPhotoFilterChange } from "@/lib/analytics";
 
 interface Company {
   slug: string;
@@ -113,9 +114,7 @@ export function PhotosContent({
     });
     setSelectedBandId((prev) => {
       // Prefer bandIds if present, format as "bandIds:id1,id2"
-      const urlValue = bandIds
-        ? `bandIds:${bandIds}`
-        : bandId || null;
+      const urlValue = bandIds ? `bandIds:${bandIds}` : bandId || null;
       return prev !== urlValue ? urlValue : prev;
     });
     setSelectedPhotographer((prev) => {
@@ -198,6 +197,12 @@ export function PhotosContent({
       setSelectedBandId(null); // Reset band when event changes
       setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ event: eventId, band: null });
+
+      // Track filter change
+      trackPhotoFilterChange({
+        filter_type: "event",
+        filter_value: eventId,
+      });
     },
     [updateUrlParams, slideshowIndex]
   );
@@ -210,8 +215,18 @@ export function PhotosContent({
       if (bandId && bandId.startsWith("bandIds:")) {
         const ids = bandId.substring(8); // Remove "bandIds:" prefix
         updateUrlParams({ band: null, bandIds: ids });
+        // Track filter change
+        trackPhotoFilterChange({
+          filter_type: "band",
+          filter_value: ids,
+        });
       } else {
         updateUrlParams({ band: bandId, bandIds: null });
+        // Track filter change
+        trackPhotoFilterChange({
+          filter_type: "band",
+          filter_value: bandId,
+        });
       }
     },
     [updateUrlParams, slideshowIndex]
@@ -222,6 +237,12 @@ export function PhotosContent({
       setSelectedPhotographer(photographer);
       setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ photographer });
+
+      // Track filter change
+      trackPhotoFilterChange({
+        filter_type: "photographer",
+        filter_value: photographer,
+      });
     },
     [updateUrlParams, slideshowIndex]
   );
@@ -234,6 +255,12 @@ export function PhotosContent({
       setSelectedBandId(null);
       setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
       updateUrlParams({ company, event: null, band: null });
+
+      // Track filter change
+      trackPhotoFilterChange({
+        filter_type: "company",
+        filter_value: company,
+      });
     },
     [updateUrlParams, slideshowIndex]
   );
@@ -413,6 +440,18 @@ export function PhotosContent({
   // Handle photo click
   const handlePhotoClick = (index: number) => {
     setSlideshowIndex(index);
+
+    // Track photo click
+    const photo = photos[index];
+    if (photo) {
+      trackPhotoClick({
+        photo_id: photo.id,
+        event_id: photo.event_id || null,
+        band_id: photo.band_id || null,
+        event_name: photo.event_name || null,
+        band_name: photo.band_name || null,
+      });
+    }
   };
 
   // Handle slideshow close
@@ -653,9 +692,7 @@ export function PhotosContent({
               <label
                 className="flex items-center gap-2 cursor-pointer"
                 title={
-                  showCompanyLogos
-                    ? "Hide company logos"
-                    : "Show company logos"
+                  showCompanyLogos ? "Hide company logos" : "Show company logos"
                 }
               >
                 <svg
@@ -806,4 +843,3 @@ export function PhotosContent({
     </PublicLayout>
   );
 }
-

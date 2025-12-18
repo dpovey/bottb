@@ -2,27 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { socialLinks } from "@/lib/social-links";
-
-// Social media icon wrapper
-const SocialIcon = ({
-  href,
-  label,
-  children,
-}: {
-  href: string;
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label={label}
-    className="text-text-dim hover:text-white transition-colors"
-  >
-    {children}
-  </a>
-);
+import { SocialIconLink } from "@/components/ui";
 
 const sitemapLinks = {
   main: [
@@ -67,13 +47,16 @@ export function Footer({ variant = "simple", className }: FooterProps) {
             {/* Social Links */}
             <div className="flex items-center gap-4">
               {socialLinks.map((social) => (
-                <SocialIcon
+                <SocialIconLink
                   key={social.label}
                   href={social.href}
+                  platform={social.platform}
                   label={social.label}
+                  location="footer_simple"
+                  className="text-text-dim hover:text-white transition-colors"
                 >
                   {social.icon()}
-                </SocialIcon>
+                </SocialIconLink>
               ))}
             </div>
           </div>
@@ -154,13 +137,16 @@ export function Footer({ variant = "simple", className }: FooterProps) {
             </h3>
             <div className="flex items-center gap-4 mb-6">
               {socialLinks.map((social) => (
-                <SocialIcon
+                <SocialIconLink
                   key={social.label}
                   href={social.href}
+                  platform={social.platform}
                   label={social.label}
+                  location="footer_full"
+                  className="text-text-dim hover:text-white transition-colors"
                 >
                   {social.icon()}
-                </SocialIcon>
+                </SocialIconLink>
               ))}
             </div>
             <ul className="space-y-2">

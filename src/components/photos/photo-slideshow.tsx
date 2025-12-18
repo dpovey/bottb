@@ -8,6 +8,11 @@ import { CompanyIcon } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import Cropper, { Area } from "react-easy-crop";
 import { ShareComposerModal } from "./share-composer-modal";
+import {
+  trackPhotoDownload,
+  trackPhotoShare,
+  trackPhotoView,
+} from "@/lib/analytics";
 
 // Label display info
 const LABEL_INFO = {
@@ -105,6 +110,29 @@ export function PhotoSlideshow({
       prevInitialIndexRef.current = initialIndex;
     }
   }, [initialIndex, currentPage, totalPhotos]);
+
+  // Track photo views when photo changes (with minimum 1s view duration)
+  useEffect(() => {
+    const photo = allPhotos[currentIndex];
+    if (!photo) return;
+
+    // Set a timer to track the view after 1 second
+    // This ensures we only track intentional views, not accidental glimpses
+    const viewTimer = setTimeout(() => {
+      trackPhotoView({
+        photo_id: photo.id,
+        event_id: photo.event_id || null,
+        band_id: photo.band_id || null,
+        event_name: photo.event_name || null,
+        band_name: photo.band_name || null,
+      });
+    }, 1000); // 1 second minimum view duration
+
+    // Clean up timer if user navigates away before 1 second
+    return () => {
+      clearTimeout(viewTimer);
+    };
+  }, [currentIndex, allPhotos]);
 
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -480,6 +508,19 @@ export function PhotoSlideshow({
       await navigator.clipboard.writeText(window.location.href);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+
+      // Track share
+      const photo = allPhotos[currentIndex];
+      if (photo) {
+        trackPhotoShare({
+          photo_id: photo.id,
+          share_method: "copy_link",
+          event_id: photo.event_id || null,
+          band_id: photo.band_id || null,
+          event_name: photo.event_name || null,
+          band_name: photo.band_name || null,
+        });
+      }
     } catch (error) {
       console.error("Failed to copy link:", error);
     }
@@ -502,6 +543,16 @@ export function PhotoSlideshow({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+
+      // Track download
+      trackPhotoDownload({
+        photo_id: photo.id,
+        event_id: photo.event_id || null,
+        band_id: photo.band_id || null,
+        photographer: photo.photographer || null,
+        event_name: photo.event_name || null,
+        band_name: photo.band_name || null,
+      });
     } catch (error) {
       console.error("Failed to download image:", error);
     }

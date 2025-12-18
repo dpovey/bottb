@@ -8,6 +8,7 @@ import {
   SocialPostTemplate,
   SocialPostResult,
 } from "@/lib/social/types";
+import { trackPhotoShare } from "@/lib/analytics";
 
 // Platform icons
 const PlatformIcon = {
@@ -220,6 +221,24 @@ export function ShareComposerModal({
       if (response.ok) {
         setPostResults(data.results || []);
         onSuccess?.();
+
+        // Track successful shares for each platform
+        const results = data.results || [];
+        results.forEach((result: SocialPostResult) => {
+          if (result.status === "success" && firstPhoto) {
+            // Track each photo that was shared
+            photos.forEach((photo) => {
+              trackPhotoShare({
+                photo_id: photo.id,
+                share_method: result.platform as "linkedin" | "facebook" | "instagram",
+                event_id: photo.event_id || null,
+                band_id: photo.band_id || null,
+                event_name: photo.event_name || null,
+                band_name: photo.band_name || null,
+              });
+            });
+          }
+        });
       } else {
         setPostError(data.error || "Failed to post");
       }

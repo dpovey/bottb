@@ -31,3 +31,7 @@ export {
   NumberedIndicator,
   type NumberedIndicatorProps,
 } from "./numbered-indicator";
+export {
+  SocialIconLink,
+  type SocialIconLinkProps,
+} from "./social-icon-link";

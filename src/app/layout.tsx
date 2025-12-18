@@ -8,6 +8,7 @@ import { FacebookPixel } from "@/components/facebook-pixel";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AdminToolbar } from "@/components/admin-toolbar";
 import { ScrollRestoration } from "@/components/scroll-restoration";
+import { PostHogProvider } from "@/components/posthog-provider";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -63,10 +64,12 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ScrollRestoration />
-        <Providers>
-          {children}
-          <AdminToolbar />
-        </Providers>
+        <PostHogProvider>
+          <Providers>
+            {children}
+            <AdminToolbar />
+          </Providers>
+        </PostHogProvider>
         <Analytics />
         <SpeedInsights />
         <FacebookPixel />

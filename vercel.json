@@ -3,6 +3,12 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/ph/:path*",
+      "destination": "https://us.i.posthog.com/:path*"
+    }
+  ]
 }
 

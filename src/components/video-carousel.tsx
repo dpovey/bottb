@@ -4,12 +4,14 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Video } from "@/lib/db";
 import { CompanyIcon } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackVideoClick, trackSubscribeClick } from "@/lib/analytics";
 
 interface VideoCarouselProps {
   videos: Video[];
   title?: string;
   showBandInfo?: boolean;
   className?: string;
+  location?: string; // Where the carousel appears (e.g., "home_page", "event_page", "band_page")
 }
 
 /**
@@ -48,6 +50,7 @@ export function VideoCarousel({
   title = "Videos",
   showBandInfo = true,
   className = "",
+  location = "video_carousel",
 }: VideoCarouselProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +120,12 @@ export function VideoCarousel({
               href="https://youtube.com/@battleofthetechbands?sub_confirmation=1&utm_source=bottb&utm_medium=website&utm_campaign=video-carousel"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                trackSubscribeClick({
+                  location,
+                  url: "https://youtube.com/@battleofthetechbands?sub_confirmation=1",
+                });
+              }}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-text-muted hover:text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -162,7 +171,20 @@ export function VideoCarousel({
           {videos.map((video) => (
             <button
               key={video.id}
-              onClick={() => setSelectedVideo(video)}
+              onClick={() => {
+                setSelectedVideo(video);
+                trackVideoClick({
+                  video_id: video.id,
+                  video_title: video.title,
+                  youtube_video_id: video.youtube_video_id,
+                  event_id: video.event_id || null,
+                  band_id: video.band_id || null,
+                  event_name: video.event_name || null,
+                  band_name: video.band_name || null,
+                  company_name: video.company_name || null,
+                  location,
+                });
+              }}
               className="group shrink-0 w-[280px] sm:w-[320px] snap-start"
             >
               {/* Thumbnail */}

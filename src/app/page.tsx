@@ -398,6 +398,7 @@ export default async function HomePage() {
         <VideoStrip
           title="Standout Performances"
           initialVideos={initialVideos}
+          location="home_page"
         />
       </Suspense>
 

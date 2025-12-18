@@ -410,7 +410,7 @@ export default function EventPage() {
       {videos.length > 0 && (
         <section className="py-12 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <VideoCarousel videos={videos} title="Videos" showBandInfo={true} />
+            <VideoCarousel videos={videos} title="Videos" showBandInfo={true} location="event_page" />
           </div>
         </section>
       )}

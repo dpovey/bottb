@@ -17,6 +17,8 @@ interface VideoStripProps {
   limit?: number;
   /** Initial videos fetched server-side (optional) */
   initialVideos?: Video[];
+  /** Location where the video strip appears (for tracking) */
+  location?: string;
 }
 
 interface VideosResponse {
@@ -31,6 +33,7 @@ export function VideoStrip({
   className = "",
   limit = 20,
   initialVideos,
+  location = "video_strip",
 }: VideoStripProps) {
   const [videos, setVideos] = useState<Video[]>(initialVideos || []);
   const [loading, setLoading] = useState(!initialVideos);
@@ -93,7 +96,7 @@ export function VideoStrip({
             </div>
           </>
         ) : (
-          <VideoCarousel videos={videos} title={title} showBandInfo={true} />
+          <VideoCarousel videos={videos} title={title} showBandInfo={true} location={location} />
         )}
       </div>
     </section>
