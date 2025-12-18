@@ -1,19 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider } from "posthog-js/react";
 
 /**
- * PostHog Provider - Wraps app with PostHog React context and tracks page views
- * 
- * PostHog initialization is handled by instrumentation-client.ts (Next.js 15.3+ best practice).
- * This provider:
- * - Wraps the app with PostHog's React context
- * - Tracks page views when routes change (after navigation completes)
+ * Internal component that uses useSearchParams - must be wrapped in Suspense
+ * for static generation compatibility
  */
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+function PostHogPageViewTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -43,6 +39,27 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     });
   }, [pathname, searchParams]);
 
-  return <PHProvider client={posthog}>{children}</PHProvider>;
+  return null;
+}
+
+/**
+ * PostHog Provider - Wraps app with PostHog React context and tracks page views
+ * 
+ * PostHog initialization is handled by instrumentation-client.ts (Next.js 15.3+ best practice).
+ * This provider:
+ * - Wraps the app with PostHog's React context
+ * - Tracks page views when routes change (after navigation completes)
+ * 
+ * Note: useSearchParams() is wrapped in Suspense to support static generation
+ */
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <PHProvider client={posthog}>
+      {children}
+      <Suspense fallback={null}>
+        <PostHogPageViewTracker />
+      </Suspense>
+    </PHProvider>
+  );
 }
 
