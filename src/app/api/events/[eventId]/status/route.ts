@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { updateEventStatus } from "@/lib/db";
 import { withAdminProtection } from "@/lib/api-protection";
 
@@ -35,6 +36,14 @@ async function handleUpdateEventStatus(
 
     if (!updatedEvent) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    // Revalidate pages that depend on event status
+    revalidatePath("/");
+    revalidatePath("/events");
+    revalidatePath(`/event/${eventId}`);
+    if (status === "finalized") {
+      revalidatePath(`/results/${eventId}`);
     }
 
     return NextResponse.json({

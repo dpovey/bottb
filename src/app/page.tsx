@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   getActiveEvent,
@@ -6,6 +7,11 @@ import {
   getBandScores,
   getBandsForEvent,
   getPhotosByLabel,
+  hasFinalizedResults,
+  getFinalizedResults,
+  getPhotos,
+  getPhotoCount,
+  getVideos,
   PHOTO_LABELS,
 } from "@/lib/db";
 import { PublicLayout } from "@/components/layouts";
@@ -21,6 +27,12 @@ import {
 import { PhotoStrip } from "@/components/photos/photo-strip";
 import { VideoStrip } from "@/components/videos/video-strip";
 import { CompanyLogoMarquee } from "@/components/company-logo-marquee";
+import {
+  EventCardSkeleton,
+  PhotoStripSkeleton,
+  VideoStripSkeleton,
+  CompanyLogoMarqueeSkeleton,
+} from "@/components/skeletons/home-skeletons";
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE =
@@ -47,8 +59,9 @@ interface EventInfo {
   [key: string]: unknown;
 }
 
-// Force dynamic rendering - don't pre-render at build time
-export const dynamic = "force-dynamic";
+// Use ISR with 5-minute revalidation for performance
+// Events are activated/finalized manually, so 5 minutes is sufficient
+export const revalidate = 300;
 
 function getRelativeDate(dateString: string): string {
   const now = new Date();
@@ -86,15 +99,35 @@ function getRelativeDate(dateString: string): string {
 }
 
 export default async function HomePage() {
-  const activeEvent = await getActiveEvent();
-  const upcomingEvents = await getUpcomingEvents();
-  const pastEvents = await getPastEvents();
+  // Parallelize all initial queries including photos and videos for strips
+  const [
+    activeEvent,
+    upcomingEvents,
+    pastEvents,
+    globalHeroPhotos,
+    initialPhotosData,
+    initialVideosData,
+    initialPhotoCount,
+  ] = await Promise.all([
+    getActiveEvent(),
+    getUpcomingEvents(),
+    getPastEvents(),
+    getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO),
+    // Fetch initial photos for PhotoStrip (random order, 50 photos)
+    getPhotos({ limit: 50, orderBy: "random" }),
+    // Fetch initial videos for VideoStrip (20 videos)
+    getVideos({ limit: 20 }),
+    // Get photo count for pagination
+    getPhotoCount({}),
+  ]);
 
-  // Fetch global hero photos
-  const globalHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO);
+  // Extract hero photo data
   const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null;
   const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE;
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+
+  const initialPhotos = initialPhotosData;
+  const initialVideos = initialVideosData;
 
   // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
@@ -141,7 +174,22 @@ export default async function HomePage() {
         };
       }
 
-      // For 2025.1 and 2026.1, calculate scores
+      // For 2025.1 and 2026.1, check if event is finalized and use finalized results
+      const isFinalized = event.status === "finalized";
+      if (isFinalized && (await hasFinalizedResults(event.id))) {
+        // Use finalized results from table (already sorted by final_rank)
+        const finalizedResults = await getFinalizedResults(event.id);
+        const overallWinner =
+          finalizedResults.length > 0
+            ? {
+                name: finalizedResults[0].band_name,
+                totalScore: Number(finalizedResults[0].total_score || 0),
+              }
+            : null;
+        return { ...event, overallWinner, bands, scoringVersion, heroPhoto };
+      }
+
+      // Only calculate scores for non-finalized past events
       const scores = (await getBandScores(event.id)) as BandScore[];
 
       const bandResults = scores
@@ -265,46 +313,111 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Past Events Section */}
-      {pastEventsWithWinners.length > 0 && (
-        <section className="py-16 bg-bg-elevated">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="font-semibold text-3xl sm:text-4xl">
-                Past Events
-              </h2>
+      {/* Past Events Section - Wrapped in Suspense for error boundaries */}
+      <Suspense
+        fallback={
+          <section className="py-16 bg-bg-elevated">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="font-semibold text-3xl sm:text-4xl">
+                  Past Events
+                </h2>
+              </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <EventCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
+          </section>
+        }
+      >
+        {pastEventsWithWinners.length > 0 && (
+          <section className="py-16 bg-bg-elevated">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-10">
+                <h2 className="font-semibold text-3xl sm:text-4xl">
+                  Past Events
+                </h2>
+              </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pastEventsWithWinners.map((event) => {
-                const relativeDate = getRelativeDate(event.date);
-                return (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    relativeDate={relativeDate}
-                    variant="past"
-                    showWinner={!!event.overallWinner}
-                    winner={event.overallWinner || undefined}
-                    bands={event.bands}
-                    heroPhoto={event.heroPhoto}
-                    visual
-                  />
-                );
-              })}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pastEventsWithWinners.map((event) => {
+                  const relativeDate = getRelativeDate(event.date);
+                  return (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      relativeDate={relativeDate}
+                      variant="past"
+                      showWinner={!!event.overallWinner}
+                      winner={event.overallWinner || undefined}
+                      bands={event.bands}
+                      heroPhoto={event.heroPhoto}
+                      visual
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+      </Suspense>
 
-      {/* Random Photo Strip */}
-      <PhotoStrip title="From the Archives" viewAllLink="/photos" />
+      {/* Random Photo Strip - Wrapped in Suspense */}
+      <Suspense
+        fallback={
+          <section className="py-16 bg-bg-elevated">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="font-semibold text-3xl">From the Archives</h2>
+              </div>
+              <PhotoStripSkeleton />
+            </div>
+          </section>
+        }
+      >
+        <PhotoStrip
+          title="From the Archives"
+          viewAllLink="/photos"
+          initialPhotos={initialPhotos}
+          initialTotalCount={initialPhotoCount}
+        />
+      </Suspense>
 
-      {/* Video Strip */}
-      <VideoStrip title="Standout Performances" />
+      {/* Video Strip - Wrapped in Suspense */}
+      <Suspense
+        fallback={
+          <section className="py-16 bg-bg">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <VideoStripSkeleton />
+            </div>
+          </section>
+        }
+      >
+        <VideoStrip
+          title="Standout Performances"
+          initialVideos={initialVideos}
+        />
+      </Suspense>
 
-      {/* Company Logo Marquee */}
-      <CompanyLogoMarquee />
+      {/* Company Logo Marquee - Wrapped in Suspense */}
+      <Suspense
+        fallback={
+          <section className="py-16 bg-bg border-t border-white/5">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+              <div className="text-center mb-10">
+                <h2 className="text-sm tracking-widest uppercase text-accent mb-2">
+                  Companies Who&apos;ve Competed
+                </h2>
+              </div>
+              <CompanyLogoMarqueeSkeleton />
+            </div>
+          </section>
+        }
+      >
+        <CompanyLogoMarquee />
+      </Suspense>
 
       {/* CTA Section */}
       <section className="py-20 bg-bg-muted border-t border-white/5">

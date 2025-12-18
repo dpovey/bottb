@@ -91,7 +91,7 @@ export function EventCard({
                 fill
                 className="object-cover opacity-80 transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
                 style={focalPoint ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` } : undefined}
-                unoptimized
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
           )}
@@ -242,7 +242,7 @@ export function EventCard({
               fill
               className="object-cover"
               style={focalPoint ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` } : undefined}
-              unoptimized
+              sizes="256px"
             />
             {/* Gradient overlay to blend with card */}
             <div className="absolute inset-0 bg-gradient-to-r from-bg-elevated to-transparent" />

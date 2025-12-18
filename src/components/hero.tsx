@@ -67,7 +67,7 @@ export function Hero({
           className="object-cover"
           style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
           priority
-          unoptimized={backgroundImage.startsWith("http")}
+          sizes="100vw"
         />
       ) : (
         // Gradient fallback

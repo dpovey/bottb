@@ -4,6 +4,8 @@ import {
   getPhotosByLabel,
   getVideos,
   getSetlistForBand,
+  hasFinalizedResults,
+  getFinalizedResults,
   PHOTO_LABELS,
   SetlistSong,
 } from "@/lib/db";
@@ -301,8 +303,78 @@ export default async function BandPage({
   let bandScore: BandScore | null = null;
 
   if (eventStatus === "finalized" || isAdmin) {
-    scores = (await getBandScores(eventId)) as BandScore[];
-    bandScore = scores.find((score) => score.id === bandId) || null;
+    // Check if event is finalized and has finalized results
+    if (
+      eventStatus === "finalized" &&
+      (await hasFinalizedResults(eventId))
+    ) {
+      // Use finalized results from table
+      const finalizedResults = await getFinalizedResults(eventId);
+      const finalizedResult = finalizedResults.find(
+        (r) => r.band_id === bandId
+      );
+
+      if (finalizedResult) {
+        // Transform finalized result to match BandScore format for compatibility
+        const allBands = await getBandsForEvent(eventId);
+        const band = allBands.find((b) => b.id === bandId);
+        bandScore = {
+          id: finalizedResult.band_id,
+          name: finalizedResult.band_name,
+          order: finalizedResult.final_rank,
+          avg_song_choice: Number(finalizedResult.avg_song_choice || 0),
+          avg_performance: Number(finalizedResult.avg_performance || 0),
+          avg_crowd_vibe: Number(finalizedResult.avg_crowd_vibe || 0),
+          avg_visuals: finalizedResult.avg_visuals
+            ? Number(finalizedResult.avg_visuals)
+            : undefined,
+          avg_crowd_vote: 0, // Not stored in finalized results
+          crowd_vote_count: finalizedResult.crowd_vote_count,
+          judge_vote_count: finalizedResult.judge_vote_count,
+          total_crowd_votes: finalizedResult.total_crowd_votes,
+          crowd_score: finalizedResult.crowd_noise_score || undefined,
+          crowd_noise_energy: finalizedResult.crowd_noise_energy || undefined,
+          crowd_noise_peak: finalizedResult.crowd_noise_peak || undefined,
+          hero_thumbnail_url: band?.hero_thumbnail_url,
+          hero_focal_point: band?.hero_focal_point,
+          info: band?.info,
+          company_slug: band?.company_slug,
+          company_name: band?.company_name,
+          company_icon_url: band?.company_icon_url,
+        } as BandScore;
+
+        // Create scores array for compatibility with existing code
+        scores = finalizedResults.map((r) => {
+          const b = allBands.find((b) => b.id === r.band_id);
+          return {
+            id: r.band_id,
+            name: r.band_name,
+            order: r.final_rank,
+            avg_song_choice: Number(r.avg_song_choice || 0),
+            avg_performance: Number(r.avg_performance || 0),
+            avg_crowd_vibe: Number(r.avg_crowd_vibe || 0),
+            avg_visuals: r.avg_visuals ? Number(r.avg_visuals) : undefined,
+            avg_crowd_vote: 0,
+            crowd_vote_count: r.crowd_vote_count,
+            judge_vote_count: r.judge_vote_count,
+            total_crowd_votes: r.total_crowd_votes,
+            crowd_score: r.crowd_noise_score || undefined,
+            crowd_noise_energy: r.crowd_noise_energy || undefined,
+            crowd_noise_peak: r.crowd_noise_peak || undefined,
+            hero_thumbnail_url: b?.hero_thumbnail_url,
+            hero_focal_point: b?.hero_focal_point,
+            info: b?.info,
+            company_slug: b?.company_slug,
+            company_name: b?.company_name,
+            company_icon_url: b?.company_icon_url,
+          } as BandScore;
+        });
+      }
+    } else {
+      // Calculate scores dynamically for non-finalized events or admin preview
+      scores = (await getBandScores(eventId)) as BandScore[];
+      bandScore = scores.find((score) => score.id === bandId) || null;
+    }
   }
 
   // For 2022.1 events, check if this band is the winner

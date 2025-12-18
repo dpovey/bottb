@@ -6,6 +6,8 @@ import {
   getBandScores,
   getBandsForEvent,
   getPhotosByLabel,
+  hasFinalizedResults,
+  getFinalizedResults,
   PHOTO_LABELS,
 } from "@/lib/db";
 import { PublicLayout } from "@/components/layouts";
@@ -51,8 +53,9 @@ interface EventInfo {
   [key: string]: unknown;
 }
 
-// Force dynamic rendering - don't pre-render at build time
-export const dynamic = "force-dynamic";
+// Use ISR with 5-minute revalidation for performance
+// Events are activated/finalized manually, so 5 minutes is sufficient
+export const revalidate = 300;
 
 function getRelativeDate(dateString: string): string {
   const now = new Date();
@@ -139,7 +142,22 @@ export default async function EventsPage() {
         };
       }
 
-      // For 2025.1 and 2026.1, calculate scores
+      // For 2025.1 and 2026.1, check if event is finalized and use finalized results
+      const isFinalized = event.status === "finalized";
+      if (isFinalized && (await hasFinalizedResults(event.id))) {
+        // Use finalized results from table (already sorted by final_rank)
+        const finalizedResults = await getFinalizedResults(event.id);
+        const overallWinner =
+          finalizedResults.length > 0
+            ? {
+                name: finalizedResults[0].band_name,
+                totalScore: Number(finalizedResults[0].total_score || 0),
+              }
+            : null;
+        return { ...event, overallWinner, bands, scoringVersion, heroPhoto };
+      }
+
+      // Only calculate scores for non-finalized past events
       const scores = (await getBandScores(event.id)) as BandScore[];
 
       const bandResults = scores

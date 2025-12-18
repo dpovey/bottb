@@ -22,6 +22,10 @@ interface PhotoStripProps {
   className?: string;
   /** Enable slideshow on photo click (default: true) */
   enableSlideshow?: boolean;
+  /** Initial photos fetched server-side (optional) */
+  initialPhotos?: Photo[];
+  /** Initial total count fetched server-side (optional) */
+  initialTotalCount?: number;
 }
 
 interface PhotosResponse {
@@ -46,12 +50,16 @@ export function PhotoStrip({
   viewAllLink,
   className = "",
   enableSlideshow = true,
+  initialPhotos,
+  initialTotalCount,
 }: PhotoStripProps) {
   // All loaded photos for the strip
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set());
+  const [photos, setPhotos] = useState<Photo[]>(initialPhotos || []);
+  const [totalCount, setTotalCount] = useState(initialTotalCount || 0);
+  const [loading, setLoading] = useState(!initialPhotos);
+  const [loadedPages, setLoadedPages] = useState<Set<number>>(
+    initialPhotos ? new Set([1]) : new Set()
+  );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Strip navigation state
@@ -91,15 +99,20 @@ export function PhotoStrip({
     return data.photos;
   }, [eventId, bandId, companySlug, photographer]);
 
-  // Initial fetch
+  // Initial fetch (only if initialPhotos not provided)
   useEffect(() => {
+    if (initialPhotos) {
+      // Already have initial photos from server, skip fetch
+      return;
+    }
+
     async function fetchInitialPhotos() {
       setLoading(true);
       try {
-        const initialPhotos = await fetchPage(1);
+        const fetchedPhotos = await fetchPage(1);
         // Deduplicate by ID (can happen with random ordering)
         const seen = new Set<string>();
-        const uniquePhotos = initialPhotos.filter(p => {
+        const uniquePhotos = fetchedPhotos.filter(p => {
           if (seen.has(p.id)) return false;
           seen.add(p.id);
           return true;
@@ -114,7 +127,7 @@ export function PhotoStrip({
     }
 
     fetchInitialPhotos();
-  }, [fetchPage]);
+  }, [fetchPage, initialPhotos]);
 
   // Load next page
   const loadNextPage = useCallback(async () => {

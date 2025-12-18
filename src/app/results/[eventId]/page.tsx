@@ -1,4 +1,10 @@
-import { getEventById, getBandsForEvent, getBandScores } from "@/lib/db";
+import {
+  getEventById,
+  getBandsForEvent,
+  getBandScores,
+  hasFinalizedResults,
+  getFinalizedResults,
+} from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import { auth } from "@/lib/auth";
@@ -189,70 +195,137 @@ export default async function ResultsPage({
     );
   }
 
-  // For 2025.1 and 2026.1 - calculate and show detailed breakdown
-  const scores = (await getBandScores(eventId)) as BandScore[];
+  // For 2025.1 and 2026.1 - use finalized results if available, otherwise calculate
+  let bandResults: {
+    id: string;
+    name: string;
+    companySlug?: string;
+    companyName?: string;
+    companyIconUrl?: string;
+    songChoice: number;
+    performance: number;
+    crowdVibe: number;
+    crowdVote: number;
+    crowdVoteCount: number;
+    totalCrowdVotes: number;
+    screamOMeter: number;
+    visuals: number;
+    crowdNoiseEnergy?: number | null;
+    heroThumbnailUrl?: string;
+    heroFocalPoint?: { x: number; y: number };
+    logoUrl?: string;
+    totalScore: number;
+    rank: number;
+  }[] = [];
 
-  // Calculate results with version-aware scoring
-  const bandResults = scores
-    .map((score) => {
-      const scoreData: BandScoreData = {
-        avg_song_choice: score.avg_song_choice,
-        avg_performance: score.avg_performance,
-        avg_crowd_vibe: score.avg_crowd_vibe,
-        avg_visuals: score.avg_visuals,
-        crowd_vote_count: score.crowd_vote_count,
-        total_crowd_votes: score.total_crowd_votes,
-        crowd_score: score.crowd_score,
-      };
+  // Check if event is finalized and has finalized results
+  if (event.status === "finalized" && (await hasFinalizedResults(eventId))) {
+    // Use finalized results from table
+    const finalizedResults = await getFinalizedResults(eventId);
 
-      // Calculate crowd vote score (normalized)
+    // Get band info for additional fields
+    const bandMap = new Map(bands.map((b) => [b.id, b]));
+
+    bandResults = finalizedResults.map((result) => {
+      const band = bandMap.get(result.band_id);
+      // Calculate normalized crowd vote score from stored data
       const maxVoteCount = Math.max(
-        ...scores.map((s) => Number(s.crowd_vote_count || 0))
+        ...finalizedResults.map((r) => Number(r.crowd_vote_count || 0))
       );
       const crowdVoteScore =
         maxVoteCount > 0
-          ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+          ? (Number(result.crowd_vote_count || 0) / maxVoteCount) * 10
           : 0;
 
-      // Calculate total using version-aware function
-      const totalScore = calculateTotalScore(
-        scoreData,
-        scoringVersion,
-        scores.map((s) => ({
-          avg_song_choice: s.avg_song_choice,
-          avg_performance: s.avg_performance,
-          avg_crowd_vibe: s.avg_crowd_vibe,
-          avg_visuals: s.avg_visuals,
-          crowd_vote_count: s.crowd_vote_count,
-          total_crowd_votes: s.total_crowd_votes,
-          crowd_score: s.crowd_score,
-        }))
-      );
-
       return {
-        id: score.id,
-        name: score.name,
-        companySlug: score.company_slug,
-        companyName: score.company_name,
-        companyIconUrl: score.company_icon_url,
-        songChoice: Number(score.avg_song_choice || 0),
-        performance: Number(score.avg_performance || 0),
-        crowdVibe: Number(score.avg_crowd_vibe || 0),
+        id: result.band_id,
+        name: result.band_name,
+        companySlug: band?.company_slug,
+        companyName: band?.company_name,
+        companyIconUrl: band?.company_icon_url,
+        songChoice: Number(result.avg_song_choice || 0),
+        performance: Number(result.avg_performance || 0),
+        crowdVibe: Number(result.avg_crowd_vibe || 0),
         crowdVote: crowdVoteScore,
-        crowdVoteCount: score.crowd_vote_count,
-        totalCrowdVotes: score.total_crowd_votes,
-        screamOMeter: score.crowd_score ? Number(score.crowd_score) : 0,
-        visuals: Number(score.avg_visuals || 0),
-        crowdNoiseEnergy: score.crowd_noise_energy,
-        heroThumbnailUrl: score.hero_thumbnail_url,
-        heroFocalPoint: score.hero_focal_point,
-        logoUrl: score.info?.logo_url,
-        totalScore,
-        rank: 0, // Will be set after sorting
+        crowdVoteCount: result.crowd_vote_count,
+        totalCrowdVotes: result.total_crowd_votes,
+        screamOMeter: result.crowd_noise_score
+          ? Number(result.crowd_noise_score)
+          : 0,
+        visuals: Number(result.avg_visuals || 0),
+        crowdNoiseEnergy: result.crowd_noise_energy,
+        heroThumbnailUrl: band?.hero_thumbnail_url,
+        heroFocalPoint: band?.hero_focal_point,
+        logoUrl: band?.info?.logo_url,
+        totalScore: Number(result.total_score || 0),
+        rank: result.final_rank,
       };
-    })
-    .sort((a, b) => b.totalScore - a.totalScore)
-    .map((result, index) => ({ ...result, rank: index + 1 }));
+    });
+  } else {
+    // Calculate scores dynamically for non-finalized events or admin preview
+    const scores = (await getBandScores(eventId)) as BandScore[];
+
+    bandResults = scores
+      .map((score) => {
+        const scoreData: BandScoreData = {
+          avg_song_choice: score.avg_song_choice,
+          avg_performance: score.avg_performance,
+          avg_crowd_vibe: score.avg_crowd_vibe,
+          avg_visuals: score.avg_visuals,
+          crowd_vote_count: score.crowd_vote_count,
+          total_crowd_votes: score.total_crowd_votes,
+          crowd_score: score.crowd_score,
+        };
+
+        // Calculate crowd vote score (normalized)
+        const maxVoteCount = Math.max(
+          ...scores.map((s) => Number(s.crowd_vote_count || 0))
+        );
+        const crowdVoteScore =
+          maxVoteCount > 0
+            ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+            : 0;
+
+        // Calculate total using version-aware function
+        const totalScore = calculateTotalScore(
+          scoreData,
+          scoringVersion,
+          scores.map((s) => ({
+            avg_song_choice: s.avg_song_choice,
+            avg_performance: s.avg_performance,
+            avg_crowd_vibe: s.avg_crowd_vibe,
+            avg_visuals: s.avg_visuals,
+            crowd_vote_count: s.crowd_vote_count,
+            total_crowd_votes: s.total_crowd_votes,
+            crowd_score: s.crowd_score,
+          }))
+        );
+
+        return {
+          id: score.id,
+          name: score.name,
+          companySlug: score.company_slug,
+          companyName: score.company_name,
+          companyIconUrl: score.company_icon_url,
+          songChoice: Number(score.avg_song_choice || 0),
+          performance: Number(score.avg_performance || 0),
+          crowdVibe: Number(score.avg_crowd_vibe || 0),
+          crowdVote: crowdVoteScore,
+          crowdVoteCount: score.crowd_vote_count,
+          totalCrowdVotes: score.total_crowd_votes,
+          screamOMeter: score.crowd_score ? Number(score.crowd_score) : 0,
+          visuals: Number(score.avg_visuals || 0),
+          crowdNoiseEnergy: score.crowd_noise_energy,
+          heroThumbnailUrl: score.hero_thumbnail_url,
+          heroFocalPoint: score.hero_focal_point,
+          logoUrl: score.info?.logo_url,
+          totalScore,
+          rank: 0, // Will be set after sorting
+        };
+      })
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .map((result, index) => ({ ...result, rank: index + 1 }));
+  }
 
   // Handle empty results early
   if (bandResults.length === 0) {

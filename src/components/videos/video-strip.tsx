@@ -15,6 +15,8 @@ interface VideoStripProps {
   className?: string;
   /** Maximum number of videos to show */
   limit?: number;
+  /** Initial videos fetched server-side (optional) */
+  initialVideos?: Video[];
 }
 
 interface VideosResponse {
@@ -28,11 +30,17 @@ export function VideoStrip({
   title = "Videos",
   className = "",
   limit = 20,
+  initialVideos,
 }: VideoStripProps) {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [videos, setVideos] = useState<Video[]>(initialVideos || []);
+  const [loading, setLoading] = useState(!initialVideos);
 
   useEffect(() => {
+    if (initialVideos) {
+      // Already have initial videos from server, skip fetch
+      return;
+    }
+
     async function fetchVideos() {
       setLoading(true);
       try {
@@ -58,7 +66,7 @@ export function VideoStrip({
     }
 
     fetchVideos();
-  }, [eventId, bandId, limit]);
+  }, [eventId, bandId, limit, initialVideos]);
 
   // Don't render anything if there are no videos
   if (!loading && videos.length === 0) {
