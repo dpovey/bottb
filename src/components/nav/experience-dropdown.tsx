@@ -62,10 +62,13 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
   const variant = useFeatureFlagVariantKey(FEATURE_FLAGS.NAV_MEDIA_LABEL);
   const payload = useFeatureFlagPayload(FEATURE_FLAGS.NAV_MEDIA_LABEL) as NavMediaLabelPayload | undefined;
   
-  // Use the label from payload, fallback to default
-  const navLabel = payload?.label ?? DEFAULT_NAV_MEDIA_LABEL;
+  // TODO: Remove hydration workaround when nav-media-label-experiment is cleaned up.
+  // Use the label from payload, but only after hydration to avoid mismatch.
+  // Server and initial client render always use the default, then we update
+  // to the experiment value after mounting.
+  const navLabel = mounted ? (payload?.label ?? DEFAULT_NAV_MEDIA_LABEL) : DEFAULT_NAV_MEDIA_LABEL;
 
-  // Track if component is mounted for portal
+  // Track if component is mounted for portal and feature flag hydration
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -170,11 +173,19 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
           className
         )}
       >
-        {navLabel}
+        {/* TODO: Remove opacity fade when nav-media-label-experiment is cleaned up */}
+        <span
+          className={cn(
+            "transition-opacity duration-50",
+            mounted ? "opacity-100" : "opacity-0"
+          )}
+        >
+          {navLabel}
+        </span>
         <svg
           className={cn(
             "w-4 h-4 transition-transform duration-300",
-            isOpen && "rotate-180"
+            mounted ? "opacity-100" : "opacity-0"
           )}
           fill="none"
           viewBox="0 0 24 24"
