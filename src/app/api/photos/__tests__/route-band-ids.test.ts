@@ -22,7 +22,14 @@ describe("Photos API Route - Multiple Band IDs", () => {
     Object.entries(searchParams).forEach(([key, value]) => {
       url.searchParams.set(key, value);
     });
-    return new NextRequest(url);
+    const request = new NextRequest(url);
+    // Ensure nextUrl is properly set (NextRequest should do this automatically, but ensure for tests)
+    Object.defineProperty(request, "nextUrl", {
+      value: url,
+      writable: true,
+      configurable: true,
+    });
+    return request;
   };
 
   it("should parse bandIds parameter and pass to getPhotos", async () => {

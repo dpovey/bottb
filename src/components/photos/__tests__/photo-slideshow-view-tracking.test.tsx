@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { PhotoSlideshow } from "../photo-slideshow";
 import type { Photo } from "@/lib/db";
@@ -88,6 +88,15 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 
+// Mock scrollIntoView for DOM elements
+beforeEach(() => {
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("PhotoSlideshow - View Tracking", () => {
   const mockPhotos: Photo[] = [
     {
@@ -168,17 +177,17 @@ describe("PhotoSlideshow - View Tracking", () => {
     render(<PhotoSlideshow {...defaultProps} />);
 
     // Fast-forward 1 second
-    vi.advanceTimersByTime(1000);
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
 
-    await waitFor(() => {
-      expect(trackPhotoView).toHaveBeenCalledTimes(1);
-      expect(trackPhotoView).toHaveBeenCalledWith({
-        photo_id: "photo1",
-        event_id: "event1",
-        band_id: "band1",
-        event_name: "Test Event",
-        band_name: "Test Band",
-      });
+    expect(trackPhotoView).toHaveBeenCalledTimes(1);
+    expect(trackPhotoView).toHaveBeenCalledWith({
+      photo_id: "photo1",
+      event_id: "event1",
+      band_id: "band1",
+      event_name: "Test Event",
+      band_name: "Test Band",
     });
   });
 
@@ -188,24 +197,26 @@ describe("PhotoSlideshow - View Tracking", () => {
     const { rerender } = render(<PhotoSlideshow {...defaultProps} />);
 
     // Fast-forward 500ms (less than 1 second)
-    vi.advanceTimersByTime(500);
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
 
     // Change to next photo (simulating navigation)
     rerender(<PhotoSlideshow {...defaultProps} initialIndex={1} />);
 
     // Fast-forward another 1 second
-    vi.advanceTimersByTime(1000);
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
 
-    await waitFor(() => {
-      // Should only track the second photo, not the first
-      expect(trackPhotoView).toHaveBeenCalledTimes(1);
-      expect(trackPhotoView).toHaveBeenCalledWith({
-        photo_id: "photo2",
-        event_id: "event1",
-        band_id: "band2",
-        event_name: "Test Event",
-        band_name: "Test Band 2",
-      });
+    // Should only track the second photo, not the first
+    expect(trackPhotoView).toHaveBeenCalledTimes(1);
+    expect(trackPhotoView).toHaveBeenCalledWith({
+      photo_id: "photo2",
+      event_id: "event1",
+      band_id: "band2",
+      event_name: "Test Event",
+      band_name: "Test Band 2",
     });
   });
 
@@ -215,27 +226,27 @@ describe("PhotoSlideshow - View Tracking", () => {
     const { rerender } = render(<PhotoSlideshow {...defaultProps} />);
 
     // Wait 1 second for first photo
-    vi.advanceTimersByTime(1000);
-
-    await waitFor(() => {
-      expect(trackPhotoView).toHaveBeenCalledTimes(1);
-      expect(trackPhotoView).toHaveBeenCalledWith(
-        expect.objectContaining({ photo_id: "photo1" })
-      );
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
     });
+
+    expect(trackPhotoView).toHaveBeenCalledTimes(1);
+    expect(trackPhotoView).toHaveBeenCalledWith(
+      expect.objectContaining({ photo_id: "photo1" })
+    );
 
     // Navigate to second photo
     rerender(<PhotoSlideshow {...defaultProps} initialIndex={1} />);
 
     // Wait 1 second for second photo
-    vi.advanceTimersByTime(1000);
-
-    await waitFor(() => {
-      expect(trackPhotoView).toHaveBeenCalledTimes(2);
-      expect(trackPhotoView).toHaveBeenCalledWith(
-        expect.objectContaining({ photo_id: "photo2" })
-      );
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
     });
+
+    expect(trackPhotoView).toHaveBeenCalledTimes(2);
+    expect(trackPhotoView).toHaveBeenCalledWith(
+      expect.objectContaining({ photo_id: "photo2" })
+    );
   });
 
   it("should handle null event_id and band_id correctly", async () => {
@@ -276,16 +287,16 @@ describe("PhotoSlideshow - View Tracking", () => {
       />
     );
 
-    vi.advanceTimersByTime(1000);
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
 
-    await waitFor(() => {
-      expect(trackPhotoView).toHaveBeenCalledWith({
-        photo_id: "photo3",
-        event_id: null,
-        band_id: null,
-        event_name: null,
-        band_name: null,
-      });
+    expect(trackPhotoView).toHaveBeenCalledWith({
+      photo_id: "photo3",
+      event_id: null,
+      band_id: null,
+      event_name: null,
+      band_name: null,
     });
   });
 });

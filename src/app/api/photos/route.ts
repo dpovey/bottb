@@ -14,13 +14,15 @@ export async function GET(request: NextRequest) {
     // Support both new (event, band) and legacy (eventId, bandId) param names
     const eventId =
       searchParams.get("event") || searchParams.get("eventId") || undefined;
-    const bandId =
-      searchParams.get("band") || searchParams.get("bandId") || undefined;
     // Support multiple band IDs (comma-separated) for deduplicated band names
     const bandIdsParam = searchParams.get("bandIds");
     const bandIds = bandIdsParam
       ? bandIdsParam.split(",").filter((id) => id.trim().length > 0)
       : undefined;
+    // Only use single bandId if bandIds is not provided
+    const bandId = bandIds
+      ? undefined
+      : searchParams.get("band") || searchParams.get("bandId") || undefined;
     const photographer = searchParams.get("photographer") || undefined;
     // Support both company and companySlug for backwards compatibility
     const companySlug =

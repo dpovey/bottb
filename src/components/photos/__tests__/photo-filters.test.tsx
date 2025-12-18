@@ -99,7 +99,7 @@ describe("PhotoFilters - Band Deduplication", () => {
     events: mockEvents.map((e) => ({ id: e.id, name: e.name, count: 10 })),
     bands: mockBands.map((b) => ({ id: b.id, name: b.name, count: 10 })),
     photographers: [{ name: "Photographer 1", count: 5 }],
-    hasPhotosWithoutBand: false,
+    hasPhotosWithoutBand: true,
     hasPhotosWithoutCompany: false,
   };
 
@@ -319,6 +319,11 @@ describe("PhotoFilters - Band Deduplication", () => {
           {...defaultProps}
           selectedCompanySlug="nonexistent"
           bands={[]}
+          availableFilters={{
+            ...mockAvailableFilters,
+            bands: [],
+            hasPhotosWithoutBand: false,
+          }}
         />
       );
 

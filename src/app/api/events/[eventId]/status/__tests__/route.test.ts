@@ -26,6 +26,11 @@ vi.mock("@/lib/api-protection", () => ({
   ) => handler,
 }));
 
+// Mock revalidatePath
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 import { updateEventStatus } from "@/lib/db";
 
 // Helper function to create NextRequest mock
