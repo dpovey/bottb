@@ -42,8 +42,16 @@ export function formatEventDate(dateString: string, timezone?: string): string {
   const year = yearFormatter.format(date);
   
   // Get hours and minutes in the timezone
-  const hours = parseInt(hourFormatter.format(date), 10);
-  const minutesNum = parseInt(minuteFormatter.format(date), 10);
+  // For UTC, use UTC methods directly for more reliable behavior
+  let hours: number;
+  let minutesNum: number;
+  if (tz === "UTC") {
+    hours = date.getUTCHours();
+    minutesNum = date.getUTCMinutes();
+  } else {
+    hours = parseInt(hourFormatter.format(date), 10);
+    minutesNum = parseInt(minuteFormatter.format(date), 10);
+  }
   const minutes = minutesNum.toString().padStart(2, "0");
   
   const ampm = hours >= 12 ? "PM" : "AM";

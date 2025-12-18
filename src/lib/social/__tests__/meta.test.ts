@@ -122,20 +122,37 @@ describe("Meta Provider", () => {
 
   describe("getMetaPages", () => {
     it("fetches pages with Instagram business accounts", async () => {
-      mockFetch.mockResolvedValueOnce({
+      // Mock the debug endpoint call (first fetch)
+      const mockDebugResponse = {
         ok: true,
-        json: () =>
-          Promise.resolve({
-            data: [
-              {
-                id: "page-123",
-                name: "Test Page",
-                access_token: "page-token",
-                instagram_business_account: { id: "ig-456" },
-              },
-            ],
-          }),
-      });
+        json: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: "page-123",
+              name: "Test Page",
+              access_token: "page-token",
+              instagram_business_account: { id: "ig-456" },
+            },
+          ],
+        }),
+      };
+      // Mock the actual pages endpoint call (second fetch)
+      const mockPagesResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: "page-123",
+              name: "Test Page",
+              access_token: "page-token",
+              instagram_business_account: { id: "ig-456" },
+            },
+          ],
+        }),
+      };
+      mockFetch
+        .mockResolvedValueOnce(mockDebugResponse)
+        .mockResolvedValueOnce(mockPagesResponse);
 
       const pages = await getMetaPages("access-token");
 
@@ -145,10 +162,19 @@ describe("Meta Provider", () => {
     });
 
     it("returns empty array if no pages", async () => {
-      mockFetch.mockResolvedValueOnce({
+      // Mock the debug endpoint call (first fetch)
+      const mockDebugResponse = {
         ok: true,
-        json: () => Promise.resolve({ data: [] }),
-      });
+        json: vi.fn().mockResolvedValue({ data: [] }),
+      };
+      // Mock the actual pages endpoint call (second fetch)
+      const mockPagesResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({ data: [] }),
+      };
+      mockFetch
+        .mockResolvedValueOnce(mockDebugResponse)
+        .mockResolvedValueOnce(mockPagesResponse);
 
       const pages = await getMetaPages("access-token");
 
