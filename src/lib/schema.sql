@@ -250,7 +250,7 @@ CREATE TABLE IF NOT EXISTS social_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Provider info
-  provider VARCHAR(50) NOT NULL CHECK (provider IN ('linkedin', 'meta')),
+  provider VARCHAR(50) NOT NULL CHECK (provider IN ('linkedin', 'facebook', 'instagram', 'threads')),
   provider_account_id VARCHAR(255) NOT NULL,
   provider_account_name VARCHAR(255),
   

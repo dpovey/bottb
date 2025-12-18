@@ -7,6 +7,7 @@ import { Photo, PHOTO_LABELS } from "@/lib/db";
 import { CompanyIcon } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import Cropper, { Area } from "react-easy-crop";
+import { ShareComposerModal } from "./share-composer-modal";
 
 // Label display info
 const LABEL_INFO = {
@@ -127,6 +128,9 @@ export function PhotoSlideshow({
 
   // Link copy state
   const [linkCopied, setLinkCopied] = useState(false);
+
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Hero labels state
   const [showLabelsModal, setShowLabelsModal] = useState(false);
@@ -343,7 +347,7 @@ export function PhotoSlideshow({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showDeleteConfirm || showCropModal || showLabelsModal) return; // Don't navigate while modals are open
+      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return; // Don't navigate while modals are open
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") goToNext();
       if (e.key === "ArrowLeft") goToPrevious();
@@ -358,6 +362,7 @@ export function PhotoSlideshow({
     showDeleteConfirm,
     showCropModal,
     showLabelsModal,
+    showShareModal,
   ]);
 
   // Scroll wheel navigation (scroll up/left = previous, scroll down/right = next)
@@ -366,7 +371,7 @@ export function PhotoSlideshow({
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (showDeleteConfirm || showCropModal || showLabelsModal) return; // Don't navigate while modals are open
+      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return; // Don't navigate while modals are open
 
       // Check if the scroll is happening over the thumbnail strip - if so, let it scroll normally
       const target = e.target as HTMLElement;
@@ -403,6 +408,7 @@ export function PhotoSlideshow({
     showDeleteConfirm,
     showCropModal,
     showLabelsModal,
+    showShareModal,
   ]);
 
   // Auto-scroll thumbnail strip to keep current photo visible
@@ -1023,6 +1029,27 @@ export function PhotoSlideshow({
             {/* Admin Controls - accent colored to indicate admin-only */}
             {isAdmin && (
               <div className="slideshow-controls flex items-center gap-2 pl-4 border-l border-accent/30">
+                {/* Share Button */}
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors"
+                  aria-label="Share to social media (Admin)"
+                  title="Share (Admin)"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                    />
+                  </svg>
+                </button>
                 <button
                   onClick={handleOpenLabelsModal}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors relative"
@@ -1721,6 +1748,17 @@ export function PhotoSlideshow({
             )}
           </div>
         </div>
+      )}
+
+      {/* Share to Social Modal */}
+      {showShareModal && currentPhoto && (
+        <ShareComposerModal
+          photos={[currentPhoto]}
+          onClose={() => setShowShareModal(false)}
+          onSuccess={() => {
+            // Optionally close after successful post
+          }}
+        />
       )}
     </div>
   );

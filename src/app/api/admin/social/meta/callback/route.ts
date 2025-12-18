@@ -61,13 +61,19 @@ export async function GET(request: NextRequest) {
     cookieStore.delete("meta_oauth_state");
 
     // Exchange code for short-lived token
+    console.log("[Meta Callback] Exchanging code for token...");
     const shortLivedToken = await exchangeMetaCode(code);
+    console.log("[Meta Callback] Got short-lived token");
 
     // Exchange for long-lived token (60 days)
+    console.log("[Meta Callback] Exchanging for long-lived token...");
     const longLivedToken = await getLongLivedToken(shortLivedToken.access_token);
+    console.log("[Meta Callback] Got long-lived token");
 
     // Get pages the user manages
+    console.log("[Meta Callback] Fetching pages...");
     const pages = await getMetaPages(longLivedToken.access_token);
+    console.log("[Meta Callback] Found", pages.length, "pages");
 
     if (pages.length === 0) {
       return NextResponse.redirect(

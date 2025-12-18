@@ -23,6 +23,7 @@ import {
   postCarouselToInstagram,
 } from "@/lib/social/meta";
 import type { SocialPlatform, CreateSocialPostInput } from "@/lib/social/types";
+import { getBaseUrl } from "@/lib/social/linkedin";
 
 interface PostRequestBody {
   platforms: SocialPlatform[];
@@ -93,12 +94,20 @@ export async function POST(request: NextRequest) {
     // Update status to processing
     await updateSocialPostStatus(post.id, "processing");
 
-    // Fetch photo URLs
-    const photoUrls: string[] = [];
+    // Fetch photo URLs - we need both original WebP URLs and JPEG URLs for Instagram
+    const photoIds: string[] = [];
+    const photoUrls: string[] = []; // Original blob URLs (WebP) for Facebook/LinkedIn
+    const jpegUrls: string[] = []; // Converted JPEG URLs for Instagram
+
+    const baseUrl = getBaseUrl();
+
     for (const photoId of body.photo_ids) {
       const photo = await getPhotoById(photoId);
       if (photo) {
+        photoIds.push(photoId);
         photoUrls.push(photo.blob_url);
+        // Instagram requires JPEG - use our conversion endpoint
+        jpegUrls.push(`${baseUrl}/api/photos/${photoId}/jpeg?quality=95`);
       }
     }
 
@@ -207,12 +216,13 @@ export async function POST(request: NextRequest) {
 
           let postId: string;
 
-          if (photoUrls.length === 1) {
+          // Use JPEG URLs for Instagram (requires JPEG format)
+          if (jpegUrls.length === 1) {
             // Single photo post
             const result = await postToInstagram(
               account.provider_account_id,
               account.access_token,
-              photoUrls[0],
+              jpegUrls[0],
               caption
             );
             postId = result.id;
@@ -221,7 +231,7 @@ export async function POST(request: NextRequest) {
             const result = await postCarouselToInstagram(
               account.provider_account_id,
               account.access_token,
-              photoUrls,
+              jpegUrls,
               caption
             );
             postId = result.id;

@@ -89,6 +89,7 @@ export function getMetaAuthUrl(state: string): string {
     "pages_show_list",
     "pages_read_engagement",
     "pages_manage_posts",
+    "business_management",
     "instagram_basic",
     "instagram_content_publish",
   ].join(",");
@@ -205,21 +206,31 @@ export async function getMetaUser(
 export async function getMetaPages(
   accessToken: string
 ): Promise<MetaPage[]> {
+  // First, let's check what permissions the token has
+  const debugUrl = `${GRAPH_API_BASE}/me/permissions?access_token=${accessToken}`;
+  const debugResponse = await fetch(debugUrl);
+  const debugData = await debugResponse.json();
+  console.log("[Meta] Token permissions:", JSON.stringify(debugData, null, 2));
+
   const params = new URLSearchParams({
     access_token: accessToken,
     fields: "id,name,access_token,instagram_business_account",
   });
 
-  const response = await fetch(`${GRAPH_API_BASE}/me/accounts?${params.toString()}`);
+  const url = `${GRAPH_API_BASE}/me/accounts?${params.toString()}`;
+  console.log("[Meta] Fetching pages from:", url.replace(accessToken, "***"));
+
+  const response = await fetch(url);
+  const data = await response.json();
 
   if (!response.ok) {
-    const error = await response.json();
+    console.error("[Meta] Failed to get pages:", data);
     throw new Error(
-      `Failed to get pages: ${error.error?.message || response.statusText}`
+      `Failed to get pages: ${data.error?.message || response.statusText}`
     );
   }
 
-  const data: MetaPagesResponse = await response.json();
+  console.log("[Meta] Pages response:", JSON.stringify(data, null, 2));
   return data.data || [];
 }
 
