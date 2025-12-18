@@ -7,6 +7,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { FacebookPixel } from "@/components/facebook-pixel";
 import { AdminToggle } from "@/components/admin-toggle";
 import { AdminToolbar } from "@/components/admin-toolbar";
+import { ScrollRestoration } from "@/components/scroll-restoration";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -61,6 +62,7 @@ export default function RootLayout({
         className={`${jost.variable} font-sans antialiased bg-bg text-text`}
         suppressHydrationWarning={true}
       >
+        <ScrollRestoration />
         <Providers>
           {children}
           <AdminToolbar />

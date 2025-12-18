@@ -66,6 +66,7 @@ export function PhotoStrip({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const stripRef = useRef<HTMLDivElement>(null);
   const photoRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const isInitialMount = useRef(true);
 
   // Slideshow state
   const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null);
@@ -162,13 +163,25 @@ export function PhotoStrip({
 
   // Auto-scroll to keep selected photo visible
   useEffect(() => {
+    // Skip scrollIntoView on initial mount to prevent page scroll
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const photo = photoRefs.current[selectedIndex];
     if (photo && stripRef.current) {
-      photo.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+      // Only scroll if the strip container is in the viewport
+      const rect = stripRef.current.getBoundingClientRect();
+      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      
+      if (isInViewport) {
+        photo.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
     }
   }, [selectedIndex]);
 
