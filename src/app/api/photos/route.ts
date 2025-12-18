@@ -16,6 +16,11 @@ export async function GET(request: NextRequest) {
       searchParams.get("event") || searchParams.get("eventId") || undefined;
     const bandId =
       searchParams.get("band") || searchParams.get("bandId") || undefined;
+    // Support multiple band IDs (comma-separated) for deduplicated band names
+    const bandIdsParam = searchParams.get("bandIds");
+    const bandIds = bandIdsParam
+      ? bandIdsParam.split(",").filter((id) => id.trim().length > 0)
+      : undefined;
     const photographer = searchParams.get("photographer") || undefined;
     // Support both company and companySlug for backwards compatibility
     const companySlug =
@@ -37,18 +42,20 @@ export async function GET(request: NextRequest) {
         getPhotos({
           eventId,
           bandId,
+          bandIds,
           photographer,
           companySlug,
           limit,
           offset,
           orderBy,
         }),
-        getPhotoCount({ eventId, bandId, photographer, companySlug }),
+        getPhotoCount({ eventId, bandId, bandIds, photographer, companySlug }),
         getDistinctPhotographers(),
         getDistinctCompanies(),
         getAvailablePhotoFilters({
           eventId,
           bandId,
+          bandIds,
           photographer,
           companySlug,
         }),

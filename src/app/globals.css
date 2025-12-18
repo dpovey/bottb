@@ -161,6 +161,36 @@
   }
 }
 
+/* ===========================================
+ * SELECT DROPDOWN OPTIONS
+ * Style select and option elements using Tailwind utilities
+ * Chrome applies default white background, so we need to override
+ * =========================================== */
+@layer components {
+  .filter-select {
+    @apply bg-bg text-white;
+  }
+
+  .filter-select option {
+    @apply bg-bg text-white;
+    padding: 0.5rem;
+  }
+
+  .filter-select option:hover,
+  .filter-select option:focus {
+    @apply bg-bg-elevated text-white;
+  }
+
+  .filter-select option:checked,
+  .filter-select option[selected] {
+    @apply bg-bg-elevated text-white;
+  }
+
+  .filter-select option:disabled {
+    @apply opacity-50 text-text-dim bg-bg;
+  }
+}
+
 /* Landscape mobile optimizations - when vertical space is limited */
 @media (max-height: 500px) {
   /* Hide thumbnail strip */

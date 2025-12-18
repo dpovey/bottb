@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Event, Band } from "@/lib/db";
 import {
   FilterBar,
@@ -57,9 +58,36 @@ export function PhotoFilters({
   loading,
 }: PhotoFiltersProps) {
   // Filter bands by selected event
-  const filteredBands = selectedEventId
+  let filteredBands = selectedEventId
     ? bands.filter((b) => b.event_id === selectedEventId)
     : bands;
+
+  // When company is selected and no event, deduplicate bands by name
+  // (same name at different events should appear once)
+  let displayBands: Array<{ id: string; name: string; ids: string[] }> = [];
+  if (selectedCompanySlug && !selectedEventId) {
+    // Group bands by name for the selected company
+    const bandsByName = new Map<string, string[]>();
+    filteredBands
+      .filter((b) => b.company_slug === selectedCompanySlug)
+      .forEach((band) => {
+        if (!bandsByName.has(band.name)) {
+          bandsByName.set(band.name, []);
+        }
+        bandsByName.get(band.name)!.push(band.id);
+      });
+
+    // Create display bands - if multiple IDs for same name, use first ID as primary (for select value)
+    // but store all IDs so we can query for photos from all matching bands
+    displayBands = Array.from(bandsByName.entries()).map(([name, ids]) => {
+      // Always use first ID as primary for select value consistency
+      const primaryId = ids[0];
+      return { id: primaryId, name, ids };
+    });
+  } else {
+    // Normal case: show all bands (or filtered by event)
+    displayBands = filteredBands.map((b) => ({ id: b.id, name: b.name, ids: [b.id] }));
+  }
 
   // Create sets of available IDs for quick lookup
   const availableCompanySlugs = new Set(
@@ -94,6 +122,8 @@ export function PhotoFilters({
   const selectedBandName =
     selectedBandId === "none"
       ? "No Band"
+      : selectedBandId && selectedBandId.startsWith("bandIds:")
+      ? displayBands.find((db) => db.id === selectedBandId.split(":")[1]?.split(",")[0])?.name || "Band"
       : filteredBands.find((b) => b.id === selectedBandId)?.name;
   const selectedCompanyName =
     selectedCompanySlug === "none"
@@ -111,6 +141,21 @@ export function PhotoFilters({
     onPhotographerChange(null);
     onCompanyChange(null);
   };
+
+  // Ref to the photographer select element
+  const photographerSelectRef = useRef<HTMLSelectElement>(null);
+
+  // Explicitly set "All Photographers" as selected when photographers load and no photographer is selected
+  useEffect(() => {
+    if (
+      photographerSelectRef.current &&
+      !selectedPhotographer &&
+      photographers.length > 0
+    ) {
+      // Ensure the first option (All Photographers) is selected
+      photographerSelectRef.current.selectedIndex = 0;
+    }
+  }, [photographers.length, selectedPhotographer]);
 
   return (
     <FilterBar>
@@ -166,20 +211,41 @@ export function PhotoFilters({
       {/* Band filter */}
       <FilterSelect
         label="Band"
-        value={selectedBandId || ""}
-        onChange={(e) => onBandChange(e.target.value || null)}
+        value={
+          selectedBandId && selectedBandId.startsWith("bandIds:")
+            ? selectedBandId.split(":")[1]?.split(",")[0] || ""
+            : selectedBandId || ""
+        }
+        onChange={(e) => {
+          const value = e.target.value || null;
+          if (value === null || value === "none") {
+            onBandChange(value);
+          } else {
+            // Find the display band entry to get all matching IDs
+            const displayBand = displayBands.find((db) => db.id === value);
+            if (displayBand && displayBand.ids.length > 1) {
+              // Multiple IDs - need to pass all of them
+              // Use a special format: "bandIds:id1,id2,id3"
+              onBandChange(`bandIds:${displayBand.ids.join(",")}`);
+            } else {
+              // Single ID - normal behavior
+              onBandChange(value);
+            }
+          }
+        }}
         disabled={loading || !hasAvailableBands}
       >
         <option value="">All Bands</option>
         {availableFilters?.hasPhotosWithoutBand && (
           <option value="none">No Band</option>
         )}
-        {filteredBands.map((band) => {
+        {displayBands.map((displayBand) => {
           const isAvailable =
-            !availableFilters || availableBandIds.has(band.id);
+            !availableFilters ||
+            displayBand.ids.some((id) => availableBandIds.has(id));
           return (
-            <option key={band.id} value={band.id} disabled={!isAvailable}>
-              {band.name}
+            <option key={displayBand.id} value={displayBand.id} disabled={!isAvailable}>
+              {displayBand.name}
               {!isAvailable ? " (0)" : ""}
             </option>
           );
@@ -188,12 +254,16 @@ export function PhotoFilters({
 
       {/* Photographer filter - last */}
       <FilterSelect
+        ref={photographerSelectRef}
+        key={`photographer-${photographers.length}-${selectedPhotographer || 'all'}`}
         label="Photographer"
-        value={selectedPhotographer || ""}
-        onChange={(e) => onPhotographerChange(e.target.value || null)}
+        value={selectedPhotographer ?? ""}
+        onChange={(e) => {
+          onPhotographerChange(e.target.value || null);
+        }}
         disabled={loading || !hasAvailablePhotographers}
       >
-        <option value="">All Photographers</option>
+        <option value="" key="all-photographers-default">All Photographers</option>
         {photographers.map((photographer) => {
           const isAvailable =
             !availableFilters ||

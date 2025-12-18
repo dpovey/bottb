@@ -386,6 +386,22 @@ export async function updateEventStatus(
   return rows[0] || null;
 }
 
+/**
+ * Calculate band scores dynamically from votes
+ * 
+ * ⚠️ IMPORTANT: Do NOT use this for finalized events!
+ * 
+ * For finalized events, use `getFinalizedResults()` instead. This function:
+ * - Runs expensive SQL queries with CTEs and aggregations
+ * - Calculates scores from live vote data (which may change)
+ * - Should only be used for non-finalized events or admin preview
+ * 
+ * @param eventId - The event ID
+ * @returns Array of band scores with calculated averages
+ * 
+ * @see getFinalizedResults - Use this for finalized events
+ * @see hasFinalizedResults - Check if finalized results exist
+ */
 export async function getBandScores(eventId: string) {
   const { rows } = await sql`
     WITH total_votes AS (
@@ -487,6 +503,7 @@ export type PhotoOrderBy = "random" | "date" | "uploaded";
 export interface GetPhotosOptions {
   eventId?: string;
   bandId?: string;
+  bandIds?: string[]; // Support multiple band IDs for deduplicated band names
   photographer?: string;
   companySlug?: string;
   limit?: number;
@@ -521,11 +538,14 @@ function sortByDate(photos: Photo[]): Photo[] {
 async function getPhotosRandom(options: {
   eventId?: string;
   bandId?: string;
+  bandIds?: string[];
   photographer?: string;
   companySlug?: string;
   limit: number;
 }): Promise<Photo[]> {
-  const { eventId, bandId, photographer, companySlug, limit } = options;
+  const { eventId, bandId, bandIds, photographer, companySlug, limit } = options;
+  // Use bandIds if provided, otherwise fall back to bandId
+  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
 
   try {
     // Use conditional SQL to combine all filters with AND
@@ -541,9 +561,10 @@ async function getPhotosRandom(options: {
       WHERE 
         (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
         AND (
-          ${bandId || null}::text IS NULL 
-          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
-          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+          ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -567,12 +588,16 @@ export async function getPhotos(
   const {
     eventId,
     bandId,
+    bandIds,
     photographer,
     companySlug,
     limit = 50,
     offset = 0,
     orderBy = "uploaded",
   } = options;
+  
+  // Use bandIds if provided, otherwise fall back to bandId
+  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
 
   // For random ordering, use SQL RANDOM() to get truly random photos across all data
   // Note: pagination with random doesn't guarantee unique results across pages,
@@ -580,7 +605,8 @@ export async function getPhotos(
   if (orderBy === "random") {
     return getPhotosRandom({
       eventId,
-      bandId,
+      bandId: effectiveBandIds?.[0], // Keep for backward compatibility
+      bandIds: effectiveBandIds,
       photographer,
       companySlug,
       limit,
@@ -599,6 +625,7 @@ export async function getPhotos(
     // Use conditional SQL to combine all filters with AND
     // Each condition is: (param IS NULL OR column = param) which passes when filter not set
     // Special handling for "none" values which mean "filter for NULL"
+    // Support multiple band IDs for deduplicated band names
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
@@ -609,9 +636,10 @@ export async function getPhotos(
       WHERE 
         (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
         AND (
-          ${bandId || null}::text IS NULL 
-          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
-          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+          ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -650,7 +678,9 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
 export async function getPhotoCount(
   options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
 ): Promise<number> {
-  const { eventId, bandId, photographer, companySlug } = options;
+  const { eventId, bandId, bandIds, photographer, companySlug } = options;
+  // Use bandIds if provided, otherwise fall back to bandId
+  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
 
   try {
     // Use conditional SQL to combine all filters with AND
@@ -661,9 +691,10 @@ export async function getPhotoCount(
       WHERE 
         (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
         AND (
-          ${bandId || null}::text IS NULL 
-          OR (${bandId || null} = 'none' AND p.band_id IS NULL)
-          OR (${bandId || null} != 'none' AND p.band_id = ${bandId || null})
+          ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -707,12 +738,21 @@ export interface AvailablePhotoFilters {
 }
 
 export async function getAvailablePhotoFilters(
-  _options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
+  options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
 ): Promise<AvailablePhotoFilters> {
+  const {
+    eventId,
+    bandId,
+    bandIds,
+    photographer,
+    companySlug,
+  } = options;
+  // Use bandIds if provided, otherwise fall back to bandId
+  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+
   try {
     // Run all queries in parallel for better performance
-    // Note: We return all available options and let the UI handle filtering
-    // This is simpler and avoids complex dynamic SQL that @vercel/postgres doesn't support well
+    // Filter results based on current active filters to show only available options
 
     const [
       companiesResult,
@@ -722,53 +762,122 @@ export async function getAvailablePhotoFilters(
       noBandResult,
       noCompanyResult,
     ] = await Promise.all([
-      // Get all companies that have photos
+      // Get companies that have photos matching current filters (excluding company filter itself)
       sql<{ slug: string; name: string; count: string }>`
         SELECT c.slug, c.name, COUNT(DISTINCT p.id)::text as count
         FROM photos p
         INNER JOIN bands b ON p.band_id = b.id
         INNER JOIN companies c ON b.company_slug = c.slug
+        WHERE 
+          (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+          AND (
+            ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          )
+          AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         GROUP BY c.slug, c.name
         ORDER BY c.name
       `,
 
-      // Get all events that have photos
+      // Get events that have photos matching current filters (excluding event filter itself)
       sql<{ id: string; name: string; count: string }>`
         SELECT e.id, e.name, COUNT(p.id)::text as count
         FROM photos p
         INNER JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE 
+          (
+            ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          )
+          AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (
+            ${companySlug || null}::text IS NULL 
+            OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+            OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+          )
         GROUP BY e.id, e.name
         ORDER BY e.name
       `,
 
-      // Get all bands that have photos
+      // Get bands that have photos matching current filters (excluding band filter itself)
       sql<{ id: string; name: string; count: string }>`
         SELECT b.id, b.name, COUNT(p.id)::text as count
         FROM photos p
         INNER JOIN bands b ON p.band_id = b.id
+        WHERE 
+          (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+          AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (
+            ${companySlug || null}::text IS NULL 
+            OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+            OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+          )
         GROUP BY b.id, b.name
         ORDER BY b.name
       `,
 
-      // Get all photographers that have photos
+      // Get photographers that have photos matching current filters (excluding photographer filter itself)
       sql<{ name: string; count: string }>`
-        SELECT photographer as name, COUNT(*)::text as count
-        FROM photos
-        WHERE photographer IS NOT NULL
-        GROUP BY photographer
-        ORDER BY photographer
-      `,
-
-      // Check if there are photos without a band
-      sql<{ count: string }>`
-        SELECT COUNT(*)::text as count FROM photos WHERE band_id IS NULL
-      `,
-
-      // Check if there are photos without a company (via band)
-      sql<{ count: string }>`
-        SELECT COUNT(*)::text as count FROM photos p
+        SELECT p.photographer as name, COUNT(*)::text as count
+        FROM photos p
         LEFT JOIN bands b ON p.band_id = b.id
-        WHERE b.company_slug IS NULL OR p.band_id IS NULL
+        WHERE 
+          p.photographer IS NOT NULL
+          AND (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+          AND (
+            ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          )
+          AND (
+            ${companySlug || null}::text IS NULL 
+            OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+            OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+          )
+        GROUP BY p.photographer
+        ORDER BY p.photographer
+      `,
+
+      // Check if there are photos without a band matching current filters
+      sql<{ count: string }>`
+        SELECT COUNT(*)::text as count 
+        FROM photos p
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE 
+          p.band_id IS NULL
+          AND (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+          AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (
+            ${companySlug || null}::text IS NULL 
+            OR (${companySlug || null} = 'none')
+          )
+      `,
+
+      // Check if there are photos without a company (via band) matching current filters
+      sql<{ count: string }>`
+        SELECT COUNT(*)::text as count 
+        FROM photos p
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE 
+          (b.company_slug IS NULL OR p.band_id IS NULL)
+          AND (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+          AND (
+            ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+            OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          )
+          AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (
+            ${companySlug || null}::text IS NULL 
+            OR (${companySlug || null} = 'none')
+          )
       `,
     ]);
 
@@ -934,7 +1043,33 @@ export async function hasFinalizedResults(eventId: string): Promise<boolean> {
 }
 
 /**
- * Get finalized results for an event
+ * Get finalized results for an event from the finalized_results table
+ * 
+ * ⚠️ IMPORTANT: Always use this for finalized events instead of getBandScores()
+ * 
+ * Finalized results are:
+ * - Pre-calculated and stored when an event is finalized
+ * - Frozen at finalization time (won't change if votes are modified)
+ * - Much faster to query (simple SELECT vs complex aggregations)
+ * - The source of truth for finalized events
+ * 
+ * Pattern:
+ * ```typescript
+ * if (event.status === 'finalized' && await hasFinalizedResults(eventId)) {
+ *   const results = await getFinalizedResults(eventId);
+ *   // Use finalized results
+ * } else {
+ *   const scores = await getBandScores(eventId);
+ *   // Calculate dynamically
+ * }
+ * ```
+ * 
+ * @param eventId - The event ID
+ * @returns Array of finalized results, sorted by final_rank (winner first)
+ * 
+ * @see getBandScores - Use this only for non-finalized events
+ * @see hasFinalizedResults - Check if finalized results exist
+ * @see finalizeEventResults - Function that creates finalized results
  */
 export async function getFinalizedResults(
   eventId: string

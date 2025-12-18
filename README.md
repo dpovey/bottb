@@ -30,6 +30,40 @@ This project uses a strict separation between server-side and client-side code t
 - Client components and browser code: Import from `user-context-client.ts`
 - Shared types: Import from `user-context.ts`
 
+### Finalized Results Architecture
+
+**Critical Rule**: Once an event is finalized, **always use finalized results** from the `finalized_results` table instead of calculating scores dynamically.
+
+**Why this matters**:
+- **Performance**: Finalized results are pre-calculated and stored, avoiding expensive SQL queries with CTEs and aggregations
+- **Data Integrity**: Results are frozen at finalization time, preventing inconsistencies if votes are modified later
+- **Consistency**: All pages show the same results for finalized events
+
+**Implementation Pattern**:
+
+```typescript
+// ✅ CORRECT: Check for finalized results first
+if (event.status === 'finalized' && await hasFinalizedResults(event.id)) {
+  const results = await getFinalizedResults(event.id);
+  // Use finalized results
+} else {
+  // Only calculate for non-finalized events
+  const scores = await getBandScores(event.id);
+  // Calculate scores dynamically
+}
+```
+
+**When to use each function**:
+- **`getFinalizedResults(eventId)`**: Use for finalized events (`status === 'finalized'`)
+- **`getBandScores(eventId)`**: Use only for non-finalized events (upcoming, voting, or admin preview)
+
+**Files that must follow this pattern**:
+- `src/app/page.tsx` - Home page past events
+- `src/app/events/page.tsx` - Events listing page
+- `src/app/results/[eventId]/page.tsx` - Results page
+- `src/app/band/[bandId]/page.tsx` - Individual band page
+- `src/app/api/events/[eventId]/scores/route.ts` - Scores API endpoint
+
 ## Scoring System
 
 ### Judge Criteria (80 points total)
