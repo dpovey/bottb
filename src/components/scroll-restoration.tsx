@@ -96,7 +96,6 @@ export function ScrollRestoration() {
 
     // Monitor scroll position - only reset if it's programmatic (not user-initiated)
     let lastScrollY = 0;
-    let scrollCheckTimeout: NodeJS.Timeout | null = null;
 
     const checkScroll = () => {
       if (!isInitialLoad.current || hasHash || userIsScrolling.current) {
@@ -109,11 +108,6 @@ export function ScrollRestoration() {
       // If scroll position changed significantly (>50px) without user interaction,
       // it's likely a programmatic scroll - reset it
       if (scrollDelta > 50 && currentScrollY > 50) {
-        // Clear any pending check
-        if (scrollCheckTimeout) {
-          clearTimeout(scrollCheckTimeout);
-        }
-
         // Reset scroll position immediately
         originalScrollTo.current!(0, 0);
         lastScrollY = 0;
@@ -145,16 +139,10 @@ export function ScrollRestoration() {
       }
 
       cancelAnimationFrame(rafId);
-      if (scrollCheckTimeout) {
-        clearTimeout(scrollCheckTimeout);
-      }
     }, 2000);
 
     return () => {
       clearTimeout(stopBlocking);
-      if (scrollCheckTimeout) {
-        clearTimeout(scrollCheckTimeout);
-      }
       cancelAnimationFrame(rafId);
       userInputEvents.forEach((event) => {
         window.removeEventListener(event, markUserScrolling);
