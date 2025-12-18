@@ -58,7 +58,7 @@ export function PhotoFilters({
   loading,
 }: PhotoFiltersProps) {
   // Filter bands by selected event
-  let filteredBands = selectedEventId
+  const filteredBands = selectedEventId
     ? bands.filter((b) => b.event_id === selectedEventId)
     : bands;
 

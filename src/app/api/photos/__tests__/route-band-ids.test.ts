@@ -95,7 +95,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
     });
 
     const response = await GET(request);
-    const data = await response.json();
+    await response.json(); // Verify response is valid JSON
 
     expect(response.status).toBe(200);
     expect(db.getPhotos).toHaveBeenCalledWith(

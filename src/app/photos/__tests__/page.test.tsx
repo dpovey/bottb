@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import { useSearchParams } from "next/navigation";
 import PhotosPage from "../page";
@@ -93,7 +92,7 @@ describe("PhotosPage - Filter Defaults", () => {
   });
 
   it("should maintain 'All Photographers' selection when photographers list loads after initial render", async () => {
-    let resolvePhotos: (value: any) => void;
+    let resolvePhotos: (value: unknown) => void;
     const photosPromise = new Promise((resolve) => {
       resolvePhotos = resolve;
     });

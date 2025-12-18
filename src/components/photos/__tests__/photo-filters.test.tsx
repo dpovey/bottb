@@ -125,7 +125,7 @@ describe("PhotoFilters - Band Deduplication", () => {
 
   describe("Band deduplication when company is selected", () => {
     it("should deduplicate bands with same name when company is selected and no event", async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       const onBandChange = vi.fn();
 
       render(
@@ -145,7 +145,7 @@ describe("PhotoFilters - Band Deduplication", () => {
     });
 
     it("should show different band names separately for same company", async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
       const onBandChange = vi.fn();
 
       render(
