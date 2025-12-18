@@ -220,7 +220,7 @@ export default async function EventsPage() {
     pastEventsWithWinners.length;
 
   return (
-    <PublicLayout footerVariant="simple" breadcrumbs={[{ label: "Events" }]}>
+    <PublicLayout footerVariant="simple" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Events" }]}>
       {/* Page Header */}
       <PageHeader
         title="Events"

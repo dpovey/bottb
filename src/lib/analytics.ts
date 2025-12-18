@@ -191,3 +191,15 @@ export function trackSubscribeClick(properties: {
   trackEvent("youtube:subscribe_clicked", properties);
 }
 
+/**
+ * Track navigation clicks for analytics and A/B testing
+ */
+export function trackNavClick(properties: {
+  nav_item: string; // The specific item clicked (e.g., "photos", "bands")
+  nav_section?: string; // The section/dropdown it belongs to (e.g., "lineup", "gallery")
+  variant?: string; // For A/B test tracking (e.g., "gallery", "highlights", "relive")
+  location: "header" | "footer" | "mobile_menu";
+}): void {
+  trackEvent("nav:click", properties);
+}
+

@@ -8,10 +8,17 @@ const sitemapLinks = {
   main: [
     { label: "Home", href: "/" },
     { label: "Events", href: "/events" },
-    { label: "Photos", href: "/photos" },
-    { label: "About", href: "/about" },
+    { label: "Bands", href: "/events" },
+    { label: "Companies", href: "/companies" },
+    { label: "Songs", href: "/songs" },
   ],
-  legal: [
+  media: [
+    { label: "Photos", href: "/photos" },
+    { label: "Videos", href: "/videos" },
+    { label: "Photographers", href: "/photographers" },
+  ],
+  info: [
+    { label: "About", href: "/about" },
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms of Use", href: "/terms" },
   ],
@@ -111,14 +118,14 @@ export function Footer({ variant = "simple", className }: FooterProps) {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Lineup Links */}
           <div>
             <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
-              Quick Links
+              Lineup
             </h3>
             <ul className="space-y-2">
               {sitemapLinks.main.map((link) => (
-                <li key={link.href}>
+                <li key={link.href + link.label}>
                   <Link
                     href={link.href}
                     className="text-text-dim hover:text-white transition-colors text-sm"
@@ -130,12 +137,26 @@ export function Footer({ variant = "simple", className }: FooterProps) {
             </ul>
           </div>
 
-          {/* Social & Legal */}
+          {/* Media Links */}
           <div>
             <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
-              Connect
+              Media
             </h3>
-            <div className="flex items-center gap-4 mb-6">
+            <ul className="space-y-2">
+              {sitemapLinks.media.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-text-dim hover:text-white transition-colors text-sm"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* Social icons */}
+            <div className="flex items-center gap-4 mt-6">
               {socialLinks.map((social) => (
                 <SocialIconLink
                   key={social.label}
@@ -149,8 +170,15 @@ export function Footer({ variant = "simple", className }: FooterProps) {
                 </SocialIconLink>
               ))}
             </div>
+          </div>
+
+          {/* Info & Legal */}
+          <div>
+            <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
+              Info
+            </h3>
             <ul className="space-y-2">
-              {sitemapLinks.legal.map((link) => (
+              {sitemapLinks.info.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

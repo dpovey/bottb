@@ -133,7 +133,15 @@ export default async function PhotographerPage({ params }: Props) {
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
 
   return (
-    <PublicLayout headerVariant="transparent" footerVariant="full">
+    <PublicLayout
+      headerVariant="transparent"
+      footerVariant="full"
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Photographers", href: "/photographers" },
+        { label: photographer.name },
+      ]}
+    >
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-end">
         {/* Background Image */}

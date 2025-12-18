@@ -34,7 +34,11 @@ export default async function AboutPage() {
   }));
 
   return (
-    <PublicLayout headerVariant="transparent" footerVariant="full">
+    <PublicLayout
+      headerVariant="transparent"
+      footerVariant="full"
+      breadcrumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
+    >
       {/* Hero Section with rotating event images */}
       <HeroCarousel images={heroImages} interval={6000}>
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16">

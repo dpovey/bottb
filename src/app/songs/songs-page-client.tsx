@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { SetlistSong, SongType } from "@/lib/db";
-import { CompanyBadge } from "@/components/ui";
+import { CompanyBadge, FilterSelect, FilterSearch } from "@/components/ui";
 import { PublicLayout } from "@/components/layouts/public-layout";
 
 interface SongsPageClientProps {
@@ -158,39 +158,26 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
         </div>
 
         {/* Filters Row */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-end">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search songs, artists, bands..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-bg-elevated border border-white/10 rounded-lg pl-10 pr-4 py-2 text-white placeholder:text-text-dim focus:outline-none focus:border-accent/50"
-            />
-          </div>
+          <FilterSearch
+            placeholder="Search songs, artists, bands..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={search ? () => setSearch("") : undefined}
+            label="Search"
+            containerClassName="flex-1 min-w-[200px] max-w-md"
+          />
 
           {/* Event Filter */}
-          <select
+          <FilterSelect
             value={eventFilter}
             onChange={(e) => {
               setEventFilter(e.target.value);
               setPage(1);
             }}
-            className="bg-bg-elevated border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-accent/50 min-w-[180px]"
+            label="Event"
+            containerClassName="min-w-[180px] flex-none"
           >
             <option value="">All Events</option>
             {events.map((event) => (
@@ -198,16 +185,17 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                 {event.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
           {/* Company Filter */}
-          <select
+          <FilterSelect
             value={companyFilter}
             onChange={(e) => {
               setCompanyFilter(e.target.value);
               setPage(1);
             }}
-            className="bg-bg-elevated border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-accent/50 min-w-[150px]"
+            label="Company"
+            containerClassName="min-w-[150px] flex-none"
           >
             <option value="">All Companies</option>
             {companies.map((company) => (
@@ -215,29 +203,30 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                 {company.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
           {/* Type Filter */}
-          <select
+          <FilterSelect
             value={typeFilter}
             onChange={(e) => {
               setTypeFilter(e.target.value as SongType | "");
               setPage(1);
             }}
-            className="bg-bg-elevated border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-accent/50 min-w-[130px]"
+            label="Type"
+            containerClassName="min-w-[130px] flex-none"
           >
             <option value="">All Types</option>
             <option value="cover">Cover</option>
             <option value="mashup">Mashup</option>
             <option value="medley">Medley</option>
             <option value="transition">Transition</option>
-          </select>
+          </FilterSelect>
 
           {/* Clear Filters */}
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-sm transition-colors"
+              className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-3 rounded-lg text-xs tracking-widest uppercase transition-colors"
             >
               Clear
             </button>
@@ -371,6 +360,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                                 name={song.company_name}
                                 iconUrl={song.company_icon_url}
                                 size="sm"
+                                asLink={false}
                               />
                             )}
                             <span>{song.band_name}</span>

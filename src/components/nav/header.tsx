@@ -6,6 +6,9 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
 import { EventsDropdown } from "./events-dropdown";
+import { LineupDropdown } from "./lineup-dropdown";
+import { ExperienceDropdown } from "./experience-dropdown";
+import { trackNavClick } from "@/lib/analytics";
 
 export interface HeaderProps {
   /** Show main navigation links */
@@ -18,11 +21,28 @@ export interface HeaderProps {
   fixed?: boolean;
 }
 
-const navLinks = [
-  { href: "/photos", label: "Photos" },
-  { href: "/photographers", label: "Photographers" },
-  { href: "/companies", label: "Companies" },
-  { href: "/about", label: "About" },
+// Mobile menu links - grouped by section
+const mobileMenuSections = [
+  {
+    title: "Events",
+    links: [{ href: "/events", label: "All Events" }],
+  },
+  {
+    title: "Lineup",
+    links: [
+      { href: "/events", label: "Bands" },
+      { href: "/companies", label: "Companies" },
+      { href: "/songs", label: "Songs" },
+    ],
+  },
+  {
+    title: "Media",
+    links: [
+      { href: "/photos", label: "Photos" },
+      { href: "/videos", label: "Videos" },
+      { href: "/photographers", label: "Photographers" },
+    ],
+  },
 ];
 
 export function Header({
@@ -99,16 +119,20 @@ export function Header({
                 {/* Events Dropdown */}
                 <EventsDropdown />
 
-                {/* Other nav links */}
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+                {/* Lineup Dropdown */}
+                <LineupDropdown />
+
+                {/* Experience/Gallery Dropdown (A/B tested label) */}
+                <ExperienceDropdown />
+
+                {/* About link */}
+                <Link
+                  href="/about"
+                  onClick={() => trackNavClick({ nav_item: "about", location: "header" })}
+                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                >
+                  About
+                </Link>
               </nav>
             )}
 
@@ -161,26 +185,51 @@ export function Header({
         {/* Mobile Navigation */}
         {mobileMenuOpen && showNav && (
           <div className="md:hidden bg-bg-elevated border-t border-white/5">
-            <nav className="px-6 py-4 space-y-2">
-              {/* Events link for mobile */}
-              <Link
-                href="/events"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
-              >
-                Events
-              </Link>
+            <nav className="px-6 py-4 space-y-4">
+              {/* Grouped sections */}
+              {mobileMenuSections.map((section, sectionIndex) => (
+                <div key={section.title}>
+                  {sectionIndex > 0 && (
+                    <div className="border-t border-white/5 pt-4" />
+                  )}
+                  <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mb-2">
+                    {section.title}
+                  </div>
+                  <div className="space-y-1">
+                    {section.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => {
+                          trackNavClick({
+                            nav_item: link.label.toLowerCase(),
+                            nav_section: section.title.toLowerCase(),
+                            location: "mobile_menu",
+                          });
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
 
-              {navLinks.map((link) => (
+              {/* About link */}
+              <div className="border-t border-white/5 pt-4">
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  href="/about"
+                  onClick={() => {
+                    trackNavClick({ nav_item: "about", location: "mobile_menu" });
+                    setMobileMenuOpen(false);
+                  }}
                   className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
-                  {link.label}
+                  About
                 </Link>
-              ))}
+              </div>
 
               {/* Mobile Breadcrumbs */}
               {breadcrumbs && breadcrumbs.length > 0 && (
