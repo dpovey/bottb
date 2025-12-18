@@ -140,15 +140,15 @@ describe("Meta Provider", () => {
       const mockPagesResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
-            data: [
-              {
-                id: "page-123",
-                name: "Test Page",
-                access_token: "page-token",
-                instagram_business_account: { id: "ig-456" },
-              },
-            ],
-          }),
+          data: [
+            {
+              id: "page-123",
+              name: "Test Page",
+              access_token: "page-token",
+              instagram_business_account: { id: "ig-456" },
+            },
+          ],
+        }),
       };
       mockFetch
         .mockResolvedValueOnce(mockDebugResponse)
