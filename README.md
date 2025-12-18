@@ -104,6 +104,9 @@ if (event.status === 'finalized' && await hasFinalizedResults(event.id)) {
      - `POSTGRES_DATABASE`: Database name
    - Set up authentication:
      - `AUTH_SECRET`: Generate a random secret key (e.g., `openssl rand -base64 32`)
+   - Optional SEO and analytics:
+     - `GOOGLE_SITE_VERIFICATION`: Google Search Console verification code (get from https://search.google.com/search-console)
+     - `NEXT_PUBLIC_BASE_URL`: Base URL for the site (auto-detected on Vercel, but can be set explicitly)
 
 4. **Deploy to Vercel**:
    ```bash

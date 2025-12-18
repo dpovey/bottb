@@ -356,7 +356,8 @@ export default async function BandPage({
 
   const eventId = band.event_id;
   const eventStatus = band.status;
-  const scoringVersion = parseScoringVersion(band.event_info as EventInfo | null);
+  const eventInfo = band.event_info as EventInfo | null;
+  const scoringVersion = parseScoringVersion(eventInfo);
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
 
   // Fetch band hero photos

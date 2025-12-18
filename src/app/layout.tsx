@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   themeColor: "#0a0a0a",
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
