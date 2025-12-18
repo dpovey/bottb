@@ -18,6 +18,11 @@ vi.mock("@/lib/db", () => ({
   getDistinctPhotographers: vi.fn(),
   getDistinctCompanies: vi.fn(),
   getAvailablePhotoFilters: vi.fn(),
+  PHOTO_LABELS: {
+    BAND_HERO: "band_hero",
+    EVENT_HERO: "event_hero",
+    GLOBAL_HERO: "global_hero",
+  },
 }));
 
 describe("PhotosPage - Filter Defaults", () => {

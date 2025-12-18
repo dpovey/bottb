@@ -61,7 +61,7 @@ export function HeroCarousel({
           >
             <Image
               src={image.url}
-              alt="Event photo"
+              alt="Battle of the Tech Bands event"
               fill
               className="object-cover"
               style={{

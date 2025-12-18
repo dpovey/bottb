@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { server } from "@/__mocks__/server";
 import { http, HttpResponse } from "msw";
-import EventPage from "../page";
+import { EventPageClient } from "../event-page-client";
 
 // Mock Next.js navigation
 vi.mock("next/navigation", () => ({
@@ -57,7 +57,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     // Wait for loading to finish first
     await waitFor(() => {
@@ -78,7 +78,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(screen.getByText("Voting Open")).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       const voteLink = screen.getByRole("link", { name: "Vote for Bands" });
@@ -114,7 +114,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       const resultsLink = screen.getByRole("link", { name: "View Results" });
@@ -133,7 +133,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(screen.getByText("2 Bands")).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(screen.getByText("1")).toBeInTheDocument();
@@ -170,7 +170,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(
@@ -180,7 +180,7 @@ describe("EventPage", () => {
   });
 
   it("shows loading state initially", () => {
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
@@ -195,7 +195,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(screen.getByText("Event not found")).toBeInTheDocument();
@@ -214,7 +214,7 @@ describe("EventPage", () => {
       })
     );
 
-    render(<EventPage />);
+    render(<EventPageClient eventId="test-event-id" />);
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(

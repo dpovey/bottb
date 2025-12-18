@@ -19,18 +19,37 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from "@/lib/scoring";
+import { getBaseUrl } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Events | Battle of the Tech Bands",
-  description:
-    "Browse all Battle of the Tech Bands events - past, present, and upcoming. See results, winners, and event details.",
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = getBaseUrl();
+  const upcomingEvents = await getUpcomingEvents();
+  const pastEvents = await getPastEvents();
+  const totalEvents = upcomingEvents.length + pastEvents.length;
+
+  const description =
+    totalEvents > 0
+      ? `Browse ${totalEvents} Battle of the Tech Bands events - past, present, and upcoming. See results, winners, and event details.`
+      : "Browse all Battle of the Tech Bands events - past, present, and upcoming. See results, winners, and event details.";
+
+  return {
     title: "Events | Battle of the Tech Bands",
-    description:
-      "Browse all Battle of the Tech Bands events - past, present, and upcoming.",
-    type: "website",
-  },
-};
+    description,
+    alternates: {
+      canonical: `${baseUrl}/events`,
+    },
+    openGraph: {
+      title: "Events | Battle of the Tech Bands",
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: "Events | Battle of the Tech Bands",
+      description,
+    },
+  };
+}
 
 interface BandScore {
   id: string;

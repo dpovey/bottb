@@ -1,5 +1,6 @@
 import { Header, Footer } from "@/components/nav";
 import type { BreadcrumbItem } from "@/components/nav";
+import { BreadcrumbsJsonLd } from "@/components/seo";
 
 interface WebLayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,9 @@ export function WebLayout({
 }: WebLayoutProps) {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <BreadcrumbsJsonLd breadcrumbs={breadcrumbs} />
+      )}
       <Header
         showNav={true}
         breadcrumbs={breadcrumbs}

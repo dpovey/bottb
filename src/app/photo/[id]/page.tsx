@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getPhotoById } from "@/lib/db";
+import { getBaseUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,9 +38,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description += ` • Photo by ${photo.photographer}`;
   }
 
+  const baseUrl = getBaseUrl();
+
   return {
     title,
     description,
+    alternates: {
+      canonical: `${baseUrl}/photo/${id}`,
+    },
     openGraph: {
       title,
       description,

@@ -68,7 +68,7 @@ export function CompanyBadge({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={iconUrl}
-            alt=""
+            alt={`${name} icon`}
             className={cn("shrink-0 object-contain", iconSize)}
           />
         ) : (

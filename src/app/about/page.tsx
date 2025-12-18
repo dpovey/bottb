@@ -5,11 +5,15 @@ import { Button, SocialIconLink } from "@/components/ui";
 import { getSocialLinks } from "@/lib/social-links";
 import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
 import { HeroCarousel } from "@/components/hero-carousel";
+import { getBaseUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "About | Battle of the Tech Bands",
   description:
     "Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.",
+  alternates: {
+    canonical: `${getBaseUrl()}/about`,
+  },
   openGraph: {
     title: "About | Battle of the Tech Bands",
     description:

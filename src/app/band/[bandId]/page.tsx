@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   getBandScores,
   getBandsForEvent,
@@ -8,6 +9,7 @@ import {
   getFinalizedResults,
   PHOTO_LABELS,
   SetlistSong,
+  type Band,
 } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
@@ -23,6 +25,8 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from "@/lib/scoring";
+import { getBaseUrl } from "@/lib/seo";
+import { MusicGroupJsonLd } from "@/components/seo";
 
 interface BandScore {
   id: string;
@@ -233,6 +237,90 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
   );
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ bandId: string }>;
+}): Promise<Metadata> {
+  const { bandId } = await params;
+  const baseUrl = getBaseUrl();
+
+  // Get band data
+  const { sql } = await import("@vercel/postgres");
+  const { rows: bandData } = await sql`
+    SELECT b.*, 
+           e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
+           c.name as company_name, c.slug as company_slug, c.icon_url as company_icon_url,
+           (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
+    FROM bands b
+    JOIN events e ON b.event_id = e.id
+    LEFT JOIN companies c ON b.company_slug = c.slug
+    WHERE b.id = ${bandId}
+  `;
+
+  if (bandData.length === 0) {
+    return {
+      title: "Band Not Found | Battle of the Tech Bands",
+    };
+  }
+
+  const band = bandData[0];
+
+  // Build title
+  const titleParts = [band.name];
+  if (band.company_name) {
+    titleParts.push(`(${band.company_name})`);
+  }
+  titleParts.push("| Battle of the Tech Bands");
+  const title = titleParts.join(" ");
+
+  // Build description
+  let description = `${band.name}`;
+  if (band.company_name) {
+    description += ` from ${band.company_name}`;
+  }
+  description += ` performing at ${band.event_name}`;
+  if (band.description) {
+    description += `. ${band.description}`;
+  }
+
+  // Get hero image
+  const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {
+    bandId,
+  });
+  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
+  const ogImage = heroPhoto?.blob_url || band.info?.logo_url || undefined;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/band/${bandId}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      images: ogImage
+        ? [
+            {
+              url: ogImage,
+              width: 1200,
+              height: 630,
+              alt: `${band.name} at ${band.event_name}`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
+
 export default async function BandPage({
   params,
 }: {
@@ -268,8 +356,7 @@ export default async function BandPage({
 
   const eventId = band.event_id;
   const eventStatus = band.status;
-  const eventInfo = band.event_info as EventInfo | null;
-  const scoringVersion = parseScoringVersion(eventInfo);
+  const scoringVersion = parseScoringVersion(band.event_info as EventInfo | null);
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
 
   // Fetch band hero photos
@@ -496,6 +583,12 @@ export default async function BandPage({
 
   return (
     <div className="bg-bg min-h-screen">
+      <MusicGroupJsonLd
+        band={band as Band}
+        eventName={band.event_name}
+        eventDate={band.date}
+        eventLocation={band.location}
+      />
       {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-end">
         {/* Background Image */}

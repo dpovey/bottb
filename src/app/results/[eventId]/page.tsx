@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import {
   getEventById,
   getBandsForEvent,
   getBandScores,
   hasFinalizedResults,
   getFinalizedResults,
+  getPhotosByLabel,
+  PHOTO_LABELS,
 } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
@@ -26,6 +29,8 @@ import {
   getCategories,
   type BandScoreData,
 } from "@/lib/scoring";
+import { getBaseUrl } from "@/lib/seo";
+import { EventJsonLd } from "@/components/seo";
 
 interface BandScore {
   id: string;
@@ -69,6 +74,120 @@ interface EventInfo {
   [key: string]: unknown;
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ eventId: string }>;
+}): Promise<Metadata> {
+  const { eventId } = await params;
+  const baseUrl = getBaseUrl();
+  const event = await getEventById(eventId);
+
+  if (!event) {
+    return {
+      title: "Event Not Found | Battle of the Tech Bands",
+    };
+  }
+
+  const eventInfo = event.info as EventInfo | null;
+  const scoringVersion = parseScoringVersion(eventInfo);
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
+
+  // Get winner information
+  let winnerName = "";
+  if (!showDetailedBreakdown) {
+    winnerName = eventInfo?.winner || "";
+  } else {
+    if (event.status === "finalized" && (await hasFinalizedResults(eventId))) {
+      const finalizedResults = await getFinalizedResults(eventId);
+      if (finalizedResults.length > 0) {
+        winnerName = finalizedResults[0].band_name;
+      }
+    } else {
+      const scores = (await getBandScores(eventId)) as BandScore[];
+      if (scores.length > 0) {
+        const sortedScores = scores
+          .map((score) => {
+            const scoreData: BandScoreData = {
+              avg_song_choice: score.avg_song_choice,
+              avg_performance: score.avg_performance,
+              avg_crowd_vibe: score.avg_crowd_vibe,
+              avg_visuals: score.avg_visuals,
+              crowd_vote_count: score.crowd_vote_count,
+              total_crowd_votes: score.total_crowd_votes,
+              crowd_score: score.crowd_score,
+            };
+            return {
+              ...score,
+              totalScore: calculateTotalScore(
+                scoreData,
+                scoringVersion,
+                scores.map((s) => ({
+                  avg_song_choice: s.avg_song_choice,
+                  avg_performance: s.avg_performance,
+                  avg_crowd_vibe: s.avg_crowd_vibe,
+                  avg_visuals: s.avg_visuals,
+                  crowd_vote_count: s.crowd_vote_count,
+                  total_crowd_votes: s.total_crowd_votes,
+                  crowd_score: s.crowd_score,
+                }))
+              ),
+            };
+          })
+          .sort((a, b) => b.totalScore - a.totalScore);
+        winnerName = sortedScores[0]?.name || "";
+      }
+    }
+  }
+
+  // Build title and description
+  const title = winnerName
+    ? `${winnerName} Wins ${event.name} | Battle of the Tech Bands`
+    : `${event.name} Results | Battle of the Tech Bands`;
+
+  let description = `Results for ${event.name}`;
+  if (winnerName) {
+    description += `. Winner: ${winnerName}`;
+  }
+  description += `. ${formatEventDate(event.date, event.timezone)} • ${event.location}`;
+
+  // Get event hero image
+  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
+    eventId,
+  });
+  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null;
+  const ogImage = heroPhoto?.blob_url || event.info?.image_url || undefined;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${baseUrl}/results/${eventId}`,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: ogImage
+        ? [
+            {
+              url: ogImage,
+              width: 1200,
+              height: 630,
+              alt: `${event.name} Results`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
+
 export default async function ResultsPage({
   params,
 }: {
@@ -87,9 +206,9 @@ export default async function ResultsPage({
     redirect(`/vote/crowd/${eventId}`);
   }
 
-  const bands = await getBandsForEvent(eventId);
   const eventInfo = event.info as EventInfo | null;
   const scoringVersion = parseScoringVersion(eventInfo);
+  const bands = await getBandsForEvent(eventId);
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
 
   const breadcrumbs = [
@@ -428,8 +547,20 @@ export default async function ResultsPage({
     totalScore: band.totalScore,
   }));
 
+  // Get event hero image for structured data
+  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
+    eventId,
+  });
+  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null;
+
   return (
-    <WebLayout breadcrumbs={breadcrumbs}>
+    <>
+      <EventJsonLd
+        event={event}
+        bands={bands}
+        heroImageUrl={heroPhoto?.blob_url || (event.info?.image_url as string | undefined)}
+      />
+      <WebLayout breadcrumbs={breadcrumbs}>
       {/* Page Header */}
       <section className="py-12 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
@@ -516,5 +647,6 @@ export default async function ResultsPage({
         </div>
       </section>
     </WebLayout>
+    </>
   );
 }

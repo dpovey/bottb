@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PhotosContent } from "./photos-content";
 import { PublicLayout } from "@/components/layouts";
+import { getBaseUrl } from "@/lib/seo";
 
 // Loading fallback for Suspense
 function PhotosLoading() {
@@ -23,6 +25,27 @@ function PhotosLoading() {
     </PublicLayout>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Photo Gallery | Battle of the Tech Bands",
+  description:
+    "Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.",
+  alternates: {
+    canonical: `${getBaseUrl()}/photos`,
+  },
+  openGraph: {
+    title: "Photo Gallery | Battle of the Tech Bands",
+    description:
+      "Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Photo Gallery | Battle of the Tech Bands",
+    description:
+      "Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.",
+  },
+};
 
 interface PhotosPageProps {
   searchParams: Promise<{

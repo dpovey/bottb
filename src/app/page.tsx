@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import {
@@ -33,6 +34,7 @@ import {
   VideoStripSkeleton,
   CompanyLogoMarqueeSkeleton,
 } from "@/components/skeletons/home-skeletons";
+import { getBaseUrl } from "@/lib/seo";
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE =
@@ -62,6 +64,50 @@ interface EventInfo {
 // Use ISR with 5-minute revalidation for performance
 // Events are activated/finalized manually, so 5 minutes is sufficient
 export const revalidate = 300;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const baseUrl = getBaseUrl();
+  const activeEvent = await getActiveEvent();
+  const globalHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO);
+  const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null;
+  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE;
+
+  let title = "Battle of the Tech Bands";
+  let description = "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.";
+
+  if (activeEvent) {
+    title = `${activeEvent.name} | Battle of the Tech Bands`;
+    description = `Vote now for ${activeEvent.name}! ${description}`;
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: baseUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      siteName: "Battle of the Tech Bands",
+      type: "website",
+      images: [
+        {
+          url: heroImageUrl,
+          width: 1200,
+          height: 630,
+          alt: "Battle of the Tech Bands",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [heroImageUrl],
+    },
+  };
+}
 
 function getRelativeDate(dateString: string): string {
   const now = new Date();

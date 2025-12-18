@@ -9,6 +9,8 @@ import { AdminToggle } from "@/components/admin-toggle";
 import { AdminToolbar } from "@/components/admin-toolbar";
 import { ScrollRestoration } from "@/components/scroll-restoration";
 import { PostHogProvider } from "@/components/posthog-provider";
+import { getBaseUrl } from "@/lib/seo";
+import { OrganizationJsonLd } from "@/components/seo";
 
 const jost = Jost({
   subsets: ["latin"],
@@ -20,6 +22,9 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: "Battle of the Tech Bands",
   description: "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+  alternates: {
+    canonical: getBaseUrl(),
+  },
   manifest: "/site.webmanifest",
   themeColor: "#0a0a0a",
   appleWebApp: {
@@ -59,6 +64,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <OrganizationJsonLd />
+      </head>
       <body
         className={`${jost.variable} font-sans antialiased bg-bg text-text`}
         suppressHydrationWarning={true}

@@ -10,7 +10,12 @@ vi.mock("@/lib/db", () => ({
   getBandsForEvent: vi.fn(),
   getBandScores: vi.fn(),
   getPhotosByLabel: vi.fn(),
+  getPhotos: vi.fn(),
+  getPhotoCount: vi.fn(),
+  getVideos: vi.fn(),
   getCompanies: vi.fn(),
+  hasFinalizedResults: vi.fn(),
+  getFinalizedResults: vi.fn(),
   PHOTO_LABELS: {
     BAND_HERO: "band_hero",
     EVENT_HERO: "event_hero",

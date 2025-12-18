@@ -21,6 +21,7 @@ vi.mock("@/lib/db", () => ({
   getBandScores: vi.fn(),
   hasFinalizedResults: vi.fn(),
   getFinalizedResults: vi.fn(),
+  getPhotosByLabel: vi.fn(),
   PHOTO_LABELS: {
     BAND_HERO: "band_hero",
     EVENT_HERO: "event_hero",
@@ -39,6 +40,7 @@ import {
   getBandScores,
   hasFinalizedResults,
   getFinalizedResults,
+  getPhotosByLabel,
 } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 
@@ -53,6 +55,7 @@ const mockHasFinalizedResults = hasFinalizedResults as unknown as ReturnType<
 const mockGetFinalizedResults = getFinalizedResults as unknown as ReturnType<
   typeof vi.fn
 >;
+const mockGetPhotosByLabel = getPhotosByLabel as unknown as ReturnType<typeof vi.fn>;
 const mockNotFound = notFound as unknown as ReturnType<typeof vi.fn>;
 const mockRedirect = redirect as unknown as ReturnType<typeof vi.fn>;
 
@@ -62,6 +65,7 @@ describe("ResultsPage", () => {
     // Default: no finalized results, use dynamic calculation
     mockHasFinalizedResults.mockResolvedValue(false);
     mockGetFinalizedResults.mockResolvedValue([]);
+    mockGetPhotosByLabel.mockResolvedValue([]);
   });
 
   it("redirects non-finalized events to crowd voting", async () => {

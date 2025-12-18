@@ -10,6 +10,7 @@ import {
   getPhotographerHeroPhoto,
   getPhotographerRandomPhoto,
 } from "@/lib/db";
+import { getBaseUrl } from "@/lib/seo";
 
 // Social icons
 function InstagramIcon({ className }: { className?: string }) {
@@ -94,11 +95,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const baseUrl = getBaseUrl();
+
   return {
     title: `${photographer.name} | Photographers | Battle of the Tech Bands`,
     description:
       photographer.bio ||
       `View photos by ${photographer.name} from Battle of the Tech Bands events.`,
+    alternates: {
+      canonical: `${baseUrl}/photographer/${slug}`,
+    },
     openGraph: {
       title: `${photographer.name} | Battle of the Tech Bands`,
       description:
