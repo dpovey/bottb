@@ -15,7 +15,10 @@ export default async function AdminPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout
+      title="Dashboard"
+      subtitle={`Welcome, ${session.user?.name || session.user?.email}`}
+    >
       <AdminDashboard session={session} />
     </AdminLayout>
   );

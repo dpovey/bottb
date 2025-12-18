@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getVideos, getEvents, getBandsForEvent } from "@/lib/db";
 import { VideoAdminClient } from "./video-admin-client";
+import { AdminLayout } from "@/components/layouts";
 
 export default async function VideoAdminPage() {
   const session = await auth();
@@ -24,11 +25,16 @@ export default async function VideoAdminPage() {
   }
 
   return (
-    <VideoAdminClient
-      initialVideos={videos}
-      events={events.map((e) => ({ id: e.id, name: e.name }))}
-      bandsMap={bandsMap}
-    />
+    <AdminLayout
+      title="Video Management"
+      subtitle="Manage YouTube videos for events and bands"
+      breadcrumbs={[{ label: "Videos" }]}
+    >
+      <VideoAdminClient
+        initialVideos={videos}
+        events={events.map((e) => ({ id: e.id, name: e.name }))}
+        bandsMap={bandsMap}
+      />
+    </AdminLayout>
   );
 }
-

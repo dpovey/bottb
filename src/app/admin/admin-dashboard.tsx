@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -25,7 +24,9 @@ interface AdminDashboardProps {
   session: Session;
 }
 
-export default function AdminDashboard({ session }: AdminDashboardProps) {
+export default function AdminDashboard({
+  session: _session,
+}: AdminDashboardProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
@@ -93,47 +94,101 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-gray-300">
-            Welcome, {session.user?.name || session.user?.email}
-          </p>
-        </div>
-        <button
-          onClick={() => signOut()}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-        >
-          Sign Out
-        </button>
-      </div>
-
+    <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
           href="/admin/videos"
-          className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/15 transition-colors group"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg
+                className="w-6 h-6 text-accent"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
                 Manage Videos
               </h3>
-              <p className="text-sm text-gray-400">Add YouTube videos to events</p>
+              <p className="text-sm text-muted">Add YouTube videos to events</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/social"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-accent"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Social Accounts
+              </h3>
+              <p className="text-sm text-muted">
+                Connect social media accounts
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/photos"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-accent"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Photo Gallery
+              </h3>
+              <p className="text-sm text-muted">Manage event photos</p>
             </div>
           </div>
         </Link>
       </div>
 
       {/* Events List */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white">Events</h2>
         </div>
@@ -144,21 +199,21 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-300 text-lg">No events found</p>
+            <p className="text-muted text-lg">No events found</p>
           </div>
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-white/5 backdrop-blur-lg rounded-xl p-4 flex justify-between items-center"
+                className="bg-surface rounded-xl p-4 flex justify-between items-center"
               >
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     {event.name}
                   </h3>
-                  <p className="text-gray-300">{event.location}</p>
-                  <p className="text-sm text-gray-400">{event.date}</p>
+                  <p className="text-muted">{event.location}</p>
+                  <p className="text-sm text-dim">{event.date}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
@@ -185,12 +240,12 @@ export default function AdminDashboard({ session }: AdminDashboardProps) {
                       <option value="finalized">Finalized</option>
                     </select>
                     {updatingStatus === event.id && (
-                      <span className="text-xs text-gray-400">Updating...</span>
+                      <span className="text-xs text-dim">Updating...</span>
                     )}
                   </div>
                   <Link
                     href={`/admin/events/${event.id}`}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                    className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
                   >
                     Manage Event
                   </Link>

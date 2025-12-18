@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AdminLayout } from "@/components/layouts";
 
 interface Event {
   id: string;
@@ -37,65 +38,59 @@ export default function AdminEventsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
+      <AdminLayout title="Events" breadcrumbs={[{ label: "Events" }]}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-white text-xl">Loading...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white text-xl">Unauthorized</div>
-      </div>
+      <AdminLayout title="Events" breadcrumbs={[{ label: "Events" }]}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-white text-xl">Unauthorized</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Event Management</h1>
-          <p className="text-gray-300">Manage all events in the system</p>
-        </div>
+    <AdminLayout
+      title="Event Management"
+      subtitle="Manage all events in the system"
+      breadcrumbs={[{ label: "Events" }]}
+      actions={
         <Link
-          href="/admin"
-          className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          href="/admin/events/create"
+          className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors"
         >
-          ← Back to Admin
+          + Create New Event
         </Link>
-      </div>
-
+      }
+    >
       {/* Events List */}
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">All Events</h2>
-          <Link
-            href="/admin/events/create"
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-          >
-            + Create New Event
-          </Link>
-        </div>
+      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+        <h2 className="text-xl font-bold text-white mb-6">All Events</h2>
 
         {events.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-300 text-lg">No events found</p>
+            <p className="text-muted text-lg">No events found</p>
           </div>
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-white/5 backdrop-blur-lg rounded-xl p-4 flex justify-between items-center"
+                className="bg-surface rounded-xl p-4 flex justify-between items-center"
               >
                 <div>
                   <h3 className="text-lg font-semibold text-white">
                     {event.name}
                   </h3>
-                  <p className="text-gray-300">{event.location}</p>
-                  <p className="text-sm text-gray-400">{event.date}</p>
+                  <p className="text-muted">{event.location}</p>
+                  <p className="text-sm text-dim">{event.date}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <span
@@ -111,7 +106,7 @@ export default function AdminEventsPage() {
                   </span>
                   <Link
                     href={`/admin/events/${event.id}`}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors"
+                    className="bg-accent hover:bg-accent-light text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors"
                   >
                     Manage
                   </Link>
@@ -121,6 +116,6 @@ export default function AdminEventsPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 }

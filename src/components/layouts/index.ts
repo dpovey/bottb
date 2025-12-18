@@ -1,3 +1,5 @@
 export { AdminLayout } from "./admin-layout";
+export { AdminSidebar } from "./admin-sidebar";
+export { AdminTopBar } from "./admin-topbar";
 export { PublicLayout } from "./public-layout";
 export { WebLayout } from "./web-layout";

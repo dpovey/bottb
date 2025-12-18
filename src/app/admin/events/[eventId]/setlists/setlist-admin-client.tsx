@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { SetlistSong, SongType, SetlistStatus } from "@/lib/db";
 import { Badge, NumberedIndicator, CompanyBadge } from "@/components/ui";
 
@@ -22,13 +21,13 @@ interface SongConflict {
 
 interface SetlistAdminClientProps {
   eventId: string;
-  eventName: string;
+  eventName?: string; // Kept for potential future use
   bands: Band[];
 }
 
 export function SetlistAdminClient({
   eventId,
-  eventName,
+  eventName: _eventName,
   bands,
 }: SetlistAdminClientProps) {
   const [setlists, setSetlists] = useState<
@@ -126,23 +125,7 @@ export function SetlistAdminClient({
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Setlist Management</h1>
-          <p className="text-gray-300">{eventName}</p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href={`/admin/events/${eventId}`}
-            className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            ← Back to Event
-          </Link>
-        </div>
-      </div>
-
+    <div className="space-y-8">
       {/* Conflicts Warning */}
       {conflicts.length > 0 && (
         <div className="bg-warning/20 border border-warning/30 rounded-xl p-4 mb-8">
