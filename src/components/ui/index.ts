@@ -36,3 +36,4 @@ export {
   type SocialIconLinkProps,
 } from "./social-icon-link";
 export { ErrorBoundary, CompactErrorFallback } from "./error-boundary";
+export { TicketCTA } from "./ticket-cta";

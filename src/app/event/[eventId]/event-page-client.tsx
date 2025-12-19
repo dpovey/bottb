@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
-import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIndicator } from "@/components/ui";
+import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIndicator, TicketCTA } from "@/components/ui";
 import { ChevronRightIcon } from "@/components/icons";
 import { PhotoStrip } from "@/components/photos/photo-strip";
 import { VideoCarousel } from "@/components/video-carousel";
@@ -19,6 +19,7 @@ interface EventInfo {
   image_url?: string;
   description?: string;
   website?: string;
+  ticket_url?: string;
   social_media?: {
     twitter?: string;
     instagram?: string;
@@ -249,10 +250,13 @@ export function EventPageClient({ eventId }: { eventId: string }) {
       )}
 
       {/* Action Section */}
-      {(event.status === "voting" || (event.status === "finalized" && !show2022Winner)) && (
+      {(event.status === "voting" || event.status === "finalized" || event.status === "upcoming") && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 items-center">
+              {event.status === "upcoming" && event.info?.ticket_url && (
+                <TicketCTA ticketUrl={event.info.ticket_url} variant="compact" />
+              )}
               {event.status === "voting" && (
                 <Link href={`/vote/crowd/${eventId}`}>
                   <Button variant="accent" size="lg">
@@ -260,18 +264,20 @@ export function EventPageClient({ eventId }: { eventId: string }) {
                   </Button>
                 </Link>
               )}
-              {event.status === "finalized" && (
+              {event.status === "finalized" && !show2022Winner && (
                 <Link href={`/results/${eventId}`}>
                   <Button variant="accent" size="lg">
                     View Results
                   </Button>
                 </Link>
               )}
-              <Link href={`/photos?event=${eventId}`}>
-                <Button variant="outline" size="lg">
-                  View Photos
-                </Button>
-              </Link>
+              {event.status !== "upcoming" && (
+                <Link href={`/photos?event=${eventId}`}>
+                  <Button variant="outline" size="lg">
+                    View Photos
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -388,6 +394,18 @@ export function EventPageClient({ eventId }: { eventId: string }) {
           )}
         </div>
       </section>
+
+      {/* Ticket CTA Section - for upcoming events */}
+      {event.status === "upcoming" && event.info?.ticket_url && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-2xl mx-auto px-6 lg:px-8">
+            <TicketCTA
+              ticketUrl={event.info.ticket_url}
+              eventName={event.name}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Photos Section */}
       <PhotoStrip eventId={eventId} />

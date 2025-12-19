@@ -13,6 +13,7 @@ export interface Event {
     image_url?: string;
     description?: string;
     website?: string;
+    ticket_url?: string;
     social_media?: {
       twitter?: string;
       instagram?: string;
