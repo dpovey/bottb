@@ -70,6 +70,7 @@ export function WinnerDisplay({
               fill
               className="object-cover"
               style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+              sizes="(max-width: 768px) 100vw, 80vw"
             />
             {/* Gradient overlay - fade from left */}
             <div className="absolute inset-0 bg-gradient-to-r from-bg-elevated via-bg-elevated/80 via-40% to-transparent" />

@@ -67,6 +67,7 @@ export function HeroCarousel({
               style={{
                 objectPosition: `${image.focalPoint?.x ?? 50}% ${image.focalPoint?.y ?? 50}%`,
               }}
+              sizes="100vw"
               priority={index === currentIndex}
             />
           </div>

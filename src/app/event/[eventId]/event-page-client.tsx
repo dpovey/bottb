@@ -186,6 +186,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
             style={{ 
               objectPosition: `${heroPhoto.hero_focal_point?.x ?? 50}% ${heroPhoto.hero_focal_point?.y ?? 50}%` 
             }}
+            sizes="100vw"
             priority
             unoptimized
           />
@@ -195,6 +196,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
             alt={`${event.name} event`}
             fill
             className="object-cover"
+            sizes="100vw"
             priority
             unoptimized
           />

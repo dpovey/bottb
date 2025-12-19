@@ -94,6 +94,7 @@ export default async function PhotographerPage({ params }: Props) {
             style={{
               objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
             }}
+            sizes="100vw"
             priority
             unoptimized
           />

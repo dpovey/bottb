@@ -610,6 +610,7 @@ export default async function BandPage({
             style={{
               objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
             }}
+            sizes="100vw"
             priority
             unoptimized
           />
