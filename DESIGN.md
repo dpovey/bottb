@@ -1342,6 +1342,13 @@ src/
 │   │   ├── card.tsx
 │   │   ├── input.tsx
 │   │   └── ...
+│   ├── icons/                 # Shared icon components
+│   │   ├── index.ts           # Exports all icons
+│   │   ├── types.ts           # IconProps interface
+│   │   ├── social/            # Social platform icons
+│   │   ├── ui/                # UI action icons
+│   │   ├── admin/             # Admin/dashboard icons
+│   │   └── misc/              # Miscellaneous icons
 │   ├── layouts/
 │   │   ├── home-layout.tsx
 │   │   ├── web-layout.tsx
@@ -1356,6 +1363,58 @@ src/
 │   └── globals.css
 └── ...
 ```
+
+---
+
+## Icons
+
+### Shared Icon Components
+
+All icons are React components that extend `SVGProps<SVGSVGElement>` with an optional `size` prop.
+
+**Location:** `src/components/icons/`
+
+### Usage
+
+```tsx
+import { SearchIcon, CloseIcon, HeartIcon } from "@/components/icons";
+
+// Basic usage
+<SearchIcon />
+
+// With size prop
+<SearchIcon size={24} />
+
+// With Tailwind classes
+<SearchIcon className="w-5 h-5 text-accent" />
+
+// All SVG props are supported
+<SearchIcon stroke="red" strokeWidth={3} />
+```
+
+### Icon Categories
+
+| Category | Path | Examples |
+|----------|------|----------|
+| Social | `icons/social/` | LinkedInIcon, YouTubeIcon, InstagramIcon, FacebookIcon, TikTokIcon, TwitterIcon |
+| UI | `icons/ui/` | CloseIcon, MenuIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CheckIcon, PlusIcon, etc. |
+| Admin | `icons/admin/` | HomeIcon, CalendarIcon, PhotoIcon, VideoIcon, ShareIcon, SettingsIcon, EditIcon, DeleteIcon, LogoutIcon |
+| Misc | `icons/misc/` | EmailIcon, BuildingIcon, UsersIcon, MusicNoteIcon, CameraIcon, MapPinIcon, HeartIcon, StarIcon, etc. |
+
+### Icon Props
+
+```tsx
+interface IconProps extends SVGProps<SVGSVGElement> {
+  size?: number; // Default varies by icon (usually 20 or 24)
+}
+```
+
+### Design Guidelines
+
+- **Social icons** use `fill="currentColor"` for solid brand marks
+- **UI/Admin/Misc icons** use `stroke="currentColor"` for outline style
+- All icons include `aria-hidden="true"` by default
+- Use `forwardRef` pattern for all icons to support refs
 
 ---
 
