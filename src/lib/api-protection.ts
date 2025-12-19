@@ -85,6 +85,8 @@ const RATE_LIMITS = {
   api: { requests: 100, windowMs: 60 * 1000 }, // 100 requests per minute
   // Admin endpoints - more permissive
   admin: { requests: 200, windowMs: 60 * 1000 }, // 200 requests per minute
+  // Photo download/conversion - prevent scraping and blob bandwidth costs
+  photo: { requests: 20, windowMs: 60 * 1000 }, // 20 requests per minute
 } as const;
 
 /**

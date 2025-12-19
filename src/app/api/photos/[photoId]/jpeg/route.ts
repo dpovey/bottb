@@ -8,17 +8,20 @@
  * - maxWidth: Maximum width in pixels (optional, preserves aspect ratio)
  *
  * Used for Instagram posting which requires JPEG format.
+ * 
+ * Rate limited to prevent scraping/DoS (blob bandwidth costs).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getPhotoById } from "@/lib/db";
+import { withRateLimit } from "@/lib/api-protection";
 import sharp from "sharp";
 
-export async function GET(
+async function handler(
   request: NextRequest,
-  { params }: { params: Promise<{ photoId: string }> }
+  context: { params: Promise<{ photoId: string }> }
 ) {
-  const { photoId } = await params;
+  const { photoId } = await context.params;
 
   try {
     const photo = await getPhotoById(photoId);
@@ -82,4 +85,11 @@ export async function GET(
     );
   }
 }
+
+// Rate limit: 20 requests per minute to prevent scraping/DoS
+export const GET = withRateLimit(
+  (request: NextRequest, context?: unknown) => 
+    handler(request, context as { params: Promise<{ photoId: string }> }),
+  "photo"
+);
 

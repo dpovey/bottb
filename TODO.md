@@ -77,6 +77,7 @@
 | ------------------ | ------------- | ------------ | ---------------- |
 | `/api/votes/batch` | ✅ Admin      | ✅ 200/min   | High             |
 | `/api/votes`       | ❌ Public     | ✅ 10/min    | Medium           |
+| `/api/photos/[id]/jpeg` | ❌ Public | ✅ 20/min   | Medium (blob cost protection) |
 | `/api/events/*`    | ❌ Public     | ✅ 100/min   | Low              |
 | `/api/bands/*`     | ❌ Public     | ✅ 100/min   | Low              |
 | `/api/auth/*`      | ❌ Public     | ❌ None      | Low              |
