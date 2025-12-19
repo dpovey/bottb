@@ -13,6 +13,21 @@ import {
   trackPhotoShare,
   trackPhotoView,
 } from "@/lib/analytics";
+import {
+  CameraIcon,
+  SpinnerIcon,
+  CheckIcon,
+  LinkIcon,
+  DownloadIcon,
+  ShareIcon,
+  StarIcon,
+  CropIcon,
+  DeleteIcon,
+  CloseIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  WarningIcon,
+} from "@/components/icons";
 
 // Label display info
 const LABEL_INFO = {
@@ -897,20 +912,7 @@ export function PhotoSlideshow({
               {currentPhoto.photographer && (
                 <span className="flex items-center gap-1.5">
                   <span className="slideshow-separator hidden sm:inline">•</span>
-                  <svg
-                    className="w-4 h-4 shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <circle cx="12" cy="13" r="3" />
-                  </svg>
+                  <CameraIcon size={16} className="shrink-0" />
                   <Link
                     href={`/photographer/${currentPhoto.photographer.toLowerCase().replace(/\s+/g, "-")}`}
                     className="truncate hover:text-accent transition-colors"
@@ -995,25 +997,7 @@ export function PhotoSlideshow({
               <span className="mx-1">/</span>
               <span>{totalCount}</span>
               {isLoadingMore && (
-                <svg
-                  className="ml-2 animate-spin w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <SpinnerIcon size={16} className="ml-2 animate-spin" />
               )}
             </span>
 
@@ -1026,33 +1010,9 @@ export function PhotoSlideshow({
                 title="Copy link"
               >
                 {linkCopied ? (
-                  <svg
-                    className="w-5 h-5 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <CheckIcon size={20} className="text-success" />
                 ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                  </svg>
+                  <LinkIcon size={20} />
                 )}
               </button>
               <button
@@ -1061,19 +1021,7 @@ export function PhotoSlideshow({
                 aria-label="Download high-resolution image"
                 title="Download"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
+                <DownloadIcon size={20} />
               </button>
             </div>
 
@@ -1087,19 +1035,7 @@ export function PhotoSlideshow({
                   aria-label="Share to social media (Admin)"
                   title="Share (Admin)"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
+                  <ShareIcon size={20} />
                 </button>
                 <button
                   onClick={handleOpenLabelsModal}
@@ -1107,19 +1043,7 @@ export function PhotoSlideshow({
                   aria-label="Set as hero image (Admin)"
                   title="Hero Labels (Admin)"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                    />
-                  </svg>
+                  <StarIcon size={20} />
                   {/* Indicator dot if photo has any hero labels */}
                   {currentPhoto?.labels && currentPhoto.labels.length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full" />
@@ -1131,27 +1055,7 @@ export function PhotoSlideshow({
                   aria-label="Adjust thumbnail crop (Admin)"
                   title="Edit crop (Admin)"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    {/* Corner brackets */}
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M4 16v2a2 2 0 002 2h2M16 20h2a2 2 0 002-2v-2"
-                    />
-                    {/* Centered + sign */}
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9 12h6M12 9v6"
-                    />
-                  </svg>
+                  <CropIcon size={20} />
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
@@ -1159,19 +1063,7 @@ export function PhotoSlideshow({
                   aria-label="Delete photo (Admin)"
                   title="Delete photo (Admin)"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
+                  <DeleteIcon size={20} />
                 </button>
               </div>
             )}
@@ -1183,19 +1075,7 @@ export function PhotoSlideshow({
               aria-label="Close slideshow"
               title="Close"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <CloseIcon size={24} />
             </button>
           </div>
         </div>
@@ -1210,19 +1090,7 @@ export function PhotoSlideshow({
           className="slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous photo"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
         {/* Image */}
@@ -1251,19 +1119,7 @@ export function PhotoSlideshow({
           className="slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next photo"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          <ChevronRightIcon size={24} strokeWidth={2} />
         </button>
       </div>
 
@@ -1309,25 +1165,7 @@ export function PhotoSlideshow({
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="shrink-0 w-16 h-16 rounded-lg bg-bg-elevated flex items-center justify-center">
-              <svg
-                className="animate-spin w-5 h-5 text-text-dim"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
+              <SpinnerIcon size={20} className="animate-spin text-text-dim" />
             </div>
           )}
         </div>
@@ -1339,19 +1177,7 @@ export function PhotoSlideshow({
           <div className="bg-bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-6 h-6 text-error"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <WarningIcon size={24} className="text-error" />
               </div>
               <div>
                 <h3 className="font-semibold text-xl mb-1">Delete Photo?</h3>
@@ -1386,25 +1212,7 @@ export function PhotoSlideshow({
               >
                 {isDeleting ? (
                   <>
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                    <SpinnerIcon size={16} className="animate-spin" />
                     Deleting...
                   </>
                 ) : (
@@ -1442,25 +1250,7 @@ export function PhotoSlideshow({
               >
                 {isSavingCrop ? (
                   <>
-                    <svg
-                      className="animate-spin w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                    <SpinnerIcon size={16} className="animate-spin" />
                     Saving...
                   </>
                 ) : (
@@ -1552,43 +1342,13 @@ export function PhotoSlideshow({
                 className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
                 aria-label="Close"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <CloseIcon size={20} />
               </button>
             </div>
 
             {isLoadingLabels ? (
               <div className="flex items-center justify-center py-8">
-                <svg
-                  className="animate-spin w-6 h-6 text-accent"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <SpinnerIcon size={24} className="animate-spin text-accent" />
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
@@ -1632,19 +1392,7 @@ export function PhotoSlideshow({
                             }`}
                           >
                             {isActive && (
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
+                              <CheckIcon size={12} className="text-white" strokeWidth={2} />
                             )}
                           </div>
                         </button>
@@ -1758,25 +1506,7 @@ export function PhotoSlideshow({
                   >
                     {isSavingFocalPoint ? (
                       <>
-                        <svg
-                          className="animate-spin w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
+                        <SpinnerIcon size={16} className="animate-spin" />
                         Saving...
                       </>
                     ) : (

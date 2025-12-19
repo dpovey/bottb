@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ChevronRightIcon } from "@/components/icons";
 
 export interface BreadcrumbItem {
   label: string;
@@ -26,19 +27,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
           <span key={index} className="flex items-center gap-2">
             {/* Separator (except for first item) */}
             {index > 0 && (
-              <svg
-                className="w-3 h-3 text-text-dim"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ChevronRightIcon size={12} className="text-text-dim" strokeWidth={2} />
             )}
 
             {/* Breadcrumb item */}

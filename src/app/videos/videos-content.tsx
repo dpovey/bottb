@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PublicLayout } from "@/components/layouts";
 import { Video } from "@/lib/db";
 import { CompanyIcon, FilterSelect } from "@/components/ui";
+import { CloseIcon, PlayIcon } from "@/components/icons";
 import { trackVideoClick } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -228,19 +229,7 @@ export function VideosContent({
               onClick={clearFilters}
               className="text-text-muted hover:text-white text-sm flex items-center gap-1 transition-colors pb-3"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <CloseIcon className="w-4 h-4" />
               Clear filters
             </button>
           )}
@@ -289,13 +278,7 @@ export function VideosContent({
                 {/* Play button */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-white ml-1"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <PlayIcon className="w-8 h-8 text-white ml-1" />
                   </div>
                 </div>
 
@@ -358,19 +341,7 @@ export function VideosContent({
                 onClick={() => setSelectedVideo(null)}
                 className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
               >
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <CloseIcon className="w-8 h-8" />
               </button>
 
               {/* YouTube embed */}

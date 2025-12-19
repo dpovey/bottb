@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCompanies, CompanyWithStats } from "@/lib/db";
 import { Button } from "@/components/ui";
+import { ChevronRightIcon } from "@/components/icons";
 
 interface CompanyWithLogo extends CompanyWithStats {
   logo_url: string;
@@ -97,9 +98,7 @@ export async function CompanyLogoMarquee({
           <Link href="/companies">
             <Button variant="outline" size="sm">
               View All Companies
-              <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRightIcon className="w-4 h-4 ml-2" />
             </Button>
           </Link>
         </div>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
 import { WebLayout } from "@/components/layouts";
 import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIndicator } from "@/components/ui";
+import { ChevronRightIcon } from "@/components/icons";
 import { PhotoStrip } from "@/components/photos/photo-strip";
 import { VideoCarousel } from "@/components/video-carousel";
 import { Video } from "@/lib/db";
@@ -376,19 +377,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
 
                         {/* Arrow */}
                         <div className="shrink-0 text-text-dim">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
+                          <ChevronRightIcon className="w-5 h-5" />
                         </div>
                       </div>
                     </Card>

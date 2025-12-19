@@ -5,6 +5,12 @@ import { Video } from "@/lib/db";
 import { CompanyIcon } from "@/components/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackVideoClick, trackSubscribeClick } from "@/lib/analytics";
+import {
+  YouTubeIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CloseIcon,
+} from "@/components/icons";
 
 interface VideoCarouselProps {
   videos: Video[];
@@ -128,9 +134,7 @@ export function VideoCarousel({
               }}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-text-muted hover:text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-              </svg>
+              <YouTubeIcon size={16} />
               Subscribe
             </a>
 
@@ -143,9 +147,7 @@ export function VideoCarousel({
                   className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-white/60 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Scroll left"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <ChevronLeftIcon size={20} strokeWidth={2} />
                 </button>
                 <button
                   onClick={() => scroll("right")}
@@ -153,9 +155,7 @@ export function VideoCarousel({
                   className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-white/60 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Scroll right"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ChevronRightIcon size={20} strokeWidth={2} />
                 </button>
               </div>
             )}
@@ -206,9 +206,7 @@ export function VideoCarousel({
 
                 {/* YouTube Icon */}
                 <div className="absolute top-2 left-2">
-                  <svg className="w-6 h-6 text-white/70" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                  </svg>
+                  <YouTubeIcon size={24} className="text-white/70" />
                 </div>
               </div>
 
@@ -266,9 +264,7 @@ export function VideoCarousel({
                 className="absolute -top-12 right-0 p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
                 aria-label="Close video"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <CloseIcon size={24} />
               </button>
 
               {/* Video Player */}

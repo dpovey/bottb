@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SetlistSong, SongType, SetlistStatus } from "@/lib/db";
 import { Badge, NumberedIndicator, CompanyBadge } from "@/components/ui";
+import { YouTubeIcon, EditIcon, DeleteIcon } from "@/components/icons";
 
 interface Band {
   id: string;
@@ -398,9 +399,7 @@ function SongRow({ song, conflict, onEdit, onDelete, isEditing }: SongRowProps) 
           className="text-text-dim hover:text-accent transition-colors"
           title="Watch on YouTube"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
-          </svg>
+          <YouTubeIcon size={20} />
         </a>
       )}
 
@@ -411,18 +410,14 @@ function SongRow({ song, conflict, onEdit, onDelete, isEditing }: SongRowProps) 
           className="p-2 hover:bg-white/10 rounded-lg transition-colors text-text-dim hover:text-white"
           title="Edit"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
+          <EditIcon className="w-4 h-4" />
         </button>
         <button
           onClick={onDelete}
           className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-text-dim hover:text-red-400"
           title="Delete"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
+          <DeleteIcon className="w-4 h-4" />
         </button>
       </div>
     </div>

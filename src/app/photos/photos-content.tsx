@@ -8,6 +8,13 @@ import { PhotoSlideshow } from "@/components/photos/photo-slideshow";
 import { PhotoFilters } from "@/components/photos/photo-filters";
 import { PublicLayout } from "@/components/layouts";
 import { trackPhotoClick, trackPhotoFilterChange } from "@/lib/analytics";
+import {
+  PlayCircleIcon,
+  RandomIcon,
+  CalendarIcon,
+  BuildingIcon,
+  SpinnerIcon,
+} from "@/components/icons";
 
 interface Company {
   slug: string;
@@ -535,25 +542,7 @@ export function PhotosContent({
                 onClick={() => setSlideshowIndex(0)}
                 className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <PlayCircleIcon size={16} />
                 Slideshow
               </button>
             )}
@@ -572,19 +561,7 @@ export function PhotosContent({
                 }`}
                 title="Show photos in random order"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
+                <RandomIcon size={14} />
                 <span className="hidden sm:inline">Random</span>
               </button>
               <button
@@ -596,19 +573,7 @@ export function PhotosContent({
                 }`}
                 title="Show photos by date"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <CalendarIcon size={14} strokeWidth={2} />
                 <span className="hidden sm:inline">By Date</span>
               </button>
             </div>
@@ -719,19 +684,7 @@ export function PhotosContent({
                   showCompanyLogos ? "Hide company logos" : "Show company logos"
                 }
               >
-                <svg
-                  className="w-4 h-4 text-text-muted"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"
-                  />
-                </svg>
+                <BuildingIcon size={16} className="text-text-muted" />
                 <button
                   role="switch"
                   aria-checked={showCompanyLogos}
@@ -787,25 +740,7 @@ export function PhotosContent({
         >
           {loadingMore && (
             <div className="flex items-center gap-3 text-text-muted">
-              <svg
-                className="animate-spin w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
+              <SpinnerIcon size={20} className="animate-spin" />
               <span className="text-sm">Loading more photos...</span>
             </div>
           )}

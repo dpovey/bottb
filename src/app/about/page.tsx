@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layouts";
 import { Button, SocialIconLink } from "@/components/ui";
+import { HeartIcon, ExternalLinkIcon } from "@/components/icons";
 import { getSocialLinks } from "@/lib/social-links";
 import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
 import { HeroCarousel } from "@/components/hero-carousel";
@@ -138,19 +139,7 @@ export default async function AboutPage() {
           <div className="bg-gradient-to-br from-accent/10 to-transparent rounded-2xl p-8 md:p-12 border border-accent/20">
             <div className="flex flex-col sm:flex-row items-start gap-6">
               <div className="shrink-0 w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                <svg
-                  className="w-8 h-8 text-accent"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+                <HeartIcon className="w-8 h-8 text-accent" />
               </div>
               <div>
                 <h3 className="font-semibold text-xl mb-3">Why Youngcare?</h3>
@@ -171,19 +160,7 @@ export default async function AboutPage() {
                   className="inline-flex items-center gap-2 mt-6 text-accent hover:text-accent-light transition-colors"
                 >
                   Learn more about Youngcare
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
+                  <ExternalLinkIcon className="w-4 h-4" />
                 </a>
               </div>
             </div>

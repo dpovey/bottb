@@ -1,0 +1,29 @@
+import { forwardRef } from "react";
+import type { IconProps } from "../types";
+
+/**
+ * Checkmark icon for success states, selections, completed items
+ */
+export const CheckIcon = forwardRef<SVGSVGElement, IconProps>(
+  ({ size = 20, className, ...props }, ref) => (
+    <svg
+      ref={ref}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  )
+);
+
+CheckIcon.displayName = "CheckIcon";
+

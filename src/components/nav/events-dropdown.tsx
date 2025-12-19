@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ChevronDownIcon, ChevronRightIcon } from "@/components/icons";
 
 interface Event {
   id: string;
@@ -220,15 +221,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
               )}
             >
               View all events
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              <ChevronRightIcon size={16} strokeWidth={2} />
             </Link>
           </div>
         )}
@@ -251,18 +244,11 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
         )}
       >
         Events
-        <svg
-          className={cn(
-            "w-4 h-4 transition-transform duration-300",
-            isOpen && "rotate-180"
-          )}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+        <ChevronDownIcon
+          size={16}
+          className={cn("transition-transform duration-300", isOpen && "rotate-180")}
           strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        />
         
         {/* Accent underline indicator */}
         <span

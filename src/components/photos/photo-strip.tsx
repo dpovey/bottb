@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Photo } from "@/lib/db";
 import { PhotoSlideshow } from "./photo-slideshow";
 import { trackPhotoClick } from "@/lib/analytics";
+import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon } from "@/components/icons";
 
 interface PhotoStripProps {
   /** Filter by event ID */
@@ -282,9 +283,7 @@ export function PhotoStrip({
                 className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-full text-xs tracking-widest uppercase flex items-center gap-2 transition-colors"
               >
                 View All
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRightIcon size={16} strokeWidth={2} />
               </Link>
             )}
           </div>
@@ -308,9 +307,7 @@ export function PhotoStrip({
                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Previous photo"
                 >
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <ChevronLeftIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
                 </button>
               )}
 
@@ -321,9 +318,7 @@ export function PhotoStrip({
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Next photo"
                 >
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ChevronRightIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
                 </button>
               )}
               
@@ -360,10 +355,7 @@ export function PhotoStrip({
                 {/* Loading indicator at end */}
                 {isLoadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg flex items-center justify-center">
-                    <svg className="animate-spin w-8 h-8 text-text-dim" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <SpinnerIcon size={32} className="animate-spin text-text-dim" />
                   </div>
                 )}
                 

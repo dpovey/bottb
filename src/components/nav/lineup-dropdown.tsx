@@ -5,6 +5,12 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { trackNavClick } from "@/lib/analytics";
+import {
+  ChevronDownIcon,
+  UsersIcon,
+  BuildingIcon,
+  MusicNoteIcon,
+} from "@/components/icons";
 
 interface LineupDropdownProps {
   /** Additional className for the trigger button */
@@ -16,31 +22,19 @@ const lineupLinks = [
     href: "/events",
     label: "Bands",
     description: "All bands across events",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-      </svg>
-    ),
+    icon: <UsersIcon size={20} />,
   },
   {
     href: "/companies",
     label: "Companies",
     description: "Tech companies represented",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-      </svg>
-    ),
+    icon: <BuildingIcon size={20} />,
   },
   {
     href: "/songs",
     label: "Songs",
     description: "Every song performed",
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z" />
-      </svg>
-    ),
+    icon: <MusicNoteIcon size={20} />,
   },
 ];
 
@@ -155,18 +149,11 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
         )}
       >
         Lineup
-        <svg
-          className={cn(
-            "w-4 h-4 transition-transform duration-300",
-            isOpen && "rotate-180"
-          )}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+        <ChevronDownIcon
+          size={16}
+          className={cn("transition-transform duration-300", isOpen && "rotate-180")}
           strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        />
         
         {/* Accent underline indicator */}
         <span

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layouts";
+import { ChevronLeftIcon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Battle of the Tech Bands",
@@ -290,9 +291,7 @@ export default function PrivacyPolicyPage() {
             href="/"
             className="text-text-muted hover:text-white transition-colors inline-flex items-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeftIcon className="w-4 h-4" />
             Back to Home
           </Link>
         </div>
