@@ -8,4 +8,5 @@ export { ScoringLegend } from "./ScoringLegend";
 export type { ScoringLegendProps } from "./ScoringLegend";
 export { PastEventWinner } from "./PastEventWinner";
 export type { PastEventWinnerProps } from "./PastEventWinner";
+export { ShareResults } from "./share-results";
 

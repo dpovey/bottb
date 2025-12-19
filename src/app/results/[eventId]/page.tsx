@@ -19,6 +19,7 @@ import {
   WinnerDisplay,
   CategoryWinners,
   ScoreBreakdown,
+  ShareResults,
   type CategoryWinnerData,
   type BandResultData,
 } from "@/components/scoring";
@@ -194,6 +195,7 @@ export default async function ResultsPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
+  const baseUrl = getBaseUrl();
   const session = await auth();
   const isAdmin = session?.user?.isAdmin || false;
   const event = await getEventById(eventId);
@@ -269,6 +271,14 @@ export default async function ResultsPage({
               eventDate={formatEventDate(event.date, event.timezone)}
               eventLocation={event.location}
             />
+            {/* Share buttons */}
+            <div className="mt-8">
+              <ShareResults
+                eventName={event.name}
+                winnerName={winnerName}
+                eventUrl={`${baseUrl}/results/${eventId}`}
+              />
+            </div>
           </div>
         </section>
 
@@ -590,6 +600,14 @@ export default async function ResultsPage({
             heroFocalPoint={overallWinner.heroFocalPoint}
             scoringVersion={scoringVersion}
           />
+          {/* Share buttons */}
+          <div className="mt-8">
+            <ShareResults
+              eventName={event.name}
+              winnerName={overallWinner.name}
+              eventUrl={`${baseUrl}/results/${eventId}`}
+            />
+          </div>
         </div>
       </section>
 
