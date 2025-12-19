@@ -3,4 +3,5 @@ export { EventJsonLd } from "./event-jsonld";
 export { MusicGroupJsonLd } from "./music-group-jsonld";
 export { BreadcrumbsJsonLd } from "./breadcrumbs-jsonld";
 export { OrganizationJsonLd } from "./organization-jsonld";
+export { FAQJsonLd } from "./faq-jsonld";
 
