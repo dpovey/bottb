@@ -1,8 +1,13 @@
 # Design
 
-- Refer to DESIGN.md for design system and design/\*.html files for mockups
-- Use shared components where ever possible. If adding new components that could be reusable assume
-  that you should make them shared.
+- **Browse components first**: Visit `/design-system` in the app to see all available UI components
+- Refer to DESIGN.md for design tokens (colors, typography, spacing) and design principles
+- Use shared components from `src/components/ui/` wherever possible
+- When adding new reusable components:
+  1. Add them to `src/components/ui/`
+  2. Export from `src/components/ui/index.ts`
+  3. **Update the design system page** at `src/app/design-system/` to showcase the new component
+- Legacy HTML mockups are in `design/*.html` for reference
 
 # Committing code
 

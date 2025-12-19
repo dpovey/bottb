@@ -2,6 +2,35 @@
 
 > Battle of the Tech Bands — Monochromatic festival aesthetic
 
+## Quick Start
+
+**Browse the interactive design system at `/design-system`** in the running app to see all available components with live examples and usage code.
+
+### For Developers
+
+- **Finding components**: Visit `/design-system` first to see what's available
+- **Using components**: Import from `@/components/ui` (e.g., `import { Button, Badge, Card } from "@/components/ui"`)
+- **Adding new components**: 
+  1. Create component in `src/components/ui/`
+  2. Export from `src/components/ui/index.ts`
+  3. Add examples to the design system at `src/app/design-system/sections/`
+
+### Design System Structure
+
+```
+src/
+├── app/design-system/          # Interactive component browser (visit /design-system)
+│   ├── page.tsx                # Route entry point
+│   ├── design-system-client.tsx # Main tabbed interface
+│   └── sections/               # Component category sections
+├── components/
+│   ├── ui/                     # Reusable UI primitives
+│   └── icons/                  # Icon components
+└── ...
+```
+
+---
+
 ## Brand Identity
 
 ### Aesthetic Direction
@@ -1420,7 +1449,20 @@ interface IconProps extends SVGProps<SVGSVGElement> {
 
 ## Design Examples
 
-See `design/` folder for standalone HTML previews:
+### React Design System (Preferred)
+
+**Visit `/design-system` in the running app** for an interactive component browser with:
+
+- Live component examples with all variants
+- Copy-paste usage code
+- Organized by category (Foundations, Actions, Display, Forms, Navigation, Layout, Icons)
+- Desktop sidebar navigation for quick browsing
+
+When adding new UI components, update the design system at `src/app/design-system/sections/`.
+
+### Legacy HTML Mockups
+
+The `design/` folder contains standalone HTML previews for reference:
 
 - `design-system.html` - Typography, colors, components
 - `theme.css` - Shared CSS variables and component styles
