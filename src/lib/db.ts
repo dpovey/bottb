@@ -530,10 +530,155 @@ function sortByDate(photos: Photo[]): Photo[] {
   });
 }
 
+// Result type for combined photos + count query
+interface PhotosWithCountResult {
+  photos: Photo[];
+  total: number;
+}
+
+// Extended Photo type with total_count from window function
+interface PhotoWithCount extends Photo {
+  total_count: string;
+}
+
+/**
+ * Get photos with total count in a single query using COUNT(*) OVER() window function.
+ * This eliminates the need for a separate count query.
+ */
+export async function getPhotosWithCount(
+  options: GetPhotosOptions = {}
+): Promise<PhotosWithCountResult> {
+  const {
+    eventId,
+    bandId,
+    bandIds,
+    photographer,
+    companySlug,
+    limit = 50,
+    offset = 0,
+    orderBy = "uploaded",
+  } = options;
+
+  // Use bandIds if provided, otherwise fall back to bandId
+  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+
+  // For random ordering, use SQL RANDOM()
+  if (orderBy === "random") {
+    return getPhotosRandomWithCount({
+      eventId,
+      bandIds: effectiveBandIds,
+      photographer,
+      companySlug,
+      limit,
+    });
+  }
+
+  // Helper to apply date sorting after fetch
+  const applyOrdering = (photos: Photo[]): Photo[] => {
+    if (orderBy === "date") {
+      return sortByDate(photos);
+    }
+    return photos;
+  };
+
+  try {
+    // Use COUNT(*) OVER() to get total count in the same query
+    const { rows } = await sql<PhotoWithCount>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             COUNT(*) OVER() as total_count
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (
+          ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+        )
+        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+        AND (
+          ${companySlug || null}::text IS NULL 
+          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+      ORDER BY p.uploaded_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const total = parseInt(rows[0]?.total_count || "0", 10);
+    // Remove total_count from photos before returning
+    const photos = rows.map(({ total_count: _total_count, ...photo }) => photo as Photo);
+    
+    return { photos: applyOrdering(photos), total };
+  } catch (error) {
+    console.error("Error fetching photos with count:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get photos in truly random order with total count using SQL RANDOM()
+ * This mixes photos from all events/bands for better discovery
+ * All filters are combined with AND for proper filtering
+ */
+async function getPhotosRandomWithCount(options: {
+  eventId?: string;
+  bandIds?: string[];
+  photographer?: string;
+  companySlug?: string;
+  limit: number;
+}): Promise<PhotosWithCountResult> {
+  const { eventId, bandIds, photographer, companySlug, limit } = options;
+  const effectiveBandIds = bandIds;
+
+  try {
+    // Use COUNT(*) OVER() to get total count in the same query
+    const { rows } = await sql<PhotoWithCount>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             COUNT(*) OVER() as total_count
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (
+          ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
+          OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+        )
+        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+        AND (
+          ${companySlug || null}::text IS NULL 
+          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+      ORDER BY RANDOM()
+      LIMIT ${limit}
+    `;
+
+    const total = parseInt(rows[0]?.total_count || "0", 10);
+    // Remove total_count from photos before returning
+    const photos = rows.map(({ total_count: _total_count, ...photo }) => photo as Photo);
+    
+    return { photos, total };
+  } catch (error) {
+    console.error("Error fetching random photos with count:", error);
+    throw error;
+  }
+}
+
 /**
  * Get photos in truly random order using SQL RANDOM()
  * This mixes photos from all events/bands for better discovery
  * All filters are combined with AND for proper filtering
+ * @deprecated Use getPhotosWithCount instead for better performance
  */
 async function getPhotosRandom(options: {
   eventId?: string;

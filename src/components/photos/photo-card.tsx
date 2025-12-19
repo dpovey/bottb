@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Photo } from "@/lib/db";
 import { CompanyIcon } from "@/components/ui";
 
@@ -17,15 +18,14 @@ export function PhotoCard({ photo, onClick, showCompanyLogo = true }: PhotoCardP
       className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
       onClick={onClick}
     >
-      {/* Thumbnail image - key forces re-render when URL changes */}
-      {/* Using <img> for dynamic blob URLs with lazy loading; Next.js Image requires remote pattern config */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      {/* Thumbnail image using Next.js Image for optimized lazy loading */}
+      <Image
         key={thumbSrc}
         src={thumbSrc}
         alt={photo.original_filename || "Photo"}
-        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-        loading="lazy"
+        fill
+        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-110"
       />
 
       {/* Company icon badge - always visible in top right if available */}

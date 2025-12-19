@@ -69,10 +69,16 @@ export function PhotosContent({
   const [gridSize, setGridSize] = useState<GridSize>("md");
   const [showCompanyLogos, setShowCompanyLogos] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Page sizes: smaller initial load for faster first paint, larger for subsequent loads
+  const INITIAL_PAGE_SIZE = 12;
   const PAGE_SIZE = 50;
 
   // Track loaded photo IDs to prevent duplicates in random mode
   const loadedPhotoIds = useRef<Set<string>>(new Set());
+  
+  // Track if this is the first load (for using smaller initial batch)
+  const isFirstLoad = useRef(true);
 
   // Filters - initialize from props (resolved server-side)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
@@ -328,6 +334,7 @@ export function PhotosContent({
     setPhotos([]);
     loadedPhotoIds.current = new Set();
     currentPage.current = 1;
+    isFirstLoad.current = true;
     setLoading(true);
   }, [
     selectedEventId,
@@ -359,21 +366,37 @@ export function PhotosContent({
         if (selectedPhotographer)
           params.set("photographer", selectedPhotographer);
         if (selectedCompanySlug) params.set("company", selectedCompanySlug);
-        params.set("limit", PAGE_SIZE.toString());
+        
+        // Use smaller batch for initial load (faster first paint), larger for subsequent loads
+        const limit = isLoadMore ? PAGE_SIZE : (isFirstLoad.current ? INITIAL_PAGE_SIZE : PAGE_SIZE);
+        params.set("limit", limit.toString());
         params.set("order", orderMode);
 
         // For ordered mode, use pagination; for random, always fetch fresh
         if (orderMode === "date") {
           params.set("page", currentPage.current.toString());
         }
+        
+        // Skip filter metadata on "load more" requests (reduces API queries from 11 to 1)
+        if (isLoadMore) {
+          params.set("skipMeta", "true");
+        }
 
         const res = await fetch(`/api/photos?${params.toString()}`);
         if (res.ok) {
           const data: PhotosResponse = await res.json();
           setTotalCount(data.pagination.total);
-          setPhotographers(data.photographers);
-          setCompanies(data.companies || []);
-          setAvailableFilters(data.availableFilters);
+          
+          // Only update filter metadata if returned (not skipped on load-more)
+          if (data.photographers && data.photographers.length > 0) {
+            setPhotographers(data.photographers);
+          }
+          if (data.companies && data.companies.length > 0) {
+            setCompanies(data.companies);
+          }
+          if (data.availableFilters) {
+            setAvailableFilters(data.availableFilters);
+          }
 
           if (isLoadMore) {
             // Filter out duplicates (important for random mode)
@@ -390,6 +413,7 @@ export function PhotosContent({
             loadedPhotoIds.current = new Set(data.photos.map((p) => p.id));
             setPhotos(data.photos);
             currentPage.current = 2; // Next load will be page 2
+            isFirstLoad.current = false; // Subsequent loads will use larger batch
           }
         }
       } catch (error) {

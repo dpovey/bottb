@@ -4,7 +4,7 @@ import { PhotosContent } from "./photos-content";
 import { PublicLayout } from "@/components/layouts";
 import { getBaseUrl } from "@/lib/seo";
 
-// Loading fallback for Suspense
+// Loading fallback for Suspense - shows skeleton grid for better perceived performance
 function PhotosLoading() {
   return (
     <PublicLayout
@@ -15,11 +15,17 @@ function PhotosLoading() {
         <div className="flex flex-col gap-4 mb-8">
           <div>
             <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
-            <p className="text-text-muted">Loading...</p>
+            <p className="text-text-muted">Loading photos...</p>
           </div>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-text-muted">Loading photos...</div>
+        {/* Skeleton grid matching default grid size (md) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-8">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-lg bg-bg-elevated animate-pulse"
+            />
+          ))}
         </div>
       </main>
     </PublicLayout>

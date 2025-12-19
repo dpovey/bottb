@@ -5,10 +5,7 @@ import * as db from "@/lib/db";
 
 // Mock the database functions
 vi.mock("@/lib/db", () => ({
-  getPhotos: vi.fn(),
-  getPhotoCount: vi.fn(),
-  getDistinctPhotographers: vi.fn(),
-  getDistinctCompanies: vi.fn(),
+  getPhotosWithCount: vi.fn(),
   getAvailablePhotoFilters: vi.fn(),
 }));
 
@@ -32,7 +29,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
     return request;
   };
 
-  it("should parse bandIds parameter and pass to getPhotos", async () => {
+  it("should parse bandIds parameter and pass to getPhotosWithCount", async () => {
     const mockPhotos = [
       {
         id: "photo1",
@@ -46,10 +43,10 @@ describe("Photos API Route - Multiple Band IDs", () => {
       },
     ];
 
-    (db.getPhotos as ReturnType<typeof vi.fn>).mockResolvedValue(mockPhotos);
-    (db.getPhotoCount as ReturnType<typeof vi.fn>).mockResolvedValue(2);
-    (db.getDistinctPhotographers as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getDistinctCompanies as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mockResolvedValue({
+      photos: mockPhotos,
+      total: 2,
+    });
     (db.getAvailablePhotoFilters as ReturnType<typeof vi.fn>).mockResolvedValue({
       companies: [],
       events: [],
@@ -67,7 +64,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(db.getPhotos).toHaveBeenCalledWith(
+    expect(db.getPhotosWithCount).toHaveBeenCalledWith(
       expect.objectContaining({
         bandIds: ["band1", "band2"],
       })
@@ -84,10 +81,10 @@ describe("Photos API Route - Multiple Band IDs", () => {
       },
     ];
 
-    (db.getPhotos as ReturnType<typeof vi.fn>).mockResolvedValue(mockPhotos);
-    (db.getPhotoCount as ReturnType<typeof vi.fn>).mockResolvedValue(1);
-    (db.getDistinctPhotographers as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getDistinctCompanies as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mockResolvedValue({
+      photos: mockPhotos,
+      total: 1,
+    });
     (db.getAvailablePhotoFilters as ReturnType<typeof vi.fn>).mockResolvedValue({
       companies: [],
       events: [],
@@ -105,7 +102,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
     await response.json(); // Verify response is valid JSON
 
     expect(response.status).toBe(200);
-    expect(db.getPhotos).toHaveBeenCalledWith(
+    expect(db.getPhotosWithCount).toHaveBeenCalledWith(
       expect.objectContaining({
         bandId: "band1",
       })
@@ -124,10 +121,10 @@ describe("Photos API Route - Multiple Band IDs", () => {
       },
     ];
 
-    (db.getPhotos as ReturnType<typeof vi.fn>).mockResolvedValue(mockPhotos);
-    (db.getPhotoCount as ReturnType<typeof vi.fn>).mockResolvedValue(2);
-    (db.getDistinctPhotographers as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getDistinctCompanies as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mockResolvedValue({
+      photos: mockPhotos,
+      total: 2,
+    });
     (db.getAvailablePhotoFilters as ReturnType<typeof vi.fn>).mockResolvedValue({
       companies: [],
       events: [],
@@ -145,21 +142,21 @@ describe("Photos API Route - Multiple Band IDs", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(db.getPhotos).toHaveBeenCalledWith(
+    expect(db.getPhotosWithCount).toHaveBeenCalledWith(
       expect.objectContaining({
         bandIds: ["band1", "band2"],
       })
     );
     // bandId should not be set when bandIds is provided
-    const callArgs = (db.getPhotos as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const callArgs = (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(callArgs.bandId).toBeUndefined();
   });
 
-  it("should pass bandIds to getPhotoCount and getAvailablePhotoFilters", async () => {
-    (db.getPhotos as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getPhotoCount as ReturnType<typeof vi.fn>).mockResolvedValue(0);
-    (db.getDistinctPhotographers as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getDistinctCompanies as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+  it("should pass bandIds to getPhotosWithCount and getAvailablePhotoFilters", async () => {
+    (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mockResolvedValue({
+      photos: [],
+      total: 0,
+    });
     (db.getAvailablePhotoFilters as ReturnType<typeof vi.fn>).mockResolvedValue({
       companies: [],
       events: [],
@@ -175,7 +172,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
 
     await GET(request);
 
-    expect(db.getPhotoCount).toHaveBeenCalledWith(
+    expect(db.getPhotosWithCount).toHaveBeenCalledWith(
       expect.objectContaining({
         bandIds: ["band1", "band2"],
       })
@@ -189,10 +186,10 @@ describe("Photos API Route - Multiple Band IDs", () => {
   });
 
   it("should handle empty bandIds parameter", async () => {
-    (db.getPhotos as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getPhotoCount as ReturnType<typeof vi.fn>).mockResolvedValue(0);
-    (db.getDistinctPhotographers as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (db.getDistinctCompanies as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mockResolvedValue({
+      photos: [],
+      total: 0,
+    });
     (db.getAvailablePhotoFilters as ReturnType<typeof vi.fn>).mockResolvedValue({
       companies: [],
       events: [],
@@ -210,7 +207,7 @@ describe("Photos API Route - Multiple Band IDs", () => {
 
     expect(response.status).toBe(200);
     // Empty bandIds should result in undefined
-    const callArgs = (db.getPhotos as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const callArgs = (db.getPhotosWithCount as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(callArgs.bandIds).toBeUndefined();
   });
 });

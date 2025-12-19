@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getPhotos,
-  getPhotoCount,
-  getDistinctPhotographers,
-  getDistinctCompanies,
+  getPhotosWithCount,
   getAvailablePhotoFilters,
   type PhotoOrderBy,
 } from "@/lib/db";
@@ -38,30 +35,43 @@ export async function GET(request: NextRequest) {
       orderParam === "random" || orderParam === "date"
         ? orderParam
         : "uploaded";
+    
+    // skipMeta=true skips fetching filter metadata (for "load more" requests)
+    const skipMeta = searchParams.get("skipMeta") === "true";
 
-    const [photos, total, photographers, companies, availableFilters] =
-      await Promise.all([
-        getPhotos({
-          eventId,
-          bandId,
-          bandIds,
-          photographer,
-          companySlug,
-          limit,
-          offset,
-          orderBy,
-        }),
-        getPhotoCount({ eventId, bandId, bandIds, photographer, companySlug }),
-        getDistinctPhotographers(),
-        getDistinctCompanies(),
-        getAvailablePhotoFilters({
-          eventId,
-          bandId,
-          bandIds,
-          photographer,
-          companySlug,
-        }),
-      ]);
+    // Use single optimized query for photos + count (eliminates duplicate WHERE clause)
+    const { photos, total } = await getPhotosWithCount({
+      eventId,
+      bandId,
+      bandIds,
+      photographer,
+      companySlug,
+      limit,
+      offset,
+      orderBy,
+    });
+
+    // Only fetch filter metadata on initial load (not "load more" requests)
+    // This reduces DB queries from 11 to 1 on subsequent page loads
+    let availableFilters = null;
+    let photographers: string[] = [];
+    let companies: { slug: string; name: string }[] = [];
+    
+    if (!skipMeta) {
+      availableFilters = await getAvailablePhotoFilters({
+        eventId,
+        bandId,
+        bandIds,
+        photographer,
+        companySlug,
+      });
+      // Extract photographers and companies from availableFilters (no separate queries needed)
+      photographers = availableFilters.photographers.map((p) => p.name);
+      companies = availableFilters.companies.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+      }));
+    }
 
     return NextResponse.json({
       photos,
