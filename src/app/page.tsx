@@ -18,7 +18,7 @@ import {
 import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
 import { Hero } from "@/components/hero";
-import { Button } from "@/components/ui";
+import { Button, ErrorBoundary, CompactErrorFallback } from "@/components/ui";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -359,112 +359,156 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Past Events Section - Wrapped in Suspense for error boundaries */}
-      <Suspense
+      {/* Past Events Section - Wrapped in Suspense + ErrorBoundary */}
+      <ErrorBoundary
+        sectionName="Past Events"
         fallback={
           <section className="py-16 bg-bg-elevated">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="flex items-center justify-between mb-10">
-                <h2 className="font-semibold text-3xl sm:text-4xl">
-                  Past Events
-                </h2>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <EventCardSkeleton key={i} />
-                ))}
-              </div>
+              <CompactErrorFallback message="Failed to load past events" />
             </div>
           </section>
         }
       >
-        {pastEventsWithWinners.length > 0 && (
-          <section className="py-16 bg-bg-elevated">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="flex items-center justify-between mb-10">
-                <h2 className="font-semibold text-3xl sm:text-4xl">
-                  Past Events
-                </h2>
+        <Suspense
+          fallback={
+            <section className="py-16 bg-bg-elevated">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-10">
+                  <h2 className="font-semibold text-3xl sm:text-4xl">
+                    Past Events
+                  </h2>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <EventCardSkeleton key={i} />
+                  ))}
+                </div>
               </div>
+            </section>
+          }
+        >
+          {pastEventsWithWinners.length > 0 && (
+            <section className="py-16 bg-bg-elevated">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-10">
+                  <h2 className="font-semibold text-3xl sm:text-4xl">
+                    Past Events
+                  </h2>
+                </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pastEventsWithWinners.map((event) => {
-                  const relativeDate = getRelativeDate(event.date);
-                  return (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      relativeDate={relativeDate}
-                      variant="past"
-                      showWinner={!!event.overallWinner}
-                      winner={event.overallWinner || undefined}
-                      bands={event.bands}
-                      heroPhoto={event.heroPhoto}
-                      visual
-                    />
-                  );
-                })}
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pastEventsWithWinners.map((event) => {
+                    const relativeDate = getRelativeDate(event.date);
+                    return (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        relativeDate={relativeDate}
+                        variant="past"
+                        showWinner={!!event.overallWinner}
+                        winner={event.overallWinner || undefined}
+                        bands={event.bands}
+                        heroPhoto={event.heroPhoto}
+                        visual
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
-      </Suspense>
+            </section>
+          )}
+        </Suspense>
+      </ErrorBoundary>
 
-      {/* Random Photo Strip - Wrapped in Suspense */}
-      <Suspense
+      {/* Random Photo Strip - Wrapped in Suspense + ErrorBoundary */}
+      <ErrorBoundary
+        sectionName="Photo Gallery"
         fallback={
           <section className="py-16 bg-bg-elevated">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="font-semibold text-3xl">From the Archives</h2>
-              </div>
-              <PhotoStripSkeleton />
+              <CompactErrorFallback message="Failed to load photos" />
             </div>
           </section>
         }
       >
-        <PhotoStrip
-          title="From the Archives"
-          viewAllLink="/photos"
-          initialPhotos={initialPhotos}
-          initialTotalCount={initialPhotoCount}
-        />
-      </Suspense>
+        <Suspense
+          fallback={
+            <section className="py-16 bg-bg-elevated">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="font-semibold text-3xl">From the Archives</h2>
+                </div>
+                <PhotoStripSkeleton />
+              </div>
+            </section>
+          }
+        >
+          <PhotoStrip
+            title="From the Archives"
+            viewAllLink="/photos"
+            initialPhotos={initialPhotos}
+            initialTotalCount={initialPhotoCount}
+          />
+        </Suspense>
+      </ErrorBoundary>
 
-      {/* Video Strip - Wrapped in Suspense */}
-      <Suspense
+      {/* Video Strip - Wrapped in Suspense + ErrorBoundary */}
+      <ErrorBoundary
+        sectionName="Videos"
         fallback={
           <section className="py-16 bg-bg">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <VideoStripSkeleton />
+              <CompactErrorFallback message="Failed to load videos" />
             </div>
           </section>
         }
       >
-        <VideoStrip
-          title="Standout Performances"
-          initialVideos={initialVideos}
-          location="home_page"
-        />
-      </Suspense>
+        <Suspense
+          fallback={
+            <section className="py-16 bg-bg">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <VideoStripSkeleton />
+              </div>
+            </section>
+          }
+        >
+          <VideoStrip
+            title="Standout Performances"
+            initialVideos={initialVideos}
+            location="home_page"
+          />
+        </Suspense>
+      </ErrorBoundary>
 
-      {/* Company Logo Marquee - Wrapped in Suspense */}
-      <Suspense
+      {/* Company Logo Marquee - Wrapped in Suspense + ErrorBoundary */}
+      <ErrorBoundary
+        sectionName="Companies"
         fallback={
           <section className="py-16 bg-bg border-t border-white/5">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="text-center mb-10">
-                <h2 className="text-sm tracking-widest uppercase text-accent mb-2">
-                  Companies Who&apos;ve Competed
-                </h2>
-              </div>
-              <CompanyLogoMarqueeSkeleton />
+              <CompactErrorFallback message="Failed to load companies" />
             </div>
           </section>
         }
       >
-        <CompanyLogoMarquee />
-      </Suspense>
+        <Suspense
+          fallback={
+            <section className="py-16 bg-bg border-t border-white/5">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <div className="text-center mb-10">
+                  <h2 className="text-sm tracking-widest uppercase text-accent mb-2">
+                    Companies Who&apos;ve Competed
+                  </h2>
+                </div>
+                <CompanyLogoMarqueeSkeleton />
+              </div>
+            </section>
+          }
+        >
+          <CompanyLogoMarquee />
+        </Suspense>
+      </ErrorBoundary>
 
       {/* CTA Section */}
       <section className="py-20 bg-bg-muted border-t border-white/5">

@@ -35,3 +35,4 @@ export {
   SocialIconLink,
   type SocialIconLinkProps,
 } from "./social-icon-link";
+export { ErrorBoundary, CompactErrorFallback } from "./error-boundary";
