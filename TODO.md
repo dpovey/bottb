@@ -1,91 +1,147 @@
-# Security Improvements TODO
+# BOTTB Website TODO
 
-## ✅ Completed (High Priority)
+## ✅ Recently Completed
 
-### API Protection System
+- [x] Security headers (CSP, HSTS, X-Frame-Options, etc.)
+- [x] AVIF image format support
+- [x] Image `sizes` attribute audit
+- [x] Photo JPEG endpoint rate limiting
+- [x] Error boundaries on home page sections
+- [x] Dynamic OG images for events/bands/results
+- [x] FAQ page with structured data
+- [x] Ticket purchase CTA on event pages
+- [x] Social share buttons on results pages
+- [x] Hero photos in sitemap for SEO
+- [x] PostHog session recording CSP fix
 
-- ✅ Created comprehensive `api-protection.ts` with higher-order functions
-- ✅ Added admin authentication wrapper (`withAdminAuth`)
-- ✅ Added user authentication wrapper (`withAuth`)
-- ✅ Added rate limiting system with configurable limits
-- ✅ Added combined protection functions (`withAdminProtection`, `withUserProtection`)
+---
 
-### Endpoint Protection
+## 🔴 High Priority
 
-- ✅ Protected `/api/votes/batch` with admin auth + rate limiting
-- ✅ Added rate limiting to all public endpoints:
-  - `/api/votes` (voting endpoint - stricter limits)
-  - `/api/events/*` (all event endpoints)
-  - `/api/bands/*` (band data endpoints)
+### Security & Infrastructure
 
-### Rate Limiting Configuration
+- [ ] **Redis-based rate limiting** - Replace in-memory with Upstash Redis for persistence across deploys
+- [ ] **Photo list rate limiting** - Add rate limit to `/api/photos` endpoint (after Redis)
+- [ ] **Signed blob URLs** - Prevent direct scraping of blob storage URLs
+- [ ] **CORS configuration** - Configure proper CORS headers in next.config.ts
+- [ ] **Dependency audit** - Run `npm audit` and fix vulnerabilities
 
-- ✅ **Voting endpoints**: 10 requests/minute (stricter)
-- ✅ **General API**: 100 requests/minute
-- ✅ **Admin endpoints**: 200 requests/minute
-- ✅ Client identification via IP + User-Agent
-- ✅ Proper HTTP headers for rate limit info
+### Performance
 
-## 🔄 Medium Priority
+- [ ] **800px medium image variant** - Add `md` variant for mobile slideshow (4x bandwidth savings)
+- [ ] **Lighthouse baseline** - Run audit and populate `lighthouse-report.json`
+- [ ] **Bundle analyzer** - Add `@next/bundle-analyzer` to track JS payload
 
-### Enhanced Security
+### Testing
 
-- [ ] **Redis-based rate limiting** - Replace in-memory store with Redis for production
-- [ ] **API key authentication** - Add API key system for server-to-server calls
-- [ ] **Request validation** - Add input validation middleware for all endpoints
-- [ ] **CORS configuration** - Proper CORS headers for production
-- [ ] **Security headers** - Add security headers (HSTS, CSP, etc.)
+- [ ] **E2E tests (Playwright)** - Critical flows: voting, admin, photo gallery
+- [ ] **Lighthouse CI** - Add to CI/CD pipeline
 
-### Monitoring & Logging
+---
 
-- [ ] **Security event logging** - Log failed auth attempts, rate limit violations
-- [ ] **Metrics collection** - Track API usage patterns and abuse attempts
-- [ ] **Alert system** - Alert on suspicious activity patterns
+## 🟡 Medium Priority
 
-## 🔮 Low Priority
+### SEO Improvements
 
-### Advanced Protection
+- [ ] **NewsArticle schema** - Add structured data for results announcements
+- [ ] **LocalBusiness schema** - Add for event venues
+- [ ] **Title consistency** - Standardize "BOTTB" vs "Battle of the Tech Bands"
+- [ ] **Alt text audit** - Review photo alt texts for keyword richness
+- [ ] **Internal linking** - Add "Related Events" / "Also Performed" sections
 
-- [ ] **IP whitelisting** - Allow specific IPs for admin functions
-- [ ] **Geolocation filtering** - Block requests from certain countries if needed
+### Features
+
+- [ ] **Search functionality** - Search across photos, songs, and bands
+- [ ] **Email notifications** - Event reminders, results announcements
+- [ ] **Band registration form** - Replace mailto with proper form
+- [ ] **Live leaderboard** - Real-time crowd scores during events
+
+### Content Pages
+
+- [ ] **Contact page** - Replace email link with proper contact form
+- [ ] **Sponsorship page** - Benefits/tiers for potential sponsors
+- [ ] **Press/Media kit** - Logos, photos, event history for journalists
+- [ ] **Winners archive** - All-time leaderboard, trophy history
+
+### Content Gaps
+
+- [ ] **About page team bios** - Add organizer information
+- [ ] **Total funds raised** - Display Youngcare fundraising total
+- [ ] **Band social links** - Add social media links to band pages
+- [ ] **Event venue details** - Parking, dress code, accessibility
+
+---
+
+## 🟢 Low Priority
+
+### UX/Design Polish
+
+- [ ] **Skeleton shimmer animations** - Richer loading states
+- [ ] **Micro-interactions** - Subtle hover/focus animations
+- [ ] **Light mode option** - For outdoor voting scenarios
+- [ ] **Form validation UX** - Inline validation with error/success states
+- [ ] **Touch target audit** - Ensure 44x44px minimum on photo grid
+
+### Advanced Features
+
+- [ ] **Photo comments/reactions** - Like/heart photos
+- [ ] **User accounts** - Save favorites, follow bands
+- [ ] **PWA/Service worker** - Offline voting support for poor connectivity
+- [ ] **Photo watermarking** - Protect photographer work
+- [ ] **Automated social posting** - Share results to channels
+
+### Technical Debt
+
+- [ ] **Zod API validation** - Add input validation middleware
+- [ ] **API documentation** - OpenAPI/Swagger docs
+- [ ] **Database connection pooling** - Configure Neon pooling limits
+- [ ] **Console error review** - Audit `suppressHydrationWarning` usage
+- [ ] **Separate PostHog projects** - Dev vs prod environments
+
+### Testing (Extended)
+
+- [ ] **Visual regression** - Chromatic/Percy for UI changes
+- [ ] **Accessibility tests** - Add axe-core to test suite
+- [ ] **API contract tests** - Frontend/backend sync validation
+
+### Security (Extended)
+
+- [ ] **Admin IP whitelisting** - Restrict admin access by IP
+- [ ] **API key authentication** - For server-to-server calls
+- [ ] **Security event logging** - Log failed auth, rate limit violations
 - [ ] **Request fingerprinting** - Enhanced client identification
-- [ ] **DDoS protection** - Integration with Cloudflare or similar
 
-### Development Experience
-
-- [ ] **API documentation** - Document all endpoints and their protection levels
-- [ ] **Testing utilities** - Helper functions for testing protected endpoints
-- [ ] **Development overrides** - Easy way to bypass protection in dev mode
-
-## 🚨 Critical Issues to Address
-
-### Immediate Actions Needed
-
-1. **Test the new protection system** - Ensure all endpoints work correctly
-2. **Update tests** - Modify existing tests to work with new protection wrappers
-3. **Production deployment** - Deploy and monitor the new rate limiting
-
-### Configuration Management
-
-- [ ] **Environment-based limits** - Different rate limits for dev/staging/prod
-- [ ] **Dynamic configuration** - Ability to adjust limits without code changes
-- [ ] **Graceful degradation** - Fallback behavior when rate limiting fails
+---
 
 ## 📊 Current Protection Status
 
-| Endpoint           | Auth Required | Rate Limited | Protection Level |
-| ------------------ | ------------- | ------------ | ---------------- |
-| `/api/votes/batch` | ✅ Admin      | ✅ 200/min   | High             |
-| `/api/votes`       | ❌ Public     | ✅ 10/min    | Medium           |
-| `/api/photos/[id]/jpeg` | ❌ Public | ✅ 20/min   | Medium (blob cost protection) |
-| `/api/events/*`    | ❌ Public     | ✅ 100/min   | Low              |
-| `/api/bands/*`     | ❌ Public     | ✅ 100/min   | Low              |
-| `/api/auth/*`      | ❌ Public     | ❌ None      | Low              |
+| Endpoint                | Auth Required | Rate Limited | Notes                    |
+| ----------------------- | ------------- | ------------ | ------------------------ |
+| `/api/votes/batch`      | ✅ Admin      | ✅ 200/min   | Batch voting             |
+| `/api/votes`            | ❌ Public     | ✅ 10/min    | Public voting            |
+| `/api/photos/[id]/jpeg` | ❌ Public     | ✅ 20/min    | Blob cost protection     |
+| `/api/events/*`         | ❌ Public     | ✅ 100/min   | Event data               |
+| `/api/bands/*`          | ❌ Public     | ✅ 100/min   | Band data                |
+| `/api/photos`           | ❌ Public     | ❌ None      | **Needs rate limiting**  |
+| `/api/auth/*`           | ❌ Public     | ❌ None      | Auth endpoints           |
 
-## 🎯 Next Steps
+---
 
-1. **Test the implementation** - Run the test suite to ensure everything works
-2. **Monitor in production** - Watch for rate limit violations and adjust limits
-3. **Add Redis** - Implement Redis-based rate limiting for better scalability
-4. **Enhance logging** - Add comprehensive security event logging
+## 📝 Notes
 
+### Image Optimization Strategy
+
+Current variants:
+- `thumbnail.webp` - 300x300 (grid)
+- `large.webp` - 2000px max (slideshow)
+
+Recommended addition:
+- `md` variant - 800px wide for mobile slideshow (biggest bandwidth win)
+
+### Rate Limiting
+
+Current implementation uses in-memory Map which:
+- Resets on deploy
+- Doesn't scale across serverless instances
+
+Upgrade path: Upstash Redis via Vercel integration
