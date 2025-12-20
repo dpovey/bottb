@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { authenticateUser } from "./password-auth";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true, // Required for Vercel deployment - trusts x-forwarded-host header
   providers: [
     Credentials({
       name: "credentials",
