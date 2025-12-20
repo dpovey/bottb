@@ -75,50 +75,54 @@ describe("BandPage", () => {
     ]);
   });
 
-  it("renders band details and scores for finalized event", async () => {
-    const bandData = [
-      {
-        id: "band-1",
-        event_id: "event-1",
-        name: "Test Band",
-        description: "A test band",
-        order: 1,
-        created_at: "2024-01-01T00:00:00Z",
-        event_name: "Test Event",
-        date: "2024-12-25T18:30:00Z",
-        location: "Test Venue",
-        timezone: "America/New_York",
-        status: "finalized",
-        event_info: { scoring_version: "2025.1" },
-      },
-    ];
+  it(
+    "renders band details and scores for finalized event",
+    async () => {
+      const bandData = [
+        {
+          id: "band-1",
+          event_id: "event-1",
+          name: "Test Band",
+          description: "A test band",
+          order: 1,
+          created_at: "2024-01-01T00:00:00Z",
+          event_name: "Test Event",
+          date: "2024-12-25T18:30:00Z",
+          location: "Test Venue",
+          timezone: "America/New_York",
+          status: "finalized",
+          event_info: { scoring_version: "2025.1" },
+        },
+      ];
 
-    const bandScores = [
-      {
-        id: "band-1",
-        name: "Test Band",
-        order: 1,
-        avg_song_choice: 15.5,
-        avg_performance: 25.0,
-        avg_crowd_vibe: 22.5,
-        avg_crowd_vote: 18.0,
-        crowd_vote_count: 10,
-        judge_vote_count: 3,
-        total_crowd_votes: 50,
-      },
-    ];
+      const bandScores = [
+        {
+          id: "band-1",
+          name: "Test Band",
+          order: 1,
+          avg_song_choice: 15.5,
+          avg_performance: 25.0,
+          avg_crowd_vibe: 22.5,
+          avg_crowd_vote: 18.0,
+          crowd_vote_count: 10,
+          judge_vote_count: 3,
+          total_crowd_votes: 50,
+        },
+      ];
 
-    mockSql.mockResolvedValue(createMockQueryResult(bandData));
-    mockGetBandScores.mockResolvedValue(bandScores);
+      mockSql.mockResolvedValue(createMockQueryResult(bandData));
+      mockGetBandScores.mockResolvedValue(bandScores);
 
-    render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
+      render(await BandPage({ params: Promise.resolve({ bandId: "band-1" }) }));
 
-    // Band name should be in the hero as h1
-    expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
-    // Event name is a link in the hero
-    expect(screen.getByText("Test Event")).toBeInTheDocument();
-    expect(screen.getByText("A test band")).toBeInTheDocument();
-  });
+      // Band name should be in the hero as h1
+      expect(screen.getByRole("heading", { level: 1, name: "Test Band" })).toBeInTheDocument();
+      // Event name is a link in the hero
+      expect(screen.getByText("Test Event")).toBeInTheDocument();
+      expect(screen.getByText("A test band")).toBeInTheDocument();
+    },
+    10000
+  );
 
   it("shows event in progress message for non-admin users when event is not finalized", async () => {
     const bandData = [

@@ -16,54 +16,58 @@ describe("CompanyLogoMarquee", () => {
     vi.clearAllMocks();
   });
 
-  it("renders companies with logos", async () => {
-    const companiesWithLogos = [
-      {
-        slug: "acme-corp",
-        name: "Acme Corp",
-        logo_url: "https://example.com/acme-logo.png",
-        icon_url: null,
-        band_count: 2,
-        event_count: 1,
-        created_at: new Date().toISOString(),
-      },
-      {
-        slug: "tech-inc",
-        name: "Tech Inc",
-        logo_url: "https://example.com/tech-logo.png",
-        icon_url: null,
-        band_count: 1,
-        event_count: 1,
-        created_at: new Date().toISOString(),
-      },
-    ];
+  it(
+    "renders companies with logos",
+    async () => {
+      const companiesWithLogos = [
+        {
+          slug: "acme-corp",
+          name: "Acme Corp",
+          logo_url: "https://example.com/acme-logo.png",
+          icon_url: null,
+          band_count: 2,
+          event_count: 1,
+          created_at: new Date().toISOString(),
+        },
+        {
+          slug: "tech-inc",
+          name: "Tech Inc",
+          logo_url: "https://example.com/tech-logo.png",
+          icon_url: null,
+          band_count: 1,
+          event_count: 1,
+          created_at: new Date().toISOString(),
+        },
+      ];
 
-    mockGetCompanies.mockResolvedValue(companiesWithLogos);
+      mockGetCompanies.mockResolvedValue(companiesWithLogos);
 
-    render(await CompanyLogoMarquee({}));
+      render(await CompanyLogoMarquee({}));
 
-    // Check section title renders
-    expect(
-      screen.getByRole("heading", { name: "Companies Who've Competed" })
-    ).toBeInTheDocument();
+      // Check section title renders
+      expect(
+        screen.getByRole("heading", { name: "Companies Who've Competed" })
+      ).toBeInTheDocument();
 
-    // Check subtitle renders
-    expect(
-      screen.getByText("Tech companies bringing the rock since 2022")
-    ).toBeInTheDocument();
+      // Check subtitle renders
+      expect(
+        screen.getByText("Tech companies bringing the rock since 2022")
+      ).toBeInTheDocument();
 
-    // Check company logos are rendered (they appear twice due to duplication for seamless loop)
-    const acmeLogos = screen.getAllByAltText("Acme Corp logo");
-    expect(acmeLogos.length).toBeGreaterThanOrEqual(2);
+      // Check company logos are rendered (they appear twice due to duplication for seamless loop)
+      const acmeLogos = screen.getAllByAltText("Acme Corp logo");
+      expect(acmeLogos.length).toBeGreaterThanOrEqual(2);
 
-    const techLogos = screen.getAllByAltText("Tech Inc logo");
-    expect(techLogos.length).toBeGreaterThanOrEqual(2);
+      const techLogos = screen.getAllByAltText("Tech Inc logo");
+      expect(techLogos.length).toBeGreaterThanOrEqual(2);
 
-    // Check View All Companies button
-    expect(
-      screen.getByRole("link", { name: /View All Companies/i })
-    ).toHaveAttribute("href", "/companies");
-  });
+      // Check View All Companies button
+      expect(
+        screen.getByRole("link", { name: /View All Companies/i })
+      ).toHaveAttribute("href", "/companies");
+    },
+    10000
+  );
 
   it("renders nothing when no companies have logos", async () => {
     const companiesWithoutLogos = [

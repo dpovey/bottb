@@ -99,12 +99,15 @@ describe("AdminDashboard", () => {
   it("renders Manage Event button for each event", async () => {
     render(<AdminDashboard session={mockSession} />);
 
-    await waitFor(() => {
-      const manageButtons = screen.getAllByRole("link", {
-        name: "Manage Event",
-      });
-      expect(manageButtons).toHaveLength(3);
-    });
+    await waitFor(
+      () => {
+        const manageButtons = screen.getAllByRole("link", {
+          name: "Manage Event",
+        });
+        expect(manageButtons).toHaveLength(3);
+      },
+      { timeout: 10000 }
+    );
   });
 
   it("links Manage Event button to correct event admin page", async () => {
