@@ -57,13 +57,13 @@ const FilterSelect = forwardRef<HTMLSelectElement, FilterSelectProps>(
             // Base styles
             "w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm",
             // Focus & hover states
-            "focus:outline-none focus:border-accent hover:border-white/20",
+            "focus:outline-hidden focus:border-accent hover:border-white/20",
             // Transitions & disabled state
             "transition-colors disabled:opacity-50",
             // Custom dropdown arrow
             "appearance-none",
             "bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')]",
-            "bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat",
+            "bg-size-[1.25em_1.25em] bg-position-[right_0.75rem_center] bg-no-repeat",
             // Use Tailwind class for select styling
             "filter-select",
             className
@@ -116,7 +116,7 @@ const FilterSearch = forwardRef<HTMLInputElement, FilterSearchProps>(
               // Placeholder
               "placeholder:text-text-dim",
               // Focus & hover states
-              "focus:outline-none focus:border-accent hover:border-white/20",
+              "focus:outline-hidden focus:border-accent hover:border-white/20",
               // Transitions & disabled state
               "transition-colors disabled:opacity-50",
               className

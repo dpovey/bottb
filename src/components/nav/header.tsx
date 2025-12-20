@@ -169,7 +169,7 @@ export function Header({
                   {sectionIndex > 0 && (
                     <div className="border-t border-white/5 pt-4" />
                   )}
-                  <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mb-2">
+                  <div className="text-[10px] tracking-widest uppercase text-text-dim mb-2">
                     {section.title}
                   </div>
                   <div className="space-y-1">

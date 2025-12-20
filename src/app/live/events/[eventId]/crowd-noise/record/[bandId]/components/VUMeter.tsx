@@ -56,12 +56,12 @@ export default function VUMeter({ rms, peakVolume }: VUMeterProps) {
   }, [rms, peakVolume]);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex-shrink-0">
+    <div className="bg-gray-800 rounded-lg p-1 sm:p-2 shrink-0">
       <h3 className="text-xs sm:text-sm font-semibold mb-1 text-gray-400">
         VU METER
       </h3>
       <div className="w-full h-8">
-        <canvas ref={canvasRef} className="w-full h-full rounded" />
+        <canvas ref={canvasRef} className="w-full h-full rounded-sm" />
       </div>
     </div>
   );

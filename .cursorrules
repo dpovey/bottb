@@ -1,12 +1,17 @@
 # Design
 
 - **Browse components first**: Visit `/design-system` in the app to see all available UI components
+- **View Storybook**: Run `npm run storybook` for isolated component development and testing
 - Refer to DESIGN.md for design tokens (colors, typography, spacing) and design principles
 - Use shared components from `src/components/ui/` wherever possible
 - When adding new reusable components:
   1. Add them to `src/components/ui/`
   2. Export from `src/components/ui/index.ts`
-  3. **Update the design system page** at `src/app/design-system/` to showcase the new component
+  3. **Create a Storybook story** in the same directory (e.g., `Button.stories.tsx`)
+  4. **Update the design system page** at `src/app/design-system/` to showcase the new component
+- When modifying existing components:
+  - **Update the corresponding Storybook story** to reflect changes
+  - Chromatic visual regression tests run on PRs to catch unintended visual changes
 - Legacy HTML mockups are in `design/*.html` for reference
 
 # Committing code

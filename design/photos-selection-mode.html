@@ -86,7 +86,7 @@
         </a>
         
         <!-- Admin badge -->
-        <span class="badge-accent px-2 py-0.5 rounded text-[10px] tracking-wider uppercase ml-3">Admin</span>
+        <span class="badge-accent px-2 py-0.5 rounded-sm text-[10px] tracking-wider uppercase ml-3">Admin</span>
         
         <!-- Nav Links (centered) -->
         <div class="hidden md:flex items-center justify-center gap-8 flex-1">
@@ -98,7 +98,7 @@
         <!-- Selection mode indicator -->
         <div class="hidden md:flex items-center gap-3">
           <span class="text-sm text-accent">Selection mode</span>
-          <button class="btn-outline px-3 py-1.5 rounded text-xs">Exit</button>
+          <button class="btn-outline px-3 py-1.5 rounded-sm text-xs">Exit</button>
         </div>
       </div>
     </div>
@@ -135,21 +135,21 @@
       <div class="flex flex-wrap gap-4">
         <div class="flex-1 min-w-[180px]">
           <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Event</label>
-          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors">
+          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors">
             <option>Sydney Tech Battle 2025</option>
             <option>All Events</option>
           </select>
         </div>
         <div class="flex-1 min-w-[180px]">
           <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Band</label>
-          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors">
+          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors">
             <option>Bandlassian</option>
             <option>All Bands</option>
           </select>
         </div>
         <div class="flex-1 min-w-[180px]">
           <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Photographer</label>
-          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent hover:border-white/20 transition-colors">
+          <select class="w-full px-4 py-3 bg-theme border border-white/10 rounded-lg text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors">
             <option>All Photographers</option>
           </select>
         </div>
@@ -240,11 +240,11 @@
         >
         <!-- Checkbox - visible on hover -->
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
         <!-- Hover overlay -->
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Bandlassian</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -260,10 +260,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Crowd Shot</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -279,10 +279,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Bandlassian</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -298,10 +298,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Bandlassian</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -317,10 +317,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Bandlassian</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -336,10 +336,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Stage Setup</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>
@@ -355,10 +355,10 @@
           class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         >
         <div class="selection-checkbox absolute top-2 left-2 opacity-0 group-hover:opacity-100">
-          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-sm">
+          <div class="w-6 h-6 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center shadow-lg backdrop-blur-xs">
           </div>
         </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <p class="text-sm font-medium text-white truncate">Crowd Energy</p>
             <p class="text-xs text-muted truncate">Sydney Tech Battle</p>

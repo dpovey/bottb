@@ -201,11 +201,11 @@ export function EventPageClient({ eventId }: { eventId: string }) {
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-bg-surface to-bg" />
+          <div className="absolute inset-0 bg-linear-to-br from-bg-surface to-bg" />
         )}
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
@@ -231,7 +231,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
 
       {/* Winner Section - For 2022.1 finalized events */}
       {show2022Winner && (
-        <section className="py-8 bg-gradient-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
+        <section className="py-8 bg-linear-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -242,7 +242,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <Link href={`/results/${eventId}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline-solid" size="sm">
                   View Results
                 </Button>
               </Link>
@@ -275,7 +275,7 @@ export function EventPageClient({ eventId }: { eventId: string }) {
               )}
               {event.status !== "upcoming" && (
                 <Link href={`/photos?event=${eventId}`}>
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline-solid" size="lg">
                     View Photos
                   </Button>
                 </Link>

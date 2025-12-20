@@ -1,6 +1,78 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: var(--font-jost), system-ui, sans-serif;
+
+  --color-bg: #0a0a0a;
+  --color-bg-elevated: #141414;
+  --color-bg-muted: #1a1a1a;
+  --color-bg-surface: #222222;
+
+  --color-text: #ffffff;
+  --color-text-muted: #a0a0a0;
+  --color-text-dim: #666666;
+
+  --color-accent: #f5a623;
+  --color-accent-light: #ffbe3d;
+
+  --color-error: #f10e34;
+  --color-error-light: #f33f5d;
+
+  --color-success: #31eb14;
+  --color-success-light: #98f58a;
+
+  --color-warning: #f5a623;
+  --color-warning-light: #ffbe3d;
+
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+
+  --color-card: #1a1a1a;
+  --color-text-muted: #a0a0a0;
+  --color-accent-hover: #ffbe3d;
+
+  --tracking-widest: 0.2em;
+
+  --shadow-glow: 0 0 20px rgba(245, 166, 35, 0.3);
+  --shadow-glow-accent: 0 0 30px rgba(245, 166, 35, 0.4);
+
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-gradient-conic: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--tw-gradient-stops)
+  );
+
+  --animate-shimmer: shimmer 2s infinite linear;
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
 
 /* ===========================================
  * Glass Effect Utilities
@@ -9,186 +81,193 @@
  * .glass: General use with border on all sides (badges, cards, modals)
  * .glass-nav: Navigation headers (bottom border only)
  * =========================================== */
-@layer utilities {
-  .glass {
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .glass-nav {
-    background: rgba(10, 10, 10, 0.8);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
+@utility glass {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
-
-/* Font selection and focus styles */
-::selection {
-  background-color: theme('colors.accent.DEFAULT');
-  color: theme('colors.text.DEFAULT');
+@utility glass-nav {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+@utility filter-select {
+  @apply bg-bg text-white;
 
-::-moz-selection {
-  background-color: theme('colors.accent.DEFAULT');
-  color: theme('colors.text.DEFAULT');
-}
-
-/* Focus styles for better accessibility */
-*:focus-visible {
-  outline: 2px solid theme('colors.accent.DEFAULT');
-  outline-offset: 2px;
-}
-
-/* Custom slider styles */
-.slider::-webkit-slider-thumb {
-  appearance: none;
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: pointer;
-  border: 2px solid #374151;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  cursor: pointer;
-  border: 2px solid #374151;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.slider::-webkit-slider-track {
-  background: transparent;
-}
-
-.slider::-moz-range-track {
-  background: transparent;
-}
-
-/* Dropdown menu item animation */
-@keyframes dropdown-item-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-dropdown-item {
-  animation: dropdown-item-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* ===========================================
- * Logo Marquee Animation
- * Infinite horizontal scroll for company logos
- * =========================================== */
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.marquee-track {
-  animation: marquee-scroll 45s linear infinite;
-}
-
-.marquee-track:hover {
-  animation-play-state: paused;
-}
-
-/* Gradient fade masks on edges */
-.marquee-container {
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 8%,
-    black 92%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 8%,
-    black 92%,
-    transparent 100%
-  );
-}
-
-/* Logo item states */
-.logo-item {
-  filter: grayscale(100%);
-  opacity: 0.5;
-  transition: all 0.3s ease;
-}
-
-.logo-item:hover {
-  filter: grayscale(0%);
-  opacity: 1;
-  transform: scale(1.08);
-}
-
-/* Logo tooltip */
-.logo-tooltip {
-  opacity: 0;
-  transform: translateX(-50%) translateY(4px);
-  transition: all 0.2s ease;
-  pointer-events: none;
-}
-
-.logo-wrapper:hover .logo-tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Reduced motion - show static grid instead */
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-  }
-  
-  .logo-item {
-    filter: grayscale(0%);
-    opacity: 0.7;
-  }
-}
-
-/* ===========================================
- * SELECT DROPDOWN OPTIONS
- * Style select and option elements using Tailwind utilities
- * Chrome applies default white background, so we need to override
- * =========================================== */
-@layer components {
-  .filter-select {
-    @apply bg-bg text-white;
-  }
-
-  .filter-select option {
+  & option {
     @apply bg-bg text-white;
     padding: 0.5rem;
   }
 
-  .filter-select option:hover,
-  .filter-select option:focus {
+  & option:hover {
     @apply bg-bg-elevated text-white;
   }
 
-  .filter-select option:checked,
-  .filter-select option[selected] {
+  & option:focus {
     @apply bg-bg-elevated text-white;
   }
 
-  .filter-select option:disabled {
+  & option:checked {
+    @apply bg-bg-elevated text-white;
+  }
+
+  & option[selected] {
+    @apply bg-bg-elevated text-white;
+  }
+
+  & option:disabled {
     @apply opacity-50 text-text-dim bg-bg;
   }
+}
+
+@layer utilities {
+  /* Font selection and focus styles */
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  ::-moz-selection {
+    background-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  /* Focus styles for better accessibility */
+  *:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Custom slider styles */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    border: 2px solid #374151;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    cursor: pointer;
+    border: 2px solid #374151;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-webkit-slider-track {
+    background: transparent;
+  }
+
+  .slider::-moz-range-track {
+    background: transparent;
+  }
+
+  /* Dropdown menu item animation */
+  @keyframes dropdown-item-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-dropdown-item {
+    animation: dropdown-item-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* ===========================================
+ * Logo Marquee Animation
+ * Infinite horizontal scroll for company logos
+ * =========================================== */
+  @keyframes marquee-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .marquee-track {
+    animation: marquee-scroll 45s linear infinite;
+  }
+
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* Gradient fade masks on edges */
+  .marquee-container {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+  }
+
+  /* Logo item states */
+  .logo-item {
+    filter: grayscale(100%);
+    opacity: 0.5;
+    transition: all 0.3s ease;
+  }
+
+  .logo-item:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  /* Logo tooltip */
+  .logo-tooltip {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  .logo-wrapper:hover .logo-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Reduced motion - show static grid instead */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track {
+      animation: none;
+    }
+
+    .logo-item {
+      filter: grayscale(0%);
+      opacity: 0.7;
+    }
+  }
+
+  /* ===========================================
+ * SELECT DROPDOWN OPTIONS
+ * Style select and option elements using Tailwind utilities
+ * Chrome applies default white background, so we need to override
+ * =========================================== */
 }
 
 /* Landscape mobile optimizations - when vertical space is limited */

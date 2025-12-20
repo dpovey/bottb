@@ -37,9 +37,9 @@ const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
           "bg-bg-elevated",
 
           // Shimmer animation (only when motion is allowed)
-          "motion-safe:bg-gradient-to-r",
+          "motion-safe:bg-linear-to-r",
           "motion-safe:from-bg-elevated motion-safe:via-bg-surface motion-safe:to-bg-elevated",
-          "motion-safe:bg-[length:200%_100%]",
+          "motion-safe:bg-size-[200%_100%]",
           "motion-safe:animate-shimmer",
 
           // Shape variants

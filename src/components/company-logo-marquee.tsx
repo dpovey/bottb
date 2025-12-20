@@ -96,7 +96,7 @@ export async function CompanyLogoMarquee({
       {showViewAll && (
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-8 text-center">
           <Link href="/companies">
-            <Button variant="outline" size="sm">
+            <Button variant="outline-solid" size="sm">
               View All Companies
               <ChevronRightIcon className="w-4 h-4 ml-2" />
             </Button>
@@ -127,7 +127,7 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
       </div>
       
       {/* Tooltip with company name */}
-      <span className="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded text-xs text-white whitespace-nowrap z-10">
+      <span className="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded-sm text-xs text-white whitespace-nowrap z-10">
         {company.name}
       </span>
     </Link>

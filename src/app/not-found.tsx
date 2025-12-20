@@ -8,8 +8,8 @@ export default function NotFound() {
     <div className="min-h-screen bg-bg flex flex-col">
       {/* Background Effect */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/5 to-cyan-900/5" />
+        <div className="absolute inset-0 bg-linear-to-b from-purple-900/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-indigo-900/5 to-cyan-900/5" />
       </div>
 
       {/* Minimal Header */}

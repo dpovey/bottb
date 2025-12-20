@@ -99,11 +99,11 @@ export default async function PhotographerPage({ params }: Props) {
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
+          <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
         )}
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 pt-32">

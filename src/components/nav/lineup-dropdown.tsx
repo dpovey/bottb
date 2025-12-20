@@ -96,8 +96,8 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
       aria-labelledby="lineup-dropdown-trigger"
       className={cn(
         "fixed left-0 right-0 z-40",
-        "bg-bg/40 backdrop-blur-[40px] saturate-150",
-        "border-b border-white/[0.08]",
+        "bg-bg/40 backdrop-blur-2xl saturate-150",
+        "border-b border-white/8",
         "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]"
       )}
       style={{ top: "64px" }} // Header height

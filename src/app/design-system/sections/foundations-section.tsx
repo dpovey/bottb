@@ -39,7 +39,7 @@ export function FoundationsSection() {
         <h2 className="font-semibold text-4xl mb-4">Design Philosophy</h2>
         <p className="text-text-muted text-lg max-w-3xl mb-8">
           Monochromatic base (white on black) with a single vibrant accent color.
-          Edit <code className="bg-bg-elevated px-2 py-1 rounded text-sm">theme.css</code> to change the accent color globally.
+          Edit <code className="bg-bg-elevated px-2 py-1 rounded-sm text-sm">theme.css</code> to change the accent color globally.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">

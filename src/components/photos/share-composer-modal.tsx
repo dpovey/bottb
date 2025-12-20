@@ -274,10 +274,10 @@ export function ShareComposerModal({
     hasResults && postResults.every((r) => r.status === "success");
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-xs"
         onClick={!isPosting ? onClose : undefined}
       />
 
@@ -405,7 +405,7 @@ export function ShareComposerModal({
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateChange(e.target.value)}
                 disabled={isPosting}
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-accent/50 hover:border-white/20 transition-colors appearance-none"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-hidden focus:border-accent/50 hover:border-white/20 transition-colors appearance-none"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
                   backgroundPosition: "right 0.75rem center",
@@ -438,7 +438,7 @@ export function ShareComposerModal({
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Bandlassian rocks Sydney Tech Battle 2025!"
                 disabled={isPosting}
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder:text-text-dim focus:outline-none focus:border-accent/50 hover:border-white/20 transition-colors disabled:opacity-50"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder:text-text-dim focus:outline-hidden focus:border-accent/50 hover:border-white/20 transition-colors disabled:opacity-50"
               />
             </div>
           )}
@@ -452,7 +452,7 @@ export function ShareComposerModal({
               <button
                 onClick={handleGenerateAI}
                 disabled={isPosting || isGeneratingAI}
-                className="border border-accent/50 text-accent hover:bg-accent/10 px-3 py-1 rounded text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                className="border border-accent/50 text-accent hover:bg-accent/10 px-3 py-1 rounded-sm text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 {isGeneratingAI ? (
                   <>
@@ -472,7 +472,7 @@ export function ShareComposerModal({
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Write your caption here..."
               disabled={isPosting}
-              className="w-full min-h-[120px] px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder:text-text-dim focus:outline-none focus:border-accent/50 hover:border-white/20 transition-colors resize-y disabled:opacity-50"
+              className="w-full min-h-[120px] px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder:text-text-dim focus:outline-hidden focus:border-accent/50 hover:border-white/20 transition-colors resize-y disabled:opacity-50"
             />
             <p className="text-xs text-text-dim mt-2">
               Tip: Use @handles for Instagram to tag photographers
@@ -487,7 +487,7 @@ export function ShareComposerModal({
                 checked={includePhotographerCredit}
                 onChange={(e) => setIncludePhotographerCredit(e.target.checked)}
                 disabled={isPosting}
-                className="w-4 h-4 rounded border-white/30 bg-bg text-accent focus:ring-accent focus:ring-offset-0"
+                className="w-4 h-4 rounded-sm border-white/30 bg-bg text-accent focus:ring-accent focus:ring-offset-0"
               />
               <span className="text-sm">Include photographer credit</span>
               {photographer && (
@@ -502,7 +502,7 @@ export function ShareComposerModal({
                 checked={includeEventLink}
                 onChange={(e) => setIncludeEventLink(e.target.checked)}
                 disabled={isPosting}
-                className="w-4 h-4 rounded border-white/30 bg-bg text-accent focus:ring-accent focus:ring-offset-0"
+                className="w-4 h-4 rounded-sm border-white/30 bg-bg text-accent focus:ring-accent focus:ring-offset-0"
               />
               <span className="text-sm">Include event link</span>
               {firstPhoto?.event_id && (

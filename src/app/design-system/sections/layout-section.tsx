@@ -19,18 +19,18 @@ export function LayoutSection() {
             </p>
 
             <div className="relative h-80 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-bg-muted to-bg" />
+              <div className="absolute inset-0 bg-linear-to-b from-purple-900/30 via-bg-muted to-bg" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center px-4">
-                  <div className="w-32 h-8 bg-bg-surface rounded mx-auto mb-4" />
+                  <div className="w-32 h-8 bg-bg-surface rounded-sm mx-auto mb-4" />
                   <h2 className="text-2xl font-semibold mb-2">Battle of the Tech Bands</h2>
                   <p className="text-text-muted text-sm mb-6">Sydney 2025 is coming</p>
                   <div className="flex gap-3 justify-center">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline-solid" size="sm">
                       Register Interest
                       <ChevronRightIcon className="w-3 h-3" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline-solid" size="sm">
                       View Events
                       <ChevronRightIcon className="w-3 h-3" />
                     </Button>
@@ -48,8 +48,8 @@ export function LayoutSection() {
             </p>
 
             <div className="relative h-80 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="flex items-start gap-4">
                   <DateBadge date={new Date("2025-10-23")} size="lg" showYear />
@@ -62,7 +62,7 @@ export function LayoutSection() {
                     <p className="text-text-muted text-sm mb-4">The Metro Theatre • Sydney, Australia</p>
                     <div className="flex gap-3">
                       <Button variant="filled" size="sm">Vote Now</Button>
-                      <Button variant="outline" size="sm">Get Tickets</Button>
+                      <Button variant="outline-solid" size="sm">Get Tickets</Button>
                     </div>
                   </div>
                 </div>
@@ -78,8 +78,8 @@ export function LayoutSection() {
             </p>
 
             <div className="relative h-64 rounded-lg overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 to-indigo-900/20" />
+              <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-bg/40" />
+              <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 to-indigo-900/20" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <p className="text-xs tracking-widest uppercase text-text-muted mb-2">Band Profile</p>
                 <h3 className="font-bold text-2xl mb-1">The Agentics</h3>
@@ -111,14 +111,14 @@ export function LayoutSection() {
               {/* Mini nav */}
               <div className="h-4 bg-bg-surface border-b border-white/5" />
               {/* Hero area */}
-              <div className="h-24 bg-gradient-to-b from-purple-900/20 to-bg flex items-center justify-center">
-                <div className="w-16 h-4 bg-bg-surface rounded" />
+              <div className="h-24 bg-linear-to-b from-purple-900/20 to-bg flex items-center justify-center">
+                <div className="w-16 h-4 bg-bg-surface rounded-sm" />
               </div>
               {/* Content */}
               <div className="p-3 border-t border-white/5">
                 <div className="max-w-[80%] mx-auto space-y-2">
-                  <div className="h-2 bg-bg-surface rounded w-full" />
-                  <div className="h-2 bg-bg-surface rounded w-3/4" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-full" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-3/4" />
                 </div>
               </div>
               {/* Footer */}
@@ -136,10 +136,10 @@ export function LayoutSection() {
               {/* Content */}
               <div className="p-3 h-32">
                 <div className="max-w-[80%] mx-auto space-y-2">
-                  <div className="h-2 bg-bg-surface rounded w-full" />
-                  <div className="h-2 bg-bg-surface rounded w-3/4" />
-                  <div className="h-2 bg-bg-surface rounded w-1/2" />
-                  <div className="h-2 bg-bg-surface rounded w-2/3" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-full" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-3/4" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-1/2" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-2/3" />
                 </div>
               </div>
               {/* Footer */}
@@ -157,9 +157,9 @@ export function LayoutSection() {
               {/* Content */}
               <div className="p-3 h-32">
                 <div className="max-w-[80%] mx-auto space-y-2">
-                  <div className="h-2 bg-bg-surface rounded w-full" />
-                  <div className="h-2 bg-bg-surface rounded w-3/4" />
-                  <div className="h-2 bg-bg-surface rounded w-1/2" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-full" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-3/4" />
+                  <div className="h-2 bg-bg-surface rounded-sm w-1/2" />
                 </div>
               </div>
               {/* Floating toolbar */}
@@ -227,7 +227,7 @@ export function LayoutSection() {
                   <code className="text-accent text-sm">max-w-7xl</code>
                   <span className="text-text-dim text-sm">1280px</span>
                 </div>
-                <div className="h-4 bg-accent/20 rounded w-full" />
+                <div className="h-4 bg-accent/20 rounded-sm w-full" />
                 <p className="text-text-dim text-xs mt-1">Standard content container</p>
               </div>
               <div>
@@ -235,7 +235,7 @@ export function LayoutSection() {
                   <code className="text-accent text-sm">max-w-4xl</code>
                   <span className="text-text-dim text-sm">896px</span>
                 </div>
-                <div className="h-4 bg-accent/20 rounded w-[70%]" />
+                <div className="h-4 bg-accent/20 rounded-sm w-[70%]" />
                 <p className="text-text-dim text-xs mt-1">Narrow content (forms, single-column)</p>
               </div>
               <div>
@@ -243,7 +243,7 @@ export function LayoutSection() {
                   <code className="text-accent text-sm">max-w-2xl</code>
                   <span className="text-text-dim text-sm">672px</span>
                 </div>
-                <div className="h-4 bg-accent/20 rounded w-[52%]" />
+                <div className="h-4 bg-accent/20 rounded-sm w-[52%]" />
                 <p className="text-text-dim text-xs mt-1">Very narrow (modals, confirmations)</p>
               </div>
             </div>

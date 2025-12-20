@@ -143,7 +143,7 @@ export function VideoAdminClient({
                 value={youtubeUrl}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=... or VIDEO_ID"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-none"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>
@@ -157,7 +157,7 @@ export function VideoAdminClient({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Video title"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-none"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>
@@ -173,7 +173,7 @@ export function VideoAdminClient({
                     setSelectedEventId(e.target.value);
                     setSelectedBandId(""); // Reset band when event changes
                   }}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-none"
+                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
                   <option value="">Select Event</option>
                   {events.map((event) => (
@@ -192,7 +192,7 @@ export function VideoAdminClient({
                   value={selectedBandId}
                   onChange={(e) => setSelectedBandId(e.target.value)}
                   disabled={!selectedEventId}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-none disabled:opacity-50"
+                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden disabled:opacity-50"
                 >
                   <option value="">Select Band</option>
                   {availableBands.map((band) => (
@@ -327,7 +327,7 @@ function VideoRow({
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               placeholder="Video title"
-              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm focus:border-accent focus:outline-none"
+              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm focus:border-accent focus:outline-hidden"
             />
             <p className="text-sm text-gray-400">{video.youtube_video_id}</p>
 
@@ -387,14 +387,14 @@ function VideoRow({
             <p className="text-sm text-gray-400">{video.youtube_video_id}</p>
             <div className="mt-2 flex gap-2 text-sm">
               {video.event_name ? (
-                <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">
+                <span className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-sm">
                   {video.event_name}
                 </span>
               ) : (
                 <span className="text-gray-500">No event</span>
               )}
               {video.band_name ? (
-                <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded">
+                <span className="bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-sm">
                   {video.band_name}
                 </span>
               ) : (

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui";
 
 export function EventCardSkeleton() {
   return (
-    <Skeleton className="aspect-[4/3] rounded-lg" />
+    <Skeleton className="aspect-4/3 rounded-lg" />
   );
 }
 

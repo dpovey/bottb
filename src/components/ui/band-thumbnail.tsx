@@ -87,7 +87,7 @@ export function BandThumbnail({
           config.container,
           "shrink-0 rounded-lg overflow-hidden bg-bg-surface transition-transform duration-200",
           "motion-safe:hover:scale-105",
-          size === "hero" && "rounded-2xl bg-bg-elevated/80 backdrop-blur border border-white/10",
+          size === "hero" && "rounded-2xl bg-bg-elevated/80 backdrop-blur-sm border border-white/10",
           className
         )}
       >
@@ -113,7 +113,7 @@ export function BandThumbnail({
         config.container,
         "shrink-0 rounded-lg overflow-hidden flex items-center justify-center",
         size === "hero" 
-          ? "rounded-2xl bg-gradient-to-br from-accent/40 to-purple-600/40 border border-white/10"
+          ? "rounded-2xl bg-linear-to-br from-accent/40 to-purple-600/40 border border-white/10"
           : "bg-bg-surface",
         className
       )}

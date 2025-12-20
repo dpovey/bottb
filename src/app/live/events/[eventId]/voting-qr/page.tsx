@@ -135,7 +135,7 @@ export default function VotingQRPage() {
               </div>
             ) : (
               <div className="bg-white p-4 rounded-xl inline-block shadow-2xl">
-                <div className="w-[300px] h-[300px] bg-gray-200 rounded flex items-center justify-center">
+                <div className="w-[300px] h-[300px] bg-gray-200 rounded-sm flex items-center justify-center">
                   <span className="text-gray-500">Loading QR Code...</span>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export default function VotingQRPage() {
             </h3>
             <div className="space-y-4">
               <div className="flex items-start">
-                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0 text-sm">
+                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 shrink-0 text-sm">
                   1
                 </span>
                 <span className="text-gray-300 text-lg">
@@ -163,7 +163,7 @@ export default function VotingQRPage() {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0 text-sm">
+                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 shrink-0 text-sm">
                   2
                 </span>
                 <span className="text-gray-300 text-lg">
@@ -171,13 +171,13 @@ export default function VotingQRPage() {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0 text-sm">
+                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 shrink-0 text-sm">
                   3
                 </span>
                 <span className="text-gray-300 text-lg">Submit your vote</span>
               </div>
               <div className="flex items-start">
-                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0 text-sm">
+                <span className="bg-slate-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 shrink-0 text-sm">
                   4
                 </span>
                 <span className="text-gray-300 text-lg">

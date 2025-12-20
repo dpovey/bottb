@@ -199,7 +199,7 @@ export function VideoCarousel({
                 
                 {/* Duration Badge */}
                 {video.duration_seconds && (
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-xs font-medium">
+                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-sm bg-black/80 text-xs font-medium">
                     {formatDuration(video.duration_seconds)}
                   </div>
                 )}

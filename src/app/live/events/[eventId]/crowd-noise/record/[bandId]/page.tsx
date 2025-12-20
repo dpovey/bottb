@@ -678,7 +678,7 @@ export default function CrowdNoiseRecordPage() {
 
           {/* Microphone Status */}
           {!isRecording && !showResults && (
-            <div className="m-16 text-center mb-2 sm:mb-4 flex-shrink-0">
+            <div className="m-16 text-center mb-2 sm:mb-4 shrink-0">
               {microphonePermission === "denied" && (
                 <div className="bg-red-600/20 border border-red-400 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3 max-w-2xl mx-auto">
                   <p className="text-red-400 text-sm sm:text-base mb-1">
@@ -788,7 +788,7 @@ export default function CrowdNoiseRecordPage() {
 
           {/* Countdown */}
           {countdown > 0 && (
-            <div className="rounded-sm  from-zinc-900 to-gray-700 bg-gradient-to-b fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300">
+            <div className="rounded-xs  from-zinc-900 to-gray-700 bg-linear-to-b fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300">
               <div className="text-center">
                 <div className="text-6xl sm:text-9xl font-bold text-white animate-pulse mb-4 sm:mb-8 drop-shadow-2xl">
                   {countdown}
@@ -815,7 +815,7 @@ export default function CrowdNoiseRecordPage() {
           {/* Recording Interface */}
           {isRecording && (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="text-center flex-shrink-0">
+              <div className="text-center shrink-0">
                 <div className="text-xl sm:text-2xl lg:text-4xl font-bold text-red-500 mb-2 sm:mb-4 lg:mb-8 animate-pulse drop-shadow-2xl">
                   🔴 RECORDING
                 </div>

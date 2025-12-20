@@ -85,7 +85,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p className="text-text-muted text-sm mb-6 max-w-md">
             We encountered an unexpected error. Please try again.
           </p>
-          <Button variant="outline" size="md" onClick={this.handleRetry}>
+          <Button variant="outline-solid" size="md" onClick={this.handleRetry}>
             Try Again
           </Button>
         </div>

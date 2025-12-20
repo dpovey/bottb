@@ -84,7 +84,7 @@ export default function Oscilloscope({
   return (
     <div className="bg-gray-800 rounded-lg p-1 sm:p-2 flex flex-col min-h-0">
       <div className="flex-1 min-h-[120px]">
-        <canvas ref={canvasRef} className="w-full h-full rounded" />
+        <canvas ref={canvasRef} className="w-full h-full rounded-sm" />
       </div>
     </div>
   );

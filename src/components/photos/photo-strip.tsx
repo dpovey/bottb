@@ -305,7 +305,7 @@ export function PhotoStrip({
               {selectedIndex > 0 && (
                 <button
                   onClick={() => setSelectedIndex(prev => Math.max(prev - 1, 0))}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Previous photo"
                 >
                   <ChevronLeftIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
@@ -316,7 +316,7 @@ export function PhotoStrip({
               {(selectedIndex < photos.length - 1 || photos.length < totalCount) && (
                 <button
                   onClick={() => setSelectedIndex(prev => Math.min(prev + 1, photos.length - 1))}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Next photo"
                 >
                   <ChevronRightIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
@@ -326,7 +326,7 @@ export function PhotoStrip({
               {/* Scrollable strip with padding for ring visibility */}
               <div
                 ref={stripRef}
-                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 focus:outline-none"
+                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 focus:outline-hidden"
                 style={{ scrollbarWidth: "thin" }}
                 tabIndex={0}
                 role="listbox"
@@ -338,7 +338,7 @@ export function PhotoStrip({
                     ref={(el) => { photoRefs.current[index] = el; }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
-                    className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-none"
+                    className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
                     aria-label={`Photo ${index + 1} of ${totalCount}`}
                     aria-selected={index === selectedIndex}
                     role="option"

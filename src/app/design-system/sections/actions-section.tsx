@@ -16,14 +16,14 @@ export function ActionsSection() {
             <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Outline (Primary Style)</h3>
             <p className="text-text-dim text-sm mb-6">The default button style. White outline on dark background.</p>
             <div className="flex flex-wrap gap-4">
-              <Button variant="outline" size="lg">
+              <Button variant="outline-solid" size="lg">
                 Register Interest
                 <ChevronRightIcon className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="md">
+              <Button variant="outline-solid" size="md">
                 View Events
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline-solid" size="sm">
                 Small
               </Button>
             </div>
@@ -102,7 +102,7 @@ export function ActionsSection() {
             <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Disabled States</h3>
             <p className="text-text-dim text-sm mb-6">All variants support disabled state.</p>
             <div className="flex flex-wrap gap-4">
-              <Button variant="outline" disabled>
+              <Button variant="outline-solid" disabled>
                 Disabled
               </Button>
               <Button variant="filled" disabled>
@@ -120,12 +120,12 @@ export function ActionsSection() {
           <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">With Icons</h3>
           <p className="text-text-dim text-sm mb-6">Icons can be placed before or after text.</p>
           <div className="flex flex-wrap gap-4 items-center">
-            <Button variant="outline" className="p-3">
+            <Button variant="outline-solid" className="p-3">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </Button>
-            <Button variant="outline">
+            <Button variant="outline-solid">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -142,13 +142,13 @@ export function ActionsSection() {
         <div className="mt-8 bg-bg-elevated rounded-lg p-6 border border-white/5">
           <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">React Component</h3>
           <p className="text-text-dim text-sm mb-4">
-            Location: <code className="bg-bg-surface px-2 py-0.5 rounded text-xs">src/components/ui/button.tsx</code>
+            Location: <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">src/components/ui/button.tsx</code>
           </p>
           <pre className="bg-bg rounded-lg p-4 text-sm overflow-x-auto">
             <code className="text-text-dim">{`import { Button } from "@/components/ui";
 
 // Variants: outline (default), filled, accent, ghost, danger
-<Button variant="outline">Click Me</Button>
+<Button variant="outline-solid">Click Me</Button>
 <Button variant="filled">Primary Action</Button>
 <Button variant="accent">Special</Button>
 <Button variant="ghost">Cancel</Button>

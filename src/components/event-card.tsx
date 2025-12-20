@@ -75,12 +75,12 @@ export function EventCard({
       <Link href={`/event/${event.id}`}>
         <div 
           className={cn(
-            "group relative rounded-lg overflow-hidden bg-bg-elevated aspect-[4/3] cursor-pointer",
+            "group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3 cursor-pointer",
             "border border-white/5 hover:border-accent/30 transition-colors duration-300"
           )}
         >
           {/* Background gradient */}
-          <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
+          <div className={cn("absolute inset-0 bg-linear-to-br", gradient)} />
           
           {/* Image if available - zooms on hover */}
           {imageUrl && (
@@ -97,7 +97,7 @@ export function EventCard({
           )}
           
           {/* Gradient overlay for content readability - lighter to show more image */}
-          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/30 to-transparent" />
           
           {/* Date Badge - Top Left */}
           <div className="absolute top-4 left-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
@@ -107,11 +107,11 @@ export function EventCard({
           {/* Status/Winner Badge - Top Right */}
           <div className="absolute top-4 right-4">
             {isActive ? (
-              <span className="bg-accent/20 border border-accent/30 text-accent rounded px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+              <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                 🎸 Live Now
               </span>
             ) : showWinner && winner ? (
-              <span className="bg-accent/20 border border-accent/30 text-accent rounded px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+              <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                 🏆 {winner.name}
               </span>
             ) : null}
@@ -192,13 +192,13 @@ export function EventCard({
                   {bands.slice(0, 3).map((band) => (
                     <span
                       key={band.id}
-                      className="bg-white/5 border border-white/10 text-text-muted text-xs px-2 py-1 rounded"
+                      className="bg-white/5 border border-white/10 text-text-muted text-xs px-2 py-1 rounded-sm"
                     >
                       {band.name}
                     </span>
                   ))}
                   {bands.length > 3 && (
-                    <span className="bg-white/5 border border-white/10 text-text-dim text-xs px-2 py-1 rounded">
+                    <span className="bg-white/5 border border-white/10 text-text-dim text-xs px-2 py-1 rounded-sm">
                       +{bands.length - 3} more
                     </span>
                   )}
@@ -209,7 +209,7 @@ export function EventCard({
             {/* Action buttons */}
             <div className="flex flex-wrap gap-3 mt-auto pt-4">
               <Link href={`/event/${event.id}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline-solid" size="sm">
                   {isPast ? "View Event" : "View Details"}
                 </Button>
               </Link>
@@ -224,7 +224,7 @@ export function EventCard({
               
               {isPast && event.status === "finalized" && (
                 <Link href={`/results/${event.id}`}>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline-solid" size="sm">
                     View Results
                   </Button>
                 </Link>
@@ -245,7 +245,7 @@ export function EventCard({
               sizes="256px"
             />
             {/* Gradient overlay to blend with card */}
-            <div className="absolute inset-0 bg-gradient-to-r from-bg-elevated to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-r from-bg-elevated to-transparent" />
           </div>
         )}
       </div>

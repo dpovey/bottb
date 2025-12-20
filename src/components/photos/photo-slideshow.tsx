@@ -845,7 +845,7 @@ export function PhotoSlideshow({
       <div className="slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
         <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
           {/* Photo Info */}
-          <div className="flex-shrink-0 min-w-0">
+          <div className="shrink-0 min-w-0">
             {currentPhoto.band_name && currentPhoto.band_id ? (
               <Link
                 href={`/band/${currentPhoto.band_id}`}
@@ -1173,7 +1173,7 @@ export function PhotoSlideshow({
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6">
           <div className="bg-bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 rounded-full bg-error/20 flex items-center justify-center shrink-0">
@@ -1226,7 +1226,7 @@ export function PhotoSlideshow({
 
       {/* Crop modal */}
       {showCropModal && currentPhoto && (
-        <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col">
+        <div className="fixed inset-0 z-60 bg-black/90 flex flex-col">
           {/* Crop Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
             <h3 className="font-semibold text-xl">Adjust Thumbnail Crop</h3>
@@ -1323,7 +1323,7 @@ export function PhotoSlideshow({
 
       {/* Hero Labels Modal */}
       {showLabelsModal && currentPhoto && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6 overflow-y-auto">
           <div className="bg-bg-elevated rounded-xl p-6 max-w-3xl w-full border border-white/10 my-auto">
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -1494,7 +1494,7 @@ export function PhotoSlideshow({
                           objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                     </div>
                   </div>
 

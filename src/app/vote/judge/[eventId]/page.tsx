@@ -327,7 +327,7 @@ export default function JudgeVotingPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter judge's name"
-              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 

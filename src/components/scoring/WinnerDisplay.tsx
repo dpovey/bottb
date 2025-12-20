@@ -53,7 +53,7 @@ export function WinnerDisplay({
   return (
     <div className="relative">
       {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 rounded-3xl blur-2xl" />
+      <div className="absolute inset-0 bg-linear-to-r from-warning/20 via-warning/10 to-warning/20 rounded-3xl blur-2xl" />
       
       <Card
         className="relative overflow-hidden bg-bg-elevated border-warning/30 p-0"
@@ -73,7 +73,7 @@ export function WinnerDisplay({
               sizes="(max-width: 768px) 100vw, 80vw"
             />
             {/* Gradient overlay - fade from left */}
-            <div className="absolute inset-0 bg-gradient-to-r from-bg-elevated via-bg-elevated/80 via-40% to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-r from-bg-elevated via-bg-elevated/80 via-40% to-transparent" />
           </div>
         )}
         

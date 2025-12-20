@@ -31,7 +31,7 @@ export function TicketCTA({
   }
 
   return (
-    <div className="bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20 rounded-2xl p-6 text-center">
+    <div className="bg-linear-to-br from-accent/10 to-accent/5 border border-accent/20 rounded-2xl p-6 text-center">
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 mb-4">
         <TicketIcon className="w-7 h-7 text-accent" />
       </div>

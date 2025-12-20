@@ -191,9 +191,9 @@ export function DisplaySection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Event Card */}
-          <div className="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-[4/3] cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
-            <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
+          <div className="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3 cursor-pointer">
+            <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
+            <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/50 to-transparent" />
 
             <div className="absolute top-4 left-4">
               <DateBadge date={new Date("2025-10-23")} size="sm" />
@@ -208,9 +208,9 @@ export function DisplaySection() {
           </div>
 
           {/* Event Card with Winner */}
-          <div className="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-[4/3] cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-900/20 via-bg-muted to-purple-900/10" />
-            <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent" />
+          <div className="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3 cursor-pointer">
+            <div className="absolute inset-0 bg-linear-to-br from-amber-900/20 via-bg-muted to-purple-900/10" />
+            <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/50 to-transparent" />
 
             <div className="absolute top-4 left-4">
               <DateBadge date={new Date("2025-03-15")} size="sm" />

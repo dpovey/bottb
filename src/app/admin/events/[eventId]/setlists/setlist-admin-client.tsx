@@ -580,7 +580,7 @@ function SongForm({
             min="1"
             value={position}
             onChange={(e) => setPosition(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-none"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
           />
         </div>
 
@@ -594,7 +594,7 @@ function SongForm({
             value={youtubeVideoId}
             onChange={(e) => setYoutubeVideoId(e.target.value)}
             placeholder="dQw4w9WgXcQ"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
           />
         </div>
       </div>
@@ -610,7 +610,7 @@ function SongForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Don't Stop Me Now"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
             required
           />
         </div>
@@ -623,7 +623,7 @@ function SongForm({
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
             placeholder="Queen"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
             required
           />
         </div>
@@ -641,7 +641,7 @@ function SongForm({
               value={transitionToTitle}
               onChange={(e) => setTransitionToTitle(e.target.value)}
               placeholder="Umbrella"
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               required={songType === "transition"}
             />
           </div>
@@ -654,7 +654,7 @@ function SongForm({
               value={transitionToArtist}
               onChange={(e) => setTransitionToArtist(e.target.value)}
               placeholder="Rihanna"
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               required={songType === "transition"}
             />
           </div>
@@ -685,7 +685,7 @@ function SongForm({
                   updateAdditionalSong(index, "title", e.target.value)
                 }
                 placeholder="Song title"
-                className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+                className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               />
               <div className="flex gap-2">
                 <input
@@ -695,7 +695,7 @@ function SongForm({
                     updateAdditionalSong(index, "artist", e.target.value)
                   }
                   placeholder="Artist"
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-none"
+                  className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
                 />
                 <button
                   type="button"

@@ -74,7 +74,7 @@ export default function LEDDisplay({
         return (
           <div
             key={i}
-            className={`${getSizeClasses()} rounded-sm transition-all duration-50 ${colorClass} ${
+            className={`${getSizeClasses()} rounded-xs transition-all duration-50 ${colorClass} ${
               isActive ? "shadow-lg" : ""
             }`}
             style={{

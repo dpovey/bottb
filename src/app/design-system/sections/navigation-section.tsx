@@ -22,7 +22,7 @@ export function NavigationSection() {
               <div className="flex items-center h-14 px-4">
                 {/* Logo */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-8 h-8 rounded bg-bg-surface" />
+                  <div className="w-8 h-8 rounded-sm bg-bg-surface" />
                   <span className="text-xs text-text-dim">Logo</span>
                 </div>
 
@@ -60,7 +60,7 @@ export function NavigationSection() {
             <div className="bg-bg/80 backdrop-blur-md rounded-lg border border-white/5">
               <div className="flex items-center h-14 px-4">
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-8 h-8 rounded bg-bg-surface" />
+                  <div className="w-8 h-8 rounded-sm bg-bg-surface" />
                 </div>
                 <div className="flex items-center justify-center gap-6 flex-1">
                   <a href="#" className="text-xs tracking-widest uppercase text-white">Events</a>
@@ -119,17 +119,17 @@ export function NavigationSection() {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-text-dim">Ancestors</span>
-                <code className="bg-bg-surface px-2 py-0.5 rounded text-xs">text-dim</code>
+                <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">text-dim</code>
               </div>
               <ChevronRightIcon className="w-3 h-3 text-text-dim" />
               <div className="flex items-center gap-2">
                 <span className="text-text-muted">Parent</span>
-                <code className="bg-bg-surface px-2 py-0.5 rounded text-xs">text-muted</code>
+                <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">text-muted</code>
               </div>
               <ChevronRightIcon className="w-3 h-3 text-text-dim" />
               <div className="flex items-center gap-2">
                 <span className="text-white">Current</span>
-                <code className="bg-bg-surface px-2 py-0.5 rounded text-xs">text-white</code>
+                <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">text-white</code>
               </div>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function NavigationSection() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                 <div>
                   <div className="flex items-start gap-3">
-                    <div className="w-16 h-16 bg-bg-surface rounded" />
+                    <div className="w-16 h-16 bg-bg-surface rounded-sm" />
                     <p className="text-text-dim text-xs mt-2">Where technology meets rock &apos;n&apos; roll.</p>
                   </div>
                 </div>
@@ -252,7 +252,7 @@ export function NavigationSection() {
             <div className="bg-bg rounded-lg p-6 border border-white/5">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 bg-bg-surface rounded opacity-60" />
+                  <div className="w-8 h-8 bg-bg-surface rounded-sm opacity-60" />
                   <span className="text-text-dim text-sm">A community charity event supporting Youngcare</span>
                 </div>
                 <div className="flex items-center gap-4">

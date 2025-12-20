@@ -100,7 +100,7 @@
 
 ### Testing (Extended)
 
-- [ ] **Visual regression** - Chromatic/Percy for UI changes
+- [x] **Visual regression** - Chromatic with Storybook (TurboSnap enabled)
 - [ ] **Accessibility tests** - Add axe-core to test suite
 - [ ] **API contract tests** - Frontend/backend sync validation
 

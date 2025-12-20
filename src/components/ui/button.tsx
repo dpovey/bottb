@@ -2,13 +2,13 @@ import { forwardRef, ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "outline" | "filled" | "accent" | "ghost" | "danger";
+  variant?: "outline-solid" | "filled" | "accent" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   asChild?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "outline", size = "md", children, ...props }, ref) => {
+  ({ className, variant = "outline-solid", size = "md", children, ...props }, ref) => {
     return (
       <button
         ref={ref}
@@ -16,7 +16,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Base styles
           "inline-flex items-center justify-center gap-2 font-medium transition-all duration-300",
           "tracking-widest uppercase disabled:opacity-50 disabled:pointer-events-none",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           
           // Micro-interactions (respects reduced motion)
           "motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
@@ -33,7 +33,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           {
             // Outline (default) - white border, transparent bg
             "border border-white/30 text-white hover:border-white/60 hover:bg-white/5":
-              variant === "outline",
+              variant === "outline-solid",
             
             // Filled - white bg, dark text
             "bg-white text-bg hover:bg-gray-200":

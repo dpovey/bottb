@@ -112,7 +112,7 @@ export function AdminSidebar() {
           />
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm">BOTTB</span>
-            <span className="bg-accent/20 text-accent px-1.5 py-0.5 rounded text-[9px] tracking-wider uppercase font-medium">
+            <span className="bg-accent/20 text-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase font-medium">
               Admin
             </span>
           </div>

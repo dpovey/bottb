@@ -294,14 +294,14 @@ export default async function HomePage() {
                 {
                   label: "View Event",
                   href: `/event/${activeEvent.id}`,
-                  variant: "outline" as const,
+                  variant: "outline-solid" as const,
                 },
               ]
             : []),
           {
             label: "View Photos",
             href: "/photos",
-            variant: "outline" as const,
+            variant: "outline-solid" as const,
           },
         ]}
       />
@@ -522,7 +522,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/about">
-              <Button variant="outline" size="lg">
+              <Button variant="outline-solid" size="lg">
                 Learn More
               </Button>
             </Link>

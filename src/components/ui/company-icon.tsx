@@ -47,7 +47,7 @@ export function CompanyIcon({
     return (
       <div
         className={cn(
-          "rounded flex items-center justify-center bg-white/10",
+          "rounded-sm flex items-center justify-center bg-white/10",
           sizeClasses[size],
           className
         )}
@@ -66,7 +66,7 @@ export function CompanyIcon({
       alt={`${companyName} logo`}
       title={companyName}
       className={cn(
-        "object-contain rounded",
+        "object-contain rounded-sm",
         sizeClasses[size],
         className
       )}

@@ -74,8 +74,8 @@ export function HeroCarousel({
         ))}
         
         {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/70 to-bg/40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-bg/40" />
+        <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
       </div>
 
       {/* Content */}

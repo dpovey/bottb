@@ -315,7 +315,7 @@ export default function CrowdVotingPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email to receive updates"
-              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-hidden focus:ring-2 focus:ring-slate-500 focus:border-transparent"
             />
             <p className="text-xs text-gray-400 mt-1">
               Providing your email is optional and helps us prevent duplicate

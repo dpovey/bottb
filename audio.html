@@ -261,7 +261,7 @@
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
                   disabled={isRecording}
-                  className="bg-gray-700 px-3 py-1 rounded w-24 text-white"
+                  className="bg-gray-700 px-3 py-1 rounded-sm w-24 text-white"
                   min="1"
                   max="60"
                 />
@@ -305,7 +305,7 @@
                   ref={vuCanvasRef}
                   width={800}
                   height={60}
-                  className="w-full rounded"
+                  className="w-full rounded-sm"
                 />
               </div>
 
@@ -315,7 +315,7 @@
                   ref={graphCanvasRef}
                   width={800}
                   height={200}
-                  className="w-full rounded"
+                  className="w-full rounded-sm"
                 />
               </div>
 
@@ -325,7 +325,7 @@
                   ref={spectrumCanvasRef}
                   width={800}
                   height={200}
-                  className="w-full rounded"
+                  className="w-full rounded-sm"
                 />
               </div>
             </div>

@@ -12,7 +12,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
         ref={ref}
         className={cn(
           // Base styles
-          "inline-flex items-center px-3 py-1 rounded text-xs font-medium tracking-wider uppercase",
+          "inline-flex items-center px-3 py-1 rounded-sm text-xs font-medium tracking-wider uppercase",
           
           // Variant styles
           {

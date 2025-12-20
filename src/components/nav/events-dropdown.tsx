@@ -118,8 +118,8 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
       aria-labelledby="events-dropdown-trigger"
       className={cn(
         "fixed left-0 right-0 z-40",
-        "bg-bg/40 backdrop-blur-[40px] saturate-150",
-        "border-b border-white/[0.08]",
+        "bg-bg/40 backdrop-blur-2xl saturate-150",
+        "border-b border-white/8",
         "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)]"
       )}
       style={{ top: "64px" }} // Header height
@@ -138,7 +138,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
             {/* Upcoming Events Column */}
             {upcomingEvents.length > 0 && (
               <div>
-                <div className="text-text-muted text-[10px] tracking-[0.2em] uppercase font-medium px-6 pb-2 pt-1">
+                <div className="text-text-muted text-[10px] tracking-widest uppercase font-medium px-6 pb-2 pt-1">
                   Upcoming Events
                 </div>
                 {upcomingEvents.map((event, index) => (
@@ -172,7 +172,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
             {/* Past Events Column */}
             {pastEvents.length > 0 && (
               <div>
-                <div className="text-text-muted text-[10px] tracking-[0.2em] uppercase font-medium px-6 pb-2 pt-1">
+                <div className="text-text-muted text-[10px] tracking-widest uppercase font-medium px-6 pb-2 pt-1">
                   Past Events
                 </div>
                 {pastEvents.map((event, index) => (

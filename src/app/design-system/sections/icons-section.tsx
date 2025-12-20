@@ -157,8 +157,8 @@ export function IconsSection() {
       <section id="icon-gallery">
         <h2 className="font-semibold text-4xl mb-8">Icon Gallery</h2>
         <p className="text-text-muted text-lg mb-8 max-w-3xl">
-          Shared icon components from <code className="bg-bg-elevated px-2 py-1 rounded text-sm">src/components/icons/</code>.
-          All icons extend <code className="bg-bg-elevated px-2 py-1 rounded text-sm">SVGProps</code> with a <code className="bg-bg-elevated px-2 py-1 rounded text-sm">size</code> prop for easy customization.
+          Shared icon components from <code className="bg-bg-elevated px-2 py-1 rounded-sm text-sm">src/components/icons/</code>.
+          All icons extend <code className="bg-bg-elevated px-2 py-1 rounded-sm text-sm">SVGProps</code> with a <code className="bg-bg-elevated px-2 py-1 rounded-sm text-sm">size</code> prop for easy customization.
         </p>
 
         <div className="space-y-8">

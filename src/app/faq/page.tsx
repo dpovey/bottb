@@ -152,7 +152,7 @@ export default function FAQPage() {
                     key={index}
                     className="group bg-bg-elevated rounded-xl border border-white/5 overflow-hidden"
                   >
-                    <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none hover:bg-white/[0.02] transition-colors">
+                    <summary className="flex items-center justify-between gap-4 p-5 cursor-pointer list-none hover:bg-white/2 transition-colors">
                       <h3 className="font-medium text-lg pr-4">
                         {item.question}
                       </h3>

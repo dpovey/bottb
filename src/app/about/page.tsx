@@ -136,7 +136,7 @@ export default async function AboutPage() {
           <h2 className="font-semibold text-2xl sm:text-3xl mb-6">
             Supporting Youngcare
           </h2>
-          <div className="bg-gradient-to-br from-accent/10 to-transparent rounded-2xl p-8 md:p-12 border border-accent/20">
+          <div className="bg-linear-to-br from-accent/10 to-transparent rounded-2xl p-8 md:p-12 border border-accent/20">
             <div className="flex flex-col sm:flex-row items-start gap-6">
               <div className="shrink-0 w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
                 <HeartIcon className="w-8 h-8 text-accent" />
@@ -293,7 +293,7 @@ export default async function AboutPage() {
         {/* Sponsor Acknowledgment */}
         <section className="mb-20">
           <div className="text-center">
-            <p className="text-xs tracking-[0.2em] uppercase text-text-dim mb-4">
+            <p className="text-xs tracking-widest uppercase text-text-dim mb-4">
               Proudly Supported By
             </p>
             <div className="inline-flex items-center justify-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
@@ -320,7 +320,7 @@ export default async function AboutPage() {
               </Button>
             </Link>
             <Link href="mailto:info@bottb.com">
-              <Button variant="outline" size="lg">
+              <Button variant="outline-solid" size="lg">
                 Register a Band
               </Button>
             </Link>

@@ -23,7 +23,7 @@ export interface HeroProps {
   actions?: {
     label: string;
     href: string;
-    variant?: "outline" | "filled" | "accent";
+    variant?: "outline-solid" | "filled" | "accent";
   }[];
   /** Height variant */
   size?: "sm" | "md" | "lg" | "full";
@@ -71,7 +71,7 @@ export function Hero({
         />
       ) : (
         // Gradient fallback
-        <div className="absolute inset-0 bg-gradient-to-br from-bg via-bg-surface to-bg" />
+        <div className="absolute inset-0 bg-linear-to-br from-bg via-bg-surface to-bg" />
       )}
 
       {/* Overlay */}
@@ -84,7 +84,7 @@ export function Hero({
       />
 
       {/* Gradient overlay at bottom for smooth transition */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-bg to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-bg to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 text-center">
@@ -102,7 +102,7 @@ export function Hero({
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             {actions.map((action, index) => (
               <Link key={index} href={action.href}>
-                <Button variant={action.variant || "outline"} size="lg">
+                <Button variant={action.variant || "outline-solid"} size="lg">
                   {action.label}
                 </Button>
               </Link>

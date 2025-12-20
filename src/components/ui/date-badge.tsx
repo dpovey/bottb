@@ -18,7 +18,7 @@ const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
         ref={ref}
         className={cn(
           // Glass effect background
-          "bg-bg/60 backdrop-blur-md rounded border border-white/5 text-center",
+          "bg-bg/60 backdrop-blur-md rounded-sm border border-white/5 text-center",
           
           // Size variants
           {

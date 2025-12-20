@@ -64,8 +64,8 @@
   <section class="relative min-h-[70vh] flex items-end pt-16">
     <!-- Background Image -->
     <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80')] bg-cover bg-center"></div>
-    <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/70 to-[var(--bg)]/40"></div>
-    <div class="absolute inset-0 bg-gradient-to-r from-purple-900/30 via-transparent to-indigo-900/20"></div>
+    <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-(--bg)/70 to-(--bg)/40"></div>
+    <div class="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-indigo-900/20"></div>
     
     <div class="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16">
       <p class="text-xs tracking-[0.3em] uppercase text-muted mb-4">Est. 2015 • Community Charity Event</p>
@@ -150,7 +150,7 @@
     <!-- About Youngcare -->
     <section class="mb-20">
       <h2 class="font-semibold text-2xl sm:text-3xl mb-6">Supporting Youngcare</h2>
-      <div class="bg-gradient-to-br from-accent/10 to-transparent rounded-2xl p-8 md:p-12 border border-accent/20">
+      <div class="bg-linear-to-br from-accent/10 to-transparent rounded-2xl p-8 md:p-12 border border-accent/20">
         <div class="flex items-start gap-6">
           <div class="shrink-0 w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
             <svg class="w-8 h-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -240,7 +240,7 @@
     <!-- Sponsor Acknowledgment -->
     <section class="mb-20">
       <div class="text-center">
-        <p class="text-xs tracking-[0.2em] uppercase text-dim mb-4">Proudly Supported By</p>
+        <p class="text-xs tracking-widest uppercase text-dim mb-4">Proudly Supported By</p>
         <div class="inline-flex items-center justify-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
           <div class="text-muted text-lg font-medium">Jumbo Interactive</div>
         </div>

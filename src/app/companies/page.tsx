@@ -152,11 +152,11 @@ function CompaniesContent() {
           {selectedCompany && (
             <div className="flex gap-3">
               <Link href={`/photos?company=${selectedCompanySlug}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline-solid" size="sm">
                   View Photos
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" onClick={clearSelection}>
+              <Button variant="outline-solid" size="sm" onClick={clearSelection}>
                 ← All Companies
               </Button>
             </div>
@@ -203,7 +203,7 @@ function CompaniesContent() {
                         </p>
                       </div>
                       <Link href={`/event/${eventGroup.event_id}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline-solid" size="sm">
                           View Event
                         </Button>
                       </Link>

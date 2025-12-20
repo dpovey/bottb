@@ -30,7 +30,7 @@ export function PhotoCard({ photo, onClick, showCompanyLogo = true }: PhotoCardP
 
       {/* Company icon badge - always visible in top right if available */}
       {showCompanyLogo && photo.company_icon_url && (
-        <div className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-xs rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
           <CompanyIcon
             iconUrl={photo.company_icon_url}
             companyName={photo.company_name || "Company"}
@@ -41,7 +41,7 @@ export function PhotoCard({ photo, onClick, showCompanyLogo = true }: PhotoCardP
       )}
 
       {/* Hover overlay with info */}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute inset-0 bg-linear-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute bottom-0 left-0 right-0 p-3">
           {photo.band_name && (
             <div className="flex items-center gap-2">

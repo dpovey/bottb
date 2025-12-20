@@ -8,6 +8,12 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     globals: true,
+    // Exclude Storybook stories from unit tests (they're tested visually via Chromatic)
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/*.stories.{ts,tsx}",
+    ],
   },
   resolve: {
     alias: {
@@ -20,4 +26,3 @@ export default defineConfig({
     "process.env": "{}",
   },
 });
-

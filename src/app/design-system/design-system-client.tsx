@@ -160,7 +160,7 @@ export function DesignSystemClient() {
   return (
     <div className="min-h-screen bg-bg">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-sm border-b border-white/5">
+      <header className="sticky top-0 z-50 bg-bg/95 backdrop-blur-xs border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           {/* Title */}
           <div className="py-6">

@@ -43,7 +43,7 @@ export function FormsSection() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
               />
             </div>
           </div>
@@ -58,7 +58,7 @@ export function FormsSection() {
               <textarea
                 placeholder="Your message..."
                 rows={4}
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20 resize-none"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20 resize-none"
               />
             </div>
           </div>
@@ -74,7 +74,7 @@ export function FormsSection() {
                 <input
                   type="text"
                   placeholder="Default state"
-                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20"
+                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
                 />
               </div>
               <div>
@@ -95,7 +95,7 @@ export function FormsSection() {
                 <input
                   type="text"
                   placeholder="Error state"
-                  className="w-full px-4 py-3 bg-bg border border-error/50 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-error"
+                  className="w-full px-4 py-3 bg-bg border border-error/50 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-error"
                 />
                 <p className="text-error text-sm mt-1">This field is required</p>
               </div>
@@ -279,7 +279,7 @@ export function FormsSection() {
           <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
             <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">React Component</h3>
             <p className="text-text-dim text-sm mb-4">
-              Location: <code className="bg-bg-surface px-2 py-0.5 rounded text-xs">src/components/ui/filter-bar.tsx</code>
+              Location: <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">src/components/ui/filter-bar.tsx</code>
             </p>
 
             <pre className="bg-bg rounded-lg p-4 text-sm overflow-x-auto">
@@ -320,7 +320,7 @@ export function FormsSection() {
               <input
                 type="text"
                 placeholder="Your name"
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
               />
             </div>
             <div>
@@ -330,7 +330,7 @@ export function FormsSection() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
               />
             </div>
             <div>
@@ -340,7 +340,7 @@ export function FormsSection() {
               <textarea
                 placeholder="Your message..."
                 rows={4}
-                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-none focus:border-white/30 hover:border-white/20 resize-none"
+                className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20 resize-none"
               />
             </div>
             <div className="flex gap-4 pt-4">

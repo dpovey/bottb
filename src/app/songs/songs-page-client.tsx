@@ -259,7 +259,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                 setSortField(field as SortField);
                 setSortDirection(dir as SortDirection);
               }}
-              className="bg-transparent border-none text-white focus:outline-none cursor-pointer"
+              className="bg-transparent border-none text-white focus:outline-hidden cursor-pointer"
             >
               <option value="title-asc">Song Name (A-Z)</option>
               <option value="title-desc">Song Name (Z-A)</option>
@@ -318,7 +318,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                     return (
                       <tr
                         key={song.id}
-                        className="hover:bg-white/[0.02] transition-colors"
+                        className="hover:bg-white/2 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <span className="font-medium">{song.title}</span>
@@ -345,7 +345,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-2 py-0.5 rounded text-xs ${typeLabel.className}`}
+                            className={`px-2 py-0.5 rounded-sm text-xs ${typeLabel.className}`}
                           >
                             {typeLabel.text}
                           </span>
@@ -383,7 +383,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                               href={`https://www.youtube.com/watch?v=${song.youtube_video_id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 rounded hover:bg-white/10 transition-colors text-text-muted hover:text-accent inline-block"
+                              className="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-text-muted hover:text-accent inline-block"
                               title="Watch video"
                             >
                               <YouTubeIcon size={20} />

@@ -6,14 +6,41 @@
 
 **Browse the interactive design system at `/design-system`** in the running app to see all available components with live examples and usage code.
 
+### Storybook
+
+For isolated component development and visual regression testing:
+
+```bash
+# Run Storybook locally
+npm run storybook
+
+# Build static Storybook site
+npm run build-storybook
+```
+
+**Storybook is deployed to GitHub Pages** on every merge to main.
+
 ### For Developers
 
 - **Finding components**: Visit `/design-system` first to see what's available
+- **Isolated development**: Run `npm run storybook` for component playground
 - **Using components**: Import from `@/components/ui` (e.g., `import { Button, Badge, Card } from "@/components/ui"`)
 - **Adding new components**: 
   1. Create component in `src/components/ui/`
   2. Export from `src/components/ui/index.ts`
-  3. Add examples to the design system at `src/app/design-system/sections/`
+  3. **Create a Storybook story** (e.g., `Button.stories.tsx`) with all variants
+  4. Add examples to the design system at `src/app/design-system/sections/`
+- **Modifying components**:
+  - Update the corresponding Storybook story to reflect changes
+  - Chromatic runs on PRs to catch unintended visual regressions
+
+### Visual Regression Testing
+
+We use **Chromatic** for automated visual regression testing:
+
+- **TurboSnap enabled**: Only changed stories are tested (saves snapshots)
+- **Runs on PRs**: Visual diffs are generated for review
+- **Skip tests**: Add `[skip chromatic]` to commit message if needed
 
 ### Design System Structure
 
@@ -24,8 +51,14 @@ src/
 │   ├── design-system-client.tsx # Main tabbed interface
 │   └── sections/               # Component category sections
 ├── components/
-│   ├── ui/                     # Reusable UI primitives
+│   ├── ui/                     # Reusable UI primitives + stories
+│   │   ├── button.tsx
+│   │   ├── Button.stories.tsx  # Storybook stories
+│   │   └── ...
 │   └── icons/                  # Icon components
+├── .storybook/                 # Storybook configuration
+│   ├── main.ts
+│   └── preview.tsx
 └── ...
 ```
 
@@ -478,20 +511,20 @@ Image background with overlay, date badge on left.
 
 ```html
 <div
-  class="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-[4/3] cursor-pointer"
+  class="group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3 cursor-pointer"
 >
   <!-- Background gradient placeholder (or image) -->
   <div
-    class="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-bg-muted to-amber-900/20"
+    class="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20"
   ></div>
   <div
-    class="absolute inset-0 bg-gradient-to-t from-bg via-bg/50 to-transparent"
+    class="absolute inset-0 bg-linear-to-t from-bg via-bg/50 to-transparent"
   ></div>
 
   <!-- Date Badge -->
   <div class="absolute top-4 left-4">
     <div
-      class="bg-bg/90 backdrop-blur-sm rounded px-2 py-1 text-center min-w-[48px]"
+      class="bg-bg/90 backdrop-blur-xs rounded-sm px-2 py-1 text-center min-w-[48px]"
     >
       <div class="text-[10px] tracking-wider uppercase text-text-muted">
         Oct
@@ -538,7 +571,7 @@ Tomorrowland-style: Month abbreviation on top, day number below.
 
 ```html
 <div
-  class="bg-bg/90 backdrop-blur-sm border border-white/10 rounded px-3 py-2 text-center min-w-[56px]"
+  class="bg-bg/90 backdrop-blur-xs border border-white/10 rounded-sm px-3 py-2 text-center min-w-[56px]"
 >
   <div class="text-[10px] tracking-wider uppercase text-text-muted">Oct</div>
   <div class="text-2xl font-semibold">23</div>
@@ -549,11 +582,11 @@ For date ranges, stack multiple badges horizontally:
 
 ```html
 <div class="flex gap-1">
-  <div class="bg-bg/90 backdrop-blur-sm rounded px-2 py-1 text-center">
+  <div class="bg-bg/90 backdrop-blur-xs rounded-sm px-2 py-1 text-center">
     <div class="text-[10px] tracking-wider uppercase text-text-muted">Jul</div>
     <div class="text-xl font-semibold">17</div>
   </div>
-  <div class="bg-bg/90 backdrop-blur-sm rounded px-2 py-1 text-center">
+  <div class="bg-bg/90 backdrop-blur-xs rounded-sm px-2 py-1 text-center">
     <div class="text-[10px] tracking-wider uppercase text-text-muted">Jul</div>
     <div class="text-xl font-semibold">19</div>
   </div>
@@ -565,21 +598,21 @@ For date ranges, stack multiple badges horizontally:
 ```html
 <!-- Status badge (outline) -->
 <span
-  class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded text-xs tracking-widest uppercase"
+  class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-widest uppercase"
 >
   Upcoming
 </span>
 
 <!-- Accent badge (for winners/live) -->
 <span
-  class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded text-xs tracking-wider uppercase"
+  class="bg-accent/20 border border-accent/30 text-accent px-3 py-1 rounded-sm text-xs tracking-wider uppercase"
 >
   🏆 Winner
 </span>
 
 <!-- Muted badge -->
 <span
-  class="bg-bg border border-white/10 text-text-muted px-3 py-1 rounded text-xs tracking-widest uppercase"
+  class="bg-bg border border-white/10 text-text-muted px-3 py-1 rounded-sm text-xs tracking-widest uppercase"
 >
   Past
 </span>
@@ -644,7 +677,7 @@ For date ranges, stack multiple badges horizontally:
       bg-bg border border-white/10 rounded-lg
       text-white placeholder-text-dim
       transition-all
-      focus:outline-none focus:border-white/30
+      focus:outline-hidden focus:border-white/30
       hover:border-white/20
     "
   />
@@ -685,11 +718,11 @@ Styled dropdown with custom arrow indicator.
       w-full px-4 py-3
       bg-bg border border-white/10 rounded-lg
       text-white text-sm
-      focus:outline-none focus:border-accent
+      focus:outline-hidden focus:border-accent
       hover:border-white/20 transition-colors
       disabled:opacity-50 appearance-none
       bg-[url('data:image/svg+xml,...')] bg-no-repeat
-      bg-[length:1.25em] bg-[right_0.75rem_center]
+      bg-size-[1.25em] bg-position-[right_0.75rem_center]
     "
   >
     <option>All Events</option>
@@ -718,7 +751,7 @@ Search input with icon and optional clear button.
         w-full pl-10 pr-10 py-3
         bg-bg border border-white/10 rounded-lg
         text-white text-sm placeholder:text-text-dim
-        focus:outline-none focus:border-accent
+        focus:outline-hidden focus:border-accent
         hover:border-white/20 transition-colors
       "
     />
@@ -1077,7 +1110,7 @@ Full-viewport hero with atmospheric background, centered text, outline CTAs.
   <div class="absolute inset-0">
     <img src="..." class="w-full h-full object-cover" />
     <div
-      class="absolute inset-0 bg-gradient-to-b from-bg/30 via-bg/60 to-bg"
+      class="absolute inset-0 bg-linear-to-b from-bg/30 via-bg/60 to-bg"
     ></div>
   </div>
 
@@ -1122,7 +1155,7 @@ Shorter hero with event details and date badge.
   <div class="absolute inset-0">
     <img src="..." class="w-full h-full object-cover" />
     <div
-      class="absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/70 to-bg"
+      class="absolute inset-0 bg-linear-to-b from-bg/40 via-bg/70 to-bg"
     ></div>
   </div>
 
@@ -1131,7 +1164,7 @@ Shorter hero with event details and date badge.
       <!-- Date Badge -->
       <div class="hidden sm:block">
         <div
-          class="bg-bg/90 backdrop-blur-sm rounded px-4 py-3 text-center min-w-[72px]"
+          class="bg-bg/90 backdrop-blur-xs rounded-sm px-4 py-3 text-center min-w-[72px]"
         >
           <div class="text-xs tracking-wider uppercase text-text-muted">
             Oct
@@ -1145,7 +1178,7 @@ Shorter hero with event details and date badge.
       <div class="flex-1">
         <div class="flex items-center gap-3 mb-4">
           <span
-            class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded text-xs tracking-widest uppercase"
+            class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-widest uppercase"
             >Upcoming</span
           >
           <span class="text-text-dim text-sm">8 Bands Competing</span>

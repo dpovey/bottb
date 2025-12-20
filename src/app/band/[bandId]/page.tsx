@@ -205,7 +205,7 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                     )}
                     {song.song_type !== "cover" && (
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider ${typeLabel.className}`}
+                        className={`px-2 py-0.5 rounded-sm text-[10px] font-medium uppercase tracking-wider ${typeLabel.className}`}
                       >
                         {typeLabel.text}
                       </span>
@@ -615,11 +615,11 @@ export default async function BandPage({
             unoptimized
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
+          <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
         )}
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 pt-32">
@@ -637,11 +637,11 @@ export default async function BandPage({
               {/* Badges */}
               {canShowScores && (isWinner || isEventWinner) && (
                 <div className="flex flex-wrap items-center gap-3 mb-4">
-                  <span className="bg-warning/20 border border-warning/30 text-warning px-3 py-1 rounded text-xs tracking-widest uppercase">
+                  <span className="bg-warning/20 border border-warning/30 text-warning px-3 py-1 rounded-sm text-xs tracking-widest uppercase">
                     🏆 Event Winner
                   </span>
                   {showDetailedBreakdown && bandRank && (
-                    <span className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded text-xs tracking-widest uppercase">
+                    <span className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-widest uppercase">
                       {bandRank === 1
                         ? "1st Place"
                         : bandRank === 2
@@ -835,7 +835,7 @@ export default async function BandPage({
       {!showDetailedBreakdown && canShowScores && isWinner && (
         <section className="py-16 bg-bg">
           <div className="max-w-4xl mx-auto px-6 lg:px-8">
-            <div className="rounded-xl p-8 text-center bg-gradient-to-r from-warning/20 via-warning/10 to-warning/20 border border-warning/30">
+            <div className="rounded-xl p-8 text-center bg-linear-to-r from-warning/20 via-warning/10 to-warning/20 border border-warning/30">
               <div className="text-5xl mb-4">🏆</div>
               <h2 className="text-3xl font-bold text-white mb-2">Champion</h2>
               <p className="text-lg text-text-muted">

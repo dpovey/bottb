@@ -195,7 +195,7 @@ export function SocialAccountsClient({
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold">LinkedIn</h3>
                   {linkedinAccount?.status === "active" && (
-                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-[10px]">
+                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
                       Connected
                     </span>
                   )}
@@ -230,7 +230,7 @@ export function SocialAccountsClient({
                   <>
                     <a
                       href="/api/admin/social/linkedin/connect"
-                      className="px-3 py-1.5 rounded text-xs border border-white/20 hover:bg-white/5 transition-colors"
+                      className="px-3 py-1.5 rounded-sm text-xs border border-white/20 hover:bg-white/5 transition-colors"
                     >
                       Reconnect
                     </a>
@@ -258,14 +258,14 @@ export function SocialAccountsClient({
           {/* Meta (Facebook + Instagram) */}
           <div className="bg-elevated rounded-xl border border-white/5 p-5">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0866FF]/20 to-[#E4405F]/20 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#0866FF]/20 to-[#E4405F]/20 flex items-center justify-center shrink-0">
                 <FacebookIcon size={24} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold">Meta (Facebook + Instagram)</h3>
                   {(facebookAccount || instagramAccount) && (
-                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-[10px]">
+                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
                       Connected
                     </span>
                   )}
@@ -309,7 +309,7 @@ export function SocialAccountsClient({
                   <>
                     <a
                       href="/api/admin/social/meta/connect"
-                      className="px-3 py-1.5 rounded text-xs border border-white/20 hover:bg-white/5 transition-colors"
+                      className="px-3 py-1.5 rounded-sm text-xs border border-white/20 hover:bg-white/5 transition-colors"
                     >
                       Reconnect
                     </a>
@@ -408,7 +408,7 @@ export function SocialAccountsClient({
                 {recentPosts.map((post) => (
                   <tr
                     key={post.id}
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                    className="border-b border-white/5 hover:bg-white/2 transition-colors"
                   >
                     <td className="px-4 py-3 text-sm text-muted">
                       {formatDate(post.created_at)}

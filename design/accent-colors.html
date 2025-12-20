@@ -96,7 +96,7 @@
         <div class="relative w-full max-w-sm">
           <!-- Dropdown Trigger -->
           <button id="dropdown-trigger" class="w-full flex items-center gap-3 px-4 py-3 bg-elevated border border-white/10 rounded-lg hover:border-white/20 transition-colors cursor-pointer">
-            <div id="selected-swatch" class="w-6 h-6 rounded shrink-0"></div>
+            <div id="selected-swatch" class="w-6 h-6 rounded-sm shrink-0"></div>
             <span id="selected-name" class="flex-1 text-left"></span>
             <span id="selected-hex" class="text-dim text-sm font-mono"></span>
             <svg class="w-5 h-5 text-muted transition-transform" id="dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,10 +139,10 @@
       <div>
         <h2 class="font-semibold text-2xl mb-6">Badges & Labels</h2>
         <div class="flex flex-wrap gap-3">
-          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">🏆 Winner</span>
-          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">Live Now</span>
-          <span class="badge-accent px-3 py-1 rounded text-xs tracking-wider uppercase">Featured</span>
-          <span class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded text-xs tracking-widest uppercase">Upcoming</span>
+          <span class="badge-accent px-3 py-1 rounded-sm text-xs tracking-wider uppercase">🏆 Winner</span>
+          <span class="badge-accent px-3 py-1 rounded-sm text-xs tracking-wider uppercase">Live Now</span>
+          <span class="badge-accent px-3 py-1 rounded-sm text-xs tracking-wider uppercase">Featured</span>
+          <span class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-widest uppercase">Upcoming</span>
         </div>
       </div>
 
@@ -161,19 +161,19 @@
         <h2 class="font-semibold text-2xl mb-6">Cards</h2>
         <div class="grid md:grid-cols-3 gap-6">
           <!-- Event Card with Winner Badge -->
-          <div class="group relative rounded-lg overflow-hidden bg-elevated aspect-[4/3] cursor-pointer card-accent-hover">
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-[var(--bg-muted)] to-amber-900/20"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/50 to-transparent"></div>
+          <div class="group relative rounded-lg overflow-hidden bg-elevated aspect-4/3 cursor-pointer card-accent-hover">
+            <div class="absolute inset-0 bg-linear-to-br from-purple-900/30 via-(--bg-muted) to-amber-900/20"></div>
+            <div class="absolute inset-0 bg-linear-to-t from-(--bg) via-(--bg)/50 to-transparent"></div>
             
             <div class="absolute top-4 left-4">
-              <div class="glass rounded px-2 py-1 text-center min-w-[48px]">
+              <div class="glass rounded-sm px-2 py-1 text-center min-w-[48px]">
                 <div class="text-[10px] tracking-wider uppercase text-muted">Oct</div>
                 <div class="text-xl font-semibold">23</div>
               </div>
             </div>
             
             <div class="absolute top-4 right-4">
-              <span class="badge-accent rounded px-3 py-1 text-xs tracking-wider uppercase">🏆 Winner</span>
+              <span class="badge-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase">🏆 Winner</span>
             </div>
             
             <div class="absolute bottom-0 left-0 right-0 p-5">
@@ -425,7 +425,7 @@
         const option = document.createElement('button');
         option.className = 'color-option w-full flex items-center gap-3 px-4 py-2 text-left';
         option.innerHTML = `
-          <div class="w-5 h-5 rounded shrink-0" style="background-color: ${color.hex}"></div>
+          <div class="w-5 h-5 rounded-sm shrink-0" style="background-color: ${color.hex}"></div>
           <span class="flex-1">${color.name}</span>
           <span class="text-dim text-xs font-mono">${color.hex}</span>
         `;

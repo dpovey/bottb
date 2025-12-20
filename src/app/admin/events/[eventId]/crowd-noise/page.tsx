@@ -487,7 +487,7 @@ export default function CrowdNoisePage() {
                       resetMeasurement();
                     }}
                     disabled={isResetting || isRecording || isSubmitting}
-                    className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded text-xs transition-colors"
+                    className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded-sm text-xs transition-colors"
                   >
                     {isResetting ? "Resetting..." : "Reset"}
                   </button>
@@ -681,7 +681,7 @@ export default function CrowdNoisePage() {
                   ref={vuCanvasRef}
                   width={800}
                   height={60}
-                  className="w-full rounded"
+                  className="w-full rounded-sm"
                 />
               </div>
 
@@ -693,7 +693,7 @@ export default function CrowdNoisePage() {
                   ref={graphCanvasRef}
                   width={800}
                   height={200}
-                  className="w-full rounded"
+                  className="w-full rounded-sm"
                 />
               </div>
             </div>
