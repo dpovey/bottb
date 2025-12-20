@@ -1133,6 +1133,33 @@ export async function getPhotosByLabel(
   }
 }
 
+/**
+ * Get all photos that have any hero label (band_hero, event_hero, global_hero, photographer_hero)
+ * Used for sitemap generation - these are curated, high-quality photos worth indexing
+ */
+export async function getAllHeroPhotos(): Promise<Photo[]> {
+  try {
+    // PostgreSQL array literal format for the overlap operator
+    const heroLabelsLiteral = `{${PHOTO_LABELS.BAND_HERO},${PHOTO_LABELS.EVENT_HERO},${PHOTO_LABELS.GLOBAL_HERO},${PHOTO_LABELS.PHOTOGRAPHER_HERO}}`;
+
+    const { rows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, 
+             b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE p.labels && ${heroLabelsLiteral}::text[]
+      ORDER BY p.uploaded_at DESC
+    `;
+    return rows;
+  } catch (error) {
+    console.error("Error fetching hero photos:", error);
+    throw error;
+  }
+}
+
 export async function updateHeroFocalPoint(
   photoId: string,
   focalPoint: HeroFocalPoint

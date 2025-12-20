@@ -3,6 +3,7 @@ import {
   getEvents,
   getBandsForEvent,
   getPhotographers,
+  getAllHeroPhotos,
 } from "@/lib/db";
 import { getBaseUrl } from "@/lib/seo";
 
@@ -88,24 +89,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error("Error fetching photographers:", error);
     }
 
-    // Get recent photos (limit to last 1000 for sitemap size)
-    // Note: Individual photo pages redirect to /photos?photo=id, so we don't need to include them
-    // But if we want to include them, we can uncomment this:
-    /*
+    // Get hero photos - curated, high-quality photos worth indexing
+    // These have proper OG metadata at /photo/[id] and redirect to gallery for UX
     try {
-      const recentPhotos = await getPhotos({ limit: 1000, orderBy: "date" });
-      for (const photo of recentPhotos) {
+      const heroPhotos = await getAllHeroPhotos();
+      for (const photo of heroPhotos) {
         sitemapEntries.push({
           url: `${baseUrl}/photo/${photo.id}`,
           lastModified: photo.uploaded_at ? new Date(photo.uploaded_at) : new Date(),
           changeFrequency: "monthly",
-          priority: 0.5,
+          priority: 0.6, // Higher than regular photos since these are curated
         });
       }
     } catch (error) {
-      console.error("Error fetching photos:", error);
+      console.error("Error fetching hero photos:", error);
     }
-    */
   } catch (error) {
     console.error("Error generating sitemap:", error);
   }
