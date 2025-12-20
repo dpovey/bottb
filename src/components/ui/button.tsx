@@ -18,6 +18,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "tracking-widest uppercase disabled:opacity-50 disabled:pointer-events-none",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
           
+          // Micro-interactions (respects reduced motion)
+          "motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
+          "motion-safe:hover:-translate-y-0.5",
+          
           // Size variants
           {
             "text-xs px-4 py-2 rounded-full": size === "sm",

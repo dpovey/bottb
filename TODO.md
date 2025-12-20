@@ -13,6 +13,8 @@
 - [x] Social share buttons on results pages
 - [x] Hero photos in sitemap for SEO
 - [x] PostHog session recording CSP fix
+- [x] Skeleton shimmer animations (with reduced-motion support)
+- [x] Micro-interactions on hover/focus (Button, Card components)
 
 ---
 
@@ -76,8 +78,6 @@
 
 ### UX/Design Polish
 
-- [ ] **Skeleton shimmer animations** - Richer loading states
-- [ ] **Micro-interactions** - Subtle hover/focus animations
 - [ ] **Light mode option** - For outdoor voting scenarios
 - [ ] **Form validation UX** - Inline validation with error/success states
 - [ ] **Touch target audit** - Ensure 44x44px minimum on photo grid

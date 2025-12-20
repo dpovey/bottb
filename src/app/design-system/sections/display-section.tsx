@@ -1,6 +1,15 @@
 "use client";
 
-import { Badge, Card, CardContent, DateBadge, NumberedIndicator } from "@/components/ui";
+import {
+  Badge,
+  Card,
+  CardContent,
+  DateBadge,
+  NumberedIndicator,
+  Skeleton,
+  SkeletonText,
+  SkeletonCard,
+} from "@/components/ui";
 
 export function DisplaySection() {
   return (
@@ -255,6 +264,96 @@ export function DisplaySection() {
               <p className="text-xl font-medium">&quot;Where tech goes loud.&quot;</p>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      {/* Skeletons */}
+      <section id="skeletons">
+        <h2 className="font-semibold text-4xl mb-8">Skeletons</h2>
+        <p className="text-text-muted mb-6">
+          Loading placeholders with shimmer animation. Respects{" "}
+          <code className="text-accent">prefers-reduced-motion</code> for accessibility.
+        </p>
+
+        <div className="space-y-8">
+          {/* Variants */}
+          <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Shape Variants
+            </h3>
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="text-center">
+                <Skeleton className="h-24 w-32 mb-2" />
+                <p className="text-xs text-text-dim">Rectangle</p>
+              </div>
+              <div className="text-center">
+                <Skeleton variant="circle" className="h-16 w-16 mb-2" />
+                <p className="text-xs text-text-dim">Circle</p>
+              </div>
+              <div className="text-center space-y-2">
+                <Skeleton variant="text" className="h-4 w-32" />
+                <Skeleton variant="text" className="h-4 w-24" />
+                <p className="text-xs text-text-dim mt-2">Text Lines</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Composed Skeletons */}
+          <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Composed Skeletons
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-xs text-text-dim mb-3">SkeletonText</p>
+                <SkeletonText lines={3} />
+              </div>
+              <div>
+                <p className="text-xs text-text-dim mb-3">SkeletonCard</p>
+                <SkeletonCard />
+              </div>
+            </div>
+          </div>
+
+          {/* Photo Grid Example */}
+          <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Photo Grid Loading
+            </h3>
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square" />
+              ))}
+            </div>
+          </div>
+
+          {/* Accessibility Note */}
+          <div className="bg-info/10 border border-info/20 rounded-lg p-4 text-info">
+            <p className="font-medium">Accessibility Note</p>
+            <p className="text-sm opacity-80">
+              When <code className="text-info-light">prefers-reduced-motion: reduce</code> is enabled,
+              the shimmer animation is disabled and a static gray placeholder is shown instead.
+            </p>
+          </div>
+
+          {/* Usage Code */}
+          <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              React Component
+            </h3>
+            <pre className="bg-bg rounded-lg p-4 text-sm overflow-x-auto">
+              <code className="text-text-dim">{`import { Skeleton, SkeletonText, SkeletonCard } from "@/components/ui";
+
+// Basic shapes
+<Skeleton className="h-8 w-32" />
+<Skeleton variant="circle" className="h-12 w-12" />
+<Skeleton variant="text" className="h-4 w-full" />
+
+// Composed components
+<SkeletonText lines={3} />
+<SkeletonCard />`}</code>
+            </pre>
+          </div>
         </div>
       </section>
     </div>

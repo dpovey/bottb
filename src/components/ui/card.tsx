@@ -13,7 +13,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           // Base styles
-          "rounded-xl border transition-colors duration-300",
+          "rounded-xl border transition-all duration-300",
           
           // Variant styles
           {
@@ -23,8 +23,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
             // Elevated - slightly more prominent
             "bg-bg-surface border-white/10": variant === "elevated",
             
-            // Interactive - hover state
-            "bg-bg-elevated border-white/5 hover:border-white/10 cursor-pointer":
+            // Interactive - hover state with micro-interactions
+            "bg-bg-elevated border-white/5 hover:border-white/10 cursor-pointer hover:shadow-lg motion-safe:hover:scale-[1.01] motion-safe:hover:-translate-y-1":
               variant === "interactive",
           },
           

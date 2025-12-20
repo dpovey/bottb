@@ -66,6 +66,15 @@ module.exports = {
       borderColor: {
         DEFAULT: 'rgba(255, 255, 255, 0.1)',
       },
+      animation: {
+        'shimmer': 'shimmer 2s infinite linear',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
     },
   },
   plugins: [],

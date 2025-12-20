@@ -40,6 +40,7 @@ const SIDEBAR_SECTIONS: Record<TabId, { id: string; label: string }[]> = {
     { id: "date-badges", label: "Date Badges" },
     { id: "numbered-indicators", label: "Numbered Indicators" },
     { id: "cards", label: "Cards" },
+    { id: "skeletons", label: "Skeletons" },
   ],
   forms: [
     { id: "form-elements", label: "Form Elements" },

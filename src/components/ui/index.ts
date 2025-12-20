@@ -37,3 +37,9 @@ export {
 } from "./social-icon-link";
 export { ErrorBoundary, CompactErrorFallback } from "./error-boundary";
 export { TicketCTA } from "./ticket-cta";
+export {
+  Skeleton,
+  SkeletonText,
+  SkeletonCard,
+  type SkeletonProps,
+} from "./skeleton";

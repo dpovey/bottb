@@ -2,6 +2,7 @@
 
 import { Photo } from "@/lib/db";
 import { PhotoIcon } from "@/components/icons";
+import { Skeleton } from "@/components/ui";
 import { PhotoCard } from "./photo-card";
 
 export type GridSize = "xs" | "sm" | "md" | "lg";
@@ -29,10 +30,7 @@ export function PhotoGrid({ photos, onPhotoClick, loading, size = "md", showComp
     return (
       <div className={`grid ${gridClass}`}>
         {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-lg bg-bg-elevated animate-pulse"
-          />
+          <Skeleton key={i} className="aspect-square" />
         ))}
       </div>
     );

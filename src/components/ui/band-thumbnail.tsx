@@ -85,7 +85,8 @@ export function BandThumbnail({
       <div
         className={cn(
           config.container,
-          "shrink-0 rounded-lg overflow-hidden bg-bg-surface transition-transform duration-200 hover:scale-105",
+          "shrink-0 rounded-lg overflow-hidden bg-bg-surface transition-transform duration-200",
+          "motion-safe:hover:scale-105",
           size === "hero" && "rounded-2xl bg-bg-elevated/80 backdrop-blur border border-white/10",
           className
         )}
