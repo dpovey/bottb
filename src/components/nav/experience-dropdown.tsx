@@ -3,15 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useFeatureFlagPayload, useFeatureFlagVariantKey } from "posthog-js/react";
 import { cn } from "@/lib/utils";
 import { trackNavClick } from "@/lib/analytics";
 import { PhotoIcon, PlayCircleIcon, CameraIcon, ChevronDownIcon } from "@/components/icons";
-import {
-  FEATURE_FLAGS,
-  DEFAULT_NAV_MEDIA_LABEL,
-  type NavMediaLabelPayload,
-} from "@/lib/feature-flags";
 
 interface ExperienceDropdownProps {
   /** Additional className for the trigger button */
@@ -45,17 +39,7 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Get feature flag variant and payload from PostHog
-  const variant = useFeatureFlagVariantKey(FEATURE_FLAGS.NAV_MEDIA_LABEL);
-  const payload = useFeatureFlagPayload(FEATURE_FLAGS.NAV_MEDIA_LABEL) as NavMediaLabelPayload | undefined;
-  
-  // TODO: Remove hydration workaround when nav-media-label-experiment is cleaned up.
-  // Use the label from payload, but only after hydration to avoid mismatch.
-  // Server and initial client render always use the default, then we update
-  // to the experiment value after mounting.
-  const navLabel = mounted ? (payload?.label ?? DEFAULT_NAV_MEDIA_LABEL) : DEFAULT_NAV_MEDIA_LABEL;
-
-  // Track if component is mounted for portal and feature flag hydration
+  // Track if component is mounted for portal
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -92,8 +76,7 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
   const handleLinkClick = (label: string) => {
     trackNavClick({
       nav_item: label.toLowerCase(),
-      nav_section: navLabel.toLowerCase(),
-      variant: variant as string | undefined,
+      nav_section: "gallery",
       location: "header",
     });
     setIsOpen(false);
@@ -160,21 +143,8 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
           className
         )}
       >
-        {/* TODO: Remove opacity fade when nav-media-label-experiment is cleaned up */}
-        <span
-          className={cn(
-            "transition-opacity duration-50",
-            mounted ? "opacity-100" : "opacity-0"
-          )}
-        >
-          {navLabel}
-        </span>
-        <ChevronDownIcon
-          className={cn(
-            "w-4 h-4 transition-transform duration-300",
-            mounted ? "opacity-100" : "opacity-0"
-          )}
-        />
+        Gallery
+        <ChevronDownIcon className="w-4 h-4 transition-transform duration-300" />
         
         {/* Accent underline indicator */}
         <span

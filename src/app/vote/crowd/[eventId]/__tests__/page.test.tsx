@@ -10,9 +10,6 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ eventId: "test-event-id" }),
 }));
 
-// Mock fetch
-global.fetch = vi.fn();
-
 // Mock the user context functions
 vi.mock("@/lib/user-context-client", () => ({
   getClientUserContext: vi.fn(() => ({
@@ -32,30 +29,9 @@ vi.mock("@/lib/user-context-client", () => ({
   ),
 }));
 
-const mockFetch = fetch as ReturnType<typeof vi.fn>;
-
 describe("CrowdVotingPage", () => {
-  const mockBands = [
-    {
-      id: "band-1",
-      name: "Test Band 1",
-      description: "A test band",
-      order: 1,
-    },
-    {
-      id: "band-2",
-      name: "Test Band 2",
-      description: "Another test band",
-      order: 2,
-    },
-  ];
-
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockBands,
-    } as Response);
   });
 
   it("renders crowd voting form", async () => {

@@ -37,7 +37,7 @@ const mobileMenuSections = [
     ],
   },
   {
-    title: "Media",
+    title: "Gallery",
     links: [
       { href: "/photos", label: "Photos" },
       { href: "/videos", label: "Videos" },
@@ -123,7 +123,7 @@ export function Header({
                 {/* Lineup Dropdown */}
                 <LineupDropdown />
 
-                {/* Experience/Gallery Dropdown (A/B tested label) */}
+                {/* Gallery Dropdown */}
                 <ExperienceDropdown />
 
                 {/* About link */}
