@@ -6,6 +6,7 @@ import { Photo } from "@/lib/db";
 import { PhotoSlideshow } from "./photo-slideshow";
 import { trackPhotoClick } from "@/lib/analytics";
 import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon } from "@/components/icons";
+import { Skeleton } from "@/components/ui";
 
 interface PhotoStripProps {
   /** Filter by event ID */
@@ -292,9 +293,9 @@ export function PhotoStrip({
             // Loading skeleton
             <div className="flex gap-4 overflow-hidden px-2 py-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
+                <Skeleton
                   key={i}
-                  className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg animate-pulse"
+                  className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0"
                 />
               ))}
             </div>

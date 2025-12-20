@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { PublicLayout } from "@/components/layouts";
 import { Video } from "@/lib/db";
-import { CompanyIcon, FilterSelect } from "@/components/ui";
+import { CompanyIcon, FilterSelect, Skeleton } from "@/components/ui";
 import { CloseIcon, PlayIcon } from "@/components/icons";
 import { trackVideoClick } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
@@ -239,10 +239,7 @@ export function VideosContent({
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="aspect-video bg-bg-elevated rounded-lg animate-pulse"
-              />
+              <Skeleton key={i} className="aspect-video" />
             ))}
           </div>
         ) : videos.length === 0 ? (

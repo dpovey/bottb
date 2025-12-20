@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PhotosContent } from "./photos-content";
 import { PublicLayout } from "@/components/layouts";
+import { Skeleton } from "@/components/ui";
 import { getBaseUrl } from "@/lib/seo";
 
 // Loading fallback for Suspense - shows skeleton grid for better perceived performance
@@ -21,10 +22,7 @@ function PhotosLoading() {
         {/* Skeleton grid matching default grid size (md) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-8">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className="aspect-square rounded-lg bg-bg-elevated animate-pulse"
-            />
+            <Skeleton key={i} className="aspect-square" />
           ))}
         </div>
       </main>

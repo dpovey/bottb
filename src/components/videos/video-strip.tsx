@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Video } from "@/lib/db";
 import { VideoCarousel } from "@/components/video-carousel";
+import { Skeleton } from "@/components/ui";
 
 interface VideoStripProps {
   /** Filter by event ID */
@@ -83,14 +84,13 @@ export function VideoStrip({
           // Loading skeleton - video aspect ratio (16:9)
           <>
             <div className="flex items-center justify-between mb-6">
-              <div className="h-8 w-48 bg-bg-elevated rounded animate-pulse" />
+              <Skeleton className="h-8 w-48" />
             </div>
             <div className="flex gap-4 overflow-hidden">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div
+                <Skeleton
                   key={i}
-                  className="w-[280px] sm:w-[320px] shrink-0 rounded-lg bg-bg-elevated animate-pulse"
-                  style={{ aspectRatio: "16/9" }}
+                  className="w-[280px] sm:w-[320px] shrink-0 aspect-video"
                 />
               ))}
             </div>
