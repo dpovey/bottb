@@ -408,13 +408,18 @@ export function PhotoSlideshow({
     showShareModal,
   ]);
 
-  // Scroll wheel navigation (scroll up/left = previous, scroll down/right = next)
+  // Scroll wheel navigation with momentum handling
+  // Accumulate scroll delta and only trigger navigation when threshold is crossed
+  const accumulatedDelta = useRef(0);
   const lastScrollTime = useRef(0);
-  const SCROLL_DEBOUNCE_MS = 150; // Minimum time between scroll navigations
+  const isNavigating = useRef(false);
+  const SCROLL_THRESHOLD = 80; // Accumulated delta needed to trigger navigation
+  const NAVIGATION_COOLDOWN_MS = 300; // Cooldown after navigation to prevent rapid switching
+  const SCROLL_DECAY_MS = 150; // Time after which accumulated delta resets
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return; // Don't navigate while modals are open
+      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return;
 
       // Check if the scroll is happening over the thumbnail strip - if so, let it scroll normally
       const target = e.target as HTMLElement;
@@ -423,22 +428,48 @@ export function PhotoSlideshow({
       // Prevent default scrolling behavior on the slideshow
       e.preventDefault();
 
-      // Use deltaY for vertical scroll, deltaX for horizontal scroll (trackpad)
-      const delta =
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-
-      // Ignore very small scroll movements
-      if (Math.abs(delta) < 10) return;
-
-      // Debounce rapid scroll events
+      // Still in cooldown after a navigation
       const now = Date.now();
-      if (now - lastScrollTime.current < SCROLL_DEBOUNCE_MS) return;
+      if (isNavigating.current && now - lastScrollTime.current < NAVIGATION_COOLDOWN_MS) {
+        return;
+      }
+      isNavigating.current = false;
+
+      // Reset accumulated delta if too much time has passed (momentum ended)
+      if (now - lastScrollTime.current > SCROLL_DECAY_MS) {
+        accumulatedDelta.current = 0;
+      }
       lastScrollTime.current = now;
 
-      if (delta > 0) {
-        goToNext();
-      } else {
-        goToPrevious();
+      // Use deltaY for vertical scroll, deltaX for horizontal scroll (trackpad)
+      // Prioritize horizontal scroll for photo navigation
+      const delta =
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+
+      // Ignore very small scroll movements (noise)
+      if (Math.abs(delta) < 5) return;
+
+      // If changing direction, reset accumulator to prevent fighting
+      if (accumulatedDelta.current !== 0 && 
+          Math.sign(delta) !== Math.sign(accumulatedDelta.current)) {
+        accumulatedDelta.current = 0;
+      }
+
+      // Accumulate the scroll delta
+      accumulatedDelta.current += delta;
+
+      // Check if we've crossed the threshold for navigation
+      if (Math.abs(accumulatedDelta.current) >= SCROLL_THRESHOLD) {
+        const direction = accumulatedDelta.current > 0 ? 1 : -1;
+        accumulatedDelta.current = 0; // Reset after navigation
+        isNavigating.current = true;
+        lastScrollTime.current = now;
+
+        if (direction > 0) {
+          goToNext();
+        } else {
+          goToPrevious();
+        }
       }
     };
 
