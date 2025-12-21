@@ -26,10 +26,49 @@ export function EventJsonLd({
   const eventDate = new Date(event.date)
   const startDate = eventDate.toISOString()
 
-  // Build end date (estimate based on typical event duration)
-  const endDate = new Date(
-    eventDate.getTime() + EVENT_DURATION_HOURS * 60 * 60 * 1000
-  ).toISOString()
+  // Build end date - set to 11:59 PM local time on the day of the event
+  // This is best practice for concert/show events as it represents when the event day ends
+  const tz = event.timezone || 'UTC'
+
+  // Get the date in the event's timezone (YYYY-MM-DD format)
+  const localDateStr = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: tz,
+  }).format(eventDate)
+
+  // Calculate timezone offset by comparing UTC midnight with timezone midnight
+  // Create a date at midnight UTC on the local date
+  const midnightUtc = new Date(`${localDateStr}T00:00:00Z`)
+
+  // See what time midnight UTC appears as in the timezone
+  const midnightInTz = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(midnightUtc)
+
+  const [offsetHours] = midnightInTz.split(':').map(Number)
+
+  // 23:59:59 in timezone = (23 - offsetHours):59:59 UTC on the same date
+  // Handle day rollover if needed
+  let utcHour = 23 - offsetHours
+  let endDateStr = localDateStr
+
+  if (utcHour < 0) {
+    // Previous day
+    utcHour += 24
+    const prevDay = new Date(midnightUtc)
+    prevDay.setUTCDate(prevDay.getUTCDate() - 1)
+    endDateStr = prevDay.toISOString().split('T')[0]
+  } else if (utcHour >= 24) {
+    // Next day
+    utcHour -= 24
+    const nextDay = new Date(midnightUtc)
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1)
+    endDateStr = nextDay.toISOString().split('T')[0]
+  }
+
+  const endDate = `${endDateStr}T${String(utcHour).padStart(2, '0')}:59:59.000Z`
 
   // Determine city and country from event name/location for better address data
   const isBrisbane = event.name.toLowerCase().includes('brisbane')
@@ -69,17 +108,20 @@ export function EventJsonLd({
     event.image_url ||
     DEFAULT_EVENT_IMAGE
 
-  // Build offers (ticket information)
+  // Build offers (ticket information) - only for upcoming/voting events
+  // For finalized events, don't include offers since the event has already happened
   const ticketUrl = eventInfo?.ticket_url
-  const offers = {
-    '@type': 'Offer',
-    url: ticketUrl || `${baseUrl}/event/${event.id}`,
-    availability:
-      event.status === 'upcoming'
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/SoldOut',
-    validFrom: new Date(event.created_at).toISOString(),
-  }
+  const offers =
+    event.status !== 'finalized'
+      ? {
+          '@type': 'Offer',
+          url: ticketUrl || `${baseUrl}/event/${event.id}`,
+          availability: 'https://schema.org/InStock',
+          validFrom: new Date(event.created_at).toISOString(),
+          price: '0',
+          priceCurrency: 'AUD',
+        }
+      : undefined
 
   // Determine event status
   const eventStatus =
@@ -118,7 +160,7 @@ export function EventJsonLd({
     url: `${baseUrl}/event/${event.id}`,
     eventStatus,
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    offers,
+    ...(offers && { offers }),
   }
 
   // Use a regular script tag per Next.js docs recommendation
