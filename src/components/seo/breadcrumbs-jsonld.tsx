@@ -1,4 +1,3 @@
-import Script from 'next/script'
 import { getBaseUrl } from '@/lib/seo'
 
 interface Breadcrumb {
@@ -43,11 +42,12 @@ export function BreadcrumbsJsonLd({ breadcrumbs, id }: BreadcrumbsJsonLdProps) {
       .replace(/\s+/g, '-')}`
 
   return (
-    <Script
+    <script
       id={scriptId}
       type="application/ld+json"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(schema).replace(/</g, '\\u003c'),
+      }}
     />
   )
 }

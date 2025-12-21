@@ -1,4 +1,3 @@
-import Script from 'next/script'
 import { Band } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -58,11 +57,12 @@ export function MusicGroupJsonLd({
   }
 
   return (
-    <Script
+    <script
       id={`music-group-jsonld-${band.id}`}
       type="application/ld+json"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(schema).replace(/</g, '\\u003c'),
+      }}
     />
   )
 }

@@ -1,4 +1,3 @@
-import Script from 'next/script'
 import { Photo } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -54,11 +53,12 @@ export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
   }
 
   return (
-    <Script
+    <script
       id={`image-object-jsonld-${photo.id}`}
       type="application/ld+json"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(schema).replace(/</g, '\\u003c'),
+      }}
     />
   )
 }

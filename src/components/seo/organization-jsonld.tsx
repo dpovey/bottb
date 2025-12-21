@@ -1,4 +1,3 @@
-import Script from 'next/script'
 import { getBaseUrl } from '@/lib/seo'
 import { getSocialLinks } from '@/lib/social-links'
 
@@ -20,7 +19,7 @@ export function OrganizationJsonLd() {
     name: 'Battle of the Tech Bands',
     alternateName: 'BOTTB',
     url: baseUrl,
-    logo: `${baseUrl}/images/logos/bottb-horizontal.png`,
+    logo: `${baseUrl}/images/logos/bottb-dark-square.png`,
     description:
       "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
     ...(socialProfiles.length > 0 && {
@@ -33,12 +32,16 @@ export function OrganizationJsonLd() {
     },
   }
 
+  // Use a regular script tag (not next/script) per Next.js docs recommendation
+  // This ensures JSON-LD is rendered in initial HTML for search engines
+  // The replace prevents XSS injection via HTML tags in the payload
   return (
-    <Script
+    <script
       id="organization-jsonld"
       type="application/ld+json"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(schema).replace(/</g, '\\u003c'),
+      }}
     />
   )
 }
