@@ -66,12 +66,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${jost.variable}`}>
       <head>
         <OrganizationJsonLd />
       </head>
       <body
-        className={`${jost.variable} font-sans antialiased bg-bg text-text`}
+        className="font-sans antialiased bg-bg text-text"
         suppressHydrationWarning={true}
       >
         <ScrollRestoration />
