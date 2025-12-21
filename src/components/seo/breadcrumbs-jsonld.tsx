@@ -1,3 +1,4 @@
+import Script from 'next/script'
 import { getBaseUrl } from '@/lib/seo'
 
 interface Breadcrumb {
@@ -7,9 +8,14 @@ interface Breadcrumb {
 
 interface BreadcrumbsJsonLdProps {
   breadcrumbs: Breadcrumb[]
+  /**
+   * Unique identifier for this breadcrumb instance (e.g., page path)
+   * Used to prevent hydration mismatches when multiple components render
+   */
+  id?: string
 }
 
-export function BreadcrumbsJsonLd({ breadcrumbs }: BreadcrumbsJsonLdProps) {
+export function BreadcrumbsJsonLd({ breadcrumbs, id }: BreadcrumbsJsonLdProps) {
   const baseUrl = getBaseUrl()
 
   const items = breadcrumbs.map((crumb, index) => ({
@@ -27,9 +33,20 @@ export function BreadcrumbsJsonLd({ breadcrumbs }: BreadcrumbsJsonLdProps) {
     itemListElement: items,
   }
 
+  // Generate a stable id from breadcrumb labels if not provided
+  const scriptId =
+    id ||
+    `breadcrumbs-${breadcrumbs
+      .map((b) => b.label)
+      .join('-')
+      .toLowerCase()
+      .replace(/\s+/g, '-')}`
+
   return (
-    <script
+    <Script
+      id={scriptId}
       type="application/ld+json"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   )

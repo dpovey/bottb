@@ -1,3 +1,4 @@
+import Script from 'next/script'
 import { Event, Band } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -69,9 +70,13 @@ export function EventJsonLd({
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
   }
 
+  // Using Next.js Script component with id prevents hydration mismatch
+  // when browser extensions (like PostHog) inject scripts before React hydrates
   return (
-    <script
+    <Script
+      id={`event-jsonld-${event.id}`}
       type="application/ld+json"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   )

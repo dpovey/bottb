@@ -1,3 +1,4 @@
+import Script from 'next/script'
 import { getBaseUrl } from '@/lib/seo'
 import { getSocialLinks } from '@/lib/social-links'
 
@@ -33,8 +34,10 @@ export function OrganizationJsonLd() {
   }
 
   return (
-    <script
+    <Script
+      id="organization-jsonld"
       type="application/ld+json"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   )

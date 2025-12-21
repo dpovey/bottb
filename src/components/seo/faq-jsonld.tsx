@@ -1,3 +1,5 @@
+import Script from 'next/script'
+
 interface FAQItem {
   question: string
   answer: string
@@ -26,8 +28,10 @@ export function FAQJsonLd({ items }: FAQJsonLdProps) {
   }
 
   return (
-    <script
+    <Script
+      id="faq-jsonld"
       type="application/ld+json"
+      strategy="afterInteractive"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   )
