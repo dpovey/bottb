@@ -5,21 +5,12 @@ import { Card, Badge, DateBadge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 /**
- * Calculate the transform needed to center a focal point in a container.
- * Uses dynamic scaling - only zooms as much as needed based on focal point position.
+ * Get object-position for the focal point.
+ * For cards (roughly square aspect ratio), we use both X and Y.
  */
-function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
+function getObjectPosition(focalPoint?: { x: number; y: number }) {
   if (!focalPoint) return undefined
-  const deltaX = Math.abs(50 - focalPoint.x)
-  const deltaY = Math.abs(50 - focalPoint.y)
-  const maxDelta = Math.max(deltaX, deltaY)
-
-  const scale = 1.02 + maxDelta * 0.003
-  const translateFactor = 1 / scale
-  const translateX = (50 - focalPoint.x) * translateFactor
-  const translateY = (50 - focalPoint.y) * translateFactor
-
-  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
+  return `${focalPoint.x}% ${focalPoint.y}%`
 }
 
 interface HeroPhoto {
@@ -109,10 +100,8 @@ export function EventCard({
                 src={imageUrl}
                 alt={`${event.name} event image`}
                 fill
-                className="object-cover origin-center opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  transform: getFocalPointTransform(focalPoint) || undefined,
-                }}
+                className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ objectPosition: getObjectPosition(focalPoint) }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
@@ -274,15 +263,13 @@ export function EventCard({
 
         {/* Event Image - Desktop only */}
         {imageUrl && (
-          <div className="hidden lg:block relative w-64 min-h-[200px] overflow-hidden">
+          <div className="hidden lg:block relative w-64 min-h-[200px]">
             <Image
               src={imageUrl}
               alt={`${event.name} event image`}
               fill
-              className="object-cover origin-center"
-              style={{
-                transform: getFocalPointTransform(focalPoint) || undefined,
-              }}
+              className="object-cover"
+              style={{ objectPosition: getObjectPosition(focalPoint) }}
               sizes="256px"
             />
             {/* Gradient overlay to blend with card */}

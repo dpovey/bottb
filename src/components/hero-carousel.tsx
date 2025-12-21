@@ -5,23 +5,19 @@ import Image from 'next/image'
 import { useMounted } from '@/lib/hooks'
 
 /**
- * Calculate the transform needed to center a focal point in a container.
- * Uses dynamic scaling - only zooms as much as needed based on focal point position.
+ * Get object-position for mobile (portrait) - horizontal cropping.
+ * Uses focal X, centers Y.
  */
-function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
-  const x = focalPoint?.x ?? 50
-  const y = focalPoint?.y ?? 50
-  const deltaX = Math.abs(50 - x)
-  const deltaY = Math.abs(50 - y)
-  const maxDelta = Math.max(deltaX, deltaY)
+function getMobileObjectPosition(focalPoint?: { x: number; y: number }) {
+  return `${focalPoint?.x ?? 50}% 50%`
+}
 
-  // Dynamic scale: minimal zoom for centered focal points
-  const scale = 1.02 + maxDelta * 0.003
-  const translateFactor = 1 / scale
-  const translateX = (50 - x) * translateFactor
-  const translateY = (50 - y) * translateFactor
-
-  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
+/**
+ * Get object-position for desktop (landscape) - vertical cropping.
+ * Centers X, uses focal Y.
+ */
+function getDesktopObjectPosition(focalPoint?: { x: number; y: number }) {
+  return `50% ${focalPoint?.y ?? 50}%`
 }
 
 interface HeroImage {
@@ -82,19 +78,32 @@ export function HeroCarousel({
         {effectiveImages.map((image, index) => (
           <div
             key={image.url}
-            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
+            className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentIndex && !isTransitioning
                 ? 'opacity-100'
                 : 'opacity-0'
             }`}
           >
+            {/* Mobile: horizontal cropping, use focal X */}
             <Image
               src={image.url}
               alt="Battle of the Tech Bands event"
               fill
-              className="object-cover origin-center"
+              className="object-cover md:hidden"
               style={{
-                transform: getFocalPointTransform(image.focalPoint),
+                objectPosition: getMobileObjectPosition(image.focalPoint),
+              }}
+              sizes="100vw"
+              priority={index === currentIndex}
+            />
+            {/* Desktop: vertical cropping, use focal Y */}
+            <Image
+              src={image.url}
+              alt="Battle of the Tech Bands event"
+              fill
+              className="object-cover hidden md:block"
+              style={{
+                objectPosition: getDesktopObjectPosition(image.focalPoint),
               }}
               sizes="100vw"
               priority={index === currentIndex}

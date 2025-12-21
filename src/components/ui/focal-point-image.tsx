@@ -13,7 +13,7 @@ export interface FocalPointImageProps {
   alt: string
   /**
    * Focal point coordinates (0-100 for both x and y).
-   * The focal point will be centered in the container.
+   * Controls which part of the image stays visible when cropped.
    */
   focalPoint?: FocalPoint
   /** Whether this is a priority image (above the fold) */
@@ -27,15 +27,16 @@ export interface FocalPointImageProps {
 }
 
 /**
- * An image component that centers a focal point in the container.
+ * An image component that uses focal point for smart cropping.
  *
- * Unlike simple `object-position`, which aligns the focal point percentage
- * with the same percentage of the container, this component ensures the
- * focal point appears at the CENTER of the container regardless of its
- * position in the image.
+ * Key insight: with object-fit: cover, cropping only happens in ONE dimension:
+ * - Wide container (landscape): image cropped vertically → only Y focal point matters
+ * - Tall container (portrait): image cropped horizontally → only X focal point matters
  *
- * This is especially important on mobile where heavy cropping can cause
- * the focal point to appear off-center with naive object-position usage.
+ * We use object-position with the focal point for the cropped dimension,
+ * and 50% (centered) for the non-cropped dimension. No scaling needed!
+ *
+ * Uses responsive breakpoints: mobile (portrait) vs md+ (landscape).
  */
 export function FocalPointImage({
   src,
@@ -46,32 +47,26 @@ export function FocalPointImage({
   className,
   unoptimized = false,
 }: FocalPointImageProps) {
-  // Calculate how far the focal point is from center
-  const deltaX = Math.abs(50 - focalPoint.x)
-  const deltaY = Math.abs(50 - focalPoint.y)
-  const maxDelta = Math.max(deltaX, deltaY)
-
-  // Dynamic scale: only zoom as much as needed
-  // - Focal point at 50% (center) = scale 1.0 (no zoom)
-  // - Focal point at 0% or 100% (edge) = scale ~1.15
-  // Add small buffer (1.02) to prevent edge gaps
-  const scale = 1.02 + maxDelta * 0.003
-
-  // Translation factor adjusts based on scale
-  const translateFactor = 1 / scale
-  const translateX = (50 - focalPoint.x) * translateFactor
-  const translateY = (50 - focalPoint.y) * translateFactor
-
   return (
-    <div className={cn('absolute inset-0 overflow-hidden', className)}>
+    <div className={cn('absolute inset-0', className)}>
+      {/* Mobile/Portrait: horizontal cropping, use focal X, center Y */}
       <Image
         src={src}
         alt={alt}
         fill
-        className="object-cover origin-center"
-        style={{
-          transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`,
-        }}
+        className="object-cover md:hidden"
+        style={{ objectPosition: `${focalPoint.x}% 50%` }}
+        priority={priority}
+        sizes={sizes}
+        unoptimized={unoptimized}
+      />
+      {/* Desktop/Landscape: vertical cropping, center X, use focal Y */}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover hidden md:block"
+        style={{ objectPosition: `50% ${focalPoint.y}%` }}
         priority={priority}
         sizes={sizes}
         unoptimized={unoptimized}

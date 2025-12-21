@@ -5,20 +5,10 @@ import { Card, Badge, BandThumbnail, CompanyBadge } from '@/components/ui'
 import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 
 /**
- * Calculate the transform needed to center a focal point in a container.
- * Uses dynamic scaling - only zooms as much as needed based on focal point position.
+ * Get object-position for the focal point.
  */
-function getFocalPointTransform(focalPoint: { x: number; y: number }) {
-  const deltaX = Math.abs(50 - focalPoint.x)
-  const deltaY = Math.abs(50 - focalPoint.y)
-  const maxDelta = Math.max(deltaX, deltaY)
-
-  const scale = 1.02 + maxDelta * 0.003
-  const translateFactor = 1 / scale
-  const translateX = (50 - focalPoint.x) * translateFactor
-  const translateY = (50 - focalPoint.y) * translateFactor
-
-  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
+function getObjectPosition(focalPoint: { x: number; y: number }) {
+  return `${focalPoint.x}% ${focalPoint.y}%`
 }
 
 export interface WinnerDisplayProps {
@@ -82,15 +72,13 @@ export function WinnerDisplay({
       >
         {/* Hero Image - Full Background */}
         {heroThumbnailUrl && (
-          <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0">
             <Image
               src={heroThumbnailUrl}
               alt={`${winnerName} performing`}
               fill
-              className="object-cover origin-center"
-              style={{
-                transform: getFocalPointTransform(heroFocalPoint),
-              }}
+              className="object-cover"
+              style={{ objectPosition: getObjectPosition(heroFocalPoint) }}
               sizes="(max-width: 768px) 100vw, 80vw"
             />
             {/* Gradient overlay - fade from left */}
