@@ -65,6 +65,19 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   /* config options here */
   outputFileTracingRoot: path.join(__dirname, "."),
+  reactCompiler: true,
+  experimental: {
+    useCache: true, // Enables "use cache" directive
+  },
+  // Custom cache life profiles for "use cache" directive
+  cacheLife: {
+    // 5-minute cache - good for navigation data, filter options
+    fiveMinutes: {
+      stale: 300,     // Serve stale for 5 minutes
+      revalidate: 300, // Revalidate after 5 minutes
+      expire: 3600,   // Expire after 1 hour
+    },
+  },
   images: {
     // Enable AVIF format for 30-50% smaller images than WebP
     formats: ["image/avif", "image/webp"],

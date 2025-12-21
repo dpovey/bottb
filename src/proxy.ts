@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMiddlewareSession } from "@/lib/middleware-auth";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { nextUrl } = request;
   const session = await getMiddlewareSession(request);
 

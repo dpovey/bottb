@@ -68,11 +68,11 @@ export function CompanyBadge({
   const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
   // Show icon for non-inline variants, OR for inline if iconUrl is provided
   const showIcon = variant !== "inline" || !!iconUrl;
-  
+
   const content = (
     <>
-      {showIcon && (
-        iconUrl ? (
+      {showIcon &&
+        (iconUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={iconUrl}
@@ -81,8 +81,7 @@ export function CompanyBadge({
           />
         ) : (
           <BuildingIcon className={cn("shrink-0", iconSize)} />
-        )
-      )}
+        ))}
       <span className="truncate">{name}</span>
     </>
   );
@@ -99,4 +98,3 @@ export function CompanyBadge({
 
   return <span className={combinedClassName}>{content}</span>;
 }
-

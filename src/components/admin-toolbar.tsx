@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   SettingsIcon,
@@ -17,14 +17,21 @@ export function AdminToolbar() {
   const { data: session, status } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+    
     // Check localStorage for collapsed state
+    // Use setTimeout to defer setState out of synchronous effect body
     const collapsed = localStorage.getItem("admin-toolbar-collapsed");
-    if (collapsed === "false") {
-      setIsCollapsed(false);
-    }
-    setIsHydrated(true);
+    setTimeout(() => {
+      if (collapsed === "false") {
+        setIsCollapsed(false);
+      }
+      setIsHydrated(true);
+    }, 0);
   }, []);
 
   const toggleCollapsed = () => {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import { useMounted } from "@/lib/hooks";
 
 interface HeroImage {
   url: string;
@@ -21,16 +22,17 @@ export function HeroCarousel({
   fallbackImage = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80",
   children,
 }: HeroCarouselProps) {
-  // Start with index 0 for consistent SSR/hydration, randomize on mount
+  const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }];
+  const mounted = useMounted();
+  const initializedRef = useRef(false);
+
+  // Start with index 0 for consistent SSR/hydration
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }];
 
   const nextImage = useCallback(() => {
     if (effectiveImages.length <= 1) return;
-    
+
     setIsTransitioning(true);
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % effectiveImages.length);
@@ -38,16 +40,16 @@ export function HeroCarousel({
     }, 500); // Half of the CSS transition duration
   }, [effectiveImages.length]);
 
-  // Randomize starting image on mount to avoid hydration mismatch
-  useEffect(() => {
-    if (effectiveImages.length > 1) {
-      setCurrentIndex(Math.floor(Math.random() * effectiveImages.length));
-    }
-    setMounted(true);
-  }, [effectiveImages.length]);
-
+  // Randomize starting image on mount and start interval
   useEffect(() => {
     if (!mounted || effectiveImages.length <= 1) return;
+
+    // Randomize on first mount only - use setTimeout to defer setState
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      const randomIndex = Math.floor(Math.random() * effectiveImages.length);
+      setTimeout(() => setCurrentIndex(randomIndex), 0);
+    }
 
     const timer = setInterval(nextImage, interval);
     return () => clearInterval(timer);
@@ -72,14 +74,16 @@ export function HeroCarousel({
               fill
               className="object-cover"
               style={{
-                objectPosition: `${image.focalPoint?.x ?? 50}% ${image.focalPoint?.y ?? 50}%`,
+                objectPosition: `${image.focalPoint?.x ?? 50}% ${
+                  image.focalPoint?.y ?? 50
+                }%`,
               }}
               sizes="100vw"
               priority={index === currentIndex}
             />
           </div>
         ))}
-        
+
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-bg/40" />
         <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
@@ -90,4 +94,3 @@ export function HeroCarousel({
     </section>
   );
 }
-

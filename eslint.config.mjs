@@ -1,38 +1,33 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from "eslint-plugin-storybook";
+import nextConfig from "eslint-config-next";
+import tseslint from "typescript-eslint";
 
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [...compat.extends("next/core-web-vitals", "next/typescript"), {
-  ignores: [
-    "node_modules/**",
-    ".next/**",
-    "out/**",
-    "build/**",
-    "coverage/**",
-    "next-env.d.ts",
-    "storybook-static/**",
-  ],
-}, {
-  rules: {
-    "@typescript-eslint/no-unused-vars": [
-      "warn", 
-      { 
-        "argsIgnorePattern": "^_", 
-        "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
-      }
+const eslintConfig = [
+  ...nextConfig,
+  {
+    ignores: [
+      "coverage/**",
+      "storybook-static/**",
     ],
   },
-}, ...storybook.configs["flat/recommended"]];
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn", 
+        { 
+          "argsIgnorePattern": "^_", 
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ],
+    },
+  },
+  ...storybook.configs["flat/recommended"]
+];
 
 export default eslintConfig;

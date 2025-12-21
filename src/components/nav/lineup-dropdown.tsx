@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useMounted } from "@/lib/hooks";
 import { trackNavClick } from "@/lib/analytics";
 import {
   ChevronDownIcon,
@@ -33,14 +34,9 @@ const lineupLinks = [
 
 export function LineupDropdown({ className }: LineupDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  // Track if component is mounted for portal
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   // Close on click outside
   useEffect(() => {
