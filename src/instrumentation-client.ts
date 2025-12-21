@@ -42,25 +42,40 @@ if (typeof window !== 'undefined') {
       posthog.debug()
     }
   } else {
-    // Initialize PostHog
-    posthog.init(posthogKey, {
-      api_host: posthogHost,
-      person_profiles: 'identified_only', // Only create profiles for identified users
-      capture_exceptions: {
-        capture_unhandled_errors: true,
-        capture_unhandled_rejections: true,
-        capture_console_errors: false,
-      },
-      loaded: (posthog) => {
-        // Enable debug mode in development for easier debugging
-        if (nodeEnv === 'development') {
-          posthog.debug()
-        }
-      },
-      // Enable debug mode immediately if in development
-      // This ensures debug logs appear even before loaded callback
-      ...(nodeEnv === 'development' ? { debug: true } : {}),
-    })
+    // Defer PostHog initialization to reduce blocking time
+    // Use requestIdleCallback if available, otherwise setTimeout as fallback
+    const initPostHog = () => {
+      posthog.init(posthogKey, {
+        api_host: posthogHost,
+        person_profiles: 'identified_only', // Only create profiles for identified users
+        capture_exceptions: {
+          capture_unhandled_errors: true,
+          capture_unhandled_rejections: true,
+          capture_console_errors: false,
+        },
+        // Disable session recording on initial load to defer lazy-recorder.js
+        // Session recording can be enabled later if needed
+        disable_session_recording: true,
+        loaded: (posthog) => {
+          // Enable debug mode in development for easier debugging
+          if (nodeEnv === 'development') {
+            posthog.debug()
+          }
+        },
+        // Enable debug mode immediately if in development
+        // This ensures debug logs appear even before loaded callback
+        ...(nodeEnv === 'development' ? { debug: true } : {}),
+      })
+    }
+
+    // Defer initialization until after page is interactive
+    // This reduces blocking time from PostHog scripts (275ms blocking task)
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(initPostHog, { timeout: 2000 })
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      setTimeout(initPostHog, 100)
+    }
   }
 }
 

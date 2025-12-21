@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, Badge } from '@/components/ui'
 import { BuildingIcon, ChevronRightIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -40,11 +41,15 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
           {hasLogo ? (
             /* Logo - centered, full width */
             <div className="h-16 mb-4 flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={company.logo_url!}
                 alt={`${company.name} logo`}
+                width={320}
+                height={64}
                 className="max-h-full max-w-full object-contain"
+                unoptimized
+                loading="lazy"
+                sizes="(max-width: 640px) 200px, 320px"
               />
             </div>
           ) : (
@@ -85,11 +90,14 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
               {/* Icon in action bar */}
               {iconUrl && hasLogo && (
                 <div className="w-8 h-8 rounded-md overflow-hidden bg-white/5 border border-white/10 shrink-0 flex items-center justify-center p-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={iconUrl}
                     alt={`${company.name} icon`}
+                    width={32}
+                    height={32}
                     className="max-w-full max-h-full object-contain"
+                    unoptimized
+                    loading="lazy"
                   />
                 </div>
               )}

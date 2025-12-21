@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getCompanies, CompanyWithStats } from '@/lib/db'
 import { Button } from '@/components/ui'
 import { ChevronRightIcon } from '@/components/icons'
@@ -99,6 +100,7 @@ export async function CompanyLogoMarquee({
 
 /**
  * Individual logo item with hover effects and tooltip
+ * Uses Next.js Image with proper dimensions to prevent layout shifts
  */
 function LogoItem({ company }: { company: CompanyWithLogo }) {
   return (
@@ -107,12 +109,15 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
       className="logo-wrapper relative shrink-0 group"
     >
       <div className="logo-item h-12 w-auto flex items-center justify-center px-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={company.logo_url}
           alt={`${company.name} logo`}
+          width={180}
+          height={48}
           className="h-full w-auto object-contain max-w-[180px]"
           loading="lazy"
+          unoptimized
+          sizes="(max-width: 768px) 120px, 180px"
         />
       </div>
 

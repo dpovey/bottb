@@ -57,6 +57,7 @@ export function FocalPointImage({
         className="object-cover md:hidden"
         style={{ objectPosition: `${focalPoint.x}% 50%` }}
         priority={priority}
+        fetchPriority={priority ? 'high' : 'auto'}
         sizes={sizes}
         unoptimized={unoptimized}
       />
@@ -68,6 +69,7 @@ export function FocalPointImage({
         className="object-cover hidden md:block"
         style={{ objectPosition: `50% ${focalPoint.y}%` }}
         priority={priority}
+        fetchPriority={priority ? 'high' : 'auto'}
         sizes={sizes}
         unoptimized={unoptimized}
       />

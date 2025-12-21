@@ -8,11 +8,22 @@ const FacebookPixel = () => {
     const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID
 
     if (pixelId && process.env.NODE_ENV === 'production') {
-      // Dynamically import to avoid SSR issues
-      import('react-facebook-pixel').then((ReactPixel) => {
-        ReactPixel.default.init(pixelId)
-        ReactPixel.default.pageView()
-      })
+      // Defer Facebook Pixel initialization to reduce blocking
+      // Use requestIdleCallback if available, otherwise setTimeout
+      const initPixel = () => {
+        // Dynamically import to avoid SSR issues
+        import('react-facebook-pixel').then((ReactPixel) => {
+          ReactPixel.default.init(pixelId)
+          ReactPixel.default.pageView()
+        })
+      }
+
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(initPixel, { timeout: 2000 })
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(initPixel, 100)
+      }
     }
   }, [])
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import {
   getActiveEvent,
@@ -26,8 +27,6 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from '@/lib/scoring'
-import { PhotoStrip } from '@/components/photos/photo-strip'
-import { VideoStrip } from '@/components/videos/video-strip'
 import { CompanyLogoMarquee } from '@/components/company-logo-marquee'
 import {
   EventCardSkeleton,
@@ -36,6 +35,38 @@ import {
   CompanyLogoMarqueeSkeleton,
 } from '@/components/skeletons/home-skeletons'
 import { getBaseUrl } from '@/lib/seo'
+
+// Dynamically import below-the-fold components to reduce initial bundle size
+const PhotoStrip = dynamic(
+  () => import('@/components/photos/photo-strip').then((mod) => ({ default: mod.PhotoStrip })),
+  {
+    loading: () => (
+      <section className="py-16 bg-bg-elevated">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-semibold text-3xl">From the Archives</h2>
+          </div>
+          <PhotoStripSkeleton />
+        </div>
+      </section>
+    ),
+    ssr: true, // Keep SSR for SEO
+  }
+)
+
+const VideoStrip = dynamic(
+  () => import('@/components/videos/video-strip').then((mod) => ({ default: mod.VideoStrip })),
+  {
+    loading: () => (
+      <section className="py-16 bg-bg">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <VideoStripSkeleton />
+        </div>
+      </section>
+    ),
+    ssr: true, // Keep SSR for SEO
+  }
+)
 
 // Default fallback hero image
 const DEFAULT_HERO_IMAGE =

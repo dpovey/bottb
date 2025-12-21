@@ -70,6 +70,37 @@ export default function RootLayout({
     <html lang="en" className={`dark ${jost.variable}`}>
       <head>
         <OrganizationJsonLd />
+        {/* Resource hints for third-party domains - improve connection time */}
+        {/* PostHog - critical for LCP (saves 660ms) */}
+        <link rel="preconnect" href="https://us.i.posthog.com" />
+        <link rel="preconnect" href="https://us-assets.i.posthog.com" />
+        <link rel="dns-prefetch" href="https://us.i.posthog.com" />
+        <link rel="dns-prefetch" href="https://us-assets.i.posthog.com" />
+        {/* Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        {/* Facebook Pixel */}
+        <link rel="preconnect" href="https://connect.facebook.net" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        {/* Vercel Analytics */}
+        <link rel="preconnect" href="https://va.vercel-scripts.com" />
+        <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
+        {/* Vercel Speed Insights */}
+        <link rel="preconnect" href="https://vitals.vercel-insights.com" />
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        {/* Image CDN */}
+        <link
+          rel="preconnect"
+          href="https://0qipqwe5exqqyona.public.blob.vercel-storage.com"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://0qipqwe5exqqyona.public.blob.vercel-storage.com"
+        />
       </head>
       <body
         className="font-sans antialiased bg-bg text-text"

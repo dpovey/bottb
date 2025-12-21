@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { BuildingIcon } from '@/components/icons'
 
@@ -25,9 +26,17 @@ const sizeClasses = {
   lg: 'w-8 h-8',
 }
 
+const sizePixels = {
+  xs: 16,
+  sm: 20,
+  md: 24,
+  lg: 32,
+}
+
 /**
  * Company icon component that displays the company's icon or logo
  * Falls back to a building icon if no image is available
+ * Uses Next.js Image component for optimization with proper sizing
  */
 export function CompanyIcon({
   iconUrl,
@@ -38,6 +47,7 @@ export function CompanyIcon({
   showFallback = true,
 }: CompanyIconProps) {
   const imageUrl = iconUrl || logoUrl
+  const pixelSize = sizePixels[size]
 
   if (!imageUrl) {
     if (!showFallback) {
@@ -59,13 +69,15 @@ export function CompanyIcon({
   }
 
   return (
-    // Using native img for dynamic blob URLs
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
+    <Image
       src={imageUrl}
       alt={`${companyName} logo`}
       title={companyName}
+      width={pixelSize}
+      height={pixelSize}
       className={cn('object-contain rounded-sm', sizeClasses[size], className)}
+      unoptimized
+      loading="lazy"
     />
   )
 }
