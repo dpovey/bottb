@@ -106,7 +106,8 @@ const nextConfig: NextConfig = {
       },
       {
         // Cache static assets for longer periods
-        source: '/:path*\\.(jpg|jpeg|png|gif|webp|avif|svg|ico|woff|woff2|ttf|eot)',
+        source:
+          '/:path*\\.(jpg|jpeg|png|gif|webp|avif|svg|ico|woff|woff2|ttf|eot)',
         headers: [
           {
             key: 'Cache-Control',

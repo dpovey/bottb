@@ -38,7 +38,10 @@ import { getBaseUrl } from '@/lib/seo'
 
 // Dynamically import below-the-fold components to reduce initial bundle size
 const PhotoStrip = dynamic(
-  () => import('@/components/photos/photo-strip').then((mod) => ({ default: mod.PhotoStrip })),
+  () =>
+    import('@/components/photos/photo-strip').then((mod) => ({
+      default: mod.PhotoStrip,
+    })),
   {
     loading: () => (
       <section className="py-16 bg-bg-elevated">
@@ -55,7 +58,10 @@ const PhotoStrip = dynamic(
 )
 
 const VideoStrip = dynamic(
-  () => import('@/components/videos/video-strip').then((mod) => ({ default: mod.VideoStrip })),
+  () =>
+    import('@/components/videos/video-strip').then((mod) => ({
+      default: mod.VideoStrip,
+    })),
   {
     loading: () => (
       <section className="py-16 bg-bg">
