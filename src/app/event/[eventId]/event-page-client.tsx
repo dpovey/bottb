@@ -203,7 +203,7 @@ export function EventPageClient({
               {event.status !== 'upcoming' && (
                 <Link href={`/photos?event=${eventId}`}>
                   <Button variant="outline-solid" size="lg">
-                    View Photos
+                    Photos
                   </Button>
                 </Link>
               )}

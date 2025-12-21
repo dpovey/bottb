@@ -345,7 +345,7 @@ export default async function HomePage() {
               ]
             : []),
           {
-            label: 'View Photos',
+            label: 'Photos',
             href: '/photos',
             variant: 'outline-solid' as const,
           },

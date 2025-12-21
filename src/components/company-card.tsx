@@ -102,7 +102,7 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                 </div>
               )}
               <span className="text-text-dim text-xs tracking-wider uppercase">
-                View bands & photos
+                Bands & photos
               </span>
             </div>
             <ChevronRightIcon className="w-4 h-4 text-text-dim" />

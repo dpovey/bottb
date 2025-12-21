@@ -227,7 +227,7 @@ export default async function PhotographerPage({ params }: Props) {
                 href={`/photos?photographer=${encodeURIComponent(photographer.name)}`}
                 className="bg-accent hover:bg-accent-light text-white px-6 py-3 rounded-full text-sm tracking-widest uppercase flex items-center gap-2 transition-colors"
               >
-                View All Photos
+                All Photos
                 <ChevronRightIcon className="w-4 h-4" />
               </Link>
             </div>

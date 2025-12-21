@@ -84,7 +84,7 @@ function SelectedCompanyView({
         <div className="flex gap-3">
           <Link href={`/photos?company=${companySlug}`}>
             <Button variant="outline-solid" size="sm">
-              View Photos
+              Photos
             </Button>
           </Link>
           <Link href="/companies">
