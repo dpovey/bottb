@@ -389,18 +389,57 @@ async function uploadPhoto(
     // Generate unique photo ID
     const photoId = crypto.randomUUID()
 
-    // Upload to blob storage
-    const _thumbnailBlob = await put(
+    // Upload thumbnail variants to blob storage (for srcset support)
+    const thumbnailBlob = await put(
       `photos/${photoId}/thumbnail.webp`,
       processed.thumbnail,
       { access: 'public', contentType: 'image/webp' }
     )
+
+    // Upload 2x thumbnail if available
+    let thumbnail2xBlob = null
+    if (processed.thumbnail2x) {
+      thumbnail2xBlob = await put(
+        `photos/${photoId}/thumbnail-2x.webp`,
+        processed.thumbnail2x,
+        { access: 'public', contentType: 'image/webp' }
+      )
+    }
+
+    // Upload 3x thumbnail if available
+    let thumbnail3xBlob = null
+    if (processed.thumbnail3x) {
+      thumbnail3xBlob = await put(
+        `photos/${photoId}/thumbnail-3x.webp`,
+        processed.thumbnail3x,
+        { access: 'public', contentType: 'image/webp' }
+      )
+    }
 
     const largeBlob = await put(
       `photos/${photoId}/large.webp`,
       processed.large,
       { access: 'public', contentType: 'image/webp' }
     )
+
+    // Upload 4K large variant if available
+    let large4kBlob = null
+    if (processed.large4k) {
+      large4kBlob = await put(
+        `photos/${photoId}/large-4k.webp`,
+        processed.large4k,
+        { access: 'public', contentType: 'image/webp' }
+      )
+    }
+
+    // Store thumbnail variant URLs in metadata for srcset support
+    const thumbnailVariants = {
+      ...metadata.rawMetadata,
+      thumbnail_url: thumbnailBlob.url,
+      thumbnail_2x_url: thumbnail2xBlob?.url || null,
+      thumbnail_3x_url: thumbnail3xBlob?.url || null,
+      large_4k_url: large4kBlob?.url || null,
+    }
 
     // Store in database
     // Use dateCreated from metadata if available, otherwise fall back to NOW()
@@ -416,7 +455,7 @@ async function uploadPhoto(
         ${photoId}, ${eventId}, ${bandId}, ${metadata.photographer},
         ${largeBlob.url}, ${`photos/${photoId}/large.webp`}, ${filename},
         ${processed.width}, ${processed.height}, ${processed.fileSize}, ${`image/${processed.format}`},
-        ${JSON.stringify(metadata.rawMetadata)}, ${matchedEventName}, ${matchedBandName}, ${matchConfidence},
+        ${JSON.stringify(thumbnailVariants)}, ${matchedEventName}, ${matchedBandName}, ${matchConfidence},
         NOW(), ${capturedAt}::timestamp with time zone
       )
     `

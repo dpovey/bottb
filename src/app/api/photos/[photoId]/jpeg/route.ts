@@ -40,11 +40,14 @@ async function handler(
       ? parseInt(searchParams.get('maxWidth')!, 10)
       : undefined
 
-    // Fetch the original image
-    const imageResponse = await fetch(photo.blob_url)
+    // Use original_blob_url if available, otherwise fall back to blob_url (large.webp)
+    const imageUrl = photo.original_blob_url || photo.blob_url
+    
+    // Fetch the image
+    const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch original image' },
+        { error: 'Failed to fetch image' },
         { status: 500 }
       )
     }

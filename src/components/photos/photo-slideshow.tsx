@@ -593,8 +593,11 @@ export function PhotoSlideshow({
     if (!photo) return
 
     try {
+      // Use original_blob_url if available, otherwise fall back to blob_url (large.webp)
+      const imageUrl = photo.original_blob_url || photo.blob_url
+      
       // Fetch the image and trigger download
-      const response = await fetch(photo.blob_url)
+      const response = await fetch(imageUrl)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -1147,11 +1150,11 @@ export function PhotoSlideshow({
           <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
-        {/* Image */}
+        {/* Image - Use 4K variant if available, otherwise use standard large */}
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={currentPhoto.id}
-            src={currentPhoto.blob_url}
+            src={currentPhoto.large_4k_url || currentPhoto.blob_url}
             alt={currentPhoto.original_filename || 'Photo'}
             className="slideshow-image max-w-[90vw] max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] object-contain rounded-lg shadow-2xl"
             custom={direction}

@@ -126,7 +126,7 @@ function SelectedCompanyView({
                 </div>
                 <Link href={`/event/${eventGroup.event_id}`}>
                   <Button variant="outline-solid" size="sm">
-                    View Event
+                    Event
                   </Button>
                 </Link>
               </div>

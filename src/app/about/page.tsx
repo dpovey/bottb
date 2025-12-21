@@ -325,7 +325,7 @@ export default async function AboutPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/">
               <Button variant="filled" size="lg">
-                View Events
+                Events
               </Button>
             </Link>
             <Link href="mailto:info@bottb.com">

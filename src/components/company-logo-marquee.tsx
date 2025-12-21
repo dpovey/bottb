@@ -88,7 +88,7 @@ export async function CompanyLogoMarquee({
         <div className="max-w-7xl mx-auto px-6 lg:px-8 mt-8 text-center">
           <Link href="/companies">
             <Button variant="outline-solid" size="sm">
-              View All Companies
+              All Companies
               <ChevronRightIcon className="w-4 h-4 ml-2" />
             </Button>
           </Link>

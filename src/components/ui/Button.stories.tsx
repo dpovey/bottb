@@ -43,7 +43,7 @@ type Story = StoryObj<typeof Button>
 // Default outline button
 export const Default: Story = {
   args: {
-    children: 'View Events',
+    children: 'Events',
     variant: 'outline-solid',
     size: 'md',
   },
@@ -154,7 +154,7 @@ export const Large: Story = {
 export const WithIcon: Story = {
   render: () => (
     <Button variant="outline-solid" size="lg">
-      View All
+      All
       <ChevronRightIcon className="w-4 h-4" />
     </Button>
   ),

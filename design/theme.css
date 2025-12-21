@@ -199,6 +199,7 @@ body {
   background: transparent;
   color: var(--text);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 .btn-outline:hover {
   border-color: rgba(255, 255, 255, 0.6);
@@ -210,6 +211,7 @@ body {
   background: var(--text);
   color: var(--bg);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 .btn-filled:hover {
   background: #e0e0e0;
@@ -220,6 +222,7 @@ body {
   background: var(--accent);
   color: var(--text);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 .btn-accent:hover {
   background: var(--accent-light);
@@ -231,6 +234,7 @@ body {
   background: transparent;
   color: var(--accent);
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 .btn-accent-outline:hover {
   background: rgba(var(--accent-rgb), 0.1);

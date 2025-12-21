@@ -338,7 +338,7 @@ export default async function HomePage() {
                   variant: 'accent' as const,
                 },
                 {
-                  label: 'View Event',
+                  label: 'Event',
                   href: `/event/${activeEvent.id}`,
                   variant: 'outline-solid' as const,
                 },
@@ -574,7 +574,7 @@ export default async function HomePage() {
             </Link>
             <Link href="/photos">
               <Button variant="ghost" size="lg">
-                View Gallery
+                Gallery
               </Button>
             </Link>
           </div>

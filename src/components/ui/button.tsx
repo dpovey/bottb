@@ -19,7 +19,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Base styles
           'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300',
           'tracking-widest uppercase disabled:opacity-50 disabled:pointer-events-none',
-          'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+          'cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
 
           // Micro-interactions (respects reduced motion)
           'motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]',

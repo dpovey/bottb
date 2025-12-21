@@ -432,6 +432,8 @@ All interactive elements must be at least **44x44px** on mobile.
 
 ### Buttons
 
+**All buttons must have `cursor-pointer` to show the hand pointer on hover.** This is a standard part of the button component and ensures consistent user experience.
+
 #### Outline Button (Primary Style - Tomorrowland)
 
 The default button style. White outline on dark background.
@@ -445,9 +447,10 @@ The default button style. White outline on dark background.
   transition-all duration-300
   hover:border-white/60 hover:bg-white/5
   flex items-center gap-2
+  cursor-pointer
 "
 >
-  View Events
+  Events
   <svg class="w-4 h-4"><!-- chevron-right --></svg>
 </button>
 ```
@@ -464,6 +467,7 @@ Use sparingly for primary CTAs like "Vote Now".
   text-sm tracking-widest uppercase font-medium
   transition-colors duration-300
   hover:bg-gray-200
+  cursor-pointer
 "
 >
   Vote Now
@@ -482,6 +486,7 @@ For live events, winners, very important actions.
   text-xs tracking-widest uppercase font-medium
   transition-colors duration-300
   hover:bg-accent-light
+  cursor-pointer
 "
 >
   Live Event
@@ -497,6 +502,7 @@ For live events, winners, very important actions.
   p-3 rounded-full
   transition-all duration-300
   hover:border-white/60 hover:bg-white/5
+  cursor-pointer
 "
 >
   <svg class="w-5 h-5"><!-- icon --></svg>
@@ -1154,7 +1160,7 @@ Full-viewport hero with atmospheric background, centered text, outline CTAs.
         href="#"
         class="border border-white/30 px-8 py-4 rounded-full text-sm tracking-widest uppercase flex items-center justify-center gap-2 hover:border-white/60 hover:bg-white/5 transition-all"
       >
-        View Events
+        Events
         <svg class="w-4 h-4"><!-- chevron --></svg>
       </a>
     </div>

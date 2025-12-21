@@ -25,7 +25,7 @@ export function ActionsSection() {
                 <ChevronRightIcon className="w-4 h-4" />
               </Button>
               <Button variant="outline-solid" size="md">
-                View Events
+                Events
               </Button>
               <Button variant="outline-solid" size="sm">
                 Small

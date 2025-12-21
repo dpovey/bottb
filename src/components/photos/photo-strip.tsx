@@ -303,7 +303,7 @@ export function PhotoStrip({
                 href={galleryLink}
                 className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-full text-xs tracking-widest uppercase flex items-center gap-2 transition-colors"
               >
-                View All
+                All
                 <ChevronRightIcon size={16} strokeWidth={2} />
               </Link>
             )}

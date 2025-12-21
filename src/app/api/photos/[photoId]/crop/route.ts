@@ -8,6 +8,7 @@ interface PhotoRow {
   id: string
   blob_url: string
   blob_pathname: string
+  original_blob_url: string | null
 }
 
 interface CropArea {
@@ -53,7 +54,7 @@ const handleCropPhoto: ProtectedApiHandler = async (
 
     // Get photo from database
     const { rows } = await sql<PhotoRow>`
-      SELECT id, blob_url, blob_pathname FROM photos WHERE id = ${photoId}
+      SELECT id, blob_url, blob_pathname, original_blob_url FROM photos WHERE id = ${photoId}
     `
 
     if (rows.length === 0) {
@@ -62,43 +63,46 @@ const handleCropPhoto: ProtectedApiHandler = async (
 
     const photo = rows[0]
 
-    // Fetch the large image from blob storage
-    const largeImageResponse = await fetch(photo.blob_url)
-    if (!largeImageResponse.ok) {
+    // Use original_blob_url if available for best crop quality, otherwise fall back to blob_url (large.webp)
+    const sourceImageUrl = photo.original_blob_url || photo.blob_url
+    
+    // Fetch the source image from blob storage
+    const sourceImageResponse = await fetch(sourceImageUrl)
+    if (!sourceImageResponse.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch original image' },
+        { error: 'Failed to fetch source image' },
         { status: 500 }
       )
     }
 
-    const largeImageBuffer = Buffer.from(await largeImageResponse.arrayBuffer())
+    const sourceImageBuffer = Buffer.from(await sourceImageResponse.arrayBuffer())
 
-    // Get original image dimensions
-    const metadata = await sharp(largeImageBuffer).metadata()
-    const originalWidth = metadata.width || 0
-    const originalHeight = metadata.height || 0
+    // Get source image dimensions
+    const metadata = await sharp(sourceImageBuffer).metadata()
+    const sourceWidth = metadata.width || 0
+    const sourceHeight = metadata.height || 0
 
     // Convert percentage-based crop coordinates to pixels
     // react-easy-crop returns values as percentages of the image
     const pixelCrop = {
-      left: Math.round((cropArea.x / 100) * originalWidth),
-      top: Math.round((cropArea.y / 100) * originalHeight),
-      width: Math.round((cropArea.width / 100) * originalWidth),
-      height: Math.round((cropArea.height / 100) * originalHeight),
+      left: Math.round((cropArea.x / 100) * sourceWidth),
+      top: Math.round((cropArea.y / 100) * sourceHeight),
+      width: Math.round((cropArea.width / 100) * sourceWidth),
+      height: Math.round((cropArea.height / 100) * sourceHeight),
     }
 
     // Ensure crop is within bounds
     pixelCrop.left = Math.max(
       0,
-      Math.min(pixelCrop.left, originalWidth - pixelCrop.width)
+      Math.min(pixelCrop.left, sourceWidth - pixelCrop.width)
     )
     pixelCrop.top = Math.max(
       0,
-      Math.min(pixelCrop.top, originalHeight - pixelCrop.height)
+      Math.min(pixelCrop.top, sourceHeight - pixelCrop.height)
     )
 
-    // Create new thumbnail with custom crop
-    const newThumbnail = await sharp(largeImageBuffer)
+    // Create new thumbnail with custom crop from source image
+    const newThumbnail = await sharp(sourceImageBuffer)
       .extract(pixelCrop)
       .resize(300, 300, { fit: 'cover' })
       .webp({ quality: 80 })

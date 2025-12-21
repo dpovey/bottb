@@ -168,7 +168,7 @@ export function EventPageClient({
               </div>
               <Link href={`/results/${eventId}`}>
                 <Button variant="outline-solid" size="sm">
-                  View Results
+                  Results
                 </Button>
               </Link>
             </div>
@@ -196,7 +196,7 @@ export function EventPageClient({
               {event.status === 'finalized' && !show2022Winner && (
                 <Link href={`/results/${eventId}`}>
                   <Button variant="accent" size="lg">
-                    View Results
+                    Results
                   </Button>
                 </Link>
               )}

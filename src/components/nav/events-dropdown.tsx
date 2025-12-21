@@ -274,7 +274,7 @@ export function EventsDropdown({
                 'text-text-muted hover:text-white text-sm transition-colors'
               )}
             >
-              View all events
+              All events
               <ChevronRightIcon size={16} strokeWidth={2} />
             </Link>
           </div>

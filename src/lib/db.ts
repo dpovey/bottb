@@ -200,6 +200,8 @@ export interface Photo {
   created_at: string
   // Original capture timestamp from EXIF/XMP metadata
   captured_at: string | null
+  // Original full-resolution image URL (when available)
+  original_blob_url: string | null
   // Labels for hero images etc.
   labels: string[]
   // Focal point for hero image display
@@ -208,6 +210,9 @@ export interface Photo {
   event_name?: string
   band_name?: string
   thumbnail_url?: string
+  thumbnail_2x_url?: string
+  thumbnail_3x_url?: string
+  large_4k_url?: string
   company_name?: string
   company_slug?: string
   company_icon_url?: string
@@ -638,6 +643,9 @@ export async function getPhotosWithCount(
     const { rows } = await sql<PhotoWithCount>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url,
              COUNT(*) OVER() as total_count
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
@@ -686,6 +694,9 @@ async function getPhotosRandomWithCount(options: {
     const { rows } = await sql<PhotoWithCount>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url,
              COUNT(*) OVER() as total_count
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
@@ -736,7 +747,10 @@ async function getPhotosRandom(options: {
     // Special handling for "none" values which mean "filter for NULL"
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
@@ -797,7 +811,10 @@ export async function getPhotos(
     // Special handling for "none" values which mean "filter for NULL"
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
@@ -824,7 +841,10 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
   try {
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id

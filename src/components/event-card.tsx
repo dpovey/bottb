@@ -238,7 +238,7 @@ export function EventCard({
             <div className="flex flex-wrap gap-3 mt-auto pt-4">
               <Link href={`/event/${event.id}`}>
                 <Button variant="outline-solid" size="sm">
-                  {isPast ? 'View Event' : 'View Details'}
+                  {isPast ? 'Event' : 'Details'}
                 </Button>
               </Link>
 
@@ -253,7 +253,7 @@ export function EventCard({
               {isPast && event.status === 'finalized' && (
                 <Link href={`/results/${event.id}`}>
                   <Button variant="outline-solid" size="sm">
-                    View Results
+                    Results
                   </Button>
                 </Link>
               )}
