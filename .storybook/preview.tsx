@@ -1,4 +1,5 @@
 import type { Preview } from "@storybook/nextjs-vite";
+import { themes } from "storybook/theming";
 import React from "react";
 
 // Import global CSS with Tailwind
@@ -45,6 +46,21 @@ const preview: Preview = {
     a11y: {
       test: "todo",
     },
+
+    // Docs configuration for dark theme
+    docs: {
+      theme: {
+        ...themes.dark,
+        appBg: "#0a0a0a",
+        appContentBg: "#0a0a0a",
+        barBg: "#141414",
+        textColor: "#ffffff",
+        textMutedColor: "#999999",
+      },
+      canvas: {
+        sourceState: "shown",
+      },
+    },
   },
 
   // Global decorator to wrap stories with dark background and Jost font
@@ -62,8 +78,14 @@ const preview: Preview = {
           :root {
             --font-jost: 'Jost', system-ui, sans-serif;
           }
+          /* Ensure the entire canvas has dark background */
+          html, body, #storybook-root {
+            background-color: #0a0a0a !important;
+            min-height: 100%;
+          }
         `}</style>
-        <div className="bg-bg text-white min-h-screen p-4 font-sans">
+        {/* Story wrapper with dark background */}
+        <div className="bg-bg text-white p-4 font-sans">
           <Story />
         </div>
       </>
