@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoStrip } from '@/components/photos/photo-strip'
-import { SocialIconLink } from '@/components/ui'
+import { SocialIconLink, FocalPointImage } from '@/components/ui'
 import {
   InstagramIcon,
   GlobeIcon,
@@ -86,14 +85,10 @@ export default async function PhotographerPage({ params }: Props) {
       <section className="relative min-h-[70vh] flex items-end">
         {/* Background Image */}
         {heroPhotoUrl ? (
-          <Image
+          <FocalPointImage
             src={heroPhotoUrl}
             alt={`Photo by ${photographer.name}`}
-            fill
-            className="object-cover"
-            style={{
-              objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
-            }}
+            focalPoint={heroFocalPoint}
             sizes="100vw"
             priority
             unoptimized

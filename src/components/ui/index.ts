@@ -40,3 +40,8 @@ export {
   SkeletonCard,
   type SkeletonProps,
 } from './skeleton'
+export {
+  FocalPointImage,
+  type FocalPoint,
+  type FocalPointImageProps,
+} from './focal-point-image'

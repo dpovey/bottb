@@ -4,6 +4,18 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useMounted } from '@/lib/hooks'
 
+/**
+ * Calculate the transform needed to center a focal point in a container.
+ * Scale up the image and translate to ensure the focal point appears at center.
+ */
+function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
+  const x = focalPoint?.x ?? 50
+  const y = focalPoint?.y ?? 50
+  const translateX = (50 - x) * 0.5
+  const translateY = (50 - y) * 0.5
+  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+}
+
 interface HeroImage {
   url: string
   focalPoint?: { x: number; y: number }
@@ -62,7 +74,7 @@ export function HeroCarousel({
         {effectiveImages.map((image, index) => (
           <div
             key={image.url}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
+            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
               index === currentIndex && !isTransitioning
                 ? 'opacity-100'
                 : 'opacity-0'
@@ -72,11 +84,9 @@ export function HeroCarousel({
               src={image.url}
               alt="Battle of the Tech Bands event"
               fill
-              className="object-cover"
+              className="object-cover origin-center"
               style={{
-                objectPosition: `${image.focalPoint?.x ?? 50}% ${
-                  image.focalPoint?.y ?? 50
-                }%`,
+                transform: getFocalPointTransform(image.focalPoint),
               }}
               sizes="100vw"
               priority={index === currentIndex}

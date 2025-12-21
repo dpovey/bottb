@@ -4,6 +4,15 @@ import Image from 'next/image'
 import { Card, Badge, BandThumbnail, CompanyBadge } from '@/components/ui'
 import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 
+/**
+ * Calculate the transform needed to center a focal point in a container.
+ */
+function getFocalPointTransform(focalPoint: { x: number; y: number }) {
+  const translateX = (50 - focalPoint.x) * 0.5
+  const translateY = (50 - focalPoint.y) * 0.5
+  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+}
+
 export interface WinnerDisplayProps {
   /** Name of the winning band */
   winnerName: string
@@ -65,14 +74,14 @@ export function WinnerDisplay({
       >
         {/* Hero Image - Full Background */}
         {heroThumbnailUrl && (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 overflow-hidden">
             <Image
               src={heroThumbnailUrl}
               alt={`${winnerName} performing`}
               fill
-              className="object-cover"
+              className="object-cover origin-center"
               style={{
-                objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
+                transform: getFocalPointTransform(heroFocalPoint),
               }}
               sizes="(max-width: 768px) 100vw, 80vw"
             />

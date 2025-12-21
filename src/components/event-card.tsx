@@ -4,6 +4,16 @@ import { formatEventDate } from '@/lib/date-utils'
 import { Card, Badge, DateBadge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
+/**
+ * Calculate the transform needed to center a focal point in a container.
+ */
+function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
+  if (!focalPoint) return undefined
+  const translateX = (50 - focalPoint.x) * 0.5
+  const translateY = (50 - focalPoint.y) * 0.5
+  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+}
+
 interface HeroPhoto {
   blob_url: string
   hero_focal_point?: { x: number; y: number }
@@ -91,12 +101,10 @@ export function EventCard({
                 src={imageUrl}
                 alt={`${event.name} event image`}
                 fill
-                className="object-cover opacity-80 transition-transform duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
-                style={
-                  focalPoint
-                    ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }
-                    : undefined
-                }
+                className="object-cover origin-center opacity-80 transition-transform duration-500 ease-out group-hover:scale-[1.26] group-hover:opacity-100"
+                style={{
+                  transform: getFocalPointTransform(focalPoint) || 'scale(1)',
+                }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
@@ -258,17 +266,15 @@ export function EventCard({
 
         {/* Event Image - Desktop only */}
         {imageUrl && (
-          <div className="hidden lg:block relative w-64 min-h-[200px]">
+          <div className="hidden lg:block relative w-64 min-h-[200px] overflow-hidden">
             <Image
               src={imageUrl}
               alt={`${event.name} event image`}
               fill
-              className="object-cover"
-              style={
-                focalPoint
-                  ? { objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }
-                  : undefined
-              }
+              className="object-cover origin-center"
+              style={{
+                transform: getFocalPointTransform(focalPoint) || undefined,
+              }}
               sizes="256px"
             />
             {/* Gradient overlay to blend with card */}

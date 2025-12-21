@@ -13,10 +13,14 @@ import {
 } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
-import Image from 'next/image'
 import { auth } from '@/lib/auth'
 import Link from 'next/link'
-import { CompanyBadge, BandThumbnail, SocialIconLink } from '@/components/ui'
+import {
+  CompanyBadge,
+  BandThumbnail,
+  SocialIconLink,
+  FocalPointImage,
+} from '@/components/ui'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
 import {
@@ -607,14 +611,10 @@ export default async function BandPage({
       <section className="relative min-h-[70vh] flex items-end">
         {/* Background Image */}
         {heroPhotoUrl ? (
-          <Image
+          <FocalPointImage
             src={heroPhotoUrl}
             alt={`${band.name}`}
-            fill
-            className="object-cover"
-            style={{
-              objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
-            }}
+            focalPoint={heroFocalPoint}
             sizes="100vw"
             priority
             unoptimized

@@ -116,6 +116,10 @@ export default async function AboutPage() {
                 to help young people with physical support needs through{' '}
                 <strong className="text-accent">Youngcare</strong>. ❤️
               </p>
+              <p className="text-sm text-text-dim pt-4 border-t border-white/5">
+                Battle of the Tech Bands is operated by BOTB Events Ltd (ACN 691
+                201 153).
+              </p>
             </div>
           </div>
         </section>

@@ -457,8 +457,10 @@ export default function TermsOfUsePage() {
                   us:
                 </p>
                 <div className="bg-bg-elevated rounded-xl p-6 border border-white/5 mt-4">
-                  <p className="text-white font-medium mb-2">
-                    Battle of the Tech Bands
+                  <p className="text-white font-medium mb-2">BOTB Events Ltd</p>
+                  <p className="text-sm text-text-dim mb-2">ACN 691 201 153</p>
+                  <p className="text-sm text-text-dim mb-3">
+                    Trading as Battle of the Tech Bands
                   </p>
                   <p>
                     Email:{' '}

@@ -13,6 +13,7 @@ import {
   CompanyBadge,
   NumberedIndicator,
   TicketCTA,
+  FocalPointImage,
 } from '@/components/ui'
 import { ChevronRightIcon } from '@/components/icons'
 import { PhotoStrip } from '@/components/photos/photo-strip'
@@ -95,28 +96,26 @@ export function EventPageClient({
       <section className="relative min-h-[40vh] flex items-end">
         {/* Background Image - prefer hero photo, fall back to event image_url */}
         {heroPhoto ? (
-          <Image
+          <FocalPointImage
             src={heroPhoto.blob_url}
             alt={`${event.name} event`}
-            fill
-            className="object-cover"
-            style={{
-              objectPosition: `${heroPhoto.hero_focal_point?.x ?? 50}% ${heroPhoto.hero_focal_point?.y ?? 50}%`,
-            }}
+            focalPoint={heroPhoto.hero_focal_point}
             sizes="100vw"
             priority
             unoptimized
           />
         ) : eventInfo?.image_url ? (
-          <Image
-            src={eventInfo.image_url}
-            alt={`${event.name} event`}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-            unoptimized
-          />
+          <div className="absolute inset-0">
+            <Image
+              src={eventInfo.image_url}
+              alt={`${event.name} event`}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+              unoptimized
+            />
+          </div>
         ) : (
           <div className="absolute inset-0 bg-linear-to-br from-bg-surface to-bg" />
         )}

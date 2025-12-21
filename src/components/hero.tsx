@@ -1,8 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { Button } from '@/components/ui'
+import { Button, FocalPointImage } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
 export interface HeroFocalPoint {
@@ -60,12 +59,10 @@ export function Hero({
     >
       {/* Background */}
       {backgroundImage ? (
-        <Image
+        <FocalPointImage
           src={backgroundImage}
           alt=""
-          fill
-          className="object-cover"
-          style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
+          focalPoint={focalPoint}
           priority
           sizes="100vw"
         />

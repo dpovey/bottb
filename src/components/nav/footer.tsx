@@ -41,7 +41,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Copyright */}
             <p className="text-text-dim text-sm">
-              {currentYear} Battle of the Tech Bands. Supporting{' '}
+              © {currentYear} BOTB Events Ltd (ACN 691 201 153). Supporting{' '}
               <a
                 href="https://youngcare.com.au"
                 target="_blank"
@@ -185,7 +185,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
         <div className="border-t border-white/5 pt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-text-dim text-sm">
-              © {currentYear} Battle of the Tech Bands
+              © {currentYear} BOTB Events Ltd (ACN 691 201 153)
             </p>
             <p className="text-text-dim text-sm">
               Proudly supporting{' '}
