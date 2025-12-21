@@ -27,6 +27,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   WarningIcon,
+  PlayIcon,
+  PauseIcon,
 } from '@/components/icons'
 
 // Label display info
@@ -79,6 +81,8 @@ interface PhotoSlideshowProps {
 
 const PAGE_SIZE = 50
 const PREFETCH_THRESHOLD = 5 // Prefetch when within 5 photos of edge
+const PLAY_INTERVAL_MS = 5000 // 5 seconds between photos in play mode
+const SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels
 
 export function PhotoSlideshow({
   photos: initialPhotos,
@@ -188,6 +192,17 @@ export function PhotoSlideshow({
   const [isDraggingFocalPoint, setIsDraggingFocalPoint] = useState(false)
   const [labelsError, setLabelsError] = useState<string | null>(null)
   const focalPointPreviewRef = useRef<HTMLDivElement>(null)
+
+  // Play mode state
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Mobile controls state (will be implemented in UI update)
+  const [_mobileControlsExpanded, _setMobileControlsExpanded] = useState(false)
+
+  // Touch/swipe state
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(
@@ -375,8 +390,12 @@ export function PhotoSlideshow({
     ) {
       // At the end but more photos exist - they're loading
       // Could show a loading indicator
+    } else if (isPlaying && currentIndex === allPhotos.length - 1) {
+      // Loop back to start in play mode
+      setDirection(1)
+      setCurrentIndex(0)
     }
-  }, [currentIndex, allPhotos.length, totalCount])
+  }, [currentIndex, allPhotos.length, totalCount, isPlaying])
 
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
@@ -384,6 +403,50 @@ export function PhotoSlideshow({
       setCurrentIndex((prev) => prev - 1)
     }
   }, [currentIndex])
+
+  // Play mode auto-advance
+  useEffect(() => {
+    if (isPlaying) {
+      playIntervalRef.current = setInterval(() => {
+        goToNext()
+      }, PLAY_INTERVAL_MS)
+    } else {
+      if (playIntervalRef.current) {
+        clearInterval(playIntervalRef.current)
+        playIntervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (playIntervalRef.current) {
+        clearInterval(playIntervalRef.current)
+        playIntervalRef.current = null
+      }
+    }
+  }, [isPlaying, goToNext])
+
+  // Stop play mode when modals open
+  useEffect(() => {
+    if (
+      showDeleteConfirm ||
+      showCropModal ||
+      showLabelsModal ||
+      showShareModal
+    ) {
+      setIsPlaying(false)
+    }
+  }, [showDeleteConfirm, showCropModal, showLabelsModal, showShareModal])
+
+  // Toggle play mode
+  const togglePlay = useCallback(() => {
+    setIsPlaying((prev) => !prev)
+    _setMobileControlsExpanded(false) // Collapse mobile controls when toggling play
+  }, [])
+
+  // Stop play mode (called on image click or manual navigation)
+  const stopPlay = useCallback(() => {
+    setIsPlaying(false)
+  }, [])
 
   // Keyboard navigation
   useEffect(() => {
@@ -396,8 +459,18 @@ export function PhotoSlideshow({
       )
         return // Don't navigate while modals are open
       if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') goToNext()
-      if (e.key === 'ArrowLeft') goToPrevious()
+      if (e.key === 'ArrowRight') {
+        stopPlay()
+        goToNext()
+      }
+      if (e.key === 'ArrowLeft') {
+        stopPlay()
+        goToPrevious()
+      }
+      if (e.key === ' ') {
+        e.preventDefault()
+        togglePlay()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -406,6 +479,8 @@ export function PhotoSlideshow({
     onClose,
     goToPrevious,
     goToNext,
+    togglePlay,
+    stopPlay,
     showDeleteConfirm,
     showCropModal,
     showLabelsModal,
@@ -494,6 +569,90 @@ export function PhotoSlideshow({
   }, [
     goToPrevious,
     goToNext,
+    showDeleteConfirm,
+    showCropModal,
+    showLabelsModal,
+    showShareModal,
+  ])
+
+  // Touch/swipe handlers for mobile
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (
+        showDeleteConfirm ||
+        showCropModal ||
+        showLabelsModal ||
+        showShareModal
+      )
+        return
+
+      // Don't interfere with thumbnail strip scrolling
+      const target = e.target as HTMLElement
+      if (thumbnailStripRef.current?.contains(target)) return
+
+      const touch = e.touches[0]
+      touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchStartRef.current) return
+      // Prevent default to avoid scrolling while swiping
+      e.preventDefault()
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current) return
+
+      const touch = e.changedTouches[0]
+      const deltaX = touch.clientX - touchStartRef.current.x
+      const deltaY = touch.clientY - touchStartRef.current.y
+
+      // Only handle horizontal swipes (ignore if vertical movement is greater)
+      if (
+        Math.abs(deltaX) > Math.abs(deltaY) &&
+        Math.abs(deltaX) > SWIPE_THRESHOLD
+      ) {
+        stopPlay()
+        if (deltaX > 0) {
+          goToPrevious()
+        } else {
+          goToNext()
+        }
+      }
+
+      touchStartRef.current = null
+    }
+
+    const container = imageContainerRef.current || document
+    container.addEventListener(
+      'touchstart',
+      handleTouchStart as EventListener,
+      {
+        passive: true,
+      }
+    )
+    container.addEventListener('touchmove', handleTouchMove as EventListener, {
+      passive: false,
+    })
+    container.addEventListener('touchend', handleTouchEnd as EventListener, {
+      passive: true,
+    })
+
+    return () => {
+      container.removeEventListener(
+        'touchstart',
+        handleTouchStart as EventListener
+      )
+      container.removeEventListener(
+        'touchmove',
+        handleTouchMove as EventListener
+      )
+      container.removeEventListener('touchend', handleTouchEnd as EventListener)
+    }
+  }, [
+    goToPrevious,
+    goToNext,
+    stopPlay,
     showDeleteConfirm,
     showCropModal,
     showLabelsModal,
@@ -881,12 +1040,30 @@ export function PhotoSlideshow({
     }),
   }
 
+  // Crossfade variants for play mode - smooth transitions without sliding
+  const crossfadeVariants = {
+    enter: {
+      opacity: 0,
+    },
+    center: {
+      zIndex: 1,
+      opacity: 1,
+    },
+    exit: {
+      zIndex: 0,
+      opacity: 0,
+    },
+  }
+
   // Calculate display position accounting for potentially loaded previous pages
   const minLoadedPage = Math.min(...Array.from(loadedPages))
   const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1
 
   return (
-    <div className="fixed inset-0 z-50 bg-bg flex flex-col">
+    <div
+      className="fixed inset-0 z-50 bg-bg flex flex-col"
+      ref={imageContainerRef}
+    >
       {/* Top Bar */}
       <div className="slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
         <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
@@ -1045,6 +1222,16 @@ export function PhotoSlideshow({
 
           {/* Counter & Controls */}
           <div className="flex items-center gap-4">
+            {/* Play/Pause Button */}
+            <button
+              onClick={togglePlay}
+              className="p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+              aria-label={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
+            </button>
+
             {/* Photo counter - hidden on mobile */}
             <span className="hidden sm:inline-flex items-center text-sm text-text-muted">
               <span className="text-white font-medium">{displayPosition}</span>
@@ -1139,7 +1326,10 @@ export function PhotoSlideshow({
       <div className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-20 pb-8 md:pb-28">
         {/* Previous Button */}
         <button
-          onClick={goToPrevious}
+          onClick={() => {
+            stopPlay()
+            goToPrevious()
+          }}
           disabled={currentIndex === 0 && minLoadedPage === 1}
           className="slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Previous photo"
@@ -1148,7 +1338,7 @@ export function PhotoSlideshow({
         </button>
 
         {/* Image */}
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.large_4k_url || currentPhoto.blob_url}
@@ -1159,23 +1349,32 @@ export function PhotoSlideshow({
               maxHeight: 'calc(100vh - 11rem)',
               width: 'auto',
               height: 'auto',
+              cursor: isPlaying ? 'pointer' : 'default',
             }}
             custom={direction}
-            variants={slideVariants}
+            variants={isPlaying ? crossfadeVariants : slideVariants}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 80, damping: 20 },
-              opacity: { duration: 0.4 },
-            }}
+            onClick={isPlaying ? stopPlay : undefined}
+            transition={
+              isPlaying
+                ? { opacity: { duration: 0.8 } }
+                : {
+                    x: { type: 'spring', stiffness: 80, damping: 20 },
+                    opacity: { duration: 0.4 },
+                  }
+            }
           />
         </AnimatePresence>
 
         {/* Next Button */}
         <button
-          onClick={goToNext}
-          disabled={displayPosition >= totalCount}
+          onClick={() => {
+            stopPlay()
+            goToNext()
+          }}
+          disabled={displayPosition >= totalCount && !isPlaying}
           className="slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next photo"
         >
