@@ -6,11 +6,19 @@ import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 
 /**
  * Calculate the transform needed to center a focal point in a container.
+ * Uses dynamic scaling - only zooms as much as needed based on focal point position.
  */
 function getFocalPointTransform(focalPoint: { x: number; y: number }) {
-  const translateX = (50 - focalPoint.x) * 0.5
-  const translateY = (50 - focalPoint.y) * 0.5
-  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+  const deltaX = Math.abs(50 - focalPoint.x)
+  const deltaY = Math.abs(50 - focalPoint.y)
+  const maxDelta = Math.max(deltaX, deltaY)
+
+  const scale = 1.02 + maxDelta * 0.003
+  const translateFactor = 1 / scale
+  const translateX = (50 - focalPoint.x) * translateFactor
+  const translateY = (50 - focalPoint.y) * translateFactor
+
+  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
 }
 
 export interface WinnerDisplayProps {

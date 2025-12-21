@@ -6,14 +6,22 @@ import { useMounted } from '@/lib/hooks'
 
 /**
  * Calculate the transform needed to center a focal point in a container.
- * Scale up the image and translate to ensure the focal point appears at center.
+ * Uses dynamic scaling - only zooms as much as needed based on focal point position.
  */
 function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
   const x = focalPoint?.x ?? 50
   const y = focalPoint?.y ?? 50
-  const translateX = (50 - x) * 0.5
-  const translateY = (50 - y) * 0.5
-  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+  const deltaX = Math.abs(50 - x)
+  const deltaY = Math.abs(50 - y)
+  const maxDelta = Math.max(deltaX, deltaY)
+
+  // Dynamic scale: minimal zoom for centered focal points
+  const scale = 1.02 + maxDelta * 0.003
+  const translateFactor = 1 / scale
+  const translateX = (50 - x) * translateFactor
+  const translateY = (50 - y) * translateFactor
+
+  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
 }
 
 interface HeroImage {

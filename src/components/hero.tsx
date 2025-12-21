@@ -1,13 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { Button, FocalPointImage } from '@/components/ui'
+import { Button, FocalPointImage, type FocalPoint } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
-export interface HeroFocalPoint {
-  x: number // 0-100 percentage from left
-  y: number // 0-100 percentage from top
-}
+/** @deprecated Use FocalPoint from @/components/ui instead */
+export type HeroFocalPoint = FocalPoint
 
 export interface HeroProps {
   /** Hero title */

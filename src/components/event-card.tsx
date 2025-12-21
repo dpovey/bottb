@@ -6,12 +6,20 @@ import { cn } from '@/lib/utils'
 
 /**
  * Calculate the transform needed to center a focal point in a container.
+ * Uses dynamic scaling - only zooms as much as needed based on focal point position.
  */
 function getFocalPointTransform(focalPoint?: { x: number; y: number }) {
   if (!focalPoint) return undefined
-  const translateX = (50 - focalPoint.x) * 0.5
-  const translateY = (50 - focalPoint.y) * 0.5
-  return `scale(1.2) translate(${translateX}%, ${translateY}%)`
+  const deltaX = Math.abs(50 - focalPoint.x)
+  const deltaY = Math.abs(50 - focalPoint.y)
+  const maxDelta = Math.max(deltaX, deltaY)
+
+  const scale = 1.02 + maxDelta * 0.003
+  const translateFactor = 1 / scale
+  const translateX = (50 - focalPoint.x) * translateFactor
+  const translateY = (50 - focalPoint.y) * translateFactor
+
+  return `scale(${scale}) translate(${translateX}%, ${translateY}%)`
 }
 
 interface HeroPhoto {
@@ -96,14 +104,14 @@ export function EventCard({
 
           {/* Image if available - zooms on hover */}
           {imageUrl && (
-            <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden group-hover:scale-105 transition-transform duration-500 ease-out">
               <Image
                 src={imageUrl}
                 alt={`${event.name} event image`}
                 fill
-                className="object-cover origin-center opacity-80 transition-transform duration-500 ease-out group-hover:scale-[1.26] group-hover:opacity-100"
+                className="object-cover origin-center opacity-80 group-hover:opacity-100 transition-opacity duration-500"
                 style={{
-                  transform: getFocalPointTransform(focalPoint) || 'scale(1)',
+                  transform: getFocalPointTransform(focalPoint) || undefined,
                 }}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />

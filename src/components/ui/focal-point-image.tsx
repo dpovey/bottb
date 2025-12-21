@@ -46,11 +46,21 @@ export function FocalPointImage({
   className,
   unoptimized = false,
 }: FocalPointImageProps) {
-  // Calculate the translation needed to center the focal point
-  // - If focal point is 45%, we need to shift right by (50-45)*0.5 = 2.5%
-  // - The 0.5 factor accounts for the 1.2x scale
-  const translateX = (50 - focalPoint.x) * 0.5
-  const translateY = (50 - focalPoint.y) * 0.5
+  // Calculate how far the focal point is from center
+  const deltaX = Math.abs(50 - focalPoint.x)
+  const deltaY = Math.abs(50 - focalPoint.y)
+  const maxDelta = Math.max(deltaX, deltaY)
+
+  // Dynamic scale: only zoom as much as needed
+  // - Focal point at 50% (center) = scale 1.0 (no zoom)
+  // - Focal point at 0% or 100% (edge) = scale ~1.15
+  // Add small buffer (1.02) to prevent edge gaps
+  const scale = 1.02 + maxDelta * 0.003
+
+  // Translation factor adjusts based on scale
+  const translateFactor = 1 / scale
+  const translateX = (50 - focalPoint.x) * translateFactor
+  const translateY = (50 - focalPoint.y) * translateFactor
 
   return (
     <div className={cn('absolute inset-0 overflow-hidden', className)}>
@@ -60,8 +70,7 @@ export function FocalPointImage({
         fill
         className="object-cover origin-center"
         style={{
-          // Scale up slightly and translate to center the focal point
-          transform: `scale(1.2) translate(${translateX}%, ${translateY}%)`,
+          transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`,
         }}
         priority={priority}
         sizes={sizes}
