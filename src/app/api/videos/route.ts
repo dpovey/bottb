@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const eventId = searchParams.get('event') || undefined
-    const bandId = searchParams.get('band') || undefined
+    const companySlug = searchParams.get('company') || undefined
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = (page - 1) * limit
 
     const [videos, total] = await Promise.all([
-      getVideos({ eventId, bandId, limit, offset }),
-      getVideoCount({ eventId, bandId }),
+      getVideos({ eventId, companySlug, limit, offset }),
+      getVideoCount({ eventId, companySlug }),
     ])
 
     return NextResponse.json({

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PhotoFilters } from '../photo-filters'
-import type { Event, Band } from '@/lib/db'
+import type { Event } from '@/lib/db'
 
 // Mock the UI components
 vi.mock('@/components/ui', () => ({
@@ -35,26 +35,34 @@ vi.mock('@/components/ui', () => ({
     </label>
   ),
   FilterPill: ({
-    label,
+    children,
     onRemove,
   }: {
-    label: string
+    children: React.ReactNode
     onRemove: () => void
   }) => (
-    <div data-testid={`filter-pill-${label}`}>
-      {label}
+    <div data-testid="filter-pill">
+      {children}
       <button onClick={onRemove}>Remove</button>
     </div>
   ),
   FilterPills: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="filter-pills">{children}</div>
   ),
-  FilterClearButton: ({ onClick }: { onClick: () => void }) => (
-    <button onClick={onClick}>Clear All</button>
+  FilterClearButton: ({
+    onClick,
+    disabled,
+  }: {
+    onClick: () => void
+    disabled?: boolean
+  }) => (
+    <button onClick={onClick} disabled={disabled}>
+      Clear All
+    </button>
   ),
 }))
 
-describe('PhotoFilters - Band Deduplication', () => {
+describe('PhotoFilters', () => {
   const mockEvents: Event[] = [
     {
       id: 'event1',
@@ -78,41 +86,6 @@ describe('PhotoFilters - Band Deduplication', () => {
     },
   ]
 
-  const mockBands: Band[] = [
-    {
-      id: 'band1',
-      event_id: 'event1',
-      name: 'Jumbo Band',
-      company_slug: 'jumbo',
-      order: 1,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      id: 'band2',
-      event_id: 'event2',
-      name: 'Jumbo Band',
-      company_slug: 'jumbo',
-      order: 1,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      id: 'band3',
-      event_id: 'event1',
-      name: 'Epsilon',
-      company_slug: 'epsilon',
-      order: 2,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      id: 'band4',
-      event_id: 'event2',
-      name: 'Epsilon Band',
-      company_slug: 'epsilon',
-      order: 2,
-      created_at: '2024-01-01T00:00:00Z',
-    },
-  ]
-
   const mockCompanies = [
     { slug: 'jumbo', name: 'Jumbo' },
     { slug: 'epsilon', name: 'Epsilon' },
@@ -121,24 +94,19 @@ describe('PhotoFilters - Band Deduplication', () => {
   const mockAvailableFilters = {
     companies: mockCompanies.map((c) => ({ ...c, count: 10 })),
     events: mockEvents.map((e) => ({ id: e.id, name: e.name, count: 10 })),
-    bands: mockBands.map((b) => ({ id: b.id, name: b.name, count: 10 })),
     photographers: [{ name: 'Photographer 1', count: 5 }],
-    hasPhotosWithoutBand: true,
     hasPhotosWithoutCompany: false,
   }
 
   const defaultProps = {
     events: mockEvents,
-    bands: mockBands,
-    photographers: ['Photographer 1'],
+    photographers: ['Photographer 1', 'Photographer 2'],
     companies: mockCompanies,
     availableFilters: mockAvailableFilters,
     selectedEventId: null,
-    selectedBandId: null,
     selectedPhotographer: null,
     selectedCompanySlug: null,
     onEventChange: vi.fn(),
-    onBandChange: vi.fn(),
     onPhotographerChange: vi.fn(),
     onCompanyChange: vi.fn(),
   }
@@ -147,86 +115,227 @@ describe('PhotoFilters - Band Deduplication', () => {
     vi.clearAllMocks()
   })
 
-  describe('Band deduplication when company is selected', () => {
-    it('should deduplicate bands with same name when company is selected and no event', async () => {
-      const _user = userEvent.setup()
-      const onBandChange = vi.fn()
+  describe('Rendering', () => {
+    it('should render all filter dropdowns', () => {
+      render(<PhotoFilters {...defaultProps} />)
 
-      render(
-        <PhotoFilters
-          {...defaultProps}
-          selectedCompanySlug="jumbo"
-          onBandChange={onBandChange}
-        />
-      )
-
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      const options = Array.from(bandSelect.options).map((opt) => opt.text)
-
-      // Should only show "Jumbo Band" once, not twice
-      const jumboBandCount = options.filter((opt) =>
-        opt.includes('Jumbo Band')
-      ).length
-      expect(jumboBandCount).toBe(1)
+      expect(screen.getByLabelText(/company/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/event/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/photographer/i)).toBeInTheDocument()
     })
 
-    it('should show different band names separately for same company', async () => {
-      const _user = userEvent.setup()
-      const onBandChange = vi.fn()
+    it('should show companies in the company filter', () => {
+      render(<PhotoFilters {...defaultProps} />)
 
-      render(
-        <PhotoFilters
-          {...defaultProps}
-          selectedCompanySlug="epsilon"
-          onBandChange={onBandChange}
-        />
-      )
+      const companySelect = screen.getByLabelText(
+        /company/i
+      ) as HTMLSelectElement
+      const options = Array.from(companySelect.options).map((opt) => opt.text)
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      const options = Array.from(bandSelect.options).map((opt) => opt.text)
-
-      // Should show both "Epsilon" and "Epsilon Band" separately
-      expect(
-        options.some((opt) => opt.includes('Epsilon') && !opt.includes('Band'))
-      ).toBe(true)
-      expect(options.some((opt) => opt.includes('Epsilon Band'))).toBe(true)
+      expect(options).toContain('All Companies')
+      expect(options).toContain('Jumbo')
+      expect(options).toContain('Epsilon')
     })
 
-    it('should send all matching band IDs when deduplicated band is selected', async () => {
+    it('should show events in the event filter', () => {
+      render(<PhotoFilters {...defaultProps} />)
+
+      const eventSelect = screen.getByLabelText(/event/i) as HTMLSelectElement
+      const options = Array.from(eventSelect.options).map((opt) => opt.text)
+
+      expect(options).toContain('All Events')
+      expect(options).toContain('Brisbane 2024')
+      expect(options).toContain('Brisbane 2025')
+    })
+
+    it('should show photographers in the photographer filter', () => {
+      // Add Photographer 2 to availableFilters for this test
+      const propsWithBothPhotographers = {
+        ...defaultProps,
+        availableFilters: {
+          ...defaultProps.availableFilters,
+          photographers: [
+            { name: 'Photographer 1', count: 5 },
+            { name: 'Photographer 2', count: 3 },
+          ],
+        },
+      }
+      render(<PhotoFilters {...propsWithBothPhotographers} />)
+
+      const photographerSelect = screen.getByLabelText(
+        /photographer/i
+      ) as HTMLSelectElement
+      const options = Array.from(photographerSelect.options).map(
+        (opt) => opt.text
+      )
+
+      expect(options).toContain('All Photographers')
+      expect(options).toContain('Photographer 1')
+      expect(options).toContain('Photographer 2')
+    })
+  })
+
+  describe('Filter interactions', () => {
+    it('should call onCompanyChange when company is selected', async () => {
       const user = userEvent.setup()
-      const onBandChange = vi.fn()
+      const onCompanyChange = vi.fn()
+
+      render(
+        <PhotoFilters {...defaultProps} onCompanyChange={onCompanyChange} />
+      )
+
+      const companySelect = screen.getByLabelText(/company/i)
+      await user.selectOptions(companySelect, 'jumbo')
+
+      expect(onCompanyChange).toHaveBeenCalledWith('jumbo')
+    })
+
+    it('should call onEventChange when event is selected', async () => {
+      const user = userEvent.setup()
+      const onEventChange = vi.fn()
+
+      render(<PhotoFilters {...defaultProps} onEventChange={onEventChange} />)
+
+      const eventSelect = screen.getByLabelText(/event/i)
+      await user.selectOptions(eventSelect, 'event1')
+
+      expect(onEventChange).toHaveBeenCalledWith('event1')
+    })
+
+    it('should call onPhotographerChange when photographer is selected', async () => {
+      const user = userEvent.setup()
+      const onPhotographerChange = vi.fn()
+
+      render(
+        <PhotoFilters
+          {...defaultProps}
+          onPhotographerChange={onPhotographerChange}
+        />
+      )
+
+      const photographerSelect = screen.getByLabelText(/photographer/i)
+      await user.selectOptions(photographerSelect, 'Photographer 1')
+
+      expect(onPhotographerChange).toHaveBeenCalledWith('Photographer 1')
+    })
+
+    it('should clear company filter when "All Companies" is selected', async () => {
+      const user = userEvent.setup()
+      const onCompanyChange = vi.fn()
 
       render(
         <PhotoFilters
           {...defaultProps}
           selectedCompanySlug="jumbo"
-          onBandChange={onBandChange}
+          onCompanyChange={onCompanyChange}
         />
       )
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
+      const companySelect = screen.getByLabelText(/company/i)
+      await user.selectOptions(companySelect, '')
 
-      // Find the "Jumbo Band" option (should be deduplicated)
-      const jumboBandOption = Array.from(bandSelect.options).find(
-        (opt) => opt.text.includes('Jumbo Band') && opt.value !== ''
+      expect(onCompanyChange).toHaveBeenCalledWith(null)
+    })
+  })
+
+  describe('Faceted filtering (show only valid options)', () => {
+    it('should only show companies that have photos with current filters', () => {
+      const availableFilters = {
+        companies: [{ slug: 'jumbo', name: 'Jumbo', count: 10 }], // Only Jumbo has photos
+        events: mockEvents.map((e) => ({ id: e.id, name: e.name, count: 10 })),
+        photographers: [{ name: 'Photographer 1', count: 5 }],
+        hasPhotosWithoutCompany: false,
+      }
+
+      render(
+        <PhotoFilters {...defaultProps} availableFilters={availableFilters} />
       )
 
-      expect(jumboBandOption).toBeTruthy()
+      const companySelect = screen.getByLabelText(
+        /company/i
+      ) as HTMLSelectElement
+      const options = Array.from(companySelect.options).map((opt) => opt.value)
 
-      // Select the deduplicated band
-      await user.selectOptions(bandSelect, jumboBandOption!.value)
-
-      // Should call onBandChange with "bandIds:id1,id2" format
-      expect(onBandChange).toHaveBeenCalled()
-      const callArg = onBandChange.mock.calls[0][0]
-      expect(callArg).toMatch(/^bandIds:/)
-      const ids = callArg.replace('bandIds:', '').split(',')
-      expect(ids.length).toBe(2)
-      expect(ids).toContain('band1')
-      expect(ids).toContain('band2')
+      // Should show All Companies + Jumbo only (not Epsilon)
+      expect(options).toContain('')
+      expect(options).toContain('jumbo')
+      expect(options).not.toContain('epsilon')
     })
 
-    it('should not deduplicate when event is selected', async () => {
+    it('should only show events that have photos with current filters', () => {
+      const availableFilters = {
+        companies: mockCompanies.map((c) => ({ ...c, count: 10 })),
+        events: [{ id: 'event1', name: 'Brisbane 2024', count: 10 }], // Only event1 has photos
+        photographers: [{ name: 'Photographer 1', count: 5 }],
+        hasPhotosWithoutCompany: false,
+      }
+
+      render(
+        <PhotoFilters {...defaultProps} availableFilters={availableFilters} />
+      )
+
+      const eventSelect = screen.getByLabelText(/event/i) as HTMLSelectElement
+      const options = Array.from(eventSelect.options).map((opt) => opt.value)
+
+      // Should show All Events + event1 only
+      expect(options).toContain('')
+      expect(options).toContain('event1')
+      expect(options).not.toContain('event2')
+    })
+
+    it('should only show photographers that have photos with current filters', () => {
+      const availableFilters = {
+        companies: mockCompanies.map((c) => ({ ...c, count: 10 })),
+        events: mockEvents.map((e) => ({ id: e.id, name: e.name, count: 10 })),
+        photographers: [{ name: 'Photographer 1', count: 5 }], // Only Photographer 1 has photos
+        hasPhotosWithoutCompany: false,
+      }
+
+      render(
+        <PhotoFilters {...defaultProps} availableFilters={availableFilters} />
+      )
+
+      const photographerSelect = screen.getByLabelText(
+        /photographer/i
+      ) as HTMLSelectElement
+      const options = Array.from(photographerSelect.options).map(
+        (opt) => opt.text
+      )
+
+      // Should show All Photographers + Photographer 1 only
+      expect(options).toContain('All Photographers')
+      expect(options).toContain('Photographer 1')
+      expect(options).not.toContain('Photographer 2')
+    })
+
+    it('should always show currently selected filter even if not in availableFilters', () => {
+      const availableFilters = {
+        companies: [], // No companies have photos (maybe filtered out by other criteria)
+        events: [],
+        photographers: [],
+        hasPhotosWithoutCompany: false,
+      }
+
+      render(
+        <PhotoFilters
+          {...defaultProps}
+          selectedCompanySlug="jumbo"
+          availableFilters={availableFilters}
+        />
+      )
+
+      const companySelect = screen.getByLabelText(
+        /company/i
+      ) as HTMLSelectElement
+      const options = Array.from(companySelect.options).map((opt) => opt.value)
+
+      // Should still show the currently selected company
+      expect(options).toContain('jumbo')
+    })
+  })
+
+  describe('Filter pills', () => {
+    it('should show filter pills when filters are active', () => {
       render(
         <PhotoFilters
           {...defaultProps}
@@ -235,174 +344,72 @@ describe('PhotoFilters - Band Deduplication', () => {
         />
       )
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      const options = Array.from(bandSelect.options).map((opt) => opt.text)
-
-      // When event is selected, should show all bands for that event
-      // "Jumbo Band" should appear once (only in event1)
-      const jumboBandCount = options.filter((opt) =>
-        opt.includes('Jumbo Band')
-      ).length
-      expect(jumboBandCount).toBe(1)
+      const pills = screen.getAllByTestId('filter-pill')
+      expect(pills.length).toBe(2)
     })
 
-    it('should send single band ID when non-deduplicated band is selected', async () => {
+    it('should call onCompanyChange(null) when company pill is removed', async () => {
       const user = userEvent.setup()
-      const onBandChange = vi.fn()
+      const onCompanyChange = vi.fn()
 
-      render(
-        <PhotoFilters
-          {...defaultProps}
-          selectedCompanySlug="epsilon"
-          onBandChange={onBandChange}
-        />
-      )
-
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-
-      // Find "Epsilon" option (different from "Epsilon Band")
-      const epsilonOption = Array.from(bandSelect.options).find(
-        (opt) =>
-          opt.text.includes('Epsilon') &&
-          !opt.text.includes('Band') &&
-          opt.value !== ''
-      )
-
-      expect(epsilonOption).toBeTruthy()
-
-      // Select the band
-      await user.selectOptions(bandSelect, epsilonOption!.value)
-
-      // Should call onBandChange with single ID (not bandIds: format)
-      expect(onBandChange).toHaveBeenCalled()
-      const callArg = onBandChange.mock.calls[0][0]
-      expect(callArg).not.toMatch(/^bandIds:/)
-      expect(callArg).toBe('band3')
-    })
-  })
-
-  describe('Band filter value handling', () => {
-    it('should display correct value when bandIds format is selected', () => {
       render(
         <PhotoFilters
           {...defaultProps}
           selectedCompanySlug="jumbo"
-          selectedBandId="bandIds:band1,band2"
+          onCompanyChange={onCompanyChange}
         />
       )
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
+      const pills = screen.getAllByTestId('filter-pill')
+      const removeButton = pills[0].querySelector('button')
+      await user.click(removeButton!)
 
-      // Should extract first ID from bandIds format for display
-      expect(bandSelect.value).toBe('band1')
-    })
-
-    it('should display correct value when single band ID is selected', () => {
-      render(<PhotoFilters {...defaultProps} selectedBandId="band3" />)
-
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      expect(bandSelect.value).toBe('band3')
-    })
-
-    it("should handle 'none' band selection", async () => {
-      const user = userEvent.setup()
-      const onBandChange = vi.fn()
-
-      render(<PhotoFilters {...defaultProps} onBandChange={onBandChange} />)
-
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      await user.selectOptions(bandSelect, 'none')
-
-      expect(onBandChange).toHaveBeenCalledWith('none')
-    })
-
-    it('should handle clearing band selection', async () => {
-      const user = userEvent.setup()
-      const onBandChange = vi.fn()
-
-      render(
-        <PhotoFilters
-          {...defaultProps}
-          selectedBandId="band1"
-          onBandChange={onBandChange}
-        />
-      )
-
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      await user.selectOptions(bandSelect, '')
-
-      expect(onBandChange).toHaveBeenCalledWith(null)
+      expect(onCompanyChange).toHaveBeenCalledWith(null)
     })
   })
 
-  describe('Edge cases', () => {
-    it('should handle company with no bands', () => {
-      render(
-        <PhotoFilters
-          {...defaultProps}
-          selectedCompanySlug="nonexistent"
-          bands={[]}
-          availableFilters={{
-            ...mockAvailableFilters,
-            bands: [],
-            hasPhotosWithoutBand: false,
-          }}
-        />
-      )
+  describe('Clear all button', () => {
+    it('should be disabled when no filters are active', () => {
+      render(<PhotoFilters {...defaultProps} />)
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      const options = Array.from(bandSelect.options).map((opt) => opt.text)
-
-      // Should only have "All Bands" option
-      expect(options.length).toBe(1)
-      expect(options[0]).toContain('All Bands')
+      const clearButton = screen.getByRole('button', { name: /clear all/i })
+      expect(clearButton).toBeDisabled()
     })
 
-    it('should handle company with single band (no deduplication needed)', async () => {
+    it('should clear all filters when clicked', async () => {
       const user = userEvent.setup()
-      const onBandChange = vi.fn()
-
-      const singleBand: Band[] = [
-        {
-          id: 'band1',
-          event_id: 'event1',
-          name: 'Single Band',
-          company_slug: 'jumbo',
-          order: 1,
-          created_at: '2024-01-01T00:00:00Z',
-        },
-      ]
+      const onEventChange = vi.fn()
+      const onPhotographerChange = vi.fn()
+      const onCompanyChange = vi.fn()
 
       render(
         <PhotoFilters
           {...defaultProps}
-          bands={singleBand}
           selectedCompanySlug="jumbo"
-          onBandChange={onBandChange}
+          selectedEventId="event1"
+          selectedPhotographer="Photographer 1"
+          onEventChange={onEventChange}
+          onPhotographerChange={onPhotographerChange}
+          onCompanyChange={onCompanyChange}
         />
       )
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      const singleBandOption = Array.from(bandSelect.options).find(
-        (opt) => opt.text.includes('Single Band') && opt.value !== ''
-      )
+      const clearButton = screen.getByRole('button', { name: /clear all/i })
+      await user.click(clearButton)
 
-      expect(singleBandOption).toBeTruthy()
-      await user.selectOptions(bandSelect, singleBandOption!.value)
-
-      // Should send single ID, not bandIds format
-      expect(onBandChange).toHaveBeenCalledWith('band1')
-      expect(onBandChange).not.toHaveBeenCalledWith(
-        expect.stringMatching(/^bandIds:/)
-      )
+      expect(onEventChange).toHaveBeenCalledWith(null)
+      expect(onPhotographerChange).toHaveBeenCalledWith(null)
+      expect(onCompanyChange).toHaveBeenCalledWith(null)
     })
+  })
 
-    it('should handle malformed bandIds format gracefully', () => {
-      render(<PhotoFilters {...defaultProps} selectedBandId="bandIds:" />)
+  describe('Loading state', () => {
+    it('should disable filters when loading', () => {
+      render(<PhotoFilters {...defaultProps} loading={true} />)
 
-      const bandSelect = screen.getByLabelText(/band/i) as HTMLSelectElement
-      // Should not crash, value should be empty or handle gracefully
-      expect(bandSelect).toBeInTheDocument()
+      expect(screen.getByLabelText(/company/i)).toBeDisabled()
+      expect(screen.getByLabelText(/event/i)).toBeDisabled()
+      expect(screen.getByLabelText(/photographer/i)).toBeDisabled()
     })
   })
 })

@@ -27,20 +27,20 @@ export const metadata: Metadata = {
 interface VideosPageProps {
   searchParams: Promise<{
     event?: string
-    band?: string
+    company?: string
   }>
 }
 
 export default async function VideosPage({ searchParams }: VideosPageProps) {
   const params = await searchParams
   const initialEventId = params.event || null
-  const initialBandId = params.band || null
+  const initialCompanySlug = params.company || null
 
   // Fetch all data in parallel
   const [videosData, navEvents] = await Promise.all([
     getCachedVideosData(
       initialEventId || undefined,
-      initialBandId || undefined
+      initialCompanySlug || undefined
     ),
     getNavEvents(),
   ])
@@ -48,7 +48,7 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
   return (
     <VideosContent
       initialEventId={initialEventId}
-      initialBandId={initialBandId}
+      initialCompanySlug={initialCompanySlug}
       initialVideos={videosData.videos}
       initialFilterOptions={videosData.filterOptions}
       navEvents={navEvents}

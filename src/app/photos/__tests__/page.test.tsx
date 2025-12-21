@@ -62,10 +62,6 @@ describe('PhotosContent - Filter Defaults', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ bands: [] }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({
           photos: [],
           pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
@@ -74,12 +70,10 @@ describe('PhotosContent - Filter Defaults', () => {
           availableFilters: {
             companies: [],
             events: [],
-            bands: [],
             photographers: [
               { name: 'Photographer 1', count: 5 },
               { name: 'Photographer 2', count: 3 },
             ],
-            hasPhotosWithoutBand: false,
             hasPhotosWithoutCompany: false,
           },
         }),
@@ -88,7 +82,6 @@ describe('PhotosContent - Filter Defaults', () => {
     render(
       <PhotosContent
         initialEventId={null}
-        initialBandId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
         initialPhotoId={null}
@@ -141,16 +134,11 @@ describe('PhotosContent - Filter Defaults', () => {
         ok: true,
         json: async () => ({ events: [] }),
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ bands: [] }),
-      })
       .mockResolvedValueOnce(photosPromise)
 
     render(
       <PhotosContent
         initialEventId={null}
-        initialBandId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
         initialPhotoId={null}
@@ -179,12 +167,10 @@ describe('PhotosContent - Filter Defaults', () => {
       availableFilters: {
         companies: [],
         events: [],
-        bands: [],
         photographers: [
           { name: 'Photographer 1', count: 5 },
           { name: 'Photographer 2', count: 3 },
         ],
-        hasPhotosWithoutBand: false,
         hasPhotosWithoutCompany: false,
       },
     })

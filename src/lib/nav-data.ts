@@ -194,13 +194,13 @@ export interface VideosData {
  */
 export async function getCachedVideosData(
   eventId?: string,
-  bandId?: string
+  companySlug?: string
 ): Promise<VideosData> {
   cacheLife('fiveMinutes')
   cacheTag('videos')
 
   const [videos, filterOptions] = await Promise.all([
-    getVideos({ eventId, bandId, limit: 100 }),
+    getVideos({ eventId, companySlug, limit: 100 }),
     getCachedFilterOptions(),
   ])
 

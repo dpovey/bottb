@@ -14,15 +14,14 @@ interface Event {
   name: string
 }
 
-interface Band {
-  id: string
+interface Company {
+  slug: string
   name: string
-  event_id: string
 }
 
 interface VideosContentProps {
   initialEventId: string | null
-  initialBandId: string | null
+  initialCompanySlug: string | null
   /** SSR-provided videos */
   initialVideos?: Video[]
   /** SSR-provided filter options */
@@ -60,7 +59,7 @@ function getThumbnailUrl(video: Video): string {
 
 export function VideosContent({
   initialEventId,
-  initialBandId,
+  initialCompanySlug,
   initialVideos,
   initialFilterOptions,
   navEvents,
@@ -70,24 +69,20 @@ export function VideosContent({
   const [events, setEvents] = useState<Event[]>(
     initialFilterOptions?.events.map((e) => ({ id: e.id, name: e.name })) || []
   )
-  const [bands, setBands] = useState<Band[]>(
-    initialFilterOptions?.bands.map((b) => ({
-      id: b.id,
-      name: b.name,
-      event_id: b.event_id,
-    })) || []
+  const [companies, setCompanies] = useState<Company[]>(
+    initialFilterOptions?.companies || []
   )
   const [loading, setLoading] = useState(!initialVideos)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     initialEventId
   )
-  const [selectedBandId, setSelectedBandId] = useState<string | null>(
-    initialBandId
+  const [selectedCompanySlug, setSelectedCompanySlug] = useState<string | null>(
+    initialCompanySlug
   )
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [totalCount, setTotalCount] = useState(initialVideos?.length || 0)
 
-  // Fetch events and bands for filters (only if not provided via SSR)
+  // Fetch events and companies for filters (only if not provided via SSR)
   useEffect(() => {
     if (initialFilterOptions) return
 
@@ -116,13 +111,13 @@ export function VideosContent({
       }
 
       try {
-        const bandsRes = await fetch('/api/bands')
-        if (bandsRes.ok) {
-          const bandsData = await bandsRes.json()
-          setBands(bandsData.bands || bandsData || [])
+        const companiesRes = await fetch('/api/companies')
+        if (companiesRes.ok) {
+          const companiesData = await companiesRes.json()
+          setCompanies(companiesData.companies || companiesData || [])
         }
       } catch (error) {
-        console.error('Failed to fetch bands:', error)
+        console.error('Failed to fetch companies:', error)
       }
     }
 
@@ -138,7 +133,7 @@ export function VideosContent({
     try {
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
-      if (selectedBandId) params.set('band', selectedBandId)
+      if (selectedCompanySlug) params.set('company', selectedCompanySlug)
       params.set('limit', '100')
 
       const res = await fetch(`/api/videos?${params.toString()}`)
@@ -152,7 +147,7 @@ export function VideosContent({
     } finally {
       setLoading(false)
     }
-  }, [selectedEventId, selectedBandId])
+  }, [selectedEventId, selectedCompanySlug])
 
   // Only fetch videos if filters changed or no SSR data
   useEffect(() => {
@@ -165,27 +160,10 @@ export function VideosContent({
   useEffect(() => {
     const params = new URLSearchParams()
     if (selectedEventId) params.set('event', selectedEventId)
-    if (selectedBandId) params.set('band', selectedBandId)
+    if (selectedCompanySlug) params.set('company', selectedCompanySlug)
     const newUrl = params.toString() ? `?${params.toString()}` : '/videos'
     window.history.replaceState(null, '', newUrl)
-  }, [selectedEventId, selectedBandId])
-
-  // Filter bands by selected event
-  const filteredBands = selectedEventId
-    ? bands.filter((b) => b.event_id === selectedEventId)
-    : bands
-
-  // Clear band selection when event changes and band is not in event
-  useEffect(() => {
-    if (selectedEventId && selectedBandId) {
-      const bandInEvent = bands.find(
-        (b) => b.id === selectedBandId && b.event_id === selectedEventId
-      )
-      if (!bandInEvent) {
-        setSelectedBandId(null)
-      }
-    }
-  }, [selectedEventId, selectedBandId, bands])
+  }, [selectedEventId, selectedCompanySlug])
 
   const handleVideoClick = (video: Video) => {
     trackVideoClick({
@@ -204,11 +182,11 @@ export function VideosContent({
 
   const clearFilters = () => {
     setSelectedEventId(null)
-    setSelectedBandId(null)
+    setSelectedCompanySlug(null)
     setFiltersChanged(true)
   }
 
-  const hasActiveFilters = selectedEventId || selectedBandId
+  const hasActiveFilters = selectedEventId || selectedCompanySlug
 
   return (
     <PublicLayout
@@ -229,6 +207,24 @@ export function VideosContent({
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8 items-end">
+          {/* Company Filter */}
+          <FilterSelect
+            value={selectedCompanySlug || ''}
+            onChange={(e) => {
+              setSelectedCompanySlug(e.target.value || null)
+              setFiltersChanged(true)
+            }}
+            label="Company"
+            containerClassName="min-w-[180px] flex-none"
+          >
+            <option value="">All Companies</option>
+            {companies.map((company) => (
+              <option key={company.slug} value={company.slug}>
+                {company.name}
+              </option>
+            ))}
+          </FilterSelect>
+
           {/* Event Filter */}
           <FilterSelect
             value={selectedEventId || ''}
@@ -243,24 +239,6 @@ export function VideosContent({
             {events.map((event) => (
               <option key={event.id} value={event.id}>
                 {event.name}
-              </option>
-            ))}
-          </FilterSelect>
-
-          {/* Band Filter */}
-          <FilterSelect
-            value={selectedBandId || ''}
-            onChange={(e) => {
-              setSelectedBandId(e.target.value || null)
-              setFiltersChanged(true)
-            }}
-            label="Band"
-            containerClassName="min-w-[180px] flex-none"
-          >
-            <option value="">All Bands</option>
-            {filteredBands.map((band) => (
-              <option key={band.id} value={band.id}>
-                {band.name}
               </option>
             ))}
           </FilterSelect>

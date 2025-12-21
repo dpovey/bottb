@@ -8,18 +8,9 @@ import {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    // Support both new (event, band) and legacy (eventId, bandId) param names
+    // Support both new (event) and legacy (eventId) param names
     const eventId =
       searchParams.get('event') || searchParams.get('eventId') || undefined
-    // Support multiple band IDs (comma-separated) for deduplicated band names
-    const bandIdsParam = searchParams.get('bandIds')
-    const bandIds = bandIdsParam
-      ? bandIdsParam.split(',').filter((id) => id.trim().length > 0)
-      : undefined
-    // Only use single bandId if bandIds is not provided
-    const bandId = bandIds
-      ? undefined
-      : searchParams.get('band') || searchParams.get('bandId') || undefined
     const photographer = searchParams.get('photographer') || undefined
     // Support both company and companySlug for backwards compatibility
     const companySlug =
@@ -40,8 +31,6 @@ export async function GET(request: NextRequest) {
     // Use single optimized query for photos + count (eliminates duplicate WHERE clause)
     const { photos, total } = await getPhotosWithCount({
       eventId,
-      bandId,
-      bandIds,
       photographer,
       companySlug,
       limit,
@@ -58,8 +47,6 @@ export async function GET(request: NextRequest) {
     if (!skipMeta) {
       availableFilters = await getAvailablePhotoFilters({
         eventId,
-        bandId,
-        bandIds,
         photographer,
         companySlug,
       })

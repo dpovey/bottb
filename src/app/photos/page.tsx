@@ -34,21 +34,21 @@ function PhotosLoading() {
 export const metadata: Metadata = {
   title: 'Photo Gallery | Battle of the Tech Bands',
   description:
-    'Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.',
+    'Browse photos from Battle of the Tech Bands events. Filter by event, photographer, or company.',
   alternates: {
     canonical: `${getBaseUrl()}/photos`,
   },
   openGraph: {
     title: 'Photo Gallery | Battle of the Tech Bands',
     description:
-      'Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.',
+      'Browse photos from Battle of the Tech Bands events. Filter by event, photographer, or company.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Photo Gallery | Battle of the Tech Bands',
     description:
-      'Browse photos from Battle of the Tech Bands events. Filter by event, band, photographer, or company.',
+      'Browse photos from Battle of the Tech Bands events. Filter by event, photographer, or company.',
   },
 }
 
@@ -56,9 +56,6 @@ interface PhotosPageProps {
   searchParams: Promise<{
     event?: string
     eventId?: string
-    band?: string
-    bandId?: string
-    bandIds?: string
     photographer?: string
     company?: string
     photo?: string
@@ -72,12 +69,8 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
     getCachedFilterOptions(),
   ])
 
-  // Support both new (event, band) and legacy (eventId, bandId) param names
+  // Support both new (event) and legacy (eventId) param names
   const initialEventId = params.event || params.eventId || null
-  // Prefer bandIds if present, format as "bandIds:id1,id2" for client component
-  const initialBandId = params.bandIds
-    ? `bandIds:${params.bandIds}`
-    : params.band || params.bandId || null
   const initialPhotographer = params.photographer || null
   const initialCompanySlug = params.company || null
   const initialPhotoId = params.photo || null
@@ -86,7 +79,6 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
     <Suspense fallback={<PhotosLoading />}>
       <PhotosContent
         initialEventId={initialEventId}
-        initialBandId={initialBandId}
         initialPhotographer={initialPhotographer}
         initialCompanySlug={initialCompanySlug}
         initialPhotoId={initialPhotoId}

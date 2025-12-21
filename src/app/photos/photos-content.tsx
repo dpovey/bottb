@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Photo, Event, Band } from '@/lib/db'
+import { Photo, Event } from '@/lib/db'
 import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
 import { PhotoFilters } from '@/components/photos/photo-filters'
@@ -25,9 +25,7 @@ interface Company {
 interface AvailableFilters {
   companies: { slug: string; name: string; count: number }[]
   events: { id: string; name: string; count: number }[]
-  bands: { id: string; name: string; count: number }[]
   photographers: { name: string; count: number }[]
-  hasPhotosWithoutBand: boolean
   hasPhotosWithoutCompany: boolean
 }
 
@@ -48,7 +46,6 @@ type OrderMode = 'random' | 'date'
 
 interface PhotosContentProps {
   initialEventId?: string | null
-  initialBandId?: string | null
   initialPhotographer?: string | null
   initialCompanySlug?: string | null
   initialPhotoId?: string | null
@@ -58,7 +55,6 @@ interface PhotosContentProps {
 
 export function PhotosContent({
   initialEventId = null,
-  initialBandId = null,
   initialPhotographer = null,
   initialCompanySlug = null,
   initialPhotoId = null,
@@ -76,16 +72,6 @@ export function PhotosContent({
       timezone: 'UTC',
       status: 'finalized' as const,
       is_active: false,
-      created_at: '',
-    })) || []
-  )
-  const [bands, setBands] = useState<Band[]>(
-    initialFilterOptions?.bands.map((b) => ({
-      id: b.id,
-      name: b.name,
-      event_id: b.event_id,
-      company_slug: b.company_slug,
-      order: 0,
       created_at: '',
     })) || []
   )
@@ -118,9 +104,6 @@ export function PhotosContent({
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     initialEventId
   )
-  const [selectedBandId, setSelectedBandId] = useState<string | null>(
-    initialBandId
-  )
   const [selectedPhotographer, setSelectedPhotographer] = useState<
     string | null
   >(initialPhotographer)
@@ -140,8 +123,6 @@ export function PhotosContent({
   // Sync filters with URL params when they change (for browser back/forward)
   useEffect(() => {
     const eventId = searchParams.get('event') || searchParams.get('eventId')
-    const bandId = searchParams.get('band') || searchParams.get('bandId')
-    const bandIds = searchParams.get('bandIds')
     const photographer = searchParams.get('photographer')
     const company = searchParams.get('company')
     const photoId = searchParams.get('photo')
@@ -150,11 +131,6 @@ export function PhotosContent({
     // Use functional updates to avoid dependency on current state values
     setSelectedEventId((prev) => {
       const urlValue = eventId || null
-      return prev !== urlValue ? urlValue : prev
-    })
-    setSelectedBandId((prev) => {
-      // Prefer bandIds if present, format as "bandIds:id1,id2"
-      const urlValue = bandIds ? `bandIds:${bandIds}` : bandId || null
       return prev !== urlValue ? urlValue : prev
     })
     setSelectedPhotographer((prev) => {
@@ -175,8 +151,6 @@ export function PhotosContent({
   const updateUrlParams = useCallback(
     (params: {
       event?: string | null
-      band?: string | null
-      bandIds?: string | null
       photographer?: string | null
       company?: string | null
     }) => {
@@ -190,23 +164,6 @@ export function PhotosContent({
           url.searchParams.set('event', params.event)
         } else {
           url.searchParams.delete('event')
-        }
-      }
-      if (params.band !== undefined || params.bandIds !== undefined) {
-        // Remove legacy param if present
-        url.searchParams.delete('bandId')
-        // Clear both band and bandIds when clearing
-        if (params.band === null && params.bandIds === null) {
-          url.searchParams.delete('band')
-          url.searchParams.delete('bandIds')
-        } else if (params.bandIds) {
-          // Use bandIds when multiple IDs
-          url.searchParams.delete('band')
-          url.searchParams.set('bandIds', params.bandIds)
-        } else if (params.band) {
-          // Use single band ID
-          url.searchParams.delete('bandIds')
-          url.searchParams.set('band', params.band)
         }
       }
       if (params.photographer !== undefined) {
@@ -234,40 +191,14 @@ export function PhotosContent({
   const handleEventChange = useCallback(
     (eventId: string | null) => {
       setSelectedEventId(eventId)
-      setSelectedBandId(null) // Reset band when event changes
       setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
-      updateUrlParams({ event: eventId, band: null })
+      updateUrlParams({ event: eventId })
 
       // Track filter change
       trackPhotoFilterChange({
         filter_type: 'event',
         filter_value: eventId,
       })
-    },
-    [updateUrlParams, slideshowIndex]
-  )
-
-  const handleBandChange = useCallback(
-    (bandId: string | null) => {
-      setSelectedBandId(bandId)
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
-      // Handle special format for multiple band IDs: "bandIds:id1,id2,id3"
-      if (bandId && bandId.startsWith('bandIds:')) {
-        const ids = bandId.substring(8) // Remove "bandIds:" prefix
-        updateUrlParams({ band: null, bandIds: ids })
-        // Track filter change
-        trackPhotoFilterChange({
-          filter_type: 'band',
-          filter_value: ids,
-        })
-      } else {
-        updateUrlParams({ band: bandId, bandIds: null })
-        // Track filter change
-        trackPhotoFilterChange({
-          filter_type: 'band',
-          filter_value: bandId,
-        })
-      }
     },
     [updateUrlParams, slideshowIndex]
   )
@@ -290,11 +221,10 @@ export function PhotosContent({
   const handleCompanyChange = useCallback(
     (company: string | null) => {
       setSelectedCompanySlug(company)
-      // Clear event/band when company changes
+      // Clear event when company changes (optional - could keep it)
       setSelectedEventId(null)
-      setSelectedBandId(null)
       setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
-      updateUrlParams({ company, event: null, band: null })
+      updateUrlParams({ company, event: null })
 
       // Track filter change
       trackPhotoFilterChange({
@@ -320,7 +250,7 @@ export function PhotosContent({
     }
   }, [pendingPhotoId, photos, loading])
 
-  // Fetch events and bands on mount (only if not provided via SSR)
+  // Fetch events on mount (only if not provided via SSR)
   useEffect(() => {
     // Skip if we already have SSR data
     if (initialFilterOptions) return
@@ -350,17 +280,6 @@ export function PhotosContent({
       } catch (error) {
         console.error('Failed to fetch events:', error)
       }
-
-      try {
-        // Fetch all bands
-        const bandsRes = await fetch('/api/bands')
-        if (bandsRes.ok) {
-          const bandsData = await bandsRes.json()
-          setBands(bandsData.bands || bandsData || [])
-        }
-      } catch (error) {
-        console.error('Failed to fetch bands:', error)
-      }
     }
 
     fetchFilters()
@@ -373,13 +292,7 @@ export function PhotosContent({
     currentPage.current = 1
     isFirstLoad.current = true
     setLoading(true)
-  }, [
-    selectedEventId,
-    selectedBandId,
-    selectedPhotographer,
-    selectedCompanySlug,
-    orderMode,
-  ])
+  }, [selectedEventId, selectedPhotographer, selectedCompanySlug, orderMode])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -393,13 +306,6 @@ export function PhotosContent({
       try {
         const params = new URLSearchParams()
         if (selectedEventId) params.set('event', selectedEventId)
-        // Handle special format for multiple band IDs: "bandIds:id1,id2,id3"
-        if (selectedBandId && selectedBandId.startsWith('bandIds:')) {
-          const ids = selectedBandId.substring(8) // Remove "bandIds:" prefix
-          params.set('bandIds', ids)
-        } else if (selectedBandId) {
-          params.set('band', selectedBandId)
-        }
         if (selectedPhotographer)
           params.set('photographer', selectedPhotographer)
         if (selectedCompanySlug) params.set('company', selectedCompanySlug)
@@ -464,13 +370,7 @@ export function PhotosContent({
         setLoadingMore(false)
       }
     },
-    [
-      selectedEventId,
-      selectedBandId,
-      selectedPhotographer,
-      selectedCompanySlug,
-      orderMode,
-    ]
+    [selectedEventId, selectedPhotographer, selectedCompanySlug, orderMode]
   )
 
   // Initial fetch when filters change
@@ -741,16 +641,13 @@ export function PhotosContent({
         {/* Filters */}
         <PhotoFilters
           events={events}
-          bands={bands}
           photographers={photographers}
           companies={companies}
           availableFilters={availableFilters}
           selectedEventId={selectedEventId}
-          selectedBandId={selectedBandId}
           selectedPhotographer={selectedPhotographer}
           selectedCompanySlug={selectedCompanySlug}
           onEventChange={handleEventChange}
-          onBandChange={handleBandChange}
           onPhotographerChange={handlePhotographerChange}
           onCompanyChange={handleCompanyChange}
           loading={loading}
@@ -795,16 +692,11 @@ export function PhotosContent({
           currentPage={1}
           filters={{
             eventId: selectedEventId,
-            bandId: selectedBandId,
             photographer: selectedPhotographer,
             companySlug: selectedCompanySlug,
           }}
           filterNames={{
             eventName: events.find((e) => e.id === selectedEventId)?.name,
-            bandName:
-              selectedBandId === 'none'
-                ? 'No Band'
-                : bands.find((b) => b.id === selectedBandId)?.name,
             photographer: selectedPhotographer,
             companyName:
               selectedCompanySlug === 'none'
@@ -815,9 +707,6 @@ export function PhotosContent({
             switch (filterType) {
               case 'event':
                 handleEventChange(value)
-                break
-              case 'band':
-                handleBandChange(value)
                 break
               case 'photographer':
                 handlePhotographerChange(value)
