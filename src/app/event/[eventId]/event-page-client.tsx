@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { formatEventDate } from "@/lib/date-utils";
@@ -9,68 +8,22 @@ import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIn
 import { ChevronRightIcon } from "@/components/icons";
 import { PhotoStrip } from "@/components/photos/photo-strip";
 import { VideoCarousel } from "@/components/video-carousel";
-import { Video } from "@/lib/db";
+import type { Video, Band as DbBand, Event as DbEvent, Photo } from "@/lib/db";
+import type { NavEvent } from "@/components/nav";
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
 } from "@/lib/scoring";
 
-interface EventInfo {
-  image_url?: string;
-  description?: string;
-  website?: string;
-  ticket_url?: string;
-  social_media?: {
-    twitter?: string;
-    instagram?: string;
-    facebook?: string;
+interface EventPageClientProps {
+  event: DbEvent;
+  bands: DbBand[];
+  heroPhoto: Photo | null;
+  videos: Video[];
+  navEvents?: {
+    upcoming: NavEvent[];
+    past: NavEvent[];
   };
-  venue_info?: string;
-  scoring_version?: string;
-  winner?: string;
-  [key: string]: unknown;
-}
-
-interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
-  status: string;
-  image_url?: string;
-  info?: EventInfo;
-}
-
-interface Band {
-  id: string;
-  event_id: string;
-  name: string;
-  description?: string;
-  company_slug?: string;
-  company_name?: string;
-  company_icon_url?: string;
-  order: number;
-  hero_thumbnail_url?: string;
-  info?: {
-    logo_url?: string;
-    website?: string;
-    social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    genre?: string;
-    members?: string[];
-    [key: string]: unknown;
-  };
-  created_at: string;
-}
-
-interface HeroPhoto {
-  id: string;
-  blob_url: string;
-  hero_focal_point?: { x: number; y: number };
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
@@ -90,73 +43,31 @@ function getStatusBadge(status: string, hasWinner: boolean) {
   }
 }
 
-export function EventPageClient({ eventId }: { eventId: string }) {
-  const [event, setEvent] = useState<Event | null>(null);
-  const [bands, setBands] = useState<Band[]>([]);
-  const [heroPhoto, setHeroPhoto] = useState<HeroPhoto | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface EventInfo {
+  image_url?: string;
+  description?: string;
+  website?: string;
+  ticket_url?: string;
+  social_media?: {
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+  };
+  venue_info?: string;
+  scoring_version?: string;
+  winner?: string;
+  [key: string]: unknown;
+}
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [eventResponse, bandsResponse, heroResponse, videosResponse] = await Promise.all([
-          fetch(`/api/events/${eventId}`),
-          fetch(`/api/bands/${eventId}`),
-          fetch(`/api/photos/heroes?label=event_hero&eventId=${eventId}`),
-          fetch(`/api/videos?event=${eventId}`),
-        ]);
-
-        if (eventResponse.ok) {
-          const eventData = await eventResponse.json();
-          setEvent(eventData);
-        }
-
-        if (bandsResponse.ok) {
-          const bandsData = await bandsResponse.json();
-          setBands(bandsData);
-        }
-
-        if (heroResponse.ok) {
-          const heroData = await heroResponse.json();
-          if (heroData.photos && heroData.photos.length > 0) {
-            setHeroPhoto(heroData.photos[0]);
-          }
-        }
-
-        if (videosResponse.ok) {
-          const videosData = await videosResponse.json();
-          setVideos(videosData.videos || []);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [eventId]);
-
-  if (isLoading) {
-    return (
-      <WebLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-text-muted text-xl">Loading...</div>
-        </div>
-      </WebLayout>
-    );
-  }
-
-  if (!event) {
-    return (
-      <WebLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-text-muted text-xl">Event not found</div>
-        </div>
-      </WebLayout>
-    );
-  }
+export function EventPageClient({ 
+  event, 
+  bands, 
+  heroPhoto, 
+  videos,
+  navEvents,
+}: EventPageClientProps) {
+  const eventId = event.id;
+  const eventInfo = event.info as EventInfo | undefined;
 
   const breadcrumbs = [
     { label: "Events", href: "/events" },
@@ -164,16 +75,16 @@ export function EventPageClient({ eventId }: { eventId: string }) {
   ];
 
   // Get scoring version and winner info
-  const scoringVersion = parseScoringVersion(event.info);
+  const scoringVersion = parseScoringVersion(eventInfo);
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
-  const storedWinner = event.info?.winner;
+  const storedWinner = eventInfo?.winner;
   const isFinalized = event.status === "finalized";
 
   // For 2022.1 events, we show the stored winner prominently
   const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner;
 
   return (
-    <WebLayout breadcrumbs={breadcrumbs}>
+    <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
       {/* Hero Section with Event Image */}
       <section className="relative min-h-[40vh] flex items-end">
         {/* Background Image - prefer hero photo, fall back to event image_url */}
@@ -190,9 +101,9 @@ export function EventPageClient({ eventId }: { eventId: string }) {
             priority
             unoptimized
           />
-        ) : event.info?.image_url ? (
+        ) : eventInfo?.image_url ? (
           <Image
-            src={event.info.image_url}
+            src={eventInfo.image_url}
             alt={`${event.name} event`}
             fill
             className="object-cover"
@@ -256,8 +167,8 @@ export function EventPageClient({ eventId }: { eventId: string }) {
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-wrap gap-4 items-center">
-              {event.status === "upcoming" && event.info?.ticket_url && (
-                <TicketCTA ticketUrl={event.info.ticket_url} variant="compact" />
+              {event.status === "upcoming" && eventInfo?.ticket_url && (
+                <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
               )}
               {event.status === "voting" && (
                 <Link href={`/vote/crowd/${eventId}`}>
@@ -286,11 +197,11 @@ export function EventPageClient({ eventId }: { eventId: string }) {
       )}
 
       {/* Description Section */}
-      {event.info?.description && (
+      {eventInfo?.description && (
         <section className="py-12 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <p className="text-text-muted text-lg max-w-3xl">
-              {event.info.description}
+              {eventInfo.description}
             </p>
           </div>
         </section>
@@ -398,11 +309,11 @@ export function EventPageClient({ eventId }: { eventId: string }) {
       </section>
 
       {/* Ticket CTA Section - for upcoming events */}
-      {event.status === "upcoming" && event.info?.ticket_url && (
+      {event.status === "upcoming" && eventInfo?.ticket_url && (
         <section className="py-12 border-t border-white/5">
           <div className="max-w-2xl mx-auto px-6 lg:px-8">
             <TicketCTA
-              ticketUrl={event.info.ticket_url}
+              ticketUrl={eventInfo.ticket_url}
               eventName={event.name}
             />
           </div>

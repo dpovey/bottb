@@ -8,6 +8,7 @@ import {
   getPhotosByLabel,
   PHOTO_LABELS,
 } from "@/lib/db";
+import { getNavEvents } from "@/lib/nav-data";
 import { notFound, redirect } from "next/navigation";
 import { formatEventDate } from "@/lib/date-utils";
 import { auth } from "@/lib/auth";
@@ -196,9 +197,12 @@ export default async function ResultsPage({
 }) {
   const { eventId } = await params;
   const baseUrl = getBaseUrl();
-  const session = await auth();
+  const [session, event, navEvents] = await Promise.all([
+    auth(),
+    getEventById(eventId),
+    getNavEvents(),
+  ]);
   const isAdmin = session?.user?.isAdmin || false;
-  const event = await getEventById(eventId);
 
   if (!event) {
     notFound();
@@ -239,7 +243,7 @@ export default async function ResultsPage({
       winnerBand?.name || legacyWinnerName || "Winner to be announced";
 
     return (
-      <WebLayout breadcrumbs={breadcrumbs}>
+      <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
         {/* Page Header */}
         <section className="py-12 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
@@ -459,7 +463,7 @@ export default async function ResultsPage({
   // Handle empty results early
   if (bandResults.length === 0) {
     return (
-      <WebLayout breadcrumbs={breadcrumbs}>
+      <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
         <div className="py-16">
           <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
             <h1 className="text-4xl font-semibold text-white mb-4">Results</h1>
@@ -570,7 +574,7 @@ export default async function ResultsPage({
         bands={bands}
         heroImageUrl={heroPhoto?.blob_url || (event.info?.image_url as string | undefined)}
       />
-      <WebLayout breadcrumbs={breadcrumbs}>
+      <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
       {/* Page Header */}
       <section className="py-12 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">

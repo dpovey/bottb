@@ -254,6 +254,35 @@ export async function getPastEvents() {
   return rows;
 }
 
+export interface PastEventWithWinner extends Event {
+  winner_band_name?: string;
+  winner_company_slug?: string;
+  winner_company_name?: string;
+  winner_company_icon_url?: string;
+}
+
+/**
+ * Get past events with winner info in a single efficient query.
+ * Joins with finalized_results and bands to get winner company info.
+ */
+export async function getPastEventsWithWinners(): Promise<PastEventWithWinner[]> {
+  const { rows } = await sql<PastEventWithWinner>`
+    SELECT 
+      e.*,
+      COALESCE(fr.band_name, e.info->>'winner') as winner_band_name,
+      COALESCE(b.company_slug, NULL) as winner_company_slug,
+      COALESCE(c.name, NULL) as winner_company_name,
+      COALESCE(c.icon_url, NULL) as winner_company_icon_url
+    FROM events e
+    LEFT JOIN finalized_results fr ON fr.event_id = e.id AND fr.final_rank = 1
+    LEFT JOIN bands b ON b.id = COALESCE(fr.band_id, e.info->>'winner_band_id')
+    LEFT JOIN companies c ON c.slug = b.company_slug
+    WHERE e.date < NOW()
+    ORDER BY e.date DESC
+  `;
+  return rows;
+}
+
 export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`
     SELECT b.*, 
@@ -267,6 +296,33 @@ export async function getBandsForEvent(eventId: string) {
     ORDER BY b."order"
   `;
   return rows;
+}
+
+/**
+ * Get all bands across all events
+ */
+export async function getBands(): Promise<Band[]> {
+  const { rows } = await sql<Band>`
+    SELECT b.*, 
+      c.name as company_name,
+      c.icon_url as company_icon_url
+    FROM bands b 
+    LEFT JOIN companies c ON b.company_slug = c.slug
+    ORDER BY b.event_id, b."order"
+  `;
+  return rows;
+}
+
+export async function getBandById(bandId: string): Promise<Band | null> {
+  const { rows } = await sql<Band>`
+    SELECT b.*, 
+      c.name as company_name,
+      c.icon_url as company_icon_url
+    FROM bands b 
+    LEFT JOIN companies c ON b.company_slug = c.slug
+    WHERE b.id = ${bandId}
+  `;
+  return rows[0] || null;
 }
 
 export async function getVotesForEvent(eventId: string) {

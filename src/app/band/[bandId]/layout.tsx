@@ -1,9 +1,11 @@
 import { WebLayout } from "@/components/layouts";
+import { getNavEvents } from "@/lib/nav-data";
 
-export default function BandLayout({
+export default async function BandLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <WebLayout>{children}</WebLayout>;
+  const navEvents = await getNavEvents();
+  return <WebLayout navEvents={navEvents}>{children}</WebLayout>;
 }

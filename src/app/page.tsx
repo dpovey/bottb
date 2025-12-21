@@ -15,6 +15,7 @@ import {
   getVideos,
   PHOTO_LABELS,
 } from "@/lib/db";
+import { getNavEvents } from "@/lib/nav-data";
 import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
 import { Hero } from "@/components/hero";
@@ -154,6 +155,7 @@ export default async function HomePage() {
     initialPhotosData,
     initialVideosData,
     initialPhotoCount,
+    navEvents,
   ] = await Promise.all([
     getActiveEvent(),
     getUpcomingEvents(),
@@ -165,6 +167,8 @@ export default async function HomePage() {
     getVideos({ limit: 20 }),
     // Get photo count for pagination
     getPhotoCount({}),
+    // Nav events for header dropdown (cached)
+    getNavEvents(),
   ]);
 
   // Extract hero photo data
@@ -274,7 +278,7 @@ export default async function HomePage() {
   );
 
   return (
-    <PublicLayout headerVariant="transparent" footerVariant="full">
+    <PublicLayout headerVariant="transparent" footerVariant="full" navEvents={navEvents}>
       {/* Hero Section */}
       <Hero
         title="Battle of the Tech Bands"

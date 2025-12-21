@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronRightIcon } from "@/components/icons";
+import { CompanyBadge } from "@/components/ui/company-badge";
 
-interface Event {
+export interface NavEvent {
   id: string;
   name: string;
   date: string;
@@ -14,6 +15,9 @@ interface Event {
   status: "upcoming" | "voting" | "finalized";
   info?: {
     winner?: string;
+    winner_company_slug?: string;
+    winner_company_name?: string;
+    winner_company_icon_url?: string;
     [key: string]: unknown;
   };
 }
@@ -21,14 +25,23 @@ interface Event {
 interface EventsDropdownProps {
   /** Additional className for the trigger button */
   className?: string;
+  /** SSR-provided upcoming events */
+  initialUpcoming?: NavEvent[];
+  /** SSR-provided past events */
+  initialPast?: NavEvent[];
 }
 
-export function EventsDropdown({ className }: EventsDropdownProps) {
+export function EventsDropdown({ 
+  className,
+  initialUpcoming,
+  initialPast,
+}: EventsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
-  const [pastEvents, setPastEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [upcomingEvents, setUpcomingEvents] = useState<NavEvent[]>(initialUpcoming || []);
+  const [pastEvents, setPastEvents] = useState<NavEvent[]>(initialPast || []);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(!initialUpcoming && !initialPast);
+  const [hasFetched, setHasFetched] = useState(!!initialUpcoming || !!initialPast);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -37,37 +50,47 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
     setMounted(true);
   }, []);
 
-  // Fetch events on mount
-  useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const [pastRes, upcomingRes] = await Promise.all([
-          fetch("/api/events/past"),
-          fetch("/api/events/upcoming"),
-        ]);
+  // Client-side fetch (only if no SSR data provided)
+  const fetchEvents = useCallback(async () => {
+    if (hasFetched) return;
+    setHasFetched(true);
+    
+    try {
+      const [pastRes, upcomingRes] = await Promise.all([
+        fetch("/api/events/past"),
+        fetch("/api/events/upcoming"),
+      ]);
 
-        if (upcomingRes.ok) {
-          const data = await upcomingRes.json();
-          setUpcomingEvents(Array.isArray(data) ? data : []);
-        }
-
-        if (pastRes.ok) {
-          const data = await pastRes.json();
-          // Sort by date descending and take first 5
-          const sorted = (Array.isArray(data) ? data : [])
-            .sort((a: Event, b: Event) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, 5);
-          setPastEvents(sorted);
-        }
-      } catch (error) {
-        console.error("Failed to fetch events:", error);
-      } finally {
-        setLoading(false);
+      if (upcomingRes.ok) {
+        const data = await upcomingRes.json();
+        setUpcomingEvents(Array.isArray(data) ? data : []);
       }
-    }
 
-    fetchEvents();
-  }, []);
+      if (pastRes.ok) {
+        const data = await pastRes.json();
+        const sorted = (Array.isArray(data) ? data : [])
+          .sort((a: NavEvent, b: NavEvent) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 5);
+        setPastEvents(sorted);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events:", error);
+      setHasFetched(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [hasFetched]);
+
+  // Prefetch on hover if no SSR data
+  const handleMouseEnter = useCallback(() => {
+    if (!hasFetched) fetchEvents();
+  }, [hasFetched, fetchEvents]);
+
+  // Fetch on click if needed
+  const handleClick = useCallback(() => {
+    if (!hasFetched) fetchEvents();
+    setIsOpen(prev => !prev);
+  }, [hasFetched, fetchEvents]);
 
   // Close on click outside
   useEffect(() => {
@@ -161,7 +184,7 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
                       {formatDate(event.date)}
                     </span>
                     <div>
-                      <div className="text-white font-medium">{event.name}</div>
+                      <div className="text-white font-medium uppercase tracking-widest text-sm">{event.name}</div>
                       <div className="text-text-muted text-xs">{event.location}</div>
                     </div>
                   </Link>
@@ -195,9 +218,24 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
                       {formatDate(event.date)}
                     </span>
                     <div>
-                      <div className="text-white font-medium">{event.name}</div>
-                      {event.info?.winner ? (
-                        <div className="text-text-muted text-xs">🏆 {event.info.winner}</div>
+                      <div className="text-white font-medium uppercase tracking-widest text-sm">{event.name}</div>
+                      {event.info?.winner_company_slug && event.info?.winner_company_name ? (
+                        <div className="text-text-muted text-xs flex items-center gap-1.5">
+                          <span>Winner:</span>
+                          <CompanyBadge
+                            slug={event.info.winner_company_slug}
+                            name={event.info.winner_company_name}
+                            iconUrl={event.info.winner_company_icon_url}
+                            variant="muted"
+                            size="sm"
+                            asLink={false}
+                          />
+                        </div>
+                      ) : event.info?.winner ? (
+                        <div className="text-text-muted text-xs flex items-center gap-1.5">
+                          <span>Winner:</span>
+                          <span>{event.info.winner}</span>
+                        </div>
                       ) : (
                         <div className="text-text-muted text-xs">{event.location}</div>
                       )}
@@ -234,11 +272,12 @@ export function EventsDropdown({ className }: EventsDropdownProps) {
       {/* Trigger Button */}
       <button
         ref={triggerRef}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
         aria-expanded={isOpen}
         aria-controls="events-dropdown-panel"
         className={cn(
-          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative",
+          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative cursor-pointer",
           isOpen ? "text-white" : "text-text-muted hover:text-white",
           className
         )}

@@ -1,8 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
-import { server } from "@/__mocks__/server";
-import { http, HttpResponse } from "msw";
 import { EventPageClient } from "../event-page-client";
+import type { Event, Band, Video, Photo } from "@/lib/db";
 
 // Mock Next.js navigation
 vi.mock("next/navigation", () => ({
@@ -16,15 +15,18 @@ vi.mock("next-auth/react", () => ({
 }));
 
 describe("EventPage", () => {
-  const mockEvent = {
+  const mockEvent: Event = {
     id: "test-event-id",
     name: "Test Event",
     date: "2024-12-25T18:30:00Z",
     location: "Test Venue",
+    timezone: "America/New_York",
     status: "voting",
+    is_active: true,
+    created_at: "2024-01-01T00:00:00Z",
   };
 
-  const mockBands = [
+  const mockBands: Band[] = [
     {
       id: "band-1",
       event_id: "test-event-id",
@@ -43,186 +45,120 @@ describe("EventPage", () => {
     },
   ];
 
+  const mockVideos: Video[] = [];
+  const mockHeroPhoto: Photo | null = null;
+
+  const defaultProps = {
+    event: mockEvent,
+    bands: mockBands,
+    heroPhoto: mockHeroPhoto,
+    videos: mockVideos,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders event details", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
-    );
-
-    render(<EventPageClient eventId="test-event-id" />);
-
-    // Wait for loading to finish first
-    await waitFor(() => {
-      expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
-    });
+  it("renders event details", () => {
+    render(<EventPageClient {...defaultProps} />);
     
-    // Now check for event name in h1
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Test Event");
   });
 
-  it("shows status badge correctly", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
-    );
+  it("shows status badge correctly", () => {
+    render(<EventPageClient {...defaultProps} />);
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Voting Open")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Voting Open")).toBeInTheDocument();
   });
 
-  it("shows voting link for voting status", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
-    );
+  it("shows voting link for voting status", () => {
+    render(<EventPageClient {...defaultProps} />);
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      const voteLink = screen.getByRole("link", { name: "Vote for Bands" });
-      expect(voteLink).toBeInTheDocument();
-      expect(voteLink).toHaveAttribute("href", "/vote/crowd/test-event-id");
-    });
+    const voteLink = screen.getByRole("link", { name: "Vote for Bands" });
+    expect(voteLink).toBeInTheDocument();
+    expect(voteLink).toHaveAttribute("href", "/vote/crowd/test-event-id");
   });
 
-  it("shows results link for finalized status", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json({ ...mockEvent, status: "finalized" });
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
+  it("shows results link for finalized status", () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        event={{ ...mockEvent, status: "finalized" }}
+      />
     );
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      const resultsLink = screen.getByRole("link", { name: "View Results" });
-      expect(resultsLink).toBeInTheDocument();
-      expect(resultsLink).toHaveAttribute("href", "/results/test-event-id");
-    });
+    const resultsLink = screen.getByRole("link", { name: "View Results" });
+    expect(resultsLink).toBeInTheDocument();
+    expect(resultsLink).toHaveAttribute("href", "/results/test-event-id");
   });
 
-  it("displays bands list", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
+  it("displays bands list", () => {
+    render(<EventPageClient {...defaultProps} />);
+
+    expect(screen.getByText("2 Bands")).toBeInTheDocument();
+    expect(screen.getByText("Test Band 1")).toBeInTheDocument();
+    expect(screen.getByText("Test Band 2")).toBeInTheDocument();
+  });
+
+  it("shows band order numbers", () => {
+    render(<EventPageClient {...defaultProps} />);
+
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("shows no bands message when empty", () => {
+    render(<EventPageClient {...defaultProps} bands={[]} />);
+
+    expect(
+      screen.getByText("No bands registered for this event yet.")
+    ).toBeInTheDocument();
+  });
+
+  it("shows winner section for 2022.1 finalized events", () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        event={{
+          ...mockEvent,
+          status: "finalized",
+          info: { winner: "Champion Band", scoring_version: "2022.1" },
+        }}
+      />
     );
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(screen.getByText("2 Bands")).toBeInTheDocument();
-      expect(screen.getByText("Test Band 1")).toBeInTheDocument();
-      expect(screen.getByText("Test Band 2")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Champion")).toBeInTheDocument();
+    expect(screen.getByText("Champion Band")).toBeInTheDocument();
   });
 
-  it("shows band order numbers", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
+  it("shows description when provided", () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        event={{
+          ...mockEvent,
+          info: { description: "This is a test event description" },
+        }}
+      />
     );
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(screen.getByText("1")).toBeInTheDocument();
-      expect(screen.getByText("2")).toBeInTheDocument();
-    });
+    expect(screen.getByText("This is a test event description")).toBeInTheDocument();
   });
 
-  it("shows no bands message when empty", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json(mockEvent);
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json([]);
-      })
+  it("displays ticket CTA for upcoming events with ticket URL", () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        event={{
+          ...mockEvent,
+          status: "upcoming",
+          info: { ticket_url: "https://tickets.example.com" },
+        }}
+      />
     );
 
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("No bands registered for this event yet.")
-      ).toBeInTheDocument();
-    });
-  });
-
-  it("shows loading state initially", () => {
-    render(<EventPageClient eventId="test-event-id" />);
-
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
-  });
-
-  it("shows error when event not found", async () => {
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.json({ error: "Event not found" }, { status: 404 });
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.json(mockBands);
-      })
-    );
-
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Event not found")).toBeInTheDocument();
-    });
-  });
-
-  it("handles fetch error gracefully", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    server.use(
-      http.get("/api/events/test-event-id", () => {
-        return HttpResponse.error();
-      }),
-      http.get("/api/bands/test-event-id", () => {
-        return HttpResponse.error();
-      })
-    );
-
-    render(<EventPageClient eventId="test-event-id" />);
-
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Error fetching data:",
-        expect.any(Error)
-      );
-    });
-
-    consoleSpy.mockRestore();
+    // There should be ticket CTAs for upcoming events
+    const ticketLinks = screen.getAllByRole("link", { name: /ticket/i });
+    expect(ticketLinks.length).toBeGreaterThan(0);
   });
 });

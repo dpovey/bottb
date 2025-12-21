@@ -5,6 +5,7 @@ import { Button, SocialIconLink } from "@/components/ui";
 import { HeartIcon, ExternalLinkIcon } from "@/components/icons";
 import { getSocialLinks } from "@/lib/social-links";
 import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
+import { getNavEvents } from "@/lib/nav-data";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { getBaseUrl } from "@/lib/seo";
 
@@ -27,8 +28,11 @@ export const metadata: Metadata = {
 const socialLinks = getSocialLinks("w-5 h-5 fill-current");
 
 export default async function AboutPage() {
-  // Fetch all event hero photos
-  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO);
+  // Fetch all event hero photos and nav events in parallel
+  const [eventHeroPhotos, navEvents] = await Promise.all([
+    getPhotosByLabel(PHOTO_LABELS.EVENT_HERO),
+    getNavEvents(),
+  ]);
   const heroImages = eventHeroPhotos.map((photo) => ({
     url: photo.blob_url,
     focalPoint: photo.hero_focal_point,
@@ -39,6 +43,7 @@ export default async function AboutPage() {
       headerVariant="transparent"
       footerVariant="full"
       breadcrumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
+      navEvents={navEvents}
     >
       {/* Hero Section with rotating event images */}
       <HeroCarousel images={heroImages} interval={6000}>

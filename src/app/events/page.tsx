@@ -10,6 +10,7 @@ import {
   getFinalizedResults,
   PHOTO_LABELS,
 } from "@/lib/db";
+import { getNavEvents } from "@/lib/nav-data";
 import { PublicLayout } from "@/components/layouts";
 import { EventCard } from "@/components/event-card";
 import { PageHeader } from "@/components/hero";
@@ -112,9 +113,12 @@ function getRelativeDate(dateString: string): string {
 }
 
 export default async function EventsPage() {
-  const activeEvent = await getActiveEvent();
-  const upcomingEvents = await getUpcomingEvents();
-  const pastEvents = await getPastEvents();
+  const [activeEvent, upcomingEvents, pastEvents, navEvents] = await Promise.all([
+    getActiveEvent(),
+    getUpcomingEvents(),
+    getPastEvents(),
+    getNavEvents(),
+  ]);
 
   // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
@@ -220,7 +224,7 @@ export default async function EventsPage() {
     pastEventsWithWinners.length;
 
   return (
-    <PublicLayout footerVariant="simple" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Events" }]}>
+    <PublicLayout footerVariant="simple" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Events" }]} navEvents={navEvents}>
       {/* Page Header */}
       <PageHeader
         title="Events"

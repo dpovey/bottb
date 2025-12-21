@@ -56,6 +56,11 @@ vi.mock("next-auth", () => ({
   })),
 }));
 
+// Mock nav-data which uses unstable_cache that doesn't work in test environment
+vi.mock("@/lib/nav-data", () => ({
+  getNavEvents: vi.fn().mockResolvedValue({ upcoming: [], past: [] }),
+}));
+
 // Establish API mocking before all tests
 beforeAll(() => server.listen());
 

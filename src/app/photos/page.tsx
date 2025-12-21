@@ -4,6 +4,7 @@ import { PhotosContent } from "./photos-content";
 import { PublicLayout } from "@/components/layouts";
 import { Skeleton } from "@/components/ui";
 import { getBaseUrl } from "@/lib/seo";
+import { getCachedFilterOptions } from "@/lib/nav-data";
 
 // Loading fallback for Suspense - shows skeleton grid for better perceived performance
 function PhotosLoading() {
@@ -66,7 +67,10 @@ interface PhotosPageProps {
 
 // Main page component - server component that resolves filters from URL params
 export default async function PhotosPage({ searchParams }: PhotosPageProps) {
-  const params = await searchParams;
+  const [params, filterOptions] = await Promise.all([
+    searchParams,
+    getCachedFilterOptions(),
+  ]);
 
   // Support both new (event, band) and legacy (eventId, bandId) param names
   const initialEventId = params.event || params.eventId || null;
@@ -86,6 +90,7 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
         initialPhotographer={initialPhotographer}
         initialCompanySlug={initialCompanySlug}
         initialPhotoId={initialPhotoId}
+        initialFilterOptions={filterOptions}
       />
     </Suspense>
   );

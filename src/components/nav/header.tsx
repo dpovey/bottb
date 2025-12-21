@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
-import { EventsDropdown } from "./events-dropdown";
+import { EventsDropdown, type NavEvent } from "./events-dropdown";
 import { LineupDropdown } from "./lineup-dropdown";
 import { ExperienceDropdown } from "./experience-dropdown";
 import { trackNavClick } from "@/lib/analytics";
@@ -20,6 +20,11 @@ export interface HeaderProps {
   variant?: "transparent" | "glass" | "solid";
   /** Make header fixed/sticky */
   fixed?: boolean;
+  /** SSR-provided nav events */
+  navEvents?: {
+    upcoming: NavEvent[];
+    past: NavEvent[];
+  };
 }
 
 // Mobile menu links - grouped by section
@@ -31,8 +36,7 @@ const mobileMenuSections = [
   {
     title: "Lineup",
     links: [
-      { href: "/events", label: "Bands" },
-      { href: "/companies", label: "Companies" },
+      { href: "/companies", label: "Bands" },
       { href: "/songs", label: "Songs" },
     ],
   },
@@ -51,6 +55,7 @@ export function Header({
   breadcrumbs,
   variant = "glass",
   fixed = true,
+  navEvents,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -118,7 +123,10 @@ export function Header({
             {showNav && (
               <nav className="hidden md:flex items-center justify-center gap-8 flex-1">
                 {/* Events Dropdown */}
-                <EventsDropdown />
+                <EventsDropdown 
+                  initialUpcoming={navEvents?.upcoming}
+                  initialPast={navEvents?.past}
+                />
 
                 {/* Lineup Dropdown */}
                 <LineupDropdown />

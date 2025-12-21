@@ -10,7 +10,7 @@ export interface CompanyBadgeProps {
   /** Company icon URL (optional - falls back to building icon) */
   iconUrl?: string | null;
   /** Visual style variant */
-  variant?: "default" | "inline" | "pill";
+  variant?: "default" | "inline" | "pill" | "muted";
   /** Size variant */
   size?: "sm" | "md";
   /** Additional CSS classes */
@@ -26,6 +26,7 @@ export interface CompanyBadgeProps {
  * - default: Subtle pill badge style
  * - inline: Text link style for inline use
  * - pill: More prominent pill style
+ * - muted: Monochrome outline style
  */
 export function CompanyBadge({
   slug,
@@ -54,6 +55,12 @@ export function CompanyBadge({
       "inline-flex items-center gap-1.5 rounded-full",
       "bg-accent/10 border border-accent/20",
       "text-accent hover:bg-accent/20",
+      size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm"
+    ),
+    muted: cn(
+      "inline-flex items-center gap-1.5 rounded-full",
+      "border border-white/20",
+      "text-text-muted",
       size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm"
     ),
   };

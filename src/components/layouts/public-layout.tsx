@@ -1,5 +1,5 @@
 import { Header, Footer } from "@/components/nav";
-import type { BreadcrumbItem } from "@/components/nav";
+import type { BreadcrumbItem, NavEvent } from "@/components/nav";
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -13,6 +13,11 @@ interface PublicLayoutProps {
   footerVariant?: "simple" | "full";
   /** Optional breadcrumbs */
   breadcrumbs?: BreadcrumbItem[];
+  /** SSR-provided nav events (optional - will fetch client-side if not provided) */
+  navEvents?: {
+    upcoming: NavEvent[];
+    past: NavEvent[];
+  };
 }
 
 export function PublicLayout({
@@ -22,6 +27,7 @@ export function PublicLayout({
   headerVariant = "transparent",
   footerVariant = "full",
   breadcrumbs,
+  navEvents,
 }: PublicLayoutProps) {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -31,6 +37,7 @@ export function PublicLayout({
           breadcrumbs={breadcrumbs}
           variant={headerVariant}
           fixed={true}
+          navEvents={navEvents}
         />
       )}
       <main className="flex-1">{children}</main>

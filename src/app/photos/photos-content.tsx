@@ -15,6 +15,7 @@ import {
   BuildingIcon,
   SpinnerIcon,
 } from "@/components/icons";
+import type { FilterOptions } from "@/lib/nav-data";
 
 interface Company {
   slug: string;
@@ -51,6 +52,8 @@ interface PhotosContentProps {
   initialPhotographer?: string | null;
   initialCompanySlug?: string | null;
   initialPhotoId?: string | null;
+  /** SSR-provided filter options to prevent layout shift */
+  initialFilterOptions?: FilterOptions;
 }
 
 export function PhotosContent({
@@ -59,13 +62,37 @@ export function PhotosContent({
   initialPhotographer = null,
   initialCompanySlug = null,
   initialPhotoId = null,
+  initialFilterOptions,
 }: PhotosContentProps) {
   const searchParams = useSearchParams();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [bands, setBands] = useState<Band[]>([]);
+  // Initialize with SSR data if available to prevent layout shift
+  const [events, setEvents] = useState<Event[]>(
+    initialFilterOptions?.events.map((e) => ({ 
+      id: e.id, 
+      name: e.name, 
+      date: e.date,
+      location: "",
+      timezone: "UTC",
+      status: "finalized" as const,
+      is_active: false,
+      created_at: "",
+    })) || []
+  );
+  const [bands, setBands] = useState<Band[]>(
+    initialFilterOptions?.bands.map((b) => ({
+      id: b.id,
+      name: b.name,
+      event_id: b.event_id,
+      company_slug: b.company_slug,
+      order: 0,
+      created_at: "",
+    })) || []
+  );
   const [photographers, setPhotographers] = useState<string[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<Company[]>(
+    initialFilterOptions?.companies || []
+  );
   const [availableFilters, setAvailableFilters] = useState<
     AvailableFilters | undefined
   >();
@@ -293,8 +320,11 @@ export function PhotosContent({
     }
   }, [pendingPhotoId, photos, loading]);
 
-  // Fetch events and bands on mount
+  // Fetch events and bands on mount (only if not provided via SSR)
   useEffect(() => {
+    // Skip if we already have SSR data
+    if (initialFilterOptions) return;
+
     async function fetchFilters() {
       try {
         // Fetch both past and upcoming events (public endpoints)
@@ -334,7 +364,7 @@ export function PhotosContent({
     }
 
     fetchFilters();
-  }, []);
+  }, [initialFilterOptions]);
 
   // Reset photos when filters or order mode change
   useEffect(() => {

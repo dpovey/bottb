@@ -7,6 +7,7 @@ import { CompanyIcon, FilterSelect, Skeleton } from "@/components/ui";
 import { CloseIcon, PlayIcon } from "@/components/icons";
 import { trackVideoClick } from "@/lib/analytics";
 import { motion, AnimatePresence } from "framer-motion";
+import type { FilterOptions, NavEvent } from "@/lib/nav-data";
 
 interface Event {
   id: string;
@@ -22,6 +23,15 @@ interface Band {
 interface VideosContentProps {
   initialEventId: string | null;
   initialBandId: string | null;
+  /** SSR-provided videos */
+  initialVideos?: Video[];
+  /** SSR-provided filter options */
+  initialFilterOptions?: FilterOptions;
+  /** SSR-provided nav events for header */
+  navEvents?: {
+    upcoming: NavEvent[];
+    past: NavEvent[];
+  };
 }
 
 /**
@@ -51,18 +61,32 @@ function getThumbnailUrl(video: Video): string {
 export function VideosContent({
   initialEventId,
   initialBandId,
+  initialVideos,
+  initialFilterOptions,
+  navEvents,
 }: VideosContentProps) {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [bands, setBands] = useState<Band[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with SSR data if available
+  const [videos, setVideos] = useState<Video[]>(initialVideos || []);
+  const [events, setEvents] = useState<Event[]>(
+    initialFilterOptions?.events.map((e) => ({ id: e.id, name: e.name })) || []
+  );
+  const [bands, setBands] = useState<Band[]>(
+    initialFilterOptions?.bands.map((b) => ({ 
+      id: b.id, 
+      name: b.name, 
+      event_id: b.event_id 
+    })) || []
+  );
+  const [loading, setLoading] = useState(!initialVideos);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
   const [selectedBandId, setSelectedBandId] = useState<string | null>(initialBandId);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(initialVideos?.length || 0);
 
-  // Fetch events and bands for filters
+  // Fetch events and bands for filters (only if not provided via SSR)
   useEffect(() => {
+    if (initialFilterOptions) return;
+
     async function fetchFilters() {
       try {
         const [pastRes, upcomingRes] = await Promise.all([
@@ -99,9 +123,12 @@ export function VideosContent({
     }
 
     fetchFilters();
-  }, []);
+  }, [initialFilterOptions]);
 
-  // Fetch videos
+  // Track if filters have changed from initial values (to know when to refetch)
+  const [filtersChanged, setFiltersChanged] = useState(false);
+
+  // Fetch videos (only when filters change, not on initial SSR load)
   const fetchVideos = useCallback(async () => {
     setLoading(true);
     try {
@@ -123,9 +150,12 @@ export function VideosContent({
     }
   }, [selectedEventId, selectedBandId]);
 
+  // Only fetch videos if filters changed or no SSR data
   useEffect(() => {
-    fetchVideos();
-  }, [fetchVideos]);
+    if (!initialVideos || filtersChanged) {
+      fetchVideos();
+    }
+  }, [fetchVideos, initialVideos, filtersChanged]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -171,6 +201,7 @@ export function VideosContent({
   const clearFilters = () => {
     setSelectedEventId(null);
     setSelectedBandId(null);
+    setFiltersChanged(true);
   };
 
   const hasActiveFilters = selectedEventId || selectedBandId;
@@ -179,6 +210,7 @@ export function VideosContent({
     <PublicLayout
       breadcrumbs={[{ label: "Home", href: "/" }, { label: "Videos" }]}
       footerVariant="simple"
+      navEvents={navEvents}
     >
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
@@ -196,7 +228,10 @@ export function VideosContent({
           {/* Event Filter */}
           <FilterSelect
             value={selectedEventId || ""}
-            onChange={(e) => setSelectedEventId(e.target.value || null)}
+            onChange={(e) => {
+              setSelectedEventId(e.target.value || null);
+              setFiltersChanged(true);
+            }}
             label="Event"
             containerClassName="min-w-[180px] flex-none"
           >
@@ -211,7 +246,10 @@ export function VideosContent({
           {/* Band Filter */}
           <FilterSelect
             value={selectedBandId || ""}
-            onChange={(e) => setSelectedBandId(e.target.value || null)}
+            onChange={(e) => {
+              setSelectedBandId(e.target.value || null);
+              setFiltersChanged(true);
+            }}
             label="Band"
             containerClassName="min-w-[180px] flex-none"
           >

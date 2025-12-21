@@ -119,7 +119,7 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
                 {link.icon}
               </div>
               <div>
-                <div className="text-white font-medium">{link.label}</div>
+                <div className="text-white font-medium uppercase tracking-widest text-sm">{link.label}</div>
                 <div className="text-text-muted text-sm">{link.description}</div>
               </div>
             </Link>
@@ -138,7 +138,7 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
         aria-expanded={isOpen}
         aria-controls="experience-dropdown-panel"
         className={cn(
-          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative",
+          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative cursor-pointer",
           isOpen ? "text-white" : "text-text-muted hover:text-white",
           className
         )}

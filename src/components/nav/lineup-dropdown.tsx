@@ -8,7 +8,6 @@ import { trackNavClick } from "@/lib/analytics";
 import {
   ChevronDownIcon,
   UsersIcon,
-  BuildingIcon,
   MusicNoteIcon,
 } from "@/components/icons";
 
@@ -19,16 +18,10 @@ interface LineupDropdownProps {
 
 const lineupLinks = [
   {
-    href: "/events",
-    label: "Bands",
-    description: "All bands across events",
-    icon: <UsersIcon size={20} />,
-  },
-  {
     href: "/companies",
-    label: "Companies",
+    label: "Bands",
     description: "Tech companies represented",
-    icon: <BuildingIcon size={20} />,
+    icon: <UsersIcon size={20} />,
   },
   {
     href: "/songs",
@@ -103,7 +96,7 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
       style={{ top: "64px" }} // Header height
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           {lineupLinks.map((link, index) => (
             <Link
               key={link.href}
@@ -124,7 +117,7 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
                 {link.icon}
               </div>
               <div>
-                <div className="text-white font-medium">{link.label}</div>
+                <div className="text-white font-medium uppercase tracking-widest text-sm">{link.label}</div>
                 <div className="text-text-muted text-sm">{link.description}</div>
               </div>
             </Link>
@@ -143,7 +136,7 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
         aria-expanded={isOpen}
         aria-controls="lineup-dropdown-panel"
         className={cn(
-          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative",
+          "flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative cursor-pointer",
           isOpen ? "text-white" : "text-text-muted hover:text-white",
           className
         )}

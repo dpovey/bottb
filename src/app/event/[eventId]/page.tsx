@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { getEventById, getBandsForEvent, getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
+import { getEventById, getBandsForEvent, getPhotosByLabel, getVideos, PHOTO_LABELS } from "@/lib/db";
+import { getNavEvents } from "@/lib/nav-data";
 import { formatEventDate } from "@/lib/date-utils";
 import { parseScoringVersion, hasDetailedBreakdown } from "@/lib/scoring";
 import { getBaseUrl } from "@/lib/seo";
 import { EventPageClient } from "./event-page-client";
 import { EventJsonLd } from "@/components/seo";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata({
   params,
@@ -94,16 +96,20 @@ export default async function EventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  
+  // Fetch all data in parallel
+  const [event, bands, eventHeroPhotos, videosData, navEvents] = await Promise.all([
+    getEventById(eventId),
+    getBandsForEvent(eventId),
+    getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
+    getVideos({ eventId }),
+    getNavEvents(),
+  ]);
   
   if (!event) {
-    return <EventPageClient eventId={eventId} />;
+    notFound();
   }
 
-  const bands = await getBandsForEvent(eventId);
-  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
-    eventId,
-  });
   const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null;
 
   return (
@@ -113,7 +119,13 @@ export default async function EventPage({
         bands={bands}
         heroImageUrl={heroPhoto?.blob_url || (event.info?.image_url as string | undefined)}
       />
-      <EventPageClient eventId={eventId} />
+      <EventPageClient 
+        event={event}
+        bands={bands}
+        heroPhoto={heroPhoto}
+        videos={videosData}
+        navEvents={navEvents}
+      />
     </>
   );
 }

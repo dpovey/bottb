@@ -21,11 +21,10 @@ export function HeroCarousel({
   fallbackImage = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80",
   children,
 }: HeroCarouselProps) {
-  // Start with a random image
-  const [currentIndex, setCurrentIndex] = useState(() =>
-    images.length > 0 ? Math.floor(Math.random() * images.length) : 0
-  );
+  // Start with index 0 for consistent SSR/hydration, randomize on mount
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }];
 
@@ -39,12 +38,20 @@ export function HeroCarousel({
     }, 500); // Half of the CSS transition duration
   }, [effectiveImages.length]);
 
+  // Randomize starting image on mount to avoid hydration mismatch
   useEffect(() => {
-    if (effectiveImages.length <= 1) return;
+    if (effectiveImages.length > 1) {
+      setCurrentIndex(Math.floor(Math.random() * effectiveImages.length));
+    }
+    setMounted(true);
+  }, [effectiveImages.length]);
+
+  useEffect(() => {
+    if (!mounted || effectiveImages.length <= 1) return;
 
     const timer = setInterval(nextImage, interval);
     return () => clearInterval(timer);
-  }, [effectiveImages.length, interval, nextImage]);
+  }, [mounted, effectiveImages.length, interval, nextImage]);
 
   return (
     <section className="relative min-h-[70vh] flex items-end">
