@@ -2,15 +2,15 @@
 
 /**
  * Upload Original Photos Script
- * 
+ *
  * Matches original image files from external drive to existing database photos
  * by filename and uploads them to blob storage as originals.
- * 
+ *
  * This preserves all existing metadata matching - we just add the original_blob_url.
- * 
+ *
  * Usage:
  *   DOTENV_CONFIG_PATH=.env.local npx tsx src/scripts/upload-original-photos.ts [options]
- * 
+ *
  * Options:
  *   --dry-run          Show what would be uploaded without actually uploading
  *   --verbose          Show detailed progress for each file
@@ -58,7 +58,12 @@ async function isValidImage(filePath: string): Promise<boolean> {
     // This will fail for videos, corrupted files, or non-image files
     const metadata = await sharp(filePath).metadata()
     // Check that it has valid dimensions
-    return !!(metadata.width && metadata.height && metadata.width > 0 && metadata.height > 0)
+    return !!(
+      metadata.width &&
+      metadata.height &&
+      metadata.width > 0 &&
+      metadata.height > 0
+    )
   } catch (error) {
     // Not a valid image file
     return false
@@ -90,7 +95,18 @@ async function findImageFiles(
     } else if (entry.isFile()) {
       const ext = extname(entry.name).toLowerCase()
       // Only check files with image extensions
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.raw', '.cr2', '.nef', '.arw', '.dng']
+      const imageExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.tiff',
+        '.tif',
+        '.raw',
+        '.cr2',
+        '.nef',
+        '.arw',
+        '.dng',
+      ]
       if (imageExtensions.includes(ext)) {
         // Validate that it's actually an image (not a video or other file with wrong extension)
         if (validateImages) {
@@ -157,7 +173,7 @@ async function matchFilesToPhotos(
   photos: PhotoRecord[]
 ): Promise<MatchResult[]> {
   const matches: MatchResult[] = []
-  
+
   // Create a map of filename -> photo for quick lookup
   const photoMap = new Map<string, PhotoRecord[]>()
   for (const photo of photos) {
@@ -172,10 +188,10 @@ async function matchFilesToPhotos(
   for (const filePath of filePaths) {
     const filename = basename(filePath)
     const filenameLower = filename.toLowerCase()
-    
+
     // Try exact match first
     const matchingPhotos = photoMap.get(filenameLower) || []
-    
+
     if (matchingPhotos.length === 0) {
       // Try without extension (in case of case differences)
       const nameWithoutExt = filenameLower.replace(/\.[^.]+$/, '')
@@ -190,8 +206,9 @@ async function matchFilesToPhotos(
 
     if (matchingPhotos.length > 0) {
       // Use the first match (or prefer one without original_blob_url)
-      const photo = matchingPhotos.find(p => !p.original_blob_url) || matchingPhotos[0]
-      
+      const photo =
+        matchingPhotos.find((p) => !p.original_blob_url) || matchingPhotos[0]
+
       matches.push({
         photoId: photo.id,
         filename,
@@ -219,7 +236,7 @@ async function uploadOriginal(
     // Read the file
     const fileBuffer = await readFile(filePath)
     const ext = extname(filename).toLowerCase()
-    
+
     // Determine content type
     const contentTypes: { [key: string]: string } = {
       '.jpg': 'image/jpeg',
@@ -344,11 +361,13 @@ async function main() {
   console.log(`   Matched ${matches.length} files\n`)
 
   // Filter out ones that already have originals (unless verbose)
-  const toUpload = matches.filter(m => !m.alreadyHasOriginal || isVerbose)
-  const alreadyHaveOriginal = matches.filter(m => m.alreadyHasOriginal)
+  const toUpload = matches.filter((m) => !m.alreadyHasOriginal || isVerbose)
+  const alreadyHaveOriginal = matches.filter((m) => m.alreadyHasOriginal)
 
   if (alreadyHaveOriginal.length > 0) {
-    console.log(`⚠️  ${alreadyHaveOriginal.length} photos already have originals (skipping)\n`)
+    console.log(
+      `⚠️  ${alreadyHaveOriginal.length} photos already have originals (skipping)\n`
+    )
   }
 
   if (toUpload.length === 0) {
@@ -365,10 +384,12 @@ async function main() {
 
   for (let i = 0; i < toUpload.length; i++) {
     const match = toUpload[i]
-    
+
     if (match.alreadyHasOriginal) {
       if (isVerbose) {
-        console.log(`[${i + 1}/${toUpload.length}] ⏭️  ${match.filename} (already has original)`)
+        console.log(
+          `[${i + 1}/${toUpload.length}] ⏭️  ${match.filename} (already has original)`
+        )
       }
       skipped++
       continue
@@ -405,7 +426,10 @@ async function main() {
       }
     } else {
       failed++
-      errors.push({ filename: match.filename, error: result.error || 'Unknown error' })
+      errors.push({
+        filename: match.filename,
+        error: result.error || 'Unknown error',
+      })
       if (isVerbose) {
         console.log(`   ❌ Failed: ${result.error}`)
       }
@@ -442,4 +466,3 @@ main().catch((error) => {
   console.error('Fatal error:', error)
   process.exit(1)
 })
-

@@ -42,7 +42,7 @@ async function handler(
 
     // Use original_blob_url if available, otherwise fall back to blob_url (large.webp)
     const imageUrl = photo.original_blob_url || photo.blob_url
-    
+
     // Fetch the image
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {

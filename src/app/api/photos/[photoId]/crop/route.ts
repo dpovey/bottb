@@ -65,7 +65,7 @@ const handleCropPhoto: ProtectedApiHandler = async (
 
     // Use original_blob_url if available for best crop quality, otherwise fall back to blob_url (large.webp)
     const sourceImageUrl = photo.original_blob_url || photo.blob_url
-    
+
     // Fetch the source image from blob storage
     const sourceImageResponse = await fetch(sourceImageUrl)
     if (!sourceImageResponse.ok) {
@@ -75,7 +75,9 @@ const handleCropPhoto: ProtectedApiHandler = async (
       )
     }
 
-    const sourceImageBuffer = Buffer.from(await sourceImageResponse.arrayBuffer())
+    const sourceImageBuffer = Buffer.from(
+      await sourceImageResponse.arrayBuffer()
+    )
 
     // Get source image dimensions
     const metadata = await sharp(sourceImageBuffer).metadata()

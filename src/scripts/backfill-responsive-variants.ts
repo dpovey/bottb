@@ -2,15 +2,15 @@
 
 /**
  * Backfill Responsive Image Variants Script
- * 
+ *
  * Generates and uploads responsive image variants (thumbnail-2x, thumbnail-3x, large-4k)
  * for existing photos that don't have them yet.
- * 
+ *
  * Uses original_blob_url when available for best quality, otherwise falls back to large.webp.
- * 
+ *
  * Usage:
  *   DOTENV_CONFIG_PATH=.env.local npx tsx src/scripts/backfill-responsive-variants.ts [options]
- * 
+ *
  * Options:
  *   --dry-run          Show what would be generated without actually processing
  *   --verbose          Show detailed progress for each photo
@@ -61,7 +61,7 @@ async function getPhotosNeedingVariants(
   limit?: number
 ): Promise<PhotoRecord[]> {
   let query: ReturnType<typeof sql<PhotoRecord>>
-  
+
   if (eventName && limit) {
     query = sql<PhotoRecord>`
       SELECT 
@@ -168,7 +168,7 @@ async function findOriginalFileOnDisk(
 
   // Recursively search event directories
   const eventDirs = ['Brisbane 2024', 'Brisbane 2025', 'Sydney 2025']
-  
+
   for (const eventDir of eventDirs) {
     const eventPath = join(PHOTOS_BASE_PATH, eventDir)
     if (!existsSync(eventPath)) continue
@@ -234,15 +234,17 @@ async function backfillVariants(
   dryRun: boolean
 ): Promise<BackfillResult> {
   const variantsGenerated: string[] = []
-  
+
   try {
     let imageBuffer: Buffer
     let sourceType: string
 
     // Try to find original file on disk first
     if (photo.original_filename) {
-      const localFilePath = await findOriginalFileOnDisk(photo.original_filename)
-      
+      const localFilePath = await findOriginalFileOnDisk(
+        photo.original_filename
+      )
+
       if (localFilePath) {
         // Use original from disk (best quality)
         imageBuffer = await readFile(localFilePath)
@@ -251,7 +253,9 @@ async function backfillVariants(
         // Fall back to original from blob storage
         const imageResponse = await fetch(photo.original_blob_url)
         if (!imageResponse.ok) {
-          throw new Error(`Failed to fetch original from blob: ${imageResponse.statusText}`)
+          throw new Error(
+            `Failed to fetch original from blob: ${imageResponse.statusText}`
+          )
         }
         imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
         sourceType = 'blob original'
@@ -259,7 +263,9 @@ async function backfillVariants(
         // Fall back to large.webp
         const imageResponse = await fetch(photo.blob_url)
         if (!imageResponse.ok) {
-          throw new Error(`Failed to fetch large.webp: ${imageResponse.statusText}`)
+          throw new Error(
+            `Failed to fetch large.webp: ${imageResponse.statusText}`
+          )
         }
         imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
         sourceType = 'large.webp'
@@ -268,7 +274,9 @@ async function backfillVariants(
       // Use original from blob storage
       const imageResponse = await fetch(photo.original_blob_url)
       if (!imageResponse.ok) {
-        throw new Error(`Failed to fetch original from blob: ${imageResponse.statusText}`)
+        throw new Error(
+          `Failed to fetch original from blob: ${imageResponse.statusText}`
+        )
       }
       imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
       sourceType = 'blob original'
@@ -276,7 +284,9 @@ async function backfillVariants(
       // Fall back to large.webp
       const imageResponse = await fetch(photo.blob_url)
       if (!imageResponse.ok) {
-        throw new Error(`Failed to fetch large.webp: ${imageResponse.statusText}`)
+        throw new Error(
+          `Failed to fetch large.webp: ${imageResponse.statusText}`
+        )
       }
       imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
       sourceType = 'large.webp'
@@ -302,7 +312,12 @@ async function backfillVariants(
       const thumbnail2xBlob = await put(
         `photos/${photo.id}/thumbnail-2x.webp`,
         processed.thumbnail2x,
-        { access: 'public', contentType: 'image/webp', addRandomSuffix: false, allowOverwrite: true }
+        {
+          access: 'public',
+          contentType: 'image/webp',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        }
       )
       updates.push({ key: 'thumbnail_2x_url', url: thumbnail2xBlob.url })
       variantsGenerated.push('thumbnail-2x')
@@ -313,7 +328,12 @@ async function backfillVariants(
       const thumbnail3xBlob = await put(
         `photos/${photo.id}/thumbnail-3x.webp`,
         processed.thumbnail3x,
-        { access: 'public', contentType: 'image/webp', addRandomSuffix: false, allowOverwrite: true }
+        {
+          access: 'public',
+          contentType: 'image/webp',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        }
       )
       updates.push({ key: 'thumbnail_3x_url', url: thumbnail3xBlob.url })
       variantsGenerated.push('thumbnail-3x')
@@ -324,7 +344,12 @@ async function backfillVariants(
       const large4kBlob = await put(
         `photos/${photo.id}/large-4k.webp`,
         processed.large4k,
-        { access: 'public', contentType: 'image/webp', addRandomSuffix: false, allowOverwrite: true }
+        {
+          access: 'public',
+          contentType: 'image/webp',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        }
       )
       updates.push({ key: 'large_4k_url', url: large4kBlob.url })
       variantsGenerated.push('large-4k')
@@ -406,9 +431,9 @@ async function main() {
   }
 
   // Count what's missing
-  const missing2x = photos.filter(p => !p.thumbnail_2x_url).length
-  const missing3x = photos.filter(p => !p.thumbnail_3x_url).length
-  const missing4k = photos.filter(p => !p.large_4k_url).length
+  const missing2x = photos.filter((p) => !p.thumbnail_2x_url).length
+  const missing3x = photos.filter((p) => !p.thumbnail_3x_url).length
+  const missing4k = photos.filter((p) => !p.large_4k_url).length
 
   console.log('📊 Missing variants:')
   console.log(`   thumbnail-2x: ${missing2x}`)
@@ -430,7 +455,9 @@ async function main() {
     }
 
     if (isVerbose) {
-      console.log(`[${i + 1}/${photos.length}] ${photo.original_filename || photo.id}`)
+      console.log(
+        `[${i + 1}/${photos.length}] ${photo.original_filename || photo.id}`
+      )
       if (photo.event_name) {
         console.log(`   Event: ${photo.event_name}`)
       }
@@ -451,15 +478,22 @@ async function main() {
     if (result.success) {
       succeeded++
       if (isVerbose) {
-        const sourceInfo = photo.original_filename 
-          ? (await findOriginalFileOnDisk(photo.original_filename) ? 'local original' : 'blob')
+        const sourceInfo = photo.original_filename
+          ? (await findOriginalFileOnDisk(photo.original_filename))
+            ? 'local original'
+            : 'blob'
           : 'blob'
         console.log(`   Source: ${sourceInfo}`)
-        console.log(`   ✅ Generated: ${result.variantsGenerated.join(', ') || 'none needed'}`)
+        console.log(
+          `   ✅ Generated: ${result.variantsGenerated.join(', ') || 'none needed'}`
+        )
       }
     } else {
       failed++
-      errors.push({ filename: result.filename, error: result.error || 'Unknown error' })
+      errors.push({
+        filename: result.filename,
+        error: result.error || 'Unknown error',
+      })
       if (isVerbose) {
         console.log(`   ❌ Failed: ${result.error}`)
       }
@@ -488,7 +522,9 @@ async function main() {
   }
 
   if (isDryRun) {
-    console.log('\n💡 Run without --dry-run to actually generate and upload variants')
+    console.log(
+      '\n💡 Run without --dry-run to actually generate and upload variants'
+    )
   } else {
     console.log('\n✅ Done!')
   }
@@ -498,4 +534,3 @@ main().catch((error) => {
   console.error('Fatal error:', error)
   process.exit(1)
 })
-

@@ -12,7 +12,9 @@ import 'dotenv/config'
 import { sql } from '@vercel/postgres'
 
 async function migrate() {
-  console.log('🚀 Starting migration: Add original_blob_url column to photos...\n')
+  console.log(
+    '🚀 Starting migration: Add original_blob_url column to photos...\n'
+  )
 
   try {
     // Add original_blob_url column
@@ -42,12 +44,18 @@ async function migrate() {
     console.log('📊 Summary:')
     console.log(`   Total photos: ${stats[0].total}`)
     console.log(`   With original_blob_url: ${stats[0].with_original}`)
-    console.log(`   Without original (will use large.webp): ${stats[0].total - stats[0].with_original}`)
+    console.log(
+      `   Without original (will use large.webp): ${stats[0].total - stats[0].with_original}`
+    )
 
     console.log('\n✅ Migration complete!')
     console.log('\n💡 Next steps:')
-    console.log('   1. Run upload-original-photos.ts to match and upload originals from external drive')
-    console.log('   2. Update download function to use original_blob_url when available')
+    console.log(
+      '   1. Run upload-original-photos.ts to match and upload originals from external drive'
+    )
+    console.log(
+      '   2. Update download function to use original_blob_url when available'
+    )
   } catch (error) {
     console.error('❌ Migration failed:', error)
     process.exit(1)
@@ -57,4 +65,3 @@ async function migrate() {
 }
 
 migrate()
-

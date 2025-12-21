@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { Photo } from '@/lib/db'
 import { CompanyIcon } from '@/components/ui'
 
@@ -16,7 +15,7 @@ export function PhotoCard({
   showCompanyLogo = true,
 }: PhotoCardProps) {
   const thumbSrc = photo.thumbnail_url || photo.blob_url
-  
+
   // Build srcset for responsive thumbnails (1x, 2x, 3x)
   const srcSet = [
     thumbSrc,
@@ -31,16 +30,15 @@ export function PhotoCard({
       className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
       onClick={onClick}
     >
-      {/* Thumbnail image using Next.js Image with srcset for responsive loading */}
-      <Image
+      {/* Thumbnail image - use img element with srcSet for pre-generated responsive variants */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         key={thumbSrc}
         src={thumbSrc}
-        alt={photo.original_filename || 'Photo'}
-        fill
-        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-        className="object-cover transition-transform duration-500 group-hover:scale-110"
         srcSet={srcSet || undefined}
-        unoptimized={!!srcSet} // Use our pre-generated variants instead of Next.js optimization
+        alt={photo.original_filename || 'Photo'}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        loading="lazy"
       />
 
       {/* Company icon badge - always visible in top right if available */}

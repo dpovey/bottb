@@ -593,11 +593,8 @@ export function PhotoSlideshow({
     if (!photo) return
 
     try {
-      // Use original_blob_url if available, otherwise fall back to blob_url (large.webp)
-      const imageUrl = photo.original_blob_url || photo.blob_url
-      
       // Fetch the image and trigger download
-      const response = await fetch(imageUrl)
+      const response = await fetch(photo.blob_url)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -1139,7 +1136,7 @@ export function PhotoSlideshow({
       </div>
 
       {/* Main Image Area */}
-      <div className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-24 pb-8 md:pb-28">
+      <div className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-20 pb-8 md:pb-28">
         {/* Previous Button */}
         <button
           onClick={goToPrevious}
@@ -1150,13 +1147,19 @@ export function PhotoSlideshow({
           <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
-        {/* Image - Use 4K variant if available, otherwise use standard large */}
+        {/* Image */}
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.large_4k_url || currentPhoto.blob_url}
             alt={currentPhoto.original_filename || 'Photo'}
-            className="slideshow-image max-w-[90vw] max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] object-contain rounded-lg shadow-2xl"
+            className="slideshow-image object-contain rounded-lg shadow-2xl"
+            style={{
+              maxWidth: 'min(90vw, calc(100vw - 8rem))',
+              maxHeight: 'calc(100vh - 11rem)',
+              width: 'auto',
+              height: 'auto',
+            }}
             custom={direction}
             variants={slideVariants}
             initial="enter"
