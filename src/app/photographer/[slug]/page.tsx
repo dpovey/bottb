@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { SocialIconLink, FocalPointImage } from '@/components/ui'
+import Image from 'next/image'
 import {
   InstagramIcon,
   GlobeIcon,
@@ -103,9 +104,20 @@ export default async function PhotographerPage({ params }: Props) {
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 pt-32">
           <div className="flex flex-col md:flex-row items-start gap-8">
-            {/* Photographer Icon */}
-            <div className="w-24 h-24 rounded-full bg-bg-elevated border border-white/10 flex items-center justify-center shrink-0">
-              <CameraIcon className="w-12 h-12 text-accent" />
+            {/* Photographer Avatar */}
+            <div className="w-24 h-24 rounded-full bg-bg-elevated border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+              {photographer.avatar_url ? (
+                <Image
+                  src={photographer.avatar_url}
+                  alt={photographer.name}
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <CameraIcon className="w-12 h-12 text-accent" />
+              )}
             </div>
 
             {/* Photographer Info */}

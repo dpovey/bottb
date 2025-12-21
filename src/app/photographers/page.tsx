@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { PublicLayout } from '@/components/layouts'
 import { Card } from '@/components/ui'
 import { InstagramIcon, GlobeIcon, CameraIcon } from '@/components/icons'
@@ -25,6 +26,7 @@ interface Photographer {
   website: string | null
   instagram: string | null
   email: string | null
+  avatar_url: string | null
   photo_count: number
 }
 
@@ -79,10 +81,21 @@ function PhotographerCard({ photographer }: { photographer: Photographer }) {
       >
         {/* Card content */}
         <div className="p-6">
-          {/* Header with icon */}
+          {/* Header with avatar */}
           <div className="flex items-start gap-4 mb-4">
-            <div className="w-14 h-14 rounded-full bg-bg-surface flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-              <CameraIcon className="w-7 h-7 text-text-muted group-hover:text-accent transition-colors" />
+            <div className="w-14 h-14 rounded-full bg-bg-surface flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors overflow-hidden">
+              {photographer.avatar_url ? (
+                <Image
+                  src={photographer.avatar_url}
+                  alt={photographer.name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <CameraIcon className="w-7 h-7 text-text-muted group-hover:text-accent transition-colors" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-xl font-semibold text-white truncate group-hover:text-accent transition-colors">

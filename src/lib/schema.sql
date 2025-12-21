@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS photographers (
   website TEXT,
   instagram TEXT,
   email TEXT,
+  avatar_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

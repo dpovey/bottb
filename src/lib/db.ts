@@ -47,6 +47,7 @@ export interface Photographer {
   website: string | null
   instagram: string | null
   email: string | null
+  avatar_url: string | null
   created_at: string
 }
 

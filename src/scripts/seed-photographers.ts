@@ -12,6 +12,7 @@ interface PhotographerSeed {
   website: string | null
   instagram: string | null
   email: string | null
+  avatar_url: string | null
 }
 
 const photographers: PhotographerSeed[] = [
@@ -23,6 +24,7 @@ const photographers: PhotographerSeed[] = [
     website: 'https://www.eddyhillphotography.com/',
     instagram: 'https://www.instagram.com/eddyhill_gigphotography/',
     email: null,
+    avatar_url: null,
   },
   {
     slug: 'rod-hunt',
@@ -32,6 +34,7 @@ const photographers: PhotographerSeed[] = [
     website: 'https://www.rodhunt.com.au/',
     instagram: 'https://www.instagram.com/rodhuntphotog/',
     email: null,
+    avatar_url: null,
   },
   {
     slug: 'renee-andrews',
@@ -39,8 +42,9 @@ const photographers: PhotographerSeed[] = [
     bio: 'Brisbane-based photographer specialising in fitness, events, and brand photography. With a focus on creativity and collaboration, Renee works closely with clients to bring their vision to life through the lens, capturing the emotion and energy of each moment.',
     location: 'Brisbane, Australia',
     website: 'https://reneeandrews.com.au/',
-    instagram: null,
+    instagram: 'https://www.instagram.com/reneeandrews_co/',
     email: null,
+    avatar_url: null,
   },
   {
     slug: 'jacob-briant',
@@ -50,6 +54,7 @@ const photographers: PhotographerSeed[] = [
     website: 'https://jacobbriantphotography.com.au/',
     instagram: 'https://www.instagram.com/j.b_photo/',
     email: null,
+    avatar_url: null,
   },
 ]
 
@@ -102,14 +107,15 @@ async function seed() {
             location = ${photographer.location},
             website = ${photographer.website},
             instagram = ${photographer.instagram},
-            email = ${photographer.email}
+            email = ${photographer.email},
+            avatar_url = ${photographer.avatar_url}
           WHERE slug = ${photographer.slug}
         `
         console.log(`   ↻ Updated ${photographer.name}`)
       } else {
         // Insert new
         await sql`
-          INSERT INTO photographers (slug, name, bio, location, website, instagram, email)
+          INSERT INTO photographers (slug, name, bio, location, website, instagram, email, avatar_url)
           VALUES (
             ${photographer.slug},
             ${photographer.name},
@@ -117,7 +123,8 @@ async function seed() {
             ${photographer.location},
             ${photographer.website},
             ${photographer.instagram},
-            ${photographer.email}
+            ${photographer.email},
+            ${photographer.avatar_url}
           )
         `
         console.log(`   ✓ Added ${photographer.name}`)
