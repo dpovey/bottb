@@ -10,32 +10,32 @@
   /* ===========================================
    * ACCENT COLOR - Vibrant Gold
    * =========================================== */
-  --accent: #F5A623;
-  --accent-light: #FFBE3D;
+  --accent: #f5a623;
+  --accent-light: #ffbe3d;
   --accent-rgb: 245, 166, 35;
 
   /* ===========================================
    * SEMANTIC COLORS (Use sparingly)
    * =========================================== */
-  
+
   /* Error - Apple Red */
   --error: #f10e34;
   --error-light: #f33f5d;
   --error-rgb: 241, 14, 52;
-  
+
   /* Success - Lime Green */
   --success: #31eb14;
   --success-light: #98f58a;
   --success-rgb: 49, 235, 20;
-  
+
   /* Warning - Vibrant Gold */
-  --warning: #F5A623;
-  --warning-light: #FFBE3D;
+  --warning: #f5a623;
+  --warning-light: #ffbe3d;
   --warning-rgb: 245, 166, 35;
-  
+
   /* Info - Blue */
-  --info: #3B82F6;
-  --info-light: #60A5FA;
+  --info: #3b82f6;
+  --info-light: #60a5fa;
   --info-rgb: 59, 130, 246;
 
   /* ===========================================
@@ -76,50 +76,118 @@ body {
  * =========================================== */
 
 /* Backgrounds */
-.bg-theme { background-color: var(--bg); }
-.bg-elevated { background-color: var(--bg-elevated); }
-.bg-muted { background-color: var(--bg-muted); }
-.bg-surface { background-color: var(--bg-surface); }
-.bg-accent { background-color: var(--accent); }
-.bg-accent-light { background-color: var(--accent-light); }
-.bg-accent-subtle { background-color: rgba(var(--accent-rgb), 0.15); }
+.bg-theme {
+  background-color: var(--bg);
+}
+.bg-elevated {
+  background-color: var(--bg-elevated);
+}
+.bg-muted {
+  background-color: var(--bg-muted);
+}
+.bg-surface {
+  background-color: var(--bg-surface);
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.bg-accent-light {
+  background-color: var(--accent-light);
+}
+.bg-accent-subtle {
+  background-color: rgba(var(--accent-rgb), 0.15);
+}
 
 /* Semantic Backgrounds */
-.bg-error { background-color: var(--error); }
-.bg-error-subtle { background-color: rgba(var(--error-rgb), 0.15); }
-.bg-success { background-color: var(--success); }
-.bg-success-subtle { background-color: rgba(var(--success-rgb), 0.15); }
-.bg-warning { background-color: var(--warning); }
-.bg-warning-subtle { background-color: rgba(var(--warning-rgb), 0.15); }
-.bg-info { background-color: var(--info); }
-.bg-info-subtle { background-color: rgba(var(--info-rgb), 0.15); }
+.bg-error {
+  background-color: var(--error);
+}
+.bg-error-subtle {
+  background-color: rgba(var(--error-rgb), 0.15);
+}
+.bg-success {
+  background-color: var(--success);
+}
+.bg-success-subtle {
+  background-color: rgba(var(--success-rgb), 0.15);
+}
+.bg-warning {
+  background-color: var(--warning);
+}
+.bg-warning-subtle {
+  background-color: rgba(var(--warning-rgb), 0.15);
+}
+.bg-info {
+  background-color: var(--info);
+}
+.bg-info-subtle {
+  background-color: rgba(var(--info-rgb), 0.15);
+}
 
 /* Text */
-.text-default { color: var(--text); }
-.text-muted { color: var(--text-muted); }
-.text-dim { color: var(--text-dim); }
-.text-accent { color: var(--accent); }
-.text-accent-light { color: var(--accent-light); }
+.text-default {
+  color: var(--text);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.text-dim {
+  color: var(--text-dim);
+}
+.text-accent {
+  color: var(--accent);
+}
+.text-accent-light {
+  color: var(--accent-light);
+}
 
 /* Semantic Text */
-.text-error { color: var(--error); }
-.text-success { color: var(--success); }
-.text-warning { color: var(--warning); }
-.text-info { color: var(--info); }
+.text-error {
+  color: var(--error);
+}
+.text-success {
+  color: var(--success);
+}
+.text-warning {
+  color: var(--warning);
+}
+.text-info {
+  color: var(--info);
+}
 
 /* Borders */
-.border-subtle { border-color: var(--border-subtle); }
-.border-default { border-color: var(--border-default); }
-.border-emphasized { border-color: var(--border-emphasized); }
-.border-interactive { border-color: var(--border-interactive); }
-.border-accent { border-color: var(--accent); }
-.border-accent-subtle { border-color: rgba(var(--accent-rgb), 0.3); }
+.border-subtle {
+  border-color: var(--border-subtle);
+}
+.border-default {
+  border-color: var(--border-default);
+}
+.border-emphasized {
+  border-color: var(--border-emphasized);
+}
+.border-interactive {
+  border-color: var(--border-interactive);
+}
+.border-accent {
+  border-color: var(--accent);
+}
+.border-accent-subtle {
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
 
 /* Semantic Borders */
-.border-error { border-color: var(--error); }
-.border-success { border-color: var(--success); }
-.border-warning { border-color: var(--warning); }
-.border-info { border-color: var(--info); }
+.border-error {
+  border-color: var(--error);
+}
+.border-success {
+  border-color: var(--success);
+}
+.border-warning {
+  border-color: var(--warning);
+}
+.border-info {
+  border-color: var(--info);
+}
 
 /* ===========================================
  * COMPONENT STYLES

@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { cn } from "@/lib/utils";
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+import { cn } from '@/lib/utils'
 import {
   HomeIcon,
   CalendarIcon,
@@ -11,93 +11,93 @@ import {
   PhotoIcon,
   ShareIcon,
   LogoutIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  matchPath?: string[];
+  label: string
+  href: string
+  icon: React.ReactNode
+  matchPath?: string[]
 }
 
 const mainNavItems: NavItem[] = [
   {
-    label: "Dashboard",
-    href: "/admin",
+    label: 'Dashboard',
+    href: '/admin',
     icon: <HomeIcon className="w-5 h-5" />,
-    matchPath: ["/admin"],
+    matchPath: ['/admin'],
   },
   {
-    label: "Events",
-    href: "/admin/events",
+    label: 'Events',
+    href: '/admin/events',
     icon: <CalendarIcon className="w-5 h-5" />,
-    matchPath: ["/admin/events"],
+    matchPath: ['/admin/events'],
   },
   {
-    label: "Videos",
-    href: "/admin/videos",
+    label: 'Videos',
+    href: '/admin/videos',
     icon: <VideoIcon className="w-5 h-5" />,
-    matchPath: ["/admin/videos"],
+    matchPath: ['/admin/videos'],
   },
   {
-    label: "Photos",
-    href: "/photos",
+    label: 'Photos',
+    href: '/photos',
     icon: <PhotoIcon className="w-5 h-5" />,
-    matchPath: ["/photos"],
+    matchPath: ['/photos'],
   },
-];
+]
 
 const settingsNavItems: NavItem[] = [
   {
-    label: "Social Accounts",
-    href: "/admin/social",
+    label: 'Social Accounts',
+    href: '/admin/social',
     icon: <ShareIcon className="w-5 h-5" />,
-    matchPath: ["/admin/social"],
+    matchPath: ['/admin/social'],
   },
-];
+]
 
 function NavLink({
   item,
   currentPath,
 }: {
-  item: NavItem;
-  currentPath: string;
+  item: NavItem
+  currentPath: string
 }) {
   const isActive = item.matchPath?.some((path) => {
-    if (path === "/admin") {
-      return currentPath === "/admin";
+    if (path === '/admin') {
+      return currentPath === '/admin'
     }
-    return currentPath.startsWith(path);
-  });
+    return currentPath.startsWith(path)
+  })
 
   return (
     <Link
       href={item.href}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+        'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
         isActive
-          ? "bg-accent/10 text-accent"
-          : "text-muted hover:bg-white/5 hover:text-white"
+          ? 'bg-accent/10 text-accent'
+          : 'text-muted hover:bg-white/5 hover:text-white'
       )}
     >
       {item.icon}
       <span className="text-sm font-medium">{item.label}</span>
     </Link>
-  );
+  )
 }
 
 export function AdminSidebar() {
-  const pathname = usePathname();
-  const { data: session } = useSession();
+  const pathname = usePathname()
+  const { data: session } = useSession()
 
   const userInitials = session?.user?.name
     ? session.user.name
-        .split(" ")
+        .split(' ')
         .map((n) => n[0])
-        .join("")
+        .join('')
         .toUpperCase()
         .slice(0, 2)
-    : session?.user?.email?.slice(0, 2).toUpperCase() || "AD";
+    : session?.user?.email?.slice(0, 2).toUpperCase() || 'AD'
 
   return (
     <aside className="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0">
@@ -153,7 +153,7 @@ export function AdminSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {session?.user?.name || session?.user?.email || "Admin"}
+              {session?.user?.name || session?.user?.email || 'Admin'}
             </p>
             <p className="text-xs text-dim truncate">Admin</p>
           </div>
@@ -167,5 +167,5 @@ export function AdminSidebar() {
         </div>
       </div>
     </aside>
-  );
+  )
 }

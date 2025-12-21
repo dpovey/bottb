@@ -1,61 +1,61 @@
-"use client";
+'use client'
 
-import { useSession, signIn } from "next-auth/react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useSession, signIn } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
-  const { data: session, status } = useSession();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const { data: session, status } = useSession()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
   // Redirect if already authenticated as admin
   useEffect(() => {
     if (session?.user) {
       if (session.user.isAdmin) {
-        router.push("/admin");
+        router.push('/admin')
       } else {
-        setError("Access denied. Admin privileges required.");
+        setError('Access denied. Admin privileges required.')
       }
     }
-  }, [session, router]);
+  }, [session, router])
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSigningIn(true);
-    setError("");
+    e.preventDefault()
+    setIsSigningIn(true)
+    setError('')
 
     try {
-      const result = await signIn("credentials", {
+      const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-      });
+      })
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError('Invalid email or password')
       } else if (result?.ok) {
         // Wait for session to update, then check admin status
         // The useEffect will handle the redirect when session updates
         // If not admin, the error will be shown by the useEffect
       }
     } catch (error) {
-      console.error("Sign in error:", error);
-      setError("An error occurred during sign in");
+      console.error('Sign in error:', error)
+      setError('An error occurred during sign in')
     } finally {
-      setIsSigningIn(false);
+      setIsSigningIn(false)
     }
-  };
+  }
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -98,10 +98,10 @@ export default function AdminLoginPage() {
             disabled={isSigningIn}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 px-6 rounded-xl transition-colors"
           >
-            {isSigningIn ? "Signing In..." : "Sign In"}
+            {isSigningIn ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
       </div>
     </div>
-  );
+  )
 }

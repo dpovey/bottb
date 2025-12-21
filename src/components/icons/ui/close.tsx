@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Close/X icon for dismissing modals, menus, etc.
@@ -23,7 +23,6 @@ export const CloseIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M6 18L18 6M6 6l12 12" />
     </svg>
   )
-);
+)
 
-CloseIcon.displayName = "CloseIcon";
-
+CloseIcon.displayName = 'CloseIcon'

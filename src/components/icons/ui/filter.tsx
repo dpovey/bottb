@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Filter/funnel icon
@@ -23,7 +23,6 @@ export const FilterIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
     </svg>
   )
-);
+)
 
-FilterIcon.displayName = "FilterIcon";
-
+FilterIcon.displayName = 'FilterIcon'

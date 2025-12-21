@@ -1,137 +1,137 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { NumberedIndicator } from "./numbered-indicator";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { NumberedIndicator } from './numbered-indicator'
 
 const meta: Meta<typeof NumberedIndicator> = {
-  title: "Display/NumberedIndicator",
+  title: 'Display/NumberedIndicator',
   component: NumberedIndicator,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Displays a number in a styled container. Use for ordered lists, rankings, and positions.",
+          'Displays a number in a styled container. Use for ordered lists, rankings, and positions.',
       },
     },
   },
   argTypes: {
     number: {
-      control: "number",
-      description: "The number to display",
+      control: 'number',
+      description: 'The number to display',
     },
     shape: {
-      control: "select",
-      options: ["circle", "square"],
-      description: "Shape of the indicator",
+      control: 'select',
+      options: ['circle', 'square'],
+      description: 'Shape of the indicator',
     },
     size: {
-      control: "select",
-      options: ["xs", "sm", "md", "lg", "xl"],
-      description: "Size variant",
+      control: 'select',
+      options: ['xs', 'sm', 'md', 'lg', 'xl'],
+      description: 'Size variant',
     },
     variant: {
-      control: "select",
+      control: 'select',
       options: [
-        "default",
-        "muted",
-        "winner",
-        "accent",
-        "rank-1",
-        "rank-2",
-        "rank-3",
+        'default',
+        'muted',
+        'winner',
+        'accent',
+        'rank-1',
+        'rank-2',
+        'rank-3',
       ],
-      description: "Visual variant",
+      description: 'Visual variant',
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof NumberedIndicator>;
+export default meta
+type Story = StoryObj<typeof NumberedIndicator>
 
 // Default
 export const Default: Story = {
   args: {
     number: 1,
-    shape: "circle",
-    size: "md",
-    variant: "default",
+    shape: 'circle',
+    size: 'md',
+    variant: 'default',
   },
-};
+}
 
 // Shape variants
 export const Circle: Story = {
   args: {
     number: 1,
-    shape: "circle",
-    size: "md",
-    variant: "default",
+    shape: 'circle',
+    size: 'md',
+    variant: 'default',
   },
-};
+}
 
 export const Square: Story = {
   args: {
     number: 1,
-    shape: "square",
-    size: "lg",
-    variant: "muted",
+    shape: 'square',
+    size: 'lg',
+    variant: 'muted',
   },
   parameters: {
     docs: {
       description: {
-        story: "Square shape commonly used for band order in event lists.",
+        story: 'Square shape commonly used for band order in event lists.',
       },
     },
   },
-};
+}
 
 // Ranking variants
 export const Rank1: Story = {
   args: {
     number: 1,
-    shape: "circle",
-    size: "md",
-    variant: "rank-1",
+    shape: 'circle',
+    size: 'md',
+    variant: 'rank-1',
   },
   parameters: {
     docs: {
       description: {
-        story: "Gold styling for 1st place.",
+        story: 'Gold styling for 1st place.',
       },
     },
   },
-};
+}
 
 export const Rank2: Story = {
   args: {
     number: 2,
-    shape: "circle",
-    size: "md",
-    variant: "rank-2",
+    shape: 'circle',
+    size: 'md',
+    variant: 'rank-2',
   },
   parameters: {
     docs: {
       description: {
-        story: "Silver styling for 2nd place.",
+        story: 'Silver styling for 2nd place.',
       },
     },
   },
-};
+}
 
 export const Rank3: Story = {
   args: {
     number: 3,
-    shape: "circle",
-    size: "md",
-    variant: "rank-3",
+    shape: 'circle',
+    size: 'md',
+    variant: 'rank-3',
   },
   parameters: {
     docs: {
       description: {
-        story: "Bronze styling for 3rd place.",
+        story: 'Bronze styling for 3rd place.',
       },
     },
   },
-};
+}
 
 // Size variants
 export const AllSizes: Story = {
@@ -147,11 +147,11 @@ export const AllSizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All available sizes from xs to xl.",
+        story: 'All available sizes from xs to xl.',
       },
     },
   },
-};
+}
 
 // Ranking podium
 export const RankingPodium: Story = {
@@ -165,11 +165,11 @@ export const RankingPodium: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Podium positions with gold, silver, and bronze styling.",
+        story: 'Podium positions with gold, silver, and bronze styling.',
       },
     },
   },
-};
+}
 
 // Setlist example
 export const SetlistPositions: Story = {
@@ -186,11 +186,11 @@ export const SetlistPositions: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Circle shape for setlist song positions.",
+        story: 'Circle shape for setlist song positions.',
       },
     },
   },
-};
+}
 
 // Band order example
 export const BandOrder: Story = {
@@ -215,11 +215,11 @@ export const BandOrder: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Square shape with muted variant for band order in event lists.",
+        story: 'Square shape with muted variant for band order in event lists.',
       },
     },
   },
-};
+}
 
 // All variants
 export const AllVariants: Story = {
@@ -237,9 +237,8 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All visual variants.",
+        story: 'All visual variants.',
       },
     },
   },
-};
-
+}

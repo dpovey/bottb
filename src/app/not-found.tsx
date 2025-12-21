@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Footer } from "@/components/nav";
-import { SadFaceIcon } from "@/components/icons";
+import Link from 'next/link'
+import Image from 'next/image'
+import { Footer } from '@/components/nav'
+import { SadFaceIcon } from '@/components/icons'
 
 export default function NotFound() {
   return (
@@ -117,9 +117,5 @@ export default function NotFound() {
       {/* Footer */}
       <Footer variant="simple" />
     </div>
-  );
+  )
 }
-
-
-
-

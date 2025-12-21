@@ -1,10 +1,10 @@
 interface FAQItem {
-  question: string;
-  answer: string;
+  question: string
+  answer: string
 }
 
 interface FAQJsonLdProps {
-  items: FAQItem[];
+  items: FAQItem[]
 }
 
 /**
@@ -13,23 +13,22 @@ interface FAQJsonLdProps {
  */
 export function FAQJsonLd({ items }: FAQJsonLdProps) {
   const schema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
     mainEntity: items.map((item) => ({
-      "@type": "Question",
+      '@type': 'Question',
       name: item.question,
       acceptedAnswer: {
-        "@type": "Answer",
+        '@type': 'Answer',
         text: item.answer,
       },
     })),
-  };
+  }
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
-  );
+  )
 }
-

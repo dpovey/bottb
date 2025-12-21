@@ -1,77 +1,77 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import Image from "next/image";
-import QRCode from "qrcode";
-import { formatEventDate } from "@/lib/date-utils";
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import Image from 'next/image'
+import QRCode from 'qrcode'
+import { formatEventDate } from '@/lib/date-utils'
 
 interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  timezone: string;
-  status: string;
+  id: string
+  name: string
+  date: string
+  location: string
+  timezone: string
+  status: string
 }
 
 export default function JudgeQRPage() {
-  const params = useParams();
-  const eventId = params.eventId as string;
-  const [event, setEvent] = useState<Event | null>(null);
-  const [judgeQRCode, setJudgeQRCode] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const params = useParams()
+  const eventId = params.eventId as string
+  const [event, setEvent] = useState<Event | null>(null)
+  const [judgeQRCode, setJudgeQRCode] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await fetch(`/api/events/${eventId}`);
+        const response = await fetch(`/api/events/${eventId}`)
         if (response.ok) {
-          const data = await response.json();
-          setEvent(data);
+          const data = await response.json()
+          setEvent(data)
         }
       } catch (error) {
-        console.error("Error fetching event:", error);
+        console.error('Error fetching event:', error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchEvent();
-  }, [eventId]);
+    fetchEvent()
+  }, [eventId])
 
   useEffect(() => {
     if (event) {
       const generateQRCode = async () => {
-        const baseUrl = window.location.origin;
-        const judgeUrl = `${baseUrl}/vote/judge/${eventId}`;
+        const baseUrl = window.location.origin
+        const judgeUrl = `${baseUrl}/vote/judge/${eventId}`
 
         try {
           const judgeQR = await QRCode.toDataURL(judgeUrl, {
             width: 400,
             margin: 2,
             color: {
-              dark: "#000000",
-              light: "#FFFFFF",
+              dark: '#000000',
+              light: '#FFFFFF',
             },
-          });
+          })
 
-          setJudgeQRCode(judgeQR);
+          setJudgeQRCode(judgeQR)
         } catch (error) {
-          console.error("Error generating QR code:", error);
+          console.error('Error generating QR code:', error)
         }
-      };
+      }
 
-      generateQRCode();
+      generateQRCode()
     }
-  }, [event, eventId]);
+  }, [event, eventId])
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
-    );
+    )
   }
 
   if (!event) {
@@ -79,7 +79,7 @@ export default function JudgeQRPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Event not found</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -98,11 +98,11 @@ export default function JudgeQRPage() {
         <div className="mt-3">
           <span
             className={`px-4 py-2 rounded-full text-sm font-semibold ${
-              event.status === "voting"
-                ? "bg-green-600 text-white"
-                : event.status === "finalized"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-600 text-white"
+              event.status === 'voting'
+                ? 'bg-green-600 text-white'
+                : event.status === 'finalized'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-600 text-white'
             }`}
           >
             {event.status.toUpperCase()}
@@ -189,7 +189,7 @@ export default function JudgeQRPage() {
           </div>
 
           {/* Results Link */}
-          {event.status === "finalized" && (
+          {event.status === 'finalized' && (
             <div className="text-center mt-8">
               <a
                 href={`/results/${eventId}`}
@@ -202,5 +202,5 @@ export default function JudgeQRPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

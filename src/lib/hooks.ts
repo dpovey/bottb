@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore } from 'react'
 
 /**
  * A no-op subscribe function for client-only state.
  * The mounted state never changes after initial hydration.
  */
 function subscribe() {
-  return () => {};
+  return () => {}
 }
 
 /**
@@ -18,8 +18,7 @@ function subscribe() {
 export function useMounted(): boolean {
   return useSyncExternalStore(
     subscribe,
-    () => true,  // Client snapshot: always true after hydration
-    () => false  // Server snapshot: always false during SSR
-  );
+    () => true, // Client snapshot: always true after hydration
+    () => false // Server snapshot: always false during SSR
+  )
 }
-

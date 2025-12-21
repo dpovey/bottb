@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps } from 'react'
 
 /**
  * Base props for all icon components.
@@ -6,6 +6,5 @@ import type { SVGProps } from "react";
  */
 export interface IconProps extends SVGProps<SVGSVGElement> {
   /** Size in pixels or CSS value (sets both width and height) */
-  size?: number | string;
+  size?: number | string
 }
-

@@ -11,33 +11,33 @@
  * - SOCIAL_TOKEN_ENCRYPTION_KEY: 32-byte hex-encoded key (64 hex chars)
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 
-const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 12; // GCM recommended IV length
-const AUTH_TAG_LENGTH = 16;
+const ALGORITHM = 'aes-256-gcm'
+const IV_LENGTH = 12 // GCM recommended IV length
+const AUTH_TAG_LENGTH = 16
 
 /**
  * Get the encryption key from environment
  */
 function getEncryptionKey(): Buffer {
-  const keyHex = process.env.SOCIAL_TOKEN_ENCRYPTION_KEY;
+  const keyHex = process.env.SOCIAL_TOKEN_ENCRYPTION_KEY
 
   if (!keyHex) {
     throw new Error(
-      "SOCIAL_TOKEN_ENCRYPTION_KEY environment variable is required. " +
-        "Generate one with: openssl rand -hex 32"
-    );
+      'SOCIAL_TOKEN_ENCRYPTION_KEY environment variable is required. ' +
+        'Generate one with: openssl rand -hex 32'
+    )
   }
 
   if (keyHex.length !== 64) {
     throw new Error(
-      "SOCIAL_TOKEN_ENCRYPTION_KEY must be 64 hex characters (32 bytes). " +
+      'SOCIAL_TOKEN_ENCRYPTION_KEY must be 64 hex characters (32 bytes). ' +
         `Got ${keyHex.length} characters.`
-    );
+    )
   }
 
-  return Buffer.from(keyHex, "hex");
+  return Buffer.from(keyHex, 'hex')
 }
 
 /**
@@ -47,19 +47,19 @@ function getEncryptionKey(): Buffer {
  * @returns Base64-encoded encrypted token (IV + authTag + ciphertext)
  */
 export function encryptToken(plaintext: string): string {
-  const key = getEncryptionKey();
-  const iv = randomBytes(IV_LENGTH);
+  const key = getEncryptionKey()
+  const iv = randomBytes(IV_LENGTH)
 
-  const cipher = createCipheriv(ALGORITHM, key, iv);
+  const cipher = createCipheriv(ALGORITHM, key, iv)
   const encrypted = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
+    cipher.update(plaintext, 'utf8'),
     cipher.final(),
-  ]);
-  const authTag = cipher.getAuthTag();
+  ])
+  const authTag = cipher.getAuthTag()
 
   // Combine: IV (12) + authTag (16) + ciphertext
-  const combined = Buffer.concat([iv, authTag, encrypted]);
-  return combined.toString("base64");
+  const combined = Buffer.concat([iv, authTag, encrypted])
+  return combined.toString('base64')
 }
 
 /**
@@ -70,27 +70,27 @@ export function encryptToken(plaintext: string): string {
  * @throws Error if decryption fails (invalid key, tampered data, etc.)
  */
 export function decryptToken(encryptedBase64: string): string {
-  const key = getEncryptionKey();
-  const combined = Buffer.from(encryptedBase64, "base64");
+  const key = getEncryptionKey()
+  const combined = Buffer.from(encryptedBase64, 'base64')
 
   if (combined.length < IV_LENGTH + AUTH_TAG_LENGTH) {
-    throw new Error("Invalid encrypted token: too short");
+    throw new Error('Invalid encrypted token: too short')
   }
 
   // Extract: IV (12) + authTag (16) + ciphertext
-  const iv = combined.subarray(0, IV_LENGTH);
-  const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
-  const ciphertext = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
+  const iv = combined.subarray(0, IV_LENGTH)
+  const authTag = combined.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH)
+  const ciphertext = combined.subarray(IV_LENGTH + AUTH_TAG_LENGTH)
 
-  const decipher = createDecipheriv(ALGORITHM, key, iv);
-  decipher.setAuthTag(authTag);
+  const decipher = createDecipheriv(ALGORITHM, key, iv)
+  decipher.setAuthTag(authTag)
 
   const decrypted = Buffer.concat([
     decipher.update(ciphertext),
     decipher.final(),
-  ]);
+  ])
 
-  return decrypted.toString("utf8");
+  return decrypted.toString('utf8')
 }
 
 /**
@@ -99,10 +99,10 @@ export function decryptToken(encryptedBase64: string): string {
  */
 export function isEncryptionConfigured(): boolean {
   try {
-    getEncryptionKey();
-    return true;
+    getEncryptionKey()
+    return true
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -111,6 +111,5 @@ export function isEncryptionConfigured(): boolean {
  * Returns a 64-character hex string suitable for SOCIAL_TOKEN_ENCRYPTION_KEY.
  */
 export function generateEncryptionKey(): string {
-  return randomBytes(32).toString("hex");
+  return randomBytes(32).toString('hex')
 }
-

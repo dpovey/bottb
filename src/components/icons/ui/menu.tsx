@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Hamburger menu icon for mobile navigation
@@ -23,7 +23,6 @@ export const MenuIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M4 6h16M4 12h16M4 18h16" />
     </svg>
   )
-);
+)
 
-MenuIcon.displayName = "MenuIcon";
-
+MenuIcon.displayName = 'MenuIcon'

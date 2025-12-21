@@ -1,59 +1,59 @@
-"use client";
+'use client'
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useSearchParams } from "next/navigation";
-import { Photo, Event, Band } from "@/lib/db";
-import { PhotoGrid, type GridSize } from "@/components/photos/photo-grid";
-import { PhotoSlideshow } from "@/components/photos/photo-slideshow";
-import { PhotoFilters } from "@/components/photos/photo-filters";
-import { PublicLayout } from "@/components/layouts";
-import { trackPhotoClick, trackPhotoFilterChange } from "@/lib/analytics";
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Photo, Event, Band } from '@/lib/db'
+import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
+import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
+import { PhotoFilters } from '@/components/photos/photo-filters'
+import { PublicLayout } from '@/components/layouts'
+import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
 import {
   PlayCircleIcon,
   RandomIcon,
   CalendarIcon,
   BuildingIcon,
   SpinnerIcon,
-} from "@/components/icons";
-import type { FilterOptions } from "@/lib/nav-data";
+} from '@/components/icons'
+import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
-  slug: string;
-  name: string;
+  slug: string
+  name: string
 }
 
 interface AvailableFilters {
-  companies: { slug: string; name: string; count: number }[];
-  events: { id: string; name: string; count: number }[];
-  bands: { id: string; name: string; count: number }[];
-  photographers: { name: string; count: number }[];
-  hasPhotosWithoutBand: boolean;
-  hasPhotosWithoutCompany: boolean;
+  companies: { slug: string; name: string; count: number }[]
+  events: { id: string; name: string; count: number }[]
+  bands: { id: string; name: string; count: number }[]
+  photographers: { name: string; count: number }[]
+  hasPhotosWithoutBand: boolean
+  hasPhotosWithoutCompany: boolean
 }
 
 interface PhotosResponse {
-  photos: Photo[];
+  photos: Photo[]
   pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  photographers: string[];
-  companies: Company[];
-  availableFilters?: AvailableFilters;
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  photographers: string[]
+  companies: Company[]
+  availableFilters?: AvailableFilters
 }
 
-type OrderMode = "random" | "date";
+type OrderMode = 'random' | 'date'
 
 interface PhotosContentProps {
-  initialEventId?: string | null;
-  initialBandId?: string | null;
-  initialPhotographer?: string | null;
-  initialCompanySlug?: string | null;
-  initialPhotoId?: string | null;
+  initialEventId?: string | null
+  initialBandId?: string | null
+  initialPhotographer?: string | null
+  initialCompanySlug?: string | null
+  initialPhotoId?: string | null
   /** SSR-provided filter options to prevent layout shift */
-  initialFilterOptions?: FilterOptions;
+  initialFilterOptions?: FilterOptions
 }
 
 export function PhotosContent({
@@ -64,21 +64,21 @@ export function PhotosContent({
   initialPhotoId = null,
   initialFilterOptions,
 }: PhotosContentProps) {
-  const searchParams = useSearchParams();
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const searchParams = useSearchParams()
+  const [photos, setPhotos] = useState<Photo[]>([])
   // Initialize with SSR data if available to prevent layout shift
   const [events, setEvents] = useState<Event[]>(
-    initialFilterOptions?.events.map((e) => ({ 
-      id: e.id, 
-      name: e.name, 
+    initialFilterOptions?.events.map((e) => ({
+      id: e.id,
+      name: e.name,
       date: e.date,
-      location: "",
-      timezone: "UTC",
-      status: "finalized" as const,
+      location: '',
+      timezone: 'UTC',
+      status: 'finalized' as const,
       is_active: false,
-      created_at: "",
+      created_at: '',
     })) || []
-  );
+  )
   const [bands, setBands] = useState<Band[]>(
     initialFilterOptions?.bands.map((b) => ({
       id: b.id,
@@ -86,378 +86,382 @@ export function PhotosContent({
       event_id: b.event_id,
       company_slug: b.company_slug,
       order: 0,
-      created_at: "",
+      created_at: '',
     })) || []
-  );
-  const [photographers, setPhotographers] = useState<string[]>([]);
+  )
+  const [photographers, setPhotographers] = useState<string[]>([])
   const [companies, setCompanies] = useState<Company[]>(
     initialFilterOptions?.companies || []
-  );
+  )
   const [availableFilters, setAvailableFilters] = useState<
     AvailableFilters | undefined
-  >();
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  const [orderMode, setOrderMode] = useState<OrderMode>("random");
-  const [gridSize, setGridSize] = useState<GridSize>("md");
-  const [showCompanyLogos, setShowCompanyLogos] = useState(true);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  
+  >()
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
+  const [orderMode, setOrderMode] = useState<OrderMode>('random')
+  const [gridSize, setGridSize] = useState<GridSize>('md')
+  const [showCompanyLogos, setShowCompanyLogos] = useState(true)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
   // Page sizes: smaller initial load for faster first paint, larger for subsequent loads
-  const INITIAL_PAGE_SIZE = 12;
-  const PAGE_SIZE = 50;
+  const INITIAL_PAGE_SIZE = 12
+  const PAGE_SIZE = 50
 
   // Track loaded photo IDs to prevent duplicates in random mode
-  const loadedPhotoIds = useRef<Set<string>>(new Set());
-  
+  const loadedPhotoIds = useRef<Set<string>>(new Set())
+
   // Track if this is the first load (for using smaller initial batch)
-  const isFirstLoad = useRef(true);
+  const isFirstLoad = useRef(true)
 
   // Filters - initialize from props (resolved server-side)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     initialEventId
-  );
+  )
   const [selectedBandId, setSelectedBandId] = useState<string | null>(
     initialBandId
-  );
+  )
   const [selectedPhotographer, setSelectedPhotographer] = useState<
     string | null
-  >(initialPhotographer);
+  >(initialPhotographer)
   const [selectedCompanySlug, setSelectedCompanySlug] = useState<string | null>(
     initialCompanySlug
-  );
+  )
 
   // Slideshow
-  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null);
+  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null)
   const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(
     initialPhotoId
-  );
+  )
 
   // Track current page for ordered mode
-  const currentPage = useRef(1);
+  const currentPage = useRef(1)
 
   // Sync filters with URL params when they change (for browser back/forward)
   useEffect(() => {
-    const eventId = searchParams.get("event") || searchParams.get("eventId");
-    const bandId = searchParams.get("band") || searchParams.get("bandId");
-    const bandIds = searchParams.get("bandIds");
-    const photographer = searchParams.get("photographer");
-    const company = searchParams.get("company");
-    const photoId = searchParams.get("photo");
+    const eventId = searchParams.get('event') || searchParams.get('eventId')
+    const bandId = searchParams.get('band') || searchParams.get('bandId')
+    const bandIds = searchParams.get('bandIds')
+    const photographer = searchParams.get('photographer')
+    const company = searchParams.get('company')
+    const photoId = searchParams.get('photo')
 
     // Only update if URL params differ from current state (handles browser navigation)
     // Use functional updates to avoid dependency on current state values
     setSelectedEventId((prev) => {
-      const urlValue = eventId || null;
-      return prev !== urlValue ? urlValue : prev;
-    });
+      const urlValue = eventId || null
+      return prev !== urlValue ? urlValue : prev
+    })
     setSelectedBandId((prev) => {
       // Prefer bandIds if present, format as "bandIds:id1,id2"
-      const urlValue = bandIds ? `bandIds:${bandIds}` : bandId || null;
-      return prev !== urlValue ? urlValue : prev;
-    });
+      const urlValue = bandIds ? `bandIds:${bandIds}` : bandId || null
+      return prev !== urlValue ? urlValue : prev
+    })
     setSelectedPhotographer((prev) => {
-      const urlValue = photographer || null;
-      return prev !== urlValue ? urlValue : prev;
-    });
+      const urlValue = photographer || null
+      return prev !== urlValue ? urlValue : prev
+    })
     setSelectedCompanySlug((prev) => {
-      const urlValue = company || null;
-      return prev !== urlValue ? urlValue : prev;
-    });
+      const urlValue = company || null
+      return prev !== urlValue ? urlValue : prev
+    })
     setPendingPhotoId((prev) => {
-      const urlValue = photoId || null;
-      return prev !== urlValue ? urlValue : prev;
-    });
-  }, [searchParams]);
+      const urlValue = photoId || null
+      return prev !== urlValue ? urlValue : prev
+    })
+  }, [searchParams])
 
   // Update URL when filters change
   const updateUrlParams = useCallback(
     (params: {
-      event?: string | null;
-      band?: string | null;
-      bandIds?: string | null;
-      photographer?: string | null;
-      company?: string | null;
+      event?: string | null
+      band?: string | null
+      bandIds?: string | null
+      photographer?: string | null
+      company?: string | null
     }) => {
-      const url = new URL(window.location.href);
+      const url = new URL(window.location.href)
 
       // Update each param using new cleaner names
       if (params.event !== undefined) {
         // Remove legacy param if present
-        url.searchParams.delete("eventId");
+        url.searchParams.delete('eventId')
         if (params.event) {
-          url.searchParams.set("event", params.event);
+          url.searchParams.set('event', params.event)
         } else {
-          url.searchParams.delete("event");
+          url.searchParams.delete('event')
         }
       }
       if (params.band !== undefined || params.bandIds !== undefined) {
         // Remove legacy param if present
-        url.searchParams.delete("bandId");
+        url.searchParams.delete('bandId')
         // Clear both band and bandIds when clearing
         if (params.band === null && params.bandIds === null) {
-          url.searchParams.delete("band");
-          url.searchParams.delete("bandIds");
+          url.searchParams.delete('band')
+          url.searchParams.delete('bandIds')
         } else if (params.bandIds) {
           // Use bandIds when multiple IDs
-          url.searchParams.delete("band");
-          url.searchParams.set("bandIds", params.bandIds);
+          url.searchParams.delete('band')
+          url.searchParams.set('bandIds', params.bandIds)
         } else if (params.band) {
           // Use single band ID
-          url.searchParams.delete("bandIds");
-          url.searchParams.set("band", params.band);
+          url.searchParams.delete('bandIds')
+          url.searchParams.set('band', params.band)
         }
       }
       if (params.photographer !== undefined) {
         if (params.photographer) {
-          url.searchParams.set("photographer", params.photographer);
+          url.searchParams.set('photographer', params.photographer)
         } else {
-          url.searchParams.delete("photographer");
+          url.searchParams.delete('photographer')
         }
       }
       if (params.company !== undefined) {
         if (params.company) {
-          url.searchParams.set("company", params.company);
+          url.searchParams.set('company', params.company)
         } else {
-          url.searchParams.delete("company");
+          url.searchParams.delete('company')
         }
       }
 
       // Use replaceState to avoid adding to browser history for filter changes
-      window.history.replaceState({}, "", url.pathname + url.search);
+      window.history.replaceState({}, '', url.pathname + url.search)
     },
     []
-  );
+  )
 
   // Wrapper functions that update both state and URL
   const handleEventChange = useCallback(
     (eventId: string | null) => {
-      setSelectedEventId(eventId);
-      setSelectedBandId(null); // Reset band when event changes
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
-      updateUrlParams({ event: eventId, band: null });
+      setSelectedEventId(eventId)
+      setSelectedBandId(null) // Reset band when event changes
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
+      updateUrlParams({ event: eventId, band: null })
 
       // Track filter change
       trackPhotoFilterChange({
-        filter_type: "event",
+        filter_type: 'event',
         filter_value: eventId,
-      });
+      })
     },
     [updateUrlParams, slideshowIndex]
-  );
+  )
 
   const handleBandChange = useCallback(
     (bandId: string | null) => {
-      setSelectedBandId(bandId);
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
+      setSelectedBandId(bandId)
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
       // Handle special format for multiple band IDs: "bandIds:id1,id2,id3"
-      if (bandId && bandId.startsWith("bandIds:")) {
-        const ids = bandId.substring(8); // Remove "bandIds:" prefix
-        updateUrlParams({ band: null, bandIds: ids });
+      if (bandId && bandId.startsWith('bandIds:')) {
+        const ids = bandId.substring(8) // Remove "bandIds:" prefix
+        updateUrlParams({ band: null, bandIds: ids })
         // Track filter change
         trackPhotoFilterChange({
-          filter_type: "band",
+          filter_type: 'band',
           filter_value: ids,
-        });
+        })
       } else {
-        updateUrlParams({ band: bandId, bandIds: null });
+        updateUrlParams({ band: bandId, bandIds: null })
         // Track filter change
         trackPhotoFilterChange({
-          filter_type: "band",
+          filter_type: 'band',
           filter_value: bandId,
-        });
+        })
       }
     },
     [updateUrlParams, slideshowIndex]
-  );
+  )
 
   const handlePhotographerChange = useCallback(
     (photographer: string | null) => {
-      setSelectedPhotographer(photographer);
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
-      updateUrlParams({ photographer });
+      setSelectedPhotographer(photographer)
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
+      updateUrlParams({ photographer })
 
       // Track filter change
       trackPhotoFilterChange({
-        filter_type: "photographer",
+        filter_type: 'photographer',
         filter_value: photographer,
-      });
+      })
     },
     [updateUrlParams, slideshowIndex]
-  );
+  )
 
   const handleCompanyChange = useCallback(
     (company: string | null) => {
-      setSelectedCompanySlug(company);
+      setSelectedCompanySlug(company)
       // Clear event/band when company changes
-      setSelectedEventId(null);
-      setSelectedBandId(null);
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null); // Reset to first photo if slideshow is open
-      updateUrlParams({ company, event: null, band: null });
+      setSelectedEventId(null)
+      setSelectedBandId(null)
+      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
+      updateUrlParams({ company, event: null, band: null })
 
       // Track filter change
       trackPhotoFilterChange({
-        filter_type: "company",
+        filter_type: 'company',
         filter_value: company,
-      });
+      })
     },
     [updateUrlParams, slideshowIndex]
-  );
+  )
 
   // Open slideshow when photos load and we have a pending photo ID
   useEffect(() => {
     if (pendingPhotoId && photos.length > 0 && !loading) {
-      const index = photos.findIndex((p) => p.id === pendingPhotoId);
+      const index = photos.findIndex((p) => p.id === pendingPhotoId)
       if (index !== -1) {
-        setSlideshowIndex(index);
-        setPendingPhotoId(null);
+        setSlideshowIndex(index)
+        setPendingPhotoId(null)
       } else {
         // Photo not found in current page - clear the pending ID
         // In a more advanced implementation, we could search for the photo
-        setPendingPhotoId(null);
+        setPendingPhotoId(null)
       }
     }
-  }, [pendingPhotoId, photos, loading]);
+  }, [pendingPhotoId, photos, loading])
 
   // Fetch events and bands on mount (only if not provided via SSR)
   useEffect(() => {
     // Skip if we already have SSR data
-    if (initialFilterOptions) return;
+    if (initialFilterOptions) return
 
     async function fetchFilters() {
       try {
         // Fetch both past and upcoming events (public endpoints)
         const [pastRes, upcomingRes] = await Promise.all([
-          fetch("/api/events/past"),
-          fetch("/api/events/upcoming"),
-        ]);
+          fetch('/api/events/past'),
+          fetch('/api/events/upcoming'),
+        ])
 
-        const allEvents: Event[] = [];
+        const allEvents: Event[] = []
         if (pastRes.ok) {
-          const pastData = await pastRes.json();
-          allEvents.push(...(Array.isArray(pastData) ? pastData : []));
+          const pastData = await pastRes.json()
+          allEvents.push(...(Array.isArray(pastData) ? pastData : []))
         }
         if (upcomingRes.ok) {
-          const upcomingData = await upcomingRes.json();
-          allEvents.push(...(Array.isArray(upcomingData) ? upcomingData : []));
+          const upcomingData = await upcomingRes.json()
+          allEvents.push(...(Array.isArray(upcomingData) ? upcomingData : []))
         }
         // Sort by date descending
         allEvents.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setEvents(allEvents);
+        )
+        setEvents(allEvents)
       } catch (error) {
-        console.error("Failed to fetch events:", error);
+        console.error('Failed to fetch events:', error)
       }
 
       try {
         // Fetch all bands
-        const bandsRes = await fetch("/api/bands");
+        const bandsRes = await fetch('/api/bands')
         if (bandsRes.ok) {
-          const bandsData = await bandsRes.json();
-          setBands(bandsData.bands || bandsData || []);
+          const bandsData = await bandsRes.json()
+          setBands(bandsData.bands || bandsData || [])
         }
       } catch (error) {
-        console.error("Failed to fetch bands:", error);
+        console.error('Failed to fetch bands:', error)
       }
     }
 
-    fetchFilters();
-  }, [initialFilterOptions]);
+    fetchFilters()
+  }, [initialFilterOptions])
 
   // Reset photos when filters or order mode change
   useEffect(() => {
-    setPhotos([]);
-    loadedPhotoIds.current = new Set();
-    currentPage.current = 1;
-    isFirstLoad.current = true;
-    setLoading(true);
+    setPhotos([])
+    loadedPhotoIds.current = new Set()
+    currentPage.current = 1
+    isFirstLoad.current = true
+    setLoading(true)
   }, [
     selectedEventId,
     selectedBandId,
     selectedPhotographer,
     selectedCompanySlug,
     orderMode,
-  ]);
+  ])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
     async (isLoadMore = false) => {
       if (isLoadMore) {
-        setLoadingMore(true);
+        setLoadingMore(true)
       } else {
-        setLoading(true);
+        setLoading(true)
       }
 
       try {
-        const params = new URLSearchParams();
-        if (selectedEventId) params.set("event", selectedEventId);
+        const params = new URLSearchParams()
+        if (selectedEventId) params.set('event', selectedEventId)
         // Handle special format for multiple band IDs: "bandIds:id1,id2,id3"
-        if (selectedBandId && selectedBandId.startsWith("bandIds:")) {
-          const ids = selectedBandId.substring(8); // Remove "bandIds:" prefix
-          params.set("bandIds", ids);
+        if (selectedBandId && selectedBandId.startsWith('bandIds:')) {
+          const ids = selectedBandId.substring(8) // Remove "bandIds:" prefix
+          params.set('bandIds', ids)
         } else if (selectedBandId) {
-          params.set("band", selectedBandId);
+          params.set('band', selectedBandId)
         }
         if (selectedPhotographer)
-          params.set("photographer", selectedPhotographer);
-        if (selectedCompanySlug) params.set("company", selectedCompanySlug);
-        
+          params.set('photographer', selectedPhotographer)
+        if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+
         // Use smaller batch for initial load (faster first paint), larger for subsequent loads
-        const limit = isLoadMore ? PAGE_SIZE : (isFirstLoad.current ? INITIAL_PAGE_SIZE : PAGE_SIZE);
-        params.set("limit", limit.toString());
-        params.set("order", orderMode);
+        const limit = isLoadMore
+          ? PAGE_SIZE
+          : isFirstLoad.current
+            ? INITIAL_PAGE_SIZE
+            : PAGE_SIZE
+        params.set('limit', limit.toString())
+        params.set('order', orderMode)
 
         // For ordered mode, use pagination; for random, always fetch fresh
-        if (orderMode === "date") {
-          params.set("page", currentPage.current.toString());
-        }
-        
-        // Skip filter metadata on "load more" requests (reduces API queries from 11 to 1)
-        if (isLoadMore) {
-          params.set("skipMeta", "true");
+        if (orderMode === 'date') {
+          params.set('page', currentPage.current.toString())
         }
 
-        const res = await fetch(`/api/photos?${params.toString()}`);
+        // Skip filter metadata on "load more" requests (reduces API queries from 11 to 1)
+        if (isLoadMore) {
+          params.set('skipMeta', 'true')
+        }
+
+        const res = await fetch(`/api/photos?${params.toString()}`)
         if (res.ok) {
-          const data: PhotosResponse = await res.json();
-          setTotalCount(data.pagination.total);
-          
+          const data: PhotosResponse = await res.json()
+          setTotalCount(data.pagination.total)
+
           // Only update filter metadata if returned (not skipped on load-more)
           if (data.photographers && data.photographers.length > 0) {
-            setPhotographers(data.photographers);
+            setPhotographers(data.photographers)
           }
           if (data.companies && data.companies.length > 0) {
-            setCompanies(data.companies);
+            setCompanies(data.companies)
           }
           if (data.availableFilters) {
-            setAvailableFilters(data.availableFilters);
+            setAvailableFilters(data.availableFilters)
           }
 
           if (isLoadMore) {
             // Filter out duplicates (important for random mode)
             const newPhotos = data.photos.filter(
               (p) => !loadedPhotoIds.current.has(p.id)
-            );
-            newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id));
-            setPhotos((prev) => [...prev, ...newPhotos]);
-            if (orderMode === "date") {
-              currentPage.current += 1;
+            )
+            newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
+            setPhotos((prev) => [...prev, ...newPhotos])
+            if (orderMode === 'date') {
+              currentPage.current += 1
             }
           } else {
             // Initial load
-            loadedPhotoIds.current = new Set(data.photos.map((p) => p.id));
-            setPhotos(data.photos);
-            currentPage.current = 2; // Next load will be page 2
-            isFirstLoad.current = false; // Subsequent loads will use larger batch
+            loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
+            setPhotos(data.photos)
+            currentPage.current = 2 // Next load will be page 2
+            isFirstLoad.current = false // Subsequent loads will use larger batch
           }
         }
       } catch (error) {
-        console.error("Failed to fetch photos:", error);
+        console.error('Failed to fetch photos:', error)
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
+        setLoading(false)
+        setLoadingMore(false)
       }
     },
     [
@@ -467,43 +471,43 @@ export function PhotosContent({
       selectedCompanySlug,
       orderMode,
     ]
-  );
+  )
 
   // Initial fetch when filters change
   useEffect(() => {
-    fetchPhotos(false);
-  }, [fetchPhotos]);
+    fetchPhotos(false)
+  }, [fetchPhotos])
 
   // Infinite scroll - load more when reaching bottom
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const [entry] = entries;
+        const [entry] = entries
         if (
           entry.isIntersecting &&
           !loading &&
           !loadingMore &&
           photos.length < totalCount
         ) {
-          fetchPhotos(true);
+          fetchPhotos(true)
         }
       },
-      { threshold: 0.1, rootMargin: "200px" }
-    );
+      { threshold: 0.1, rootMargin: '200px' }
+    )
 
     if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
+      observer.observe(loadMoreRef.current)
     }
 
-    return () => observer.disconnect();
-  }, [loading, loadingMore, photos.length, totalCount, fetchPhotos]);
+    return () => observer.disconnect()
+  }, [loading, loadingMore, photos.length, totalCount, fetchPhotos])
 
   // Handle photo click
   const handlePhotoClick = (index: number) => {
-    setSlideshowIndex(index);
+    setSlideshowIndex(index)
 
     // Track photo click
-    const photo = photos[index];
+    const photo = photos[index]
     if (photo) {
       trackPhotoClick({
         photo_id: photo.id,
@@ -511,34 +515,34 @@ export function PhotosContent({
         band_id: photo.band_id || null,
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
-      });
+      })
     }
-  };
+  }
 
   // Handle slideshow close
   const handleSlideshowClose = () => {
-    setSlideshowIndex(null);
+    setSlideshowIndex(null)
     // Clear the photo param from URL
-    const url = new URL(window.location.href);
-    url.searchParams.delete("photo");
-    window.history.replaceState({}, "", url.pathname + url.search);
-  };
+    const url = new URL(window.location.href)
+    url.searchParams.delete('photo')
+    window.history.replaceState({}, '', url.pathname + url.search)
+  }
 
   // Handle photo change in slideshow (update URL)
   const handlePhotoChange = (photoId: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set("photo", photoId);
-    window.history.replaceState({}, "", url.pathname + url.search);
-  };
+    const url = new URL(window.location.href)
+    url.searchParams.set('photo', photoId)
+    window.history.replaceState({}, '', url.pathname + url.search)
+  }
 
   // Handle photo deletion (called from slideshow)
   const handlePhotoDeleted = (photoId: string) => {
     // Remove the photo from local state
-    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    loadedPhotoIds.current.delete(photoId);
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
+    loadedPhotoIds.current.delete(photoId)
     // Update total count
-    setTotalCount((prev) => prev - 1);
-  };
+    setTotalCount((prev) => prev - 1)
+  }
 
   // Handle photo crop (called from slideshow)
   const handlePhotoCropped = (photoId: string, newThumbnailUrl: string) => {
@@ -547,12 +551,12 @@ export function PhotosContent({
       prev.map((p) =>
         p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
       )
-    );
-  };
+    )
+  }
 
   return (
     <PublicLayout
-      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Photos" }]}
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Photos' }]}
       footerVariant="simple"
     >
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -563,8 +567,8 @@ export function PhotosContent({
               <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
               <p className="text-text-muted">
                 {photos.length} of {totalCount} photo
-                {totalCount !== 1 ? "s" : ""} from {events.length} event
-                {events.length !== 1 ? "s" : ""}
+                {totalCount !== 1 ? 's' : ''} from {events.length} event
+                {events.length !== 1 ? 's' : ''}
               </p>
             </div>
             {photos.length > 0 && (
@@ -583,11 +587,11 @@ export function PhotosContent({
             {/* Order toggle */}
             <div className="flex items-center bg-bg-elevated rounded-full p-1">
               <button
-                onClick={() => setOrderMode("random")}
+                onClick={() => setOrderMode('random')}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                  orderMode === "random"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  orderMode === 'random'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Show photos in random order"
               >
@@ -595,11 +599,11 @@ export function PhotosContent({
                 <span className="hidden sm:inline">Random</span>
               </button>
               <button
-                onClick={() => setOrderMode("date")}
+                onClick={() => setOrderMode('date')}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                  orderMode === "date"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  orderMode === 'date'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Show photos by date"
               >
@@ -611,11 +615,11 @@ export function PhotosContent({
             {/* Size selector */}
             <div className="flex items-center bg-bg-elevated rounded-full p-1">
               <button
-                onClick={() => setGridSize("xs")}
+                onClick={() => setGridSize('xs')}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "xs"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  gridSize === 'xs'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Extra large thumbnails (1 per row on mobile)"
               >
@@ -628,11 +632,11 @@ export function PhotosContent({
                 </svg>
               </button>
               <button
-                onClick={() => setGridSize("sm")}
+                onClick={() => setGridSize('sm')}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "sm"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  gridSize === 'sm'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Large thumbnails"
               >
@@ -648,11 +652,11 @@ export function PhotosContent({
                 </svg>
               </button>
               <button
-                onClick={() => setGridSize("md")}
+                onClick={() => setGridSize('md')}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "md"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  gridSize === 'md'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Medium thumbnails (default)"
               >
@@ -673,11 +677,11 @@ export function PhotosContent({
                 </svg>
               </button>
               <button
-                onClick={() => setGridSize("lg")}
+                onClick={() => setGridSize('lg')}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                  gridSize === "lg"
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-white"
+                  gridSize === 'lg'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
                 }`}
                 title="Small thumbnails (compact)"
               >
@@ -711,7 +715,7 @@ export function PhotosContent({
               <label
                 className="flex items-center gap-2 cursor-pointer"
                 title={
-                  showCompanyLogos ? "Hide company logos" : "Show company logos"
+                  showCompanyLogos ? 'Hide company logos' : 'Show company logos'
                 }
               >
                 <BuildingIcon size={16} className="text-text-muted" />
@@ -720,12 +724,12 @@ export function PhotosContent({
                   aria-checked={showCompanyLogos}
                   onClick={() => setShowCompanyLogos(!showCompanyLogos)}
                   className={`relative w-9 h-5 rounded-full transition-colors ${
-                    showCompanyLogos ? "bg-accent" : "bg-bg-surface"
+                    showCompanyLogos ? 'bg-accent' : 'bg-bg-surface'
                   }`}
                 >
                   <span
                     className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-                      showCompanyLogos ? "translate-x-4" : "translate-x-0"
+                      showCompanyLogos ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -798,29 +802,29 @@ export function PhotosContent({
           filterNames={{
             eventName: events.find((e) => e.id === selectedEventId)?.name,
             bandName:
-              selectedBandId === "none"
-                ? "No Band"
+              selectedBandId === 'none'
+                ? 'No Band'
                 : bands.find((b) => b.id === selectedBandId)?.name,
             photographer: selectedPhotographer,
             companyName:
-              selectedCompanySlug === "none"
-                ? "No Company"
+              selectedCompanySlug === 'none'
+                ? 'No Company'
                 : companies.find((c) => c.slug === selectedCompanySlug)?.name,
           }}
           onFilterChange={(filterType, value) => {
             switch (filterType) {
-              case "event":
-                handleEventChange(value);
-                break;
-              case "band":
-                handleBandChange(value);
-                break;
-              case "photographer":
-                handlePhotographerChange(value);
-                break;
-              case "company":
-                handleCompanyChange(value);
-                break;
+              case 'event':
+                handleEventChange(value)
+                break
+              case 'band':
+                handleBandChange(value)
+                break
+              case 'photographer':
+                handlePhotographerChange(value)
+                break
+              case 'company':
+                handleCompanyChange(value)
+                break
             }
           }}
           onClose={handleSlideshowClose}
@@ -830,5 +834,5 @@ export function PhotosContent({
         />
       )}
     </PublicLayout>
-  );
+  )
 }

@@ -7,6 +7,7 @@ This document outlines the comprehensive testing strategy for the band deduplica
 ## Feature Summary
 
 When a company is selected and no event is selected:
+
 - Bands with the same name are deduplicated (shown once)
 - Different band names are shown separately
 - Selecting a deduplicated band queries photos from all matching band IDs
@@ -19,6 +20,7 @@ When a company is selected and no event is selected:
 **Purpose**: Test the UI logic for band deduplication and selection handling.
 
 **Test Cases**:
+
 - ✅ Deduplicates bands with same name when company is selected (no event)
 - ✅ Shows different band names separately for same company
 - ✅ Sends all matching band IDs when deduplicated band is selected
@@ -33,6 +35,7 @@ When a company is selected and no event is selected:
 - ✅ Handles malformed `bandIds:` format gracefully
 
 **Key Assertions**:
+
 - Band dropdown shows deduplicated names correctly
 - `onBandChange` is called with `bandIds:id1,id2` format for deduplicated bands
 - `onBandChange` is called with single ID for non-deduplicated bands
@@ -43,6 +46,7 @@ When a company is selected and no event is selected:
 **Purpose**: Test SQL query generation and execution with multiple band IDs.
 
 **Test Cases**:
+
 - ✅ Queries photos with multiple band IDs using `ANY()` array syntax
 - ✅ Handles single band ID normally
 - ✅ Prefers `bandIds` over `bandId` when both are provided
@@ -52,6 +56,7 @@ When a company is selected and no event is selected:
 - ✅ Handles single band ID in available filters
 
 **Key Assertions**:
+
 - SQL queries use `ANY(array)` syntax for multiple IDs
 - Single IDs use equality check
 - Empty arrays don't filter
@@ -62,6 +67,7 @@ When a company is selected and no event is selected:
 **Purpose**: Test API parameter parsing and routing to database functions.
 
 **Test Cases**:
+
 - ✅ Parses `bandIds` parameter and passes to `getPhotos`
 - ✅ Handles single `bandId` parameter (backward compatibility)
 - ✅ Prefers `bandIds` over `band` when both are provided
@@ -69,6 +75,7 @@ When a company is selected and no event is selected:
 - ✅ Handles empty `bandIds` parameter
 
 **Key Assertions**:
+
 - URL parameter `bandIds=id1,id2` is parsed correctly
 - Comma-separated values are split into array
 - All database functions receive correct parameters
@@ -79,10 +86,12 @@ When a company is selected and no event is selected:
 **Purpose**: Test end-to-end user flow from UI interaction to API calls.
 
 **Test Cases**:
+
 - ✅ Deduplicates bands and queries photos from multiple band IDs
 - ✅ Handles URL with `bandIds` parameter on initial load
 
 **Key Assertions**:
+
 - User can select company, see deduplicated bands, select band, and API is called with `bandIds`
 - URL parameters are correctly parsed and applied on page load
 - Band select displays correct value when `bandIds` format is in URL
@@ -210,4 +219,3 @@ npm run test:coverage -- src/components/photos/__tests__/
 3. Add tests for concurrent filter changes
 4. Add tests for browser back/forward navigation
 5. Add visual regression tests for UI changes
-

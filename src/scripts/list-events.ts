@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 
-import { config } from "dotenv";
-import { sql } from "@vercel/postgres";
+import { config } from 'dotenv'
+import { sql } from '@vercel/postgres'
 
 // Load environment variables from .env.local
-config({ path: ".env.local" });
+config({ path: '.env.local' })
 
 async function listEvents(showBands = false) {
   try {
@@ -22,32 +22,32 @@ async function listEvents(showBands = false) {
       LEFT JOIN bands b ON e.id = b.event_id
       GROUP BY e.id, e.name, e.date, e.location, e.is_active, e.status
       ORDER BY e.date DESC
-    `;
+    `
 
     if (rows.length === 0) {
-      console.log("No events found.");
-      return;
+      console.log('No events found.')
+      return
     }
 
-    console.log("📅 Events:\n");
+    console.log('📅 Events:\n')
 
     for (let index = 0; index < rows.length; index++) {
-      const event = rows[index];
-      const statusIcon = event.is_active ? "🟢" : "⚪";
+      const event = rows[index]
+      const statusIcon = event.is_active ? '🟢' : '⚪'
       const statusText =
-        event.status === "finalized"
-          ? "FINALIZED"
-          : event.status === "voting"
-          ? "VOTING"
-          : "UPCOMING";
-      const date = new Date(event.date).toLocaleDateString();
+        event.status === 'finalized'
+          ? 'FINALIZED'
+          : event.status === 'voting'
+            ? 'VOTING'
+            : 'UPCOMING'
+      const date = new Date(event.date).toLocaleDateString()
 
-      console.log(`${index + 1}. ${event.name}`);
-      console.log(`   📍 ${event.location} • ${date}`);
+      console.log(`${index + 1}. ${event.name}`)
+      console.log(`   📍 ${event.location} • ${date}`)
       console.log(
         `   🎵 ${event.band_count} bands • ${statusIcon} ${statusText}`
-      );
-      console.log(`   🆔 ID: ${event.id}`);
+      )
+      console.log(`   🆔 ID: ${event.id}`)
 
       // Show bands if requested
       if (showBands && event.band_count > 0) {
@@ -57,57 +57,57 @@ async function listEvents(showBands = false) {
             FROM bands 
             WHERE event_id = ${event.id}
             ORDER BY "order" ASC
-          `;
+          `
 
-          console.log(`   🎸 Bands:`);
+          console.log(`   🎸 Bands:`)
           bands.forEach((band, bandIndex) => {
-            console.log(`      ${bandIndex + 1}. ${band.name}`);
-            console.log(`         🆔 ID: ${band.id}`);
+            console.log(`      ${bandIndex + 1}. ${band.name}`)
+            console.log(`         🆔 ID: ${band.id}`)
 
             // Check for logo in info JSONB
-            const logoUrl = band.info?.logo_url;
+            const logoUrl = band.info?.logo_url
             if (logoUrl) {
-              console.log(`         🖼️  Logo: ${logoUrl}`);
+              console.log(`         🖼️  Logo: ${logoUrl}`)
             } else {
-              console.log(`         🖼️  Logo: No logo available`);
+              console.log(`         🖼️  Logo: No logo available`)
             }
 
             // Show other info if available
             if (band.info?.website) {
-              console.log(`         🌐 Website: ${band.info.website}`);
+              console.log(`         🌐 Website: ${band.info.website}`)
             }
             if (band.info?.genre) {
-              console.log(`         🎵 Genre: ${band.info.genre}`);
+              console.log(`         🎵 Genre: ${band.info.genre}`)
             }
             if (band.info?.social_media?.twitter) {
               console.log(
                 `         🐦 Twitter: ${band.info.social_media.twitter}`
-              );
+              )
             }
 
             if (band.description) {
-              console.log(`         ${band.description}`);
+              console.log(`         ${band.description}`)
             }
-          });
+          })
         } catch (error) {
           console.log(
             `   ❌ Error fetching bands: ${
-              error instanceof Error ? error.message : "Unknown error"
+              error instanceof Error ? error.message : 'Unknown error'
             }`
-          );
+          )
         }
       }
 
-      console.log();
+      console.log()
     }
   } catch (error) {
-    console.error("❌ Error listing events:", error);
-    process.exit(1);
+    console.error('❌ Error listing events:', error)
+    process.exit(1)
   }
 }
 
 // Parse command line arguments
-const args = process.argv.slice(2);
-const showBands = args.includes("--bands") || args.includes("-b");
+const args = process.argv.slice(2)
+const showBands = args.includes('--bands') || args.includes('-b')
 
-listEvents(showBands);
+listEvents(showBands)

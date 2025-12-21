@@ -1,39 +1,39 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { PublicLayout } from "@/components/layouts";
-import { Card } from "@/components/ui";
-import { InstagramIcon, GlobeIcon, CameraIcon } from "@/components/icons";
-import { getPhotographers } from "@/lib/db";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { PublicLayout } from '@/components/layouts'
+import { Card } from '@/components/ui'
+import { InstagramIcon, GlobeIcon, CameraIcon } from '@/components/icons'
+import { getPhotographers } from '@/lib/db'
 
 export const metadata: Metadata = {
-  title: "Photographers | Battle of the Tech Bands",
+  title: 'Photographers | Battle of the Tech Bands',
   description:
-    "Meet the talented photographers who capture the energy and excitement of Battle of the Tech Bands events.",
+    'Meet the talented photographers who capture the energy and excitement of Battle of the Tech Bands events.',
   openGraph: {
-    title: "Photographers | Battle of the Tech Bands",
+    title: 'Photographers | Battle of the Tech Bands',
     description:
-      "Meet the talented photographers who capture the energy and excitement of Battle of the Tech Bands events.",
-    type: "website",
+      'Meet the talented photographers who capture the energy and excitement of Battle of the Tech Bands events.',
+    type: 'website',
   },
-};
+}
 
 interface Photographer {
-  slug: string;
-  name: string;
-  bio: string | null;
-  location: string | null;
-  website: string | null;
-  instagram: string | null;
-  email: string | null;
-  photo_count: number;
+  slug: string
+  name: string
+  bio: string | null
+  location: string | null
+  website: string | null
+  instagram: string | null
+  email: string | null
+  photo_count: number
 }
 
 export default async function PhotographersPage() {
-  const photographers = await getPhotographers();
+  const photographers = await getPhotographers()
 
   return (
     <PublicLayout
-      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Photographers" }]}
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Photographers' }]}
       footerVariant="simple"
     >
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -66,13 +66,17 @@ export default async function PhotographersPage() {
         )}
       </main>
     </PublicLayout>
-  );
+  )
 }
 
 function PhotographerCard({ photographer }: { photographer: Photographer }) {
   return (
     <Link href={`/photographer/${photographer.slug}`}>
-      <Card variant="interactive" padding="none" className="overflow-hidden group">
+      <Card
+        variant="interactive"
+        padding="none"
+        className="overflow-hidden group"
+      >
         {/* Card content */}
         <div className="p-6">
           {/* Header with icon */}
@@ -101,8 +105,8 @@ function PhotographerCard({ photographer }: { photographer: Photographer }) {
           <div className="flex items-center justify-between">
             {/* Photo count */}
             <span className="text-text-dim text-sm">
-              {photographer.photo_count}{" "}
-              {photographer.photo_count === 1 ? "photo" : "photos"}
+              {photographer.photo_count}{' '}
+              {photographer.photo_count === 1 ? 'photo' : 'photos'}
             </span>
 
             {/* Social links */}
@@ -122,9 +126,5 @@ function PhotographerCard({ photographer }: { photographer: Photographer }) {
         </div>
       </Card>
     </Link>
-  );
+  )
 }
-
-
-
-

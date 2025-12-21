@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 import {
   TwitterIcon,
   LinkedInIcon,
   FacebookIcon,
   LinkIcon,
   CheckIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 interface ShareResultsProps {
-  eventName: string;
-  winnerName: string;
-  eventUrl: string;
+  eventName: string
+  winnerName: string
+  eventUrl: string
 }
 
 /**
@@ -23,42 +23,42 @@ export function ShareResults({
   winnerName,
   eventUrl,
 }: ShareResultsProps) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false)
 
-  const shareText = `🏆 ${winnerName} wins ${eventName}! Check out the full results from Battle of the Tech Bands.`;
-  const encodedText = encodeURIComponent(shareText);
-  const encodedUrl = encodeURIComponent(eventUrl);
+  const shareText = `🏆 ${winnerName} wins ${eventName}! Check out the full results from Battle of the Tech Bands.`
+  const encodedText = encodeURIComponent(shareText)
+  const encodedUrl = encodeURIComponent(eventUrl)
 
   const shareLinks = [
     {
-      name: "Twitter",
+      name: 'Twitter',
       icon: TwitterIcon,
       href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-      color: "hover:text-[#1DA1F2]",
+      color: 'hover:text-[#1DA1F2]',
     },
     {
-      name: "LinkedIn",
+      name: 'LinkedIn',
       icon: LinkedInIcon,
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      color: "hover:text-[#0A66C2]",
+      color: 'hover:text-[#0A66C2]',
     },
     {
-      name: "Facebook",
+      name: 'Facebook',
       icon: FacebookIcon,
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
-      color: "hover:text-[#1877F2]",
+      color: 'hover:text-[#1877F2]',
     },
-  ];
+  ]
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(eventUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(eventUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("Failed to copy:", err);
+      console.error('Failed to copy:', err)
     }
-  };
+  }
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -82,10 +82,10 @@ export function ShareResults({
           onClick={handleCopyLink}
           className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
             copied
-              ? "bg-success/10 border-success/30 text-success"
-              : "bg-white/5 border-white/10 text-text-muted hover:bg-white/10 hover:border-white/20 hover:text-white"
+              ? 'bg-success/10 border-success/30 text-success'
+              : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10 hover:border-white/20 hover:text-white'
           }`}
-          aria-label={copied ? "Link copied" : "Copy link"}
+          aria-label={copied ? 'Link copied' : 'Copy link'}
         >
           {copied ? (
             <CheckIcon className="w-5 h-5" />
@@ -95,6 +95,5 @@ export function ShareResults({
         </button>
       </div>
     </div>
-  );
+  )
 }
-

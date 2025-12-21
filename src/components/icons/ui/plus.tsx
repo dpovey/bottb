@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Plus icon for add/create actions
@@ -23,7 +23,6 @@ export const PlusIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M12 4v16m8-8H4" />
     </svg>
   )
-);
+)
 
-PlusIcon.displayName = "PlusIcon";
-
+PlusIcon.displayName = 'PlusIcon'

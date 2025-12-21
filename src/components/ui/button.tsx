@@ -1,67 +1,68 @@
-import { forwardRef, ButtonHTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
+import { forwardRef, ButtonHTMLAttributes } from 'react'
+import { cn } from '@/lib/utils'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "outline-solid" | "filled" | "accent" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
-  asChild?: boolean;
+  variant?: 'outline-solid' | 'filled' | 'accent' | 'ghost' | 'danger'
+  size?: 'sm' | 'md' | 'lg'
+  asChild?: boolean
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "outline-solid", size = "md", children, ...props }, ref) => {
+  (
+    { className, variant = 'outline-solid', size = 'md', children, ...props },
+    ref
+  ) => {
     return (
       <button
         ref={ref}
         className={cn(
           // Base styles
-          "inline-flex items-center justify-center gap-2 font-medium transition-all duration-300",
-          "tracking-widest uppercase disabled:opacity-50 disabled:pointer-events-none",
-          "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-          
+          'inline-flex items-center justify-center gap-2 font-medium transition-all duration-300',
+          'tracking-widest uppercase disabled:opacity-50 disabled:pointer-events-none',
+          'focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+
           // Micro-interactions (respects reduced motion)
-          "motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
-          "motion-safe:hover:-translate-y-0.5",
-          
+          'motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]',
+          'motion-safe:hover:-translate-y-0.5',
+
           // Size variants
           {
-            "text-xs px-4 py-2 rounded-full": size === "sm",
-            "text-sm px-6 py-3 rounded-full": size === "md",
-            "text-sm px-8 py-4 rounded-full": size === "lg",
+            'text-xs px-4 py-2 rounded-full': size === 'sm',
+            'text-sm px-6 py-3 rounded-full': size === 'md',
+            'text-sm px-8 py-4 rounded-full': size === 'lg',
           },
-          
+
           // Style variants
           {
             // Outline (default) - white border, transparent bg
-            "border border-white/30 text-white hover:border-white/60 hover:bg-white/5":
-              variant === "outline-solid",
-            
+            'border border-white/30 text-white hover:border-white/60 hover:bg-white/5':
+              variant === 'outline-solid',
+
             // Filled - white bg, dark text
-            "bg-white text-bg hover:bg-gray-200":
-              variant === "filled",
-            
+            'bg-white text-bg hover:bg-gray-200': variant === 'filled',
+
             // Accent - accent color bg
-            "bg-accent text-white hover:bg-accent-light":
-              variant === "accent",
-            
+            'bg-accent text-white hover:bg-accent-light': variant === 'accent',
+
             // Ghost - no border, just text
-            "text-text-muted hover:text-white hover:bg-white/5":
-              variant === "ghost",
-            
+            'text-text-muted hover:text-white hover:bg-white/5':
+              variant === 'ghost',
+
             // Danger - for destructive actions
-            "bg-error/20 border border-error/30 text-error hover:bg-error/30":
-              variant === "danger",
+            'bg-error/20 border border-error/30 text-error hover:bg-error/30':
+              variant === 'danger',
           },
-          
+
           className
         )}
         {...props}
       >
         {children}
       </button>
-    );
+    )
   }
-);
+)
 
-Button.displayName = "Button";
+Button.displayName = 'Button'
 
-export { Button };
+export { Button }

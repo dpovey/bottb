@@ -1,37 +1,37 @@
-import type { NextConfig } from "next";
-import path from "path";
-import { withPostHogConfig } from "@posthog/nextjs-config";
+import type { NextConfig } from 'next'
+import path from 'path'
+import { withPostHogConfig } from '@posthog/nextjs-config'
 
 // Security headers configuration
 const securityHeaders = [
   {
     // Strict Transport Security - enforce HTTPS
-    key: "Strict-Transport-Security",
-    value: "max-age=31536000; includeSubDomains",
+    key: 'Strict-Transport-Security',
+    value: 'max-age=31536000; includeSubDomains',
   },
   {
     // Prevent clickjacking - only allow same origin framing
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
+    key: 'X-Frame-Options',
+    value: 'SAMEORIGIN',
   },
   {
     // Prevent MIME type sniffing
-    key: "X-Content-Type-Options",
-    value: "nosniff",
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
   },
   {
     // Control referrer information
-    key: "Referrer-Policy",
-    value: "strict-origin-when-cross-origin",
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
   },
   {
     // Permissions Policy - restrict browser features
-    key: "Permissions-Policy",
-    value: "camera=(), microphone=(self), geolocation=()",
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(self), geolocation=()',
   },
   {
     // Content Security Policy
-    key: "Content-Security-Policy",
+    key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
       // Scripts: self, inline (Next.js needs this), eval for dev, and trusted domains
@@ -58,13 +58,13 @@ const securityHeaders = [
       "form-action 'self'",
       // Frame ancestors: same as X-Frame-Options
       "frame-ancestors 'self'",
-    ].join("; "),
+    ].join('; '),
   },
-];
+]
 
 const nextConfig: NextConfig = {
   /* config options here */
-  outputFileTracingRoot: path.join(__dirname, "."),
+  outputFileTracingRoot: path.join(__dirname, '.'),
   reactCompiler: true,
   experimental: {
     useCache: true, // Enables "use cache" directive
@@ -73,26 +73,26 @@ const nextConfig: NextConfig = {
   cacheLife: {
     // 5-minute cache - good for navigation data, filter options
     fiveMinutes: {
-      stale: 300,     // Serve stale for 5 minutes
+      stale: 300, // Serve stale for 5 minutes
       revalidate: 300, // Revalidate after 5 minutes
-      expire: 3600,   // Expire after 1 hour
+      expire: 3600, // Expire after 1 hour
     },
   },
   images: {
     // Enable AVIF format for 30-50% smaller images than WebP
-    formats: ["image/avif", "image/webp"],
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "0qipqwe5exqqyona.public.blob.vercel-storage.com",
-        port: "",
-        pathname: "/**",
+        protocol: 'https',
+        hostname: '0qipqwe5exqqyona.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
       },
       {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-        port: "",
-        pathname: "/**",
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
@@ -101,15 +101,15 @@ const nextConfig: NextConfig = {
     return [
       {
         // Apply to all routes
-        source: "/:path*",
+        source: '/:path*',
         headers: securityHeaders,
       },
-    ];
+    ]
   },
-};
+}
 
 export default withPostHogConfig(nextConfig, {
   personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY!,
   envId: process.env.POSTHOG_ENV_ID!,
   host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-});
+})

@@ -1,77 +1,77 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { formatEventDate } from "@/lib/date-utils";
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { formatEventDate } from '@/lib/date-utils'
 
 interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  timezone: string;
-  status: string;
+  id: string
+  name: string
+  date: string
+  location: string
+  timezone: string
+  status: string
 }
 
 interface EventAdminDashboardProps {
-  eventId: string;
+  eventId: string
 }
 
 export default function EventAdminDashboard({
   eventId,
 }: EventAdminDashboardProps) {
-  const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
+  const [event, setEvent] = useState<Event | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
 
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const response = await fetch(`/api/events/${eventId}`);
+        const response = await fetch(`/api/events/${eventId}`)
         if (response.ok) {
-          const data = await response.json();
-          setEvent(data);
+          const data = await response.json()
+          setEvent(data)
         }
       } catch (error) {
-        console.error("Error fetching event:", error);
+        console.error('Error fetching event:', error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchEvent();
-  }, [eventId]);
+    fetchEvent()
+  }, [eventId])
 
   const handleClearScores = async () => {
-    setIsClearing(true);
+    setIsClearing(true)
     try {
       const response = await fetch(`/api/events/${eventId}/clear-scores`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
 
       if (response.ok) {
-        const result = await response.json();
-        alert(`✅ ${result.message}`);
-        setShowClearConfirm(false);
+        const result = await response.json()
+        alert(`✅ ${result.message}`)
+        setShowClearConfirm(false)
       } else {
-        const error = await response.json();
-        alert(`❌ Error: ${error.error}`);
+        const error = await response.json()
+        alert(`❌ Error: ${error.error}`)
       }
     } catch (error) {
-      console.error("Error clearing scores:", error);
-      alert("❌ Failed to clear scores");
+      console.error('Error clearing scores:', error)
+      alert('❌ Failed to clear scores')
     } finally {
-      setIsClearing(false);
+      setIsClearing(false)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading...</div>
       </div>
-    );
+    )
   }
 
   if (!event) {
@@ -79,7 +79,7 @@ export default function EventAdminDashboard({
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Event not found</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -88,11 +88,11 @@ export default function EventAdminDashboard({
       <div className="flex items-center gap-4">
         <span
           className={`px-4 py-2 rounded-full text-sm font-semibold ${
-            event.status === "voting"
-              ? "bg-green-600 text-white"
-              : event.status === "finalized"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-600 text-white"
+            event.status === 'voting'
+              ? 'bg-green-600 text-white'
+              : event.status === 'finalized'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-600 text-white'
           }`}
         >
           {event.status.toUpperCase()}
@@ -171,32 +171,32 @@ export default function EventAdminDashboard({
           Quick Actions
         </h3>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              href={`/results/${eventId}`}
-              className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
-            >
-              📊 View Results
-            </Link>
-            <Link
-              href={`/vote/crowd/${eventId}`}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
-            >
-              🎵 Test Crowd Voting
-            </Link>
-            <Link
-              href={`/vote/judge/${eventId}`}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
-            >
-              ⚖️ Test Judge Scoring
-            </Link>
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
-              disabled={isClearing}
-            >
-              {isClearing ? "⏳ Clearing..." : "🗑️ Clear Scores"}
-            </button>
-          </div>
+          <Link
+            href={`/results/${eventId}`}
+            className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+          >
+            📊 View Results
+          </Link>
+          <Link
+            href={`/vote/crowd/${eventId}`}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+          >
+            🎵 Test Crowd Voting
+          </Link>
+          <Link
+            href={`/vote/judge/${eventId}`}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+          >
+            ⚖️ Test Judge Scoring
+          </Link>
+          <button
+            onClick={() => setShowClearConfirm(true)}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+            disabled={isClearing}
+          >
+            {isClearing ? '⏳ Clearing...' : '🗑️ Clear Scores'}
+          </button>
+        </div>
       </div>
 
       {/* Clear Scores Confirmation Dialog */}
@@ -207,7 +207,7 @@ export default function EventAdminDashboard({
               Clear All Scores?
             </h3>
             <p className="text-gray-600 mb-6">
-              This will permanently delete all voting data for{" "}
+              This will permanently delete all voting data for{' '}
               <strong>{event?.name}</strong>:
             </p>
             <ul className="text-gray-600 mb-6 ml-4 list-disc">
@@ -232,12 +232,12 @@ export default function EventAdminDashboard({
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
                 disabled={isClearing}
               >
-                {isClearing ? "Clearing..." : "Yes, Clear All Scores"}
+                {isClearing ? 'Clearing...' : 'Yes, Clear All Scores'}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -189,44 +189,44 @@ export { customRender as render };
 ```typescript
 // __tests__/utils/mock-data.ts
 export const createMockEvent = (overrides = {}) => ({
-  id: "event-1",
-  name: "Test Event",
-  date: "2024-12-25T18:30:00Z",
-  location: "Test Venue",
+  id: 'event-1',
+  name: 'Test Event',
+  date: '2024-12-25T18:30:00Z',
+  location: 'Test Venue',
   is_active: true,
-  status: "voting" as const,
-  created_at: "2024-01-01T00:00:00Z",
+  status: 'voting' as const,
+  created_at: '2024-01-01T00:00:00Z',
   ...overrides,
-});
+})
 
 export const createMockBand = (overrides = {}) => ({
-  id: "band-1",
-  event_id: "event-1",
-  name: "Test Band",
-  description: "A test band",
+  id: 'band-1',
+  event_id: 'event-1',
+  name: 'Test Band',
+  description: 'A test band',
   order: 1,
-  created_at: "2024-01-01T00:00:00Z",
+  created_at: '2024-01-01T00:00:00Z',
   ...overrides,
-});
+})
 ```
 
 ### MSW Handlers
 
 ```typescript
 // __tests__/mocks/handlers.ts
-import { rest } from "msw";
+import { rest } from 'msw'
 
 export const handlers = [
-  rest.get("/api/events/:eventId", (req, res, ctx) => {
-    return res(ctx.json(createMockEvent()));
+  rest.get('/api/events/:eventId', (req, res, ctx) => {
+    return res(ctx.json(createMockEvent()))
   }),
-  rest.get("/api/bands/:eventId", (req, res, ctx) => {
-    return res(ctx.json([createMockBand()]));
+  rest.get('/api/bands/:eventId', (req, res, ctx) => {
+    return res(ctx.json([createMockBand()]))
   }),
-  rest.post("/api/votes", (req, res, ctx) => {
-    return res(ctx.json({ id: "vote-1", ...req.body }));
+  rest.post('/api/votes', (req, res, ctx) => {
+    return res(ctx.json({ id: 'vote-1', ...req.body }))
   }),
-];
+]
 ```
 
 ## Test Configuration
@@ -235,22 +235,22 @@ export const handlers = [
 
 ```javascript
 // jest.config.js
-const nextJest = require("next/jest");
+const nextJest = require('next/jest')
 
 const createJestConfig = nextJest({
-  dir: "./",
-});
+  dir: './',
+})
 
 const customJestConfig = {
-  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  testEnvironment: "jest-environment-jsdom",
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'jest-environment-jsdom',
   moduleNameMapping: {
-    "^@/(.*)$": "<rootDir>/src/$1",
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [
-    "src/**/*.{js,jsx,ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/**/*.stories.{js,jsx,ts,tsx}",
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.{js,jsx,ts,tsx}',
   ],
   coverageThreshold: {
     global: {
@@ -260,21 +260,21 @@ const customJestConfig = {
       statements: 80,
     },
   },
-};
+}
 
-module.exports = createJestConfig(customJestConfig);
+module.exports = createJestConfig(customJestConfig)
 ```
 
 ### Test Setup
 
 ```javascript
 // jest.setup.js
-import "@testing-library/jest-dom";
-import { server } from "./src/__mocks__/server";
+import '@testing-library/jest-dom'
+import { server } from './src/__mocks__/server'
 
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 ```
 
 ## Implementation Priority
@@ -311,20 +311,3 @@ afterAll(() => server.close());
 - Focus on testing user interactions and business logic
 - Avoid testing implementation details
 - Use meaningful test descriptions that explain the expected behavior
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

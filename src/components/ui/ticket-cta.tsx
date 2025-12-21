@@ -1,10 +1,10 @@
-import Link from "next/link";
-import { TicketIcon, ExternalLinkIcon } from "@/components/icons";
+import Link from 'next/link'
+import { TicketIcon, ExternalLinkIcon } from '@/components/icons'
 
 interface TicketCTAProps {
-  ticketUrl: string;
-  eventName?: string;
-  variant?: "default" | "compact";
+  ticketUrl: string
+  eventName?: string
+  variant?: 'default' | 'compact'
 }
 
 /**
@@ -13,9 +13,9 @@ interface TicketCTAProps {
 export function TicketCTA({
   ticketUrl,
   eventName,
-  variant = "default",
+  variant = 'default',
 }: TicketCTAProps) {
-  if (variant === "compact") {
+  if (variant === 'compact') {
     return (
       <Link
         href={ticketUrl}
@@ -27,7 +27,7 @@ export function TicketCTA({
         Get Tickets
         <ExternalLinkIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
       </Link>
-    );
+    )
   }
 
   return (
@@ -39,7 +39,7 @@ export function TicketCTA({
       <p className="text-text-muted text-sm mb-6 max-w-md mx-auto">
         {eventName
           ? `Secure your spot at ${eventName}. All proceeds support Youngcare.`
-          : "Secure your spot at this event. All proceeds support Youngcare."}
+          : 'Secure your spot at this event. All proceeds support Youngcare.'}
       </p>
       <Link
         href={ticketUrl}
@@ -50,10 +50,7 @@ export function TicketCTA({
         Purchase Tickets
         <ExternalLinkIcon className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
       </Link>
-      <p className="text-text-dim text-xs mt-4">
-        Opens in a new tab
-      </p>
+      <p className="text-text-dim text-xs mt-4">Opens in a new tab</p>
     </div>
-  );
+  )
 }
-

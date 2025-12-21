@@ -1,87 +1,93 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import Image from "next/image";
-import { formatEventDate } from "@/lib/date-utils";
-import { WebLayout } from "@/components/layouts";
-import { Button, Badge, Card, DateBadge, BandThumbnail, CompanyBadge, NumberedIndicator, TicketCTA } from "@/components/ui";
-import { ChevronRightIcon } from "@/components/icons";
-import { PhotoStrip } from "@/components/photos/photo-strip";
-import { VideoCarousel } from "@/components/video-carousel";
-import type { Video, Band as DbBand, Event as DbEvent, Photo } from "@/lib/db";
-import type { NavEvent } from "@/components/nav";
+import Link from 'next/link'
+import Image from 'next/image'
+import { formatEventDate } from '@/lib/date-utils'
+import { WebLayout } from '@/components/layouts'
 import {
-  parseScoringVersion,
-  hasDetailedBreakdown,
-} from "@/lib/scoring";
+  Button,
+  Badge,
+  Card,
+  DateBadge,
+  BandThumbnail,
+  CompanyBadge,
+  NumberedIndicator,
+  TicketCTA,
+} from '@/components/ui'
+import { ChevronRightIcon } from '@/components/icons'
+import { PhotoStrip } from '@/components/photos/photo-strip'
+import { VideoCarousel } from '@/components/video-carousel'
+import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
+import type { NavEvent } from '@/components/nav'
+import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 
 interface EventPageClientProps {
-  event: DbEvent;
-  bands: DbBand[];
-  heroPhoto: Photo | null;
-  videos: Video[];
+  event: DbEvent
+  bands: DbBand[]
+  heroPhoto: Photo | null
+  videos: Video[]
   navEvents?: {
-    upcoming: NavEvent[];
-    past: NavEvent[];
-  };
+    upcoming: NavEvent[]
+    past: NavEvent[]
+  }
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
   switch (status) {
-    case "voting":
-      return <Badge variant="success">Voting Open</Badge>;
-    case "finalized":
+    case 'voting':
+      return <Badge variant="success">Voting Open</Badge>
+    case 'finalized':
       return hasWinner ? (
         <Badge variant="warning">Completed</Badge>
       ) : (
         <Badge variant="accent">Results Available</Badge>
-      );
-    case "upcoming":
-      return <Badge variant="info">Upcoming</Badge>;
+      )
+    case 'upcoming':
+      return <Badge variant="info">Upcoming</Badge>
     default:
-      return <Badge variant="default">{status}</Badge>;
+      return <Badge variant="default">{status}</Badge>
   }
 }
 
 interface EventInfo {
-  image_url?: string;
-  description?: string;
-  website?: string;
-  ticket_url?: string;
+  image_url?: string
+  description?: string
+  website?: string
+  ticket_url?: string
   social_media?: {
-    twitter?: string;
-    instagram?: string;
-    facebook?: string;
-  };
-  venue_info?: string;
-  scoring_version?: string;
-  winner?: string;
-  [key: string]: unknown;
+    twitter?: string
+    instagram?: string
+    facebook?: string
+  }
+  venue_info?: string
+  scoring_version?: string
+  winner?: string
+  [key: string]: unknown
 }
 
-export function EventPageClient({ 
-  event, 
-  bands, 
-  heroPhoto, 
+export function EventPageClient({
+  event,
+  bands,
+  heroPhoto,
   videos,
   navEvents,
 }: EventPageClientProps) {
-  const eventId = event.id;
-  const eventInfo = event.info as EventInfo | undefined;
+  const eventId = event.id
+  const eventInfo = event.info as EventInfo | undefined
 
   const breadcrumbs = [
-    { label: "Events", href: "/events" },
+    { label: 'Events', href: '/events' },
     { label: event.name },
-  ];
+  ]
 
   // Get scoring version and winner info
-  const scoringVersion = parseScoringVersion(eventInfo);
-  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
-  const storedWinner = eventInfo?.winner;
-  const isFinalized = event.status === "finalized";
+  const scoringVersion = parseScoringVersion(eventInfo)
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
+  const storedWinner = eventInfo?.winner
+  const isFinalized = event.status === 'finalized'
 
   // For 2022.1 events, we show the stored winner prominently
-  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner;
+  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner
 
   return (
     <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
@@ -94,8 +100,8 @@ export function EventPageClient({
             alt={`${event.name} event`}
             fill
             className="object-cover"
-            style={{ 
-              objectPosition: `${heroPhoto.hero_focal_point?.x ?? 50}% ${heroPhoto.hero_focal_point?.y ?? 50}%` 
+            style={{
+              objectPosition: `${heroPhoto.hero_focal_point?.x ?? 50}% ${heroPhoto.hero_focal_point?.y ?? 50}%`,
             }}
             sizes="100vw"
             priority
@@ -122,7 +128,12 @@ export function EventPageClient({
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
             {/* Date Badge */}
-            <DateBadge date={event.date} timezone={event.timezone} size="lg" showYear />
+            <DateBadge
+              date={event.date}
+              timezone={event.timezone}
+              size="lg"
+              showYear
+            />
 
             {/* Event Info */}
             <div className="flex-1">
@@ -148,8 +159,12 @@ export function EventPageClient({
               <div className="flex items-center gap-4">
                 <span className="text-4xl">🏆</span>
                 <div>
-                  <p className="text-sm text-warning uppercase tracking-widest">Champion</p>
-                  <p className="text-2xl font-semibold text-white">{storedWinner}</p>
+                  <p className="text-sm text-warning uppercase tracking-widest">
+                    Champion
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {storedWinner}
+                  </p>
                 </div>
               </div>
               <Link href={`/results/${eventId}`}>
@@ -163,28 +178,30 @@ export function EventPageClient({
       )}
 
       {/* Action Section */}
-      {(event.status === "voting" || event.status === "finalized" || event.status === "upcoming") && (
+      {(event.status === 'voting' ||
+        event.status === 'finalized' ||
+        event.status === 'upcoming') && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-wrap gap-4 items-center">
-              {event.status === "upcoming" && eventInfo?.ticket_url && (
+              {event.status === 'upcoming' && eventInfo?.ticket_url && (
                 <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
               )}
-              {event.status === "voting" && (
+              {event.status === 'voting' && (
                 <Link href={`/vote/crowd/${eventId}`}>
                   <Button variant="accent" size="lg">
                     Vote for Bands
                   </Button>
                 </Link>
               )}
-              {event.status === "finalized" && !show2022Winner && (
+              {event.status === 'finalized' && !show2022Winner && (
                 <Link href={`/results/${eventId}`}>
                   <Button variant="accent" size="lg">
                     View Results
                   </Button>
                 </Link>
               )}
-              {event.status !== "upcoming" && (
+              {event.status !== 'upcoming' && (
                 <Link href={`/photos?event=${eventId}`}>
                   <Button variant="outline-solid" size="lg">
                     View Photos
@@ -212,10 +229,10 @@ export function EventPageClient({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-sm tracking-widest uppercase text-text-muted mb-2">
-              {isFinalized ? "Competed" : "Performing"}
+              {isFinalized ? 'Competed' : 'Performing'}
             </h2>
             <p className="text-2xl font-semibold text-white">
-              {bands.length} Band{bands.length !== 1 ? "s" : ""}
+              {bands.length} Band{bands.length !== 1 ? 's' : ''}
             </p>
           </div>
 
@@ -228,15 +245,15 @@ export function EventPageClient({
           ) : (
             <div className="grid gap-4">
               {bands.map((band) => {
-                const isWinner = show2022Winner && band.name === storedWinner;
-                
+                const isWinner = show2022Winner && band.name === storedWinner
+
                 return (
                   <Link key={band.id} href={`/band/${band.id}`}>
                     <Card
                       variant="interactive"
                       padding="none"
                       className={`overflow-hidden ${
-                        isWinner ? "border-warning/30 bg-warning/5" : ""
+                        isWinner ? 'border-warning/30 bg-warning/5' : ''
                       }`}
                     >
                       <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
@@ -265,13 +282,17 @@ export function EventPageClient({
                         {/* Band Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className={`text-lg font-semibold truncate ${
-                              isWinner ? "text-warning" : "text-white"
-                            }`}>
+                            <h3
+                              className={`text-lg font-semibold truncate ${
+                                isWinner ? 'text-warning' : 'text-white'
+                              }`}
+                            >
                               {band.name}
                             </h3>
                             {isWinner && (
-                              <Badge variant="warning" className="shrink-0">Champion</Badge>
+                              <Badge variant="warning" className="shrink-0">
+                                Champion
+                              </Badge>
                             )}
                           </div>
                           {/* Company badge - asLink=false to avoid nested <a> tags */}
@@ -301,7 +322,7 @@ export function EventPageClient({
                       </div>
                     </Card>
                   </Link>
-                );
+                )
               })}
             </div>
           )}
@@ -309,7 +330,7 @@ export function EventPageClient({
       </section>
 
       {/* Ticket CTA Section - for upcoming events */}
-      {event.status === "upcoming" && eventInfo?.ticket_url && (
+      {event.status === 'upcoming' && eventInfo?.ticket_url && (
         <section className="py-12 border-t border-white/5">
           <div className="max-w-2xl mx-auto px-6 lg:px-8">
             <TicketCTA
@@ -327,11 +348,15 @@ export function EventPageClient({
       {videos.length > 0 && (
         <section className="py-12 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <VideoCarousel videos={videos} title="Videos" showBandInfo={true} location="event_page" />
+            <VideoCarousel
+              videos={videos}
+              title="Videos"
+              showBandInfo={true}
+              location="event_page"
+            />
           </div>
         </section>
       )}
     </WebLayout>
-  );
+  )
 }
-

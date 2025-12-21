@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Pause icon
@@ -24,7 +24,6 @@ export const PauseIcon = forwardRef<SVGSVGElement, IconProps>(
       <rect x="14" y="4" width="4" height="16" />
     </svg>
   )
-);
+)
 
-PauseIcon.displayName = "PauseIcon";
-
+PauseIcon.displayName = 'PauseIcon'

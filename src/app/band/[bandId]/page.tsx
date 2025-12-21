@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
 import {
   getBandScores,
   getBandsForEvent,
@@ -10,23 +10,23 @@ import {
   PHOTO_LABELS,
   SetlistSong,
   type Band,
-} from "@/lib/db";
-import { notFound } from "next/navigation";
-import { formatEventDate } from "@/lib/date-utils";
-import Image from "next/image";
-import { auth } from "@/lib/auth";
-import Link from "next/link";
-import { CompanyBadge, BandThumbnail, SocialIconLink } from "@/components/ui";
-import { PhotoStrip } from "@/components/photos/photo-strip";
-import { VideoCarousel } from "@/components/video-carousel";
+} from '@/lib/db'
+import { notFound } from 'next/navigation'
+import { formatEventDate } from '@/lib/date-utils'
+import Image from 'next/image'
+import { auth } from '@/lib/auth'
+import Link from 'next/link'
+import { CompanyBadge, BandThumbnail, SocialIconLink } from '@/components/ui'
+import { PhotoStrip } from '@/components/photos/photo-strip'
+import { VideoCarousel } from '@/components/video-carousel'
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
   calculateTotalScore,
   type BandScoreData,
-} from "@/lib/scoring";
-import { getBaseUrl } from "@/lib/seo";
-import { MusicGroupJsonLd } from "@/components/seo";
+} from '@/lib/scoring'
+import { getBaseUrl } from '@/lib/seo'
+import { MusicGroupJsonLd } from '@/components/seo'
 import {
   TwitterIcon,
   InstagramIcon,
@@ -36,52 +36,52 @@ import {
   ArrowLeftIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 interface BandScore {
-  id: string;
-  name: string;
-  order: number;
-  avg_song_choice: number;
-  avg_performance: number;
-  avg_crowd_vibe: number;
-  avg_visuals?: number;
-  avg_crowd_vote: number;
-  crowd_vote_count: number;
-  judge_vote_count: number;
-  total_crowd_votes: number;
-  crowd_noise_energy?: number;
-  crowd_noise_peak?: number;
-  crowd_score?: number;
+  id: string
+  name: string
+  order: number
+  avg_song_choice: number
+  avg_performance: number
+  avg_crowd_vibe: number
+  avg_visuals?: number
+  avg_crowd_vote: number
+  crowd_vote_count: number
+  judge_vote_count: number
+  total_crowd_votes: number
+  crowd_noise_energy?: number
+  crowd_noise_peak?: number
+  crowd_score?: number
 }
 
 interface EventInfo {
-  scoring_version?: string;
-  winner?: string;
-  [key: string]: unknown;
+  scoring_version?: string
+  winner?: string
+  [key: string]: unknown
 }
 
 // Progress bar component
 function ProgressBar({
   value,
   max,
-  className = "",
+  className = '',
 }: {
-  value: number;
-  max: number;
-  className?: string;
+  value: number
+  max: number
+  className?: string
 }) {
-  const percent = max > 0 ? (value / max) * 100 : 0;
+  const percent = max > 0 ? (value / max) * 100 : 0
   return (
     <div className="h-2 bg-bg-surface rounded-full overflow-hidden">
       <div
         className={`h-full rounded-full transition-all duration-1000 ${
-          className || "bg-accent"
+          className || 'bg-accent'
         }`}
         style={{ width: `${percent}%` }}
       />
     </div>
-  );
+  )
 }
 
 // Score category row component
@@ -92,11 +92,11 @@ function ScoreRow({
   max,
   progressClassName,
 }: {
-  emoji: string;
-  label: string;
-  value: number;
-  max: number;
-  progressClassName?: string;
+  emoji: string
+  label: string
+  value: number
+  max: number
+  progressClassName?: string
 }) {
   return (
     <div>
@@ -111,21 +111,21 @@ function ScoreRow({
       </div>
       <ProgressBar value={value} max={max} className={progressClassName} />
     </div>
-  );
+  )
 }
 
 // Circular progress component for crowd vote
 function CircularProgress({ percent }: { percent: number }) {
   // SVG circle math: circumference = 2 * pi * r
   // For r=16, circumference ≈ 100.53
-  const dashoffset = 100.53 - (percent / 100) * 100.53;
+  const dashoffset = 100.53 - (percent / 100) * 100.53
 
   return (
     <div className="relative w-24 h-24 shrink-0">
       <svg
         className="w-full h-full -rotate-90"
         viewBox="0 0 36 36"
-        style={{ transformOrigin: "center" }}
+        style={{ transformOrigin: 'center' }}
       >
         <circle
           cx="18"
@@ -151,22 +151,25 @@ function CircularProgress({ percent }: { percent: number }) {
         <span className="text-xl font-semibold">{Math.round(percent)}%</span>
       </div>
     </div>
-  );
+  )
 }
 
 // Setlist Section Component
 function SetlistSection({ songs }: { songs: SetlistSong[] }) {
-  if (songs.length === 0) return null;
+  if (songs.length === 0) return null
 
   const getSongTypeLabel = (type: string) => {
     const labels: Record<string, { text: string; className: string }> = {
-      cover: { text: "Cover", className: "bg-white/10 text-text-muted" },
-      mashup: { text: "Mashup", className: "bg-accent/20 text-accent" },
-      medley: { text: "Medley", className: "bg-info/20 text-info" },
-      transition: { text: "Transition", className: "bg-success/20 text-success" },
-    };
-    return labels[type] || labels.cover;
-  };
+      cover: { text: 'Cover', className: 'bg-white/10 text-text-muted' },
+      mashup: { text: 'Mashup', className: 'bg-accent/20 text-accent' },
+      medley: { text: 'Medley', className: 'bg-info/20 text-info' },
+      transition: {
+        text: 'Transition',
+        className: 'bg-success/20 text-success',
+      },
+    }
+    return labels[type] || labels.cover
+  }
 
   return (
     <section className="py-12 border-t border-white/5">
@@ -176,14 +179,14 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
         </h2>
         <div className="bg-bg-elevated rounded-xl border border-white/5 overflow-hidden">
           {songs.map((song, index) => {
-            const typeLabel = getSongTypeLabel(song.song_type);
-            const isLast = index === songs.length - 1;
+            const typeLabel = getSongTypeLabel(song.song_type)
+            const isLast = index === songs.length - 1
 
             return (
               <div
                 key={song.id}
                 className={`flex items-center gap-4 p-4 ${
-                  !isLast ? "border-b border-white/5" : ""
+                  !isLast ? 'border-b border-white/5' : ''
                 }`}
               >
                 {/* Position number */}
@@ -195,15 +198,16 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-white">{song.title}</span>
-                    {song.song_type === "transition" && song.transition_to_title && (
-                      <>
-                        <span className="text-text-dim">→</span>
-                        <span className="font-medium text-white">
-                          {song.transition_to_title}
-                        </span>
-                      </>
-                    )}
-                    {song.song_type !== "cover" && (
+                    {song.song_type === 'transition' &&
+                      song.transition_to_title && (
+                        <>
+                          <span className="text-text-dim">→</span>
+                          <span className="font-medium text-white">
+                            {song.transition_to_title}
+                          </span>
+                        </>
+                      )}
+                    {song.song_type !== 'cover' && (
                       <span
                         className={`px-2 py-0.5 rounded-sm text-[10px] font-medium uppercase tracking-wider ${typeLabel.className}`}
                       >
@@ -213,14 +217,20 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                   </div>
                   <div className="text-sm text-text-muted mt-0.5">
                     {song.artist}
-                    {song.song_type === "transition" && song.transition_to_artist && (
-                      <> / {song.transition_to_artist}</>
-                    )}
-                    {song.additional_songs && song.additional_songs.length > 0 && (
-                      <>
-                        {" "}+ {song.additional_songs.map((s) => `${s.title} (${s.artist})`).join(", ")}
-                      </>
-                    )}
+                    {song.song_type === 'transition' &&
+                      song.transition_to_artist && (
+                        <> / {song.transition_to_artist}</>
+                      )}
+                    {song.additional_songs &&
+                      song.additional_songs.length > 0 && (
+                        <>
+                          {' '}
+                          +{' '}
+                          {song.additional_songs
+                            .map((s) => `${s.title} (${s.artist})`)
+                            .join(', ')}
+                        </>
+                      )}
                   </div>
                 </div>
 
@@ -237,24 +247,24 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                   </a>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ bandId: string }>;
+  params: Promise<{ bandId: string }>
 }): Promise<Metadata> {
-  const { bandId } = await params;
-  const baseUrl = getBaseUrl();
+  const { bandId } = await params
+  const baseUrl = getBaseUrl()
 
   // Get band data
-  const { sql } = await import("@vercel/postgres");
+  const { sql } = await import('@vercel/postgres')
   const { rows: bandData } = await sql`
     SELECT b.*, 
            e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
@@ -264,40 +274,40 @@ export async function generateMetadata({
     JOIN events e ON b.event_id = e.id
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.id = ${bandId}
-  `;
+  `
 
   if (bandData.length === 0) {
     return {
-      title: "Band Not Found | Battle of the Tech Bands",
-    };
+      title: 'Band Not Found | Battle of the Tech Bands',
+    }
   }
 
-  const band = bandData[0];
+  const band = bandData[0]
 
   // Build title
-  const titleParts = [band.name];
+  const titleParts = [band.name]
   if (band.company_name) {
-    titleParts.push(`(${band.company_name})`);
+    titleParts.push(`(${band.company_name})`)
   }
-  titleParts.push("| Battle of the Tech Bands");
-  const title = titleParts.join(" ");
+  titleParts.push('| Battle of the Tech Bands')
+  const title = titleParts.join(' ')
 
   // Build description
-  let description = `${band.name}`;
+  let description = `${band.name}`
   if (band.company_name) {
-    description += ` from ${band.company_name}`;
+    description += ` from ${band.company_name}`
   }
-  description += ` performing at ${band.event_name}`;
+  description += ` performing at ${band.event_name}`
   if (band.description) {
-    description += `. ${band.description}`;
+    description += `. ${band.description}`
   }
 
   // Get hero image
   const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {
     bandId,
-  });
-  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
-  const ogImage = heroPhoto?.blob_url || band.info?.logo_url || undefined;
+  })
+  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null
+  const ogImage = heroPhoto?.blob_url || band.info?.logo_url || undefined
 
   return {
     title,
@@ -308,7 +318,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      type: "profile",
+      type: 'profile',
       images: ogImage
         ? [
             {
@@ -321,27 +331,27 @@ export async function generateMetadata({
         : undefined,
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title,
       description,
       images: ogImage ? [ogImage] : undefined,
     },
-  };
+  }
 }
 
 export default async function BandPage({
   params,
 }: {
-  params: Promise<{ bandId: string }>;
+  params: Promise<{ bandId: string }>
 }) {
-  const { bandId } = await params;
+  const { bandId } = await params
 
   // Check if user is admin
-  const session = await auth();
-  const isAdmin = session?.user?.isAdmin || false;
+  const session = await auth()
+  const isAdmin = session?.user?.isAdmin || false
 
   // Get all events to find which one contains this band
-  const { sql } = await import("@vercel/postgres");
+  const { sql } = await import('@vercel/postgres')
   const { rows: bandData } = await sql`
     SELECT b.*, 
            e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
@@ -351,69 +361,64 @@ export default async function BandPage({
     JOIN events e ON b.event_id = e.id
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.id = ${bandId}
-  `;
+  `
 
   if (bandData.length === 0) {
-    notFound();
+    notFound()
   }
 
-  const band = bandData[0];
+  const band = bandData[0]
   if (!band || !band.event_id) {
-    notFound();
+    notFound()
   }
 
-  const eventId = band.event_id;
-  const eventStatus = band.status;
-  const eventInfo = band.event_info as EventInfo | null;
-  const scoringVersion = parseScoringVersion(eventInfo);
-  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
+  const eventId = band.event_id
+  const eventStatus = band.status
+  const eventInfo = band.event_info as EventInfo | null
+  const scoringVersion = parseScoringVersion(eventInfo)
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
 
   // Fetch band hero photos
   const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {
     bandId,
-  });
-  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null;
-  const heroPhotoUrl = heroPhoto?.blob_url ?? null;
-  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+  })
+  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null
+  const heroPhotoUrl = heroPhoto?.blob_url ?? null
+  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
 
   // Fetch all bands for the event to enable navigation
-  const allBands = await getBandsForEvent(eventId);
-  const currentBandIndex = allBands.findIndex((b) => b.id === bandId);
-  const prevBand = currentBandIndex > 0 ? allBands[currentBandIndex - 1] : null;
+  const allBands = await getBandsForEvent(eventId)
+  const currentBandIndex = allBands.findIndex((b) => b.id === bandId)
+  const prevBand = currentBandIndex > 0 ? allBands[currentBandIndex - 1] : null
   const nextBand =
     currentBandIndex < allBands.length - 1
       ? allBands[currentBandIndex + 1]
-      : null;
+      : null
 
   // Fetch videos for this band
-  const videos = await getVideos({ bandId });
+  const videos = await getVideos({ bandId })
 
   // Fetch setlist for this band (only shown when event is finalized)
-  let setlist: SetlistSong[] = [];
-  if (eventStatus === "finalized" || isAdmin) {
-    setlist = await getSetlistForBand(bandId);
+  let setlist: SetlistSong[] = []
+  if (eventStatus === 'finalized' || isAdmin) {
+    setlist = await getSetlistForBand(bandId)
   }
 
   // Only fetch scores if event is finalized or user is admin
-  let scores: BandScore[] = [];
-  let bandScore: BandScore | null = null;
+  let scores: BandScore[] = []
+  let bandScore: BandScore | null = null
 
-  if (eventStatus === "finalized" || isAdmin) {
+  if (eventStatus === 'finalized' || isAdmin) {
     // Check if event is finalized and has finalized results
-    if (
-      eventStatus === "finalized" &&
-      (await hasFinalizedResults(eventId))
-    ) {
+    if (eventStatus === 'finalized' && (await hasFinalizedResults(eventId))) {
       // Use finalized results from table
-      const finalizedResults = await getFinalizedResults(eventId);
-      const finalizedResult = finalizedResults.find(
-        (r) => r.band_id === bandId
-      );
+      const finalizedResults = await getFinalizedResults(eventId)
+      const finalizedResult = finalizedResults.find((r) => r.band_id === bandId)
 
       if (finalizedResult) {
         // Transform finalized result to match BandScore format for compatibility
-        const allBands = await getBandsForEvent(eventId);
-        const band = allBands.find((b) => b.id === bandId);
+        const allBands = await getBandsForEvent(eventId)
+        const band = allBands.find((b) => b.id === bandId)
         bandScore = {
           id: finalizedResult.band_id,
           name: finalizedResult.band_name,
@@ -437,11 +442,11 @@ export default async function BandPage({
           company_slug: band?.company_slug,
           company_name: band?.company_name,
           company_icon_url: band?.company_icon_url,
-        } as BandScore;
+        } as BandScore
 
         // Create scores array for compatibility with existing code
         scores = finalizedResults.map((r) => {
-          const b = allBands.find((b) => b.id === r.band_id);
+          const b = allBands.find((b) => b.id === r.band_id)
           return {
             id: r.band_id,
             name: r.band_name,
@@ -463,25 +468,25 @@ export default async function BandPage({
             company_slug: b?.company_slug,
             company_name: b?.company_name,
             company_icon_url: b?.company_icon_url,
-          } as BandScore;
-        });
+          } as BandScore
+        })
       }
     } else {
       // Calculate scores dynamically for non-finalized events or admin preview
-      scores = (await getBandScores(eventId)) as BandScore[];
-      bandScore = scores.find((score) => score.id === bandId) || null;
+      scores = (await getBandScores(eventId)) as BandScore[]
+      bandScore = scores.find((score) => score.id === bandId) || null
     }
   }
 
   // For 2022.1 events, check if this band is the winner
-  const isWinner = !showDetailedBreakdown && eventInfo?.winner === band.name;
+  const isWinner = !showDetailedBreakdown && eventInfo?.winner === band.name
 
   // Calculate scores only if we have band score data and detailed breakdown
-  let totalScore = 0;
-  let judgeScore = 0;
-  let crowdVoteScore = 0;
-  let screamOMeterScore = 0;
-  let visualsScore = 0;
+  let totalScore = 0
+  let judgeScore = 0
+  let crowdVoteScore = 0
+  let screamOMeterScore = 0
+  let visualsScore = 0
 
   if (showDetailedBreakdown && bandScore) {
     const scoreData: BandScoreData = {
@@ -492,24 +497,24 @@ export default async function BandPage({
       crowd_vote_count: bandScore.crowd_vote_count,
       total_crowd_votes: bandScore.total_crowd_votes,
       crowd_score: bandScore.crowd_score,
-    };
+    }
 
     // Calculate normalized crowd vote score
     const maxVoteCount = Math.max(
       ...scores.map((s) => Number(s.crowd_vote_count || 0))
-    );
+    )
     crowdVoteScore =
       maxVoteCount > 0
         ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
-        : 0;
+        : 0
 
     // Version-specific scores
-    if (scoringVersion === "2025.1") {
+    if (scoringVersion === '2025.1') {
       screamOMeterScore = bandScore.crowd_score
         ? Number(bandScore.crowd_score)
-        : 0;
-    } else if (scoringVersion === "2026.1") {
-      visualsScore = Number(bandScore.avg_visuals || 0);
+        : 0
+    } else if (scoringVersion === '2026.1') {
+      visualsScore = Number(bandScore.avg_visuals || 0)
     }
 
     // Calculate total
@@ -525,15 +530,15 @@ export default async function BandPage({
         total_crowd_votes: s.total_crowd_votes,
         crowd_score: s.crowd_score,
       }))
-    );
+    )
 
     judgeScore =
       Number(bandScore.avg_song_choice || 0) +
       Number(bandScore.avg_performance || 0) +
-      Number(bandScore.avg_crowd_vibe || 0);
+      Number(bandScore.avg_crowd_vibe || 0)
 
-    if (scoringVersion === "2026.1") {
-      judgeScore += visualsScore;
+    if (scoringVersion === '2026.1') {
+      judgeScore += visualsScore
     }
   }
 
@@ -542,19 +547,19 @@ export default async function BandPage({
     ? (Number(bandScore.crowd_vote_count || 0) /
         Number(bandScore.total_crowd_votes)) *
       100
-    : 0;
+    : 0
 
   // Check if this band has the highest crowd votes
   const isHighestVoted =
     bandScore &&
     scores.length > 0 &&
     Number(bandScore.crowd_vote_count || 0) ===
-      Math.max(...scores.map((s) => Number(s.crowd_vote_count || 0)));
+      Math.max(...scores.map((s) => Number(s.crowd_vote_count || 0)))
 
-  const crowdVibeMax = scoringVersion === "2026.1" ? 20 : 30;
-  const maxJudgePoints = scoringVersion === "2026.1" ? 90 : 80;
+  const crowdVibeMax = scoringVersion === '2026.1' ? 20 : 30
+  const maxJudgePoints = scoringVersion === '2026.1' ? 90 : 80
 
-  const canShowScores = eventStatus === "finalized" || isAdmin;
+  const canShowScores = eventStatus === 'finalized' || isAdmin
 
   // Find band rank
   const bandRank =
@@ -586,9 +591,9 @@ export default async function BandPage({
           }))
           .sort((a, b) => b.total - a.total)
           .findIndex((s) => s.id === bandId) + 1
-      : null;
+      : null
 
-  const isEventWinner = bandRank === 1 && showDetailedBreakdown;
+  const isEventWinner = bandRank === 1 && showDetailedBreakdown
 
   return (
     <div className="bg-bg min-h-screen">
@@ -643,12 +648,12 @@ export default async function BandPage({
                   {showDetailedBreakdown && bandRank && (
                     <span className="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-widest uppercase">
                       {bandRank === 1
-                        ? "1st Place"
+                        ? '1st Place'
                         : bandRank === 2
-                        ? "2nd Place"
-                        : bandRank === 3
-                        ? "3rd Place"
-                        : `${bandRank}th Place`}
+                          ? '2nd Place'
+                          : bandRank === 3
+                            ? '3rd Place'
+                            : `${bandRank}th Place`}
                     </span>
                   )}
                 </div>
@@ -763,7 +768,7 @@ export default async function BandPage({
                     value={Number(bandScore.avg_crowd_vibe || 0)}
                     max={crowdVibeMax}
                   />
-                  {scoringVersion === "2026.1" && (
+                  {scoringVersion === '2026.1' && (
                     <ScoreRow
                       emoji="🎨"
                       label="Visuals"
@@ -813,14 +818,14 @@ export default async function BandPage({
               </div>
 
               {/* Scream-o-Meter (2025.1) or Visuals Summary (2026.1) */}
-              {scoringVersion === "2025.1" && (
+              {scoringVersion === '2025.1' && (
                 <ScreamOMeterCard
                   score={screamOMeterScore}
                   energy={bandScore.crowd_noise_energy}
                   peak={bandScore.crowd_noise_peak}
                 />
               )}
-              {scoringVersion === "2026.1" && (
+              {scoringVersion === '2026.1' && (
                 <VisualsSummaryCard
                   score={visualsScore}
                   judgeCount={bandScore.judge_vote_count}
@@ -847,17 +852,17 @@ export default async function BandPage({
       )}
 
       {/* Event Status Message for Non-Admin Users */}
-      {eventStatus !== "finalized" && !isAdmin && (
+      {eventStatus !== 'finalized' && !isAdmin && (
         <section className="py-16 bg-bg">
           <div className="max-w-4xl mx-auto px-6 lg:px-8">
             <div className="bg-warning/10 border border-warning/30 rounded-xl p-8 text-center">
               <div className="text-5xl mb-4">
-                {eventStatus === "upcoming" ? "📅" : "🎵"}
+                {eventStatus === 'upcoming' ? '📅' : '🎵'}
               </div>
               <h2 className="text-3xl font-bold text-warning mb-2">
-                {eventStatus === "upcoming"
-                  ? "Event Upcoming"
-                  : "Event In Progress"}
+                {eventStatus === 'upcoming'
+                  ? 'Event Upcoming'
+                  : 'Event In Progress'}
               </h2>
               <p className="text-lg text-text-muted">
                 Scores will be available after the event is finalized
@@ -874,7 +879,12 @@ export default async function BandPage({
       {videos.length > 0 && (
         <section className="py-12 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <VideoCarousel videos={videos} title="Videos" showBandInfo={false} location="band_page" />
+            <VideoCarousel
+              videos={videos}
+              title="Videos"
+              showBandInfo={false}
+              location="band_page"
+            />
           </div>
         </section>
       )}
@@ -953,7 +963,7 @@ export default async function BandPage({
         </div>
       </section>
     </div>
-  );
+  )
 }
 
 // Scream-o-Meter Card Component (for 2025.1)
@@ -962,12 +972,12 @@ function ScreamOMeterCard({
   energy,
   peak,
 }: {
-  score: number;
-  energy?: number;
-  peak?: number;
+  score: number
+  energy?: number
+  peak?: number
 }) {
-  const percent = (score / 10) * 100;
-  const hasData = score > 0;
+  const percent = (score / 10) * 100
+  const hasData = score > 0
 
   return (
     <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
@@ -976,7 +986,7 @@ function ScreamOMeterCard({
           Scream-o-Meter
         </h3>
         <span className="text-2xl font-semibold">
-          {hasData ? score.toFixed(1) : "N/A"}
+          {hasData ? score.toFixed(1) : 'N/A'}
           <span className="text-sm text-text-dim">/10</span>
         </span>
       </div>
@@ -992,7 +1002,7 @@ function ScreamOMeterCard({
                     className="h-full rounded-full transition-all duration-1000"
                     style={{
                       width: `${percent}%`,
-                      background: "linear-gradient(90deg, #31eb14, #F5A623)",
+                      background: 'linear-gradient(90deg, #31eb14, #F5A623)',
                     }}
                   />
                 </div>
@@ -1000,18 +1010,18 @@ function ScreamOMeterCard({
             </div>
             <div className="text-center text-text-muted text-sm">
               {score >= 8
-                ? "Incredible crowd energy!"
+                ? 'Incredible crowd energy!'
                 : score >= 6
-                ? "Solid crowd energy"
-                : score >= 4
-                ? "Moderate crowd energy"
-                : "Building crowd energy"}
+                  ? 'Solid crowd energy'
+                  : score >= 4
+                    ? 'Moderate crowd energy'
+                    : 'Building crowd energy'}
             </div>
           </div>
 
           <div className="mt-6 pt-4 border-t border-white/5 text-sm text-text-dim">
-            {energy ? `Energy: ${Number(energy).toFixed(2)}` : ""}
-            {peak ? ` • Peak: ${Number(peak).toFixed(0)} dB` : ""}
+            {energy ? `Energy: ${Number(energy).toFixed(2)}` : ''}
+            {peak ? ` • Peak: ${Number(peak).toFixed(0)} dB` : ''}
           </div>
         </>
       ) : (
@@ -1023,7 +1033,7 @@ function ScreamOMeterCard({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // Visuals Summary Card (for 2026.1)
@@ -1031,10 +1041,10 @@ function VisualsSummaryCard({
   score,
   judgeCount,
 }: {
-  score: number;
-  judgeCount?: number;
+  score: number
+  judgeCount?: number
 }) {
-  const percent = (score / 20) * 100;
+  const percent = (score / 20) * 100
 
   return (
     <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
@@ -1062,27 +1072,27 @@ function VisualsSummaryCard({
         </div>
         <div className="text-center text-text-muted text-sm">
           {percent >= 80
-            ? "Exceptional stage presence"
+            ? 'Exceptional stage presence'
             : percent >= 60
-            ? "Great visual impact"
-            : percent >= 40
-            ? "Good presentation"
-            : "Basic presentation"}
+              ? 'Great visual impact'
+              : percent >= 40
+                ? 'Good presentation'
+                : 'Basic presentation'}
         </div>
       </div>
 
       <div className="mt-6 pt-4 border-t border-white/5 text-sm text-text-dim">
         Costumes, backdrops & themed presentation
-        {judgeCount ? ` • ${judgeCount} judges` : ""}
+        {judgeCount ? ` • ${judgeCount} judges` : ''}
       </div>
     </div>
-  );
+  )
 }
 
 // Band Navigation Component (Previous/Next)
 interface BandNavigationProps {
-  prevBand: { id: string; name: string } | null;
-  nextBand: { id: string; name: string } | null;
+  prevBand: { id: string; name: string } | null
+  nextBand: { id: string; name: string } | null
 }
 
 function BandNavigation({ prevBand, nextBand }: BandNavigationProps) {
@@ -1136,5 +1146,5 @@ function BandNavigation({ prevBand, nextBand }: BandNavigationProps) {
         </div>
       </div>
     </section>
-  );
+  )
 }

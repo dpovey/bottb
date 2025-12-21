@@ -1,100 +1,101 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { Breadcrumbs, type BreadcrumbItem } from "./breadcrumbs";
-import { EventsDropdown, type NavEvent } from "./events-dropdown";
-import { LineupDropdown } from "./lineup-dropdown";
-import { ExperienceDropdown } from "./experience-dropdown";
-import { trackNavClick } from "@/lib/analytics";
-import { CloseIcon, MenuIcon } from "@/components/icons";
+import Image from 'next/image'
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
+import { Breadcrumbs, type BreadcrumbItem } from './breadcrumbs'
+import { EventsDropdown, type NavEvent } from './events-dropdown'
+import { LineupDropdown } from './lineup-dropdown'
+import { ExperienceDropdown } from './experience-dropdown'
+import { trackNavClick } from '@/lib/analytics'
+import { CloseIcon, MenuIcon } from '@/components/icons'
 
 export interface HeaderProps {
   /** Show main navigation links */
-  showNav?: boolean;
+  showNav?: boolean
   /** Optional breadcrumbs to display */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
   /** Background style - "transparent" starts clear and becomes glass on scroll */
-  variant?: "transparent" | "glass" | "solid";
+  variant?: 'transparent' | 'glass' | 'solid'
   /** Make header fixed/sticky */
-  fixed?: boolean;
+  fixed?: boolean
   /** SSR-provided nav events */
   navEvents?: {
-    upcoming: NavEvent[];
-    past: NavEvent[];
-  };
+    upcoming: NavEvent[]
+    past: NavEvent[]
+  }
 }
 
 // Mobile menu links - grouped by section
 const mobileMenuSections = [
   {
-    title: "Events",
-    links: [{ href: "/events", label: "All Events" }],
+    title: 'Events',
+    links: [{ href: '/events', label: 'All Events' }],
   },
   {
-    title: "Lineup",
+    title: 'Lineup',
     links: [
-      { href: "/companies", label: "Bands" },
-      { href: "/songs", label: "Songs" },
+      { href: '/companies', label: 'Bands' },
+      { href: '/songs', label: 'Songs' },
     ],
   },
   {
-    title: "Gallery",
+    title: 'Gallery',
     links: [
-      { href: "/photos", label: "Photos" },
-      { href: "/videos", label: "Videos" },
-      { href: "/photographers", label: "Photographers" },
+      { href: '/photos', label: 'Photos' },
+      { href: '/videos', label: 'Videos' },
+      { href: '/photographers', label: 'Photographers' },
     ],
   },
-];
+]
 
 export function Header({
   showNav = true,
   breadcrumbs,
-  variant = "glass",
+  variant = 'glass',
   fixed = true,
   navEvents,
 }: HeaderProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
 
   // Track scroll position for transparent variant auto-glass effect
   useEffect(() => {
-    if (variant !== "transparent") return;
+    if (variant !== 'transparent') return
 
     const handleScroll = () => {
       // Trigger glass effect after scrolling 50px
-      setIsScrolled(window.scrollY > 50);
-    };
+      setIsScrolled(window.scrollY > 50)
+    }
 
     // Check initial scroll position
-    handleScroll();
+    handleScroll()
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [variant]);
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [variant])
 
   // Determine if we should show the glass effect
-  const showGlass = variant === "glass" || (variant === "transparent" && isScrolled);
+  const showGlass =
+    variant === 'glass' || (variant === 'transparent' && isScrolled)
 
   return (
     <>
       {/* Main Header */}
       <header
         className={cn(
-          "z-50 transition-all duration-300",
+          'z-50 transition-all duration-300',
           {
-            "fixed top-0 left-0 right-0": fixed,
+            'fixed top-0 left-0 right-0': fixed,
             relative: !fixed,
           },
           // Glass effect styles (uses glass-nav for bottom-border only variant)
-          showGlass && "glass-nav",
+          showGlass && 'glass-nav',
           // Transparent state (before scroll or when variant is transparent and not scrolled)
-          variant === "transparent" && !isScrolled && "bg-transparent",
+          variant === 'transparent' && !isScrolled && 'bg-transparent',
           // Solid variant
-          variant === "solid" && "bg-bg border-b border-white/5"
+          variant === 'solid' && 'bg-bg border-b border-white/5'
         )}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -123,7 +124,7 @@ export function Header({
             {showNav && (
               <nav className="hidden md:flex items-center justify-center gap-8 flex-1">
                 {/* Events Dropdown */}
-                <EventsDropdown 
+                <EventsDropdown
                   initialUpcoming={navEvents?.upcoming}
                   initialPast={navEvents?.past}
                 />
@@ -137,7 +138,9 @@ export function Header({
                 {/* About link */}
                 <Link
                   href="/about"
-                  onClick={() => trackNavClick({ nav_item: "about", location: "header" })}
+                  onClick={() =>
+                    trackNavClick({ nav_item: 'about', location: 'header' })
+                  }
                   className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
                   About
@@ -189,9 +192,9 @@ export function Header({
                           trackNavClick({
                             nav_item: link.label.toLowerCase(),
                             nav_section: section.title.toLowerCase(),
-                            location: "mobile_menu",
-                          });
-                          setMobileMenuOpen(false);
+                            location: 'mobile_menu',
+                          })
+                          setMobileMenuOpen(false)
                         }}
                         className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                       >
@@ -207,8 +210,11 @@ export function Header({
                 <Link
                   href="/about"
                   onClick={() => {
-                    trackNavClick({ nav_item: "about", location: "mobile_menu" });
-                    setMobileMenuOpen(false);
+                    trackNavClick({
+                      nav_item: 'about',
+                      location: 'mobile_menu',
+                    })
+                    setMobileMenuOpen(false)
                   }}
                   className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
@@ -230,5 +236,5 @@ export function Header({
       {/* Spacer for fixed header */}
       {fixed && <div className="h-16" />}
     </>
-  );
+  )
 }

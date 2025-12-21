@@ -1,64 +1,71 @@
-import type { Metadata } from "next";
-import { getEventById, getBandsForEvent, getPhotosByLabel, getVideos, PHOTO_LABELS } from "@/lib/db";
-import { getNavEvents } from "@/lib/nav-data";
-import { formatEventDate } from "@/lib/date-utils";
-import { parseScoringVersion, hasDetailedBreakdown } from "@/lib/scoring";
-import { getBaseUrl } from "@/lib/seo";
-import { EventPageClient } from "./event-page-client";
-import { EventJsonLd } from "@/components/seo";
-import { notFound } from "next/navigation";
+import type { Metadata } from 'next'
+import {
+  getEventById,
+  getBandsForEvent,
+  getPhotosByLabel,
+  getVideos,
+  PHOTO_LABELS,
+} from '@/lib/db'
+import { getNavEvents } from '@/lib/nav-data'
+import { formatEventDate } from '@/lib/date-utils'
+import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
+import { getBaseUrl } from '@/lib/seo'
+import { EventPageClient } from './event-page-client'
+import { EventJsonLd } from '@/components/seo'
+import { notFound } from 'next/navigation'
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ eventId: string }>;
+  params: Promise<{ eventId: string }>
 }): Promise<Metadata> {
-  const { eventId } = await params;
-  const baseUrl = getBaseUrl();
-  const event = await getEventById(eventId);
+  const { eventId } = await params
+  const baseUrl = getBaseUrl()
+  const event = await getEventById(eventId)
 
   if (!event) {
     return {
-      title: "Event Not Found | Battle of the Tech Bands",
-    };
+      title: 'Event Not Found | Battle of the Tech Bands',
+    }
   }
 
-  const eventInfo = event.info as { [key: string]: unknown } | null;
-  const scoringVersion = parseScoringVersion(eventInfo);
-  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion);
-  const storedWinner = eventInfo?.winner as string | undefined;
-  const isFinalized = event.status === "finalized";
-  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner;
+  const eventInfo = event.info as { [key: string]: unknown } | null
+  const scoringVersion = parseScoringVersion(eventInfo)
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
+  const storedWinner = eventInfo?.winner as string | undefined
+  const isFinalized = event.status === 'finalized'
+  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner
 
   // Get bands count
-  const bands = await getBandsForEvent(eventId);
-  const bandCount = bands.length;
+  const bands = await getBandsForEvent(eventId)
+  const bandCount = bands.length
 
   // Build title
-  let title = event.name;
+  let title = event.name
   if (show2022Winner) {
-    title += ` - ${storedWinner} Wins`;
+    title += ` - ${storedWinner} Wins`
   }
-  title += " | Battle of the Tech Bands";
+  title += ' | Battle of the Tech Bands'
 
   // Build description
-  let description = `${event.name} - ${formatEventDate(event.date, event.timezone)} at ${event.location}`;
+  let description = `${event.name} - ${formatEventDate(event.date, event.timezone)} at ${event.location}`
   if (bandCount > 0) {
-    description += `. ${bandCount} band${bandCount !== 1 ? "s" : ""} ${isFinalized ? "competed" : "performing"}`;
+    description += `. ${bandCount} band${bandCount !== 1 ? 's' : ''} ${isFinalized ? 'competed' : 'performing'}`
   }
   if (event.info?.description) {
-    description += `. ${event.info.description}`;
+    description += `. ${event.info.description}`
   }
   if (show2022Winner) {
-    description += `. Winner: ${storedWinner}`;
+    description += `. Winner: ${storedWinner}`
   }
 
   // Get event hero image
   const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
     eventId,
-  });
-  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null;
-  const ogImage = heroPhoto?.blob_url || (event.info?.image_url as string | undefined);
+  })
+  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
+  const ogImage =
+    heroPhoto?.blob_url || (event.info?.image_url as string | undefined)
 
   return {
     title,
@@ -69,7 +76,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      type: "website",
+      type: 'website',
       images: ogImage
         ? [
             {
@@ -82,44 +89,47 @@ export async function generateMetadata({
         : undefined,
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title,
       description,
       images: ogImage ? [ogImage] : undefined,
     },
-  };
+  }
 }
 
 export default async function EventPage({
   params,
 }: {
-  params: Promise<{ eventId: string }>;
+  params: Promise<{ eventId: string }>
 }) {
-  const { eventId } = await params;
-  
+  const { eventId } = await params
+
   // Fetch all data in parallel
-  const [event, bands, eventHeroPhotos, videosData, navEvents] = await Promise.all([
-    getEventById(eventId),
-    getBandsForEvent(eventId),
-    getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
-    getVideos({ eventId }),
-    getNavEvents(),
-  ]);
-  
+  const [event, bands, eventHeroPhotos, videosData, navEvents] =
+    await Promise.all([
+      getEventById(eventId),
+      getBandsForEvent(eventId),
+      getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
+      getVideos({ eventId }),
+      getNavEvents(),
+    ])
+
   if (!event) {
-    notFound();
+    notFound()
   }
 
-  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null;
+  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   return (
     <>
       <EventJsonLd
         event={event}
         bands={bands}
-        heroImageUrl={heroPhoto?.blob_url || (event.info?.image_url as string | undefined)}
+        heroImageUrl={
+          heroPhoto?.blob_url || (event.info?.image_url as string | undefined)
+        }
       />
-      <EventPageClient 
+      <EventPageClient
         event={event}
         bands={bands}
         heroPhoto={heroPhoto}
@@ -127,5 +137,5 @@ export default async function EventPage({
         navEvents={navEvents}
       />
     </>
-  );
+  )
 }

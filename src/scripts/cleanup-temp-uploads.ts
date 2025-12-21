@@ -1,20 +1,18 @@
 #!/usr/bin/env tsx
 
-import { cleanupTempUploads } from "../lib/blob";
+import { cleanupTempUploads } from '../lib/blob'
 
 async function main() {
   try {
-    console.log("🧹 Starting cleanup of temporary uploads...");
+    console.log('🧹 Starting cleanup of temporary uploads...')
 
-    const deletedCount = await cleanupTempUploads();
+    const deletedCount = await cleanupTempUploads()
 
-    console.log(
-      `✅ Cleanup complete! Deleted ${deletedCount} temporary files.`
-    );
+    console.log(`✅ Cleanup complete! Deleted ${deletedCount} temporary files.`)
   } catch (error) {
-    console.error("❌ Cleanup failed:", error);
-    process.exit(1);
+    console.error('❌ Cleanup failed:', error)
+    process.exit(1)
   }
 }
 
-main();
+main()

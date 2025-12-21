@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Lightning bolt icon for AI, quick actions
@@ -23,7 +23,6 @@ export const LightningIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   )
-);
+)
 
-LightningIcon.displayName = "LightningIcon";
-
+LightningIcon.displayName = 'LightningIcon'

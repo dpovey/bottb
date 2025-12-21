@@ -1,0 +1,8 @@
+node_modules/
+.next/
+coverage/
+storybook-static/
+
+# HTML with syntax errors
+design/header-dropdown.html
+

@@ -1,381 +1,660 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>All Songs — BOTTB</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="theme.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Jost', 'system-ui', 'sans-serif'],
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Songs — BOTTB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Jost', 'system-ui', 'sans-serif'],
+            },
           },
         },
-      },
-    }
-  </script>
-</head>
-<body class="bg-theme min-h-screen">
-
-  <!-- Navigation -->
-  <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      <div class="flex items-center h-16">
-        <a href="home.html" class="flex items-center shrink-0">
-          <img src="../public/images/logos/bottb-horizontal.png" alt="Battle of the Tech Bands" class="h-10 transition-transform duration-200 hover:scale-105">
-        </a>
-        <div class="hidden md:flex items-center justify-center gap-8 flex-1">
-          <a href="home.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">Events</a>
-          <a href="photos.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">Photos</a>
-          <a href="songs.html" class="text-sm tracking-widest uppercase text-white">Songs</a>
-          <a href="about.html" class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors">About</a>
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Page Header -->
-  <section class="pt-24 pb-12 bg-theme">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      <h1 class="text-4xl md:text-5xl font-semibold mb-4">All Songs</h1>
-      <p class="text-muted text-lg max-w-2xl">Every song performed across all Battle of the Tech Bands events. Filter by event, band, company, or song type.</p>
-    </div>
-  </section>
-
-  <!-- Filters & Table -->
-  <section class="py-8 bg-theme">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      
-      <!-- Filters Row -->
-      <div class="flex flex-wrap gap-4 mb-6 items-end">
-        <!-- Search -->
-        <div class="flex-1 min-w-[200px] max-w-md">
-          <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Search</label>
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dim pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input type="text" placeholder="Search songs, artists, bands..." class="w-full bg-theme border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white text-sm placeholder:text-dim focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors">
-          </div>
-        </div>
-        
-        <!-- Event Filter -->
-        <div class="min-w-[180px]">
-          <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Event</label>
-          <select class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat" style="background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e'); background-size: 1.25em 1.25em; background-position: right 0.75rem center;">
-            <option value="">All Events</option>
-            <option value="sydney-2025">Sydney 2025</option>
-            <option value="brisbane-2025">Brisbane 2025</option>
-            <option value="sydney-2024">Sydney 2024</option>
-          </select>
-        </div>
-        
-        <!-- Company Filter -->
-        <div class="min-w-[150px]">
-          <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Company</label>
-          <select class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat" style="background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e'); background-size: 1.25em 1.25em; background-position: right 0.75rem center;">
-            <option value="">All Companies</option>
-            <option value="atlassian">Atlassian</option>
-            <option value="amazon">Amazon</option>
-            <option value="canva">Canva</option>
-            <option value="google">Google</option>
-            <option value="salesforce">Salesforce</option>
-          </select>
-        </div>
-        
-        <!-- Type Filter -->
-        <div class="min-w-[130px]">
-          <label class="block text-[10px] tracking-widest uppercase text-dim mb-2">Type</label>
-          <select class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat" style="background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e'); background-size: 1.25em 1.25em; background-position: right 0.75rem center;">
-            <option value="">All Types</option>
-            <option value="cover">Cover</option>
-            <option value="mashup">Mashup</option>
-            <option value="medley">Medley</option>
-            <option value="transition">Transition</option>
-          </select>
-        </div>
-        
-        <!-- Clear Button -->
-        <button class="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-3 rounded-lg text-xs tracking-widest uppercase transition-colors">
-          Clear
-        </button>
-      </div>
-      
-      <!-- Results Count -->
-      <div class="flex items-center justify-between mb-4">
-        <p class="text-muted text-sm">Showing <span class="text-white">32</span> songs</p>
-        <div class="flex items-center gap-2 text-sm">
-          <span class="text-muted">Sort by:</span>
-          <select class="bg-transparent border-none text-white focus:outline-hidden cursor-pointer">
-            <option value="song">Song Name</option>
-            <option value="artist">Artist</option>
-            <option value="event">Event Date</option>
-            <option value="band">Band Name</option>
-          </select>
-        </div>
-      </div>
-      
-      <!-- Songs Table -->
-      <div class="bg-elevated rounded-xl border border-white/5 overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-white/5 text-left">
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium">Song</th>
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium">Artist(s)</th>
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium">Type</th>
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium">Band</th>
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium">Event</th>
-                <th class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium w-10"></th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/5">
-              <!-- Row 1 - Cover -->
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4">
-                  <span class="font-medium">Africa</span>
-                </td>
-                <td class="px-6 py-4 text-muted">Toto</td>
-                <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10">Cover</span>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.atlassian.com/favicon.ico" alt="">
-                      Atlassian
-                    </span>
-                    Bandlassian
-                  </a>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="#" class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-accent" title="Watch video">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                    </svg>
-                  </a>
-                </td>
-              </tr>
-              
-              <!-- Row 2 - Mashup -->
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4">
-                  <span class="font-medium">Anti-Hero</span>
-                </td>
-                <td class="px-6 py-4 text-muted">Taylor Swift / Pendulum</td>
-                <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded-sm text-xs bg-accent/20 text-accent border border-accent/30">Mashup</span>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.canva.com/favicon.ico" alt="">
-                      Canva
-                    </span>
-                    Canvanauts
-                  </a>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a>
-                </td>
-                <td class="px-6 py-4"></td>
-              </tr>
-              
-              <!-- Row 3 - Medley -->
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4">
-                  <span class="font-medium">Jump Medley</span>
-                </td>
-                <td class="px-6 py-4 text-muted text-sm">Van Halen, Kris Kross, House of Pain</td>
-                <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded-sm text-xs bg-info/20 text-info border border-info/30">Medley</span>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.amazon.com/favicon.ico" alt="">
-                      Amazon
-                    </span>
-                    Jamazon
-                  </a>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a>
-                </td>
-                <td class="px-6 py-4"></td>
-              </tr>
-              
-              <!-- Row 4 - Transition -->
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4">
-                  <div class="font-medium flex items-center gap-1">
-                    If You Were The Rain
-                    <svg class="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    Umbrella
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-muted">Gladys Knight → Rihanna</td>
-                <td class="px-6 py-4">
-                  <span class="px-2 py-0.5 rounded-sm text-xs bg-success/20 text-success border border-success/30">Transition</span>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.amazon.com/favicon.ico" alt="">
-                      Amazon
-                    </span>
-                    Jamazon
-                  </a>
-                </td>
-                <td class="px-6 py-4">
-                  <a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a>
-                </td>
-                <td class="px-6 py-4"></td>
-              </tr>
-              
-              <!-- More rows... -->
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4"><span class="font-medium">Mr Brightside</span></td>
-                <td class="px-6 py-4 text-muted">The Killers</td>
-                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10">Cover</span></td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">Banjo</span>
-                    The Special Guests
-                  </a>
-                </td>
-                <td class="px-6 py-4"><a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a></td>
-                <td class="px-6 py-4"></td>
-              </tr>
-              
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4"><span class="font-medium">Seven Nation Army</span></td>
-                <td class="px-6 py-4 text-muted">The White Stripes</td>
-                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10">Cover</span></td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.salesforce.com/favicon.ico" alt="">
-                      Salesforce
-                    </span>
-                    The Incident Commanders
-                  </a>
-                </td>
-                <td class="px-6 py-4"><a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a></td>
-                <td class="px-6 py-4"></td>
-              </tr>
-              
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4"><span class="font-medium">Don't Stop Me Now</span></td>
-                <td class="px-6 py-4 text-muted">Queen</td>
-                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10">Cover</span></td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.canva.com/favicon.ico" alt="">
-                      Canva
-                    </span>
-                    Canvanauts
-                  </a>
-                </td>
-                <td class="px-6 py-4"><a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a></td>
-                <td class="px-6 py-4">
-                  <a href="#" class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-accent" title="Watch video">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                    </svg>
-                  </a>
-                </td>
-              </tr>
-              
-              <tr class="hover:bg-white/2 transition-colors">
-                <td class="px-6 py-4"><span class="font-medium">Dumb Things</span></td>
-                <td class="px-6 py-4 text-muted">Paul Kelly</td>
-                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10">Cover</span></td>
-                <td class="px-6 py-4">
-                  <a href="band.html" class="flex items-center gap-2 text-muted hover:text-white transition-colors">
-                    <span class="company-badge company-badge-sm">
-                      <img src="https://www.google.com/favicon.ico" alt="">
-                      Google
-                    </span>
-                    Google Band
-                  </a>
-                </td>
-                <td class="px-6 py-4"><a href="event.html" class="text-muted hover:text-accent transition-colors">Sydney 2025</a></td>
-                <td class="px-6 py-4"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between">
-          <p class="text-sm text-muted">Showing 1-10 of 32 songs</p>
-          <div class="flex items-center gap-2">
-            <button class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm" disabled>Previous</button>
-            <button class="px-3 py-1.5 rounded-sm bg-accent text-white text-sm">1</button>
-            <button class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm">2</button>
-            <button class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm">3</button>
-            <button class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm">4</button>
-            <button class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm">Next</button>
+      }
+    </script>
+  </head>
+  <body class="bg-theme min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="flex items-center h-16">
+          <a href="home.html" class="flex items-center shrink-0">
+            <img
+              src="../public/images/logos/bottb-horizontal.png"
+              alt="Battle of the Tech Bands"
+              class="h-10 transition-transform duration-200 hover:scale-105"
+            />
+          </a>
+          <div class="hidden md:flex items-center justify-center gap-8 flex-1">
+            <a
+              href="home.html"
+              class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors"
+              >Events</a
+            >
+            <a
+              href="photos.html"
+              class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors"
+              >Photos</a
+            >
+            <a
+              href="songs.html"
+              class="text-sm tracking-widest uppercase text-white"
+              >Songs</a
+            >
+            <a
+              href="about.html"
+              class="text-sm tracking-widest uppercase text-muted hover:text-white transition-colors"
+              >About</a
+            >
           </div>
         </div>
       </div>
-      
-    </div>
-  </section>
+    </nav>
 
-  <!-- Stats Section -->
-  <section class="py-12 bg-elevated border-t border-white/5">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="text-center">
-          <div class="text-3xl font-semibold text-accent mb-1">187</div>
-          <div class="text-sm text-muted">Total Songs Performed</div>
+    <!-- Page Header -->
+    <section class="pt-24 pb-12 bg-theme">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-semibold mb-4">All Songs</h1>
+        <p class="text-muted text-lg max-w-2xl">
+          Every song performed across all Battle of the Tech Bands events.
+          Filter by event, band, company, or song type.
+        </p>
+      </div>
+    </section>
+
+    <!-- Filters & Table -->
+    <section class="py-8 bg-theme">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <!-- Filters Row -->
+        <div class="flex flex-wrap gap-4 mb-6 items-end">
+          <!-- Search -->
+          <div class="flex-1 min-w-[200px] max-w-md">
+            <label
+              class="block text-[10px] tracking-widest uppercase text-dim mb-2"
+              >Search</label
+            >
+            <div class="relative">
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dim pointer-events-none"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search songs, artists, bands..."
+                class="w-full bg-theme border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white text-sm placeholder:text-dim focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors"
+              />
+            </div>
+          </div>
+
+          <!-- Event Filter -->
+          <div class="min-w-[180px]">
+            <label
+              class="block text-[10px] tracking-widest uppercase text-dim mb-2"
+              >Event</label
+            >
+            <select
+              class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat"
+              style="
+                background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e');
+                background-size: 1.25em 1.25em;
+                background-position: right 0.75rem center;
+              "
+            >
+              <option value="">All Events</option>
+              <option value="sydney-2025">Sydney 2025</option>
+              <option value="brisbane-2025">Brisbane 2025</option>
+              <option value="sydney-2024">Sydney 2024</option>
+            </select>
+          </div>
+
+          <!-- Company Filter -->
+          <div class="min-w-[150px]">
+            <label
+              class="block text-[10px] tracking-widest uppercase text-dim mb-2"
+              >Company</label
+            >
+            <select
+              class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat"
+              style="
+                background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e');
+                background-size: 1.25em 1.25em;
+                background-position: right 0.75rem center;
+              "
+            >
+              <option value="">All Companies</option>
+              <option value="atlassian">Atlassian</option>
+              <option value="amazon">Amazon</option>
+              <option value="canva">Canva</option>
+              <option value="google">Google</option>
+              <option value="salesforce">Salesforce</option>
+            </select>
+          </div>
+
+          <!-- Type Filter -->
+          <div class="min-w-[130px]">
+            <label
+              class="block text-[10px] tracking-widest uppercase text-dim mb-2"
+              >Type</label
+            >
+            <select
+              class="w-full bg-theme border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-hidden focus:border-accent hover:border-white/20 transition-colors appearance-none bg-no-repeat"
+              style="
+                background-image: url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%23666666%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e');
+                background-size: 1.25em 1.25em;
+                background-position: right 0.75rem center;
+              "
+            >
+              <option value="">All Types</option>
+              <option value="cover">Cover</option>
+              <option value="mashup">Mashup</option>
+              <option value="medley">Medley</option>
+              <option value="transition">Transition</option>
+            </select>
+          </div>
+
+          <!-- Clear Button -->
+          <button
+            class="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-3 rounded-lg text-xs tracking-widest uppercase transition-colors"
+          >
+            Clear
+          </button>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-semibold mb-1">142</div>
-          <div class="text-sm text-muted">Unique Artists Covered</div>
+
+        <!-- Results Count -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-muted text-sm">
+            Showing <span class="text-white">32</span> songs
+          </p>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-muted">Sort by:</span>
+            <select
+              class="bg-transparent border-none text-white focus:outline-hidden cursor-pointer"
+            >
+              <option value="song">Song Name</option>
+              <option value="artist">Artist</option>
+              <option value="event">Event Date</option>
+              <option value="band">Band Name</option>
+            </select>
+          </div>
         </div>
-        <div class="text-center">
-          <div class="text-3xl font-semibold mb-1">12</div>
-          <div class="text-sm text-muted">Events</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-semibold mb-1">54</div>
-          <div class="text-sm text-muted">Bands</div>
+
+        <!-- Songs Table -->
+        <div
+          class="bg-elevated rounded-xl border border-white/5 overflow-hidden"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-white/5 text-left">
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium"
+                  >
+                    Song
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium"
+                  >
+                    Artist(s)
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium"
+                  >
+                    Type
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium"
+                  >
+                    Band
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium"
+                  >
+                    Event
+                  </th>
+                  <th
+                    class="px-6 py-4 text-xs tracking-widest uppercase text-muted font-medium w-10"
+                  ></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                <!-- Row 1 - Cover -->
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Africa</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Toto</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10"
+                      >Cover</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img
+                          src="https://www.atlassian.com/favicon.ico"
+                          alt=""
+                        />
+                        Atlassian
+                      </span>
+                      Bandlassian
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="#"
+                      class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-accent"
+                      title="Watch video"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"
+                        />
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Row 2 - Mashup -->
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Anti-Hero</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Taylor Swift / Pendulum</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-accent/20 text-accent border border-accent/30"
+                      >Mashup</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img src="https://www.canva.com/favicon.ico" alt="" />
+                        Canva
+                      </span>
+                      Canvanauts
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+
+                <!-- Row 3 - Medley -->
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Jump Medley</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted text-sm">
+                    Van Halen, Kris Kross, House of Pain
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-info/20 text-info border border-info/30"
+                      >Medley</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img src="https://www.amazon.com/favicon.ico" alt="" />
+                        Amazon
+                      </span>
+                      Jamazon
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+
+                <!-- Row 4 - Transition -->
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="font-medium flex items-center gap-1">
+                      If You Were The Rain
+                      <svg
+                        class="w-3 h-3 text-muted"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                      Umbrella
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Gladys Knight → Rihanna</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-success/20 text-success border border-success/30"
+                      >Transition</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img src="https://www.amazon.com/favicon.ico" alt="" />
+                        Amazon
+                      </span>
+                      Jamazon
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+
+                <!-- More rows... -->
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Mr Brightside</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">The Killers</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10"
+                      >Cover</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">Banjo</span>
+                      The Special Guests
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Seven Nation Army</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">The White Stripes</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10"
+                      >Cover</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img
+                          src="https://www.salesforce.com/favicon.ico"
+                          alt=""
+                        />
+                        Salesforce
+                      </span>
+                      The Incident Commanders
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Don't Stop Me Now</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Queen</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10"
+                      >Cover</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img src="https://www.canva.com/favicon.ico" alt="" />
+                        Canva
+                      </span>
+                      Canvanauts
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="#"
+                      class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-accent"
+                      title="Watch video"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"
+                        />
+                      </svg>
+                    </a>
+                  </td>
+                </tr>
+
+                <tr class="hover:bg-white/2 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="font-medium">Dumb Things</span>
+                  </td>
+                  <td class="px-6 py-4 text-muted">Paul Kelly</td>
+                  <td class="px-6 py-4">
+                    <span
+                      class="px-2 py-0.5 rounded-sm text-xs bg-white/10 text-muted border border-white/10"
+                      >Cover</span
+                    >
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="band.html"
+                      class="flex items-center gap-2 text-muted hover:text-white transition-colors"
+                    >
+                      <span class="company-badge company-badge-sm">
+                        <img src="https://www.google.com/favicon.ico" alt="" />
+                        Google
+                      </span>
+                      Google Band
+                    </a>
+                  </td>
+                  <td class="px-6 py-4">
+                    <a
+                      href="event.html"
+                      class="text-muted hover:text-accent transition-colors"
+                      >Sydney 2025</a
+                    >
+                  </td>
+                  <td class="px-6 py-4"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div
+            class="px-6 py-4 border-t border-white/5 flex items-center justify-between"
+          >
+            <p class="text-sm text-muted">Showing 1-10 of 32 songs</p>
+            <div class="flex items-center gap-2">
+              <button
+                class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm"
+                disabled
+              >
+                Previous
+              </button>
+              <button
+                class="px-3 py-1.5 rounded-sm bg-accent text-white text-sm"
+              >
+                1
+              </button>
+              <button
+                class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm"
+              >
+                2
+              </button>
+              <button
+                class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm"
+              >
+                3
+              </button>
+              <button
+                class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm"
+              >
+                4
+              </button>
+              <button
+                class="px-3 py-1.5 rounded-sm bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors text-sm"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/5 py-8">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <img src="../public/images/logos/bottb-dark-square.png" alt="BOTTB" class="h-6 opacity-60">
-          <span class="text-dim text-sm">A community charity event supporting Youngcare</span>
-        </div>
-        <div class="text-dim text-sm">
-          <a href="mailto:info@bottb.com" class="hover:text-white transition-colors">info@bottb.com</a>
+    <!-- Stats Section -->
+    <section class="py-12 bg-elevated border-t border-white/5">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="text-center">
+            <div class="text-3xl font-semibold text-accent mb-1">187</div>
+            <div class="text-sm text-muted">Total Songs Performed</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-semibold mb-1">142</div>
+            <div class="text-sm text-muted">Unique Artists Covered</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-semibold mb-1">12</div>
+            <div class="text-sm text-muted">Events</div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-semibold mb-1">54</div>
+            <div class="text-sm text-muted">Bands</div>
+          </div>
         </div>
       </div>
-    </div>
-  </footer>
+    </section>
 
-</body>
+    <!-- Footer -->
+    <footer class="border-t border-white/5 py-8">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <div class="flex items-center gap-4">
+            <img
+              src="../public/images/logos/bottb-dark-square.png"
+              alt="BOTTB"
+              class="h-6 opacity-60"
+            />
+            <span class="text-dim text-sm"
+              >A community charity event supporting Youngcare</span
+            >
+          </div>
+          <div class="text-dim text-sm">
+            <a
+              href="mailto:info@bottb.com"
+              class="hover:text-white transition-colors"
+              >info@bottb.com</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
 </html>
-

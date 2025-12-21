@@ -1,13 +1,7 @@
 {
   "metadata": {
     "timestamp": "2025-12-11T08:18:08.109Z",
-    "tables": [
-      "users",
-      "events",
-      "bands",
-      "votes",
-      "crowd_noise_measurements"
-    ]
+    "tables": ["users", "events", "bands", "votes", "crowd_noise_measurements"]
   },
   "data": {
     "users": [

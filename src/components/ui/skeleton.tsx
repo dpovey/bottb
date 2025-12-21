@@ -1,5 +1,5 @@
-import { forwardRef, HTMLAttributes } from "react";
-import { cn } from "@/lib/utils";
+import { forwardRef, HTMLAttributes } from 'react'
+import { cn } from '@/lib/utils'
 
 export interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -8,7 +8,7 @@ export interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
    * - circle: Perfect circle (use with equal width/height)
    * - text: Pill-shaped for text placeholders
    */
-  variant?: "rectangle" | "circle" | "text";
+  variant?: 'rectangle' | 'circle' | 'text'
 }
 
 /**
@@ -27,36 +27,36 @@ export interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
  * <Skeleton variant="text" className="h-4 w-3/4" />
  */
 const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
-  ({ className, variant = "rectangle", ...props }, ref) => {
+  ({ className, variant = 'rectangle', ...props }, ref) => {
     return (
       <div
         ref={ref}
         aria-hidden="true"
         className={cn(
           // Base styles - static background for reduced motion
-          "bg-bg-elevated",
+          'bg-bg-elevated',
 
           // Shimmer animation (only when motion is allowed)
-          "motion-safe:bg-linear-to-r",
-          "motion-safe:from-bg-elevated motion-safe:via-bg-surface motion-safe:to-bg-elevated",
-          "motion-safe:bg-size-[200%_100%]",
-          "motion-safe:animate-shimmer",
+          'motion-safe:bg-linear-to-r',
+          'motion-safe:from-bg-elevated motion-safe:via-bg-surface motion-safe:to-bg-elevated',
+          'motion-safe:bg-size-[200%_100%]',
+          'motion-safe:animate-shimmer',
 
           // Shape variants
           {
-            "rounded-lg": variant === "rectangle",
-            "rounded-full": variant === "circle" || variant === "text",
+            'rounded-lg': variant === 'rectangle',
+            'rounded-full': variant === 'circle' || variant === 'text',
           },
 
           className
         )}
         {...props}
       />
-    );
+    )
   }
-);
+)
 
-Skeleton.displayName = "Skeleton";
+Skeleton.displayName = 'Skeleton'
 
 /**
  * Pre-composed skeleton for text content blocks
@@ -65,24 +65,24 @@ export function SkeletonText({
   lines = 3,
   className,
 }: {
-  lines?: number;
-  className?: string;
+  lines?: number
+  className?: string
 }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn('space-y-3', className)}>
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
           variant="text"
           className={cn(
-            "h-4",
+            'h-4',
             // Last line is shorter for natural appearance
-            i === lines - 1 ? "w-2/3" : "w-full"
+            i === lines - 1 ? 'w-2/3' : 'w-full'
           )}
         />
       ))}
     </div>
-  );
+  )
 }
 
 /**
@@ -92,7 +92,7 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/5 bg-bg-elevated p-6",
+        'rounded-xl border border-white/5 bg-bg-elevated p-6',
         className
       )}
     >
@@ -105,8 +105,7 @@ export function SkeletonCard({ className }: { className?: string }) {
       </div>
       <SkeletonText lines={2} />
     </div>
-  );
+  )
 }
 
-export { Skeleton };
-
+export { Skeleton }

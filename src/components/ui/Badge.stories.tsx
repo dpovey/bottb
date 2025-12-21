@@ -1,113 +1,113 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Badge } from "./badge";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Badge } from './badge'
 
 const meta: Meta<typeof Badge> = {
-  title: "Display/Badge",
+  title: 'Display/Badge',
   component: Badge,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Badge component for status indicators, labels, and tags. Uses semantic colors sparingly per BOTTB design guidelines.",
+          'Badge component for status indicators, labels, and tags. Uses semantic colors sparingly per BOTTB design guidelines.',
       },
     },
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "accent", "error", "success", "warning", "info"],
-      description: "Visual style variant",
+      control: 'select',
+      options: ['default', 'accent', 'error', 'success', 'warning', 'info'],
+      description: 'Visual style variant',
     },
     children: {
-      control: "text",
-      description: "Badge content",
+      control: 'text',
+      description: 'Badge content',
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof Badge>;
+export default meta
+type Story = StoryObj<typeof Badge>
 
 // Default badge
 export const Default: Story = {
   args: {
-    children: "Upcoming",
-    variant: "default",
+    children: 'Upcoming',
+    variant: 'default',
   },
-};
+}
 
 // All variants
 export const Accent: Story = {
   args: {
-    children: "🏆 Winner",
-    variant: "accent",
+    children: '🏆 Winner',
+    variant: 'accent',
   },
   parameters: {
     docs: {
       description: {
-        story: "For winners, featured items, and selected states.",
+        story: 'For winners, featured items, and selected states.',
       },
     },
   },
-};
+}
 
 export const Error: Story = {
   args: {
-    children: "Cancelled",
-    variant: "error",
+    children: 'Cancelled',
+    variant: 'error',
   },
   parameters: {
     docs: {
       description: {
-        story: "For error states and cancelled items.",
+        story: 'For error states and cancelled items.',
       },
     },
   },
-};
+}
 
 export const Success: Story = {
   args: {
-    children: "Confirmed",
-    variant: "success",
+    children: 'Confirmed',
+    variant: 'success',
   },
   parameters: {
     docs: {
       description: {
-        story: "For completed and confirmed states.",
+        story: 'For completed and confirmed states.',
       },
     },
   },
-};
+}
 
 export const Warning: Story = {
   args: {
-    children: "Attention",
-    variant: "warning",
+    children: 'Attention',
+    variant: 'warning',
   },
   parameters: {
     docs: {
       description: {
-        story: "For items requiring attention.",
+        story: 'For items requiring attention.',
       },
     },
   },
-};
+}
 
 export const Info: Story = {
   args: {
-    children: "8 Bands",
-    variant: "info",
+    children: '8 Bands',
+    variant: 'info',
   },
   parameters: {
     docs: {
       description: {
-        story: "For informational messages.",
+        story: 'For informational messages.',
       },
     },
   },
-};
+}
 
 // Status badges showcase
 export const StatusBadges: Story = {
@@ -122,11 +122,11 @@ export const StatusBadges: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Common event status badges.",
+        story: 'Common event status badges.',
       },
     },
   },
-};
+}
 
 // All variants showcase
 export const AllVariants: Story = {
@@ -143,9 +143,8 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All badge variants. Use semantic colors sparingly.",
+        story: 'All badge variants. Use semantic colors sparingly.',
       },
     },
   },
-};
-
+}

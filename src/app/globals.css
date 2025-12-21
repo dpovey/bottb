@@ -276,67 +276,67 @@
   .slideshow-thumbnails {
     display: none !important;
   }
-  
+
   /* Ultra-compact top bar */
   .slideshow-topbar {
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
   }
-  
+
   .slideshow-topbar-inner {
     padding: 0.25rem 0.75rem !important;
   }
-  
+
   /* Force horizontal layout for photo info in landscape */
   .slideshow-info {
     flex-direction: row !important;
     align-items: center !important;
     gap: 0.5rem !important;
   }
-  
+
   /* Show bullet separators in landscape */
   .slideshow-info .slideshow-separator {
     display: inline !important;
   }
-  
+
   /* Compact band name */
   .slideshow-band-name {
     font-size: 0.875rem !important;
     line-height: 1.25rem !important;
   }
-  
+
   /* Compact metadata text */
   .slideshow-meta {
     font-size: 0.75rem !important;
   }
-  
+
   /* Smaller control buttons */
   .slideshow-controls button {
     padding: 0.25rem !important;
   }
-  
+
   .slideshow-controls svg {
     width: 1rem !important;
     height: 1rem !important;
   }
-  
+
   /* Smaller close button */
   .slideshow-close svg {
     width: 1.25rem !important;
     height: 1.25rem !important;
   }
-  
+
   /* Smaller nav buttons */
   .slideshow-nav {
     width: 2.5rem !important;
     height: 2.5rem !important;
   }
-  
+
   .slideshow-nav svg {
     width: 1.25rem !important;
     height: 1.25rem !important;
   }
-  
+
   /* Maximize main image area */
   .slideshow-main {
     padding-top: 2.5rem !important;
@@ -344,7 +344,7 @@
     padding-left: 3rem !important;
     padding-right: 3rem !important;
   }
-  
+
   /* Maximize image height */
   .slideshow-image {
     max-height: calc(100vh - 3rem) !important;

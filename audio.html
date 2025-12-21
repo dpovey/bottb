@@ -1,347 +1,374 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useRef, useEffect } = React;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      const { useState, useRef, useEffect } = React
 
-    function AudioAnalyzer() {
-      const [isRecording, setIsRecording] = useState(false);
-      const [duration, setDuration] = useState(10);
-      const [timeLeft, setTimeLeft] = useState(0);
-      const [totalEnergy, setTotalEnergy] = useState(0);
-      const [peakVolume, setPeakVolume] = useState(0);
-      
-      const audioContextRef = useRef(null);
-      const analyserRef = useRef(null);
-      const dataArrayRef = useRef(null);
-      const freqDataRef = useRef(null);
-      const sourceRef = useRef(null);
-      const animationRef = useRef(null);
-      const startTimeRef = useRef(0);
-      const energyAccumulatorRef = useRef(0);
-      const volumeHistoryRef = useRef([]);
-      const isActiveRef = useRef(false);
-      const durationRef = useRef(10);
-      
-      const vuCanvasRef = useRef(null);
-      const graphCanvasRef = useRef(null);
-      const spectrumCanvasRef = useRef(null);
+      function AudioAnalyzer() {
+        const [isRecording, setIsRecording] = useState(false)
+        const [duration, setDuration] = useState(10)
+        const [timeLeft, setTimeLeft] = useState(0)
+        const [totalEnergy, setTotalEnergy] = useState(0)
+        const [peakVolume, setPeakVolume] = useState(0)
 
-      const startRecording = async () => {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          
-          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-          analyserRef.current = audioContextRef.current.createAnalyser();
-          analyserRef.current.fftSize = 2048;
-          analyserRef.current.smoothingTimeConstant = 0.3;
-          
-          sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
-          sourceRef.current.connect(analyserRef.current);
-          
-          const bufferLength = analyserRef.current.frequencyBinCount;
-          dataArrayRef.current = new Uint8Array(bufferLength);
-          freqDataRef.current = new Uint8Array(bufferLength);
-          
-          startTimeRef.current = Date.now();
-          energyAccumulatorRef.current = 0;
-          volumeHistoryRef.current = [];
-          durationRef.current = duration;
-          isActiveRef.current = true;
-          
-          setIsRecording(true);
-          setTimeLeft(duration);
-          setTotalEnergy(0);
-          setPeakVolume(0);
-          
-          visualize();
-        } catch (err) {
-          alert(`Microphone error: ${err.message}`);
-        }
-      };
+        const audioContextRef = useRef(null)
+        const analyserRef = useRef(null)
+        const dataArrayRef = useRef(null)
+        const freqDataRef = useRef(null)
+        const sourceRef = useRef(null)
+        const animationRef = useRef(null)
+        const startTimeRef = useRef(0)
+        const energyAccumulatorRef = useRef(0)
+        const volumeHistoryRef = useRef([])
+        const isActiveRef = useRef(false)
+        const durationRef = useRef(10)
 
-      const stopRecording = () => {
-        isActiveRef.current = false;
-        
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-        if (sourceRef.current) {
-          sourceRef.current.disconnect();
-          sourceRef.current.mediaStream.getTracks().forEach(track => track.stop());
-        }
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-        }
-        setIsRecording(false);
-        setTimeLeft(0);
-      };
+        const vuCanvasRef = useRef(null)
+        const graphCanvasRef = useRef(null)
+        const spectrumCanvasRef = useRef(null)
 
-      const visualize = () => {
-        if (!isActiveRef.current) return;
-        
-        const analyser = analyserRef.current;
-        const dataArray = dataArrayRef.current;
-        const freqData = freqDataRef.current;
-        
-        analyser.getByteTimeDomainData(dataArray);
-        analyser.getByteFrequencyData(freqData);
-        
-        let sumSquares = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const normalized = (dataArray[i] - 128) / 128;
-          sumSquares += normalized * normalized;
-        }
-        const rms = Math.sqrt(sumSquares / dataArray.length);
-        
-        const dt = 1 / 60;
-        energyAccumulatorRef.current += rms * rms * dt;
-        
-        volumeHistoryRef.current.push({ time: Date.now(), volume: rms });
-        if (volumeHistoryRef.current.length > 600) {
-          volumeHistoryRef.current.shift();
-        }
-        
-        setPeakVolume(prev => Math.max(prev, rms));
-        
-        drawVUMeter(rms);
-        drawVolumeGraph();
-        drawSpectrum(freqData);
-        
-        const elapsed = (Date.now() - startTimeRef.current) / 1000;
-        const remaining = Math.max(0, durationRef.current - elapsed);
-        setTimeLeft(remaining);
-        setTotalEnergy(energyAccumulatorRef.current);
-        
-        if (remaining > 0) {
-          animationRef.current = requestAnimationFrame(visualize);
-        } else {
-          stopRecording();
-        }
-      };
+        const startRecording = async () => {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            })
 
-      const drawVUMeter = (rms) => {
-        const canvas = vuCanvasRef.current;
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, width, height);
-        
-        const barWidth = width * Math.min(rms * 5, 1);
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        gradient.addColorStop(0, '#00ff00');
-        gradient.addColorStop(0.6, '#ffff00');
-        gradient.addColorStop(0.85, '#ff8800');
-        gradient.addColorStop(1, '#ff0000');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, barWidth, height);
-        
-        const peakX = width * Math.min(peakVolume * 5, 1);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(peakX - 2, 0, 4, height);
-        
-        ctx.fillStyle = '#666';
-        for (let i = 0; i <= 10; i++) {
-          const x = (i / 10) * width;
-          ctx.fillRect(x, height - 10, 1, 10);
-        }
-      };
+            audioContextRef.current = new (
+              window.AudioContext || window.webkitAudioContext
+            )()
+            analyserRef.current = audioContextRef.current.createAnalyser()
+            analyserRef.current.fftSize = 2048
+            analyserRef.current.smoothingTimeConstant = 0.3
 
-      const drawVolumeGraph = () => {
-        const canvas = graphCanvasRef.current;
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, width, height);
-        
-        const history = volumeHistoryRef.current;
-        if (history.length < 2) return;
-        
-        ctx.strokeStyle = '#00ff88';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        
-        const timeWindow = durationRef.current * 1000;
-        const now = Date.now();
-        const startTime = now - timeWindow;
-        
-        history.forEach((point, i) => {
-          const x = ((point.time - startTime) / timeWindow) * width;
-          const y = height - (point.volume * 5 * height);
-          
-          if (i === 0) {
-            ctx.moveTo(x, Math.max(0, Math.min(height, y)));
-          } else {
-            ctx.lineTo(x, Math.max(0, Math.min(height, y)));
+            sourceRef.current =
+              audioContextRef.current.createMediaStreamSource(stream)
+            sourceRef.current.connect(analyserRef.current)
+
+            const bufferLength = analyserRef.current.frequencyBinCount
+            dataArrayRef.current = new Uint8Array(bufferLength)
+            freqDataRef.current = new Uint8Array(bufferLength)
+
+            startTimeRef.current = Date.now()
+            energyAccumulatorRef.current = 0
+            volumeHistoryRef.current = []
+            durationRef.current = duration
+            isActiveRef.current = true
+
+            setIsRecording(true)
+            setTimeLeft(duration)
+            setTotalEnergy(0)
+            setPeakVolume(0)
+
+            visualize()
+          } catch (err) {
+            alert(`Microphone error: ${err.message}`)
           }
-        });
-        
-        ctx.stroke();
-        
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 1;
-        for (let i = 0; i <= 4; i++) {
-          const y = (i / 4) * height;
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(width, y);
-          ctx.stroke();
         }
-      };
 
-      const drawSpectrum = (freqData) => {
-        const canvas = spectrumCanvasRef.current;
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, width, height);
-        
-        const barWidth = width / freqData.length;
-        const gradient = ctx.createLinearGradient(0, height, 0, 0);
-        gradient.addColorStop(0, '#00ff88');
-        gradient.addColorStop(0.5, '#0088ff');
-        gradient.addColorStop(1, '#8800ff');
-        
-        for (let i = 0; i < freqData.length; i++) {
-          const barHeight = (freqData[i] / 255) * height;
-          ctx.fillStyle = gradient;
-          ctx.fillRect(i * barWidth, height - barHeight, barWidth - 1, barHeight);
-        }
-      };
+        const stopRecording = () => {
+          isActiveRef.current = false
 
-      useEffect(() => {
-        return () => {
           if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current);
+            cancelAnimationFrame(animationRef.current)
           }
-          if (sourceRef.current && sourceRef.current.mediaStream) {
-            sourceRef.current.mediaStream.getTracks().forEach(track => track.stop());
+          if (sourceRef.current) {
+            sourceRef.current.disconnect()
+            sourceRef.current.mediaStream
+              .getTracks()
+              .forEach((track) => track.stop())
           }
           if (audioContextRef.current) {
-            audioContextRef.current.close();
+            audioContextRef.current.close()
           }
-        };
-      }, []);
+          setIsRecording(false)
+          setTimeLeft(0)
+        }
 
-      return (
-        <div className="min-h-screen bg-gray-900 text-white p-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Audio Energy Analyzer</h1>
-            
-            <div className="bg-gray-800 rounded-lg p-6 mb-6">
-              <div className="flex items-center gap-4 mb-4">
-                <label className="text-sm">Duration (seconds):</label>
-                <input
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  disabled={isRecording}
-                  className="bg-gray-700 px-3 py-1 rounded-sm w-24 text-white"
-                  min="1"
-                  max="60"
-                />
-                <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={`px-6 py-2 rounded font-semibold ${
-                    isRecording
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
-                >
-                  {isRecording ? 'Stop' : 'Start Recording'}
-                </button>
-                {isRecording && (
-                  <span className="text-xl font-mono">
-                    {timeLeft.toFixed(1)}s
-                  </span>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-400">Total Energy:</span>
-                  <span className="ml-2 font-mono text-lg text-green-400">
-                    {totalEnergy.toFixed(4)}
-                  </span>
+        const visualize = () => {
+          if (!isActiveRef.current) return
+
+          const analyser = analyserRef.current
+          const dataArray = dataArrayRef.current
+          const freqData = freqDataRef.current
+
+          analyser.getByteTimeDomainData(dataArray)
+          analyser.getByteFrequencyData(freqData)
+
+          let sumSquares = 0
+          for (let i = 0; i < dataArray.length; i++) {
+            const normalized = (dataArray[i] - 128) / 128
+            sumSquares += normalized * normalized
+          }
+          const rms = Math.sqrt(sumSquares / dataArray.length)
+
+          const dt = 1 / 60
+          energyAccumulatorRef.current += rms * rms * dt
+
+          volumeHistoryRef.current.push({ time: Date.now(), volume: rms })
+          if (volumeHistoryRef.current.length > 600) {
+            volumeHistoryRef.current.shift()
+          }
+
+          setPeakVolume((prev) => Math.max(prev, rms))
+
+          drawVUMeter(rms)
+          drawVolumeGraph()
+          drawSpectrum(freqData)
+
+          const elapsed = (Date.now() - startTimeRef.current) / 1000
+          const remaining = Math.max(0, durationRef.current - elapsed)
+          setTimeLeft(remaining)
+          setTotalEnergy(energyAccumulatorRef.current)
+
+          if (remaining > 0) {
+            animationRef.current = requestAnimationFrame(visualize)
+          } else {
+            stopRecording()
+          }
+        }
+
+        const drawVUMeter = (rms) => {
+          const canvas = vuCanvasRef.current
+          if (!canvas) return
+
+          const ctx = canvas.getContext('2d')
+          const width = canvas.width
+          const height = canvas.height
+
+          ctx.clearRect(0, 0, width, height)
+          ctx.fillStyle = '#1a1a1a'
+          ctx.fillRect(0, 0, width, height)
+
+          const barWidth = width * Math.min(rms * 5, 1)
+          const gradient = ctx.createLinearGradient(0, 0, width, 0)
+          gradient.addColorStop(0, '#00ff00')
+          gradient.addColorStop(0.6, '#ffff00')
+          gradient.addColorStop(0.85, '#ff8800')
+          gradient.addColorStop(1, '#ff0000')
+
+          ctx.fillStyle = gradient
+          ctx.fillRect(0, 0, barWidth, height)
+
+          const peakX = width * Math.min(peakVolume * 5, 1)
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(peakX - 2, 0, 4, height)
+
+          ctx.fillStyle = '#666'
+          for (let i = 0; i <= 10; i++) {
+            const x = (i / 10) * width
+            ctx.fillRect(x, height - 10, 1, 10)
+          }
+        }
+
+        const drawVolumeGraph = () => {
+          const canvas = graphCanvasRef.current
+          if (!canvas) return
+
+          const ctx = canvas.getContext('2d')
+          const width = canvas.width
+          const height = canvas.height
+
+          ctx.clearRect(0, 0, width, height)
+          ctx.fillStyle = '#1a1a1a'
+          ctx.fillRect(0, 0, width, height)
+
+          const history = volumeHistoryRef.current
+          if (history.length < 2) return
+
+          ctx.strokeStyle = '#00ff88'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+
+          const timeWindow = durationRef.current * 1000
+          const now = Date.now()
+          const startTime = now - timeWindow
+
+          history.forEach((point, i) => {
+            const x = ((point.time - startTime) / timeWindow) * width
+            const y = height - point.volume * 5 * height
+
+            if (i === 0) {
+              ctx.moveTo(x, Math.max(0, Math.min(height, y)))
+            } else {
+              ctx.lineTo(x, Math.max(0, Math.min(height, y)))
+            }
+          })
+
+          ctx.stroke()
+
+          ctx.strokeStyle = '#333'
+          ctx.lineWidth = 1
+          for (let i = 0; i <= 4; i++) {
+            const y = (i / 4) * height
+            ctx.beginPath()
+            ctx.moveTo(0, y)
+            ctx.lineTo(width, y)
+            ctx.stroke()
+          }
+        }
+
+        const drawSpectrum = (freqData) => {
+          const canvas = spectrumCanvasRef.current
+          if (!canvas) return
+
+          const ctx = canvas.getContext('2d')
+          const width = canvas.width
+          const height = canvas.height
+
+          ctx.clearRect(0, 0, width, height)
+          ctx.fillStyle = '#1a1a1a'
+          ctx.fillRect(0, 0, width, height)
+
+          const barWidth = width / freqData.length
+          const gradient = ctx.createLinearGradient(0, height, 0, 0)
+          gradient.addColorStop(0, '#00ff88')
+          gradient.addColorStop(0.5, '#0088ff')
+          gradient.addColorStop(1, '#8800ff')
+
+          for (let i = 0; i < freqData.length; i++) {
+            const barHeight = (freqData[i] / 255) * height
+            ctx.fillStyle = gradient
+            ctx.fillRect(
+              i * barWidth,
+              height - barHeight,
+              barWidth - 1,
+              barHeight
+            )
+          }
+        }
+
+        useEffect(() => {
+          return () => {
+            if (animationRef.current) {
+              cancelAnimationFrame(animationRef.current)
+            }
+            if (sourceRef.current && sourceRef.current.mediaStream) {
+              sourceRef.current.mediaStream
+                .getTracks()
+                .forEach((track) => track.stop())
+            }
+            if (audioContextRef.current) {
+              audioContextRef.current.close()
+            }
+          }
+        }, [])
+
+        return (
+          <div className="min-h-screen bg-gray-900 text-white p-8">
+            <div className="max-w-4xl mx-auto">
+              <h1 className="text-3xl font-bold mb-8">Audio Energy Analyzer</h1>
+
+              <div className="bg-gray-800 rounded-lg p-6 mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <label className="text-sm">Duration (seconds):</label>
+                  <input
+                    type="number"
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    disabled={isRecording}
+                    className="bg-gray-700 px-3 py-1 rounded-sm w-24 text-white"
+                    min="1"
+                    max="60"
+                  />
+                  <button
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`px-6 py-2 rounded font-semibold ${
+                      isRecording
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : 'bg-green-600 hover:bg-green-700'
+                    }`}
+                  >
+                    {isRecording ? 'Stop' : 'Start Recording'}
+                  </button>
+                  {isRecording && (
+                    <span className="text-xl font-mono">
+                      {timeLeft.toFixed(1)}s
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <span className="text-gray-400">Peak Volume:</span>
-                  <span className="ml-2 font-mono text-lg text-yellow-400">
-                    {peakVolume.toFixed(3)}
-                  </span>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-400">Total Energy:</span>
+                    <span className="ml-2 font-mono text-lg text-green-400">
+                      {totalEnergy.toFixed(4)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Peak Volume:</span>
+                    <span className="ml-2 font-mono text-lg text-yellow-400">
+                      {peakVolume.toFixed(3)}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-2 text-gray-400">VU METER</h2>
-                <canvas
-                  ref={vuCanvasRef}
-                  width={800}
-                  height={60}
-                  className="w-full rounded-sm"
-                />
+              <div className="space-y-4">
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold mb-2 text-gray-400">
+                    VU METER
+                  </h2>
+                  <canvas
+                    ref={vuCanvasRef}
+                    width={800}
+                    height={60}
+                    className="w-full rounded-sm"
+                  />
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold mb-2 text-gray-400">
+                    VOLUME OVER TIME
+                  </h2>
+                  <canvas
+                    ref={graphCanvasRef}
+                    width={800}
+                    height={200}
+                    className="w-full rounded-sm"
+                  />
+                </div>
+
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h2 className="text-sm font-semibold mb-2 text-gray-400">
+                    FREQUENCY SPECTRUM
+                  </h2>
+                  <canvas
+                    ref={spectrumCanvasRef}
+                    width={800}
+                    height={200}
+                    className="w-full rounded-sm"
+                  />
+                </div>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-2 text-gray-400">VOLUME OVER TIME</h2>
-                <canvas
-                  ref={graphCanvasRef}
-                  width={800}
-                  height={200}
-                  className="w-full rounded-sm"
-                />
+              <div className="mt-6 bg-gray-800 rounded-lg p-4 text-sm text-gray-400">
+                <p>
+                  <strong className="text-white">Energy calculation:</strong>{' '}
+                  Uses RMS (Root Mean Square) integrated over time. Energy =
+                  ∫(RMS²)dt. Standard acoustic energy measure.
+                </p>
               </div>
-
-              <div className="bg-gray-800 rounded-lg p-4">
-                <h2 className="text-sm font-semibold mb-2 text-gray-400">FREQUENCY SPECTRUM</h2>
-                <canvas
-                  ref={spectrumCanvasRef}
-                  width={800}
-                  height={200}
-                  className="w-full rounded-sm"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 bg-gray-800 rounded-lg p-4 text-sm text-gray-400">
-              <p>
-                <strong className="text-white">Energy calculation:</strong> Uses RMS (Root Mean Square) 
-                integrated over time. Energy = ∫(RMS²)dt. Standard acoustic energy measure.
-              </p>
             </div>
           </div>
-        </div>
-      );
-    }
+        )
+      }
 
-    ReactDOM.render(<AudioAnalyzer />, document.getElementById('root'));
-  </script>
-</body>
+      ReactDOM.render(<AudioAnalyzer />, document.getElementById('root'))
+    </script>
+  </body>
 </html>

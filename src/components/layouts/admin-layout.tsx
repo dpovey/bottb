@@ -1,35 +1,35 @@
-import { AdminSidebar } from "./admin-sidebar";
-import { AdminTopBar } from "./admin-topbar";
-import type { BreadcrumbItem } from "@/components/nav";
+import { AdminSidebar } from './admin-sidebar'
+import { AdminTopBar } from './admin-topbar'
+import type { BreadcrumbItem } from '@/components/nav'
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
   /** Page title for the top bar */
-  title?: string;
+  title?: string
   /** Page subtitle/description */
-  subtitle?: string;
+  subtitle?: string
   /** Breadcrumbs for navigation context (first crumb is auto-added) */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
   /** Actions to show in the top bar */
-  actions?: React.ReactNode;
+  actions?: React.ReactNode
   /** Whether to show the top bar (default: true) */
-  showTopBar?: boolean;
+  showTopBar?: boolean
   /** Whether content should have default padding (default: true) */
-  padContent?: boolean;
+  padContent?: boolean
   /** Max width constraint for content (default: none) */
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "4xl" | "6xl" | "full";
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full'
 }
 
 const maxWidthClasses = {
-  sm: "max-w-sm",
-  md: "max-w-md",
-  lg: "max-w-lg",
-  xl: "max-w-xl",
-  "2xl": "max-w-2xl",
-  "4xl": "max-w-4xl",
-  "6xl": "max-w-6xl",
-  full: "max-w-full",
-};
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '4xl': 'max-w-4xl',
+  '6xl': 'max-w-6xl',
+  full: 'max-w-full',
+}
 
 export function AdminLayout({
   children,
@@ -54,13 +54,13 @@ export function AdminLayout({
           />
         )}
         <div
-          className={`flex-1 ${padContent ? "p-8" : ""} ${
-            maxWidth ? maxWidthClasses[maxWidth] : ""
+          className={`flex-1 ${padContent ? 'p-8' : ''} ${
+            maxWidth ? maxWidthClasses[maxWidth] : ''
           }`}
         >
           {children}
         </div>
       </main>
     </div>
-  );
+  )
 }

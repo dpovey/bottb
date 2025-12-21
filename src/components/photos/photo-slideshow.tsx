@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { Photo, PHOTO_LABELS } from "@/lib/db";
-import { CompanyIcon } from "@/components/ui";
-import { motion, AnimatePresence } from "framer-motion";
-import Cropper, { Area } from "react-easy-crop";
-import { ShareComposerModal } from "./share-composer-modal";
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { Photo, PHOTO_LABELS } from '@/lib/db'
+import { CompanyIcon } from '@/components/ui'
+import { motion, AnimatePresence } from 'framer-motion'
+import Cropper, { Area } from 'react-easy-crop'
+import { ShareComposerModal } from './share-composer-modal'
 import {
   trackPhotoDownload,
   trackPhotoShare,
   trackPhotoView,
-} from "@/lib/analytics";
+} from '@/lib/analytics'
 import {
   CameraIcon,
   SpinnerIcon,
@@ -27,58 +27,58 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   WarningIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 // Label display info
 const LABEL_INFO = {
   [PHOTO_LABELS.BAND_HERO]: {
-    name: "Band Hero",
-    description: "Featured on band page",
-    icon: "🎸",
+    name: 'Band Hero',
+    description: 'Featured on band page',
+    icon: '🎸',
   },
   [PHOTO_LABELS.EVENT_HERO]: {
-    name: "Event Hero",
-    description: "Featured on event page",
-    icon: "🎪",
+    name: 'Event Hero',
+    description: 'Featured on event page',
+    icon: '🎪',
   },
   [PHOTO_LABELS.GLOBAL_HERO]: {
-    name: "Global Hero",
-    description: "Featured on home page",
-    icon: "🏠",
+    name: 'Global Hero',
+    description: 'Featured on home page',
+    icon: '🏠',
   },
-} as const;
+} as const
 
 interface FilterNames {
-  eventName?: string | null;
-  bandName?: string | null;
-  photographer?: string | null;
-  companyName?: string | null;
+  eventName?: string | null
+  bandName?: string | null
+  photographer?: string | null
+  companyName?: string | null
 }
 
 interface PhotoSlideshowProps {
-  photos: Photo[];
-  initialIndex: number;
-  totalPhotos: number;
-  currentPage: number;
+  photos: Photo[]
+  initialIndex: number
+  totalPhotos: number
+  currentPage: number
   filters: {
-    eventId?: string | null;
-    bandId?: string | null;
-    photographer?: string | null;
-    companySlug?: string | null;
-  };
-  filterNames?: FilterNames;
-  onClose: () => void;
-  onPhotoDeleted?: (photoId: string) => void;
-  onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void;
-  onPhotoChange?: (photoId: string) => void;
+    eventId?: string | null
+    bandId?: string | null
+    photographer?: string | null
+    companySlug?: string | null
+  }
+  filterNames?: FilterNames
+  onClose: () => void
+  onPhotoDeleted?: (photoId: string) => void
+  onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void
+  onPhotoChange?: (photoId: string) => void
   onFilterChange?: (
-    filterType: "event" | "band" | "photographer" | "company",
+    filterType: 'event' | 'band' | 'photographer' | 'company',
     value: string | null
-  ) => void;
+  ) => void
 }
 
-const PAGE_SIZE = 50;
-const PREFETCH_THRESHOLD = 5; // Prefetch when within 5 photos of edge
+const PAGE_SIZE = 50
+const PREFETCH_THRESHOLD = 5 // Prefetch when within 5 photos of edge
 
 export function PhotoSlideshow({
   photos: initialPhotos,
@@ -93,43 +93,43 @@ export function PhotoSlideshow({
   onPhotoChange,
   onFilterChange,
 }: PhotoSlideshowProps) {
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.isAdmin ?? false;
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.isAdmin ?? false
 
   // Internal state for all loaded photos
-  const [allPhotos, setAllPhotos] = useState<Photo[]>(initialPhotos);
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [direction, setDirection] = useState(0);
+  const [allPhotos, setAllPhotos] = useState<Photo[]>(initialPhotos)
+  const [currentIndex, setCurrentIndex] = useState(initialIndex)
+  const [direction, setDirection] = useState(0)
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     new Set([currentPage])
-  );
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [totalCount, setTotalCount] = useState(totalPhotos);
+  )
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [totalCount, setTotalCount] = useState(totalPhotos)
 
   // Track the previous initialIndex to detect filter changes
-  const prevInitialIndexRef = useRef(initialIndex);
+  const prevInitialIndexRef = useRef(initialIndex)
 
   // Sync photos from parent without resetting position (e.g., after crop updates)
   useEffect(() => {
-    setAllPhotos(initialPhotos);
-  }, [initialPhotos]);
+    setAllPhotos(initialPhotos)
+  }, [initialPhotos])
 
   // Only reset position when filters change (indicated by initialIndex changing to 0)
   // This happens when parent explicitly resets slideshowIndex after a filter change
   useEffect(() => {
     if (prevInitialIndexRef.current !== initialIndex) {
-      setCurrentIndex(initialIndex);
-      setLoadedPages(new Set([currentPage]));
-      setTotalCount(totalPhotos);
-      setDirection(0);
-      prevInitialIndexRef.current = initialIndex;
+      setCurrentIndex(initialIndex)
+      setLoadedPages(new Set([currentPage]))
+      setTotalCount(totalPhotos)
+      setDirection(0)
+      prevInitialIndexRef.current = initialIndex
     }
-  }, [initialIndex, currentPage, totalPhotos]);
+  }, [initialIndex, currentPage, totalPhotos])
 
   // Track photo views when photo changes (with minimum 1s view duration)
   useEffect(() => {
-    const photo = allPhotos[currentIndex];
-    if (!photo) return;
+    const photo = allPhotos[currentIndex]
+    if (!photo) return
 
     // Set a timer to track the view after 1 second
     // This ensures we only track intentional views, not accidental glimpses
@@ -140,73 +140,73 @@ export function PhotoSlideshow({
         band_id: photo.band_id || null,
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
-      });
-    }, 1000); // 1 second minimum view duration
+      })
+    }, 1000) // 1 second minimum view duration
 
     // Clean up timer if user navigates away before 1 second
     return () => {
-      clearTimeout(viewTimer);
-    };
-  }, [currentIndex, allPhotos]);
+      clearTimeout(viewTimer)
+    }
+  }, [currentIndex, allPhotos])
 
   // Delete state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Track the most recently cropped photo to ensure immediate update
   const [lastCroppedPhoto, setLastCroppedPhoto] = useState<{
-    id: string;
-    url: string;
-  } | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+    id: string
+    url: string
+  } | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Crop state
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [isSavingCrop, setIsSavingCrop] = useState(false);
-  const [cropError, setCropError] = useState<string | null>(null);
-  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+  const [isSavingCrop, setIsSavingCrop] = useState(false)
+  const [cropError, setCropError] = useState<string | null>(null)
+  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null)
 
   // Link copy state
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // Share modal state
-  const [showShareModal, setShowShareModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Hero labels state
-  const [showLabelsModal, setShowLabelsModal] = useState(false);
-  const [photoLabels, setPhotoLabels] = useState<string[]>([]);
+  const [showLabelsModal, setShowLabelsModal] = useState(false)
+  const [photoLabels, setPhotoLabels] = useState<string[]>([])
   const [heroFocalPoint, setHeroFocalPoint] = useState<{
-    x: number;
-    y: number;
-  }>({ x: 50, y: 50 });
-  const [isLoadingLabels, setIsLoadingLabels] = useState(false);
-  const [isSavingLabels, setIsSavingLabels] = useState(false);
-  const [isSavingFocalPoint, setIsSavingFocalPoint] = useState(false);
-  const [isDraggingFocalPoint, setIsDraggingFocalPoint] = useState(false);
-  const [labelsError, setLabelsError] = useState<string | null>(null);
-  const focalPointPreviewRef = useRef<HTMLDivElement>(null);
+    x: number
+    y: number
+  }>({ x: 50, y: 50 })
+  const [isLoadingLabels, setIsLoadingLabels] = useState(false)
+  const [isSavingLabels, setIsSavingLabels] = useState(false)
+  const [isSavingFocalPoint, setIsSavingFocalPoint] = useState(false)
+  const [isDraggingFocalPoint, setIsDraggingFocalPoint] = useState(false)
+  const [labelsError, setLabelsError] = useState<string | null>(null)
+  const focalPointPreviewRef = useRef<HTMLDivElement>(null)
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(
     async (pixelCrop: Area, imageSrc: string) => {
-      const image = new Image();
-      image.crossOrigin = "anonymous";
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
 
       return new Promise<string>((resolve, reject) => {
         image.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
           if (!ctx) {
-            reject(new Error("Could not get canvas context"));
-            return;
+            reject(new Error('Could not get canvas context'))
+            return
           }
 
           // Set canvas size to 80x80 for preview
-          canvas.width = 80;
-          canvas.height = 80;
+          canvas.width = 80
+          canvas.height = 80
 
           // Draw the cropped region scaled to 80x80
           ctx.drawImage(
@@ -219,158 +219,156 @@ export function PhotoSlideshow({
             0,
             80,
             80
-          );
+          )
 
-          resolve(canvas.toDataURL("image/jpeg", 0.8));
-        };
-        image.onerror = () => reject(new Error("Failed to load image"));
-        image.src = imageSrc;
-      });
+          resolve(canvas.toDataURL('image/jpeg', 0.8))
+        }
+        image.onerror = () => reject(new Error('Failed to load image'))
+        image.src = imageSrc
+      })
     },
     []
-  );
+  )
 
   // Update preview when crop changes (debounced)
   useEffect(() => {
-    if (!showCropModal || !croppedAreaPixels) return;
+    if (!showCropModal || !croppedAreaPixels) return
 
-    const currentPhoto = allPhotos[currentIndex];
-    if (!currentPhoto) return;
+    const currentPhoto = allPhotos[currentIndex]
+    if (!currentPhoto) return
 
     const timeoutId = setTimeout(async () => {
       try {
         const previewUrl = await generateCropPreview(
           croppedAreaPixels,
           currentPhoto.blob_url
-        );
-        setCropPreviewUrl(previewUrl);
+        )
+        setCropPreviewUrl(previewUrl)
       } catch (_error) {
         // Preview generation failed - not critical
       }
-    }, 100);
+    }, 100)
 
-    return () => clearTimeout(timeoutId);
+    return () => clearTimeout(timeoutId)
   }, [
     croppedAreaPixels,
     showCropModal,
     currentIndex,
     allPhotos,
     generateCropPreview,
-  ]);
+  ])
 
   // Clear preview when modal closes
   useEffect(() => {
     if (!showCropModal) {
-      setCropPreviewUrl(null);
+      setCropPreviewUrl(null)
     }
-  }, [showCropModal]);
+  }, [showCropModal])
 
-  const thumbnailStripRef = useRef<HTMLDivElement>(null);
-  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const thumbnailStripRef = useRef<HTMLDivElement>(null)
+  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   // Fetch a specific page of photos
   const fetchPage = useCallback(
     async (page: number): Promise<Photo[]> => {
-      const params = new URLSearchParams();
-      if (filters.eventId) params.set("event", filters.eventId);
-      if (filters.bandId) params.set("band", filters.bandId);
-      if (filters.photographer)
-        params.set("photographer", filters.photographer);
-      if (filters.companySlug) params.set("company", filters.companySlug);
-      params.set("page", page.toString());
-      params.set("limit", PAGE_SIZE.toString());
-      params.set("order", "date"); // Chronological order for slideshow viewing
+      const params = new URLSearchParams()
+      if (filters.eventId) params.set('event', filters.eventId)
+      if (filters.bandId) params.set('band', filters.bandId)
+      if (filters.photographer) params.set('photographer', filters.photographer)
+      if (filters.companySlug) params.set('company', filters.companySlug)
+      params.set('page', page.toString())
+      params.set('limit', PAGE_SIZE.toString())
+      params.set('order', 'date') // Chronological order for slideshow viewing
 
-      const res = await fetch(`/api/photos?${params.toString()}`);
-      if (!res.ok) return [];
+      const res = await fetch(`/api/photos?${params.toString()}`)
+      if (!res.ok) return []
 
-      const data = await res.json();
-      setTotalCount(data.pagination.total);
-      return data.photos;
+      const data = await res.json()
+      setTotalCount(data.pagination.total)
+      return data.photos
     },
     [filters]
-  );
+  )
 
   // Load next page
   const loadNextPage = useCallback(async () => {
-    const nextPage = Math.max(...Array.from(loadedPages)) + 1;
-    const maxPage = Math.ceil(totalCount / PAGE_SIZE);
+    const nextPage = Math.max(...Array.from(loadedPages)) + 1
+    const maxPage = Math.ceil(totalCount / PAGE_SIZE)
 
-    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore)
-      return;
+    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore) return
 
-    setIsLoadingMore(true);
+    setIsLoadingMore(true)
     try {
-      const newPhotos = await fetchPage(nextPage);
+      const newPhotos = await fetchPage(nextPage)
       if (newPhotos.length > 0) {
         setAllPhotos((prev) => {
           // Deduplicate by filtering out photos that already exist
-          const existingIds = new Set(prev.map((p) => p.id));
+          const existingIds = new Set(prev.map((p) => p.id))
           const uniqueNewPhotos = newPhotos.filter(
             (p) => !existingIds.has(p.id)
-          );
-          return [...prev, ...uniqueNewPhotos];
-        });
-        setLoadedPages((prev) => new Set([...prev, nextPage]));
+          )
+          return [...prev, ...uniqueNewPhotos]
+        })
+        setLoadedPages((prev) => new Set([...prev, nextPage]))
       }
     } finally {
-      setIsLoadingMore(false);
+      setIsLoadingMore(false)
     }
-  }, [loadedPages, totalCount, isLoadingMore, fetchPage]);
+  }, [loadedPages, totalCount, isLoadingMore, fetchPage])
 
   // Load previous page
   const loadPrevPage = useCallback(async () => {
-    const prevPage = Math.min(...Array.from(loadedPages)) - 1;
+    const prevPage = Math.min(...Array.from(loadedPages)) - 1
 
-    if (prevPage < 1 || loadedPages.has(prevPage) || isLoadingMore) return;
+    if (prevPage < 1 || loadedPages.has(prevPage) || isLoadingMore) return
 
-    setIsLoadingMore(true);
+    setIsLoadingMore(true)
     try {
-      const newPhotos = await fetchPage(prevPage);
+      const newPhotos = await fetchPage(prevPage)
       if (newPhotos.length > 0) {
         // Use functional updates that compute added count correctly
         setAllPhotos((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id));
+          const existingIds = new Set(prev.map((p) => p.id))
           const uniqueNewPhotos = newPhotos.filter(
             (p) => !existingIds.has(p.id)
-          );
+          )
           // Also update currentIndex in the same render cycle
           if (uniqueNewPhotos.length > 0) {
-            setCurrentIndex((prevIndex) => prevIndex + uniqueNewPhotos.length);
+            setCurrentIndex((prevIndex) => prevIndex + uniqueNewPhotos.length)
           }
-          return [...uniqueNewPhotos, ...prev];
-        });
-        setLoadedPages((prev) => new Set([...prev, prevPage]));
+          return [...uniqueNewPhotos, ...prev]
+        })
+        setLoadedPages((prev) => new Set([...prev, prevPage]))
       }
     } finally {
-      setIsLoadingMore(false);
+      setIsLoadingMore(false)
     }
-  }, [loadedPages, isLoadingMore, fetchPage]);
+  }, [loadedPages, isLoadingMore, fetchPage])
 
   // Check if we need to prefetch
   useEffect(() => {
     // Near the end - load next page
     if (currentIndex >= allPhotos.length - PREFETCH_THRESHOLD) {
-      loadNextPage();
+      loadNextPage()
     }
     // Near the beginning - load previous page
     if (currentIndex < PREFETCH_THRESHOLD) {
-      loadPrevPage();
+      loadPrevPage()
     }
-  }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage]);
+  }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage])
 
   const goToIndex = useCallback(
     (index: number) => {
-      setDirection(index > currentIndex ? 1 : -1);
-      setCurrentIndex(index);
+      setDirection(index > currentIndex ? 1 : -1)
+      setCurrentIndex(index)
     },
     [currentIndex]
-  );
+  )
 
   const goToNext = useCallback(() => {
     if (currentIndex < allPhotos.length - 1) {
-      setDirection(1);
-      setCurrentIndex((prev) => prev + 1);
+      setDirection(1)
+      setCurrentIndex((prev) => prev + 1)
     } else if (
       currentIndex === allPhotos.length - 1 &&
       allPhotos.length < totalCount
@@ -378,26 +376,32 @@ export function PhotoSlideshow({
       // At the end but more photos exist - they're loading
       // Could show a loading indicator
     }
-  }, [currentIndex, allPhotos.length, totalCount]);
+  }, [currentIndex, allPhotos.length, totalCount])
 
   const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
-      setDirection(-1);
-      setCurrentIndex((prev) => prev - 1);
+      setDirection(-1)
+      setCurrentIndex((prev) => prev - 1)
     }
-  }, [currentIndex]);
+  }, [currentIndex])
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return; // Don't navigate while modals are open
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight") goToNext();
-      if (e.key === "ArrowLeft") goToPrevious();
-    };
+      if (
+        showDeleteConfirm ||
+        showCropModal ||
+        showLabelsModal ||
+        showShareModal
+      )
+        return // Don't navigate while modals are open
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') goToNext()
+      if (e.key === 'ArrowLeft') goToPrevious()
+    }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     onClose,
     goToPrevious,
@@ -406,76 +410,87 @@ export function PhotoSlideshow({
     showCropModal,
     showLabelsModal,
     showShareModal,
-  ]);
+  ])
 
   // Scroll wheel navigation with momentum handling
   // Accumulate scroll delta and only trigger navigation when threshold is crossed
-  const accumulatedDelta = useRef(0);
-  const lastScrollTime = useRef(0);
-  const isNavigating = useRef(false);
-  const SCROLL_THRESHOLD = 80; // Accumulated delta needed to trigger navigation
-  const NAVIGATION_COOLDOWN_MS = 300; // Cooldown after navigation to prevent rapid switching
-  const SCROLL_DECAY_MS = 150; // Time after which accumulated delta resets
+  const accumulatedDelta = useRef(0)
+  const lastScrollTime = useRef(0)
+  const isNavigating = useRef(false)
+  const SCROLL_THRESHOLD = 80 // Accumulated delta needed to trigger navigation
+  const NAVIGATION_COOLDOWN_MS = 300 // Cooldown after navigation to prevent rapid switching
+  const SCROLL_DECAY_MS = 150 // Time after which accumulated delta resets
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (showDeleteConfirm || showCropModal || showLabelsModal || showShareModal) return;
+      if (
+        showDeleteConfirm ||
+        showCropModal ||
+        showLabelsModal ||
+        showShareModal
+      )
+        return
 
       // Check if the scroll is happening over the thumbnail strip - if so, let it scroll normally
-      const target = e.target as HTMLElement;
-      if (thumbnailStripRef.current?.contains(target)) return;
+      const target = e.target as HTMLElement
+      if (thumbnailStripRef.current?.contains(target)) return
 
       // Prevent default scrolling behavior on the slideshow
-      e.preventDefault();
+      e.preventDefault()
 
       // Still in cooldown after a navigation
-      const now = Date.now();
-      if (isNavigating.current && now - lastScrollTime.current < NAVIGATION_COOLDOWN_MS) {
-        return;
+      const now = Date.now()
+      if (
+        isNavigating.current &&
+        now - lastScrollTime.current < NAVIGATION_COOLDOWN_MS
+      ) {
+        return
       }
-      isNavigating.current = false;
+      isNavigating.current = false
 
       // Reset accumulated delta if too much time has passed (momentum ended)
       if (now - lastScrollTime.current > SCROLL_DECAY_MS) {
-        accumulatedDelta.current = 0;
+        accumulatedDelta.current = 0
       }
-      lastScrollTime.current = now;
+      lastScrollTime.current = now
 
       // Use deltaY for vertical scroll, deltaX for horizontal scroll (trackpad)
       // Prioritize horizontal scroll for photo navigation
       const delta =
-        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
 
       // Ignore very small scroll movements (noise)
-      if (Math.abs(delta) < 5) return;
+      if (Math.abs(delta) < 5) return
 
       // If changing direction, reset accumulator to prevent fighting
-      if (accumulatedDelta.current !== 0 && 
-          Math.sign(delta) !== Math.sign(accumulatedDelta.current)) {
-        accumulatedDelta.current = 0;
+      if (
+        accumulatedDelta.current !== 0 &&
+        Math.sign(delta) !== Math.sign(accumulatedDelta.current)
+      ) {
+        accumulatedDelta.current = 0
       }
 
       // Accumulate the scroll delta
-      accumulatedDelta.current += delta;
+      accumulatedDelta.current += delta
 
       // Check if we've crossed the threshold for navigation
       if (Math.abs(accumulatedDelta.current) >= SCROLL_THRESHOLD) {
-        const direction = accumulatedDelta.current > 0 ? 1 : -1;
-        accumulatedDelta.current = 0; // Reset after navigation
-        isNavigating.current = true;
-        lastScrollTime.current = now;
+        const direction = accumulatedDelta.current > 0 ? 1 : -1
+        accumulatedDelta.current = 0 // Reset after navigation
+        isNavigating.current = true
+        lastScrollTime.current = now
 
         if (direction > 0) {
-          goToNext();
+          goToNext()
         } else {
-          goToPrevious();
+          goToPrevious()
         }
       }
-    };
+    }
 
     // Use passive: false to allow preventDefault
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => window.removeEventListener("wheel", handleWheel);
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
   }, [
     goToPrevious,
     goToNext,
@@ -483,112 +498,112 @@ export function PhotoSlideshow({
     showCropModal,
     showLabelsModal,
     showShareModal,
-  ]);
+  ])
 
   // Auto-scroll thumbnail strip to keep current photo visible
   useEffect(() => {
-    const thumbnail = thumbnailRefs.current[currentIndex];
+    const thumbnail = thumbnailRefs.current[currentIndex]
     if (thumbnail && thumbnailStripRef.current) {
       thumbnail.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
     }
-  }, [currentIndex]);
+  }, [currentIndex])
 
   // Notify parent when current photo changes (for URL updates)
   useEffect(() => {
-    const photo = allPhotos[currentIndex];
+    const photo = allPhotos[currentIndex]
     if (photo && onPhotoChange) {
-      onPhotoChange(photo.id);
+      onPhotoChange(photo.id)
     }
-  }, [currentIndex, allPhotos, onPhotoChange]);
+  }, [currentIndex, allPhotos, onPhotoChange])
 
   // Handle photo deletion
   const handleDelete = async () => {
-    const photoToDelete = allPhotos[currentIndex];
-    if (!photoToDelete) return;
+    const photoToDelete = allPhotos[currentIndex]
+    if (!photoToDelete) return
 
-    setIsDeleting(true);
-    setDeleteError(null);
+    setIsDeleting(true)
+    setDeleteError(null)
 
     try {
       const response = await fetch(`/api/photos/${photoToDelete.id}`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete photo");
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete photo')
       }
 
       // Remove from local state
-      setAllPhotos((prev) => prev.filter((p) => p.id !== photoToDelete.id));
-      setTotalCount((prev) => prev - 1);
+      setAllPhotos((prev) => prev.filter((p) => p.id !== photoToDelete.id))
+      setTotalCount((prev) => prev - 1)
 
       // Notify parent component
-      onPhotoDeleted?.(photoToDelete.id);
+      onPhotoDeleted?.(photoToDelete.id)
 
       // Close confirmation dialog
-      setShowDeleteConfirm(false);
+      setShowDeleteConfirm(false)
 
       // If this was the last photo, close the slideshow
       if (allPhotos.length <= 1) {
-        onClose();
+        onClose()
       } else if (currentIndex >= allPhotos.length - 1) {
         // If we deleted the last photo, go to previous
-        setCurrentIndex(currentIndex - 1);
+        setCurrentIndex(currentIndex - 1)
       }
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Delete failed");
+      setDeleteError(error instanceof Error ? error.message : 'Delete failed')
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }
 
   // Handle copying link to clipboard
   const handleCopyLink = async () => {
     try {
       // Copy current URL (which already has the photo param from URL sync)
-      await navigator.clipboard.writeText(window.location.href);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 2000);
+      await navigator.clipboard.writeText(window.location.href)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
 
       // Track share
-      const photo = allPhotos[currentIndex];
+      const photo = allPhotos[currentIndex]
       if (photo) {
         trackPhotoShare({
           photo_id: photo.id,
-          share_method: "copy_link",
+          share_method: 'copy_link',
           event_id: photo.event_id || null,
           band_id: photo.band_id || null,
           event_name: photo.event_name || null,
           band_name: photo.band_name || null,
-        });
+        })
       }
     } catch (error) {
-      console.error("Failed to copy link:", error);
+      console.error('Failed to copy link:', error)
     }
-  };
+  }
 
   // Handle downloading high-res image
   const handleDownload = async () => {
-    const photo = allPhotos[currentIndex];
-    if (!photo) return;
+    const photo = allPhotos[currentIndex]
+    if (!photo) return
 
     try {
       // Fetch the image and trigger download
-      const response = await fetch(photo.blob_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = photo.original_filename || `photo-${photo.id}.jpg`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const response = await fetch(photo.blob_url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = photo.original_filename || `photo-${photo.id}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
 
       // Track download
       trackPhotoDownload({
@@ -598,35 +613,35 @@ export function PhotoSlideshow({
         photographer: photo.photographer || null,
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
-      });
+      })
     } catch (error) {
-      console.error("Failed to download image:", error);
+      console.error('Failed to download image:', error)
     }
-  };
+  }
 
   // Handle crop completion callback
   const onCropComplete = useCallback(
     (_croppedArea: Area, croppedAreaPixels: Area) => {
-      setCroppedAreaPixels(croppedAreaPixels);
+      setCroppedAreaPixels(croppedAreaPixels)
     },
     []
-  );
+  )
 
   // Handle saving the crop
   const handleSaveCrop = async () => {
-    const photoToCrop = allPhotos[currentIndex];
-    if (!photoToCrop || !croppedAreaPixels) return;
+    const photoToCrop = allPhotos[currentIndex]
+    if (!photoToCrop || !croppedAreaPixels) return
 
-    setIsSavingCrop(true);
-    setCropError(null);
+    setIsSavingCrop(true)
+    setCropError(null)
 
     try {
       // Get the image dimensions to calculate percentages
-      const img = new Image();
-      img.src = photoToCrop.blob_url;
+      const img = new Image()
+      img.src = photoToCrop.blob_url
       await new Promise((resolve) => {
-        img.onload = resolve;
-      });
+        img.onload = resolve
+      })
 
       // Convert pixel coordinates to percentages
       const cropArea = {
@@ -634,79 +649,79 @@ export function PhotoSlideshow({
         y: (croppedAreaPixels.y / img.naturalHeight) * 100,
         width: (croppedAreaPixels.width / img.naturalWidth) * 100,
         height: (croppedAreaPixels.height / img.naturalHeight) * 100,
-      };
-
-      const response = await fetch(`/api/photos/${photoToCrop.id}/crop`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cropArea }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to save crop");
       }
 
-      const result = await response.json();
-      const newUrl = result.thumbnailUrl; // This is a NEW unique URL, not the same path
-      const photoId = photoToCrop.id;
+      const response = await fetch(`/api/photos/${photoToCrop.id}/crop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cropArea }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save crop')
+      }
+
+      const result = await response.json()
+      const newUrl = result.thumbnailUrl // This is a NEW unique URL, not the same path
+      const photoId = photoToCrop.id
 
       // Update the thumbnail URL in local state
       setAllPhotos((prev) =>
         prev.map((p) =>
           p.id === photoId ? { ...p, thumbnail_url: newUrl } : p
         )
-      );
+      )
 
       // Track the just-cropped photo for immediate update
-      setLastCroppedPhoto({ id: photoId, url: newUrl });
+      setLastCroppedPhoto({ id: photoId, url: newUrl })
 
       // Notify parent to update gallery view
-      onPhotoCropped?.(photoId, newUrl);
+      onPhotoCropped?.(photoId, newUrl)
 
       // Close crop modal and reset state
-      setShowCropModal(false);
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setCroppedAreaPixels(null);
+      setShowCropModal(false)
+      setCrop({ x: 0, y: 0 })
+      setZoom(1)
+      setCroppedAreaPixels(null)
     } catch (error) {
       setCropError(
-        error instanceof Error ? error.message : "Failed to save crop"
-      );
+        error instanceof Error ? error.message : 'Failed to save crop'
+      )
     } finally {
-      setIsSavingCrop(false);
+      setIsSavingCrop(false)
     }
-  };
+  }
 
   // Fetch photo labels and focal point when opening the labels modal
   const fetchPhotoLabels = useCallback(async (photoId: string) => {
-    setIsLoadingLabels(true);
-    setLabelsError(null);
+    setIsLoadingLabels(true)
+    setLabelsError(null)
     try {
-      const response = await fetch(`/api/photos/${photoId}/labels`);
+      const response = await fetch(`/api/photos/${photoId}/labels`)
       if (!response.ok) {
-        throw new Error("Failed to fetch labels");
+        throw new Error('Failed to fetch labels')
       }
-      const data = await response.json();
-      setPhotoLabels(data.labels || []);
-      setHeroFocalPoint(data.heroFocalPoint || { x: 50, y: 50 });
+      const data = await response.json()
+      setPhotoLabels(data.labels || [])
+      setHeroFocalPoint(data.heroFocalPoint || { x: 50, y: 50 })
     } catch (error) {
       setLabelsError(
-        error instanceof Error ? error.message : "Failed to load labels"
-      );
+        error instanceof Error ? error.message : 'Failed to load labels'
+      )
     } finally {
-      setIsLoadingLabels(false);
+      setIsLoadingLabels(false)
     }
-  }, []);
+  }, [])
 
   // Open labels modal and fetch current labels
   const handleOpenLabelsModal = useCallback(() => {
-    const photo = allPhotos[currentIndex];
+    const photo = allPhotos[currentIndex]
     if (photo) {
-      setShowLabelsModal(true);
-      fetchPhotoLabels(photo.id);
+      setShowLabelsModal(true)
+      fetchPhotoLabels(photo.id)
     }
-  }, [allPhotos, currentIndex, fetchPhotoLabels]);
+  }, [allPhotos, currentIndex, fetchPhotoLabels])
 
   // Calculate focal point position from mouse event
   const calculateFocalPoint = useCallback(
@@ -714,76 +729,76 @@ export function PhotoSlideshow({
       e: React.MouseEvent<HTMLDivElement> | MouseEvent,
       element: HTMLDivElement
     ) => {
-      const rect = element.getBoundingClientRect();
+      const rect = element.getBoundingClientRect()
       const x = Math.max(
         0,
         Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
-      );
+      )
       const y = Math.max(
         0,
         Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
-      );
-      return { x, y };
+      )
+      return { x, y }
     },
     []
-  );
+  )
 
   // Handle focal point drag start
   const handleFocalPointMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDraggingFocalPoint(true);
-      const newPoint = calculateFocalPoint(e, e.currentTarget);
-      setHeroFocalPoint(newPoint);
+      e.preventDefault()
+      setIsDraggingFocalPoint(true)
+      const newPoint = calculateFocalPoint(e, e.currentTarget)
+      setHeroFocalPoint(newPoint)
     },
     [calculateFocalPoint]
-  );
+  )
 
   // Handle focal point drag
   useEffect(() => {
-    if (!isDraggingFocalPoint) return;
+    if (!isDraggingFocalPoint) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!focalPointPreviewRef.current) return;
-      const newPoint = calculateFocalPoint(e, focalPointPreviewRef.current);
-      setHeroFocalPoint(newPoint);
-    };
+      if (!focalPointPreviewRef.current) return
+      const newPoint = calculateFocalPoint(e, focalPointPreviewRef.current)
+      setHeroFocalPoint(newPoint)
+    }
 
     const handleMouseUp = () => {
-      setIsDraggingFocalPoint(false);
-    };
+      setIsDraggingFocalPoint(false)
+    }
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDraggingFocalPoint, calculateFocalPoint]);
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDraggingFocalPoint, calculateFocalPoint])
 
   // Save focal point
   const handleSaveFocalPoint = async () => {
-    const photo = allPhotos[currentIndex];
-    if (!photo) return;
+    const photo = allPhotos[currentIndex]
+    if (!photo) return
 
-    setIsSavingFocalPoint(true);
-    setLabelsError(null);
+    setIsSavingFocalPoint(true)
+    setLabelsError(null)
 
     try {
       const response = await fetch(`/api/photos/${photo.id}/labels`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ heroFocalPoint: heroFocalPoint }),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to save focal point");
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save focal point')
       }
 
-      const result = await response.json();
-      setHeroFocalPoint(result.heroFocalPoint);
+      const result = await response.json()
+      setHeroFocalPoint(result.heroFocalPoint)
 
       // Update the photo in local state
       setAllPhotos((prev) =>
@@ -792,61 +807,61 @@ export function PhotoSlideshow({
             ? { ...p, hero_focal_point: result.heroFocalPoint }
             : p
         )
-      );
+      )
     } catch (error) {
       setLabelsError(
-        error instanceof Error ? error.message : "Failed to save focal point"
-      );
+        error instanceof Error ? error.message : 'Failed to save focal point'
+      )
     } finally {
-      setIsSavingFocalPoint(false);
+      setIsSavingFocalPoint(false)
     }
-  };
+  }
 
   // Toggle a label on/off
   const handleToggleLabel = async (label: string) => {
-    const photo = allPhotos[currentIndex];
-    if (!photo) return;
+    const photo = allPhotos[currentIndex]
+    if (!photo) return
 
     const newLabels = photoLabels.includes(label)
       ? photoLabels.filter((l) => l !== label)
-      : [...photoLabels, label];
+      : [...photoLabels, label]
 
-    setIsSavingLabels(true);
-    setLabelsError(null);
+    setIsSavingLabels(true)
+    setLabelsError(null)
 
     try {
       const response = await fetch(`/api/photos/${photo.id}/labels`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ labels: newLabels }),
-      });
+      })
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update labels");
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update labels')
       }
 
-      const result = await response.json();
-      setPhotoLabels(result.labels);
+      const result = await response.json()
+      setPhotoLabels(result.labels)
 
       // Update the photo in local state
       setAllPhotos((prev) =>
         prev.map((p) =>
           p.id === photo.id ? { ...p, labels: result.labels } : p
         )
-      );
+      )
     } catch (error) {
-      setLabelsError(error instanceof Error ? error.message : "Failed to save");
+      setLabelsError(error instanceof Error ? error.message : 'Failed to save')
     } finally {
-      setIsSavingLabels(false);
+      setIsSavingLabels(false)
     }
-  };
+  }
 
-  const currentPhoto = allPhotos[currentIndex];
+  const currentPhoto = allPhotos[currentIndex]
 
   // Safety check
   if (!currentPhoto) {
-    return null;
+    return null
   }
 
   const slideVariants = {
@@ -864,11 +879,11 @@ export function PhotoSlideshow({
       x: direction < 0 ? 300 : -300,
       opacity: 0,
     }),
-  };
+  }
 
   // Calculate display position accounting for potentially loaded previous pages
-  const minLoadedPage = Math.min(...Array.from(loadedPages));
-  const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1;
+  const minLoadedPage = Math.min(...Array.from(loadedPages))
+  const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1
 
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col">
@@ -908,7 +923,9 @@ export function PhotoSlideshow({
                           className="shrink-0"
                         />
                       )}
-                      <span className="truncate">{currentPhoto.company_name}</span>
+                      <span className="truncate">
+                        {currentPhoto.company_name}
+                      </span>
                     </Link>
                   ) : currentPhoto.company_name ? (
                     <span className="flex items-center gap-1.5 truncate">
@@ -921,11 +938,15 @@ export function PhotoSlideshow({
                           className="shrink-0"
                         />
                       )}
-                      <span className="truncate">{currentPhoto.company_name}</span>
+                      <span className="truncate">
+                        {currentPhoto.company_name}
+                      </span>
                     </span>
                   ) : null}
                   {currentPhoto.company_name && currentPhoto.event_name && (
-                    <span className="slideshow-separator hidden sm:inline">•</span>
+                    <span className="slideshow-separator hidden sm:inline">
+                      •
+                    </span>
                   )}
                   {currentPhoto.event_name && currentPhoto.event_id ? (
                     <Link
@@ -942,10 +963,12 @@ export function PhotoSlideshow({
               {/* Photographer with camera icon */}
               {currentPhoto.photographer && (
                 <span className="flex items-center gap-1.5">
-                  <span className="slideshow-separator hidden sm:inline">•</span>
+                  <span className="slideshow-separator hidden sm:inline">
+                    •
+                  </span>
                   <CameraIcon size={16} className="shrink-0" />
                   <Link
-                    href={`/photographer/${currentPhoto.photographer.toLowerCase().replace(/\s+/g, "-")}`}
+                    href={`/photographer/${currentPhoto.photographer.toLowerCase().replace(/\s+/g, '-')}`}
                     className="truncate hover:text-accent transition-colors"
                   >
                     {currentPhoto.photographer}
@@ -966,7 +989,7 @@ export function PhotoSlideshow({
                   {filterNames.companyName}
                   {onFilterChange && (
                     <button
-                      onClick={() => onFilterChange("company", null)}
+                      onClick={() => onFilterChange('company', null)}
                       className="hover:text-white transition-colors"
                       aria-label={`Remove ${filterNames.companyName} filter`}
                     >
@@ -980,7 +1003,7 @@ export function PhotoSlideshow({
                   {filterNames.eventName}
                   {onFilterChange && (
                     <button
-                      onClick={() => onFilterChange("event", null)}
+                      onClick={() => onFilterChange('event', null)}
                       className="hover:text-white transition-colors"
                       aria-label={`Remove ${filterNames.eventName} filter`}
                     >
@@ -994,7 +1017,7 @@ export function PhotoSlideshow({
                   {filterNames.bandName}
                   {onFilterChange && (
                     <button
-                      onClick={() => onFilterChange("band", null)}
+                      onClick={() => onFilterChange('band', null)}
                       className="hover:text-white transition-colors"
                       aria-label={`Remove ${filterNames.bandName} filter`}
                     >
@@ -1008,7 +1031,7 @@ export function PhotoSlideshow({
                   {filterNames.photographer}
                   {onFilterChange && (
                     <button
-                      onClick={() => onFilterChange("photographer", null)}
+                      onClick={() => onFilterChange('photographer', null)}
                       className="hover:text-white transition-colors"
                       aria-label={`Remove ${filterNames.photographer} filter`}
                     >
@@ -1129,7 +1152,7 @@ export function PhotoSlideshow({
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.blob_url}
-            alt={currentPhoto.original_filename || "Photo"}
+            alt={currentPhoto.original_filename || 'Photo'}
             className="slideshow-image max-w-[90vw] max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] object-contain rounded-lg shadow-2xl"
             custom={direction}
             variants={slideVariants}
@@ -1137,7 +1160,7 @@ export function PhotoSlideshow({
             animate="center"
             exit="exit"
             transition={{
-              x: { type: "spring", stiffness: 80, damping: 20 },
+              x: { type: 'spring', stiffness: 80, damping: 20 },
               opacity: { duration: 0.4 },
             }}
           />
@@ -1159,26 +1182,26 @@ export function PhotoSlideshow({
         <div
           ref={thumbnailStripRef}
           className="flex gap-3 overflow-x-auto py-3"
-          style={{ scrollbarWidth: "thin" }}
+          style={{ scrollbarWidth: 'thin' }}
         >
           {allPhotos.map((photo, index) => {
             // Use freshly cropped URL if available, otherwise use stored thumbnail
             const thumbSrc =
               lastCroppedPhoto?.id === photo.id
                 ? lastCroppedPhoto.url
-                : photo.thumbnail_url || photo.blob_url;
-            const isSelected = index === currentIndex;
+                : photo.thumbnail_url || photo.blob_url
+            const isSelected = index === currentIndex
             return (
               <button
                 key={`${photo.id}-${index}`}
                 ref={(el) => {
-                  thumbnailRefs.current[index] = el;
+                  thumbnailRefs.current[index] = el
                 }}
                 onClick={() => goToIndex(index)}
                 className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
                   isSelected
-                    ? "ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100"
-                    : "opacity-50 hover:opacity-75"
+                    ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100'
+                    : 'opacity-50 hover:opacity-75'
                 }`}
                 aria-label={`Go to photo ${index + 1}`}
               >
@@ -1191,7 +1214,7 @@ export function PhotoSlideshow({
                   loading="lazy"
                 />
               </button>
-            );
+            )
           })}
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
@@ -1228,8 +1251,8 @@ export function PhotoSlideshow({
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setDeleteError(null);
+                  setShowDeleteConfirm(false)
+                  setDeleteError(null)
                 }}
                 disabled={isDeleting}
                 className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
@@ -1247,7 +1270,7 @@ export function PhotoSlideshow({
                     Deleting...
                   </>
                 ) : (
-                  "Delete Photo"
+                  'Delete Photo'
                 )}
               </button>
             </div>
@@ -1264,10 +1287,10 @@ export function PhotoSlideshow({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  setShowCropModal(false);
-                  setCrop({ x: 0, y: 0 });
-                  setZoom(1);
-                  setCropError(null);
+                  setShowCropModal(false)
+                  setCrop({ x: 0, y: 0 })
+                  setZoom(1)
+                  setCropError(null)
                 }}
                 disabled={isSavingCrop}
                 className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
@@ -1285,7 +1308,7 @@ export function PhotoSlideshow({
                     Saving...
                   </>
                 ) : (
-                  "Save Crop"
+                  'Save Crop'
                 )}
               </button>
             </div>
@@ -1367,8 +1390,8 @@ export function PhotoSlideshow({
               </div>
               <button
                 onClick={() => {
-                  setShowLabelsModal(false);
-                  setLabelsError(null);
+                  setShowLabelsModal(false)
+                  setLabelsError(null)
                 }}
                 className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
                 aria-label="Close"
@@ -1390,8 +1413,8 @@ export function PhotoSlideshow({
                   </h4>
                   <div className="space-y-2">
                     {Object.entries(LABEL_INFO).map(([label, info]) => {
-                      const isActive = photoLabels.includes(label);
-                      const isDisabled = isSavingLabels;
+                      const isActive = photoLabels.includes(label)
+                      const isDisabled = isSavingLabels
 
                       return (
                         <button
@@ -1400,10 +1423,10 @@ export function PhotoSlideshow({
                           disabled={isDisabled}
                           className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                             isActive
-                              ? "border-accent bg-accent/10 text-white"
-                              : "border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10"
+                              ? 'border-accent bg-accent/10 text-white'
+                              : 'border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10'
                           } ${
-                            isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                            isDisabled ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                         >
                           <span className="text-xl">{info.icon}</span>
@@ -1418,16 +1441,20 @@ export function PhotoSlideshow({
                           <div
                             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                               isActive
-                                ? "border-accent bg-accent"
-                                : "border-white/30"
+                                ? 'border-accent bg-accent'
+                                : 'border-white/30'
                             }`}
                           >
                             {isActive && (
-                              <CheckIcon size={12} className="text-white" strokeWidth={2} />
+                              <CheckIcon
+                                size={12}
+                                className="text-white"
+                                strokeWidth={2}
+                              />
                             )}
                           </div>
                         </button>
-                      );
+                      )
                     })}
                   </div>
 
@@ -1435,12 +1462,12 @@ export function PhotoSlideshow({
                   {currentPhoto.band_name && (
                     <div className="mt-4 pt-4 border-t border-white/10">
                       <p className="text-xs text-text-dim">
-                        <span className="text-text-muted">Band:</span>{" "}
+                        <span className="text-text-muted">Band:</span>{' '}
                         {currentPhoto.band_name}
                       </p>
                       {currentPhoto.event_name && (
                         <p className="text-xs text-text-dim mt-1">
-                          <span className="text-text-muted">Event:</span>{" "}
+                          <span className="text-text-muted">Event:</span>{' '}
                           {currentPhoto.event_name}
                         </p>
                       )}
@@ -1463,8 +1490,8 @@ export function PhotoSlideshow({
                     ref={focalPointPreviewRef}
                     className={`relative w-full aspect-video rounded-lg overflow-hidden border transition-colors select-none ${
                       isDraggingFocalPoint
-                        ? "border-accent cursor-grabbing"
-                        : "border-white/10 cursor-crosshair hover:border-white/30"
+                        ? 'border-accent cursor-grabbing'
+                        : 'border-white/10 cursor-crosshair hover:border-white/30'
                     }`}
                     onMouseDown={handleFocalPointMouseDown}
                   >
@@ -1483,7 +1510,7 @@ export function PhotoSlideshow({
                     {/* Focal point indicator */}
                     <div
                       className={`absolute w-8 h-8 -ml-4 -mt-4 pointer-events-none transition-transform ${
-                        isDraggingFocalPoint ? "scale-125" : ""
+                        isDraggingFocalPoint ? 'scale-125' : ''
                       }`}
                       style={{
                         left: `${heroFocalPoint.x}%`,
@@ -1492,7 +1519,7 @@ export function PhotoSlideshow({
                     >
                       <div
                         className={`absolute inset-0 rounded-full border-2 border-white shadow-lg ${
-                          isDraggingFocalPoint ? "" : "animate-pulse"
+                          isDraggingFocalPoint ? '' : 'animate-pulse'
                         }`}
                       />
                       <div className="absolute inset-2 rounded-full bg-accent" />
@@ -1541,12 +1568,12 @@ export function PhotoSlideshow({
                         Saving...
                       </>
                     ) : (
-                      "Save Focal Point"
+                      'Save Focal Point'
                     )}
                   </button>
 
                   <p className="text-xs text-text-dim mt-2 text-center">
-                    Position: {Math.round(heroFocalPoint.x)}%,{" "}
+                    Position: {Math.round(heroFocalPoint.x)}%,{' '}
                     {Math.round(heroFocalPoint.y)}%
                   </p>
                 </div>
@@ -1573,5 +1600,5 @@ export function PhotoSlideshow({
         />
       )}
     </div>
-  );
+  )
 }

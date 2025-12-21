@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { Card } from "@/components/ui";
-import { ScoringVersion, getCategories, ScoringCategory } from "@/lib/scoring";
+import { Card } from '@/components/ui'
+import { ScoringVersion, getCategories, ScoringCategory } from '@/lib/scoring'
 
 export interface CategoryWinnerData {
   /** Category ID */
-  categoryId: string;
+  categoryId: string
   /** Winning band name */
-  winnerName: string;
+  winnerName: string
   /** Score achieved */
-  score: number;
+  score: number
   /** Max possible score for this category */
-  maxScore: number;
+  maxScore: number
 }
 
 export interface CategoryWinnersProps {
   /** Scoring version determines which categories to show */
-  scoringVersion: ScoringVersion;
+  scoringVersion: ScoringVersion
   /** Winner data for each category */
-  categoryWinners: CategoryWinnerData[];
+  categoryWinners: CategoryWinnerData[]
 }
 
 function CategoryCard({
@@ -27,10 +27,10 @@ function CategoryCard({
   score,
   maxScore,
 }: {
-  category: ScoringCategory;
-  winnerName: string;
-  score: number;
-  maxScore: number;
+  category: ScoringCategory
+  winnerName: string
+  score: number
+  maxScore: number
 }) {
   return (
     <Card className="text-center hover:border-white/10 transition-colors">
@@ -44,17 +44,17 @@ function CategoryCard({
         <span className="text-text-dim">/{maxScore}</span>
       </p>
     </Card>
-  );
+  )
 }
 
 export function CategoryWinners({
   scoringVersion,
   categoryWinners,
 }: CategoryWinnersProps) {
-  const categories = getCategories(scoringVersion);
+  const categories = getCategories(scoringVersion)
 
   if (categories.length === 0) {
-    return null; // No categories for 2022.1
+    return null // No categories for 2022.1
   }
 
   return (
@@ -63,11 +63,13 @@ export function CategoryWinners({
         <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
           Category Winners
         </h3>
-        <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${categories.length} gap-4`}>
+        <div
+          className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-${categories.length} gap-4`}
+        >
           {categories.map((category) => {
             const winnerData = categoryWinners.find(
               (w) => w.categoryId === category.id
-            );
+            )
 
             if (!winnerData) {
               return (
@@ -78,7 +80,7 @@ export function CategoryWinners({
                   </h3>
                   <p className="font-medium text-text-dim">N/A</p>
                 </Card>
-              );
+              )
             }
 
             return (
@@ -89,17 +91,10 @@ export function CategoryWinners({
                 score={winnerData.score}
                 maxScore={winnerData.maxScore}
               />
-            );
+            )
           })}
         </div>
       </div>
     </section>
-  );
+  )
 }
-
-
-
-
-
-
-

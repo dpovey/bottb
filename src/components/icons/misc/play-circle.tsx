@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Play button in a circle - for slideshow, video playback
@@ -24,7 +24,6 @@ export const PlayCircleIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   )
-);
+)
 
-PlayCircleIcon.displayName = "PlayCircleIcon";
-
+PlayCircleIcon.displayName = 'PlayCircleIcon'

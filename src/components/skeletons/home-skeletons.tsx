@@ -1,9 +1,7 @@
-import { Skeleton } from "@/components/ui";
+import { Skeleton } from '@/components/ui'
 
 export function EventCardSkeleton() {
-  return (
-    <Skeleton className="aspect-4/3 rounded-lg" />
-  );
+  return <Skeleton className="aspect-4/3 rounded-lg" />
 }
 
 export function PhotoStripSkeleton() {
@@ -16,7 +14,7 @@ export function PhotoStripSkeleton() {
         />
       ))}
     </div>
-  );
+  )
 }
 
 export function VideoStripSkeleton() {
@@ -34,18 +32,15 @@ export function VideoStripSkeleton() {
         ))}
       </div>
     </>
-  );
+  )
 }
 
 export function CompanyLogoMarqueeSkeleton() {
   return (
     <div className="flex items-center gap-16 py-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <Skeleton
-          key={i}
-          className="h-12 w-32 shrink-0"
-        />
+        <Skeleton key={i} className="h-12 w-32 shrink-0" />
       ))}
     </div>
-  );
+  )
 }

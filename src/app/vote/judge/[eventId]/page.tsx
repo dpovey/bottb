@@ -1,105 +1,105 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 // No fingerprinting needed for judge voting
-import { BandThumbnail } from "@/components/ui";
-import { ScoringVersion, parseScoringVersion } from "@/lib/scoring";
+import { BandThumbnail } from '@/components/ui'
+import { ScoringVersion, parseScoringVersion } from '@/lib/scoring'
 
 interface Band {
-  id: string;
-  name: string;
-  description?: string;
-  order: number;
-  hero_thumbnail_url?: string;
+  id: string
+  name: string
+  description?: string
+  order: number
+  hero_thumbnail_url?: string
   info?: {
-    logo_url?: string;
-    website?: string;
+    logo_url?: string
+    website?: string
     social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    genre?: string;
-    members?: string[];
-    [key: string]: unknown;
-  };
+      twitter?: string
+      instagram?: string
+      facebook?: string
+    }
+    genre?: string
+    members?: string[]
+    [key: string]: unknown
+  }
 }
 
 interface EventInfo {
-  scoring_version?: string;
-  [key: string]: unknown;
+  scoring_version?: string
+  [key: string]: unknown
 }
 
 interface JudgeScores {
-  song_choice: number;
-  performance: number;
-  crowd_vibe: number;
-  visuals: number; // 2026.1 only
+  song_choice: number
+  performance: number
+  crowd_vibe: number
+  visuals: number // 2026.1 only
 }
 
 export default function JudgeVotingPage() {
-  const params = useParams();
-  const eventId = params.eventId as string;
-  const [bands, setBands] = useState<Band[]>([]);
-  const [scores, setScores] = useState<Record<string, JudgeScores>>({});
-  const [name, setName] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [duplicateError, setDuplicateError] = useState<string>("");
-  const [scoringVersion, setScoringVersion] = useState<ScoringVersion>("2026.1");
+  const params = useParams()
+  const eventId = params.eventId as string
+  const [bands, setBands] = useState<Band[]>([])
+  const [scores, setScores] = useState<Record<string, JudgeScores>>({})
+  const [name, setName] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [duplicateError, setDuplicateError] = useState<string>('')
+  const [scoringVersion, setScoringVersion] = useState<ScoringVersion>('2026.1')
 
   // Scoring config based on version
-  const is2026 = scoringVersion === "2026.1";
-  const crowdVibeMax = is2026 ? 20 : 30;
-  const maxJudgeScore = is2026 ? 90 : 80; // 20+30+20+20 vs 20+30+30
+  const is2026 = scoringVersion === '2026.1'
+  const crowdVibeMax = is2026 ? 20 : 30
+  const maxJudgeScore = is2026 ? 90 : 80 // 20+30+20+20 vs 20+30+30
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch event to get scoring version
-        const eventResponse = await fetch(`/api/events/${eventId}`);
+        const eventResponse = await fetch(`/api/events/${eventId}`)
         if (eventResponse.ok) {
-          const eventData = await eventResponse.json();
-          const eventInfo = eventData.info as EventInfo | null;
-          const version = parseScoringVersion(eventInfo);
-          setScoringVersion(version);
+          const eventData = await eventResponse.json()
+          const eventInfo = eventData.info as EventInfo | null
+          const version = parseScoringVersion(eventInfo)
+          setScoringVersion(version)
         }
 
         // Fetch bands
-        const response = await fetch(`/api/bands/${eventId}`);
-        const data = await response.json();
+        const response = await fetch(`/api/bands/${eventId}`)
+        const data = await response.json()
 
         // Ensure data is an array
-        const bandsData = Array.isArray(data) ? data : [];
-        setBands(bandsData);
+        const bandsData = Array.isArray(data) ? data : []
+        setBands(bandsData)
 
         // Initialize scores
-        const initialScores: Record<string, JudgeScores> = {};
+        const initialScores: Record<string, JudgeScores> = {}
         bandsData.forEach((band: Band) => {
           initialScores[band.id] = {
             song_choice: 0,
             performance: 0,
             crowd_vibe: 0,
             visuals: 0,
-          };
-        });
-        setScores(initialScores);
+          }
+        })
+        setScores(initialScores)
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('Error fetching data:', error)
         // Set empty array on error to prevent map errors
-        setBands([]);
+        setBands([])
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
     // Note: We don't check for cookies here anymore
     // Cookies allow vote updates, only fingerprints block voting
 
-    fetchData();
-  }, [eventId]);
+    fetchData()
+  }, [eventId])
 
   const handleScoreChange = (
     bandId: string,
@@ -112,34 +112,34 @@ export default function JudgeVotingPage() {
         ...prev[bandId],
         [criterion]: value,
       },
-    }));
-  };
+    }))
+  }
 
   const isFormValid = () => {
     return (
-      name.trim() !== "" && // Name is required
+      name.trim() !== '' && // Name is required
       bands.every((band) => {
-        const bandScores = scores[band.id];
+        const bandScores = scores[band.id]
         const baseValid =
           bandScores &&
           bandScores.song_choice > 0 &&
           bandScores.performance > 0 &&
-          bandScores.crowd_vibe > 0;
-        
+          bandScores.crowd_vibe > 0
+
         // For 2026.1, visuals is also required
         if (is2026) {
-          return baseValid && bandScores.visuals > 0;
+          return baseValid && bandScores.visuals > 0
         }
-        return baseValid;
+        return baseValid
       })
-    );
-  };
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isFormValid()) return;
+    e.preventDefault()
+    if (!isFormValid()) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
       // No fingerprinting needed for judge voting - admins can vote multiple times
 
@@ -147,62 +147,62 @@ export default function JudgeVotingPage() {
         const voteData: Record<string, unknown> = {
           event_id: eventId,
           band_id: band.id,
-          voter_type: "judge" as const,
+          voter_type: 'judge' as const,
           name: name, // Name is required for judges
           vote_fingerprint: `${eventId}-${name.toLowerCase().trim()}-${band.id}`, // Unique per event, judge, and band
           song_choice: scores[band.id].song_choice,
           performance: scores[band.id].performance,
           crowd_vibe: scores[band.id].crowd_vibe,
-        };
+        }
         // Only include visuals for 2026.1
         if (is2026) {
-          voteData.visuals = scores[band.id].visuals;
+          voteData.visuals = scores[band.id].visuals
         }
-        return voteData;
-      });
+        return voteData
+      })
 
-      const response = await fetch("/api/votes/batch", {
-        method: "POST",
+      const response = await fetch('/api/votes/batch', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           votes,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
         // No cookie needed for judge voting - admins can vote multiple times
-        setIsSubmitted(true);
+        setIsSubmitted(true)
       } else {
         if (response.status === 403) {
           // Event status validation error
           setDuplicateError(
-            data.error || "Voting is not currently open for this event"
-          );
-          return;
+            data.error || 'Voting is not currently open for this event'
+          )
+          return
         } else if (response.status === 404) {
           // Event not found
-          setDuplicateError("Event not found");
-          return;
+          setDuplicateError('Event not found')
+          return
         } else if (response.status === 409) {
           // Duplicate judge vote
-          setDuplicateError(data.error);
-          return;
+          setDuplicateError(data.error)
+          return
         } else {
-          console.error("Error submitting votes:", response.status);
+          console.error('Error submitting votes:', response.status)
           // Show error but don't block future submissions
         }
       }
     } catch (error) {
-      console.error("Error submitting votes:", error);
+      console.error('Error submitting votes:', error)
       // Show error but don't block future submissions
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (isSubmitted) {
     return (
@@ -218,10 +218,10 @@ export default function JudgeVotingPage() {
           <button
             onClick={() => {
               // Reset form for next judge
-              setName("");
-              setScores({});
-              setIsSubmitted(false);
-              setIsSubmitting(false);
+              setName('')
+              setScores({})
+              setIsSubmitted(false)
+              setIsSubmitting(false)
             }}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition-colors"
           >
@@ -229,7 +229,7 @@ export default function JudgeVotingPage() {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   if (isLoading) {
@@ -241,7 +241,7 @@ export default function JudgeVotingPage() {
           <p className="text-gray-300">Fetching bands for this event</p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -273,7 +273,9 @@ export default function JudgeVotingPage() {
               </div>
             )}
 
-            <div className={`grid gap-4 text-sm ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            <div
+              className={`grid gap-4 text-sm ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+            >
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
                   Song Choice (20 points)
@@ -355,7 +357,9 @@ export default function JudgeVotingPage() {
                   </div>
                 </div>
 
-                <div className={`grid gap-6 ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+                <div
+                  className={`grid gap-6 ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+                >
                   <div>
                     <label className="block text-white font-medium mb-2">
                       Song Choice: {scores[band.id]?.song_choice || 0}/20
@@ -368,7 +372,7 @@ export default function JudgeVotingPage() {
                       onChange={(e) =>
                         handleScoreChange(
                           band.id,
-                          "song_choice",
+                          'song_choice',
                           parseInt(e.target.value) || 0
                         )
                       }
@@ -400,7 +404,7 @@ export default function JudgeVotingPage() {
                       onChange={(e) =>
                         handleScoreChange(
                           band.id,
-                          "performance",
+                          'performance',
                           parseInt(e.target.value) || 0
                         )
                       }
@@ -422,7 +426,8 @@ export default function JudgeVotingPage() {
 
                   <div>
                     <label className="block text-white font-medium mb-2">
-                      Crowd Vibe: {scores[band.id]?.crowd_vibe || 0}/{crowdVibeMax}
+                      Crowd Vibe: {scores[band.id]?.crowd_vibe || 0}/
+                      {crowdVibeMax}
                     </label>
                     <input
                       type="range"
@@ -432,7 +437,7 @@ export default function JudgeVotingPage() {
                       onChange={(e) =>
                         handleScoreChange(
                           band.id,
-                          "crowd_vibe",
+                          'crowd_vibe',
                           parseInt(e.target.value) || 0
                         )
                       }
@@ -440,9 +445,11 @@ export default function JudgeVotingPage() {
                       aria-label={`Crowd Vibe for ${band.name}`}
                       style={{
                         background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) * 100
+                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) *
+                          100
                         }%, #374151 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) * 100
+                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) *
+                          100
                         }%, #374151 100%)`,
                       }}
                     />
@@ -465,7 +472,7 @@ export default function JudgeVotingPage() {
                         onChange={(e) =>
                           handleScoreChange(
                             band.id,
-                            "visuals",
+                            'visuals',
                             parseInt(e.target.value) || 0
                           )
                         }
@@ -489,11 +496,11 @@ export default function JudgeVotingPage() {
 
                 <div className="mt-4 text-right">
                   <span className="text-white font-medium">
-                    Total:{" "}
+                    Total:{' '}
                     {(scores[band.id]?.song_choice || 0) +
                       (scores[band.id]?.performance || 0) +
                       (scores[band.id]?.crowd_vibe || 0) +
-                      (is2026 ? (scores[band.id]?.visuals || 0) : 0)}
+                      (is2026 ? scores[band.id]?.visuals || 0 : 0)}
                     /{maxJudgeScore}
                   </span>
                 </div>
@@ -506,10 +513,10 @@ export default function JudgeVotingPage() {
             disabled={!isFormValid() || isSubmitting}
             className="w-full mt-8 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl text-lg transition-colors"
           >
-            {isSubmitting ? "Submitting..." : "Submit All Scores"}
+            {isSubmitting ? 'Submitting...' : 'Submit All Scores'}
           </button>
         </div>
       </form>
     </div>
-  );
+  )
 }

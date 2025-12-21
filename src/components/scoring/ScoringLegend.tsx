@@ -1,21 +1,24 @@
-"use client";
+'use client'
 
-import { Card } from "@/components/ui";
-import { ScoringVersion, getCategories, getScoringFormula } from "@/lib/scoring";
+import { Card } from '@/components/ui'
+import { ScoringVersion, getCategories, getScoringFormula } from '@/lib/scoring'
 
 export interface ScoringLegendProps {
   /** Scoring version */
-  scoringVersion: ScoringVersion;
+  scoringVersion: ScoringVersion
   /** Whether to show in compact mode */
-  compact?: boolean;
+  compact?: boolean
 }
 
-export function ScoringLegend({ scoringVersion, compact = false }: ScoringLegendProps) {
-  const categories = getCategories(scoringVersion);
-  const formula = getScoringFormula(scoringVersion);
+export function ScoringLegend({
+  scoringVersion,
+  compact = false,
+}: ScoringLegendProps) {
+  const categories = getCategories(scoringVersion)
+  const formula = getScoringFormula(scoringVersion)
 
   if (categories.length === 0) {
-    return null; // No legend for 2022.1
+    return null // No legend for 2022.1
   }
 
   if (compact) {
@@ -24,7 +27,7 @@ export function ScoringLegend({ scoringVersion, compact = false }: ScoringLegend
         <span className="text-text-dim">Scoring: </span>
         {formula}
       </div>
-    );
+    )
   }
 
   return (
@@ -32,7 +35,7 @@ export function ScoringLegend({ scoringVersion, compact = false }: ScoringLegend
       <h4 className="text-xs tracking-widest uppercase text-text-muted mb-4">
         Scoring System
       </h4>
-      
+
       <div className="space-y-3">
         {categories.map((category) => (
           <div key={category.id} className="flex items-start gap-3">
@@ -55,12 +58,5 @@ export function ScoringLegend({ scoringVersion, compact = false }: ScoringLegend
         </div>
       </div>
     </Card>
-  );
+  )
 }
-
-
-
-
-
-
-

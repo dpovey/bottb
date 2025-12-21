@@ -3,6 +3,7 @@
 ## What We're Investigating
 
 The page is scrolling to the "Past Events" section when it loads. We need to understand:
+
 1. **What** is causing the scroll
 2. **When** it happens (timing)
 3. **Why** it happens (root cause)
@@ -12,6 +13,7 @@ The page is scrolling to the "Past Events" section when it loads. We need to und
 ### What is Browser Scroll Restoration?
 
 Browser scroll restoration is a feature that automatically restores the scroll position when you:
+
 - Navigate back/forward using browser buttons
 - Reload the page (in some cases)
 - Return to a page from history
@@ -31,6 +33,7 @@ Browser scroll restoration is a feature that automatically restores the scroll p
 ### The Problem with Suspense Boundaries
 
 When a Suspense boundary resolves:
+
 1. New content is added to the DOM
 2. Browser may try to restore scroll position
 3. If content above the restored position was removed/changed, browser may scroll to maintain the "same" position
@@ -39,6 +42,7 @@ When a Suspense boundary resolves:
 ## Next.js and Scroll Behavior
 
 Next.js has its own scroll restoration behavior:
+
 - On client-side navigation, it tries to restore scroll position
 - On initial page load, it should start at top
 - Suspense boundaries can interfere with this
@@ -109,10 +113,8 @@ The `ScrollDebug` component logs:
 ## Next Steps
 
 After reviewing the debug output:
+
 1. Identify the exact cause
 2. Fix the root cause (not just the symptom)
 3. Remove the debug component
 4. Test thoroughly
-
-
-

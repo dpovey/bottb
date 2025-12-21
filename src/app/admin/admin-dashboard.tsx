@@ -1,98 +1,98 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { VideoIcon, ShareIcon, PhotoIcon } from "@/components/icons";
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { VideoIcon, ShareIcon, PhotoIcon } from '@/components/icons'
 
 interface Event {
-  id: string;
-  name: string;
-  location: string;
-  status: "upcoming" | "voting" | "finalized";
-  date: string;
+  id: string
+  name: string
+  location: string
+  status: 'upcoming' | 'voting' | 'finalized'
+  date: string
 }
 
 interface Session {
   user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    isAdmin?: boolean;
-  };
+    id: string
+    name?: string | null
+    email?: string | null
+    isAdmin?: boolean
+  }
 }
 
 interface AdminDashboardProps {
-  session: Session;
+  session: Session
 }
 
 export default function AdminDashboard({
   session: _session,
 }: AdminDashboardProps) {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    fetchEvents()
+  }, [])
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch("/api/events");
+      const response = await fetch('/api/events')
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json()
         // Ensure data is an array
-        const eventsData = Array.isArray(data) ? data : [];
-        setEvents(eventsData);
+        const eventsData = Array.isArray(data) ? data : []
+        setEvents(eventsData)
       } else {
-        const errorData = await response.json();
-        console.error("Error fetching events:", response.status, errorData);
-        setEvents([]);
+        const errorData = await response.json()
+        console.error('Error fetching events:', response.status, errorData)
+        setEvents([])
       }
     } catch (error) {
-      console.error("Error fetching events:", error);
-      setEvents([]);
+      console.error('Error fetching events:', error)
+      setEvents([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleStatusChange = async (eventId: string, newStatus: string) => {
-    setUpdatingStatus(eventId);
+    setUpdatingStatus(eventId)
     try {
       const response = await fetch(`/api/events/${eventId}/status`, {
-        method: "PATCH",
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ status: newStatus }),
-      });
+      })
 
       if (response.ok) {
-        const result = await response.json();
+        const result = await response.json()
         // Update the local state
         setEvents((prevEvents) =>
           prevEvents.map((event) =>
             event.id === eventId
               ? {
                   ...event,
-                  status: newStatus as "upcoming" | "voting" | "finalized",
+                  status: newStatus as 'upcoming' | 'voting' | 'finalized',
                 }
               : event
           )
-        );
-        alert(`✅ ${result.message}`);
+        )
+        alert(`✅ ${result.message}`)
       } else {
-        const error = await response.json();
-        alert(`❌ Error: ${error.error}`);
+        const error = await response.json()
+        alert(`❌ Error: ${error.error}`)
       }
     } catch (error) {
-      console.error("Error updating event status:", error);
-      alert("❌ Failed to update event status");
+      console.error('Error updating event status:', error)
+      alert('❌ Failed to update event status')
     } finally {
-      setUpdatingStatus(null);
+      setUpdatingStatus(null)
     }
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -189,15 +189,15 @@ export default function AdminDashboard({
                       }
                       disabled={updatingStatus === event.id}
                       className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 ${
-                        event.status === "voting"
-                          ? "bg-green-500/30 text-green-300 border-green-400 hover:bg-green-500/40"
-                          : event.status === "upcoming"
-                          ? "bg-blue-500/30 text-blue-300 border-blue-400 hover:bg-blue-500/40"
-                          : "bg-gray-500/30 text-gray-300 border-gray-400 hover:bg-gray-500/40"
+                        event.status === 'voting'
+                          ? 'bg-green-500/30 text-green-300 border-green-400 hover:bg-green-500/40'
+                          : event.status === 'upcoming'
+                            ? 'bg-blue-500/30 text-blue-300 border-blue-400 hover:bg-blue-500/40'
+                            : 'bg-gray-500/30 text-gray-300 border-gray-400 hover:bg-gray-500/40'
                       } ${
                         updatingStatus === event.id
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer transition-all duration-200 hover:scale-105"
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'cursor-pointer transition-all duration-200 hover:scale-105'
                       }`}
                     >
                       <option value="upcoming">Upcoming</option>
@@ -221,5 +221,5 @@ export default function AdminDashboard({
         )}
       </div>
     </div>
-  );
+  )
 }

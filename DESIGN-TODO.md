@@ -1,7 +1,7 @@
 # Design System Migration TODO
 
 > Current state assessment and migration plan
-> 
+>
 > **Design Inspiration**: [Tomorrowland](https://www.tomorrowland.com/) — Monochromatic, elegant, sophisticated
 
 ## Migration Status
@@ -10,45 +10,46 @@
 
 ### ✅ Completed
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Tailwind config with design tokens | ✅ Done | Colors, fonts, spacing in `tailwind.config.js` |
-| Jost font setup | ✅ Done | Replaced Rock Salt + Lato |
-| Button component | ✅ Done | `src/components/ui/button.tsx` - outline, filled, accent, ghost, danger |
-| Card component | ✅ Done | `src/components/ui/card.tsx` - default, elevated, interactive |
-| Badge component | ✅ Done | `src/components/ui/badge.tsx` - semantic variants |
-| DateBadge component | ✅ Done | `src/components/ui/date-badge.tsx` |
-| BandThumbnail component | ✅ Done | `src/components/ui/band-thumbnail.tsx` - logo/hero fallback |
-| CompanyBadge component | ✅ Done | `src/components/ui/company-badge.tsx` - outline badge with icon |
-| CompanyIcon component | ✅ Done | `src/components/ui/company-icon.tsx` - square icon display |
-| Header component | ✅ Done | `src/components/nav/header.tsx` - reusable with nav, breadcrumbs |
-| Footer component | ✅ Done | `src/components/nav/footer.tsx` - simple and full variants |
-| Breadcrumbs component | ✅ Done | `src/components/nav/breadcrumbs.tsx` |
-| Layout refactor | ✅ Done | WebLayout, AdminLayout, PublicLayout use shared Header/Footer |
-| Home page | ✅ Done | Hero section, new design system |
-| Event page | ✅ Done | Hero, breadcrumbs, company badges on bands |
-| Band page | ✅ Done | Hero, score breakdown, company badge |
-| Results page | ✅ Done | Category winners, full table with company badges, band links |
-| Voting pages | ✅ Done | Crowd and judge voting with design system |
-| Photos page | ✅ Done | Gallery grid, slideshow, filters |
-| Photo slideshow | ✅ Done | Full-screen with keyboard nav, company badges |
-| Companies page | ✅ Done | Company cards with logos/icons |
-| Company logos/icons | ✅ Done | Blob storage, seeding scripts |
-| Test updates | ✅ Done | All tests passing |
+| Task                               | Status  | Notes                                                                   |
+| ---------------------------------- | ------- | ----------------------------------------------------------------------- |
+| Tailwind config with design tokens | ✅ Done | Colors, fonts, spacing in `tailwind.config.js`                          |
+| Jost font setup                    | ✅ Done | Replaced Rock Salt + Lato                                               |
+| Button component                   | ✅ Done | `src/components/ui/button.tsx` - outline, filled, accent, ghost, danger |
+| Card component                     | ✅ Done | `src/components/ui/card.tsx` - default, elevated, interactive           |
+| Badge component                    | ✅ Done | `src/components/ui/badge.tsx` - semantic variants                       |
+| DateBadge component                | ✅ Done | `src/components/ui/date-badge.tsx`                                      |
+| BandThumbnail component            | ✅ Done | `src/components/ui/band-thumbnail.tsx` - logo/hero fallback             |
+| CompanyBadge component             | ✅ Done | `src/components/ui/company-badge.tsx` - outline badge with icon         |
+| CompanyIcon component              | ✅ Done | `src/components/ui/company-icon.tsx` - square icon display              |
+| Header component                   | ✅ Done | `src/components/nav/header.tsx` - reusable with nav, breadcrumbs        |
+| Footer component                   | ✅ Done | `src/components/nav/footer.tsx` - simple and full variants              |
+| Breadcrumbs component              | ✅ Done | `src/components/nav/breadcrumbs.tsx`                                    |
+| Layout refactor                    | ✅ Done | WebLayout, AdminLayout, PublicLayout use shared Header/Footer           |
+| Home page                          | ✅ Done | Hero section, new design system                                         |
+| Event page                         | ✅ Done | Hero, breadcrumbs, company badges on bands                              |
+| Band page                          | ✅ Done | Hero, score breakdown, company badge                                    |
+| Results page                       | ✅ Done | Category winners, full table with company badges, band links            |
+| Voting pages                       | ✅ Done | Crowd and judge voting with design system                               |
+| Photos page                        | ✅ Done | Gallery grid, slideshow, filters                                        |
+| Photo slideshow                    | ✅ Done | Full-screen with keyboard nav, company badges                           |
+| Companies page                     | ✅ Done | Company cards with logos/icons                                          |
+| Company logos/icons                | ✅ Done | Blob storage, seeding scripts                                           |
+| Test updates                       | ✅ Done | All tests passing                                                       |
 
 ### 🔄 In Progress / TODO
 
-| Task | Priority | Notes |
-|------|----------|-------|
-| Admin pages | Low | Can use basic styling for now |
-| SEO metadata | Low | Add OG images, structured data |
-| About page | Low | Create based on design examples |
+| Task         | Priority | Notes                           |
+| ------------ | -------- | ------------------------------- |
+| Admin pages  | Low      | Can use basic styling for now   |
+| SEO metadata | Low      | Add OG images, structured data  |
+| About page   | Low      | Create based on design examples |
 
 ---
 
 ## Design Direction Summary
 
 Based on the actual Tomorrowland website:
+
 - **90% monochromatic** — white/gray text on near-black backgrounds
 - **Outline buttons** — not filled, subtle white borders
 - **ALL CAPS + letter spacing** for navigation and buttons
@@ -58,13 +59,13 @@ Based on the actual Tomorrowland website:
 
 ### ✅ Finalized Color Decisions
 
-| Role | Color | Hex | Usage |
-|------|-------|-----|-------|
-| **Accent** | Vibrant Gold | `#F5A623` | Selected states, primary CTAs, links, winner badges |
-| **Error** | Apple Red | `#f10e34` | Error states, destructive actions |
-| **Success** | Lime Green | `#31eb14` | Success states, confirmations |
-| **Warning** | Vibrant Gold | `#F5A623` | Warning states, caution notices (same as accent) |
-| **Info** | Blue | `#3B82F6` | Informational messages |
+| Role        | Color        | Hex       | Usage                                               |
+| ----------- | ------------ | --------- | --------------------------------------------------- |
+| **Accent**  | Vibrant Gold | `#F5A623` | Selected states, primary CTAs, links, winner badges |
+| **Error**   | Apple Red    | `#f10e34` | Error states, destructive actions                   |
+| **Success** | Lime Green   | `#31eb14` | Success states, confirmations                       |
+| **Warning** | Vibrant Gold | `#F5A623` | Warning states, caution notices (same as accent)    |
+| **Info**    | Blue         | `#3B82F6` | Informational messages                              |
 
 See `design/` folder for HTML mockups and `design/theme.css` for the CSS variables.
 
@@ -120,6 +121,7 @@ All components are in `src/components/`:
 ## Design Examples
 
 Review the HTML mockups in `design/`:
+
 - `design-system.html` — Typography, colors, all components
 - `theme.css` — Shared CSS variables and component styles (company-badge, etc.)
 - `home.html` — Home page layout
@@ -160,9 +162,8 @@ import { Button } from "@/components/ui";
 ### Card Usage
 
 ```tsx
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui";
-
-<Card variant="interactive">
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
+;<Card variant="interactive">
   <CardHeader>
     <CardTitle>Title</CardTitle>
   </CardHeader>
@@ -173,13 +174,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui";
 ### Layout Usage
 
 ```tsx
-import { WebLayout } from "@/components/layouts";
-
-<WebLayout 
-  breadcrumbs={[
-    { label: "Events", href: "/" },
-    { label: "Event Name" }
-  ]}
+import { WebLayout } from '@/components/layouts'
+;<WebLayout
+  breadcrumbs={[{ label: 'Events', href: '/' }, { label: 'Event Name' }]}
   footerVariant="simple"
 >
   {children}

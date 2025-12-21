@@ -1,75 +1,75 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Button } from "./button";
-import { ChevronRightIcon } from "@/components/icons";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Button } from './button'
+import { ChevronRightIcon } from '@/components/icons'
 
 const meta: Meta<typeof Button> = {
-  title: "Actions/Button",
+  title: 'Actions/Button',
   component: Button,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Primary button component with multiple variants and sizes. Follows BOTTB design system with outline-solid as the default style.",
+          'Primary button component with multiple variants and sizes. Follows BOTTB design system with outline-solid as the default style.',
       },
     },
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["outline-solid", "filled", "accent", "ghost", "danger"],
-      description: "Visual style variant (outline-solid is default)",
+      control: 'select',
+      options: ['outline-solid', 'filled', 'accent', 'ghost', 'danger'],
+      description: 'Visual style variant (outline-solid is default)',
     },
     size: {
-      control: "select",
-      options: ["sm", "md", "lg"],
-      description: "Button size",
+      control: 'select',
+      options: ['sm', 'md', 'lg'],
+      description: 'Button size',
     },
     disabled: {
-      control: "boolean",
-      description: "Disabled state",
+      control: 'boolean',
+      description: 'Disabled state',
     },
     children: {
-      control: "text",
-      description: "Button content",
+      control: 'text',
+      description: 'Button content',
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof Button>;
+export default meta
+type Story = StoryObj<typeof Button>
 
 // Default outline button
 export const Default: Story = {
   args: {
-    children: "View Events",
-    variant: "outline-solid",
-    size: "md",
+    children: 'View Events',
+    variant: 'outline-solid',
+    size: 'md',
   },
-};
+}
 
 // All variants
 export const Outline: Story = {
   args: {
-    children: "Register Interest",
-    variant: "outline-solid",
-    size: "lg",
+    children: 'Register Interest',
+    variant: 'outline-solid',
+    size: 'lg',
   },
   parameters: {
     docs: {
       description: {
-        story: "Default button style - white outline on dark background.",
+        story: 'Default button style - white outline on dark background.',
       },
     },
   },
-};
+}
 
 export const Filled: Story = {
   args: {
-    children: "Vote Now",
-    variant: "filled",
-    size: "lg",
+    children: 'Vote Now',
+    variant: 'filled',
+    size: 'lg',
   },
   parameters: {
     docs: {
@@ -78,77 +78,77 @@ export const Filled: Story = {
       },
     },
   },
-};
+}
 
 export const Accent: Story = {
   args: {
-    children: "Live Event",
-    variant: "accent",
-    size: "lg",
+    children: 'Live Event',
+    variant: 'accent',
+    size: 'lg',
   },
   parameters: {
     docs: {
       description: {
-        story: "For live events, winners, and very important actions.",
+        story: 'For live events, winners, and very important actions.',
       },
     },
   },
-};
+}
 
 export const Ghost: Story = {
   args: {
-    children: "Cancel",
-    variant: "ghost",
-    size: "md",
+    children: 'Cancel',
+    variant: 'ghost',
+    size: 'md',
   },
   parameters: {
     docs: {
       description: {
-        story: "No border, just text. For secondary actions.",
+        story: 'No border, just text. For secondary actions.',
       },
     },
   },
-};
+}
 
 export const Danger: Story = {
   args: {
-    children: "Delete Event",
-    variant: "danger",
-    size: "md",
+    children: 'Delete Event',
+    variant: 'danger',
+    size: 'md',
   },
   parameters: {
     docs: {
       description: {
-        story: "For destructive actions like delete.",
+        story: 'For destructive actions like delete.',
       },
     },
   },
-};
+}
 
 // Size variants
 export const Small: Story = {
   args: {
-    children: "Small",
-    variant: "outline-solid",
-    size: "sm",
+    children: 'Small',
+    variant: 'outline-solid',
+    size: 'sm',
   },
-};
+}
 
 export const Medium: Story = {
   args: {
-    children: "Medium",
-    variant: "outline-solid",
-    size: "md",
+    children: 'Medium',
+    variant: 'outline-solid',
+    size: 'md',
   },
-};
+}
 
 export const Large: Story = {
   args: {
-    children: "Large",
-    variant: "outline-solid",
-    size: "lg",
+    children: 'Large',
+    variant: 'outline-solid',
+    size: 'lg',
   },
-};
+}
 
 // With icon
 export const WithIcon: Story = {
@@ -161,11 +161,11 @@ export const WithIcon: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Buttons can include icons before or after text.",
+        story: 'Buttons can include icons before or after text.',
       },
     },
   },
-};
+}
 
 // Icon only
 export const IconOnly: Story = {
@@ -177,11 +177,11 @@ export const IconOnly: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Icon-only button with square padding.",
+        story: 'Icon-only button with square padding.',
       },
     },
   },
-};
+}
 
 // Disabled states
 export const DisabledStates: Story = {
@@ -204,11 +204,11 @@ export const DisabledStates: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All variants support disabled state.",
+        story: 'All variants support disabled state.',
       },
     },
   },
-};
+}
 
 // All variants showcase
 export const AllVariants: Story = {
@@ -224,11 +224,11 @@ export const AllVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All button variants side by side.",
+        story: 'All button variants side by side.',
       },
     },
   },
-};
+}
 
 // All sizes showcase
 export const AllSizes: Story = {
@@ -242,9 +242,8 @@ export const AllSizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: "All button sizes side by side.",
+        story: 'All button sizes side by side.',
       },
     },
   },
-};
-
+}

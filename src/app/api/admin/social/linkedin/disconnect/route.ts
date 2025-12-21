@@ -7,27 +7,26 @@
  * Admin-only endpoint.
  */
 
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { disconnectSocialAccount } from "@/lib/social/db";
+import { NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { disconnectSocialAccount } from '@/lib/social/db'
 
 export async function DELETE() {
   // Check admin auth
-  const session = await auth();
+  const session = await auth()
   if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
-    await disconnectSocialAccount("linkedin");
+    await disconnectSocialAccount('linkedin')
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("LinkedIn disconnect error:", error);
+    console.error('LinkedIn disconnect error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Disconnect failed" },
+      { error: error instanceof Error ? error.message : 'Disconnect failed' },
       { status: 500 }
-    );
+    )
   }
 }
-

@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { trackSocialLinkClick } from "@/lib/analytics";
+import { trackSocialLinkClick } from '@/lib/analytics'
 
 export interface SocialIconLinkProps {
-  href: string;
-  platform: string;
-  label: string;
-  location: string; // Where the icon appears (e.g., "footer", "about_hero", "band_page")
-  children: React.ReactNode;
-  className?: string;
+  href: string
+  platform: string
+  label: string
+  location: string // Where the icon appears (e.g., "footer", "about_hero", "band_page")
+  children: React.ReactNode
+  className?: string
 }
 
 /**
@@ -28,8 +28,8 @@ export function SocialIconLink({
       platform,
       location,
       url: href,
-    });
-  };
+    })
+  }
 
   return (
     <a
@@ -42,6 +42,5 @@ export function SocialIconLink({
     >
       {children}
     </a>
-  );
+  )
 }
-

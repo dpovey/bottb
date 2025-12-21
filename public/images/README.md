@@ -20,9 +20,8 @@ Reference these images in your components using:
 Or with Next.js Image component:
 
 ```tsx
-import Image from "next/image";
-
-<Image src="/images/logos/logo.png" alt="Logo" width={100} height={50} />;
+import Image from 'next/image'
+;<Image src="/images/logos/logo.png" alt="Logo" width={100} height={50} />
 ```
 
 ## Note

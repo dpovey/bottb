@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import React, { Component, type ReactNode } from "react";
-import { Button } from "./button";
+import React, { Component, type ReactNode } from 'react'
+import { Button } from './button'
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
+  children: ReactNode
   /** Fallback UI to show when error occurs. If not provided, default error UI is shown. */
-  fallback?: ReactNode;
+  fallback?: ReactNode
   /** Custom error handler called when error is caught */
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
   /** Section name for display in error message */
-  sectionName?: string;
+  sectionName?: string
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error: Error | null
 }
 
 /**
  * Error Boundary component to catch JavaScript errors in child components.
  * Prevents entire page crashes by containing errors to specific sections.
- * 
+ *
  * Usage:
  * ```tsx
  * <ErrorBoundary sectionName="Photo Gallery">
@@ -29,33 +29,36 @@ interface ErrorBoundaryState {
  * </ErrorBoundary>
  * ```
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error to console in development
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-    
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
+
     // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo);
+    this.props.onError?.(error, errorInfo)
   }
 
   handleRetry = (): void => {
-    this.setState({ hasError: false, error: null });
-  };
+    this.setState({ hasError: false, error: null })
+  }
 
   render(): ReactNode {
     if (this.state.hasError) {
       // Return custom fallback if provided
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       // Default error UI
@@ -80,7 +83,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <h3 className="text-lg font-semibold mb-2">
             {this.props.sectionName
               ? `Something went wrong loading ${this.props.sectionName}`
-              : "Something went wrong"}
+              : 'Something went wrong'}
           </h3>
           <p className="text-text-muted text-sm mb-6 max-w-md">
             We encountered an unexpected error. Please try again.
@@ -89,22 +92,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             Try Again
           </Button>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
 /**
  * Compact error fallback for smaller sections (cards, strips, etc.)
  */
-export function CompactErrorFallback({ 
-  message = "Failed to load",
-  onRetry 
-}: { 
-  message?: string;
-  onRetry?: () => void;
+export function CompactErrorFallback({
+  message = 'Failed to load',
+  onRetry,
+}: {
+  message?: string
+  onRetry?: () => void
 }) {
   return (
     <div className="flex items-center justify-center gap-3 py-8 px-4 text-center bg-bg-elevated rounded-lg border border-white/5">
@@ -124,7 +127,7 @@ export function CompactErrorFallback({
       </svg>
       <span className="text-text-muted text-sm">{message}</span>
       {onRetry && (
-        <button 
+        <button
           onClick={onRetry}
           className="text-accent hover:text-accent-light text-sm underline"
         >
@@ -132,6 +135,5 @@ export function CompactErrorFallback({
         </button>
       )}
     </div>
-  );
+  )
 }
-

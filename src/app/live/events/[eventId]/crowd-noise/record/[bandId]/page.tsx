@@ -1,102 +1,102 @@
-"use client";
+'use client'
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import {
   VUMeter,
   VolumeGraph,
   Oscilloscope,
   CircularOscilloscope,
   LEDDisplay,
-} from "./components";
-import { BandThumbnail } from "@/components/ui";
+} from './components'
+import { BandThumbnail } from '@/components/ui'
 
 interface Band {
-  id: string;
-  name: string;
-  order: number;
-  hero_thumbnail_url?: string;
+  id: string
+  name: string
+  order: number
+  hero_thumbnail_url?: string
   info?: {
-    logo_url?: string;
-    [key: string]: unknown;
-  };
+    logo_url?: string
+    [key: string]: unknown
+  }
 }
 
 interface _CrowdNoiseMeasurement {
-  id: string;
-  event_id: string;
-  band_id: string;
-  energy_level: number;
-  peak_volume: number;
-  recording_duration: number;
-  created_at: string;
+  id: string
+  event_id: string
+  band_id: string
+  energy_level: number
+  peak_volume: number
+  recording_duration: number
+  created_at: string
 }
 
 export default function CrowdNoiseRecordPage() {
-  const params = useParams();
-  const router = useRouter();
-  const eventId = params.eventId as string;
-  const bandId = params.bandId as string;
+  const params = useParams()
+  const router = useRouter()
+  const eventId = params.eventId as string
+  const bandId = params.bandId as string
 
-  const [band, setBand] = useState<Band | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [totalEnergy, setTotalEnergy] = useState(0);
-  const [peakVolume, setPeakVolume] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [crowdScore, setCrowdScore] = useState(0);
+  const [band, setBand] = useState<Band | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [totalEnergy, setTotalEnergy] = useState(0)
+  const [peakVolume, setPeakVolume] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [crowdScore, setCrowdScore] = useState(0)
   const [microphonePermission, setMicrophonePermission] = useState<
-    "unknown" | "granted" | "denied"
-  >("unknown");
-  const [isCheckingMic, setIsCheckingMic] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [isMonitoring, setIsMonitoring] = useState(false);
-  const [viewportScale, setViewportScale] = useState(1);
-  const [frameCount, setFrameCount] = useState(0);
+    'unknown' | 'granted' | 'denied'
+  >('unknown')
+  const [isCheckingMic, setIsCheckingMic] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const [audioLevel, setAudioLevel] = useState(0)
+  const [isMonitoring, setIsMonitoring] = useState(false)
+  const [viewportScale, setViewportScale] = useState(1)
+  const [frameCount, setFrameCount] = useState(0)
 
   const [availableMicrophones, setAvailableMicrophones] = useState<
     MediaDeviceInfo[]
-  >([]);
-  const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>("");
+  >([])
+  const [selectedMicrophoneId, setSelectedMicrophoneId] = useState<string>('')
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef(0);
-  const energyAccumulatorRef = useRef(0);
-  const isActiveRef = useRef(false);
-  const countdownActiveRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const dataArrayRef = useRef<Uint8Array | null>(null)
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
+  const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef(0)
+  const energyAccumulatorRef = useRef(0)
+  const isActiveRef = useRef(false)
+  const countdownActiveRef = useRef(false)
 
   const startAudioMonitoring = async () => {
     try {
-      await setupAudioMonitoring();
+      await setupAudioMonitoring()
     } catch (error) {
-      console.error("Error starting audio monitoring:", error);
+      console.error('Error starting audio monitoring:', error)
     }
-  };
+  }
 
   const setupAudioMonitoring = useCallback(
     async (stream?: MediaStream) => {
       try {
         // Clean up any existing monitoring
         if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-          animationRef.current = null;
+          cancelAnimationFrame(animationRef.current)
+          animationRef.current = null
         }
 
         // Get stream with selected microphone if not provided
-        let audioStream = stream;
+        let audioStream = stream
         if (!audioStream && selectedMicrophoneId) {
           audioStream = await navigator.mediaDevices.getUserMedia({
             audio: { deviceId: { exact: selectedMicrophoneId } },
-          });
+          })
         } else if (!audioStream) {
           // Try to get a real microphone, not virtual audio devices
           audioStream = await navigator.mediaDevices.getUserMedia({
@@ -107,109 +107,110 @@ export default function CrowdNoiseRecordPage() {
               sampleRate: 44100,
               channelCount: 1,
             },
-          });
+          })
         }
 
-        const audioContext = new (window.AudioContext ||
+        const audioContext = new (
+          window.AudioContext ||
           (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext)();
+            .webkitAudioContext
+        )()
 
         // Resume audio context if it's suspended
-        if (audioContext.state === "suspended") {
-          await audioContext.resume();
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume()
         }
 
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        analyser.smoothingTimeConstant = 0.3;
+        const analyser = audioContext.createAnalyser()
+        analyser.fftSize = 2048
+        analyser.smoothingTimeConstant = 0.3
 
-        const source = audioContext.createMediaStreamSource(audioStream);
-        source.connect(analyser);
+        const source = audioContext.createMediaStreamSource(audioStream)
+        source.connect(analyser)
 
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+        const bufferLength = analyser.frequencyBinCount
+        const dataArray = new Uint8Array(bufferLength)
 
-        setIsMonitoring(true);
+        setIsMonitoring(true)
 
         const monitorAudio = () => {
           // Only monitor if we're not actively recording
           if (!isActiveRef.current) {
-            analyser.getByteTimeDomainData(dataArray);
-            let sumSquares = 0;
+            analyser.getByteTimeDomainData(dataArray)
+            let sumSquares = 0
             for (let i = 0; i < dataArray.length; i++) {
-              const normalized = (dataArray[i] - 128) / 128;
-              sumSquares += normalized * normalized;
+              const normalized = (dataArray[i] - 128) / 128
+              sumSquares += normalized * normalized
             }
-            const rms = Math.sqrt(sumSquares / dataArray.length);
-            setAudioLevel(rms);
+            const rms = Math.sqrt(sumSquares / dataArray.length)
+            setAudioLevel(rms)
           }
 
-          animationRef.current = requestAnimationFrame(monitorAudio);
-        };
+          animationRef.current = requestAnimationFrame(monitorAudio)
+        }
 
-        monitorAudio();
+        monitorAudio()
       } catch (error) {
-        console.error("Error setting up audio monitoring:", error);
-        setIsMonitoring(false);
+        console.error('Error setting up audio monitoring:', error)
+        setIsMonitoring(false)
       }
     },
     [selectedMicrophoneId, isActiveRef, animationRef]
-  );
+  )
 
   const checkMicrophonePermission = useCallback(async (): Promise<boolean> => {
-    setIsCheckingMic(true);
+    setIsCheckingMic(true)
     try {
       // First get available microphones to set the correct default
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await navigator.mediaDevices.enumerateDevices()
       const microphones = devices.filter((device) => {
-        if (device.kind !== "audioinput") return false;
+        if (device.kind !== 'audioinput') return false
 
         // Filter out virtual audio devices
-        const label = device.label.toLowerCase();
+        const label = device.label.toLowerCase()
         const isVirtual =
-          label.includes("virtual") ||
-          label.includes("background music") ||
-          label.includes("loopback") ||
-          label.includes("stereo mix") ||
-          label.includes("what u hear");
+          label.includes('virtual') ||
+          label.includes('background music') ||
+          label.includes('loopback') ||
+          label.includes('stereo mix') ||
+          label.includes('what u hear')
 
-        return !isVirtual;
-      });
+        return !isVirtual
+      })
 
       // Sort microphones by priority
       const sortedMicrophones = microphones.sort((a, b) => {
-        const aLabel = a.label.toLowerCase();
-        const bLabel = b.label.toLowerCase();
+        const aLabel = a.label.toLowerCase()
+        const bLabel = b.label.toLowerCase()
 
-        if (aLabel.includes("built-in") && !bLabel.includes("built-in"))
-          return -1;
-        if (!aLabel.includes("built-in") && bLabel.includes("built-in"))
-          return 1;
-        if (aLabel.includes("usb") && !bLabel.includes("usb")) return -1;
-        if (!aLabel.includes("usb") && bLabel.includes("usb")) return 1;
-        if (aLabel.includes("external") && !bLabel.includes("external"))
-          return -1;
-        if (!aLabel.includes("external") && bLabel.includes("external"))
-          return 1;
-        if (aLabel.includes("default") && !bLabel.includes("default"))
-          return -1;
-        if (!aLabel.includes("default") && bLabel.includes("default")) return 1;
+        if (aLabel.includes('built-in') && !bLabel.includes('built-in'))
+          return -1
+        if (!aLabel.includes('built-in') && bLabel.includes('built-in'))
+          return 1
+        if (aLabel.includes('usb') && !bLabel.includes('usb')) return -1
+        if (!aLabel.includes('usb') && bLabel.includes('usb')) return 1
+        if (aLabel.includes('external') && !bLabel.includes('external'))
+          return -1
+        if (!aLabel.includes('external') && bLabel.includes('external'))
+          return 1
+        if (aLabel.includes('default') && !bLabel.includes('default')) return -1
+        if (!aLabel.includes('default') && bLabel.includes('default')) return 1
 
-        return aLabel.localeCompare(bLabel);
-      });
+        return aLabel.localeCompare(bLabel)
+      })
 
-      setAvailableMicrophones(sortedMicrophones);
+      setAvailableMicrophones(sortedMicrophones)
 
       // Get the best microphone ID directly
       const bestMicrophoneId =
-        sortedMicrophones.length > 0 ? sortedMicrophones[0].deviceId : null;
+        sortedMicrophones.length > 0 ? sortedMicrophones[0].deviceId : null
 
       // Set the selected microphone ID only if none is currently selected
       if (bestMicrophoneId && !selectedMicrophoneId) {
-        setSelectedMicrophoneId(bestMicrophoneId);
+        setSelectedMicrophoneId(bestMicrophoneId)
       }
 
-      const microphoneId = selectedMicrophoneId || bestMicrophoneId;
+      const microphoneId = selectedMicrophoneId || bestMicrophoneId
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: microphoneId
           ? { deviceId: { exact: microphoneId } }
@@ -220,146 +221,145 @@ export default function CrowdNoiseRecordPage() {
               sampleRate: 44100,
               channelCount: 1,
             },
-      });
-      setMicrophonePermission("granted");
+      })
+      setMicrophonePermission('granted')
 
       // Set up audio monitoring for real-time feedback with the correct stream
-      await setupAudioMonitoring(stream);
+      await setupAudioMonitoring(stream)
 
-      return true;
+      return true
     } catch (error) {
-      console.error("Microphone permission denied:", error);
-      setMicrophonePermission("denied");
-      return false;
+      console.error('Microphone permission denied:', error)
+      setMicrophonePermission('denied')
+      return false
     } finally {
-      setIsCheckingMic(false);
+      setIsCheckingMic(false)
     }
-  }, [setupAudioMonitoring, selectedMicrophoneId]);
+  }, [setupAudioMonitoring, selectedMicrophoneId])
 
   useEffect(() => {
     const fetchBand = async () => {
       try {
-        const response = await fetch(`/api/bands/${eventId}`);
-        const bands = await response.json();
-        const foundBand = bands.find((b: Band) => b.id === bandId);
+        const response = await fetch(`/api/bands/${eventId}`)
+        const bands = await response.json()
+        const foundBand = bands.find((b: Band) => b.id === bandId)
         if (foundBand) {
-          setBand(foundBand);
+          setBand(foundBand)
         } else {
-          router.push(`/admin/events/${eventId}/crowd-noise`);
+          router.push(`/admin/events/${eventId}/crowd-noise`)
         }
       } catch (error) {
-        console.error("Error fetching band:", error);
-        router.push(`/admin/events/${eventId}/crowd-noise`);
+        console.error('Error fetching band:', error)
+        router.push(`/admin/events/${eventId}/crowd-noise`)
       }
-    };
+    }
 
-    fetchBand();
-    checkMicrophonePermission();
+    fetchBand()
+    checkMicrophonePermission()
 
     // Cleanup function
     return () => {
-      countdownActiveRef.current = false;
+      countdownActiveRef.current = false
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        cancelAnimationFrame(animationRef.current)
       }
-    };
-  }, [eventId, bandId, router, checkMicrophonePermission]);
+    }
+  }, [eventId, bandId, router, checkMicrophonePermission])
 
   // Calculate viewport scale based on screen size
   useEffect(() => {
     const calculateScale = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
+      const vw = window.innerWidth
+      const vh = window.innerHeight
 
       // Base dimensions for scaling (desktop reference)
-      const baseWidth = 1200;
-      const baseHeight = 800;
+      const baseWidth = 1200
+      const baseHeight = 800
 
       // Calculate scale based on both width and height, use the smaller one
-      const scaleX = vw / baseWidth;
-      const scaleY = vh / baseHeight;
-      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 1
+      const scaleX = vw / baseWidth
+      const scaleY = vh / baseHeight
+      const scale = Math.min(scaleX, scaleY, 1) // Don't scale up beyond 1
 
       // Minimum scale to prevent elements from becoming too small
-      const minScale = 0.4;
-      const finalScale = Math.max(scale, minScale);
+      const minScale = 0.4
+      const finalScale = Math.max(scale, minScale)
 
-      setViewportScale(finalScale);
-    };
+      setViewportScale(finalScale)
+    }
 
-    calculateScale();
-    window.addEventListener("resize", calculateScale);
+    calculateScale()
+    window.addEventListener('resize', calculateScale)
 
     return () => {
-      window.removeEventListener("resize", calculateScale);
-    };
-  }, []);
+      window.removeEventListener('resize', calculateScale)
+    }
+  }, [])
 
   const _getAvailableMicrophones = async () => {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await navigator.mediaDevices.enumerateDevices()
       const microphones = devices.filter((device) => {
-        if (device.kind !== "audioinput") return false;
+        if (device.kind !== 'audioinput') return false
 
         // Filter out virtual audio devices
-        const label = device.label.toLowerCase();
+        const label = device.label.toLowerCase()
         const isVirtual =
-          label.includes("virtual") ||
-          label.includes("background music") ||
-          label.includes("loopback") ||
-          label.includes("stereo mix") ||
-          label.includes("what u hear");
+          label.includes('virtual') ||
+          label.includes('background music') ||
+          label.includes('loopback') ||
+          label.includes('stereo mix') ||
+          label.includes('what u hear')
 
-        return !isVirtual;
-      });
+        return !isVirtual
+      })
 
       // Sort microphones by priority for better ordering
       const sortedMicrophones = microphones.sort((a, b) => {
         // Priority order: Built-in mics first, then USB/external, then others
-        const aLabel = a.label.toLowerCase();
-        const bLabel = b.label.toLowerCase();
+        const aLabel = a.label.toLowerCase()
+        const bLabel = b.label.toLowerCase()
 
         // Built-in microphones (usually better for crowd noise)
-        if (aLabel.includes("built-in") && !bLabel.includes("built-in"))
-          return -1;
-        if (!aLabel.includes("built-in") && bLabel.includes("built-in"))
-          return 1;
+        if (aLabel.includes('built-in') && !bLabel.includes('built-in'))
+          return -1
+        if (!aLabel.includes('built-in') && bLabel.includes('built-in'))
+          return 1
 
         // USB microphones (good quality)
-        if (aLabel.includes("usb") && !bLabel.includes("usb")) return -1;
-        if (!aLabel.includes("usb") && bLabel.includes("usb")) return 1;
+        if (aLabel.includes('usb') && !bLabel.includes('usb')) return -1
+        if (!aLabel.includes('usb') && bLabel.includes('usb')) return 1
 
         // External microphones
-        if (aLabel.includes("external") && !bLabel.includes("external"))
-          return -1;
-        if (!aLabel.includes("external") && bLabel.includes("external"))
-          return 1;
+        if (aLabel.includes('external') && !bLabel.includes('external'))
+          return -1
+        if (!aLabel.includes('external') && bLabel.includes('external'))
+          return 1
 
         // Default microphones
-        if (aLabel.includes("default") && !bLabel.includes("default"))
-          return -1;
-        if (!aLabel.includes("default") && bLabel.includes("default")) return 1;
+        if (aLabel.includes('default') && !bLabel.includes('default')) return -1
+        if (!aLabel.includes('default') && bLabel.includes('default')) return 1
 
         // Sort by label alphabetically as fallback
-        return aLabel.localeCompare(bLabel);
-      });
+        return aLabel.localeCompare(bLabel)
+      })
 
-      setAvailableMicrophones(sortedMicrophones);
+      setAvailableMicrophones(sortedMicrophones)
 
       // Auto-select the first (highest priority) microphone if none selected
       if (sortedMicrophones.length > 0 && !selectedMicrophoneId) {
-        setSelectedMicrophoneId(sortedMicrophones[0].deviceId);
+        setSelectedMicrophoneId(sortedMicrophones[0].deviceId)
       }
     } catch (error) {
-      console.error("Error getting microphones:", error);
+      console.error('Error getting microphones:', error)
     }
-  };
+  }
 
   const startCountdown = async () => {
-    if (microphonePermission !== "granted") {
-      const hasPermission = await checkMicrophonePermission();
+    if (microphonePermission !== 'granted') {
+      const hasPermission = await checkMicrophonePermission()
       if (!hasPermission) {
-        return;
+        return
       }
     }
 
@@ -369,24 +369,26 @@ export default function CrowdNoiseRecordPage() {
         audio: selectedMicrophoneId
           ? { deviceId: { exact: selectedMicrophoneId } }
           : true,
-      });
+      })
 
-      audioContextRef.current = new (window.AudioContext ||
+      audioContextRef.current = new (
+        window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
-      analyserRef.current.smoothingTimeConstant = 0.3;
+          .webkitAudioContext
+      )()
+      analyserRef.current = audioContextRef.current.createAnalyser()
+      analyserRef.current.fftSize = 2048
+      analyserRef.current.smoothingTimeConstant = 0.3
 
       sourceRef.current =
-        audioContextRef.current.createMediaStreamSource(stream);
-      sourceRef.current.connect(analyserRef.current);
+        audioContextRef.current.createMediaStreamSource(stream)
+      sourceRef.current.connect(analyserRef.current)
 
-      const bufferLength = analyserRef.current.frequencyBinCount;
-      dataArrayRef.current = new Uint8Array(bufferLength);
+      const bufferLength = analyserRef.current.frequencyBinCount
+      dataArrayRef.current = new Uint8Array(bufferLength)
 
       // Start monitoring audio during countdown for circular oscilloscope
-      countdownActiveRef.current = true;
+      countdownActiveRef.current = true
       const monitorCountdownAudio = () => {
         if (
           analyserRef.current &&
@@ -395,67 +397,67 @@ export default function CrowdNoiseRecordPage() {
         ) {
           analyserRef.current.getByteTimeDomainData(
             dataArrayRef.current as Uint8Array<ArrayBuffer>
-          );
+          )
           // Force circular oscilloscope update
-          setFrameCount((prev) => prev + 1);
-          requestAnimationFrame(monitorCountdownAudio);
+          setFrameCount((prev) => prev + 1)
+          requestAnimationFrame(monitorCountdownAudio)
         }
-      };
-      monitorCountdownAudio();
+      }
+      monitorCountdownAudio()
 
       // Keep the stream active during countdown
       // Don't stop the stream - we'll use it when recording starts
     } catch (err) {
-      console.error("Error setting up audio:", err);
-      alert(`Microphone error: ${(err as Error).message}`);
-      return;
+      console.error('Error setting up audio:', err)
+      alert(`Microphone error: ${(err as Error).message}`)
+      return
     }
 
-    let countdownValue = 3;
-    setCountdown(countdownValue);
+    let countdownValue = 3
+    setCountdown(countdownValue)
 
     const countdownInterval = setInterval(() => {
-      countdownValue--;
+      countdownValue--
       if (countdownValue > 0) {
-        setCountdown(countdownValue);
+        setCountdown(countdownValue)
       } else {
-        setCountdown(0);
-        countdownActiveRef.current = false; // Stop countdown monitoring
-        clearInterval(countdownInterval);
+        setCountdown(0)
+        countdownActiveRef.current = false // Stop countdown monitoring
+        clearInterval(countdownInterval)
         // Start recording immediately after countdown - everything is already set up
-        startRecording();
+        startRecording()
       }
-    }, 1000);
+    }, 1000)
 
     return () => {
-      clearInterval(countdownInterval);
-      countdownActiveRef.current = false;
-    };
-  };
+      clearInterval(countdownInterval)
+      countdownActiveRef.current = false
+    }
+  }
 
   const startRecording = async () => {
     try {
       // Check if audio context is still valid and stream is active
       let needsNewStream =
-        !audioContextRef.current || !analyserRef.current || !sourceRef.current;
+        !audioContextRef.current || !analyserRef.current || !sourceRef.current
 
       if (sourceRef.current && sourceRef.current.mediaStream) {
         // Check if the stream is still active
         const activeTracks = sourceRef.current.mediaStream
           .getAudioTracks()
-          .filter((track) => track.readyState === "live");
+          .filter((track) => track.readyState === 'live')
         if (activeTracks.length === 0) {
-          needsNewStream = true;
+          needsNewStream = true
         }
       }
 
       if (needsNewStream) {
         // Clean up existing connections
         if (sourceRef.current) {
-          sourceRef.current.disconnect();
+          sourceRef.current.disconnect()
         }
         if (audioContextRef.current) {
-          audioContextRef.current.close();
+          audioContextRef.current.close()
         }
 
         // Get a fresh stream with selected microphone
@@ -463,122 +465,122 @@ export default function CrowdNoiseRecordPage() {
           audio: selectedMicrophoneId
             ? { deviceId: { exact: selectedMicrophoneId } }
             : true,
-        });
+        })
 
-        audioContextRef.current = new (window.AudioContext ||
+        audioContextRef.current = new (
+          window.AudioContext ||
           (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext)();
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 2048;
-        analyserRef.current.smoothingTimeConstant = 0.3;
+            .webkitAudioContext
+        )()
+        analyserRef.current = audioContextRef.current.createAnalyser()
+        analyserRef.current.fftSize = 2048
+        analyserRef.current.smoothingTimeConstant = 0.3
 
         sourceRef.current =
-          audioContextRef.current.createMediaStreamSource(stream);
-        sourceRef.current.connect(analyserRef.current);
+          audioContextRef.current.createMediaStreamSource(stream)
+        sourceRef.current.connect(analyserRef.current)
 
-        const bufferLength = analyserRef.current.frequencyBinCount;
-        dataArrayRef.current = new Uint8Array(bufferLength);
+        const bufferLength = analyserRef.current.frequencyBinCount
+        dataArrayRef.current = new Uint8Array(bufferLength)
       }
 
       // Start recording state
-      setIsRecording(true);
-      setTimeLeft(7);
-      setTotalEnergy(0);
-      setPeakVolume(0);
+      setIsRecording(true)
+      setTimeLeft(7)
+      setTotalEnergy(0)
+      setPeakVolume(0)
 
-      startTimeRef.current = Date.now();
-      energyAccumulatorRef.current = 0;
-      isActiveRef.current = true;
+      startTimeRef.current = Date.now()
+      energyAccumulatorRef.current = 0
+      isActiveRef.current = true
 
       // Start visualization immediately
-      visualize();
+      visualize()
     } catch (err) {
-      console.error("Error starting recording:", err);
-      alert(`Microphone error: ${(err as Error).message}`);
+      console.error('Error starting recording:', err)
+      alert(`Microphone error: ${(err as Error).message}`)
     }
-  };
+  }
 
   const stopRecording = () => {
-    isActiveRef.current = false;
+    isActiveRef.current = false
 
     if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
+      cancelAnimationFrame(animationRef.current)
     }
     if (sourceRef.current) {
-      sourceRef.current.disconnect();
-      sourceRef.current.mediaStream
-        .getTracks()
-        .forEach((track) => track.stop());
+      sourceRef.current.disconnect()
+      sourceRef.current.mediaStream.getTracks().forEach((track) => track.stop())
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close()
     }
     // Calculate crowd score out of 10 based on energy level
     // Use the final accumulated energy value directly
-    const finalEnergy = energyAccumulatorRef.current;
-    console.log("Debug - finalEnergy:", finalEnergy, "peakVolume:", peakVolume);
-    const energyScore = Math.min(10, Math.max(1, Math.round(finalEnergy * 5)));
-    console.log("Debug - calculated energyScore:", energyScore);
+    const finalEnergy = energyAccumulatorRef.current
+    console.log('Debug - finalEnergy:', finalEnergy, 'peakVolume:', peakVolume)
+    const energyScore = Math.min(10, Math.max(1, Math.round(finalEnergy * 5)))
+    console.log('Debug - calculated energyScore:', energyScore)
 
     // Ensure crowd_score is always between 1 and 10
-    const crowdScore = Math.min(10, Math.max(1, energyScore));
-    setTotalEnergy(finalEnergy); // Update the state to show correct value
-    setCrowdScore(crowdScore);
+    const crowdScore = Math.min(10, Math.max(1, energyScore))
+    setTotalEnergy(finalEnergy) // Update the state to show correct value
+    setCrowdScore(crowdScore)
 
-    setIsRecording(false);
-    setTimeLeft(0);
-    setShowResults(true);
-  };
+    setIsRecording(false)
+    setTimeLeft(0)
+    setShowResults(true)
+  }
 
   const visualize = () => {
     if (!isActiveRef.current || !analyserRef.current || !dataArrayRef.current)
-      return;
+      return
 
-    const analyser = analyserRef.current;
-    const dataArray = dataArrayRef.current;
+    const analyser = analyserRef.current
+    const dataArray = dataArrayRef.current
 
-    analyser.getByteTimeDomainData(dataArray as Uint8Array<ArrayBuffer>);
+    analyser.getByteTimeDomainData(dataArray as Uint8Array<ArrayBuffer>)
 
-    let sumSquares = 0;
+    let sumSquares = 0
     for (let i = 0; i < dataArray.length; i++) {
-      const normalized = (dataArray[i] - 128) / 128;
-      sumSquares += normalized * normalized;
+      const normalized = (dataArray[i] - 128) / 128
+      sumSquares += normalized * normalized
     }
-    const rms = Math.sqrt(sumSquares / dataArray.length);
+    const rms = Math.sqrt(sumSquares / dataArray.length)
 
     // Update audio level for debugging
-    setAudioLevel(rms);
+    setAudioLevel(rms)
 
-    const dt = 1 / 60;
+    const dt = 1 / 60
     // Proper audio energy accumulation (RMS squared over time)
-    energyAccumulatorRef.current += rms * rms * dt;
+    energyAccumulatorRef.current += rms * rms * dt
 
-    setPeakVolume((prev) => Math.max(prev, rms));
+    setPeakVolume((prev) => Math.max(prev, rms))
 
     // Force oscilloscope update
-    setFrameCount((prev) => prev + 1);
+    setFrameCount((prev) => prev + 1)
 
-    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const remaining = Math.max(0, 7 - elapsed);
-    setTimeLeft(remaining);
-    setTotalEnergy(energyAccumulatorRef.current);
+    const elapsed = (Date.now() - startTimeRef.current) / 1000
+    const remaining = Math.max(0, 7 - elapsed)
+    setTimeLeft(remaining)
+    setTotalEnergy(energyAccumulatorRef.current)
 
     if (remaining > 0) {
-      animationRef.current = requestAnimationFrame(visualize);
+      animationRef.current = requestAnimationFrame(visualize)
     } else {
-      stopRecording();
+      stopRecording()
     }
-  };
+  }
 
   const submitMeasurement = async () => {
-    if (!band) return;
+    if (!band) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
       const response = await fetch(`/api/events/${eventId}/crowd-noise`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           band_id: band.id,
@@ -587,54 +589,54 @@ export default function CrowdNoiseRecordPage() {
           recording_duration: 7,
           crowd_score: crowdScore,
         }),
-      });
+      })
 
       if (response.ok) {
-        setIsSubmitted(true);
+        setIsSubmitted(true)
         setTimeout(() => {
-          router.push(`/admin/events/${eventId}/crowd-noise`);
-        }, 2000);
+          router.push(`/admin/events/${eventId}/crowd-noise`)
+        }, 2000)
       } else {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
+        const errorData = await response.json()
+        console.error('API Error:', errorData)
         throw new Error(
-          `Failed to submit measurement: ${errorData.error || "Unknown error"}`
-        );
+          `Failed to submit measurement: ${errorData.error || 'Unknown error'}`
+        )
       }
     } catch (error) {
-      console.error("Error submitting measurement:", error);
+      console.error('Error submitting measurement:', error)
       alert(
         `Failed to submit measurement: ${
-          error instanceof Error ? error.message : "Unknown error"
+          error instanceof Error ? error.message : 'Unknown error'
         }. Please try again.`
-      );
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const doItAgain = () => {
-    setShowResults(false);
-    setTotalEnergy(0);
-    setPeakVolume(0);
-    setIsSubmitted(false);
-  };
+    setShowResults(false)
+    setTotalEnergy(0)
+    setPeakVolume(0)
+    setIsSubmitted(false)
+  }
 
   if (!band) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-4xl">Loading...</div>
       </div>
-    );
+    )
   }
 
   return (
     <>
       {/* Microphone Status Indicator - Bottom Right */}
       <div className="fixed bottom-2 sm:bottom-4 right-2 sm:right-4 z-50">
-        {microphonePermission === "granted" ? (
+        {microphonePermission === 'granted' ? (
           <div className="text-3xl sm:text-5xl text-green-400">🎤✓</div>
-        ) : microphonePermission === "denied" ? (
+        ) : microphonePermission === 'denied' ? (
           <div className="text-3xl sm:text-5xl text-red-400">🎤✗</div>
         ) : (
           <div className="text-3xl sm:text-5xl text-yellow-400">🎤?</div>
@@ -646,7 +648,7 @@ export default function CrowdNoiseRecordPage() {
           className="w-full max-w-7xl mx-auto flex-1 flex flex-col"
           style={{
             transform: `scale(${viewportScale})`,
-            transformOrigin: "top center",
+            transformOrigin: 'top center',
             height: `${100 / viewportScale}%`, // Compensate for scale to maintain full height
           }}
         >
@@ -661,7 +663,7 @@ export default function CrowdNoiseRecordPage() {
               />
             </div>
             <div className="flex items-center justify-center">
-              {(band.info?.logo_url || band.hero_thumbnail_url) ? (
+              {band.info?.logo_url || band.hero_thumbnail_url ? (
                 <BandThumbnail
                   logoUrl={band.info?.logo_url}
                   heroThumbnailUrl={band.hero_thumbnail_url}
@@ -679,7 +681,7 @@ export default function CrowdNoiseRecordPage() {
           {/* Microphone Status */}
           {!isRecording && !showResults && (
             <div className="m-16 text-center mb-2 sm:mb-4 shrink-0">
-              {microphonePermission === "denied" && (
+              {microphonePermission === 'denied' && (
                 <div className="bg-red-600/20 border border-red-400 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3 max-w-2xl mx-auto">
                   <p className="text-red-400 text-sm sm:text-base mb-1">
                     Microphone access denied
@@ -691,7 +693,7 @@ export default function CrowdNoiseRecordPage() {
                 </div>
               )}
 
-              {microphonePermission === "unknown" && (
+              {microphonePermission === 'unknown' && (
                 <div className="bg-yellow-600/20 border border-yellow-400 rounded-lg p-2 sm:p-3 mb-2 sm:mb-3 max-w-2xl mx-auto">
                   <p className="text-yellow-400 text-sm sm:text-base mb-1">
                     Microphone access required
@@ -702,7 +704,7 @@ export default function CrowdNoiseRecordPage() {
                 </div>
               )}
 
-              {microphonePermission === "granted" && (
+              {microphonePermission === 'granted' && (
                 <div className="p-3 sm:p-6 mb-4 sm:mb-8 max-w-2xl mx-auto">
                   {/* Microphone Selection */}
                   {availableMicrophones.length > 1 && (
@@ -713,15 +715,15 @@ export default function CrowdNoiseRecordPage() {
                       <select
                         value={selectedMicrophoneId}
                         onChange={async (e) => {
-                          setSelectedMicrophoneId(e.target.value);
-                          setIsMonitoring(false);
-                          setAudioLevel(0);
+                          setSelectedMicrophoneId(e.target.value)
+                          setIsMonitoring(false)
+                          setAudioLevel(0)
 
                           // Restart monitoring with new microphone
                           try {
-                            await setupAudioMonitoring();
+                            await setupAudioMonitoring()
                           } catch (error) {
-                            console.error("Error switching microphone:", error);
+                            console.error('Error switching microphone:', error)
                           }
                         }}
                         className="flex-1 max-w-[50%] bg-gray-800 text-white rounded-lg p-1 sm:p-2 border border-gray-600 text-xs sm:text-sm"
@@ -740,8 +742,8 @@ export default function CrowdNoiseRecordPage() {
                     <div className="flex items-center justify-center space-x-2 text-xs text-gray-400 mt-1 sm:mt-2 mb-2 sm:mb-3">
                       <span>
                         {isMonitoring
-                          ? "Monitoring audio input"
-                          : "Audio monitoring not active"}
+                          ? 'Monitoring audio input'
+                          : 'Audio monitoring not active'}
                       </span>
                       {isMonitoring && (
                         <LEDDisplay
@@ -766,22 +768,22 @@ export default function CrowdNoiseRecordPage() {
 
               <button
                 onClick={startCountdown}
-                disabled={isCheckingMic || microphonePermission === "denied"}
+                disabled={isCheckingMic || microphonePermission === 'denied'}
                 className={`mt-24 px-8 sm:px-16 py-4 sm:py-8 rounded-2xl text-2xl sm:text-4xl font-bold transition-all transform hover:scale-105 ${
-                  microphonePermission === "denied"
-                    ? "bg-red-600 text-red-200 cursor-not-allowed"
+                  microphonePermission === 'denied'
+                    ? 'bg-red-600 text-red-200 cursor-not-allowed'
                     : isCheckingMic
-                    ? "bg-yellow-600 text-yellow-200 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700 text-white shadow-2xl animate-pulse border-2 sm:border-4 border-green-400/50"
+                      ? 'bg-yellow-600 text-yellow-200 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700 text-white shadow-2xl animate-pulse border-2 sm:border-4 border-green-400/50'
                 }`}
               >
                 {isCheckingMic
-                  ? "Checking Microphone..."
-                  : microphonePermission === "denied"
-                  ? "Microphone Denied"
-                  : microphonePermission === "unknown"
-                  ? "Check Microphone"
-                  : "Start Recording"}
+                  ? 'Checking Microphone...'
+                  : microphonePermission === 'denied'
+                    ? 'Microphone Denied'
+                    : microphonePermission === 'unknown'
+                      ? 'Check Microphone'
+                      : 'Start Recording'}
               </button>
             </div>
           )}
@@ -921,7 +923,7 @@ export default function CrowdNoiseRecordPage() {
                   disabled={isSubmitting}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-3 sm:py-6 px-6 sm:px-12 rounded-2xl text-lg sm:text-2xl transition-all transform hover:scale-105 shadow-2xl border-2 border-blue-400/50"
                 >
-                  {isSubmitting ? "Saving..." : "Save & Continue"}
+                  {isSubmitting ? 'Saving...' : 'Save & Continue'}
                 </button>
                 <button
                   onClick={doItAgain}
@@ -959,5 +961,5 @@ export default function CrowdNoiseRecordPage() {
         </div>
       </div>
     </>
-  );
+  )
 }

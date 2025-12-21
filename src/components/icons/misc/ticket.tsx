@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Ticket icon for events
@@ -24,7 +24,6 @@ export const TicketIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M13 6v3M13 15v3" />
     </svg>
   )
-);
+)
 
-TicketIcon.displayName = "TicketIcon";
-
+TicketIcon.displayName = 'TicketIcon'

@@ -1,12 +1,12 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import type {
   SocialAccount,
   SocialPostTemplate,
   SocialPostWithResults,
-} from "@/lib/social/types";
+} from '@/lib/social/types'
 import {
   LinkedInIcon,
   FacebookIcon,
@@ -15,12 +15,12 @@ import {
   EditIcon,
   InfoIcon,
   PlusIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 interface SocialAccountsClientProps {
-  initialAccounts: SocialAccount[];
-  initialTemplates: SocialPostTemplate[];
-  initialRecentPosts: SocialPostWithResults[];
+  initialAccounts: SocialAccount[]
+  initialTemplates: SocialPostTemplate[]
+  initialRecentPosts: SocialPostWithResults[]
 }
 
 // Platform display info
@@ -29,44 +29,44 @@ const platformInfo: Record<
   { name: string; icon: React.ReactNode; color: string }
 > = {
   linkedin: {
-    name: "LinkedIn",
-    color: "#0A66C2",
+    name: 'LinkedIn',
+    color: '#0A66C2',
     icon: <LinkedInIcon className="w-5 h-5" />,
   },
   facebook: {
-    name: "Facebook",
-    color: "#0866FF",
+    name: 'Facebook',
+    color: '#0866FF',
     icon: <FacebookIcon className="w-5 h-5" />,
   },
   instagram: {
-    name: "Instagram",
-    color: "#E4405F",
+    name: 'Instagram',
+    color: '#E4405F',
     icon: <InstagramIcon className="w-5 h-5" />,
   },
-};
+}
 
 export function SocialAccountsClient({
   initialAccounts,
   initialTemplates,
   initialRecentPosts,
 }: SocialAccountsClientProps) {
-  const [accounts, setAccounts] = useState(initialAccounts);
-  const [templates] = useState(initialTemplates);
-  const [recentPosts] = useState(initialRecentPosts);
-  const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState(initialAccounts)
+  const [templates] = useState(initialTemplates)
+  const [recentPosts] = useState(initialRecentPosts)
+  const [disconnecting, setDisconnecting] = useState<string | null>(null)
 
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   // Check for success/error messages from OAuth callback
-  const connected = searchParams.get("connected");
-  const error = searchParams.get("error");
-  const errorMessage = searchParams.get("message");
+  const connected = searchParams.get('connected')
+  const error = searchParams.get('error')
+  const errorMessage = searchParams.get('message')
 
   // Clear URL params after showing message
   const clearParams = () => {
-    router.replace("/admin/social");
-  };
+    router.replace('/admin/social')
+  }
 
   const handleDisconnect = async (provider: string) => {
     if (
@@ -74,51 +74,51 @@ export function SocialAccountsClient({
         `Are you sure you want to disconnect your ${provider} account? You will need to reconnect to post.`
       )
     ) {
-      return;
+      return
     }
 
-    setDisconnecting(provider);
+    setDisconnecting(provider)
     try {
       const response = await fetch(`/api/admin/social/${provider}/disconnect`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
 
       if (response.ok) {
-        setAccounts((prev) => prev.filter((a) => a.provider !== provider));
+        setAccounts((prev) => prev.filter((a) => a.provider !== provider))
       } else {
-        const data = await response.json();
-        alert(`Failed to disconnect: ${data.error}`);
+        const data = await response.json()
+        alert(`Failed to disconnect: ${data.error}`)
       }
     } catch (err) {
-      console.error("Disconnect error:", err);
-      alert("Failed to disconnect account");
+      console.error('Disconnect error:', err)
+      alert('Failed to disconnect account')
     } finally {
-      setDisconnecting(null);
+      setDisconnecting(null)
     }
-  };
+  }
 
   const getAccountByProvider = (provider: string) =>
-    accounts.find((a) => a.provider === provider);
+    accounts.find((a) => a.provider === provider)
 
-  const linkedinAccount = getAccountByProvider("linkedin");
-  const facebookAccount = getAccountByProvider("facebook");
-  const instagramAccount = getAccountByProvider("instagram");
+  const linkedinAccount = getAccountByProvider('linkedin')
+  const facebookAccount = getAccountByProvider('facebook')
+  const instagramAccount = getAccountByProvider('instagram')
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-AU", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
+    return new Date(dateStr).toLocaleDateString('en-AU', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
 
   const getDaysUntilExpiry = (expiresAt: string | null) => {
-    if (!expiresAt) return null;
+    if (!expiresAt) return null
     const days = Math.ceil(
       (new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    return days;
-  };
+    )
+    return days
+  }
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -194,7 +194,7 @@ export function SocialAccountsClient({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-semibold">LinkedIn</h3>
-                  {linkedinAccount?.status === "active" && (
+                  {linkedinAccount?.status === 'active' && (
                     <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
                       Connected
                     </span>
@@ -206,13 +206,17 @@ export function SocialAccountsClient({
                       {linkedinAccount.provider_account_name} (Organization)
                     </p>
                     <div className="flex items-center gap-4 text-xs text-dim">
-                      <span>Connected {formatDate(linkedinAccount.connected_at)}</span>
+                      <span>
+                        Connected {formatDate(linkedinAccount.connected_at)}
+                      </span>
                       {linkedinAccount.access_token_expires_at && (
                         <>
                           <span>•</span>
                           <span>
-                            Expires in{" "}
-                            {getDaysUntilExpiry(linkedinAccount.access_token_expires_at)}{" "}
+                            Expires in{' '}
+                            {getDaysUntilExpiry(
+                              linkedinAccount.access_token_expires_at
+                            )}{' '}
                             days
                           </span>
                         </>
@@ -235,8 +239,8 @@ export function SocialAccountsClient({
                       Reconnect
                     </a>
                     <button
-                      onClick={() => handleDisconnect("linkedin")}
-                      disabled={disconnecting === "linkedin"}
+                      onClick={() => handleDisconnect('linkedin')}
+                      disabled={disconnecting === 'linkedin'}
                       className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50"
                       title="Disconnect"
                     >
@@ -314,8 +318,8 @@ export function SocialAccountsClient({
                       Reconnect
                     </a>
                     <button
-                      onClick={() => handleDisconnect("meta")}
-                      disabled={disconnecting === "meta"}
+                      onClick={() => handleDisconnect('meta')}
+                      disabled={disconnecting === 'meta'}
                       className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50"
                       title="Disconnect"
                     >
@@ -362,7 +366,7 @@ export function SocialAccountsClient({
                 <p className="text-sm text-dim truncate">
                   {template.description ||
                     template.caption_template ||
-                    "No description"}
+                    'No description'}
                 </p>
               </div>
               <button
@@ -382,7 +386,9 @@ export function SocialAccountsClient({
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="font-semibold text-lg">Recent Posts</h2>
-              <p className="text-sm text-muted mt-1">History of shared content</p>
+              <p className="text-sm text-muted mt-1">
+                History of shared content
+              </p>
             </div>
           </div>
 
@@ -416,7 +422,7 @@ export function SocialAccountsClient({
                     <td className="px-4 py-3">
                       <span className="text-sm truncate max-w-[200px] block">
                         {post.caption.slice(0, 50)}
-                        {post.caption.length > 50 ? "..." : ""}
+                        {post.caption.length > 50 ? '...' : ''}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -435,22 +441,22 @@ export function SocialAccountsClient({
                     <td className="px-4 py-3">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] ${
-                          post.status === "completed"
-                            ? "bg-green-500/20 text-green-400"
-                            : post.status === "partial"
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : post.status === "failed"
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-white/10 text-muted"
+                          post.status === 'completed'
+                            ? 'bg-green-500/20 text-green-400'
+                            : post.status === 'partial'
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : post.status === 'failed'
+                                ? 'bg-red-500/20 text-red-400'
+                                : 'bg-white/10 text-muted'
                         }`}
                       >
-                        {post.status === "completed"
-                          ? "Published"
-                          : post.status === "partial"
-                          ? "Partial"
-                          : post.status === "failed"
-                          ? "Failed"
-                          : post.status}
+                        {post.status === 'completed'
+                          ? 'Published'
+                          : post.status === 'partial'
+                            ? 'Partial'
+                            : post.status === 'failed'
+                              ? 'Failed'
+                              : post.status}
                       </span>
                     </td>
                   </tr>
@@ -461,6 +467,5 @@ export function SocialAccountsClient({
         </div>
       )}
     </div>
-  );
+  )
 }
-

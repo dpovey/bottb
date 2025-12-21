@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { useSession, signOut } from "next-auth/react";
-import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { useSession, signOut } from 'next-auth/react'
+import Link from 'next/link'
+import { useState, useEffect, useRef } from 'react'
+import { cn } from '@/lib/utils'
 import {
   SettingsIcon,
   HomeIcon,
@@ -11,43 +11,43 @@ import {
   PhotoIcon,
   LogoutIcon,
   CloseIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 export function AdminToolbar() {
-  const { data: session, status } = useSession();
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const initializedRef = useRef(false);
+  const { data: session, status } = useSession()
+  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-    
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     // Check localStorage for collapsed state
     // Use setTimeout to defer setState out of synchronous effect body
-    const collapsed = localStorage.getItem("admin-toolbar-collapsed");
+    const collapsed = localStorage.getItem('admin-toolbar-collapsed')
     setTimeout(() => {
-      if (collapsed === "false") {
-        setIsCollapsed(false);
+      if (collapsed === 'false') {
+        setIsCollapsed(false)
       }
-      setIsHydrated(true);
-    }, 0);
-  }, []);
+      setIsHydrated(true)
+    }, 0)
+  }, [])
 
   const toggleCollapsed = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem("admin-toolbar-collapsed", String(newState));
-  };
+    const newState = !isCollapsed
+    setIsCollapsed(newState)
+    localStorage.setItem('admin-toolbar-collapsed', String(newState))
+  }
 
   // Don't show if not logged in or not admin
-  if (status === "loading" || !session?.user?.isAdmin) {
-    return null;
+  if (status === 'loading' || !session?.user?.isAdmin) {
+    return null
   }
 
   // Don't render until hydrated to avoid mismatch
   if (!isHydrated) {
-    return null;
+    return null
   }
 
   // Collapsed state - FAB
@@ -56,33 +56,33 @@ export function AdminToolbar() {
       <button
         onClick={toggleCollapsed}
         className={cn(
-          "fixed bottom-6 right-6 z-50",
-          "w-12 h-12 rounded-full",
-          "bg-bg/90 backdrop-blur-lg",
-          "border border-accent/30",
-          "shadow-lg shadow-black/40",
-          "flex items-center justify-center",
-          "text-accent hover:text-accent-light",
-          "hover:border-accent hover:scale-105",
-          "transition-all duration-200"
+          'fixed bottom-6 right-6 z-50',
+          'w-12 h-12 rounded-full',
+          'bg-bg/90 backdrop-blur-lg',
+          'border border-accent/30',
+          'shadow-lg shadow-black/40',
+          'flex items-center justify-center',
+          'text-accent hover:text-accent-light',
+          'hover:border-accent hover:scale-105',
+          'transition-all duration-200'
         )}
         title="Open Admin Panel"
       >
         <SettingsIcon className="w-5 h-5" />
       </button>
-    );
+    )
   }
 
   // Expanded state - Full toolbar
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-50",
-        "bg-bg/90 backdrop-blur-lg",
-        "border border-accent/30",
-        "rounded-2xl",
-        "shadow-lg shadow-black/40",
-        "flex items-center gap-2 p-2"
+        'fixed bottom-6 right-6 z-50',
+        'bg-bg/90 backdrop-blur-lg',
+        'border border-accent/30',
+        'rounded-2xl',
+        'shadow-lg shadow-black/40',
+        'flex items-center gap-2 p-2'
       )}
     >
       {/* Admin Badge */}
@@ -141,11 +141,5 @@ export function AdminToolbar() {
         <CloseIcon className="w-5 h-5 text-text-muted" />
       </button>
     </div>
-  );
+  )
 }
-
-
-
-
-
-

@@ -1,48 +1,48 @@
-"use client";
+'use client'
 
-import { Card, BandThumbnail, CompanyBadge } from "@/components/ui";
-import { ScoringVersion, getCategories, getScoringFormula } from "@/lib/scoring";
+import { Card, BandThumbnail, CompanyBadge } from '@/components/ui'
+import { ScoringVersion, getCategories, getScoringFormula } from '@/lib/scoring'
 
 export interface BandResultData {
-  id: string;
-  name: string;
-  companySlug?: string;
-  companyName?: string;
-  companyIconUrl?: string;
-  rank: number;
-  logoUrl?: string;
-  heroThumbnailUrl?: string;
+  id: string
+  name: string
+  companySlug?: string
+  companyName?: string
+  companyIconUrl?: string
+  rank: number
+  logoUrl?: string
+  heroThumbnailUrl?: string
   // Scores
-  songChoice: number;
-  performance: number;
-  crowdVibe: number;
-  crowdVote: number;
-  crowdVoteCount?: number;
+  songChoice: number
+  performance: number
+  crowdVibe: number
+  crowdVote: number
+  crowdVoteCount?: number
   // Version-specific
-  screamOMeter?: number; // 2025.1
-  visuals?: number; // 2026.1
-  totalScore: number;
+  screamOMeter?: number // 2025.1
+  visuals?: number // 2026.1
+  totalScore: number
 }
 
 export interface ScoreBreakdownProps {
   /** Scoring version determines which columns to show */
-  scoringVersion: ScoringVersion;
+  scoringVersion: ScoringVersion
   /** Results data for all bands */
-  results: BandResultData[];
+  results: BandResultData[]
   /** Total number of voters */
-  totalVoters?: number;
+  totalVoters?: number
 }
 
 function getRankColor(rank: number): string {
   switch (rank) {
     case 1:
-      return "text-warning";
+      return 'text-warning'
     case 2:
-      return "text-text-muted";
+      return 'text-text-muted'
     case 3:
-      return "text-warning/60";
+      return 'text-warning/60'
     default:
-      return "text-text-dim";
+      return 'text-text-dim'
   }
 }
 
@@ -51,15 +51,15 @@ export function ScoreBreakdown({
   results,
   totalVoters,
 }: ScoreBreakdownProps) {
-  const categories = getCategories(scoringVersion);
-  const formula = getScoringFormula(scoringVersion);
+  const categories = getCategories(scoringVersion)
+  const formula = getScoringFormula(scoringVersion)
 
   if (categories.length === 0) {
-    return null; // No breakdown for 2022.1
+    return null // No breakdown for 2022.1
   }
 
-  const is2025 = scoringVersion === "2025.1";
-  const is2026 = scoringVersion === "2026.1";
+  const is2025 = scoringVersion === '2025.1'
+  const is2026 = scoringVersion === '2026.1'
 
   return (
     <section className="py-12">
@@ -171,9 +171,7 @@ export function ScoreBreakdown({
                       </td>
                     )}
                     <td className="py-4 px-4 text-center font-bold">
-                      <span
-                        className={band.rank === 1 ? "text-warning" : ""}
-                      >
+                      <span className={band.rank === 1 ? 'text-warning' : ''}>
                         {band.totalScore.toFixed(1)}
                       </span>
                     </td>
@@ -188,7 +186,7 @@ export function ScoreBreakdown({
             <span>Scoring: {formula}</span>
             {totalVoters !== undefined && (
               <span>
-                Total voters:{" "}
+                Total voters:{' '}
                 <span className="text-white font-medium">{totalVoters}</span>
               </span>
             )}
@@ -196,6 +194,5 @@ export function ScoreBreakdown({
         </Card>
       </div>
     </section>
-  );
+  )
 }
-

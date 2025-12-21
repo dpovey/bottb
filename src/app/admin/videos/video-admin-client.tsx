@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Video } from "@/lib/db";
-import { EditIcon, DeleteIcon, SpinnerIcon } from "@/components/icons";
+import { useState } from 'react'
+import { Video } from '@/lib/db'
+import { EditIcon, DeleteIcon, SpinnerIcon } from '@/components/icons'
 
 interface VideoAdminClientProps {
-  initialVideos: Video[];
-  events: { id: string; name: string }[];
-  bandsMap: Record<string, { id: string; name: string }[]>;
+  initialVideos: Video[]
+  events: { id: string; name: string }[]
+  bandsMap: Record<string, { id: string; name: string }[]>
 }
 
 export function VideoAdminClient({
@@ -15,81 +15,81 @@ export function VideoAdminClient({
   events,
   bandsMap,
 }: VideoAdminClientProps) {
-  const [videos, setVideos] = useState<Video[]>(initialVideos);
-  const [isAddingVideo, setIsAddingVideo] = useState(false);
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [selectedEventId, setSelectedEventId] = useState("");
-  const [selectedBandId, setSelectedBandId] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [videos, setVideos] = useState<Video[]>(initialVideos)
+  const [isAddingVideo, setIsAddingVideo] = useState(false)
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [title, setTitle] = useState('')
+  const [selectedEventId, setSelectedEventId] = useState('')
+  const [selectedBandId, setSelectedBandId] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Get bands for selected event
-  const availableBands = selectedEventId ? bandsMap[selectedEventId] || [] : [];
+  const availableBands = selectedEventId ? bandsMap[selectedEventId] || [] : []
 
   const handleAddVideo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+    e.preventDefault()
+    setError(null)
+    setIsSubmitting(true)
 
     try {
-      const response = await fetch("/api/videos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/videos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           youtubeUrl,
           title,
           eventId: selectedEventId || null,
           bandId: selectedBandId || null,
         }),
-      });
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        setVideos([data.video, ...videos]);
-        setYoutubeUrl("");
-        setTitle("");
-        setSelectedEventId("");
-        setSelectedBandId("");
-        setIsAddingVideo(false);
+        const data = await response.json()
+        setVideos([data.video, ...videos])
+        setYoutubeUrl('')
+        setTitle('')
+        setSelectedEventId('')
+        setSelectedBandId('')
+        setIsAddingVideo(false)
       } else if (response.status === 409) {
-        const data = await response.json();
-        setError(`Video already exists: ${data.video?.title || "Unknown"}`);
+        const data = await response.json()
+        setError(`Video already exists: ${data.video?.title || 'Unknown'}`)
       } else {
-        const data = await response.json();
-        setError(data.error || "Failed to add video");
+        const data = await response.json()
+        setError(data.error || 'Failed to add video')
       }
     } catch (err) {
-      setError("Failed to add video");
-      console.error(err);
+      setError('Failed to add video')
+      console.error(err)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm("Are you sure you want to delete this video?")) return;
+    if (!confirm('Are you sure you want to delete this video?')) return
 
-    setDeletingId(videoId);
+    setDeletingId(videoId)
     try {
       const response = await fetch(`/api/videos/${videoId}`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
 
       if (response.ok) {
-        setVideos(videos.filter((v) => v.id !== videoId));
+        setVideos(videos.filter((v) => v.id !== videoId))
       } else {
-        const data = await response.json();
-        alert(data.error || "Failed to delete video");
+        const data = await response.json()
+        alert(data.error || 'Failed to delete video')
       }
     } catch (err) {
-      alert("Failed to delete video");
-      console.error(err);
+      alert('Failed to delete video')
+      console.error(err)
     } finally {
-      setDeletingId(null);
+      setDeletingId(null)
     }
-  };
+  }
 
   const handleUpdateVideo = async (
     videoId: string,
@@ -99,23 +99,25 @@ export function VideoAdminClient({
   ) => {
     try {
       const response = await fetch(`/api/videos/${videoId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, eventId, bandId }),
-      });
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        setVideos(videos.map((v) => (v.id === videoId ? { ...v, ...data.video } : v)));
+        const data = await response.json()
+        setVideos(
+          videos.map((v) => (v.id === videoId ? { ...v, ...data.video } : v))
+        )
       } else {
-        const data = await response.json();
-        alert(data.error || "Failed to update video");
+        const data = await response.json()
+        alert(data.error || 'Failed to update video')
       }
     } catch (err) {
-      alert("Failed to update video");
-      console.error(err);
+      alert('Failed to update video')
+      console.error(err)
     }
-  };
+  }
 
   return (
     <div className="space-y-8">
@@ -170,8 +172,8 @@ export function VideoAdminClient({
                 <select
                   value={selectedEventId}
                   onChange={(e) => {
-                    setSelectedEventId(e.target.value);
-                    setSelectedBandId(""); // Reset band when event changes
+                    setSelectedEventId(e.target.value)
+                    setSelectedBandId('') // Reset band when event changes
                   }}
                   className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
@@ -216,13 +218,13 @@ export function VideoAdminClient({
                 disabled={isSubmitting}
                 className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? "Adding..." : "Add Video"}
+                {isSubmitting ? 'Adding...' : 'Add Video'}
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  setIsAddingVideo(false);
-                  setError(null);
+                  setIsAddingVideo(false)
+                  setError(null)
                 }}
                 className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
               >
@@ -263,16 +265,21 @@ export function VideoAdminClient({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 interface VideoRowProps {
-  video: Video;
-  events: { id: string; name: string }[];
-  bandsMap: Record<string, { id: string; name: string }[]>;
-  onUpdate: (videoId: string, title: string | null, eventId: string | null, bandId: string | null) => Promise<void>;
-  onDelete: (videoId: string) => Promise<void>;
-  isDeleting: boolean;
+  video: Video
+  events: { id: string; name: string }[]
+  bandsMap: Record<string, { id: string; name: string }[]>
+  onUpdate: (
+    videoId: string,
+    title: string | null,
+    eventId: string | null,
+    bandId: string | null
+  ) => Promise<void>
+  onDelete: (videoId: string) => Promise<void>
+  isDeleting: boolean
 }
 
 function VideoRow({
@@ -283,22 +290,17 @@ function VideoRow({
   onDelete,
   isDeleting,
 }: VideoRowProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(video.title);
-  const [editEventId, setEditEventId] = useState(video.event_id || "");
-  const [editBandId, setEditBandId] = useState(video.band_id || "");
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState(video.title)
+  const [editEventId, setEditEventId] = useState(video.event_id || '')
+  const [editBandId, setEditBandId] = useState(video.band_id || '')
 
-  const availableBands = editEventId ? bandsMap[editEventId] || [] : [];
+  const availableBands = editEventId ? bandsMap[editEventId] || [] : []
 
   const handleSave = async () => {
-    await onUpdate(
-      video.id,
-      editTitle,
-      editEventId || null,
-      editBandId || null
-    );
-    setIsEditing(false);
-  };
+    await onUpdate(video.id, editTitle, editEventId || null, editBandId || null)
+    setIsEditing(false)
+  }
 
   return (
     <div className="bg-surface rounded-xl p-4 flex gap-4">
@@ -311,7 +313,10 @@ function VideoRow({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_video_id}/mqdefault.jpg`}
+          src={
+            video.thumbnail_url ||
+            `https://img.youtube.com/vi/${video.youtube_video_id}/mqdefault.jpg`
+          }
           alt={video.title}
           className="w-32 h-20 object-cover rounded-lg hover:opacity-80 transition-opacity"
         />
@@ -335,8 +340,8 @@ function VideoRow({
               <select
                 value={editEventId}
                 onChange={(e) => {
-                  setEditEventId(e.target.value);
-                  setEditBandId("");
+                  setEditEventId(e.target.value)
+                  setEditBandId('')
                 }}
                 className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               >
@@ -370,10 +375,10 @@ function VideoRow({
               </button>
               <button
                 onClick={() => {
-                  setIsEditing(false);
-                  setEditTitle(video.title);
-                  setEditEventId(video.event_id || "");
-                  setEditBandId(video.band_id || "");
+                  setIsEditing(false)
+                  setEditTitle(video.title)
+                  setEditEventId(video.event_id || '')
+                  setEditBandId(video.band_id || '')
                 }}
                 className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors"
               >
@@ -383,7 +388,9 @@ function VideoRow({
           </div>
         ) : (
           <>
-            <h3 className="text-lg font-semibold text-white truncate">{video.title}</h3>
+            <h3 className="text-lg font-semibold text-white truncate">
+              {video.title}
+            </h3>
             <p className="text-sm text-gray-400">{video.youtube_video_id}</p>
             <div className="mt-2 flex gap-2 text-sm">
               {video.event_name ? (
@@ -428,6 +435,5 @@ function VideoRow({
         </button>
       </div>
     </div>
-  );
+  )
 }
-

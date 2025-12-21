@@ -1,124 +1,124 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import {
   getClientUserContext,
   hasVotingCookie,
   getFingerprintJSData,
   getVoteFromCookie,
-} from "@/lib/user-context-client";
-import { BandThumbnail } from "@/components/ui";
+} from '@/lib/user-context-client'
+import { BandThumbnail } from '@/components/ui'
 
 interface Band {
-  id: string;
-  name: string;
-  description?: string;
-  order: number;
-  hero_thumbnail_url?: string;
+  id: string
+  name: string
+  description?: string
+  order: number
+  hero_thumbnail_url?: string
   info?: {
-    logo_url?: string;
-    website?: string;
+    logo_url?: string
+    website?: string
     social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    genre?: string;
-    members?: string[];
-    [key: string]: unknown;
-  };
+      twitter?: string
+      instagram?: string
+      facebook?: string
+    }
+    genre?: string
+    members?: string[]
+    [key: string]: unknown
+  }
 }
 
 export default function CrowdVotingPage() {
-  const params = useParams();
-  const eventId = params.eventId as string;
-  const [bands, setBands] = useState<Band[]>([]);
-  const [selectedBand, setSelectedBand] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [duplicateError, setDuplicateError] = useState<string>("");
-  const [voteStatus, setVoteStatus] = useState<"approved" | "pending">(
-    "approved"
-  );
+  const params = useParams()
+  const eventId = params.eventId as string
+  const [bands, setBands] = useState<Band[]>([])
+  const [selectedBand, setSelectedBand] = useState<string>('')
+  const [email, setEmail] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [duplicateError, setDuplicateError] = useState<string>('')
+  const [voteStatus, setVoteStatus] = useState<'approved' | 'pending'>(
+    'approved'
+  )
   const [previousVote, setPreviousVote] = useState<{
-    bandId: string;
-    bandName: string;
-  } | null>(null);
+    bandId: string
+    bandName: string
+  } | null>(null)
 
   useEffect(() => {
     const fetchBands = async () => {
       try {
-        const response = await fetch(`/api/bands/${eventId}`);
-        const data = await response.json();
+        const response = await fetch(`/api/bands/${eventId}`)
+        const data = await response.json()
 
         // Ensure data is an array
-        const bandsData = Array.isArray(data) ? data : [];
-        setBands(bandsData);
+        const bandsData = Array.isArray(data) ? data : []
+        setBands(bandsData)
       } catch (error) {
-        console.error("Error fetching bands:", error);
+        console.error('Error fetching bands:', error)
         // Set empty array on error to prevent map errors
-        setBands([]);
+        setBands([])
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
     const fetchPreviousVote = () => {
       // Check if user has a voting cookie and get vote data
       if (hasVotingCookie(eventId)) {
-        const voteData = getVoteFromCookie(eventId);
+        const voteData = getVoteFromCookie(eventId)
         if (voteData) {
-          setPreviousVote(voteData);
-          setSelectedBand(voteData.bandId); // Pre-select the previous choice
+          setPreviousVote(voteData)
+          setSelectedBand(voteData.bandId) // Pre-select the previous choice
         }
       }
-    };
+    }
 
-    fetchBands();
-    fetchPreviousVote();
-  }, [eventId]);
+    fetchBands()
+    fetchPreviousVote()
+  }, [eventId])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBand) return;
+    e.preventDefault()
+    if (!selectedBand) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
       // Get client-side user context
-      const clientContext = getClientUserContext();
+      const clientContext = getClientUserContext()
 
       // Get FingerprintJS data
-      let fingerprintData;
+      let fingerprintData
       try {
-        fingerprintData = await getFingerprintJSData();
+        fingerprintData = await getFingerprintJSData()
       } catch (error) {
-        console.warn("FingerprintJS failed, continuing without it:", error);
-        fingerprintData = null;
+        console.warn('FingerprintJS failed, continuing without it:', error)
+        fingerprintData = null
       }
 
-      const response = await fetch("/api/votes", {
-        method: "POST",
+      const response = await fetch('/api/votes', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           // Send client context as headers
-          "X-Screen-Resolution": clientContext.screen_resolution || "",
-          "X-Timezone": clientContext.timezone || "",
-          "X-Language": clientContext.language || "",
+          'X-Screen-Resolution': clientContext.screen_resolution || '',
+          'X-Timezone': clientContext.timezone || '',
+          'X-Language': clientContext.language || '',
           // Send FingerprintJS visitor ID and confidence as headers (small data)
-          "X-FingerprintJS-Visitor-ID": fingerprintData?.visitorId || "",
-          "X-FingerprintJS-Confidence":
-            fingerprintData?.confidence?.toString() || "",
-          "X-FingerprintJS-Confidence-Comment":
-            fingerprintData?.confidenceComment || "",
+          'X-FingerprintJS-Visitor-ID': fingerprintData?.visitorId || '',
+          'X-FingerprintJS-Confidence':
+            fingerprintData?.confidence?.toString() || '',
+          'X-FingerprintJS-Confidence-Comment':
+            fingerprintData?.confidenceComment || '',
         },
         body: JSON.stringify({
           event_id: eventId,
           band_id: selectedBand,
-          voter_type: "crowd",
+          voter_type: 'crowd',
           crowd_vote: 20, // Crowd gets full points for crowd vote
           email: email || undefined, // Only send email if provided
           // Only send essential fingerprint data, not all components
@@ -126,63 +126,63 @@ export default function CrowdVotingPage() {
           fingerprintjs_confidence: fingerprintData?.confidence,
           fingerprintjs_confidence_comment: fingerprintData?.confidenceComment,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
         // Cookie is set by server with vote data
-        setVoteStatus(data.status || "approved");
-        setIsSubmitted(true);
+        setVoteStatus(data.status || 'approved')
+        setIsSubmitted(true)
       } else {
         if (response.status === 400 && data.duplicateDetected) {
           // Duplicate detected but no email provided
-          setDuplicateError(data.message);
-          return;
+          setDuplicateError(data.message)
+          return
         } else if (response.status === 403) {
           // Event status validation error
           setDuplicateError(
-            data.message || "Voting is not currently open for this event"
-          );
-          return;
+            data.message || 'Voting is not currently open for this event'
+          )
+          return
         } else if (response.status === 404) {
           // Event not found
-          setDuplicateError("Event not found");
-          return;
+          setDuplicateError('Event not found')
+          return
         } else if (response.status === 409) {
-          setHasAlreadyVoted(true);
-          return; // Exit early for other duplicate vote scenarios
+          setHasAlreadyVoted(true)
+          return // Exit early for other duplicate vote scenarios
         } else {
-          setHasAlreadyVoted(true);
-          return; // Exit early for other errors
+          setHasAlreadyVoted(true)
+          return // Exit early for other errors
         }
       }
     } catch (error) {
-      console.error("Error submitting vote:", error);
-      setHasAlreadyVoted(true);
+      console.error('Error submitting vote:', error)
+      setHasAlreadyVoted(true)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   if (isSubmitted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
           <div className="text-6xl mb-4">
-            {voteStatus === "pending" ? "⏳" : "✅"}
+            {voteStatus === 'pending' ? '⏳' : '✅'}
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">
-            {voteStatus === "pending" ? "Vote Under Review" : "Vote Submitted!"}
+            {voteStatus === 'pending' ? 'Vote Under Review' : 'Vote Submitted!'}
           </h2>
           <p className="text-gray-300">
-            {voteStatus === "pending"
-              ? "Your vote has been recorded and will be reviewed for approval. Thank you for participating!"
-              : "Your vote has been recorded. Thank you for participating!"}
+            {voteStatus === 'pending'
+              ? 'Your vote has been recorded and will be reviewed for approval. Thank you for participating!'
+              : 'Your vote has been recorded. Thank you for participating!'}
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   if (hasAlreadyVoted) {
@@ -197,7 +197,7 @@ export default function CrowdVotingPage() {
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   if (isLoading) {
@@ -209,7 +209,7 @@ export default function CrowdVotingPage() {
           <p className="text-gray-300">Fetching bands for this event</p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -244,7 +244,7 @@ export default function CrowdVotingPage() {
                 <div className="text-blue-400 mr-3">ℹ️</div>
                 <div>
                   <p className="text-blue-100 font-medium">
-                    You previously voted for{" "}
+                    You previously voted for{' '}
                     <span className="text-blue-300 font-bold">
                       {previousVote.bandName}
                     </span>
@@ -264,8 +264,8 @@ export default function CrowdVotingPage() {
                 key={band.id}
                 className={`block p-4 rounded-xl cursor-pointer transition-colors ${
                   selectedBand === band.id
-                    ? "bg-slate-600/30 border-2 border-slate-400"
-                    : "bg-white/10 hover:bg-white/20 border-2 border-transparent"
+                    ? 'bg-slate-600/30 border-2 border-slate-400'
+                    : 'bg-white/10 hover:bg-white/20 border-2 border-transparent'
                 }`}
               >
                 <input
@@ -329,13 +329,13 @@ export default function CrowdVotingPage() {
             className="w-full mt-8 bg-slate-600 hover:bg-slate-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl text-lg transition-colors"
           >
             {isSubmitting
-              ? "Submitting..."
+              ? 'Submitting...'
               : previousVote
-              ? "Update Vote"
-              : "Submit Vote"}
+                ? 'Update Vote'
+                : 'Submit Vote'}
           </button>
         </div>
       </form>
     </div>
-  );
+  )
 }

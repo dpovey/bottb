@@ -1,31 +1,31 @@
-import { Header, Footer } from "@/components/nav";
-import type { BreadcrumbItem, NavEvent } from "@/components/nav";
+import { Header, Footer } from '@/components/nav'
+import type { BreadcrumbItem, NavEvent } from '@/components/nav'
 
 interface PublicLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
   /** Show navigation (usually true, except for special pages) */
-  showNav?: boolean;
+  showNav?: boolean
   /** Show header at all (for immersive experiences) */
-  showHeader?: boolean;
+  showHeader?: boolean
   /** Header variant */
-  headerVariant?: "transparent" | "glass" | "solid";
+  headerVariant?: 'transparent' | 'glass' | 'solid'
   /** Footer variant */
-  footerVariant?: "simple" | "full";
+  footerVariant?: 'simple' | 'full'
   /** Optional breadcrumbs */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
   /** SSR-provided nav events (optional - will fetch client-side if not provided) */
   navEvents?: {
-    upcoming: NavEvent[];
-    past: NavEvent[];
-  };
+    upcoming: NavEvent[]
+    past: NavEvent[]
+  }
 }
 
 export function PublicLayout({
   children,
   showNav = true,
   showHeader = true,
-  headerVariant = "transparent",
-  footerVariant = "full",
+  headerVariant = 'transparent',
+  footerVariant = 'full',
   breadcrumbs,
   navEvents,
 }: PublicLayoutProps) {
@@ -43,5 +43,5 @@ export function PublicLayout({
       <main className="flex-1">{children}</main>
       <Footer variant={footerVariant} />
     </div>
-  );
+  )
 }

@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import { Photo } from "@/lib/db";
+import { useState, useEffect, useCallback } from 'react'
+import { Photo } from '@/lib/db'
 import {
   SocialPlatform,
   SocialAccount,
   SocialPostTemplate,
   SocialPostResult,
-} from "@/lib/social/types";
-import { trackPhotoShare } from "@/lib/analytics";
+} from '@/lib/social/types'
+import { trackPhotoShare } from '@/lib/analytics'
 import {
   LinkedInIcon,
   FacebookIcon,
@@ -18,19 +18,19 @@ import {
   SpinnerIcon,
   LightningIcon,
   ShareIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 // Platform icons mapping
 const PlatformIcon: Record<string, React.ReactNode> = {
   linkedin: <LinkedInIcon className="w-5 h-5" />,
   facebook: <FacebookIcon className="w-5 h-5" />,
   instagram: <InstagramIcon className="w-5 h-5" />,
-};
+}
 
 interface ShareComposerModalProps {
-  photos: Photo[];
-  onClose: () => void;
-  onSuccess?: () => void;
+  photos: Photo[]
+  onClose: () => void
+  onSuccess?: () => void
 }
 
 export function ShareComposerModal({
@@ -39,71 +39,71 @@ export function ShareComposerModal({
   onSuccess,
 }: ShareComposerModalProps) {
   // Connected accounts state
-  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
-  const [templates, setTemplates] = useState<SocialPostTemplate[]>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [accounts, setAccounts] = useState<SocialAccount[]>([])
+  const [templates, setTemplates] = useState<SocialPostTemplate[]>([])
+  const [loadingAccounts, setLoadingAccounts] = useState(true)
 
   // Form state
   const [selectedPlatforms, setSelectedPlatforms] = useState<SocialPlatform[]>(
     []
-  );
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
-  const [title, setTitle] = useState("");
-  const [caption, setCaption] = useState("");
+  )
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
+  const [title, setTitle] = useState('')
+  const [caption, setCaption] = useState('')
   const [includePhotographerCredit, setIncludePhotographerCredit] =
-    useState(true);
-  const [includeEventLink, setIncludeEventLink] = useState(true);
+    useState(true)
+  const [includeEventLink, setIncludeEventLink] = useState(true)
 
   // Posting state
-  const [isPosting, setIsPosting] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isPosting, setIsPosting] = useState(false)
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [postResults, setPostResults] = useState<SocialPostResult[] | null>(
     null
-  );
-  const [postError, setPostError] = useState<string | null>(null);
+  )
+  const [postError, setPostError] = useState<string | null>(null)
 
   // Get photo context
-  const firstPhoto = photos[0];
-  const photographer = firstPhoto?.photographer || "Unknown photographer";
-  const bandName = firstPhoto?.band_name || "";
-  const eventName = firstPhoto?.event_name || "";
-  const companyName = firstPhoto?.company_name || "";
+  const firstPhoto = photos[0]
+  const photographer = firstPhoto?.photographer || 'Unknown photographer'
+  const bandName = firstPhoto?.band_name || ''
+  const eventName = firstPhoto?.event_name || ''
+  const companyName = firstPhoto?.company_name || ''
 
   // Fetch connected accounts and templates
   useEffect(() => {
     async function fetchData() {
       try {
         const [accountsRes, templatesRes] = await Promise.all([
-          fetch("/api/admin/social/accounts"),
-          fetch("/api/admin/social/templates"),
-        ]);
+          fetch('/api/admin/social/accounts'),
+          fetch('/api/admin/social/templates'),
+        ])
 
         if (accountsRes.ok) {
-          const data = await accountsRes.json();
-          setAccounts(data.accounts || []);
+          const data = await accountsRes.json()
+          setAccounts(data.accounts || [])
 
           // Auto-select all connected platforms
           const connectedPlatforms = (data.accounts || [])
-            .filter((a: SocialAccount) => a.status === "active")
-            .map((a: SocialAccount) => a.provider as SocialPlatform);
+            .filter((a: SocialAccount) => a.status === 'active')
+            .map((a: SocialAccount) => a.provider as SocialPlatform)
           setSelectedPlatforms(
             Array.from(new Set(connectedPlatforms)) as SocialPlatform[]
-          );
+          )
         }
 
         if (templatesRes.ok) {
-          const data = await templatesRes.json();
-          setTemplates(data.templates || []);
+          const data = await templatesRes.json()
+          setTemplates(data.templates || [])
         }
       } catch (error) {
-        console.error("Failed to fetch social data:", error);
+        console.error('Failed to fetch social data:', error)
       } finally {
-        setLoadingAccounts(false);
+        setLoadingAccounts(false)
       }
     }
 
-    fetchData();
-  }, []);
+    fetchData()
+  }, [])
 
   // Toggle platform selection
   const togglePlatform = (platform: SocialPlatform) => {
@@ -111,52 +111,52 @@ export function ShareComposerModal({
       prev.includes(platform)
         ? prev.filter((p) => p !== platform)
         : [...prev, platform]
-    );
-  };
+    )
+  }
 
   // Check if platform is connected
   const isPlatformConnected = (platform: SocialPlatform) => {
     return accounts.some(
-      (a) => a.provider === platform && a.status === "active"
-    );
-  };
+      (a) => a.provider === platform && a.status === 'active'
+    )
+  }
 
   // Apply template
   const handleTemplateChange = (templateId: string) => {
-    setSelectedTemplateId(templateId);
+    setSelectedTemplateId(templateId)
 
     if (templateId) {
-      const template = templates.find((t) => t.id === templateId);
+      const template = templates.find((t) => t.id === templateId)
       if (template) {
         if (template.title_template) {
-          setTitle(applyPlaceholders(template.title_template));
+          setTitle(applyPlaceholders(template.title_template))
         }
         if (template.caption_template) {
-          setCaption(applyPlaceholders(template.caption_template));
+          setCaption(applyPlaceholders(template.caption_template))
         }
-        setIncludePhotographerCredit(template.include_photographer_credit);
-        setIncludeEventLink(template.include_event_link);
+        setIncludePhotographerCredit(template.include_photographer_credit)
+        setIncludeEventLink(template.include_event_link)
       }
     }
-  };
+  }
 
   // Apply placeholders to template text
   const applyPlaceholders = (text: string) => {
     return text
-      .replace(/{band_name}/g, bandName || "")
-      .replace(/{event_name}/g, eventName || "")
-      .replace(/{photographer}/g, photographer || "")
-      .replace(/{company_name}/g, companyName || "")
-      .replace(/{photo_count}/g, photos.length.toString());
-  };
+      .replace(/{band_name}/g, bandName || '')
+      .replace(/{event_name}/g, eventName || '')
+      .replace(/{photographer}/g, photographer || '')
+      .replace(/{company_name}/g, companyName || '')
+      .replace(/{photo_count}/g, photos.length.toString())
+  }
 
   // Generate AI caption
   const handleGenerateAI = async () => {
-    setIsGeneratingAI(true);
+    setIsGeneratingAI(true)
     try {
-      const response = await fetch("/api/admin/social/suggest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/admin/social/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event_name: eventName,
           band_name: bandName,
@@ -164,43 +164,43 @@ export function ShareComposerModal({
           photographer_name: photographer,
           photo_count: photos.length,
         }),
-      });
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        setCaption(data.suggestion || "");
+        const data = await response.json()
+        setCaption(data.suggestion || '')
       } else {
-        const error = await response.json();
-        setPostError(error.error || "Failed to generate AI suggestion");
+        const error = await response.json()
+        setPostError(error.error || 'Failed to generate AI suggestion')
       }
     } catch (error) {
-      console.error("AI generation failed:", error);
-      setPostError("Failed to generate AI suggestion");
+      console.error('AI generation failed:', error)
+      setPostError('Failed to generate AI suggestion')
     } finally {
-      setIsGeneratingAI(false);
+      setIsGeneratingAI(false)
     }
-  };
+  }
 
   // Submit post
   const handleSubmit = useCallback(async () => {
     if (selectedPlatforms.length === 0) {
-      setPostError("Please select at least one platform");
-      return;
+      setPostError('Please select at least one platform')
+      return
     }
 
     if (!caption.trim()) {
-      setPostError("Please enter a caption");
-      return;
+      setPostError('Please enter a caption')
+      return
     }
 
-    setIsPosting(true);
-    setPostError(null);
-    setPostResults(null);
+    setIsPosting(true)
+    setPostError(null)
+    setPostResults(null)
 
     try {
-      const response = await fetch("/api/admin/social/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/admin/social/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           platforms: selectedPlatforms,
           title: title || undefined,
@@ -212,39 +212,42 @@ export function ShareComposerModal({
           include_photographer_credit: includePhotographerCredit,
           include_event_link: includeEventLink,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        setPostResults(data.results || []);
-        onSuccess?.();
+        setPostResults(data.results || [])
+        onSuccess?.()
 
         // Track successful shares for each platform
-        const results = data.results || [];
+        const results = data.results || []
         results.forEach((result: SocialPostResult) => {
-          if (result.status === "success" && firstPhoto) {
+          if (result.status === 'success' && firstPhoto) {
             // Track each photo that was shared
             photos.forEach((photo) => {
               trackPhotoShare({
                 photo_id: photo.id,
-                share_method: result.platform as "linkedin" | "facebook" | "instagram",
+                share_method: result.platform as
+                  | 'linkedin'
+                  | 'facebook'
+                  | 'instagram',
                 event_id: photo.event_id || null,
                 band_id: photo.band_id || null,
                 event_name: photo.event_name || null,
                 band_name: photo.band_name || null,
-              });
-            });
+              })
+            })
           }
-        });
+        })
       } else {
-        setPostError(data.error || "Failed to post");
+        setPostError(data.error || 'Failed to post')
       }
     } catch (error) {
-      console.error("Post failed:", error);
-      setPostError("Failed to post. Please try again.");
+      console.error('Post failed:', error)
+      setPostError('Failed to post. Please try again.')
     } finally {
-      setIsPosting(false);
+      setIsPosting(false)
     }
   }, [
     selectedPlatforms,
@@ -256,22 +259,22 @@ export function ShareComposerModal({
     includePhotographerCredit,
     includeEventLink,
     onSuccess,
-  ]);
+  ])
 
   // Close on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isPosting) {
-        onClose();
+      if (e.key === 'Escape' && !isPosting) {
+        onClose()
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, isPosting]);
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, isPosting])
 
-  const hasResults = postResults && postResults.length > 0;
+  const hasResults = postResults && postResults.length > 0
   const allSuccess =
-    hasResults && postResults.every((r) => r.status === "success");
+    hasResults && postResults.every((r) => r.status === 'success')
 
   return (
     <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
@@ -317,7 +320,7 @@ export function ShareComposerModal({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo.thumbnail_url || photo.blob_url}
-                    alt={photo.original_filename || "Photo"}
+                    alt={photo.original_filename || 'Photo'}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -330,7 +333,7 @@ export function ShareComposerModal({
             </div>
             <p className="text-xs text-text-dim mt-2">
               {bandName && `${bandName} @ `}
-              {eventName || "Event"}
+              {eventName || 'Event'}
               {photographer && ` · Photo by ${photographer}`}
             </p>
           </div>
@@ -347,7 +350,7 @@ export function ShareComposerModal({
               </div>
             ) : accounts.length === 0 ? (
               <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg text-warning text-sm">
-                No social accounts connected.{" "}
+                No social accounts connected.{' '}
                 <a
                   href="/admin/social"
                   className="underline hover:no-underline"
@@ -357,40 +360,40 @@ export function ShareComposerModal({
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {(["linkedin", "facebook", "instagram"] as SocialPlatform[]).map(
-                  (platform) => {
-                    const connected = isPlatformConnected(platform);
-                    const selected = selectedPlatforms.includes(platform);
+                {(
+                  ['linkedin', 'facebook', 'instagram'] as SocialPlatform[]
+                ).map((platform) => {
+                  const connected = isPlatformConnected(platform)
+                  const selected = selectedPlatforms.includes(platform)
 
-                    return (
-                      <button
-                        key={platform}
-                        onClick={() => connected && togglePlatform(platform)}
-                        disabled={!connected || isPosting}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
-                          selected
-                            ? "border-accent bg-accent/10 text-white"
-                            : connected
-                              ? "border-white/10 hover:border-white/30 text-text-muted hover:text-white"
-                              : "border-white/10 opacity-40 cursor-not-allowed"
-                        }`}
-                      >
-                        {PlatformIcon[platform]}
-                        <span className="text-sm font-medium capitalize">
-                          {platform}
+                  return (
+                    <button
+                      key={platform}
+                      onClick={() => connected && togglePlatform(platform)}
+                      disabled={!connected || isPosting}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
+                        selected
+                          ? 'border-accent bg-accent/10 text-white'
+                          : connected
+                            ? 'border-white/10 hover:border-white/30 text-text-muted hover:text-white'
+                            : 'border-white/10 opacity-40 cursor-not-allowed'
+                      }`}
+                    >
+                      {PlatformIcon[platform]}
+                      <span className="text-sm font-medium capitalize">
+                        {platform}
+                      </span>
+                      {selected && (
+                        <CheckIcon className="w-4 h-4 text-accent ml-1" />
+                      )}
+                      {!connected && (
+                        <span className="text-[10px] text-text-dim ml-1">
+                          Not connected
                         </span>
-                        {selected && (
-                          <CheckIcon className="w-4 h-4 text-accent ml-1" />
-                        )}
-                        {!connected && (
-                          <span className="text-[10px] text-text-dim ml-1">
-                            Not connected
-                          </span>
-                        )}
-                      </button>
-                    );
-                  }
-                )}
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -408,9 +411,9 @@ export function ShareComposerModal({
                 className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white text-sm focus:outline-hidden focus:border-accent/50 hover:border-white/20 transition-colors appearance-none"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: "right 0.75rem center",
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "1.25em 1.25em",
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.25em 1.25em',
                 }}
               >
                 <option value="">Custom post</option>
@@ -424,7 +427,7 @@ export function ShareComposerModal({
           )}
 
           {/* Title (LinkedIn) */}
-          {selectedPlatforms.includes("linkedin") && (
+          {selectedPlatforms.includes('linkedin') && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs tracking-widest uppercase text-text-muted">
@@ -524,17 +527,17 @@ export function ShareComposerModal({
                   <div
                     key={result.id}
                     className={`flex items-center justify-between p-3 rounded-lg ${
-                      result.status === "success"
-                        ? "bg-success/10 border border-success/20"
-                        : "bg-error/10 border border-error/20"
+                      result.status === 'success'
+                        ? 'bg-success/10 border border-success/20'
+                        : 'bg-error/10 border border-error/20'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
                         className={
-                          result.status === "success"
-                            ? "text-success"
-                            : "text-error"
+                          result.status === 'success'
+                            ? 'text-success'
+                            : 'text-error'
                         }
                       >
                         {PlatformIcon[result.platform]}
@@ -542,30 +545,31 @@ export function ShareComposerModal({
                       <div>
                         <span
                           className={`text-sm font-medium capitalize ${
-                            result.status === "success"
-                              ? "text-success"
-                              : "text-error"
+                            result.status === 'success'
+                              ? 'text-success'
+                              : 'text-error'
                           }`}
                         >
                           {result.platform}
                         </span>
-                        {result.status === "failed" && result.error_message && (
+                        {result.status === 'failed' && result.error_message && (
                           <p className="text-xs text-error/80">
                             {result.error_message}
                           </p>
                         )}
                       </div>
                     </div>
-                    {result.status === "success" && result.external_post_url && (
-                      <a
-                        href={result.external_post_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-success hover:underline"
-                      >
-                        View post →
-                      </a>
-                    )}
+                    {result.status === 'success' &&
+                      result.external_post_url && (
+                        <a
+                          href={result.external_post_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-success hover:underline"
+                        >
+                          View post →
+                        </a>
+                      )}
                   </div>
                 ))}
               </div>
@@ -585,8 +589,8 @@ export function ShareComposerModal({
           <div className="text-sm text-text-muted">
             <span className="font-medium text-white">
               {selectedPlatforms.length}
-            </span>{" "}
-            platform{selectedPlatforms.length !== 1 ? "s" : ""} selected
+            </span>{' '}
+            platform{selectedPlatforms.length !== 1 ? 's' : ''} selected
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -594,15 +598,13 @@ export function ShareComposerModal({
               disabled={isPosting}
               className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
             >
-              {allSuccess ? "Close" : "Cancel"}
+              {allSuccess ? 'Close' : 'Cancel'}
             </button>
             {!allSuccess && (
               <button
                 onClick={handleSubmit}
                 disabled={
-                  isPosting ||
-                  selectedPlatforms.length === 0 ||
-                  !caption.trim()
+                  isPosting || selectedPlatforms.length === 0 || !caption.trim()
                 }
                 className="bg-accent hover:bg-accent-light px-6 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -623,5 +625,5 @@ export function ShareComposerModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

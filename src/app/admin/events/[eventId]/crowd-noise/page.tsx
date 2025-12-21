@@ -1,328 +1,328 @@
-"use client";
+'use client'
 
-import { useState, useRef, useEffect } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { BandThumbnail } from "@/components/ui";
+import { useState, useRef, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { BandThumbnail } from '@/components/ui'
 
 interface Band {
-  id: string;
-  name: string;
-  order: number;
-  hero_thumbnail_url?: string;
+  id: string
+  name: string
+  order: number
+  hero_thumbnail_url?: string
   info?: {
-    logo_url?: string;
-    [key: string]: unknown;
-  };
+    logo_url?: string
+    [key: string]: unknown
+  }
 }
 
 interface CrowdNoiseMeasurement {
-  id: string;
-  event_id: string;
-  band_id: string;
-  energy_level: number;
-  peak_volume: number;
-  recording_duration: number;
-  crowd_score: number;
-  created_at: string;
+  id: string
+  event_id: string
+  band_id: string
+  energy_level: number
+  peak_volume: number
+  recording_duration: number
+  crowd_score: number
+  created_at: string
 }
 
 export default function CrowdNoisePage() {
-  const params = useParams();
-  const eventId = params.eventId as string;
+  const params = useParams()
+  const eventId = params.eventId as string
 
   // Authentication is handled by middleware
 
-  const [bands, setBands] = useState<Band[]>([]);
-  const [selectedBandId, setSelectedBandId] = useState<string>("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [totalEnergy, setTotalEnergy] = useState(0);
-  const [peakVolume, setPeakVolume] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [bands, setBands] = useState<Band[]>([])
+  const [selectedBandId, setSelectedBandId] = useState<string>('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(0)
+  const [totalEnergy, setTotalEnergy] = useState(0)
+  const [peakVolume, setPeakVolume] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
   const [microphonePermission, setMicrophonePermission] = useState<
-    "unknown" | "granted" | "denied"
-  >("unknown");
-  const [isCheckingMic, setIsCheckingMic] = useState(false);
+    'unknown' | 'granted' | 'denied'
+  >('unknown')
+  const [isCheckingMic, setIsCheckingMic] = useState(false)
   const [measurements, setMeasurements] = useState<
     Record<string, CrowdNoiseMeasurement>
-  >({});
+  >({})
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef(0);
-  const energyAccumulatorRef = useRef(0);
-  const isActiveRef = useRef(false);
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const dataArrayRef = useRef<Uint8Array | null>(null)
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
+  const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef(0)
+  const energyAccumulatorRef = useRef(0)
+  const isActiveRef = useRef(false)
 
-  const vuCanvasRef = useRef<HTMLCanvasElement>(null);
-  const graphCanvasRef = useRef<HTMLCanvasElement>(null);
-  const _spectrumCanvasRef = useRef<HTMLCanvasElement>(null);
+  const vuCanvasRef = useRef<HTMLCanvasElement>(null)
+  const graphCanvasRef = useRef<HTMLCanvasElement>(null)
+  const _spectrumCanvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     const fetchBands = async () => {
       try {
-        const response = await fetch(`/api/bands/${eventId}`);
-        const data = await response.json();
-        setBands(Array.isArray(data) ? data : []);
+        const response = await fetch(`/api/bands/${eventId}`)
+        const data = await response.json()
+        setBands(Array.isArray(data) ? data : [])
       } catch (error) {
-        console.error("Error fetching bands:", error);
+        console.error('Error fetching bands:', error)
       }
-    };
+    }
 
     const fetchMeasurements = async () => {
       try {
-        const response = await fetch(`/api/events/${eventId}/crowd-noise`);
+        const response = await fetch(`/api/events/${eventId}/crowd-noise`)
         if (response.ok) {
-          const data = await response.json();
-          const measurementsMap: Record<string, CrowdNoiseMeasurement> = {};
+          const data = await response.json()
+          const measurementsMap: Record<string, CrowdNoiseMeasurement> = {}
           data.forEach((measurement: CrowdNoiseMeasurement) => {
-            measurementsMap[measurement.band_id] = measurement;
-          });
-          setMeasurements(measurementsMap);
+            measurementsMap[measurement.band_id] = measurement
+          })
+          setMeasurements(measurementsMap)
         }
       } catch (error) {
-        console.error("Error fetching measurements:", error);
+        console.error('Error fetching measurements:', error)
       }
-    };
+    }
 
     // Check microphone permission on component mount
     const checkInitialMicPermission = async () => {
       try {
         // Check if we already have permission
         const result = await navigator.permissions.query({
-          name: "microphone" as PermissionName,
-        });
-        if (result.state === "granted") {
-          setMicrophonePermission("granted");
-        } else if (result.state === "denied") {
-          setMicrophonePermission("denied");
+          name: 'microphone' as PermissionName,
+        })
+        if (result.state === 'granted') {
+          setMicrophonePermission('granted')
+        } else if (result.state === 'denied') {
+          setMicrophonePermission('denied')
         }
       } catch (_error) {
         // Fallback if permissions API is not supported
-        console.log("Permissions API not supported, will check on first use");
+        console.log('Permissions API not supported, will check on first use')
       }
-    };
+    }
 
-    fetchBands();
-    fetchMeasurements();
-    checkInitialMicPermission();
-  }, [eventId]);
+    fetchBands()
+    fetchMeasurements()
+    checkInitialMicPermission()
+  }, [eventId])
 
   const checkMicrophonePermission = async (): Promise<boolean> => {
-    setIsCheckingMic(true);
+    setIsCheckingMic(true)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setMicrophonePermission("granted");
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      setMicrophonePermission('granted')
       // Stop the stream immediately as we just needed to check permission
-      stream.getTracks().forEach((track) => track.stop());
-      return true;
+      stream.getTracks().forEach((track) => track.stop())
+      return true
     } catch (error) {
-      console.error("Microphone permission denied:", error);
-      setMicrophonePermission("denied");
-      return false;
+      console.error('Microphone permission denied:', error)
+      setMicrophonePermission('denied')
+      return false
     } finally {
-      setIsCheckingMic(false);
+      setIsCheckingMic(false)
     }
-  };
+  }
 
   const _startCountdown = () => {
-    if (microphonePermission !== "granted") {
-      checkMicrophonePermission();
-      return;
+    if (microphonePermission !== 'granted') {
+      checkMicrophonePermission()
+      return
     }
 
-    setCountdown(3);
+    setCountdown(3)
 
     // Use setTimeout for precise timing
-    const countdown3 = setTimeout(() => setCountdown(2), 1000);
-    const countdown2 = setTimeout(() => setCountdown(1), 2000);
+    const countdown3 = setTimeout(() => setCountdown(2), 1000)
+    const countdown2 = setTimeout(() => setCountdown(1), 2000)
     const countdown1 = setTimeout(() => {
-      setCountdown(0);
+      setCountdown(0)
       // Start recording immediately after countdown
-      setTimeout(() => startRecording(), 100);
-    }, 3000);
+      setTimeout(() => startRecording(), 100)
+    }, 3000)
 
     // Cleanup function to clear timeouts if component unmounts
     return () => {
-      clearTimeout(countdown3);
-      clearTimeout(countdown2);
-      clearTimeout(countdown1);
-    };
-  };
+      clearTimeout(countdown3)
+      clearTimeout(countdown2)
+      clearTimeout(countdown1)
+    }
+  }
 
   const startRecording = async () => {
     try {
       // Always check microphone permission first
-      if (microphonePermission !== "granted") {
-        const hasPermission = await checkMicrophonePermission();
+      if (microphonePermission !== 'granted') {
+        const hasPermission = await checkMicrophonePermission()
         if (!hasPermission) {
-          return;
+          return
         }
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      audioContextRef.current = new (window.AudioContext ||
+      audioContextRef.current = new (
+        window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext)();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 2048;
-      analyserRef.current.smoothingTimeConstant = 0.3;
+          .webkitAudioContext
+      )()
+      analyserRef.current = audioContextRef.current.createAnalyser()
+      analyserRef.current.fftSize = 2048
+      analyserRef.current.smoothingTimeConstant = 0.3
 
       sourceRef.current =
-        audioContextRef.current.createMediaStreamSource(stream);
-      sourceRef.current.connect(analyserRef.current);
+        audioContextRef.current.createMediaStreamSource(stream)
+      sourceRef.current.connect(analyserRef.current)
 
-      const bufferLength = analyserRef.current.frequencyBinCount;
-      dataArrayRef.current = new Uint8Array(bufferLength);
+      const bufferLength = analyserRef.current.frequencyBinCount
+      dataArrayRef.current = new Uint8Array(bufferLength)
 
-      startTimeRef.current = Date.now();
-      energyAccumulatorRef.current = 0;
-      isActiveRef.current = true;
+      startTimeRef.current = Date.now()
+      energyAccumulatorRef.current = 0
+      isActiveRef.current = true
 
-      setIsRecording(true);
-      setTimeLeft(7);
-      setTotalEnergy(0);
-      setPeakVolume(0);
+      setIsRecording(true)
+      setTimeLeft(7)
+      setTotalEnergy(0)
+      setPeakVolume(0)
 
-      visualize();
+      visualize()
     } catch (err) {
-      alert(`Microphone error: ${(err as Error).message}`);
+      alert(`Microphone error: ${(err as Error).message}`)
     }
-  };
+  }
 
   const stopRecording = () => {
-    isActiveRef.current = false;
+    isActiveRef.current = false
 
     if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
+      cancelAnimationFrame(animationRef.current)
     }
     if (sourceRef.current) {
-      sourceRef.current.disconnect();
-      sourceRef.current.mediaStream
-        .getTracks()
-        .forEach((track) => track.stop());
+      sourceRef.current.disconnect()
+      sourceRef.current.mediaStream.getTracks().forEach((track) => track.stop())
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close()
     }
-    setIsRecording(false);
-    setTimeLeft(0);
-  };
+    setIsRecording(false)
+    setTimeLeft(0)
+  }
 
   const visualize = () => {
     if (!isActiveRef.current || !analyserRef.current || !dataArrayRef.current)
-      return;
+      return
 
-    const analyser = analyserRef.current;
-    const dataArray = dataArrayRef.current;
+    const analyser = analyserRef.current
+    const dataArray = dataArrayRef.current
 
-    analyser.getByteTimeDomainData(dataArray as Uint8Array<ArrayBuffer>);
+    analyser.getByteTimeDomainData(dataArray as Uint8Array<ArrayBuffer>)
 
-    let sumSquares = 0;
+    let sumSquares = 0
     for (let i = 0; i < dataArray.length; i++) {
-      const normalized = (dataArray[i] - 128) / 128;
-      sumSquares += normalized * normalized;
+      const normalized = (dataArray[i] - 128) / 128
+      sumSquares += normalized * normalized
     }
-    const rms = Math.sqrt(sumSquares / dataArray.length);
+    const rms = Math.sqrt(sumSquares / dataArray.length)
 
-    const dt = 1 / 60;
-    energyAccumulatorRef.current += rms * rms * dt;
+    const dt = 1 / 60
+    energyAccumulatorRef.current += rms * rms * dt
 
-    setPeakVolume((prev) => Math.max(prev, rms));
+    setPeakVolume((prev) => Math.max(prev, rms))
 
-    drawVUMeter(rms);
-    drawVolumeGraph(rms);
+    drawVUMeter(rms)
+    drawVolumeGraph(rms)
 
-    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const remaining = Math.max(0, 7 - elapsed);
-    setTimeLeft(remaining);
-    setTotalEnergy(energyAccumulatorRef.current);
+    const elapsed = (Date.now() - startTimeRef.current) / 1000
+    const remaining = Math.max(0, 7 - elapsed)
+    setTimeLeft(remaining)
+    setTotalEnergy(energyAccumulatorRef.current)
 
     if (remaining > 0) {
-      animationRef.current = requestAnimationFrame(visualize);
+      animationRef.current = requestAnimationFrame(visualize)
     } else {
-      stopRecording();
+      stopRecording()
     }
-  };
+  }
 
   const drawVUMeter = (rms: number) => {
-    const canvas = vuCanvasRef.current;
-    if (!canvas) return;
+    const canvas = vuCanvasRef.current
+    if (!canvas) return
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = canvas.width
+    const height = canvas.height
 
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height)
+    ctx.fillStyle = '#1a1a1a'
+    ctx.fillRect(0, 0, width, height)
 
-    const barWidth = width * Math.min(rms * 5, 1);
-    const gradient = ctx.createLinearGradient(0, 0, width, 0);
-    gradient.addColorStop(0, "#00ff00");
-    gradient.addColorStop(0.6, "#ffff00");
-    gradient.addColorStop(0.85, "#ff8800");
-    gradient.addColorStop(1, "#ff0000");
+    const barWidth = width * Math.min(rms * 5, 1)
+    const gradient = ctx.createLinearGradient(0, 0, width, 0)
+    gradient.addColorStop(0, '#00ff00')
+    gradient.addColorStop(0.6, '#ffff00')
+    gradient.addColorStop(0.85, '#ff8800')
+    gradient.addColorStop(1, '#ff0000')
 
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, barWidth, height);
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, barWidth, height)
 
-    const peakX = width * Math.min(peakVolume * 5, 1);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(peakX - 2, 0, 4, height);
+    const peakX = width * Math.min(peakVolume * 5, 1)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(peakX - 2, 0, 4, height)
 
-    ctx.fillStyle = "#666";
+    ctx.fillStyle = '#666'
     for (let i = 0; i <= 10; i++) {
-      const x = (i / 10) * width;
-      ctx.fillRect(x, height - 10, 1, 10);
+      const x = (i / 10) * width
+      ctx.fillRect(x, height - 10, 1, 10)
     }
-  };
+  }
 
   const drawVolumeGraph = (rms: number) => {
-    const canvas = graphCanvasRef.current;
-    if (!canvas) return;
+    const canvas = graphCanvasRef.current
+    if (!canvas) return
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = canvas.width
+    const height = canvas.height
 
-    ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height)
+    ctx.fillStyle = '#1a1a1a'
+    ctx.fillRect(0, 0, width, height)
 
-    const elapsed = (Date.now() - startTimeRef.current) / 1000;
-    const progress = Math.min(elapsed / 5, 1);
-    const x = progress * width;
-    const y = height - rms * 5 * height;
+    const elapsed = (Date.now() - startTimeRef.current) / 1000
+    const progress = Math.min(elapsed / 5, 1)
+    const x = progress * width
+    const y = height - rms * 5 * height
 
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, height);
-    ctx.lineTo(x, Math.max(0, Math.min(height, y)));
-    ctx.stroke();
-  };
+    ctx.strokeStyle = '#00ff88'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, height)
+    ctx.lineTo(x, Math.max(0, Math.min(height, y)))
+    ctx.stroke()
+  }
 
   const submitMeasurement = async () => {
-    if (!selectedBandId) return;
+    if (!selectedBandId) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
       const response = await fetch(`/api/events/${eventId}/crowd-noise`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           band_id: selectedBandId,
@@ -330,71 +330,71 @@ export default function CrowdNoisePage() {
           peak_volume: peakVolume,
           recording_duration: 7,
         }),
-      });
+      })
 
       if (response.ok) {
-        const measurement = await response.json();
+        const measurement = await response.json()
         setMeasurements((prev) => ({
           ...prev,
           [measurement.band_id]: measurement,
-        }));
-        setIsSubmitted(true);
+        }))
+        setIsSubmitted(true)
 
         // Reset form after successful submission
         setTimeout(() => {
-          setIsSubmitted(false);
-          setTotalEnergy(0);
-          setPeakVolume(0);
-          setSelectedBandId("");
-        }, 2000);
+          setIsSubmitted(false)
+          setTotalEnergy(0)
+          setPeakVolume(0)
+          setSelectedBandId('')
+        }, 2000)
       } else {
-        throw new Error("Failed to submit measurement");
+        throw new Error('Failed to submit measurement')
       }
     } catch (error) {
-      console.error("Error submitting measurement:", error);
-      alert("Failed to submit measurement. Please try again.");
+      console.error('Error submitting measurement:', error)
+      alert('Failed to submit measurement. Please try again.')
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const resetMeasurement = async () => {
-    if (!selectedBandId) return;
+    if (!selectedBandId) return
 
-    setIsResetting(true);
+    setIsResetting(true)
     try {
       const response = await fetch(
         `/api/events/${eventId}/crowd-noise?band_id=${selectedBandId}`,
         {
-          method: "DELETE",
+          method: 'DELETE',
         }
-      );
+      )
 
       if (response.ok) {
         // Remove the measurement from local state
         setMeasurements((prev) => {
-          const newMeasurements = { ...prev };
-          delete newMeasurements[selectedBandId];
-          return newMeasurements;
-        });
+          const newMeasurements = { ...prev }
+          delete newMeasurements[selectedBandId]
+          return newMeasurements
+        })
 
         // Reset form state
-        setTotalEnergy(0);
-        setPeakVolume(0);
-        setIsSubmitted(false);
+        setTotalEnergy(0)
+        setPeakVolume(0)
+        setIsSubmitted(false)
       } else {
-        throw new Error("Failed to reset measurement");
+        throw new Error('Failed to reset measurement')
       }
     } catch (error) {
-      console.error("Error resetting measurement:", error);
-      alert("Failed to reset measurement. Please try again.");
+      console.error('Error resetting measurement:', error)
+      alert('Failed to reset measurement. Please try again.')
     } finally {
-      setIsResetting(false);
+      setIsResetting(false)
     }
-  };
+  }
 
-  const selectedBand = bands.find((band) => band.id === selectedBandId);
-  const hasMeasurement = selectedBand && measurements[selectedBand.id];
+  const selectedBand = bands.find((band) => band.id === selectedBandId)
+  const hasMeasurement = selectedBand && measurements[selectedBand.id]
 
   // Show loading while fetching bands
   if (bands.length === 0) {
@@ -402,12 +402,12 @@ export default function CrowdNoisePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-white text-xl">Loading bands...</div>
       </div>
-    );
+    )
   }
 
   // Show completion message if all bands have been measured
   const allBandsMeasured =
-    bands.length > 0 && bands.every((band) => measurements[band.id]);
+    bands.length > 0 && bands.every((band) => measurements[band.id])
   if (allBandsMeasured) {
     return (
       <div className="text-center py-12">
@@ -423,7 +423,7 @@ export default function CrowdNoisePage() {
           Back to Event Management
         </Link>
       </div>
-    );
+    )
   }
 
   return (
@@ -435,31 +435,31 @@ export default function CrowdNoisePage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {bands.map((band) => {
-            const hasMeasurement = measurements[band.id];
+            const hasMeasurement = measurements[band.id]
             return (
               <div
                 key={band.id}
                 className={`p-4 rounded-xl text-left transition-all ${
                   selectedBandId === band.id
-                    ? "bg-blue-600 text-white"
+                    ? 'bg-blue-600 text-white'
                     : hasMeasurement
-                    ? "bg-green-600/20 text-green-400 border-2 border-green-400"
-                    : "bg-white/10 text-white hover:bg-white/20"
+                      ? 'bg-green-600/20 text-green-400 border-2 border-green-400'
+                      : 'bg-white/10 text-white hover:bg-white/20'
                 } ${
                   isRecording || isSubmitting
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
+                    ? 'opacity-50 cursor-not-allowed'
+                    : ''
                 }`}
               >
                 <button
                   onClick={() => {
                     if (hasMeasurement) {
-                      setSelectedBandId(band.id);
+                      setSelectedBandId(band.id)
                     } else {
                       window.open(
                         `/live/events/${eventId}/crowd-noise/record/${band.id}`,
-                        "_blank"
-                      );
+                        '_blank'
+                      )
                     }
                   }}
                   disabled={isRecording || isSubmitting}
@@ -483,17 +483,17 @@ export default function CrowdNoisePage() {
                 {hasMeasurement && selectedBandId === band.id && (
                   <button
                     onClick={(e) => {
-                      e.stopPropagation();
-                      resetMeasurement();
+                      e.stopPropagation()
+                      resetMeasurement()
                     }}
                     disabled={isResetting || isRecording || isSubmitting}
                     className="mt-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-1 px-3 rounded-sm text-xs transition-colors"
                   >
-                    {isResetting ? "Resetting..." : "Reset"}
+                    {isResetting ? 'Resetting...' : 'Reset'}
                   </button>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       </div>
@@ -521,32 +521,32 @@ export default function CrowdNoisePage() {
                   disabled={isResetting || isRecording || isSubmitting}
                   className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
                 >
-                  {isResetting ? "Resetting..." : "Reset"}
+                  {isResetting ? 'Resetting...' : 'Reset'}
                 </button>
               </div>
               <div className="bg-yellow-600/20 text-yellow-400 px-4 py-3 rounded-lg text-center">
                 <div className="text-2xl font-bold">
-                  Crowd Score:{" "}
-                  {measurements[selectedBand.id]?.crowd_score || "N/A"}
+                  Crowd Score:{' '}
+                  {measurements[selectedBand.id]?.crowd_score || 'N/A'}
                 </div>
                 <div className="text-lg text-gray-300 mt-1">
-                  Energy Level:{" "}
+                  Energy Level:{' '}
                   {measurements[selectedBand.id]?.energy_level
                     ? Number(
                         measurements[selectedBand.id].energy_level
                       ).toFixed(2)
-                    : "N/A"}
+                    : 'N/A'}
                 </div>
                 <div className="text-sm text-gray-300 mt-1">
                   {measurements[selectedBand.id]?.crowd_score >= 8
-                    ? "🔥 INCREDIBLE!"
+                    ? '🔥 INCREDIBLE!'
                     : measurements[selectedBand.id]?.crowd_score >= 6
-                    ? "🎉 AMAZING!"
-                    : measurements[selectedBand.id]?.crowd_score >= 4
-                    ? "👏 GREAT!"
-                    : measurements[selectedBand.id]?.crowd_score >= 2
-                    ? "👍 GOOD!"
-                    : "💪 KEEP TRYING!"}
+                      ? '🎉 AMAZING!'
+                      : measurements[selectedBand.id]?.crowd_score >= 4
+                        ? '👏 GREAT!'
+                        : measurements[selectedBand.id]?.crowd_score >= 2
+                          ? '👍 GOOD!'
+                          : '💪 KEEP TRYING!'}
                 </div>
               </div>
             </div>
@@ -572,7 +572,7 @@ export default function CrowdNoisePage() {
           {!isRecording && !isSubmitted && (
             <div className="text-center">
               {/* Microphone Permission Status */}
-              {microphonePermission === "unknown" && (
+              {microphonePermission === 'unknown' && (
                 <div className="mb-4 p-4 bg-yellow-600/20 border border-yellow-400 rounded-lg">
                   <p className="text-yellow-400 mb-2">
                     Microphone access required
@@ -583,7 +583,7 @@ export default function CrowdNoisePage() {
                 </div>
               )}
 
-              {microphonePermission === "denied" && (
+              {microphonePermission === 'denied' && (
                 <div className="mb-4 p-4 bg-red-600/20 border border-red-400 rounded-lg">
                   <p className="text-red-400 mb-2">Microphone access denied</p>
                   <p className="text-sm text-gray-300">
@@ -593,7 +593,7 @@ export default function CrowdNoisePage() {
                 </div>
               )}
 
-              {microphonePermission === "granted" && (
+              {microphonePermission === 'granted' && (
                 <div className="mb-4 p-4 bg-green-600/20 border border-green-400 rounded-lg">
                   <p className="text-green-400">✓ Microphone ready</p>
                 </div>
@@ -602,46 +602,46 @@ export default function CrowdNoisePage() {
               <button
                 onClick={() => {
                   if (hasMeasurement) {
-                    return;
+                    return
                   }
                   window.open(
                     `/live/events/${eventId}/crowd-noise/record/${selectedBandId}`,
-                    "_blank"
-                  );
+                    '_blank'
+                  )
                 }}
                 disabled={
                   !!hasMeasurement ||
                   isCheckingMic ||
-                  microphonePermission === "denied"
+                  microphonePermission === 'denied'
                 }
                 className={`px-8 py-4 rounded-xl text-2xl font-bold transition-colors ${
                   hasMeasurement
-                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    : microphonePermission === "denied"
-                    ? "bg-red-600 text-red-200 cursor-not-allowed"
-                    : isCheckingMic
-                    ? "bg-yellow-600 text-yellow-200 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700 text-white"
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : microphonePermission === 'denied'
+                      ? 'bg-red-600 text-red-200 cursor-not-allowed'
+                      : isCheckingMic
+                        ? 'bg-yellow-600 text-yellow-200 cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700 text-white'
                 }`}
               >
                 {hasMeasurement
-                  ? "Already Measured"
+                  ? 'Already Measured'
                   : isCheckingMic
-                  ? "Checking Microphone..."
-                  : microphonePermission === "denied"
-                  ? "Microphone Denied"
-                  : microphonePermission === "unknown"
-                  ? "Check Microphone"
-                  : "Start Recording"}
+                    ? 'Checking Microphone...'
+                    : microphonePermission === 'denied'
+                      ? 'Microphone Denied'
+                      : microphonePermission === 'unknown'
+                        ? 'Check Microphone'
+                        : 'Start Recording'}
               </button>
               <p className="text-gray-300 mt-4">
                 {hasMeasurement
-                  ? "This band has already been measured"
-                  : microphonePermission === "denied"
-                  ? "Please enable microphone access to continue"
-                  : microphonePermission === "unknown"
-                  ? "Click to check microphone permission first"
-                  : "Click to open full-screen recording page"}
+                  ? 'This band has already been measured'
+                  : microphonePermission === 'denied'
+                    ? 'Please enable microphone access to continue'
+                    : microphonePermission === 'unknown'
+                      ? 'Click to check microphone permission first'
+                      : 'Click to open full-screen recording page'}
               </p>
             </div>
           )}
@@ -707,12 +707,12 @@ export default function CrowdNoisePage() {
                 disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-4 px-8 rounded-xl text-xl transition-colors"
               >
-                {isSubmitting ? "Saving..." : "Save Measurement"}
+                {isSubmitting ? 'Saving...' : 'Save Measurement'}
               </button>
             </div>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }

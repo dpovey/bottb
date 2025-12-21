@@ -1,59 +1,59 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
-import { useMounted } from "@/lib/hooks";
+import { useState, useEffect, useCallback, useRef } from 'react'
+import Image from 'next/image'
+import { useMounted } from '@/lib/hooks'
 
 interface HeroImage {
-  url: string;
-  focalPoint?: { x: number; y: number };
+  url: string
+  focalPoint?: { x: number; y: number }
 }
 
 interface HeroCarouselProps {
-  images: HeroImage[];
-  interval?: number; // in milliseconds
-  fallbackImage?: string;
-  children?: React.ReactNode;
+  images: HeroImage[]
+  interval?: number // in milliseconds
+  fallbackImage?: string
+  children?: React.ReactNode
 }
 
 export function HeroCarousel({
   images,
   interval = 10000,
-  fallbackImage = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80",
+  fallbackImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80',
   children,
 }: HeroCarouselProps) {
-  const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }];
-  const mounted = useMounted();
-  const initializedRef = useRef(false);
+  const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }]
+  const mounted = useMounted()
+  const initializedRef = useRef(false)
 
   // Start with index 0 for consistent SSR/hydration
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const nextImage = useCallback(() => {
-    if (effectiveImages.length <= 1) return;
+    if (effectiveImages.length <= 1) return
 
-    setIsTransitioning(true);
+    setIsTransitioning(true)
     setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % effectiveImages.length);
-      setIsTransitioning(false);
-    }, 500); // Half of the CSS transition duration
-  }, [effectiveImages.length]);
+      setCurrentIndex((prev) => (prev + 1) % effectiveImages.length)
+      setIsTransitioning(false)
+    }, 500) // Half of the CSS transition duration
+  }, [effectiveImages.length])
 
   // Randomize starting image on mount and start interval
   useEffect(() => {
-    if (!mounted || effectiveImages.length <= 1) return;
+    if (!mounted || effectiveImages.length <= 1) return
 
     // Randomize on first mount only - use setTimeout to defer setState
     if (!initializedRef.current) {
-      initializedRef.current = true;
-      const randomIndex = Math.floor(Math.random() * effectiveImages.length);
-      setTimeout(() => setCurrentIndex(randomIndex), 0);
+      initializedRef.current = true
+      const randomIndex = Math.floor(Math.random() * effectiveImages.length)
+      setTimeout(() => setCurrentIndex(randomIndex), 0)
     }
 
-    const timer = setInterval(nextImage, interval);
-    return () => clearInterval(timer);
-  }, [mounted, effectiveImages.length, interval, nextImage]);
+    const timer = setInterval(nextImage, interval)
+    return () => clearInterval(timer)
+  }, [mounted, effectiveImages.length, interval, nextImage])
 
   return (
     <section className="relative min-h-[70vh] flex items-end">
@@ -64,8 +64,8 @@ export function HeroCarousel({
             key={image.url}
             className={`absolute inset-0 transition-opacity duration-1000 ${
               index === currentIndex && !isTransitioning
-                ? "opacity-100"
-                : "opacity-0"
+                ? 'opacity-100'
+                : 'opacity-0'
             }`}
           >
             <Image
@@ -92,5 +92,5 @@ export function HeroCarousel({
       {/* Content */}
       {children}
     </section>
-  );
+  )
 }

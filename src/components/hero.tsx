@@ -1,37 +1,37 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui'
+import { cn } from '@/lib/utils'
 
 export interface HeroFocalPoint {
-  x: number; // 0-100 percentage from left
-  y: number; // 0-100 percentage from top
+  x: number // 0-100 percentage from left
+  y: number // 0-100 percentage from top
 }
 
 export interface HeroProps {
   /** Hero title */
-  title: string;
+  title: string
   /** Subtitle or tagline */
-  subtitle?: string;
+  subtitle?: string
   /** Background image URL (or placeholder gradient if not provided) */
-  backgroundImage?: string;
+  backgroundImage?: string
   /** Focal point for image positioning (0-100 for both x and y) */
-  focalPoint?: HeroFocalPoint;
+  focalPoint?: HeroFocalPoint
   /** CTA buttons */
   actions?: {
-    label: string;
-    href: string;
-    variant?: "outline-solid" | "filled" | "accent";
-  }[];
+    label: string
+    href: string
+    variant?: 'outline-solid' | 'filled' | 'accent'
+  }[]
   /** Height variant */
-  size?: "sm" | "md" | "lg" | "full";
+  size?: 'sm' | 'md' | 'lg' | 'full'
   /** Overlay intensity */
-  overlay?: "light" | "medium" | "heavy";
+  overlay?: 'light' | 'medium' | 'heavy'
   /** Additional children (e.g., badges, stats) */
-  children?: React.ReactNode;
-  className?: string;
+  children?: React.ReactNode
+  className?: string
 }
 
 export function Hero({
@@ -40,20 +40,20 @@ export function Hero({
   backgroundImage,
   focalPoint = { x: 50, y: 50 },
   actions,
-  size = "lg",
-  overlay = "heavy",
+  size = 'lg',
+  overlay = 'heavy',
   children,
   className,
 }: HeroProps) {
   return (
     <section
       className={cn(
-        "relative overflow-hidden flex items-center justify-center",
+        'relative overflow-hidden flex items-center justify-center',
         {
-          "min-h-[40vh]": size === "sm",
-          "min-h-[60vh]": size === "md",
-          "min-h-[80vh]": size === "lg",
-          "min-h-screen": size === "full",
+          'min-h-[40vh]': size === 'sm',
+          'min-h-[60vh]': size === 'md',
+          'min-h-[80vh]': size === 'lg',
+          'min-h-screen': size === 'full',
         },
         className
       )}
@@ -76,10 +76,10 @@ export function Hero({
 
       {/* Overlay */}
       <div
-        className={cn("absolute inset-0", {
-          "bg-bg/20": overlay === "light",
-          "bg-bg/40": overlay === "medium",
-          "bg-bg/55": overlay === "heavy",
+        className={cn('absolute inset-0', {
+          'bg-bg/20': overlay === 'light',
+          'bg-bg/40': overlay === 'medium',
+          'bg-bg/55': overlay === 'heavy',
         })}
       />
 
@@ -102,7 +102,7 @@ export function Hero({
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             {actions.map((action, index) => (
               <Link key={index} href={action.href}>
-                <Button variant={action.variant || "outline-solid"} size="lg">
+                <Button variant={action.variant || 'outline-solid'} size="lg">
                   {action.label}
                 </Button>
               </Link>
@@ -113,15 +113,15 @@ export function Hero({
         {children}
       </div>
     </section>
-  );
+  )
 }
 
 // Simpler variant for page headers (not full hero)
 export interface PageHeaderProps {
-  title: string;
-  subtitle?: string;
-  children?: React.ReactNode;
-  className?: string;
+  title: string
+  subtitle?: string
+  children?: React.ReactNode
+  className?: string
 }
 
 export function PageHeader({
@@ -131,7 +131,7 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("py-12 lg:py-16 border-b border-white/5", className)}>
+    <div className={cn('py-12 lg:py-16 border-b border-white/5', className)}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-white mb-4">
           {title}
@@ -142,6 +142,5 @@ export function PageHeader({
         {children}
       </div>
     </div>
-  );
+  )
 }
-

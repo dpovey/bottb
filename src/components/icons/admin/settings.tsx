@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Settings/cog icon
@@ -24,7 +24,6 @@ export const SettingsIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
-);
+)
 
-SettingsIcon.displayName = "SettingsIcon";
-
+SettingsIcon.displayName = 'SettingsIcon'

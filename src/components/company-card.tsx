@@ -1,20 +1,20 @@
-import Link from "next/link";
-import { Card, Badge } from "@/components/ui";
-import { BuildingIcon, ChevronRightIcon } from "@/components/icons";
-import { cn } from "@/lib/utils";
+import Link from 'next/link'
+import { Card, Badge } from '@/components/ui'
+import { BuildingIcon, ChevronRightIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
 
 interface CompanyCardProps {
   company: {
-    slug: string;
-    name: string;
-    logo_url?: string | null;
-    icon_url?: string | null;
-    website?: string | null;
-    band_count: number;
-    event_count: number;
-  };
+    slug: string
+    name: string
+    logo_url?: string | null
+    icon_url?: string | null
+    website?: string | null
+    band_count: number
+    event_count: number
+  }
   /** Whether this company is currently selected/highlighted */
-  selected?: boolean;
+  selected?: boolean
 }
 
 /**
@@ -22,9 +22,9 @@ interface CompanyCardProps {
  * Used on the Companies listing page
  */
 export function CompanyCard({ company, selected = false }: CompanyCardProps) {
-  const hasLogo = !!company.logo_url;
+  const hasLogo = !!company.logo_url
   // Use icon for the square, fallback to logo
-  const iconUrl = company.icon_url || company.logo_url;
+  const iconUrl = company.icon_url || company.logo_url
 
   return (
     <Link href={`/companies?company=${company.slug}`}>
@@ -32,8 +32,8 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
         variant="interactive"
         padding="none"
         className={cn(
-          "overflow-hidden h-full",
-          selected && "border-accent/30 bg-accent/5"
+          'overflow-hidden h-full',
+          selected && 'border-accent/30 bg-accent/5'
         )}
       >
         <div className="p-6">
@@ -59,7 +59,7 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                 </h3>
                 {company.website && (
                   <p className="text-text-dim text-xs truncate mt-0.5">
-                    {company.website.replace(/^https?:\/\//, "")}
+                    {company.website.replace(/^https?:\/\//, '')}
                   </p>
                 )}
               </div>
@@ -67,13 +67,13 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
           )}
 
           {/* Stats */}
-          <div className={cn("flex gap-3", hasLogo && "justify-center")}>
+          <div className={cn('flex gap-3', hasLogo && 'justify-center')}>
             <Badge variant="default" className="bg-white/5">
               {company.event_count} event
-              {company.event_count !== 1 ? "s" : ""}
+              {company.event_count !== 1 ? 's' : ''}
             </Badge>
             <Badge variant="default" className="bg-white/5">
-              {company.band_count} band{company.band_count !== 1 ? "s" : ""}
+              {company.band_count} band{company.band_count !== 1 ? 's' : ''}
             </Badge>
           </div>
         </div>
@@ -102,6 +102,5 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
         </div>
       </Card>
     </Link>
-  );
+  )
 }
-

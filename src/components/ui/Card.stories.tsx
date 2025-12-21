@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import {
   Card,
   CardHeader,
@@ -6,44 +6,44 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "./card";
-import { Button } from "./button";
+} from './card'
+import { Button } from './button'
 
 const meta: Meta<typeof Card> = {
-  title: "Display/Card",
+  title: 'Display/Card',
   component: Card,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Card component for containing content. Supports multiple variants and padding options.",
+          'Card component for containing content. Supports multiple variants and padding options.',
       },
     },
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["default", "elevated", "interactive"],
-      description: "Visual style variant",
+      control: 'select',
+      options: ['default', 'elevated', 'interactive'],
+      description: 'Visual style variant',
     },
     padding: {
-      control: "select",
-      options: ["none", "sm", "md", "lg"],
-      description: "Internal padding",
+      control: 'select',
+      options: ['none', 'sm', 'md', 'lg'],
+      description: 'Internal padding',
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof Card>;
+export default meta
+type Story = StoryObj<typeof Card>
 
 // Default card
 export const Default: Story = {
   args: {
-    variant: "default",
-    padding: "md",
+    variant: 'default',
+    padding: 'md',
     children: (
       <>
         <CardHeader>
@@ -56,13 +56,13 @@ export const Default: Story = {
       </>
     ),
   },
-};
+}
 
 // Elevated card
 export const Elevated: Story = {
   args: {
-    variant: "elevated",
-    padding: "md",
+    variant: 'elevated',
+    padding: 'md',
     children: (
       <>
         <CardHeader>
@@ -75,13 +75,13 @@ export const Elevated: Story = {
       </>
     ),
   },
-};
+}
 
 // Interactive card
 export const Interactive: Story = {
   args: {
-    variant: "interactive",
-    padding: "md",
+    variant: 'interactive',
+    padding: 'md',
     children: (
       <>
         <CardHeader>
@@ -97,17 +97,17 @@ export const Interactive: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Interactive cards have hover effects with scale and shadow.",
+        story: 'Interactive cards have hover effects with scale and shadow.',
       },
     },
   },
-};
+}
 
 // With footer
 export const WithFooter: Story = {
   args: {
-    variant: "default",
-    padding: "md",
+    variant: 'default',
+    padding: 'md',
     children: (
       <>
         <CardHeader>
@@ -125,7 +125,7 @@ export const WithFooter: Story = {
       </>
     ),
   },
-};
+}
 
 // Padding variants
 export const PaddingVariants: Story = {
@@ -154,11 +154,11 @@ export const PaddingVariants: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Cards with different padding options.",
+        story: 'Cards with different padding options.',
       },
     },
   },
-};
+}
 
 // Simple card (no sub-components)
 export const SimpleCard: Story = {
@@ -170,5 +170,4 @@ export const SimpleCard: Story = {
       </p>
     </Card>
   ),
-};
-
+}

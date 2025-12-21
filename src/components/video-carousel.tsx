@@ -1,37 +1,37 @@
-"use client";
+'use client'
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Video } from "@/lib/db";
-import { CompanyIcon } from "@/components/ui";
-import { motion, AnimatePresence } from "framer-motion";
-import { trackVideoClick, trackSubscribeClick } from "@/lib/analytics";
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Video } from '@/lib/db'
+import { CompanyIcon } from '@/components/ui'
+import { motion, AnimatePresence } from 'framer-motion'
+import { trackVideoClick, trackSubscribeClick } from '@/lib/analytics'
 import {
   YouTubeIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CloseIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 
 interface VideoCarouselProps {
-  videos: Video[];
-  title?: string;
-  showBandInfo?: boolean;
-  className?: string;
-  location?: string; // Where the carousel appears (e.g., "home_page", "event_page", "band_page")
+  videos: Video[]
+  title?: string
+  showBandInfo?: boolean
+  className?: string
+  location?: string // Where the carousel appears (e.g., "home_page", "event_page", "band_page")
 }
 
 /**
  * Format duration in seconds to MM:SS or H:MM:SS
  */
 function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
+  if (!seconds) return ''
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
 /**
@@ -39,78 +39,78 @@ function formatDuration(seconds: number | null): string {
  */
 function getThumbnailUrl(video: Video): string {
   if (video.thumbnail_url) {
-    return video.thumbnail_url;
+    return video.thumbnail_url
   }
   // Fallback to YouTube's thumbnail API
-  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`;
+  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`
 }
 
 /**
  * Video Carousel Component
- * 
+ *
  * Displays a horizontal scrolling carousel of YouTube video thumbnails.
  * Clicking a thumbnail opens a modal with the embedded YouTube player.
  */
 export function VideoCarousel({
   videos,
-  title = "Videos",
+  title = 'Videos',
   showBandInfo = true,
-  className = "",
-  location = "video_carousel",
+  className = '',
+  location = 'video_carousel',
 }: VideoCarouselProps) {
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   // Check scroll state
   const checkScrollState = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+    const container = scrollContainerRef.current
+    if (!container) return
 
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setCanScrollLeft(scrollLeft > 0);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
-  }, []);
+    const { scrollLeft, scrollWidth, clientWidth } = container
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1)
+  }, [])
 
   useEffect(() => {
-    checkScrollState();
-    const container = scrollContainerRef.current;
+    checkScrollState()
+    const container = scrollContainerRef.current
     if (container) {
-      container.addEventListener("scroll", checkScrollState);
-      window.addEventListener("resize", checkScrollState);
+      container.addEventListener('scroll', checkScrollState)
+      window.addEventListener('resize', checkScrollState)
       return () => {
-        container.removeEventListener("scroll", checkScrollState);
-        window.removeEventListener("resize", checkScrollState);
-      };
+        container.removeEventListener('scroll', checkScrollState)
+        window.removeEventListener('resize', checkScrollState)
+      }
     }
-  }, [checkScrollState, videos]);
+  }, [checkScrollState, videos])
 
   // Scroll handlers
-  const scroll = useCallback((direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+  const scroll = useCallback((direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current
+    if (!container) return
 
-    const scrollAmount = container.clientWidth * 0.8;
+    const scrollAmount = container.clientWidth * 0.8
     container.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  }, []);
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    })
+  }, [])
 
   // Close modal on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedVideo) {
-        setSelectedVideo(null);
+      if (e.key === 'Escape' && selectedVideo) {
+        setSelectedVideo(null)
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedVideo]);
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedVideo])
 
   if (videos.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -119,7 +119,7 @@ export function VideoCarousel({
         {/* Header with title and navigation */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-semibold text-2xl sm:text-3xl">{title}</h2>
-          
+
           <div className="flex items-center gap-3">
             {/* Subscribe link */}
             <a
@@ -129,8 +129,8 @@ export function VideoCarousel({
               onClick={() => {
                 trackSubscribeClick({
                   location,
-                  url: "https://youtube.com/@battleofthetechbands?sub_confirmation=1",
-                });
+                  url: 'https://youtube.com/@battleofthetechbands?sub_confirmation=1',
+                })
               }}
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-text-muted hover:text-white border border-white/20 hover:border-white/40 hover:bg-white/5 transition-all"
             >
@@ -142,7 +142,7 @@ export function VideoCarousel({
             {videos.length > 2 && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => scroll("left")}
+                  onClick={() => scroll('left')}
                   disabled={!canScrollLeft}
                   className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-white/60 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Scroll left"
@@ -150,7 +150,7 @@ export function VideoCarousel({
                   <ChevronLeftIcon size={20} strokeWidth={2} />
                 </button>
                 <button
-                  onClick={() => scroll("right")}
+                  onClick={() => scroll('right')}
                   disabled={!canScrollRight}
                   className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white hover:border-white/60 hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Scroll right"
@@ -166,13 +166,13 @@ export function VideoCarousel({
         <div
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent snap-x snap-mandatory"
-          style={{ scrollbarWidth: "thin" }}
+          style={{ scrollbarWidth: 'thin' }}
         >
           {videos.map((video) => (
             <button
               key={video.id}
               onClick={() => {
-                setSelectedVideo(video);
+                setSelectedVideo(video)
                 trackVideoClick({
                   video_id: video.id,
                   video_title: video.title,
@@ -183,7 +183,7 @@ export function VideoCarousel({
                   band_name: video.band_name || null,
                   company_name: video.company_name || null,
                   location,
-                });
+                })
               }}
               className="group shrink-0 w-[280px] sm:w-[320px] snap-start"
             >
@@ -196,7 +196,7 @@ export function VideoCarousel({
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
-                
+
                 {/* Duration Badge */}
                 {video.duration_seconds && (
                   <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-sm bg-black/80 text-xs font-medium">
@@ -220,7 +220,7 @@ export function VideoCarousel({
                     {video.company_icon_url && (
                       <CompanyIcon
                         iconUrl={video.company_icon_url}
-                        companyName={video.company_name || ""}
+                        companyName={video.company_name || ''}
                         size="xs"
                         showFallback={false}
                       />
@@ -229,7 +229,9 @@ export function VideoCarousel({
                     {video.event_name && (
                       <>
                         <span className="text-text-dim">•</span>
-                        <span className="truncate text-text-dim">{video.event_name}</span>
+                        <span className="truncate text-text-dim">
+                          {video.event_name}
+                        </span>
                       </>
                     )}
                   </div>
@@ -254,7 +256,7 @@ export function VideoCarousel({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               className="relative w-full max-w-5xl"
               onClick={(e) => e.stopPropagation()}
             >
@@ -286,7 +288,7 @@ export function VideoCarousel({
                     {selectedVideo.company_icon_url && (
                       <CompanyIcon
                         iconUrl={selectedVideo.company_icon_url}
-                        companyName={selectedVideo.company_name || ""}
+                        companyName={selectedVideo.company_name || ''}
                         size="sm"
                         showFallback={false}
                       />
@@ -295,13 +297,17 @@ export function VideoCarousel({
                     {selectedVideo.company_name && (
                       <>
                         <span className="text-text-dim">•</span>
-                        <span className="text-text-dim">{selectedVideo.company_name}</span>
+                        <span className="text-text-dim">
+                          {selectedVideo.company_name}
+                        </span>
                       </>
                     )}
                   </div>
                 )}
                 {selectedVideo.event_name && (
-                  <p className="mt-1 text-text-dim text-sm">{selectedVideo.event_name}</p>
+                  <p className="mt-1 text-text-dim text-sm">
+                    {selectedVideo.event_name}
+                  </p>
                 )}
               </div>
             </motion.div>
@@ -309,6 +315,5 @@ export function VideoCarousel({
         )}
       </AnimatePresence>
     </>
-  );
+  )
 }
-

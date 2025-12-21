@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 import {
   FilterBar,
   FilterSelect,
@@ -9,22 +9,24 @@ import {
   FilterPills,
   FilterClearButton,
   Button,
-} from "@/components/ui";
-import { CheckIcon } from "@/components/icons";
+} from '@/components/ui'
+import { CheckIcon } from '@/components/icons'
 
 export function FormsSection() {
-  const [searchValue, setSearchValue] = useState("");
-  const [eventFilter, setEventFilter] = useState("");
-  const [bandFilter, setBandFilter] = useState("");
-  const [selectedBand, setSelectedBand] = useState<string | null>("code-rockers");
+  const [searchValue, setSearchValue] = useState('')
+  const [eventFilter, setEventFilter] = useState('')
+  const [bandFilter, setBandFilter] = useState('')
+  const [selectedBand, setSelectedBand] = useState<string | null>(
+    'code-rockers'
+  )
 
-  const hasFilters = searchValue || eventFilter || bandFilter;
+  const hasFilters = searchValue || eventFilter || bandFilter
 
   const handleClear = () => {
-    setSearchValue("");
-    setEventFilter("");
-    setBandFilter("");
-  };
+    setSearchValue('')
+    setEventFilter('')
+    setBandFilter('')
+  }
 
   return (
     <div className="space-y-20">
@@ -35,7 +37,9 @@ export function FormsSection() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Text Input */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Text Input</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Text Input
+            </h3>
             <div>
               <label className="block text-xs tracking-wider uppercase text-text-muted mb-2">
                 Email
@@ -50,7 +54,9 @@ export function FormsSection() {
 
           {/* Textarea */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Textarea</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Textarea
+            </h3>
             <div>
               <label className="block text-xs tracking-wider uppercase text-text-muted mb-2">
                 Message
@@ -65,7 +71,9 @@ export function FormsSection() {
 
           {/* Input States */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Input States</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Input States
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs tracking-wider uppercase text-text-muted mb-2">
@@ -97,31 +105,35 @@ export function FormsSection() {
                   placeholder="Error state"
                   className="w-full px-4 py-3 bg-bg border border-error/50 rounded-lg text-white placeholder-text-dim transition-all focus:outline-hidden focus:border-error"
                 />
-                <p className="text-error text-sm mt-1">This field is required</p>
+                <p className="text-error text-sm mt-1">
+                  This field is required
+                </p>
               </div>
             </div>
           </div>
 
           {/* Voting Selection */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Selection (Voting)</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Selection (Voting)
+            </h3>
             <div className="space-y-2">
               <label
                 className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors ${
-                  selectedBand === "agentics"
-                    ? "bg-accent/10 border border-accent/40"
-                    : "bg-bg border border-white/10 hover:border-white/20"
+                  selectedBand === 'agentics'
+                    ? 'bg-accent/10 border border-accent/40'
+                    : 'bg-bg border border-white/10 hover:border-white/20'
                 }`}
-                onClick={() => setSelectedBand("agentics")}
+                onClick={() => setSelectedBand('agentics')}
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                    selectedBand === "agentics"
-                      ? "bg-accent border border-accent"
-                      : "border border-white/30"
+                    selectedBand === 'agentics'
+                      ? 'bg-accent border border-accent'
+                      : 'border border-white/30'
                   }`}
                 >
-                  {selectedBand === "agentics" && (
+                  {selectedBand === 'agentics' && (
                     <CheckIcon className="w-3 h-3 text-bg" />
                   )}
                 </div>
@@ -132,20 +144,20 @@ export function FormsSection() {
               </label>
               <label
                 className={`flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors ${
-                  selectedBand === "code-rockers"
-                    ? "bg-accent/10 border border-accent/40"
-                    : "bg-bg border border-white/10 hover:border-white/20"
+                  selectedBand === 'code-rockers'
+                    ? 'bg-accent/10 border border-accent/40'
+                    : 'bg-bg border border-white/10 hover:border-white/20'
                 }`}
-                onClick={() => setSelectedBand("code-rockers")}
+                onClick={() => setSelectedBand('code-rockers')}
               >
                 <div
                   className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                    selectedBand === "code-rockers"
-                      ? "bg-accent border border-accent"
-                      : "border border-white/30"
+                    selectedBand === 'code-rockers'
+                      ? 'bg-accent border border-accent'
+                      : 'border border-white/30'
                   }`}
                 >
-                  {selectedBand === "code-rockers" && (
+                  {selectedBand === 'code-rockers' && (
                     <CheckIcon className="w-3 h-3 text-bg" />
                   )}
                 </div>
@@ -163,15 +175,21 @@ export function FormsSection() {
       <section id="filter-components">
         <h2 className="font-semibold text-4xl mb-8">Filter Components</h2>
         <p className="text-text-muted text-lg mb-8 max-w-3xl">
-          Standardized filter components for filtering data. Always use FilterSelect for dropdowns to ensure consistent chevron styling.
+          Standardized filter components for filtering data. Always use
+          FilterSelect for dropdowns to ensure consistent chevron styling.
         </p>
 
         <div className="space-y-8">
           {/* FilterSelect */}
           <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">FilterSelect (Dropdown)</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              FilterSelect (Dropdown)
+            </h3>
             <p className="text-text-dim text-sm mb-6">
-              Styled dropdown with custom chevron. <strong className="text-white">Always use this instead of raw &lt;select&gt;.</strong>
+              Styled dropdown with custom chevron.{' '}
+              <strong className="text-white">
+                Always use this instead of raw &lt;select&gt;.
+              </strong>
             </p>
 
             <div className="flex flex-wrap gap-6 items-end">
@@ -197,8 +215,12 @@ export function FormsSection() {
 
           {/* FilterSearch */}
           <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">FilterSearch</h3>
-            <p className="text-text-dim text-sm mb-6">Search input with icon and optional clear button.</p>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              FilterSearch
+            </h3>
+            <p className="text-text-dim text-sm mb-6">
+              Search input with icon and optional clear button.
+            </p>
 
             <div className="flex-1 min-w-[240px] max-w-md">
               <FilterSearch
@@ -206,16 +228,19 @@ export function FormsSection() {
                 placeholder="Search songs, bands..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                onClear={() => setSearchValue("")}
+                onClear={() => setSearchValue('')}
               />
             </div>
           </div>
 
           {/* FilterBar (Complete) */}
           <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">FilterBar (Complete Example)</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              FilterBar (Complete Example)
+            </h3>
             <p className="text-text-dim text-sm mb-6">
-              Wraps all filter elements with consistent styling. Used on Photos, Videos, Songs pages.
+              Wraps all filter elements with consistent styling. Used on Photos,
+              Videos, Songs pages.
             </p>
 
             <FilterBar>
@@ -224,7 +249,7 @@ export function FormsSection() {
                 placeholder="Search..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                onClear={() => setSearchValue("")}
+                onClear={() => setSearchValue('')}
                 className="flex-1 min-w-[200px]"
               />
 
@@ -257,17 +282,21 @@ export function FormsSection() {
             {hasFilters && (
               <FilterPills className="mt-4">
                 {eventFilter && (
-                  <FilterPill onRemove={() => setEventFilter("")}>
-                    {eventFilter === "sydney-2025" ? "Sydney 2025" : "Brisbane 2025"}
+                  <FilterPill onRemove={() => setEventFilter('')}>
+                    {eventFilter === 'sydney-2025'
+                      ? 'Sydney 2025'
+                      : 'Brisbane 2025'}
                   </FilterPill>
                 )}
                 {bandFilter && (
-                  <FilterPill onRemove={() => setBandFilter("")}>
-                    {bandFilter === "agentics" ? "The Agentics" : "Code Rockers"}
+                  <FilterPill onRemove={() => setBandFilter('')}>
+                    {bandFilter === 'agentics'
+                      ? 'The Agentics'
+                      : 'Code Rockers'}
                   </FilterPill>
                 )}
                 {searchValue && (
-                  <FilterPill onRemove={() => setSearchValue("")}>
+                  <FilterPill onRemove={() => setSearchValue('')}>
                     &quot;{searchValue}&quot;
                   </FilterPill>
                 )}
@@ -277,9 +306,14 @@ export function FormsSection() {
 
           {/* Usage Code */}
           <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">React Component</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              React Component
+            </h3>
             <p className="text-text-dim text-sm mb-4">
-              Location: <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">src/components/ui/filter-bar.tsx</code>
+              Location:{' '}
+              <code className="bg-bg-surface px-2 py-0.5 rounded-sm text-xs">
+                src/components/ui/filter-bar.tsx
+              </code>
             </p>
 
             <pre className="bg-bg rounded-lg p-4 text-sm overflow-x-auto">
@@ -355,6 +389,5 @@ export function FormsSection() {
         </div>
       </section>
     </div>
-  );
+  )
 }
-

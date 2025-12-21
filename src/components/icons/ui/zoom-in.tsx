@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Zoom in icon
@@ -24,7 +24,6 @@ export const ZoomInIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
     </svg>
   )
-);
+)
 
-ZoomInIcon.displayName = "ZoomInIcon";
-
+ZoomInIcon.displayName = 'ZoomInIcon'

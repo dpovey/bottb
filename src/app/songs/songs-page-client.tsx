@@ -1,151 +1,151 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { SetlistSong, SongType } from "@/lib/db";
-import { CompanyBadge, FilterSelect, FilterSearch } from "@/components/ui";
-import { YouTubeIcon } from "@/components/icons";
-import { PublicLayout } from "@/components/layouts/public-layout";
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { SetlistSong, SongType } from '@/lib/db'
+import { CompanyBadge, FilterSelect, FilterSearch } from '@/components/ui'
+import { YouTubeIcon } from '@/components/icons'
+import { PublicLayout } from '@/components/layouts/public-layout'
 
 interface SongsPageClientProps {
-  events: { id: string; name: string }[];
-  companies: { slug: string; name: string }[];
+  events: { id: string; name: string }[]
+  companies: { slug: string; name: string }[]
 }
 
-type SortField = "title" | "artist" | "event" | "band";
-type SortDirection = "asc" | "desc";
+type SortField = 'title' | 'artist' | 'event' | 'band'
+type SortDirection = 'asc' | 'desc'
 
 export function SongsPageClient({ events, companies }: SongsPageClientProps) {
-  const [songs, setSongs] = useState<SetlistSong[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+  const [songs, setSongs] = useState<SetlistSong[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [total, setTotal] = useState(0)
 
   // Filters
-  const [search, setSearch] = useState("");
-  const [eventFilter, setEventFilter] = useState("");
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState<SongType | "">("");
+  const [search, setSearch] = useState('')
+  const [eventFilter, setEventFilter] = useState('')
+  const [companyFilter, setCompanyFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState<SongType | ''>('')
 
   // Sorting
-  const [sortField, setSortField] = useState<SortField>("title");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<SortField>('title')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
   // Pagination
-  const [page, setPage] = useState(1);
-  const limit = 50;
+  const [page, setPage] = useState(1)
+  const limit = 50
 
   // Debounced search
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [debouncedSearch, setDebouncedSearch] = useState(search)
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPage(1); // Reset to first page on search
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+      setDebouncedSearch(search)
+      setPage(1) // Reset to first page on search
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   // Fetch songs
   const fetchSongs = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const params = new URLSearchParams();
-      if (eventFilter) params.set("event", eventFilter);
-      if (typeFilter) params.set("type", typeFilter);
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      params.set("page", String(page));
-      params.set("limit", String(limit));
+      const params = new URLSearchParams()
+      if (eventFilter) params.set('event', eventFilter)
+      if (typeFilter) params.set('type', typeFilter)
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      params.set('page', String(page))
+      params.set('limit', String(limit))
 
-      const response = await fetch(`/api/songs?${params.toString()}`);
+      const response = await fetch(`/api/songs?${params.toString()}`)
       if (response.ok) {
-        const data = await response.json();
-        setSongs(data.songs);
-        setTotal(data.pagination.total);
+        const data = await response.json()
+        setSongs(data.songs)
+        setTotal(data.pagination.total)
       }
     } catch (error) {
-      console.error("Error fetching songs:", error);
+      console.error('Error fetching songs:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [eventFilter, typeFilter, debouncedSearch, page]);
+  }, [eventFilter, typeFilter, debouncedSearch, page])
 
   useEffect(() => {
-    fetchSongs();
-  }, [fetchSongs]);
+    fetchSongs()
+  }, [fetchSongs])
 
   // Filter songs by company (client-side since it's not in the API)
   const filteredSongs = companyFilter
     ? songs.filter((s) => s.company_slug === companyFilter)
-    : songs;
+    : songs
 
   // Sort songs
   const sortedSongs = [...filteredSongs].sort((a, b) => {
-    let aVal = "";
-    let bVal = "";
+    let aVal = ''
+    let bVal = ''
 
     switch (sortField) {
-      case "title":
-        aVal = a.title.toLowerCase();
-        bVal = b.title.toLowerCase();
-        break;
-      case "artist":
-        aVal = a.artist.toLowerCase();
-        bVal = b.artist.toLowerCase();
-        break;
-      case "event":
-        aVal = a.event_date || "";
-        bVal = b.event_date || "";
-        break;
-      case "band":
-        aVal = (a.band_name || "").toLowerCase();
-        bVal = (b.band_name || "").toLowerCase();
-        break;
+      case 'title':
+        aVal = a.title.toLowerCase()
+        bVal = b.title.toLowerCase()
+        break
+      case 'artist':
+        aVal = a.artist.toLowerCase()
+        bVal = b.artist.toLowerCase()
+        break
+      case 'event':
+        aVal = a.event_date || ''
+        bVal = b.event_date || ''
+        break
+      case 'band':
+        aVal = (a.band_name || '').toLowerCase()
+        bVal = (b.band_name || '').toLowerCase()
+        break
     }
 
-    if (sortDirection === "asc") {
-      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    if (sortDirection === 'asc') {
+      return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
     } else {
-      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+      return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
     }
-  });
+  })
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / limit)
 
   const getSongTypeLabel = (type: string) => {
     const labels: Record<string, { text: string; className: string }> = {
       cover: {
-        text: "Cover",
-        className: "bg-white/10 text-text-muted border border-white/10",
+        text: 'Cover',
+        className: 'bg-white/10 text-text-muted border border-white/10',
       },
       mashup: {
-        text: "Mashup",
-        className: "bg-accent/20 text-accent border border-accent/30",
+        text: 'Mashup',
+        className: 'bg-accent/20 text-accent border border-accent/30',
       },
       medley: {
-        text: "Medley",
-        className: "bg-info/20 text-info border border-info/30",
+        text: 'Medley',
+        className: 'bg-info/20 text-info border border-info/30',
       },
       transition: {
-        text: "Transition",
-        className: "bg-success/20 text-success border border-success/30",
+        text: 'Transition',
+        className: 'bg-success/20 text-success border border-success/30',
       },
-    };
-    return labels[type] || labels.cover;
-  };
+    }
+    return labels[type] || labels.cover
+  }
 
   const clearFilters = () => {
-    setSearch("");
-    setEventFilter("");
-    setCompanyFilter("");
-    setTypeFilter("");
-    setPage(1);
-  };
+    setSearch('')
+    setEventFilter('')
+    setCompanyFilter('')
+    setTypeFilter('')
+    setPage(1)
+  }
 
-  const hasActiveFilters = search || eventFilter || companyFilter || typeFilter;
+  const hasActiveFilters = search || eventFilter || companyFilter || typeFilter
 
   return (
     <PublicLayout
-      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Songs" }]}
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Songs' }]}
       footerVariant="simple"
     >
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -165,7 +165,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
             placeholder="Search songs, artists, bands..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onClear={search ? () => setSearch("") : undefined}
+            onClear={search ? () => setSearch('') : undefined}
             label="Search"
             containerClassName="flex-1 min-w-[200px] max-w-md"
           />
@@ -174,8 +174,8 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
           <FilterSelect
             value={eventFilter}
             onChange={(e) => {
-              setEventFilter(e.target.value);
-              setPage(1);
+              setEventFilter(e.target.value)
+              setPage(1)
             }}
             label="Event"
             containerClassName="min-w-[180px] flex-none"
@@ -192,8 +192,8 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
           <FilterSelect
             value={companyFilter}
             onChange={(e) => {
-              setCompanyFilter(e.target.value);
-              setPage(1);
+              setCompanyFilter(e.target.value)
+              setPage(1)
             }}
             label="Company"
             containerClassName="min-w-[150px] flex-none"
@@ -210,8 +210,8 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
           <FilterSelect
             value={typeFilter}
             onChange={(e) => {
-              setTypeFilter(e.target.value as SongType | "");
-              setPage(1);
+              setTypeFilter(e.target.value as SongType | '')
+              setPage(1)
             }}
             label="Type"
             containerClassName="min-w-[130px] flex-none"
@@ -238,14 +238,11 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
         <div className="flex items-center justify-between mb-4">
           <p className="text-text-muted text-sm">
             {isLoading ? (
-              "Loading..."
+              'Loading...'
             ) : (
               <>
-                Showing{" "}
-                <span className="text-white">{sortedSongs.length}</span>{" "}
-                {total !== sortedSongs.length && (
-                  <>of {total} </>
-                )}
+                Showing <span className="text-white">{sortedSongs.length}</span>{' '}
+                {total !== sortedSongs.length && <>of {total} </>}
                 songs
               </>
             )}
@@ -255,9 +252,9 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
             <select
               value={`${sortField}-${sortDirection}`}
               onChange={(e) => {
-                const [field, dir] = e.target.value.split("-");
-                setSortField(field as SortField);
-                setSortDirection(dir as SortDirection);
+                const [field, dir] = e.target.value.split('-')
+                setSortField(field as SortField)
+                setSortDirection(dir as SortDirection)
               }}
               className="bg-transparent border-none text-white focus:outline-hidden cursor-pointer"
             >
@@ -284,8 +281,8 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
               <p className="text-lg mb-2">No songs found</p>
               <p className="text-sm">
                 {hasActiveFilters
-                  ? "Try adjusting your filters"
-                  : "Songs will appear here after events are finalized"}
+                  ? 'Try adjusting your filters'
+                  : 'Songs will appear here after events are finalized'}
               </p>
             </div>
           ) : (
@@ -313,7 +310,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {sortedSongs.map((song) => {
-                    const typeLabel = getSongTypeLabel(song.song_type);
+                    const typeLabel = getSongTypeLabel(song.song_type)
 
                     return (
                       <tr
@@ -322,25 +319,23 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                       >
                         <td className="px-6 py-4">
                           <span className="font-medium">{song.title}</span>
-                          {song.song_type === "transition" &&
+                          {song.song_type === 'transition' &&
                             song.transition_to_title && (
                               <span className="text-text-dim">
-                                {" "}
+                                {' '}
                                 → {song.transition_to_title}
                               </span>
                             )}
                         </td>
                         <td className="px-6 py-4 text-text-muted">
                           {song.artist}
-                          {song.song_type === "transition" &&
+                          {song.song_type === 'transition' &&
                             song.transition_to_artist && (
                               <> / {song.transition_to_artist}</>
                             )}
                           {song.additional_songs &&
                             song.additional_songs.length > 0 && (
-                              <>
-                                {" "}+ {song.additional_songs.length} more
-                              </>
+                              <> + {song.additional_songs.length} more</>
                             )}
                         </td>
                         <td className="px-6 py-4">
@@ -391,7 +386,7 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                           )}
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
@@ -423,6 +418,5 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
         )}
       </main>
     </PublicLayout>
-  );
+  )
 }
-

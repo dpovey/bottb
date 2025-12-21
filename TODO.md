@@ -115,15 +115,15 @@
 
 ## 📊 Current Protection Status
 
-| Endpoint                | Auth Required | Rate Limited | Notes                    |
-| ----------------------- | ------------- | ------------ | ------------------------ |
-| `/api/votes/batch`      | ✅ Admin      | ✅ 200/min   | Batch voting             |
-| `/api/votes`            | ❌ Public     | ✅ 10/min    | Public voting            |
-| `/api/photos/[id]/jpeg` | ❌ Public     | ✅ 20/min    | Blob cost protection     |
-| `/api/events/*`         | ❌ Public     | ✅ 100/min   | Event data               |
-| `/api/bands/*`          | ❌ Public     | ✅ 100/min   | Band data                |
-| `/api/photos`           | ❌ Public     | ❌ None      | **Needs rate limiting**  |
-| `/api/auth/*`           | ❌ Public     | ❌ None      | Auth endpoints           |
+| Endpoint                | Auth Required | Rate Limited | Notes                   |
+| ----------------------- | ------------- | ------------ | ----------------------- |
+| `/api/votes/batch`      | ✅ Admin      | ✅ 200/min   | Batch voting            |
+| `/api/votes`            | ❌ Public     | ✅ 10/min    | Public voting           |
+| `/api/photos/[id]/jpeg` | ❌ Public     | ✅ 20/min    | Blob cost protection    |
+| `/api/events/*`         | ❌ Public     | ✅ 100/min   | Event data              |
+| `/api/bands/*`          | ❌ Public     | ✅ 100/min   | Band data               |
+| `/api/photos`           | ❌ Public     | ❌ None      | **Needs rate limiting** |
+| `/api/auth/*`           | ❌ Public     | ❌ None      | Auth endpoints          |
 
 ---
 
@@ -132,15 +132,18 @@
 ### Image Optimization Strategy
 
 Current variants:
+
 - `thumbnail.webp` - 300x300 (grid)
 - `large.webp` - 2000px max (slideshow)
 
 Recommended addition:
+
 - `md` variant - 800px wide for mobile slideshow (biggest bandwidth win)
 
 ### Rate Limiting
 
 Current implementation uses in-memory Map which:
+
 - Resets on deploy
 - Doesn't scale across serverless instances
 

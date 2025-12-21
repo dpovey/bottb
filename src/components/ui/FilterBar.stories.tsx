@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useState } from "react";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { useState } from 'react'
 import {
   FilterBar,
   FilterSelect,
@@ -7,25 +7,25 @@ import {
   FilterPill,
   FilterPills,
   FilterClearButton,
-} from "./filter-bar";
+} from './filter-bar'
 
 const meta: Meta<typeof FilterBar> = {
-  title: "Forms/FilterBar",
+  title: 'Forms/FilterBar',
   component: FilterBar,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "padded",
+    layout: 'padded',
     docs: {
       description: {
         component:
-          "A composable system for building filter interfaces. Used in Photos page and Songs page.",
+          'A composable system for building filter interfaces. Used in Photos page and Songs page.',
       },
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof FilterBar>;
+export default meta
+type Story = StoryObj<typeof FilterBar>
 
 // Basic FilterBar
 export const Default: Story = {
@@ -40,7 +40,7 @@ export const Default: Story = {
       <FilterClearButton disabled />
     </FilterBar>
   ),
-};
+}
 
 // FilterSelect only
 export const SelectOnly: Story = {
@@ -56,17 +56,17 @@ export const SelectOnly: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Styled dropdown with custom arrow indicator.",
+        story: 'Styled dropdown with custom arrow indicator.',
       },
     },
   },
-};
+}
 
 // FilterSearch only
 export const SearchOnly: Story = {
   render: () => {
     const SearchDemo = () => {
-      const [value, setValue] = useState("");
+      const [value, setValue] = useState('')
       return (
         <div className="max-w-sm">
           <FilterSearch
@@ -74,21 +74,21 @@ export const SearchOnly: Story = {
             placeholder="Search songs..."
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            onClear={() => setValue("")}
+            onClear={() => setValue('')}
           />
         </div>
-      );
-    };
-    return <SearchDemo />;
+      )
+    }
+    return <SearchDemo />
   },
   parameters: {
     docs: {
       description: {
-        story: "Search input with icon and clear button when value exists.",
+        story: 'Search input with icon and clear button when value exists.',
       },
     },
   },
-};
+}
 
 // FilterPill examples
 export const Pills: Story = {
@@ -102,21 +102,21 @@ export const Pills: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Removable pills showing active filters.",
+        story: 'Removable pills showing active filters.',
       },
     },
   },
-};
+}
 
 // Complete interactive example
 export const Interactive: Story = {
   render: () => {
     const InteractiveDemo = () => {
-      const [search, setSearch] = useState("");
-      const [event, setEvent] = useState("");
-      const [band, setBand] = useState("");
+      const [search, setSearch] = useState('')
+      const [event, setEvent] = useState('')
+      const [band, setBand] = useState('')
 
-      const hasActiveFilters = search || event || band;
+      const hasActiveFilters = search || event || band
 
       return (
         <FilterBar>
@@ -125,7 +125,7 @@ export const Interactive: Story = {
             placeholder="Search songs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch("")}
+            onClear={() => setSearch('')}
           />
 
           <FilterSelect
@@ -151,46 +151,47 @@ export const Interactive: Story = {
           <FilterClearButton
             disabled={!hasActiveFilters}
             onClick={() => {
-              setSearch("");
-              setEvent("");
-              setBand("");
+              setSearch('')
+              setEvent('')
+              setBand('')
             }}
           />
 
           {hasActiveFilters && (
             <FilterPills className="w-full">
               {search && (
-                <FilterPill onRemove={() => setSearch("")}>
+                <FilterPill onRemove={() => setSearch('')}>
                   &ldquo;{search}&rdquo;
                 </FilterPill>
               )}
               {event && (
-                <FilterPill onRemove={() => setEvent("")}>
-                  {event === "sydney-2025"
-                    ? "Sydney Tech Battle 2025"
-                    : "Brisbane Tech Battle 2024"}
+                <FilterPill onRemove={() => setEvent('')}>
+                  {event === 'sydney-2025'
+                    ? 'Sydney Tech Battle 2025'
+                    : 'Brisbane Tech Battle 2024'}
                 </FilterPill>
               )}
               {band && (
-                <FilterPill onRemove={() => setBand("")}>
-                  {band === "agentics" ? "The Agentics" : "Code Rockers"}
+                <FilterPill onRemove={() => setBand('')}>
+                  {band === 'agentics' ? 'The Agentics' : 'Code Rockers'}
                 </FilterPill>
               )}
             </FilterPills>
           )}
         </FilterBar>
-      );
-    };
-    return <InteractiveDemo />;
+      )
+    }
+    return <InteractiveDemo />
   },
   parameters: {
     docs: {
       description: {
-        story: "Complete interactive filter bar with search, selects, and pills.",
+        story:
+          'Complete interactive filter bar with search, selects, and pills.',
       },
     },
   },
-};
+}
 
 // Photos page example
 export const PhotosPageExample: Story = {
@@ -219,11 +220,11 @@ export const PhotosPageExample: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Filter bar as used on the Photos page.",
+        story: 'Filter bar as used on the Photos page.',
       },
     },
   },
-};
+}
 
 // Songs page example
 export const SongsPageExample: Story = {
@@ -249,9 +250,8 @@ export const SongsPageExample: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Filter bar as used on the Songs page.",
+        story: 'Filter bar as used on the Songs page.',
       },
     },
   },
-};
-
+}

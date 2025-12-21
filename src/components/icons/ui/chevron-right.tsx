@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Chevron pointing right - for navigation, "next" actions, "view all" links
@@ -23,7 +23,6 @@ export const ChevronRightIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M9 5l7 7-7 7" />
     </svg>
   )
-);
+)
 
-ChevronRightIcon.displayName = "ChevronRightIcon";
-
+ChevronRightIcon.displayName = 'ChevronRightIcon'

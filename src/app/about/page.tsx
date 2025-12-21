@@ -1,48 +1,48 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { PublicLayout } from "@/components/layouts";
-import { Button, SocialIconLink } from "@/components/ui";
-import { HeartIcon, ExternalLinkIcon } from "@/components/icons";
-import { getSocialLinks } from "@/lib/social-links";
-import { getPhotosByLabel, PHOTO_LABELS } from "@/lib/db";
-import { getNavEvents } from "@/lib/nav-data";
-import { HeroCarousel } from "@/components/hero-carousel";
-import { getBaseUrl } from "@/lib/seo";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { PublicLayout } from '@/components/layouts'
+import { Button, SocialIconLink } from '@/components/ui'
+import { HeartIcon, ExternalLinkIcon } from '@/components/icons'
+import { getSocialLinks } from '@/lib/social-links'
+import { getPhotosByLabel, PHOTO_LABELS } from '@/lib/db'
+import { getNavEvents } from '@/lib/nav-data'
+import { HeroCarousel } from '@/components/hero-carousel'
+import { getBaseUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
-  title: "About | Battle of the Tech Bands",
+  title: 'About | Battle of the Tech Bands',
   description:
-    "Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.",
+    'Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.',
   alternates: {
     canonical: `${getBaseUrl()}/about`,
   },
   openGraph: {
-    title: "About | Battle of the Tech Bands",
+    title: 'About | Battle of the Tech Bands',
     description:
-      "Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.",
-    type: "website",
+      'Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.',
+    type: 'website',
   },
-};
+}
 
 // Social links with fill-current class for hero section styling
-const socialLinks = getSocialLinks("w-5 h-5 fill-current");
+const socialLinks = getSocialLinks('w-5 h-5 fill-current')
 
 export default async function AboutPage() {
   // Fetch all event hero photos and nav events in parallel
   const [eventHeroPhotos, navEvents] = await Promise.all([
     getPhotosByLabel(PHOTO_LABELS.EVENT_HERO),
     getNavEvents(),
-  ]);
+  ])
   const heroImages = eventHeroPhotos.map((photo) => ({
     url: photo.blob_url,
     focalPoint: photo.hero_focal_point,
-  }));
+  }))
 
   return (
     <PublicLayout
       headerVariant="transparent"
       footerVariant="full"
-      breadcrumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'About' }]}
       navEvents={navEvents}
     >
       {/* Hero Section with rotating event images */}
@@ -97,7 +97,7 @@ export default async function AboutPage() {
               <p>
                 <strong className="text-white">
                   BoTTB isn&apos;t a corporate or policy-driven event
-                </strong>{" "}
+                </strong>{' '}
                 — it&apos;s a community-run charity gig, created by musicians
                 who just happen to work in tech.
               </p>
@@ -109,11 +109,11 @@ export default async function AboutPage() {
               </p>
               <p>
                 The spirit of Battle of the Tech Bands has always been about
-                celebrating human creativity —{" "}
+                celebrating human creativity —{' '}
                 <strong className="text-white">
                   real people performing together
-                </strong>{" "}
-                to help young people with physical support needs through{" "}
+                </strong>{' '}
+                to help young people with physical support needs through{' '}
                 <strong className="text-accent">Youngcare</strong>. ❤️
               </p>
             </div>
@@ -225,11 +225,11 @@ export default async function AboutPage() {
                     The Beginning — Black Bear Lodge
                   </h3>
                   <p className="text-text-muted leading-relaxed">
-                    It all started at Brisbane&apos;s iconic{" "}
+                    It all started at Brisbane&apos;s iconic{' '}
                     <strong className="text-white">Black Bear Lodge</strong> in
                     Fortitude Valley — a beloved venue known for its intimate
                     atmosphere and rich musical heritage. Four bands took the
-                    stage: Jumbo, Rex, FoundU, and Teach Starter.{" "}
+                    stage: Jumbo, Rex, FoundU, and Teach Starter.{' '}
                     <strong className="text-white">Jumbo</strong> took home the
                     inaugural trophy.
                   </p>
@@ -247,7 +247,7 @@ export default async function AboutPage() {
                     Moving to The Triffid
                   </h3>
                   <p className="text-text-muted leading-relaxed">
-                    The event outgrew its original home and moved to{" "}
+                    The event outgrew its original home and moved to{' '}
                     <strong className="text-white">The Triffid</strong> in
                     Newstead — one of Brisbane&apos;s premier live music venues.
                     Five bands competed: Jumbo, Rex, CitrusAd, TechnologyOne,
@@ -285,7 +285,7 @@ export default async function AboutPage() {
                   <p className="text-text-muted leading-relaxed">
                     For the first time, Battle of the Tech Bands goes
                     interstate! Brisbane continues at The Triffid, while Sydney
-                    joins the movement with its own event at{" "}
+                    joins the movement with its own event at{' '}
                     <strong className="text-white">The Factory Theatre</strong>.
                     Ten bands across two cities — the biggest year yet.
                   </p>
@@ -333,5 +333,5 @@ export default async function AboutPage() {
         </section>
       </main>
     </PublicLayout>
-  );
+  )
 }

@@ -24,11 +24,12 @@
 ## Pre-commit Checklist
 
 **MUST run these commands and verify they pass before committing:**
+- `npm run format:check` - Prettier formatting check
 - `npm run typecheck` - TypeScript type checking
 - `npm run lint` - ESLint (do not run in a sandbox, and do not rely on read_lints tool alone, must run the actual command)
 - `npm test` - All tests (if tests cannot run due to environment, note this but still verify typecheck and lint)
 
-**All three must pass with exit code 0 before committing.** This includes failures unrelated to your change.
+**All four must pass with exit code 0 before committing.** This includes failures unrelated to your change.
 
 - If in doubt ask before committing.
 

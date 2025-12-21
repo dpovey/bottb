@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Chevron pointing down - for dropdowns, accordions
@@ -23,7 +23,6 @@ export const ChevronDownIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M6 9l6 6 6-6" />
     </svg>
   )
-);
+)
 
-ChevronDownIcon.displayName = "ChevronDownIcon";
-
+ChevronDownIcon.displayName = 'ChevronDownIcon'

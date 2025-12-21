@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { PublicLayout } from "@/components/layouts";
-import { PhotoStrip } from "@/components/photos/photo-strip";
-import { SocialIconLink } from "@/components/ui";
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { PublicLayout } from '@/components/layouts'
+import { PhotoStrip } from '@/components/photos/photo-strip'
+import { SocialIconLink } from '@/components/ui'
 import {
   InstagramIcon,
   GlobeIcon,
@@ -13,29 +13,29 @@ import {
   MapPinIcon,
   ArrowLeftIcon,
   ChevronRightIcon,
-} from "@/components/icons";
+} from '@/components/icons'
 import {
   getPhotographerBySlug,
   getPhotographerHeroPhoto,
   getPhotographerRandomPhoto,
-} from "@/lib/db";
-import { getBaseUrl } from "@/lib/seo";
+} from '@/lib/db'
+import { getBaseUrl } from '@/lib/seo'
 
 interface Props {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const photographer = await getPhotographerBySlug(slug);
+  const { slug } = await params
+  const photographer = await getPhotographerBySlug(slug)
 
   if (!photographer) {
     return {
-      title: "Photographer Not Found | Battle of the Tech Bands",
-    };
+      title: 'Photographer Not Found | Battle of the Tech Bands',
+    }
   }
 
-  const baseUrl = getBaseUrl();
+  const baseUrl = getBaseUrl()
 
   return {
     title: `${photographer.name} | Photographers | Battle of the Tech Bands`,
@@ -50,35 +50,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description:
         photographer.bio ||
         `View photos by ${photographer.name} from Battle of the Tech Bands events.`,
-      type: "profile",
+      type: 'profile',
     },
-  };
+  }
 }
 
 export default async function PhotographerPage({ params }: Props) {
-  const { slug } = await params;
-  const photographer = await getPhotographerBySlug(slug);
+  const { slug } = await params
+  const photographer = await getPhotographerBySlug(slug)
 
   if (!photographer) {
-    notFound();
+    notFound()
   }
 
   // Get hero photo - first try labeled hero, then fall back to random
-  let heroPhoto = await getPhotographerHeroPhoto(photographer.name);
+  let heroPhoto = await getPhotographerHeroPhoto(photographer.name)
   if (!heroPhoto) {
-    heroPhoto = await getPhotographerRandomPhoto(photographer.name);
+    heroPhoto = await getPhotographerRandomPhoto(photographer.name)
   }
 
-  const heroPhotoUrl = heroPhoto?.blob_url ?? null;
-  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 };
+  const heroPhotoUrl = heroPhoto?.blob_url ?? null
+  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
 
   return (
     <PublicLayout
       headerVariant="transparent"
       footerVariant="full"
       breadcrumbs={[
-        { label: "Home", href: "/" },
-        { label: "Photographers", href: "/photographers" },
+        { label: 'Home', href: '/' },
+        { label: 'Photographers', href: '/photographers' },
         { label: photographer.name },
       ]}
     >
@@ -228,6 +228,5 @@ export default async function PhotographerPage({ params }: Props) {
         </div>
       </section>
     </PublicLayout>
-  );
+  )
 }
-

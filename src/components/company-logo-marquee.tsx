@@ -1,21 +1,21 @@
-import Link from "next/link";
-import { getCompanies, CompanyWithStats } from "@/lib/db";
-import { Button } from "@/components/ui";
-import { ChevronRightIcon } from "@/components/icons";
+import Link from 'next/link'
+import { getCompanies, CompanyWithStats } from '@/lib/db'
+import { Button } from '@/components/ui'
+import { ChevronRightIcon } from '@/components/icons'
 
 interface CompanyWithLogo extends CompanyWithStats {
-  logo_url: string;
+  logo_url: string
 }
 
 interface CompanyLogoMarqueeProps {
   /** Custom title for the section */
-  title?: string;
+  title?: string
   /** Custom subtitle */
-  subtitle?: string;
+  subtitle?: string
   /** Whether to show the "View All Companies" button */
-  showViewAll?: boolean;
+  showViewAll?: boolean
   /** Custom class for the section */
-  className?: string;
+  className?: string
 }
 
 /**
@@ -27,29 +27,29 @@ interface CompanyLogoMarqueeProps {
  */
 export async function CompanyLogoMarquee({
   title = "Companies Who've Competed",
-  subtitle = "Tech companies bringing the rock since 2022",
+  subtitle = 'Tech companies bringing the rock since 2022',
   showViewAll = true,
-  className = "",
+  className = '',
 }: CompanyLogoMarqueeProps) {
   // Fetch companies with logos
-  const allCompanies = await getCompanies();
-  
+  const allCompanies = await getCompanies()
+
   // Filter to only companies with logos
   const companiesWithLogos = allCompanies.filter(
     (c): c is CompanyWithLogo => !!c.logo_url
-  );
+  )
 
   // Don't render if no companies have logos
   if (companiesWithLogos.length === 0) {
-    return null;
+    return null
   }
 
   // Duplicate logos to ensure seamless loop
   // If few logos, duplicate multiple times to fill the viewport
-  const minLogosForLoop = 8;
-  let displayLogos = [...companiesWithLogos];
+  const minLogosForLoop = 8
+  let displayLogos = [...companiesWithLogos]
   while (displayLogos.length < minLogosForLoop) {
-    displayLogos = [...displayLogos, ...companiesWithLogos];
+    displayLogos = [...displayLogos, ...companiesWithLogos]
   }
 
   return (
@@ -60,34 +60,24 @@ export async function CompanyLogoMarquee({
           <h2 className="text-sm tracking-widest uppercase text-accent mb-2">
             {title}
           </h2>
-          {subtitle && (
-            <p className="text-text-muted text-sm">
-              {subtitle}
-            </p>
-          )}
+          {subtitle && <p className="text-text-muted text-sm">{subtitle}</p>}
         </div>
       </div>
 
       {/* Full-width marquee container with faded edges */}
       <div className="marquee-container overflow-hidden">
-        <div 
-          className="marquee-track flex items-center gap-16 py-4" 
-          style={{ width: "max-content" }}
+        <div
+          className="marquee-track flex items-center gap-16 py-4"
+          style={{ width: 'max-content' }}
         >
           {/* First set of logos */}
           {displayLogos.map((company, index) => (
-            <LogoItem 
-              key={`${company.slug}-${index}`} 
-              company={company} 
-            />
+            <LogoItem key={`${company.slug}-${index}`} company={company} />
           ))}
-          
+
           {/* Duplicate set for seamless loop */}
           {displayLogos.map((company, index) => (
-            <LogoItem 
-              key={`${company.slug}-dup-${index}`} 
-              company={company} 
-            />
+            <LogoItem key={`${company.slug}-dup-${index}`} company={company} />
           ))}
         </div>
       </div>
@@ -104,7 +94,7 @@ export async function CompanyLogoMarquee({
         </div>
       )}
     </section>
-  );
+  )
 }
 
 /**
@@ -112,7 +102,7 @@ export async function CompanyLogoMarquee({
  */
 function LogoItem({ company }: { company: CompanyWithLogo }) {
   return (
-    <Link 
+    <Link
       href={`/companies?company=${company.slug}`}
       className="logo-wrapper relative shrink-0 group"
     >
@@ -125,12 +115,11 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
           loading="lazy"
         />
       </div>
-      
+
       {/* Tooltip with company name */}
       <span className="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded-sm text-xs text-white whitespace-nowrap z-10">
         {company.name}
       </span>
     </Link>
-  );
+  )
 }
-

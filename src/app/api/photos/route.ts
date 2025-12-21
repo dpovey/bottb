@@ -1,43 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 import {
   getPhotosWithCount,
   getAvailablePhotoFilters,
   type PhotoOrderBy,
-} from "@/lib/db";
+} from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = request.nextUrl.searchParams
     // Support both new (event, band) and legacy (eventId, bandId) param names
     const eventId =
-      searchParams.get("event") || searchParams.get("eventId") || undefined;
+      searchParams.get('event') || searchParams.get('eventId') || undefined
     // Support multiple band IDs (comma-separated) for deduplicated band names
-    const bandIdsParam = searchParams.get("bandIds");
+    const bandIdsParam = searchParams.get('bandIds')
     const bandIds = bandIdsParam
-      ? bandIdsParam.split(",").filter((id) => id.trim().length > 0)
-      : undefined;
+      ? bandIdsParam.split(',').filter((id) => id.trim().length > 0)
+      : undefined
     // Only use single bandId if bandIds is not provided
     const bandId = bandIds
       ? undefined
-      : searchParams.get("band") || searchParams.get("bandId") || undefined;
-    const photographer = searchParams.get("photographer") || undefined;
+      : searchParams.get('band') || searchParams.get('bandId') || undefined
+    const photographer = searchParams.get('photographer') || undefined
     // Support both company and companySlug for backwards compatibility
     const companySlug =
-      searchParams.get("company") ||
-      searchParams.get("companySlug") ||
-      undefined;
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
-    const offset = (page - 1) * limit;
+      searchParams.get('company') ||
+      searchParams.get('companySlug') ||
+      undefined
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const offset = (page - 1) * limit
     // Order: random (for galleries/strips), date (for slideshows), uploaded (default)
-    const orderParam = searchParams.get("order");
+    const orderParam = searchParams.get('order')
     const orderBy: PhotoOrderBy =
-      orderParam === "random" || orderParam === "date"
-        ? orderParam
-        : "uploaded";
-    
+      orderParam === 'random' || orderParam === 'date' ? orderParam : 'uploaded'
+
     // skipMeta=true skips fetching filter metadata (for "load more" requests)
-    const skipMeta = searchParams.get("skipMeta") === "true";
+    const skipMeta = searchParams.get('skipMeta') === 'true'
 
     // Use single optimized query for photos + count (eliminates duplicate WHERE clause)
     const { photos, total } = await getPhotosWithCount({
@@ -49,14 +47,14 @@ export async function GET(request: NextRequest) {
       limit,
       offset,
       orderBy,
-    });
+    })
 
     // Only fetch filter metadata on initial load (not "load more" requests)
     // This reduces DB queries from 11 to 1 on subsequent page loads
-    let availableFilters = null;
-    let photographers: string[] = [];
-    let companies: { slug: string; name: string }[] = [];
-    
+    let availableFilters = null
+    let photographers: string[] = []
+    let companies: { slug: string; name: string }[] = []
+
     if (!skipMeta) {
       availableFilters = await getAvailablePhotoFilters({
         eventId,
@@ -64,13 +62,13 @@ export async function GET(request: NextRequest) {
         bandIds,
         photographer,
         companySlug,
-      });
+      })
       // Extract photographers and companies from availableFilters (no separate queries needed)
-      photographers = availableFilters.photographers.map((p) => p.name);
+      photographers = availableFilters.photographers.map((p) => p.name)
       companies = availableFilters.companies.map((c) => ({
         slug: c.slug,
         name: c.name,
-      }));
+      }))
     }
 
     return NextResponse.json({
@@ -84,12 +82,12 @@ export async function GET(request: NextRequest) {
       photographers,
       companies,
       availableFilters,
-    });
+    })
   } catch (error) {
-    console.error("Error fetching photos:", error);
+    console.error('Error fetching photos:', error)
     return NextResponse.json(
-      { error: "Failed to fetch photos" },
+      { error: 'Failed to fetch photos' },
       { status: 500 }
-    );
+    )
   }
 }

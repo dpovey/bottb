@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Grid view icon
@@ -26,7 +26,6 @@ export const GridIcon = forwardRef<SVGSVGElement, IconProps>(
       <rect x="3" y="14" width="7" height="7" />
     </svg>
   )
-);
+)
 
-GridIcon.displayName = "GridIcon";
-
+GridIcon.displayName = 'GridIcon'

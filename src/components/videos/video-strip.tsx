@@ -1,80 +1,80 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { Video } from "@/lib/db";
-import { VideoCarousel } from "@/components/video-carousel";
-import { Skeleton } from "@/components/ui";
+import { useEffect, useState } from 'react'
+import { Video } from '@/lib/db'
+import { VideoCarousel } from '@/components/video-carousel'
+import { Skeleton } from '@/components/ui'
 
 interface VideoStripProps {
   /** Filter by event ID */
-  eventId?: string;
+  eventId?: string
   /** Filter by band ID */
-  bandId?: string;
+  bandId?: string
   /** Custom title for the section */
-  title?: string;
+  title?: string
   /** Custom class for the container */
-  className?: string;
+  className?: string
   /** Maximum number of videos to show */
-  limit?: number;
+  limit?: number
   /** Initial videos fetched server-side (optional) */
-  initialVideos?: Video[];
+  initialVideos?: Video[]
   /** Location where the video strip appears (for tracking) */
-  location?: string;
+  location?: string
 }
 
 interface VideosResponse {
-  videos: Video[];
-  total: number;
+  videos: Video[]
+  total: number
 }
 
 export function VideoStrip({
   eventId,
   bandId,
-  title = "Videos",
-  className = "",
+  title = 'Videos',
+  className = '',
   limit = 20,
   initialVideos,
-  location = "video_strip",
+  location = 'video_strip',
 }: VideoStripProps) {
-  const [videos, setVideos] = useState<Video[]>(initialVideos || []);
-  const [loading, setLoading] = useState(!initialVideos);
+  const [videos, setVideos] = useState<Video[]>(initialVideos || [])
+  const [loading, setLoading] = useState(!initialVideos)
 
   useEffect(() => {
     if (initialVideos) {
       // Already have initial videos from server, skip fetch
-      return;
+      return
     }
 
     async function fetchVideos() {
-      setLoading(true);
+      setLoading(true)
       try {
-        const params = new URLSearchParams();
-        if (eventId) params.set("event", eventId);
-        if (bandId) params.set("band", bandId);
-        params.set("limit", limit.toString());
+        const params = new URLSearchParams()
+        if (eventId) params.set('event', eventId)
+        if (bandId) params.set('band', bandId)
+        params.set('limit', limit.toString())
 
-        const res = await fetch(`/api/videos?${params.toString()}`);
+        const res = await fetch(`/api/videos?${params.toString()}`)
         if (!res.ok) {
-          setVideos([]);
-          return;
+          setVideos([])
+          return
         }
 
-        const data: VideosResponse = await res.json();
-        setVideos(data.videos || []);
+        const data: VideosResponse = await res.json()
+        setVideos(data.videos || [])
       } catch (error) {
-        console.error("Failed to fetch videos:", error);
-        setVideos([]);
+        console.error('Failed to fetch videos:', error)
+        setVideos([])
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    fetchVideos();
-  }, [eventId, bandId, limit, initialVideos]);
+    fetchVideos()
+  }, [eventId, bandId, limit, initialVideos])
 
   // Don't render anything if there are no videos
   if (!loading && videos.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -96,10 +96,14 @@ export function VideoStrip({
             </div>
           </>
         ) : (
-          <VideoCarousel videos={videos} title={title} showBandInfo={true} location={location} />
+          <VideoCarousel
+            videos={videos}
+            title={title}
+            showBandInfo={true}
+            location={location}
+          />
         )}
       </div>
     </section>
-  );
+  )
 }
-

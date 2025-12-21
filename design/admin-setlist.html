@@ -1,510 +1,1074 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Setlists — Admin — BOTTB</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="theme.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Jost', 'system-ui', 'sans-serif'],
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Setlists — Admin — BOTTB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Jost', 'system-ui', 'sans-serif'],
+            },
           },
         },
-      },
-    }
-  </script>
-  <style>
-    .song-row-admin {
-      transition: background-color 0.2s ease;
-    }
-    .song-row-admin:hover {
-      background: rgba(255, 255, 255, 0.02);
-    }
-    .drag-handle {
-      cursor: grab;
-    }
-    .drag-handle:active {
-      cursor: grabbing;
-    }
-  </style>
-</head>
-<body class="bg-theme min-h-screen">
-
-  <!-- Admin Layout: Sidebar + Content -->
-  <div class="flex min-h-screen">
-    
-    <!-- Sidebar (same as admin.html) -->
-    <aside class="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0">
-      <div class="p-6 border-b border-white/5">
-        <a href="home.html" class="flex items-center gap-3">
-          <img src="../public/images/logos/bottb-dark-square.png" alt="BOTTB" class="h-8">
-          <div>
-            <span class="font-semibold text-sm">BOTTB</span>
-            <span class="badge-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase ml-2">Admin</span>
-          </div>
-        </a>
-      </div>
-      
-      <nav class="flex-1 p-4">
-        <ul class="space-y-1">
-          <li>
-            <a href="admin.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="text-sm">Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-accent/10 text-accent">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span class="text-sm font-medium">Events</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
-              <span class="text-sm">Bands</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-              </svg>
-              <span class="text-sm">Setlists</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
-    
-    <!-- Main Content -->
-    <main class="flex-1 overflow-auto">
-      <!-- Top Bar -->
-      <header class="sticky top-0 z-10 bg-theme/80 backdrop-blur-lg border-b border-white/5 px-8 py-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2 text-sm text-muted mb-1">
-              <a href="admin.html" class="hover:text-white transition-colors">Events</a>
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-              <a href="#" class="hover:text-white transition-colors">Sydney Tech Battle 2025</a>
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-              <span class="text-white">Setlists</span>
+      }
+    </script>
+    <style>
+      .song-row-admin {
+        transition: background-color 0.2s ease;
+      }
+      .song-row-admin:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .drag-handle {
+        cursor: grab;
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+    </style>
+  </head>
+  <body class="bg-theme min-h-screen">
+    <!-- Admin Layout: Sidebar + Content -->
+    <div class="flex min-h-screen">
+      <!-- Sidebar (same as admin.html) -->
+      <aside
+        class="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0"
+      >
+        <div class="p-6 border-b border-white/5">
+          <a href="home.html" class="flex items-center gap-3">
+            <img
+              src="../public/images/logos/bottb-dark-square.png"
+              alt="BOTTB"
+              class="h-8"
+            />
+            <div>
+              <span class="font-semibold text-sm">BOTTB</span>
+              <span
+                class="badge-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase ml-2"
+                >Admin</span
+              >
             </div>
-            <h1 class="font-semibold text-2xl">Manage Setlists</h1>
-          </div>
-          <div class="flex items-center gap-3">
-            <!-- Event status indicator -->
-            <span class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-wider uppercase">Upcoming</span>
-          </div>
-        </div>
-      </header>
-      
-      <!-- Content -->
-      <div class="p-8">
-        
-        <!-- Info Alert -->
-        <div class="alert alert-info mb-6 flex items-start gap-3">
-          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <p class="font-medium">Setlists are hidden until the event is finalized</p>
-            <p class="text-sm opacity-80 mt-1">Public visitors won't see setlists until you finalize the event results.</p>
-          </div>
+          </a>
         </div>
 
-        <!-- Conflict Warning (shown when applicable) -->
-        <div class="alert alert-warning mb-6 flex items-start gap-3">
-          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <div>
-            <p class="font-medium">1 song conflict detected</p>
-            <p class="text-sm opacity-80 mt-1">"Dumb Things" is used by both Google band and Salesforce band.</p>
+        <nav class="flex-1 p-4">
+          <ul class="space-y-1">
+            <li>
+              <a
+                href="admin.html"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <span class="text-sm">Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg bg-accent/10 text-accent"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span class="text-sm font-medium">Events</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                  />
+                </svg>
+                <span class="text-sm">Bands</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg text-muted hover:bg-white/5 hover:text-white transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                  />
+                </svg>
+                <span class="text-sm">Setlists</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-auto">
+        <!-- Top Bar -->
+        <header
+          class="sticky top-0 z-10 bg-theme/80 backdrop-blur-lg border-b border-white/5 px-8 py-4"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2 text-sm text-muted mb-1">
+                <a href="admin.html" class="hover:text-white transition-colors"
+                  >Events</a
+                >
+                <svg
+                  class="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <a href="#" class="hover:text-white transition-colors"
+                  >Sydney Tech Battle 2025</a
+                >
+                <svg
+                  class="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <span class="text-white">Setlists</span>
+              </div>
+              <h1 class="font-semibold text-2xl">Manage Setlists</h1>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- Event status indicator -->
+              <span
+                class="bg-white/10 border border-white/20 text-white px-3 py-1 rounded-sm text-xs tracking-wider uppercase"
+                >Upcoming</span
+              >
+            </div>
           </div>
-        </div>
+        </header>
 
-        <!-- Band Tabs -->
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-white shrink-0">
-            Bandlassian
-          </button>
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0">
-            Canvanauts
-          </button>
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0 relative">
-            Google
-            <span class="absolute -top-1 -right-1 w-2 h-2 bg-warning rounded-full"></span>
-          </button>
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0">
-            The Special Guests
-          </button>
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0 relative">
-            The Incident Commanders
-            <span class="absolute -top-1 -right-1 w-2 h-2 bg-warning rounded-full"></span>
-          </button>
-          <button class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0">
-            Jamazon
-          </button>
-        </div>
+        <!-- Content -->
+        <div class="p-8">
+          <!-- Info Alert -->
+          <div class="alert alert-info mb-6 flex items-start gap-3">
+            <svg
+              class="w-5 h-5 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div>
+              <p class="font-medium">
+                Setlists are hidden until the event is finalized
+              </p>
+              <p class="text-sm opacity-80 mt-1">
+                Public visitors won't see setlists until you finalize the event
+                results.
+              </p>
+            </div>
+          </div>
 
-        <!-- Selected Band Setlist -->
-        <div class="grid lg:grid-cols-3 gap-6">
-          
-          <!-- Setlist Editor (2/3 width) -->
-          <div class="lg:col-span-2">
-            <div class="bg-elevated rounded-xl border border-white/5 overflow-hidden">
-              <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <h2 class="font-semibold">Bandlassian Setlist</h2>
-                  <span class="company-badge">
-                    <img src="https://www.atlassian.com/favicon.ico" alt="">
-                    Atlassian
-                  </span>
+          <!-- Conflict Warning (shown when applicable) -->
+          <div class="alert alert-warning mb-6 flex items-start gap-3">
+            <svg
+              class="w-5 h-5 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <div>
+              <p class="font-medium">1 song conflict detected</p>
+              <p class="text-sm opacity-80 mt-1">
+                "Dumb Things" is used by both Google band and Salesforce band.
+              </p>
+            </div>
+          </div>
+
+          <!-- Band Tabs -->
+          <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-white shrink-0"
+            >
+              Bandlassian
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0"
+            >
+              Canvanauts
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0 relative"
+            >
+              Google
+              <span
+                class="absolute -top-1 -right-1 w-2 h-2 bg-warning rounded-full"
+              ></span>
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0"
+            >
+              The Special Guests
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0 relative"
+            >
+              The Incident Commanders
+              <span
+                class="absolute -top-1 -right-1 w-2 h-2 bg-warning rounded-full"
+              ></span>
+            </button>
+            <button
+              class="px-4 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors shrink-0"
+            >
+              Jamazon
+            </button>
+          </div>
+
+          <!-- Selected Band Setlist -->
+          <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Setlist Editor (2/3 width) -->
+            <div class="lg:col-span-2">
+              <div
+                class="bg-elevated rounded-xl border border-white/5 overflow-hidden"
+              >
+                <div
+                  class="px-6 py-4 border-b border-white/5 flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-3">
+                    <h2 class="font-semibold">Bandlassian Setlist</h2>
+                    <span class="company-badge">
+                      <img src="https://www.atlassian.com/favicon.ico" alt="" />
+                      Atlassian
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="badge-success px-2 py-0.5 rounded-sm text-xs"
+                      >5 songs</span
+                    >
+                    <span class="badge-accent px-2 py-0.5 rounded-sm text-xs"
+                      >Locked</span
+                    >
+                  </div>
                 </div>
+
+                <!-- Song List (Draggable) -->
+                <div class="divide-y divide-white/5">
+                  <!-- Song 1 -->
+                  <div class="song-row-admin flex items-center gap-3 p-4">
+                    <button class="drag-handle p-1 text-dim hover:text-muted">
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                    </button>
+                    <div class="w-6 text-center text-sm text-muted">1</div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">Africa</span>
+                        <span
+                          class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10"
+                          >Cover</span
+                        >
+                      </div>
+                      <div class="text-sm text-muted">Toto</div>
+                    </div>
+                    <span
+                      class="badge-success px-2 py-0.5 rounded-sm text-[10px]"
+                      >Locked</span
+                    >
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white"
+                        title="Edit"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error"
+                        title="Delete"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Song 2 -->
+                  <div class="song-row-admin flex items-center gap-3 p-4">
+                    <button class="drag-handle p-1 text-dim hover:text-muted">
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                    </button>
+                    <div class="w-6 text-center text-sm text-muted">2</div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">Rosanna</span>
+                        <span
+                          class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10"
+                          >Cover</span
+                        >
+                      </div>
+                      <div class="text-sm text-muted">Toto</div>
+                    </div>
+                    <span
+                      class="badge-success px-2 py-0.5 rounded-sm text-[10px]"
+                      >Locked</span
+                    >
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white"
+                        title="Edit"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error"
+                        title="Delete"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Song 3 - Pending status -->
+                  <div
+                    class="song-row-admin flex items-center gap-3 p-4 bg-white/1"
+                  >
+                    <button class="drag-handle p-1 text-dim hover:text-muted">
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                    </button>
+                    <div class="w-6 text-center text-sm text-muted">3</div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">Learn to Fly</span>
+                        <span
+                          class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10"
+                          >Cover</span
+                        >
+                      </div>
+                      <div class="text-sm text-muted">Foo Fighters</div>
+                    </div>
+                    <span
+                      class="bg-white/10 border border-white/20 text-muted px-2 py-0.5 rounded-sm text-[10px]"
+                      >Pending</span
+                    >
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-success/20 transition-colors text-muted hover:text-success"
+                        title="Lock"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white"
+                        title="Edit"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error"
+                        title="Delete"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Song 4 - Conflict status -->
+                  <div
+                    class="song-row-admin flex items-center gap-3 p-4 bg-warning/5 border-l-2 border-warning"
+                  >
+                    <button class="drag-handle p-1 text-dim hover:text-muted">
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                    </button>
+                    <div class="w-6 text-center text-sm text-muted">4</div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">Dumb Things</span>
+                        <span
+                          class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10"
+                          >Cover</span
+                        >
+                      </div>
+                      <div class="text-sm text-muted">Paul Kelly</div>
+                      <div class="text-xs text-warning mt-1">
+                        ⚠️ Also in Google's setlist
+                      </div>
+                    </div>
+                    <span
+                      class="badge-warning px-2 py-0.5 rounded-sm text-[10px]"
+                      >Conflict</span
+                    >
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white"
+                        title="Edit"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error"
+                        title="Delete"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Song 5 - With video link -->
+                  <div class="song-row-admin flex items-center gap-3 p-4">
+                    <button class="drag-handle p-1 text-dim hover:text-muted">
+                      <svg
+                        class="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 8h16M4 16h16"
+                        />
+                      </svg>
+                    </button>
+                    <div class="w-6 text-center text-sm text-muted">5</div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">September</span>
+                        <span
+                          class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10"
+                          >Cover</span
+                        >
+                        <svg
+                          class="w-4 h-4 text-accent"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                          title="Has video"
+                        >
+                          <path
+                            d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"
+                          />
+                        </svg>
+                      </div>
+                      <div class="text-sm text-muted">
+                        Earth, Wind &amp; Fire
+                      </div>
+                    </div>
+                    <span
+                      class="badge-success px-2 py-0.5 rounded-sm text-[10px]"
+                      >Locked</span
+                    >
+                    <div class="flex items-center gap-1">
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white"
+                        title="Edit"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error"
+                        title="Delete"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="1.5"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add Song Button -->
+                <div class="px-6 py-4 border-t border-white/5">
+                  <button
+                    class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2 w-full justify-center"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Song
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bulk Actions -->
+              <div class="mt-4 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="badge-success px-2 py-0.5 rounded-sm text-xs">5 songs</span>
-                  <span class="badge-accent px-2 py-0.5 rounded-sm text-xs">Locked</span>
-                </div>
-              </div>
-              
-              <!-- Song List (Draggable) -->
-              <div class="divide-y divide-white/5">
-                <!-- Song 1 -->
-                <div class="song-row-admin flex items-center gap-3 p-4">
-                  <button class="drag-handle p-1 text-dim hover:text-muted">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
+                  <button class="btn-outline px-3 py-1.5 rounded-sm text-xs">
+                    Lock All Pending
                   </button>
-                  <div class="w-6 text-center text-sm text-muted">1</div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">Africa</span>
-                      <span class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10">Cover</span>
-                    </div>
-                    <div class="text-sm text-muted">Toto</div>
-                  </div>
-                  <span class="badge-success px-2 py-0.5 rounded-sm text-[10px]">Locked</span>
-                  <div class="flex items-center gap-1">
-                    <button class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white" title="Edit">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error" title="Delete">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Song 2 -->
-                <div class="song-row-admin flex items-center gap-3 p-4">
-                  <button class="drag-handle p-1 text-dim hover:text-muted">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
+                  <button class="btn-outline px-3 py-1.5 rounded-sm text-xs">
+                    Unlock All
                   </button>
-                  <div class="w-6 text-center text-sm text-muted">2</div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">Rosanna</span>
-                      <span class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10">Cover</span>
-                    </div>
-                    <div class="text-sm text-muted">Toto</div>
-                  </div>
-                  <span class="badge-success px-2 py-0.5 rounded-sm text-[10px]">Locked</span>
-                  <div class="flex items-center gap-1">
-                    <button class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white" title="Edit">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error" title="Delete">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
                 </div>
-                
-                <!-- Song 3 - Pending status -->
-                <div class="song-row-admin flex items-center gap-3 p-4 bg-white/1">
-                  <button class="drag-handle p-1 text-dim hover:text-muted">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
-                  </button>
-                  <div class="w-6 text-center text-sm text-muted">3</div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">Learn to Fly</span>
-                      <span class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10">Cover</span>
-                    </div>
-                    <div class="text-sm text-muted">Foo Fighters</div>
-                  </div>
-                  <span class="bg-white/10 border border-white/20 text-muted px-2 py-0.5 rounded-sm text-[10px]">Pending</span>
-                  <div class="flex items-center gap-1">
-                    <button class="p-1.5 rounded-sm hover:bg-success/20 transition-colors text-muted hover:text-success" title="Lock">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white" title="Edit">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error" title="Delete">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Song 4 - Conflict status -->
-                <div class="song-row-admin flex items-center gap-3 p-4 bg-warning/5 border-l-2 border-warning">
-                  <button class="drag-handle p-1 text-dim hover:text-muted">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
-                  </button>
-                  <div class="w-6 text-center text-sm text-muted">4</div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">Dumb Things</span>
-                      <span class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10">Cover</span>
-                    </div>
-                    <div class="text-sm text-muted">Paul Kelly</div>
-                    <div class="text-xs text-warning mt-1">⚠️ Also in Google's setlist</div>
-                  </div>
-                  <span class="badge-warning px-2 py-0.5 rounded-sm text-[10px]">Conflict</span>
-                  <div class="flex items-center gap-1">
-                    <button class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white" title="Edit">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error" title="Delete">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                
-                <!-- Song 5 - With video link -->
-                <div class="song-row-admin flex items-center gap-3 p-4">
-                  <button class="drag-handle p-1 text-dim hover:text-muted">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
-                    </svg>
-                  </button>
-                  <div class="w-6 text-center text-sm text-muted">5</div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">September</span>
-                      <span class="px-1.5 py-0.5 rounded-sm text-[10px] bg-white/10 text-muted border border-white/10">Cover</span>
-                      <svg class="w-4 h-4 text-accent" fill="currentColor" viewBox="0 0 24 24" title="Has video">
-                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-                      </svg>
-                    </div>
-                    <div class="text-sm text-muted">Earth, Wind &amp; Fire</div>
-                  </div>
-                  <span class="badge-success px-2 py-0.5 rounded-sm text-[10px]">Locked</span>
-                  <div class="flex items-center gap-1">
-                    <button class="p-1.5 rounded-sm hover:bg-white/10 transition-colors text-muted hover:text-white" title="Edit">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button class="p-1.5 rounded-sm hover:bg-error/20 transition-colors text-muted hover:text-error" title="Delete">
-                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Add Song Button -->
-              <div class="px-6 py-4 border-t border-white/5">
-                <button class="btn-outline px-4 py-2 rounded-lg text-sm flex items-center gap-2 w-full justify-center">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Song
+                <button class="btn-accent px-4 py-2 rounded-lg text-sm">
+                  Save Changes
                 </button>
               </div>
             </div>
-            
-            <!-- Bulk Actions -->
-            <div class="mt-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <button class="btn-outline px-3 py-1.5 rounded-sm text-xs">Lock All Pending</button>
-                <button class="btn-outline px-3 py-1.5 rounded-sm text-xs">Unlock All</button>
-              </div>
-              <button class="btn-accent px-4 py-2 rounded-lg text-sm">Save Changes</button>
-            </div>
-          </div>
-          
-          <!-- Add Song Form (1/3 width) -->
-          <div class="lg:col-span-1">
-            <div class="bg-elevated rounded-xl border border-white/5 overflow-hidden sticky top-24">
-              <div class="px-6 py-4 border-b border-white/5">
-                <h3 class="font-semibold">Add Song</h3>
-              </div>
-              
-              <div class="p-6 space-y-4">
-                <!-- Song Type -->
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Song Type</label>
-                  <div class="grid grid-cols-2 gap-2">
-                    <button class="px-3 py-2 rounded-lg text-sm font-medium bg-accent text-white">Cover</button>
-                    <button class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors">Mashup</button>
-                    <button class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors">Medley</button>
-                    <button class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors">Transition</button>
-                  </div>
+
+            <!-- Add Song Form (1/3 width) -->
+            <div class="lg:col-span-1">
+              <div
+                class="bg-elevated rounded-xl border border-white/5 overflow-hidden sticky top-24"
+              >
+                <div class="px-6 py-4 border-b border-white/5">
+                  <h3 class="font-semibold">Add Song</h3>
                 </div>
-                
-                <!-- Song Title -->
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Song Title</label>
-                  <input type="text" placeholder="e.g., Africa" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50">
-                </div>
-                
-                <!-- Original Artist (for Cover) -->
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Original Artist</label>
-                  <input type="text" placeholder="e.g., Toto" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50">
-                </div>
-                
-                <!-- Link to Video (optional) -->
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Link to Video (Optional)</label>
-                  <select class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-hidden focus:border-accent/50">
-                    <option value="">No video</option>
-                    <option value="v1">Africa - Bandlassian (Sydney 2025)</option>
-                    <option value="v2">September - Bandlassian (Sydney 2025)</option>
-                  </select>
-                </div>
-                
-                <!-- Notes -->
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Notes (Optional)</label>
-                  <textarea placeholder="Any special notes about this song..." rows="2" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50 resize-none"></textarea>
-                </div>
-                
-                <button class="btn-accent w-full px-4 py-2 rounded-lg text-sm">Add to Setlist</button>
-              </div>
-            </div>
-            
-            <!-- Alternative Forms for Other Types -->
-            <div class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden">
-              <div class="px-6 py-4 border-b border-white/5">
-                <h3 class="font-semibold text-sm">Mashup Form Preview</h3>
-              </div>
-              <div class="p-6 space-y-4">
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Song Title</label>
-                  <input type="text" value="Anti-Hero" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white" readonly>
-                </div>
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Artists (comma separated)</label>
-                  <input type="text" value="Taylor Swift, Pendulum" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white" readonly>
-                </div>
-              </div>
-            </div>
-            
-            <div class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden">
-              <div class="px-6 py-4 border-b border-white/5">
-                <h3 class="font-semibold text-sm">Medley Form Preview</h3>
-              </div>
-              <div class="p-6 space-y-4">
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Medley Title</label>
-                  <input type="text" value="Jump Medley" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white" readonly>
-                </div>
-                <div>
-                  <label class="block text-xs tracking-widest uppercase text-muted mb-2">Songs in Medley</label>
-                  <div class="space-y-2">
-                    <div class="flex gap-2">
-                      <input type="text" value="Jump" placeholder="Song" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
-                      <input type="text" value="Van Halen" placeholder="Artist" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
+
+                <div class="p-6 space-y-4">
+                  <!-- Song Type -->
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Song Type</label
+                    >
+                    <div class="grid grid-cols-2 gap-2">
+                      <button
+                        class="px-3 py-2 rounded-lg text-sm font-medium bg-accent text-white"
+                      >
+                        Cover
+                      </button>
+                      <button
+                        class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors"
+                      >
+                        Mashup
+                      </button>
+                      <button
+                        class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors"
+                      >
+                        Medley
+                      </button>
+                      <button
+                        class="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 text-muted hover:bg-white/10 hover:text-white transition-colors"
+                      >
+                        Transition
+                      </button>
                     </div>
-                    <div class="flex gap-2">
-                      <input type="text" value="Jump" placeholder="Song" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
-                      <input type="text" value="Kris Kross" placeholder="Artist" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
-                    </div>
-                    <div class="flex gap-2">
-                      <input type="text" value="Jump Around" placeholder="Song" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
-                      <input type="text" value="House of Pain" placeholder="Artist" class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white" readonly>
-                    </div>
-                    <button class="text-xs text-accent hover:text-accent-light">+ Add another song</button>
+                  </div>
+
+                  <!-- Song Title -->
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Song Title</label
+                    >
+                    <input
+                      type="text"
+                      placeholder="e.g., Africa"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50"
+                    />
+                  </div>
+
+                  <!-- Original Artist (for Cover) -->
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Original Artist</label
+                    >
+                    <input
+                      type="text"
+                      placeholder="e.g., Toto"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50"
+                    />
+                  </div>
+
+                  <!-- Link to Video (optional) -->
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Link to Video (Optional)</label
+                    >
+                    <select
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-hidden focus:border-accent/50"
+                    >
+                      <option value="">No video</option>
+                      <option value="v1">
+                        Africa - Bandlassian (Sydney 2025)
+                      </option>
+                      <option value="v2">
+                        September - Bandlassian (Sydney 2025)
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Notes -->
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Notes (Optional)</label
+                    >
+                    <textarea
+                      placeholder="Any special notes about this song..."
+                      rows="2"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-dim focus:outline-hidden focus:border-accent/50 resize-none"
+                    ></textarea>
+                  </div>
+
+                  <button
+                    class="btn-accent w-full px-4 py-2 rounded-lg text-sm"
+                  >
+                    Add to Setlist
+                  </button>
+                </div>
+              </div>
+
+              <!-- Alternative Forms for Other Types -->
+              <div
+                class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden"
+              >
+                <div class="px-6 py-4 border-b border-white/5">
+                  <h3 class="font-semibold text-sm">Mashup Form Preview</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Song Title</label
+                    >
+                    <input
+                      type="text"
+                      value="Anti-Hero"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white"
+                      readonly
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Artists (comma separated)</label
+                    >
+                    <input
+                      type="text"
+                      value="Taylor Swift, Pendulum"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white"
+                      readonly
+                    />
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <div class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden">
-              <div class="px-6 py-4 border-b border-white/5">
-                <h3 class="font-semibold text-sm">Transition Form Preview</h3>
+
+              <div
+                class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden"
+              >
+                <div class="px-6 py-4 border-b border-white/5">
+                  <h3 class="font-semibold text-sm">Medley Form Preview</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Medley Title</label
+                    >
+                    <input
+                      type="text"
+                      value="Jump Medley"
+                      class="w-full bg-surface border border-white/10 rounded-lg px-4 py-2 text-white"
+                      readonly
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs tracking-widest uppercase text-muted mb-2"
+                      >Songs in Medley</label
+                    >
+                    <div class="space-y-2">
+                      <div class="flex gap-2">
+                        <input
+                          type="text"
+                          value="Jump"
+                          placeholder="Song"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                        <input
+                          type="text"
+                          value="Van Halen"
+                          placeholder="Artist"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                      </div>
+                      <div class="flex gap-2">
+                        <input
+                          type="text"
+                          value="Jump"
+                          placeholder="Song"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                        <input
+                          type="text"
+                          value="Kris Kross"
+                          placeholder="Artist"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                      </div>
+                      <div class="flex gap-2">
+                        <input
+                          type="text"
+                          value="Jump Around"
+                          placeholder="Song"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                        <input
+                          type="text"
+                          value="House of Pain"
+                          placeholder="Artist"
+                          class="flex-1 bg-surface border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+                          readonly
+                        />
+                      </div>
+                      <button
+                        class="text-xs text-accent hover:text-accent-light"
+                      >
+                        + Add another song
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs tracking-widest uppercase text-muted mb-2">From Song</label>
-                    <input type="text" value="If You Were The Rain" class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white" readonly>
-                  </div>
-                  <div>
-                    <label class="block text-xs tracking-widest uppercase text-muted mb-2">From Artist</label>
-                    <input type="text" value="Gladys Knight" class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white" readonly>
-                  </div>
+
+              <div
+                class="mt-6 bg-elevated rounded-xl border border-white/5 overflow-hidden"
+              >
+                <div class="px-6 py-4 border-b border-white/5">
+                  <h3 class="font-semibold text-sm">Transition Form Preview</h3>
                 </div>
-                <div class="flex justify-center">
-                  <svg class="w-6 h-6 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs tracking-widest uppercase text-muted mb-2">To Song</label>
-                    <input type="text" value="Umbrella" class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white" readonly>
+                <div class="p-6 space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        class="block text-xs tracking-widest uppercase text-muted mb-2"
+                        >From Song</label
+                      >
+                      <input
+                        type="text"
+                        value="If You Were The Rain"
+                        class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                        readonly
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-xs tracking-widest uppercase text-muted mb-2"
+                        >From Artist</label
+                      >
+                      <input
+                        type="text"
+                        value="Gladys Knight"
+                        class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                        readonly
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label class="block text-xs tracking-widest uppercase text-muted mb-2">To Artist</label>
-                    <input type="text" value="Rihanna" class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white" readonly>
+                  <div class="flex justify-center">
+                    <svg
+                      class="w-6 h-6 text-muted"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        class="block text-xs tracking-widest uppercase text-muted mb-2"
+                        >To Song</label
+                      >
+                      <input
+                        type="text"
+                        value="Umbrella"
+                        class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                        readonly
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-xs tracking-widest uppercase text-muted mb-2"
+                        >To Artist</label
+                      >
+                      <input
+                        type="text"
+                        value="Rihanna"
+                        class="w-full bg-surface border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                        readonly
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
-  </div>
-
-</body>
+      </main>
+    </div>
+  </body>
 </html>
-

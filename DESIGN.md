@@ -25,7 +25,7 @@ npm run build-storybook
 - **Finding components**: Visit `/design-system` first to see what's available
 - **Isolated development**: Run `npm run storybook` for component playground
 - **Using components**: Import from `@/components/ui` (e.g., `import { Button, Badge, Card } from "@/components/ui"`)
-- **Adding new components**: 
+- **Adding new components**:
   1. Create component in `src/components/ui/`
   2. Export from `src/components/ui/index.ts`
   3. **Create a Storybook story** (e.g., `Button.stories.tsx`) with all variants
@@ -161,41 +161,41 @@ module.exports = {
     extend: {
       colors: {
         bg: {
-          DEFAULT: "#0a0a0a",
-          elevated: "#141414",
-          muted: "#1a1a1a",
-          surface: "#222222",
+          DEFAULT: '#0a0a0a',
+          elevated: '#141414',
+          muted: '#1a1a1a',
+          surface: '#222222',
         },
         accent: {
-          DEFAULT: "#F5A623", // Vibrant Gold
-          light: "#FFBE3D",
-          muted: "rgba(245, 166, 35, 0.15)",
+          DEFAULT: '#F5A623', // Vibrant Gold
+          light: '#FFBE3D',
+          muted: 'rgba(245, 166, 35, 0.15)',
         },
         text: {
-          DEFAULT: "#ffffff",
-          muted: "#a0a0a0",
-          dim: "#666666",
+          DEFAULT: '#ffffff',
+          muted: '#a0a0a0',
+          dim: '#666666',
         },
         error: {
-          DEFAULT: "#f10e34", // Apple Red
-          light: "#f33f5d",
+          DEFAULT: '#f10e34', // Apple Red
+          light: '#f33f5d',
         },
         success: {
-          DEFAULT: "#31eb14", // Lime Green
-          light: "#98f58a",
+          DEFAULT: '#31eb14', // Lime Green
+          light: '#98f58a',
         },
         warning: {
-          DEFAULT: "#F5A623", // Vibrant Gold
-          light: "#FFBE3D",
+          DEFAULT: '#F5A623', // Vibrant Gold
+          light: '#FFBE3D',
         },
         info: {
-          DEFAULT: "#3B82F6", // Blue
-          light: "#60A5FA",
+          DEFAULT: '#3B82F6', // Blue
+          light: '#60A5FA',
         },
       },
     },
   },
-};
+}
 ```
 
 ---
@@ -262,12 +262,12 @@ letterSpacing: {
 Or in Next.js:
 
 ```tsx
-import { Jost } from "next/font/google";
+import { Jost } from 'next/font/google'
 
 const jost = Jost({
-  subsets: ["latin"],
-  variable: "--font-jost",
-});
+  subsets: ['latin'],
+  variable: '--font-jost',
+})
 ```
 
 ---
@@ -741,7 +741,9 @@ Search input with icon and optional clear button.
     Search
   </label>
   <div class="relative">
-    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim pointer-events-none">
+    <svg
+      class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim pointer-events-none"
+    >
       <!-- search icon -->
     </svg>
     <input
@@ -756,7 +758,9 @@ Search input with icon and optional clear button.
       "
     />
     <!-- Optional clear button -->
-    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-white">
+    <button
+      class="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-white"
+    >
       <svg class="w-4 h-4"><!-- x icon --></svg>
     </button>
   </div>
@@ -768,9 +772,13 @@ Search input with icon and optional clear button.
 Removable pill showing active filter.
 
 ```html
-<span class="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent">
+<span
+  class="inline-flex items-center gap-2 px-3 py-1 bg-accent/15 rounded-full text-xs text-accent"
+>
   Sydney Tech Battle 2025
-  <button class="hover:text-white transition-colors" aria-label="Remove filter">×</button>
+  <button class="hover:text-white transition-colors" aria-label="Remove filter">
+    ×
+  </button>
 </span>
 ```
 
@@ -802,16 +810,16 @@ import {
   FilterPill,
   FilterPills,
   FilterClearButton,
-} from "@/components/ui";
+} from '@/components/ui'
 
 // Basic usage
-<FilterBar>
+;<FilterBar>
   <FilterSearch
     label="Search"
     placeholder="Search songs..."
     value={search}
     onChange={(e) => setSearch(e.target.value)}
-    onClear={() => setSearch("")}
+    onClear={() => setSearch('')}
   />
 
   <FilterSelect
@@ -821,14 +829,13 @@ import {
   >
     <option value="">All Events</option>
     {events.map((e) => (
-      <option key={e.id} value={e.id}>{e.name}</option>
+      <option key={e.id} value={e.id}>
+        {e.name}
+      </option>
     ))}
   </FilterSelect>
 
-  <FilterClearButton
-    disabled={!hasActiveFilters}
-    onClick={handleClearAll}
-  />
+  <FilterClearButton disabled={!hasActiveFilters} onClick={handleClearAll} />
 
   {hasActiveFilters && (
     <FilterPills className="w-full">
@@ -903,11 +910,11 @@ Indicate the arrangement type of songs in setlists. Each type has a distinct col
 
 Workflow state indicators for admin interfaces.
 
-| Status   | Color   | Use Case                      |
-| -------- | ------- | ----------------------------- |
-| Pending  | Muted   | Awaiting confirmation         |
-| Locked   | Success | Confirmed/finalized           |
-| Conflict | Warning | Needs attention (e.g., dupe)  |
+| Status   | Color   | Use Case                     |
+| -------- | ------- | ---------------------------- |
+| Pending  | Muted   | Awaiting confirmation        |
+| Locked   | Success | Confirmed/finalized          |
+| Conflict | Warning | Needs attention (e.g., dupe) |
 
 ```html
 <!-- Pending -->
@@ -930,34 +937,34 @@ Displays a number in a styled container. Use for ordered lists, rankings, and po
 
 #### When to Use
 
-| Context | Shape | Size | Variant | Example |
-|---------|-------|------|---------|---------|
-| Band order in event list | `square` | `lg` | `muted` | Event page band cards |
-| Setlist song positions | `circle` | `md` | `default` | Setlist display |
-| Table rankings | Plain text | - | - | ScoreBreakdown (no container) |
-| Winner position | `square` | `lg` | `winner` | Gold highlight |
+| Context                  | Shape      | Size | Variant   | Example                       |
+| ------------------------ | ---------- | ---- | --------- | ----------------------------- |
+| Band order in event list | `square`   | `lg` | `muted`   | Event page band cards         |
+| Setlist song positions   | `circle`   | `md` | `default` | Setlist display               |
+| Table rankings           | Plain text | -    | -         | ScoreBreakdown (no container) |
+| Winner position          | `square`   | `lg` | `winner`  | Gold highlight                |
 
 #### Variants
 
-| Variant | Background | Text Color | Use Case |
-|---------|------------|------------|----------|
-| `default` | `bg-bg-surface` | `text-text-muted` | Standard ordered list |
-| `muted` | `bg-white/5` | `text-text-muted` | Subtle background |
-| `winner` | `bg-warning/20` | `text-warning` | Gold/winner highlight |
-| `accent` | `bg-accent/20` | `text-accent` | Accent highlight |
-| `rank-1` | `bg-warning/20` | `text-warning` | 1st place |
-| `rank-2` | `bg-white/10` | `text-text-muted` | 2nd place |
-| `rank-3` | `bg-amber-900/30` | `text-amber-600` | 3rd place |
+| Variant   | Background        | Text Color        | Use Case              |
+| --------- | ----------------- | ----------------- | --------------------- |
+| `default` | `bg-bg-surface`   | `text-text-muted` | Standard ordered list |
+| `muted`   | `bg-white/5`      | `text-text-muted` | Subtle background     |
+| `winner`  | `bg-warning/20`   | `text-warning`    | Gold/winner highlight |
+| `accent`  | `bg-accent/20`    | `text-accent`     | Accent highlight      |
+| `rank-1`  | `bg-warning/20`   | `text-warning`    | 1st place             |
+| `rank-2`  | `bg-white/10`     | `text-text-muted` | 2nd place             |
+| `rank-3`  | `bg-amber-900/30` | `text-amber-600`  | 3rd place             |
 
 #### Sizes
 
 | Size | Dimensions | Font Size |
-|------|------------|-----------|
-| `xs` | 20×20px | 0.75rem |
-| `sm` | 24×24px | 0.75rem |
-| `md` | 32×32px | 0.875rem |
-| `lg` | 40×40px | 1rem |
-| `xl` | 48×48px | 1.125rem |
+| ---- | ---------- | --------- |
+| `xs` | 20×20px    | 0.75rem   |
+| `sm` | 24×24px    | 0.75rem   |
+| `md` | 32×32px    | 0.875rem  |
+| `lg` | 40×40px    | 1rem      |
+| `xl` | 48×48px    | 1.125rem  |
 
 #### HTML Examples
 
@@ -966,7 +973,9 @@ Displays a number in a styled container. Use for ordered lists, rankings, and po
 <div class="numbered-indicator">1</div>
 
 <!-- Square -->
-<div class="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-white/5 font-medium text-text-muted">
+<div
+  class="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-white/5 font-medium text-text-muted"
+>
   1
 </div>
 
@@ -1012,7 +1021,9 @@ Small icon button for linking to YouTube videos.
 ```html
 <a href="#" class="video-link-btn" title="Watch video">
   <svg fill="currentColor" viewBox="0 0 24 24">
-    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+    <path
+      d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"
+    />
   </svg>
 </a>
 ```
@@ -1028,7 +1039,12 @@ Inline arrow for showing song transitions (A → B).
   <span>If You Were The Rain</span>
   <span class="transition-arrow">
     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M13 7l5 5m0 0l-5 5m5-5H6"
+      />
     </svg>
   </span>
   <span>Umbrella</span>
@@ -1077,15 +1093,15 @@ Search input with dropdown filters for filtering data tables.
   <!-- Search -->
   <div class="filter-search">
     <svg class="filter-search-icon"><!-- search icon --></svg>
-    <input type="text" placeholder="Search songs, artists...">
+    <input type="text" placeholder="Search songs, artists..." />
   </div>
-  
+
   <!-- Filters -->
   <select class="filter-select">
     <option value="">All Events</option>
     <option value="sydney-2025">Sydney 2025</option>
   </select>
-  
+
   <select class="filter-select">
     <option value="">All Types</option>
     <option value="cover">Cover</option>
@@ -1278,18 +1294,18 @@ Every page must include:
 
 ```tsx
 export const metadata: Metadata = {
-  title: "Page Title | Battle of the Tech Bands",
-  description: "Compelling description under 160 chars",
+  title: 'Page Title | Battle of the Tech Bands',
+  description: 'Compelling description under 160 chars',
   openGraph: {
-    title: "Page Title | Battle of the Tech Bands",
-    description: "Compelling description",
-    images: ["/og-image.jpg"],
-    type: "website",
+    title: 'Page Title | Battle of the Tech Bands',
+    description: 'Compelling description',
+    images: ['/og-image.jpg'],
+    type: 'website',
   },
   twitter: {
-    card: "summary_large_image",
+    card: 'summary_large_image',
   },
-};
+}
 ```
 
 ### URL Structure
@@ -1346,7 +1362,9 @@ Implement JSON-LD for events:
 
 /* Borders and colors */
 .subtle-transition {
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 /* Opacity fades */
@@ -1456,18 +1474,18 @@ import { SearchIcon, CloseIcon, HeartIcon } from "@/components/icons";
 
 ### Icon Categories
 
-| Category | Path | Examples |
-|----------|------|----------|
-| Social | `icons/social/` | LinkedInIcon, YouTubeIcon, InstagramIcon, FacebookIcon, TikTokIcon, TwitterIcon |
-| UI | `icons/ui/` | CloseIcon, MenuIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CheckIcon, PlusIcon, etc. |
-| Admin | `icons/admin/` | HomeIcon, CalendarIcon, PhotoIcon, VideoIcon, ShareIcon, SettingsIcon, EditIcon, DeleteIcon, LogoutIcon |
-| Misc | `icons/misc/` | EmailIcon, BuildingIcon, UsersIcon, MusicNoteIcon, CameraIcon, MapPinIcon, HeartIcon, StarIcon, etc. |
+| Category | Path            | Examples                                                                                                       |
+| -------- | --------------- | -------------------------------------------------------------------------------------------------------------- |
+| Social   | `icons/social/` | LinkedInIcon, YouTubeIcon, InstagramIcon, FacebookIcon, TikTokIcon, TwitterIcon                                |
+| UI       | `icons/ui/`     | CloseIcon, MenuIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon, CheckIcon, PlusIcon, etc. |
+| Admin    | `icons/admin/`  | HomeIcon, CalendarIcon, PhotoIcon, VideoIcon, ShareIcon, SettingsIcon, EditIcon, DeleteIcon, LogoutIcon        |
+| Misc     | `icons/misc/`   | EmailIcon, BuildingIcon, UsersIcon, MusicNoteIcon, CameraIcon, MapPinIcon, HeartIcon, StarIcon, etc.           |
 
 ### Icon Props
 
 ```tsx
 interface IconProps extends SVGProps<SVGSVGElement> {
-  size?: number; // Default varies by icon (usually 20 or 24)
+  size?: number // Default varies by icon (usually 20 or 24)
 }
 ```
 

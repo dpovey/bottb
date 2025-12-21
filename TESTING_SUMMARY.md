@@ -161,20 +161,3 @@ npm run test:ci
 ✅ **CI Ready**: Configured for continuous integration
 
 The testing suite is now ready to ensure code quality and prevent regressions as the application evolves.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

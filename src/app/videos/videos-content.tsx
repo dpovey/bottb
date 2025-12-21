@@ -1,51 +1,51 @@
-"use client";
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import { PublicLayout } from "@/components/layouts";
-import { Video } from "@/lib/db";
-import { CompanyIcon, FilterSelect, Skeleton } from "@/components/ui";
-import { CloseIcon, PlayIcon } from "@/components/icons";
-import { trackVideoClick } from "@/lib/analytics";
-import { motion, AnimatePresence } from "framer-motion";
-import type { FilterOptions, NavEvent } from "@/lib/nav-data";
+import { useState, useEffect, useCallback } from 'react'
+import { PublicLayout } from '@/components/layouts'
+import { Video } from '@/lib/db'
+import { CompanyIcon, FilterSelect, Skeleton } from '@/components/ui'
+import { CloseIcon, PlayIcon } from '@/components/icons'
+import { trackVideoClick } from '@/lib/analytics'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { FilterOptions, NavEvent } from '@/lib/nav-data'
 
 interface Event {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 interface Band {
-  id: string;
-  name: string;
-  event_id: string;
+  id: string
+  name: string
+  event_id: string
 }
 
 interface VideosContentProps {
-  initialEventId: string | null;
-  initialBandId: string | null;
+  initialEventId: string | null
+  initialBandId: string | null
   /** SSR-provided videos */
-  initialVideos?: Video[];
+  initialVideos?: Video[]
   /** SSR-provided filter options */
-  initialFilterOptions?: FilterOptions;
+  initialFilterOptions?: FilterOptions
   /** SSR-provided nav events for header */
   navEvents?: {
-    upcoming: NavEvent[];
-    past: NavEvent[];
-  };
+    upcoming: NavEvent[]
+    past: NavEvent[]
+  }
 }
 
 /**
  * Format duration in seconds to MM:SS or H:MM:SS
  */
 function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
+  if (!seconds) return ''
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
 /**
@@ -53,9 +53,9 @@ function formatDuration(seconds: number | null): string {
  */
 function getThumbnailUrl(video: Video): string {
   if (video.thumbnail_url) {
-    return video.thumbnail_url;
+    return video.thumbnail_url
   }
-  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`;
+  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`
 }
 
 export function VideosContent({
@@ -66,122 +66,126 @@ export function VideosContent({
   navEvents,
 }: VideosContentProps) {
   // Initialize with SSR data if available
-  const [videos, setVideos] = useState<Video[]>(initialVideos || []);
+  const [videos, setVideos] = useState<Video[]>(initialVideos || [])
   const [events, setEvents] = useState<Event[]>(
     initialFilterOptions?.events.map((e) => ({ id: e.id, name: e.name })) || []
-  );
+  )
   const [bands, setBands] = useState<Band[]>(
-    initialFilterOptions?.bands.map((b) => ({ 
-      id: b.id, 
-      name: b.name, 
-      event_id: b.event_id 
+    initialFilterOptions?.bands.map((b) => ({
+      id: b.id,
+      name: b.name,
+      event_id: b.event_id,
     })) || []
-  );
-  const [loading, setLoading] = useState(!initialVideos);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
-  const [selectedBandId, setSelectedBandId] = useState<string | null>(initialBandId);
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [totalCount, setTotalCount] = useState(initialVideos?.length || 0);
+  )
+  const [loading, setLoading] = useState(!initialVideos)
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(
+    initialEventId
+  )
+  const [selectedBandId, setSelectedBandId] = useState<string | null>(
+    initialBandId
+  )
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+  const [totalCount, setTotalCount] = useState(initialVideos?.length || 0)
 
   // Fetch events and bands for filters (only if not provided via SSR)
   useEffect(() => {
-    if (initialFilterOptions) return;
+    if (initialFilterOptions) return
 
     async function fetchFilters() {
       try {
         const [pastRes, upcomingRes] = await Promise.all([
-          fetch("/api/events/past"),
-          fetch("/api/events/upcoming"),
-        ]);
+          fetch('/api/events/past'),
+          fetch('/api/events/upcoming'),
+        ])
 
-        const allEvents: Event[] = [];
+        const allEvents: Event[] = []
         if (pastRes.ok) {
-          const pastData = await pastRes.json();
-          allEvents.push(...(Array.isArray(pastData) ? pastData : []));
+          const pastData = await pastRes.json()
+          allEvents.push(...(Array.isArray(pastData) ? pastData : []))
         }
         if (upcomingRes.ok) {
-          const upcomingData = await upcomingRes.json();
-          allEvents.push(...(Array.isArray(upcomingData) ? upcomingData : []));
+          const upcomingData = await upcomingRes.json()
+          allEvents.push(...(Array.isArray(upcomingData) ? upcomingData : []))
         }
         allEvents.sort(
           (a, b) => new Date(b.name).getTime() - new Date(a.name).getTime()
-        );
-        setEvents(allEvents);
+        )
+        setEvents(allEvents)
       } catch (error) {
-        console.error("Failed to fetch events:", error);
+        console.error('Failed to fetch events:', error)
       }
 
       try {
-        const bandsRes = await fetch("/api/bands");
+        const bandsRes = await fetch('/api/bands')
         if (bandsRes.ok) {
-          const bandsData = await bandsRes.json();
-          setBands(bandsData.bands || bandsData || []);
+          const bandsData = await bandsRes.json()
+          setBands(bandsData.bands || bandsData || [])
         }
       } catch (error) {
-        console.error("Failed to fetch bands:", error);
+        console.error('Failed to fetch bands:', error)
       }
     }
 
-    fetchFilters();
-  }, [initialFilterOptions]);
+    fetchFilters()
+  }, [initialFilterOptions])
 
   // Track if filters have changed from initial values (to know when to refetch)
-  const [filtersChanged, setFiltersChanged] = useState(false);
+  const [filtersChanged, setFiltersChanged] = useState(false)
 
   // Fetch videos (only when filters change, not on initial SSR load)
   const fetchVideos = useCallback(async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const params = new URLSearchParams();
-      if (selectedEventId) params.set("event", selectedEventId);
-      if (selectedBandId) params.set("band", selectedBandId);
-      params.set("limit", "100");
+      const params = new URLSearchParams()
+      if (selectedEventId) params.set('event', selectedEventId)
+      if (selectedBandId) params.set('band', selectedBandId)
+      params.set('limit', '100')
 
-      const res = await fetch(`/api/videos?${params.toString()}`);
+      const res = await fetch(`/api/videos?${params.toString()}`)
       if (res.ok) {
-        const data = await res.json();
-        setVideos(data.videos || []);
-        setTotalCount(data.pagination?.total || data.videos?.length || 0);
+        const data = await res.json()
+        setVideos(data.videos || [])
+        setTotalCount(data.pagination?.total || data.videos?.length || 0)
       }
     } catch (error) {
-      console.error("Failed to fetch videos:", error);
+      console.error('Failed to fetch videos:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [selectedEventId, selectedBandId]);
+  }, [selectedEventId, selectedBandId])
 
   // Only fetch videos if filters changed or no SSR data
   useEffect(() => {
     if (!initialVideos || filtersChanged) {
-      fetchVideos();
+      fetchVideos()
     }
-  }, [fetchVideos, initialVideos, filtersChanged]);
+  }, [fetchVideos, initialVideos, filtersChanged])
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedEventId) params.set("event", selectedEventId);
-    if (selectedBandId) params.set("band", selectedBandId);
-    const newUrl = params.toString() ? `?${params.toString()}` : "/videos";
-    window.history.replaceState(null, "", newUrl);
-  }, [selectedEventId, selectedBandId]);
+    const params = new URLSearchParams()
+    if (selectedEventId) params.set('event', selectedEventId)
+    if (selectedBandId) params.set('band', selectedBandId)
+    const newUrl = params.toString() ? `?${params.toString()}` : '/videos'
+    window.history.replaceState(null, '', newUrl)
+  }, [selectedEventId, selectedBandId])
 
   // Filter bands by selected event
   const filteredBands = selectedEventId
     ? bands.filter((b) => b.event_id === selectedEventId)
-    : bands;
+    : bands
 
   // Clear band selection when event changes and band is not in event
   useEffect(() => {
     if (selectedEventId && selectedBandId) {
       const bandInEvent = bands.find(
         (b) => b.id === selectedBandId && b.event_id === selectedEventId
-      );
+      )
       if (!bandInEvent) {
-        setSelectedBandId(null);
+        setSelectedBandId(null)
       }
     }
-  }, [selectedEventId, selectedBandId, bands]);
+  }, [selectedEventId, selectedBandId, bands])
 
   const handleVideoClick = (video: Video) => {
     trackVideoClick({
@@ -193,22 +197,22 @@ export function VideosContent({
       event_name: video.event_name,
       band_name: video.band_name,
       company_name: video.company_name,
-      location: "videos_page",
-    });
-    setSelectedVideo(video);
-  };
+      location: 'videos_page',
+    })
+    setSelectedVideo(video)
+  }
 
   const clearFilters = () => {
-    setSelectedEventId(null);
-    setSelectedBandId(null);
-    setFiltersChanged(true);
-  };
+    setSelectedEventId(null)
+    setSelectedBandId(null)
+    setFiltersChanged(true)
+  }
 
-  const hasActiveFilters = selectedEventId || selectedBandId;
+  const hasActiveFilters = selectedEventId || selectedBandId
 
   return (
     <PublicLayout
-      breadcrumbs={[{ label: "Home", href: "/" }, { label: "Videos" }]}
+      breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Videos' }]}
       footerVariant="simple"
       navEvents={navEvents}
     >
@@ -218,8 +222,8 @@ export function VideosContent({
           <h1 className="font-semibold text-4xl mb-2">Videos</h1>
           <p className="text-text-muted">
             {loading
-              ? "Loading..."
-              : `${totalCount} video${totalCount !== 1 ? "s" : ""} from Battle of the Tech Bands events`}
+              ? 'Loading...'
+              : `${totalCount} video${totalCount !== 1 ? 's' : ''} from Battle of the Tech Bands events`}
           </p>
         </div>
 
@@ -227,10 +231,10 @@ export function VideosContent({
         <div className="flex flex-wrap gap-4 mb-8 items-end">
           {/* Event Filter */}
           <FilterSelect
-            value={selectedEventId || ""}
+            value={selectedEventId || ''}
             onChange={(e) => {
-              setSelectedEventId(e.target.value || null);
-              setFiltersChanged(true);
+              setSelectedEventId(e.target.value || null)
+              setFiltersChanged(true)
             }}
             label="Event"
             containerClassName="min-w-[180px] flex-none"
@@ -245,10 +249,10 @@ export function VideosContent({
 
           {/* Band Filter */}
           <FilterSelect
-            value={selectedBandId || ""}
+            value={selectedBandId || ''}
             onChange={(e) => {
-              setSelectedBandId(e.target.value || null);
-              setFiltersChanged(true);
+              setSelectedBandId(e.target.value || null)
+              setFiltersChanged(true)
             }}
             label="Band"
             containerClassName="min-w-[180px] flex-none"
@@ -334,7 +338,7 @@ export function VideosContent({
                       {video.company_icon_url && (
                         <CompanyIcon
                           iconUrl={video.company_icon_url}
-                          companyName={video.company_name || ""}
+                          companyName={video.company_name || ''}
                           size="sm"
                         />
                       )}
@@ -342,7 +346,9 @@ export function VideosContent({
                       {video.event_name && (
                         <>
                           <span className="text-text-dim">•</span>
-                          <span className="text-text-dim">{video.event_name}</span>
+                          <span className="text-text-dim">
+                            {video.event_name}
+                          </span>
                         </>
                       )}
                     </div>
@@ -396,7 +402,8 @@ export function VideosContent({
                 {selectedVideo.band_name && (
                   <p className="text-text-muted">
                     {selectedVideo.band_name}
-                    {selectedVideo.event_name && ` • ${selectedVideo.event_name}`}
+                    {selectedVideo.event_name &&
+                      ` • ${selectedVideo.event_name}`}
                   </p>
                 )}
               </div>
@@ -405,6 +412,5 @@ export function VideosContent({
         )}
       </AnimatePresence>
     </PublicLayout>
-  );
+  )
 }
-

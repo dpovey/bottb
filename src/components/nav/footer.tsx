@@ -1,47 +1,47 @@
-import Image from "next/image";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { socialLinks } from "@/lib/social-links";
-import { SocialIconLink } from "@/components/ui";
-import { EmailIcon } from "@/components/icons";
+import Image from 'next/image'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
+import { socialLinks } from '@/lib/social-links'
+import { SocialIconLink } from '@/components/ui'
+import { EmailIcon } from '@/components/icons'
 
 const sitemapLinks = {
   main: [
-    { label: "Home", href: "/" },
-    { label: "Events", href: "/events" },
-    { label: "Bands", href: "/events" },
-    { label: "Companies", href: "/companies" },
-    { label: "Songs", href: "/songs" },
+    { label: 'Home', href: '/' },
+    { label: 'Events', href: '/events' },
+    { label: 'Bands', href: '/events' },
+    { label: 'Companies', href: '/companies' },
+    { label: 'Songs', href: '/songs' },
   ],
   media: [
-    { label: "Photos", href: "/photos" },
-    { label: "Videos", href: "/videos" },
-    { label: "Photographers", href: "/photographers" },
+    { label: 'Photos', href: '/photos' },
+    { label: 'Videos', href: '/videos' },
+    { label: 'Photographers', href: '/photographers' },
   ],
   info: [
-    { label: "About", href: "/about" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Use", href: "/terms" },
+    { label: 'About', href: '/about' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Use', href: '/terms' },
   ],
-};
+}
 
 export interface FooterProps {
   /** Footer variant */
-  variant?: "simple" | "full";
-  className?: string;
+  variant?: 'simple' | 'full'
+  className?: string
 }
 
-export function Footer({ variant = "simple", className }: FooterProps) {
-  const currentYear = new Date().getFullYear();
+export function Footer({ variant = 'simple', className }: FooterProps) {
+  const currentYear = new Date().getFullYear()
 
-  if (variant === "simple") {
+  if (variant === 'simple') {
     return (
-      <footer className={cn("border-t border-white/5 py-8", className)}>
+      <footer className={cn('border-t border-white/5 py-8', className)}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Copyright */}
             <p className="text-text-dim text-sm">
-              {currentYear} Battle of the Tech Bands. Supporting{" "}
+              {currentYear} Battle of the Tech Bands. Supporting{' '}
               <a
                 href="https://youngcare.com.au"
                 target="_blank"
@@ -70,12 +70,12 @@ export function Footer({ variant = "simple", className }: FooterProps) {
           </div>
         </div>
       </footer>
-    );
+    )
   }
 
   // Full footer variant
   return (
-    <footer className={cn("border-t border-white/5 pt-12 pb-8", className)}>
+    <footer className={cn('border-t border-white/5 pt-12 pb-8', className)}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Main footer content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
@@ -188,7 +188,7 @@ export function Footer({ variant = "simple", className }: FooterProps) {
               © {currentYear} Battle of the Tech Bands
             </p>
             <p className="text-text-dim text-sm">
-              Proudly supporting{" "}
+              Proudly supporting{' '}
               <a
                 href="https://youngcare.com.au"
                 target="_blank"
@@ -202,5 +202,5 @@ export function Footer({ variant = "simple", className }: FooterProps) {
         </div>
       </div>
     </footer>
-  );
+  )
 }

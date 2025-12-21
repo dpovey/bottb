@@ -19,52 +19,52 @@
  * - NEXT_PUBLIC_BASE_URL (for OAuth redirect, auto-detected on Vercel)
  */
 
-import { getBaseUrl } from "./linkedin";
+import { getBaseUrl } from './linkedin'
 
-const GRAPH_API_VERSION = "v21.0";
-const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
+const GRAPH_API_VERSION = 'v21.0'
+const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface MetaTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
+  access_token: string
+  token_type: string
+  expires_in?: number
 }
 
 export interface MetaPage {
-  id: string;
-  name: string;
-  access_token: string;
+  id: string
+  name: string
+  access_token: string
   instagram_business_account?: {
-    id: string;
-  };
+    id: string
+  }
 }
 
 export interface MetaPagesResponse {
-  data: MetaPage[];
+  data: MetaPage[]
 }
 
 export interface MetaUserResponse {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export interface InstagramAccount {
-  id: string;
-  username: string;
-  name?: string;
+  id: string
+  username: string
+  name?: string
 }
 
 export interface MetaMediaResponse {
-  id: string;
+  id: string
 }
 
 export interface MetaPostResponse {
-  id: string;
-  post_id?: string;
+  id: string
+  post_id?: string
 }
 
 // ============================================================================
@@ -75,34 +75,34 @@ export interface MetaPostResponse {
  * Get the Meta OAuth authorization URL
  */
 export function getMetaAuthUrl(state: string): string {
-  const appId = process.env.META_APP_ID;
+  const appId = process.env.META_APP_ID
 
   if (!appId) {
-    throw new Error("META_APP_ID environment variable is required");
+    throw new Error('META_APP_ID environment variable is required')
   }
 
-  const baseUrl = getBaseUrl();
-  const redirectUri = `${baseUrl}/api/admin/social/meta/callback`;
+  const baseUrl = getBaseUrl()
+  const redirectUri = `${baseUrl}/api/admin/social/meta/callback`
 
   // Request permissions for both Facebook Pages and Instagram
   const scopes = [
-    "pages_show_list",
-    "pages_read_engagement",
-    "pages_manage_posts",
-    "business_management",
-    "instagram_basic",
-    "instagram_content_publish",
-  ].join(",");
+    'pages_show_list',
+    'pages_read_engagement',
+    'pages_manage_posts',
+    'business_management',
+    'instagram_basic',
+    'instagram_content_publish',
+  ].join(',')
 
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
     state,
     scope: scopes,
-    response_type: "code",
-  });
+    response_type: 'code',
+  })
 
-  return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params.toString()}`;
+  return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params.toString()}`
 }
 
 /**
@@ -111,37 +111,37 @@ export function getMetaAuthUrl(state: string): string {
 export async function exchangeMetaCode(
   code: string
 ): Promise<MetaTokenResponse> {
-  const appId = process.env.META_APP_ID;
-  const appSecret = process.env.META_APP_SECRET;
+  const appId = process.env.META_APP_ID
+  const appSecret = process.env.META_APP_SECRET
 
   if (!appId || !appSecret) {
     throw new Error(
-      "Meta OAuth environment variables are required (META_APP_ID, META_APP_SECRET)"
-    );
+      'Meta OAuth environment variables are required (META_APP_ID, META_APP_SECRET)'
+    )
   }
 
-  const baseUrl = getBaseUrl();
-  const redirectUri = `${baseUrl}/api/admin/social/meta/callback`;
+  const baseUrl = getBaseUrl()
+  const redirectUri = `${baseUrl}/api/admin/social/meta/callback`
 
   const params = new URLSearchParams({
     client_id: appId,
     client_secret: appSecret,
     redirect_uri: redirectUri,
     code,
-  });
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/oauth/access_token?${params.toString()}`
-  );
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Meta token exchange failed: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -150,32 +150,32 @@ export async function exchangeMetaCode(
 export async function getLongLivedToken(
   shortLivedToken: string
 ): Promise<MetaTokenResponse> {
-  const appId = process.env.META_APP_ID;
-  const appSecret = process.env.META_APP_SECRET;
+  const appId = process.env.META_APP_ID
+  const appSecret = process.env.META_APP_SECRET
 
   if (!appId || !appSecret) {
-    throw new Error("Meta app credentials required");
+    throw new Error('Meta app credentials required')
   }
 
   const params = new URLSearchParams({
-    grant_type: "fb_exchange_token",
+    grant_type: 'fb_exchange_token',
     client_id: appId,
     client_secret: appSecret,
     fb_exchange_token: shortLivedToken,
-  });
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/oauth/access_token?${params.toString()}`
-  );
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to get long-lived token: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 // ============================================================================
@@ -188,50 +188,50 @@ export async function getLongLivedToken(
 export async function getMetaUser(
   accessToken: string
 ): Promise<MetaUserResponse> {
-  const response = await fetch(`${GRAPH_API_BASE}/me?access_token=${accessToken}`);
+  const response = await fetch(
+    `${GRAPH_API_BASE}/me?access_token=${accessToken}`
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to get user info: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
  * Get pages the user manages (with their access tokens)
  */
-export async function getMetaPages(
-  accessToken: string
-): Promise<MetaPage[]> {
+export async function getMetaPages(accessToken: string): Promise<MetaPage[]> {
   // First, let's check what permissions the token has
-  const debugUrl = `${GRAPH_API_BASE}/me/permissions?access_token=${accessToken}`;
-  const debugResponse = await fetch(debugUrl);
-  const debugData = await debugResponse.json();
-  console.log("[Meta] Token permissions:", JSON.stringify(debugData, null, 2));
+  const debugUrl = `${GRAPH_API_BASE}/me/permissions?access_token=${accessToken}`
+  const debugResponse = await fetch(debugUrl)
+  const debugData = await debugResponse.json()
+  console.log('[Meta] Token permissions:', JSON.stringify(debugData, null, 2))
 
   const params = new URLSearchParams({
     access_token: accessToken,
-    fields: "id,name,access_token,instagram_business_account",
-  });
+    fields: 'id,name,access_token,instagram_business_account',
+  })
 
-  const url = `${GRAPH_API_BASE}/me/accounts?${params.toString()}`;
-  console.log("[Meta] Fetching pages from:", url.replace(accessToken, "***"));
+  const url = `${GRAPH_API_BASE}/me/accounts?${params.toString()}`
+  console.log('[Meta] Fetching pages from:', url.replace(accessToken, '***'))
 
-  const response = await fetch(url);
-  const data = await response.json();
+  const response = await fetch(url)
+  const data = await response.json()
 
   if (!response.ok) {
-    console.error("[Meta] Failed to get pages:", data);
+    console.error('[Meta] Failed to get pages:', data)
     throw new Error(
       `Failed to get pages: ${data.error?.message || response.statusText}`
-    );
+    )
   }
 
-  console.log("[Meta] Pages response:", JSON.stringify(data, null, 2));
-  return data.data || [];
+  console.log('[Meta] Pages response:', JSON.stringify(data, null, 2))
+  return data.data || []
 }
 
 /**
@@ -243,21 +243,21 @@ export async function getInstagramAccount(
 ): Promise<InstagramAccount> {
   const params = new URLSearchParams({
     access_token: accessToken,
-    fields: "id,username,name",
-  });
+    fields: 'id,username,name',
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${igAccountId}?${params.toString()}`
-  );
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to get Instagram account: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 // ============================================================================
@@ -277,21 +277,21 @@ export async function postToFacebookPage(
     access_token: pageAccessToken,
     url: imageUrl,
     caption,
-  });
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${pageId}/photos?${params.toString()}`,
-    { method: "POST" }
-  );
+    { method: 'POST' }
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to post to Facebook: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -304,58 +304,58 @@ export async function postMultipleToFacebookPage(
   caption: string
 ): Promise<MetaPostResponse> {
   // First, upload each photo as unpublished
-  const photoIds: string[] = [];
+  const photoIds: string[] = []
 
   for (const imageUrl of imageUrls) {
     const params = new URLSearchParams({
       access_token: pageAccessToken,
       url: imageUrl,
-      published: "false",
-    });
+      published: 'false',
+    })
 
     const response = await fetch(
       `${GRAPH_API_BASE}/${pageId}/photos?${params.toString()}`,
-      { method: "POST" }
-    );
+      { method: 'POST' }
+    )
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json()
       throw new Error(
         `Failed to upload photo: ${error.error?.message || response.statusText}`
-      );
+      )
     }
 
-    const result: MetaMediaResponse = await response.json();
-    photoIds.push(result.id);
+    const result: MetaMediaResponse = await response.json()
+    photoIds.push(result.id)
   }
 
   // Now create a post with all the photos attached
   const formData = new URLSearchParams({
     access_token: pageAccessToken,
     message: caption,
-  });
+  })
 
   // Add each photo as attached_media
   photoIds.forEach((id, index) => {
-    formData.append(`attached_media[${index}]`, JSON.stringify({ media_fbid: id }));
-  });
+    formData.append(
+      `attached_media[${index}]`,
+      JSON.stringify({ media_fbid: id })
+    )
+  })
 
-  const response = await fetch(
-    `${GRAPH_API_BASE}/${pageId}/feed`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const response = await fetch(`${GRAPH_API_BASE}/${pageId}/feed`, {
+    method: 'POST',
+    body: formData,
+  })
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to create multi-photo post: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 // ============================================================================
@@ -381,22 +381,22 @@ export async function createInstagramMediaContainer(
     access_token: accessToken,
     image_url: imageUrl,
     caption,
-  });
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${igAccountId}/media?${params.toString()}`,
-    { method: "POST" }
-  );
+    { method: 'POST' }
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to create IG media container: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  const result: MetaMediaResponse = await response.json();
-  return result.id;
+  const result: MetaMediaResponse = await response.json()
+  return result.id
 }
 
 /**
@@ -410,23 +410,23 @@ export async function createInstagramCarouselItem(
   const params = new URLSearchParams({
     access_token: accessToken,
     image_url: imageUrl,
-    is_carousel_item: "true",
-  });
+    is_carousel_item: 'true',
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${igAccountId}/media?${params.toString()}`,
-    { method: "POST" }
-  );
+    { method: 'POST' }
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to create IG carousel item: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  const result: MetaMediaResponse = await response.json();
-  return result.id;
+  const result: MetaMediaResponse = await response.json()
+  return result.id
 }
 
 /**
@@ -440,27 +440,27 @@ export async function createInstagramCarouselContainer(
 ): Promise<string> {
   const params = new URLSearchParams({
     access_token: accessToken,
-    media_type: "CAROUSEL",
+    media_type: 'CAROUSEL',
     caption,
-  });
+  })
 
   // Add children IDs
-  params.append("children", childrenIds.join(","));
+  params.append('children', childrenIds.join(','))
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${igAccountId}/media?${params.toString()}`,
-    { method: "POST" }
-  );
+    { method: 'POST' }
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to create IG carousel container: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  const result: MetaMediaResponse = await response.json();
-  return result.id;
+  const result: MetaMediaResponse = await response.json()
+  return result.id
 }
 
 /**
@@ -474,21 +474,21 @@ export async function publishInstagramMedia(
   const params = new URLSearchParams({
     access_token: accessToken,
     creation_id: containerId,
-  });
+  })
 
   const response = await fetch(
     `${GRAPH_API_BASE}/${igAccountId}/media_publish?${params.toString()}`,
-    { method: "POST" }
-  );
+    { method: 'POST' }
+  )
 
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json()
     throw new Error(
       `Failed to publish IG media: ${error.error?.message || response.statusText}`
-    );
+    )
   }
 
-  return response.json();
+  return response.json()
 }
 
 /**
@@ -506,10 +506,10 @@ export async function postToInstagram(
     accessToken,
     imageUrl,
     caption
-  );
+  )
 
   // Publish
-  return publishInstagramMedia(igAccountId, accessToken, containerId);
+  return publishInstagramMedia(igAccountId, accessToken, containerId)
 }
 
 /**
@@ -522,22 +522,22 @@ export async function postCarouselToInstagram(
   caption: string
 ): Promise<MetaPostResponse> {
   if (imageUrls.length < 2) {
-    throw new Error("Carousel requires at least 2 images");
+    throw new Error('Carousel requires at least 2 images')
   }
 
   if (imageUrls.length > 10) {
-    throw new Error("Carousel supports maximum 10 images");
+    throw new Error('Carousel supports maximum 10 images')
   }
 
   // Create carousel item containers for each image
-  const childrenIds: string[] = [];
+  const childrenIds: string[] = []
   for (const imageUrl of imageUrls) {
     const itemId = await createInstagramCarouselItem(
       igAccountId,
       accessToken,
       imageUrl
-    );
-    childrenIds.push(itemId);
+    )
+    childrenIds.push(itemId)
   }
 
   // Create carousel container
@@ -546,9 +546,8 @@ export async function postCarouselToInstagram(
     accessToken,
     childrenIds,
     caption
-  );
+  )
 
   // Publish
-  return publishInstagramMedia(igAccountId, accessToken, carouselId);
+  return publishInstagramMedia(igAccountId, accessToken, carouselId)
 }
-

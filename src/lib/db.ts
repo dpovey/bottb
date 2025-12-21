@@ -1,230 +1,230 @@
-import { sql } from "@vercel/postgres";
+import { sql } from '@vercel/postgres'
 
 export interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  timezone: string; // IANA timezone name (e.g., "Australia/Brisbane")
-  is_active: boolean;
-  status: "upcoming" | "voting" | "finalized";
-  image_url?: string;
+  id: string
+  name: string
+  date: string
+  location: string
+  timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
+  is_active: boolean
+  status: 'upcoming' | 'voting' | 'finalized'
+  image_url?: string
   info?: {
-    image_url?: string;
-    description?: string;
-    website?: string;
-    ticket_url?: string;
+    image_url?: string
+    description?: string
+    website?: string
+    ticket_url?: string
     social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    venue_info?: string;
-    [key: string]: unknown;
-  };
-  created_at: string;
+      twitter?: string
+      instagram?: string
+      facebook?: string
+    }
+    venue_info?: string
+    [key: string]: unknown
+  }
+  created_at: string
 }
 
 export interface Company {
-  slug: string;
-  name: string;
-  logo_url?: string;
-  icon_url?: string;
-  website?: string;
-  created_at: string;
+  slug: string
+  name: string
+  logo_url?: string
+  icon_url?: string
+  website?: string
+  created_at: string
 }
 
 export interface CompanyWithStats extends Company {
-  band_count: number;
-  event_count: number;
+  band_count: number
+  event_count: number
 }
 
 export interface Photographer {
-  slug: string;
-  name: string;
-  bio: string | null;
-  location: string | null;
-  website: string | null;
-  instagram: string | null;
-  email: string | null;
-  created_at: string;
+  slug: string
+  name: string
+  bio: string | null
+  location: string | null
+  website: string | null
+  instagram: string | null
+  email: string | null
+  created_at: string
 }
 
 export interface PhotographerWithStats extends Photographer {
-  photo_count: number;
+  photo_count: number
 }
 
 export interface Band {
-  id: string;
-  event_id: string;
-  name: string;
-  description?: string;
-  company_slug?: string;
-  order: number;
-  image_url?: string;
-  hero_thumbnail_url?: string;
-  hero_focal_point?: { x: number; y: number };
+  id: string
+  event_id: string
+  name: string
+  description?: string
+  company_slug?: string
+  order: number
+  image_url?: string
+  hero_thumbnail_url?: string
+  hero_focal_point?: { x: number; y: number }
   info?: {
-    logo_url?: string;
-    website?: string;
+    logo_url?: string
+    website?: string
     social_media?: {
-      twitter?: string;
-      instagram?: string;
-      facebook?: string;
-    };
-    genre?: string;
-    members?: string[];
-    [key: string]: unknown;
-  };
-  created_at: string;
+      twitter?: string
+      instagram?: string
+      facebook?: string
+    }
+    genre?: string
+    members?: string[]
+    [key: string]: unknown
+  }
+  created_at: string
   // Joined fields
-  company_name?: string;
-  company_icon_url?: string;
+  company_name?: string
+  company_icon_url?: string
 }
 
 export interface Vote {
-  id: string;
-  event_id: string;
-  band_id: string;
-  voter_type: "crowd" | "judge";
-  song_choice?: number;
-  performance?: number;
-  crowd_vibe?: number;
-  visuals?: number; // 2026.1 only
-  crowd_vote?: number;
+  id: string
+  event_id: string
+  band_id: string
+  voter_type: 'crowd' | 'judge'
+  song_choice?: number
+  performance?: number
+  crowd_vibe?: number
+  visuals?: number // 2026.1 only
+  crowd_vote?: number
   // User context fields
-  ip_address?: string;
-  user_agent?: string;
-  browser_name?: string;
-  browser_version?: string;
-  os_name?: string;
-  os_version?: string;
-  device_type?: string;
-  screen_resolution?: string;
-  timezone?: string;
-  language?: string;
-  google_click_id?: string;
-  facebook_pixel_id?: string;
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-  utm_term?: string;
-  utm_content?: string;
-  vote_fingerprint?: string;
-  fingerprintjs_visitor_id?: string;
-  fingerprintjs_confidence?: number;
-  fingerprintjs_confidence_comment?: string;
-  email?: string;
-  name?: string;
-  status?: "approved" | "pending";
-  created_at: string;
+  ip_address?: string
+  user_agent?: string
+  browser_name?: string
+  browser_version?: string
+  os_name?: string
+  os_version?: string
+  device_type?: string
+  screen_resolution?: string
+  timezone?: string
+  language?: string
+  google_click_id?: string
+  facebook_pixel_id?: string
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  utm_term?: string
+  utm_content?: string
+  vote_fingerprint?: string
+  fingerprintjs_visitor_id?: string
+  fingerprintjs_confidence?: number
+  fingerprintjs_confidence_comment?: string
+  email?: string
+  name?: string
+  status?: 'approved' | 'pending'
+  created_at: string
 }
 
 export interface CrowdNoiseMeasurement {
-  id: string;
-  event_id: string;
-  band_id: string;
-  energy_level: number;
-  peak_volume: number;
-  recording_duration: number;
-  crowd_score: number;
-  created_at: string;
+  id: string
+  event_id: string
+  band_id: string
+  energy_level: number
+  peak_volume: number
+  recording_duration: number
+  crowd_score: number
+  created_at: string
 }
 
 export interface FinalizedResult {
-  id: string;
-  event_id: string;
-  band_id: string;
-  band_name: string;
-  final_rank: number;
-  avg_song_choice: number | null;
-  avg_performance: number | null;
-  avg_crowd_vibe: number | null;
-  avg_visuals: number | null; // 2026.1 scoring
-  crowd_vote_count: number;
-  judge_vote_count: number;
-  total_crowd_votes: number;
-  crowd_noise_energy: number | null; // 2025.1 scoring
-  crowd_noise_peak: number | null; // 2025.1 scoring
-  crowd_noise_score: number | null; // 2025.1 scoring
-  judge_score: number | null;
-  crowd_score: number | null;
-  visuals_score: number | null; // 2026.1 scoring
-  total_score: number | null;
-  finalized_at: string;
+  id: string
+  event_id: string
+  band_id: string
+  band_name: string
+  final_rank: number
+  avg_song_choice: number | null
+  avg_performance: number | null
+  avg_crowd_vibe: number | null
+  avg_visuals: number | null // 2026.1 scoring
+  crowd_vote_count: number
+  judge_vote_count: number
+  total_crowd_votes: number
+  crowd_noise_energy: number | null // 2025.1 scoring
+  crowd_noise_peak: number | null // 2025.1 scoring
+  crowd_noise_score: number | null // 2025.1 scoring
+  judge_score: number | null
+  crowd_score: number | null
+  visuals_score: number | null // 2026.1 scoring
+  total_score: number | null
+  finalized_at: string
 }
 
 export interface Video {
-  id: string;
-  youtube_video_id: string;
-  title: string;
-  event_id: string | null;
-  band_id: string | null;
-  duration_seconds: number | null;
-  thumbnail_url: string | null;
-  published_at: string | null;
-  sort_order: number;
-  created_at: string;
+  id: string
+  youtube_video_id: string
+  title: string
+  event_id: string | null
+  band_id: string | null
+  duration_seconds: number | null
+  thumbnail_url: string | null
+  published_at: string | null
+  sort_order: number
+  created_at: string
   // Joined fields
-  event_name?: string;
-  band_name?: string;
-  company_name?: string;
-  company_slug?: string;
-  company_icon_url?: string;
+  event_name?: string
+  band_name?: string
+  company_name?: string
+  company_slug?: string
+  company_icon_url?: string
 }
 
 export interface HeroFocalPoint {
-  x: number; // 0-100 percentage from left
-  y: number; // 0-100 percentage from top
+  x: number // 0-100 percentage from left
+  y: number // 0-100 percentage from top
 }
 
 export interface Photo {
-  id: string;
-  event_id: string | null;
-  band_id: string | null;
-  photographer: string | null;
-  blob_url: string;
-  blob_pathname: string;
-  original_filename: string | null;
-  width: number | null;
-  height: number | null;
-  file_size: number | null;
-  content_type: string | null;
-  xmp_metadata: Record<string, unknown> | null;
-  matched_event_name: string | null;
-  matched_band_name: string | null;
-  match_confidence: "exact" | "fuzzy" | "manual" | "unmatched" | null;
-  uploaded_by: string | null;
-  uploaded_at: string;
-  created_at: string;
+  id: string
+  event_id: string | null
+  band_id: string | null
+  photographer: string | null
+  blob_url: string
+  blob_pathname: string
+  original_filename: string | null
+  width: number | null
+  height: number | null
+  file_size: number | null
+  content_type: string | null
+  xmp_metadata: Record<string, unknown> | null
+  matched_event_name: string | null
+  matched_band_name: string | null
+  match_confidence: 'exact' | 'fuzzy' | 'manual' | 'unmatched' | null
+  uploaded_by: string | null
+  uploaded_at: string
+  created_at: string
   // Original capture timestamp from EXIF/XMP metadata
-  captured_at: string | null;
+  captured_at: string | null
   // Labels for hero images etc.
-  labels: string[];
+  labels: string[]
   // Focal point for hero image display
-  hero_focal_point: HeroFocalPoint;
+  hero_focal_point: HeroFocalPoint
   // Joined fields
-  event_name?: string;
-  band_name?: string;
-  thumbnail_url?: string;
-  company_name?: string;
-  company_slug?: string;
-  company_icon_url?: string;
+  event_name?: string
+  band_name?: string
+  thumbnail_url?: string
+  company_name?: string
+  company_slug?: string
+  company_icon_url?: string
 }
 
 // Photo label constants
 export const PHOTO_LABELS = {
-  BAND_HERO: "band_hero",
-  EVENT_HERO: "event_hero",
-  GLOBAL_HERO: "global_hero",
-  PHOTOGRAPHER_HERO: "photographer_hero",
-} as const;
+  BAND_HERO: 'band_hero',
+  EVENT_HERO: 'event_hero',
+  GLOBAL_HERO: 'global_hero',
+  PHOTOGRAPHER_HERO: 'photographer_hero',
+} as const
 
-export type PhotoLabel = (typeof PHOTO_LABELS)[keyof typeof PHOTO_LABELS];
+export type PhotoLabel = (typeof PHOTO_LABELS)[keyof typeof PHOTO_LABELS]
 
 export async function getEvents() {
-  const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`;
-  return rows;
+  const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`
+  return rows
 }
 
 export async function getActiveEvent() {
@@ -232,8 +232,8 @@ export async function getActiveEvent() {
     SELECT * FROM events 
     WHERE is_active = true AND status = 'voting' 
     LIMIT 1
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 export async function getUpcomingEvents() {
@@ -241,8 +241,8 @@ export async function getUpcomingEvents() {
     SELECT * FROM events 
     WHERE date >= NOW() 
     ORDER BY date ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export async function getPastEvents() {
@@ -250,22 +250,24 @@ export async function getPastEvents() {
     SELECT * FROM events 
     WHERE date < NOW() 
     ORDER BY date DESC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export interface PastEventWithWinner extends Event {
-  winner_band_name?: string;
-  winner_company_slug?: string;
-  winner_company_name?: string;
-  winner_company_icon_url?: string;
+  winner_band_name?: string
+  winner_company_slug?: string
+  winner_company_name?: string
+  winner_company_icon_url?: string
 }
 
 /**
  * Get past events with winner info in a single efficient query.
  * Joins with finalized_results and bands to get winner company info.
  */
-export async function getPastEventsWithWinners(): Promise<PastEventWithWinner[]> {
+export async function getPastEventsWithWinners(): Promise<
+  PastEventWithWinner[]
+> {
   const { rows } = await sql<PastEventWithWinner>`
     SELECT 
       e.*,
@@ -279,8 +281,8 @@ export async function getPastEventsWithWinners(): Promise<PastEventWithWinner[]>
     LEFT JOIN companies c ON c.slug = b.company_slug
     WHERE e.date < NOW()
     ORDER BY e.date DESC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export async function getBandsForEvent(eventId: string) {
@@ -294,8 +296,8 @@ export async function getBandsForEvent(eventId: string) {
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.event_id = ${eventId} 
     ORDER BY b."order"
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -309,8 +311,8 @@ export async function getBands(): Promise<Band[]> {
     FROM bands b 
     LEFT JOIN companies c ON b.company_slug = c.slug
     ORDER BY b.event_id, b."order"
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export async function getBandById(bandId: string): Promise<Band | null> {
@@ -321,14 +323,14 @@ export async function getBandById(bandId: string): Promise<Band | null> {
     FROM bands b 
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.id = ${bandId}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 export async function getVotesForEvent(eventId: string) {
   const { rows } =
-    await sql<Vote>`SELECT * FROM votes WHERE event_id = ${eventId}`;
-  return rows;
+    await sql<Vote>`SELECT * FROM votes WHERE event_id = ${eventId}`
+  return rows
 }
 
 export async function hasUserVotedByEmail(
@@ -338,11 +340,11 @@ export async function hasUserVotedByEmail(
   const { rows } = await sql<{ count: number }>`
     SELECT COUNT(*) as count FROM votes 
     WHERE event_id = ${eventId} AND email = ${email} AND status = 'approved'
-  `;
-  return rows[0]?.count > 0;
+  `
+  return rows[0]?.count > 0
 }
 
-export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
+export async function submitVote(vote: Omit<Vote, 'id' | 'created_at'>) {
   const { rows } = await sql<Vote>`
             INSERT INTO votes (
               event_id, band_id, voter_type, song_choice, performance, crowd_vibe, visuals, crowd_vote,
@@ -353,37 +355,37 @@ export async function submitVote(vote: Omit<Vote, "id" | "created_at">) {
             )
             VALUES (
               ${vote.event_id}, ${vote.band_id}, ${vote.voter_type}, ${
-    vote.song_choice
-  },
+                vote.song_choice
+              },
               ${vote.performance}, ${vote.crowd_vibe}, ${vote.visuals}, ${
-    vote.crowd_vote
-  },
+                vote.crowd_vote
+              },
               ${vote.ip_address}, ${vote.user_agent}, ${vote.browser_name}, ${
-    vote.browser_version
-  },
+                vote.browser_version
+              },
               ${vote.os_name}, ${vote.os_version}, ${vote.device_type}, ${
-    vote.screen_resolution
-  },
+                vote.screen_resolution
+              },
               ${vote.timezone}, ${vote.language}, ${vote.google_click_id}, ${
-    vote.facebook_pixel_id
-  },
+                vote.facebook_pixel_id
+              },
               ${vote.utm_source}, ${vote.utm_medium}, ${vote.utm_campaign}, ${
-    vote.utm_term
-  },
+                vote.utm_term
+              },
               ${vote.utm_content}, ${vote.vote_fingerprint}, ${
-    vote.fingerprintjs_visitor_id
-  },
+                vote.fingerprintjs_visitor_id
+              },
               ${vote.fingerprintjs_confidence}, ${
-    vote.fingerprintjs_confidence_comment
-  }, 
-              ${vote.email}, ${vote.name}, ${vote.status || "approved"}
+                vote.fingerprintjs_confidence_comment
+              }, 
+              ${vote.email}, ${vote.name}, ${vote.status || 'approved'}
             )
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
-export async function updateVote(vote: Omit<Vote, "id" | "created_at">) {
+export async function updateVote(vote: Omit<Vote, 'id' | 'created_at'>) {
   const { rows } = await sql<Vote>`
     UPDATE votes SET
       band_id = ${vote.band_id},
@@ -416,46 +418,46 @@ export async function updateVote(vote: Omit<Vote, "id" | "created_at">) {
       },
       email = ${vote.email},
       name = ${vote.name},
-      status = ${vote.status || "approved"}
+      status = ${vote.status || 'approved'}
     WHERE event_id = ${vote.event_id} AND voter_type = ${vote.voter_type}
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
 export async function getEventById(eventId: string) {
   const { rows } = await sql<Event>`
     SELECT * FROM events WHERE id = ${eventId}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 export async function updateEventStatus(
   eventId: string,
-  status: "upcoming" | "voting" | "finalized"
+  status: 'upcoming' | 'voting' | 'finalized'
 ) {
   const { rows } = await sql<Event>`
     UPDATE events 
     SET status = ${status}
     WHERE id = ${eventId}
     RETURNING *
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
  * Calculate band scores dynamically from votes
- * 
+ *
  * ⚠️ IMPORTANT: Do NOT use this for finalized events!
- * 
+ *
  * For finalized events, use `getFinalizedResults()` instead. This function:
  * - Runs expensive SQL queries with CTEs and aggregations
  * - Calculates scores from live vote data (which may change)
  * - Should only be used for non-finalized events or admin preview
- * 
+ *
  * @param eventId - The event ID
  * @returns Array of band scores with calculated averages
- * 
+ *
  * @see getFinalizedResults - Use this for finalized events
  * @see hasFinalizedResults - Check if finalized results exist
  */
@@ -497,26 +499,26 @@ export async function getBandScores(eventId: string) {
     WHERE b.event_id = ${eventId}
     GROUP BY b.id, b.name, b."order", b.info, b.description, b.company_slug, c.name, c.icon_url, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
     ORDER BY b."order"
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export async function submitCrowdNoiseMeasurement(
-  measurement: Omit<CrowdNoiseMeasurement, "id" | "created_at">
+  measurement: Omit<CrowdNoiseMeasurement, 'id' | 'created_at'>
 ) {
   // First, delete any existing measurement for this event/band combination
   await sql`
     DELETE FROM crowd_noise_measurements 
     WHERE event_id = ${measurement.event_id} AND band_id = ${measurement.band_id}
-  `;
+  `
 
   // Then insert the new measurement
   const { rows } = await sql<CrowdNoiseMeasurement>`
     INSERT INTO crowd_noise_measurements (event_id, band_id, energy_level, peak_volume, recording_duration, crowd_score)
     VALUES (${measurement.event_id}, ${measurement.band_id}, ${measurement.energy_level}, ${measurement.peak_volume}, ${measurement.recording_duration}, ${measurement.crowd_score})
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
 export async function getCrowdNoiseMeasurements(eventId: string) {
@@ -526,8 +528,8 @@ export async function getCrowdNoiseMeasurements(eventId: string) {
     JOIN bands b ON cnm.band_id = b.id
     WHERE cnm.event_id = ${eventId}
     ORDER BY b."order"
-  `;
-  return rows;
+  `
+  return rows
 }
 
 export async function getCrowdNoiseMeasurement(
@@ -537,8 +539,8 @@ export async function getCrowdNoiseMeasurement(
   const { rows } = await sql<CrowdNoiseMeasurement>`
     SELECT * FROM crowd_noise_measurements 
     WHERE event_id = ${eventId} AND band_id = ${bandId}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 export async function deleteCrowdNoiseMeasurement(
@@ -549,23 +551,23 @@ export async function deleteCrowdNoiseMeasurement(
     DELETE FROM crowd_noise_measurements 
     WHERE event_id = ${eventId} AND band_id = ${bandId}
     RETURNING *
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 // Photo functions
 
-export type PhotoOrderBy = "random" | "date" | "uploaded";
+export type PhotoOrderBy = 'random' | 'date' | 'uploaded'
 
 export interface GetPhotosOptions {
-  eventId?: string;
-  bandId?: string;
-  bandIds?: string[]; // Support multiple band IDs for deduplicated band names
-  photographer?: string;
-  companySlug?: string;
-  limit?: number;
-  offset?: number;
-  orderBy?: PhotoOrderBy;
+  eventId?: string
+  bandId?: string
+  bandIds?: string[] // Support multiple band IDs for deduplicated band names
+  photographer?: string
+  companySlug?: string
+  limit?: number
+  offset?: number
+  orderBy?: PhotoOrderBy
 }
 
 /**
@@ -575,27 +577,27 @@ export interface GetPhotosOptions {
  */
 function sortByDate(photos: Photo[]): Photo[] {
   return [...photos].sort((a, b) => {
-    const dateA = a.captured_at ? new Date(a.captured_at).getTime() : 0;
-    const dateB = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+    const dateA = a.captured_at ? new Date(a.captured_at).getTime() : 0
+    const dateB = b.captured_at ? new Date(b.captured_at).getTime() : 0
     if (dateA !== dateB) {
-      return dateA - dateB;
+      return dateA - dateB
     }
     // Secondary sort by filename for photos with same timestamp
-    const filenameA = a.original_filename || "";
-    const filenameB = b.original_filename || "";
-    return filenameA.localeCompare(filenameB, undefined, { numeric: true });
-  });
+    const filenameA = a.original_filename || ''
+    const filenameB = b.original_filename || ''
+    return filenameA.localeCompare(filenameB, undefined, { numeric: true })
+  })
 }
 
 // Result type for combined photos + count query
 interface PhotosWithCountResult {
-  photos: Photo[];
-  total: number;
+  photos: Photo[]
+  total: number
 }
 
 // Extended Photo type with total_count from window function
 interface PhotoWithCount extends Photo {
-  total_count: string;
+  total_count: string
 }
 
 /**
@@ -613,30 +615,31 @@ export async function getPhotosWithCount(
     companySlug,
     limit = 50,
     offset = 0,
-    orderBy = "uploaded",
-  } = options;
+    orderBy = 'uploaded',
+  } = options
 
   // Use bandIds if provided, otherwise fall back to bandId
-  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+  const effectiveBandIds =
+    bandIds && bandIds.length > 0 ? bandIds : bandId ? [bandId] : undefined
 
   // For random ordering, use SQL RANDOM()
-  if (orderBy === "random") {
+  if (orderBy === 'random') {
     return getPhotosRandomWithCount({
       eventId,
       bandIds: effectiveBandIds,
       photographer,
       companySlug,
       limit,
-    });
+    })
   }
 
   // Helper to apply date sorting after fetch
   const applyOrdering = (photos: Photo[]): Photo[] => {
-    if (orderBy === "date") {
-      return sortByDate(photos);
+    if (orderBy === 'date') {
+      return sortByDate(photos)
     }
-    return photos;
-  };
+    return photos
+  }
 
   try {
     // Use COUNT(*) OVER() to get total count in the same query
@@ -654,7 +657,7 @@ export async function getPhotosWithCount(
           ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -664,16 +667,18 @@ export async function getPhotosWithCount(
         )
       ORDER BY p.uploaded_at DESC
       LIMIT ${limit} OFFSET ${offset}
-    `;
+    `
 
-    const total = parseInt(rows[0]?.total_count || "0", 10);
+    const total = parseInt(rows[0]?.total_count || '0', 10)
     // Remove total_count from photos before returning
-    const photos = rows.map(({ total_count: _total_count, ...photo }) => photo as Photo);
-    
-    return { photos: applyOrdering(photos), total };
+    const photos = rows.map(
+      ({ total_count: _total_count, ...photo }) => photo as Photo
+    )
+
+    return { photos: applyOrdering(photos), total }
   } catch (error) {
-    console.error("Error fetching photos with count:", error);
-    throw error;
+    console.error('Error fetching photos with count:', error)
+    throw error
   }
 }
 
@@ -683,14 +688,14 @@ export async function getPhotosWithCount(
  * All filters are combined with AND for proper filtering
  */
 async function getPhotosRandomWithCount(options: {
-  eventId?: string;
-  bandIds?: string[];
-  photographer?: string;
-  companySlug?: string;
-  limit: number;
+  eventId?: string
+  bandIds?: string[]
+  photographer?: string
+  companySlug?: string
+  limit: number
 }): Promise<PhotosWithCountResult> {
-  const { eventId, bandIds, photographer, companySlug, limit } = options;
-  const effectiveBandIds = bandIds;
+  const { eventId, bandIds, photographer, companySlug, limit } = options
+  const effectiveBandIds = bandIds
 
   try {
     // Use COUNT(*) OVER() to get total count in the same query
@@ -708,7 +713,7 @@ async function getPhotosRandomWithCount(options: {
           ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -718,16 +723,18 @@ async function getPhotosRandomWithCount(options: {
         )
       ORDER BY RANDOM()
       LIMIT ${limit}
-    `;
+    `
 
-    const total = parseInt(rows[0]?.total_count || "0", 10);
+    const total = parseInt(rows[0]?.total_count || '0', 10)
     // Remove total_count from photos before returning
-    const photos = rows.map(({ total_count: _total_count, ...photo }) => photo as Photo);
-    
-    return { photos, total };
+    const photos = rows.map(
+      ({ total_count: _total_count, ...photo }) => photo as Photo
+    )
+
+    return { photos, total }
   } catch (error) {
-    console.error("Error fetching random photos with count:", error);
-    throw error;
+    console.error('Error fetching random photos with count:', error)
+    throw error
   }
 }
 
@@ -738,16 +745,17 @@ async function getPhotosRandomWithCount(options: {
  * @deprecated Use getPhotosWithCount instead for better performance
  */
 async function getPhotosRandom(options: {
-  eventId?: string;
-  bandId?: string;
-  bandIds?: string[];
-  photographer?: string;
-  companySlug?: string;
-  limit: number;
+  eventId?: string
+  bandId?: string
+  bandIds?: string[]
+  photographer?: string
+  companySlug?: string
+  limit: number
 }): Promise<Photo[]> {
-  const { eventId, bandId, bandIds, photographer, companySlug, limit } = options;
+  const { eventId, bandId, bandIds, photographer, companySlug, limit } = options
   // Use bandIds if provided, otherwise fall back to bandId
-  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+  const effectiveBandIds =
+    bandIds && bandIds.length > 0 ? bandIds : bandId ? [bandId] : undefined
 
   try {
     // Use conditional SQL to combine all filters with AND
@@ -766,7 +774,7 @@ async function getPhotosRandom(options: {
           ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -776,11 +784,11 @@ async function getPhotosRandom(options: {
         )
       ORDER BY RANDOM()
       LIMIT ${limit}
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching random photos:", error);
-    throw error;
+    console.error('Error fetching random photos:', error)
+    throw error
   }
 }
 
@@ -795,16 +803,17 @@ export async function getPhotos(
     companySlug,
     limit = 50,
     offset = 0,
-    orderBy = "uploaded",
-  } = options;
-  
+    orderBy = 'uploaded',
+  } = options
+
   // Use bandIds if provided, otherwise fall back to bandId
-  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+  const effectiveBandIds =
+    bandIds && bandIds.length > 0 ? bandIds : bandId ? [bandId] : undefined
 
   // For random ordering, use SQL RANDOM() to get truly random photos across all data
   // Note: pagination with random doesn't guarantee unique results across pages,
   // but this gives better variety for discovery/browsing
-  if (orderBy === "random") {
+  if (orderBy === 'random') {
     return getPhotosRandom({
       eventId,
       bandId: effectiveBandIds?.[0], // Keep for backward compatibility
@@ -812,16 +821,16 @@ export async function getPhotos(
       photographer,
       companySlug,
       limit,
-    });
+    })
   }
 
   // Helper to apply date sorting after fetch (for chronological slideshow viewing)
   const applyOrdering = (photos: Photo[]): Photo[] => {
-    if (orderBy === "date") {
-      return sortByDate(photos);
+    if (orderBy === 'date') {
+      return sortByDate(photos)
     }
-    return photos; // Already ordered by uploaded_at DESC from SQL
-  };
+    return photos // Already ordered by uploaded_at DESC from SQL
+  }
 
   try {
     // Use conditional SQL to combine all filters with AND
@@ -841,7 +850,7 @@ export async function getPhotos(
           ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -851,11 +860,11 @@ export async function getPhotos(
         )
       ORDER BY p.uploaded_at DESC
       LIMIT ${limit} OFFSET ${offset}
-    `;
-    return applyOrdering(rows);
+    `
+    return applyOrdering(rows)
   } catch (error) {
-    console.error("Error fetching photos:", error);
-    throw error;
+    console.error('Error fetching photos:', error)
+    throw error
   }
 }
 
@@ -869,20 +878,21 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
       LEFT JOIN bands b ON p.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE p.id = ${photoId}
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error fetching photo:", error);
-    throw error;
+    console.error('Error fetching photo:', error)
+    throw error
   }
 }
 
 export async function getPhotoCount(
-  options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
+  options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
-  const { eventId, bandId, bandIds, photographer, companySlug } = options;
+  const { eventId, bandId, bandIds, photographer, companySlug } = options
   // Use bandIds if provided, otherwise fall back to bandId
-  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+  const effectiveBandIds =
+    bandIds && bandIds.length > 0 ? bandIds : bandId ? [bandId] : undefined
 
   try {
     // Use conditional SQL to combine all filters with AND
@@ -896,7 +906,7 @@ export async function getPhotoCount(
           ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
           OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+          OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
         )
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
@@ -904,11 +914,11 @@ export async function getPhotoCount(
           OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
           OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
         )
-    `;
-    return parseInt(rows[0]?.count || "0", 10);
+    `
+    return parseInt(rows[0]?.count || '0', 10)
   } catch (error) {
-    console.error("Error counting photos:", error);
-    throw error;
+    console.error('Error counting photos:', error)
+    throw error
   }
 }
 
@@ -918,11 +928,11 @@ export async function getDistinctPhotographers(): Promise<string[]> {
       SELECT DISTINCT photographer FROM photos 
       WHERE photographer IS NOT NULL 
       ORDER BY photographer
-    `;
-    return rows.map((r) => r.photographer);
+    `
+    return rows.map((r) => r.photographer)
   } catch (error) {
-    console.error("Error fetching photographers:", error);
-    throw error;
+    console.error('Error fetching photographers:', error)
+    throw error
   }
 }
 
@@ -931,26 +941,21 @@ export async function getDistinctPhotographers(): Promise<string[]> {
  * Returns options that have matching photos given the current filter context.
  */
 export interface AvailablePhotoFilters {
-  companies: { slug: string; name: string; count: number }[];
-  events: { id: string; name: string; count: number }[];
-  bands: { id: string; name: string; count: number }[];
-  photographers: { name: string; count: number }[];
-  hasPhotosWithoutBand: boolean;
-  hasPhotosWithoutCompany: boolean;
+  companies: { slug: string; name: string; count: number }[]
+  events: { id: string; name: string; count: number }[]
+  bands: { id: string; name: string; count: number }[]
+  photographers: { name: string; count: number }[]
+  hasPhotosWithoutBand: boolean
+  hasPhotosWithoutCompany: boolean
 }
 
 export async function getAvailablePhotoFilters(
-  options: Omit<GetPhotosOptions, "limit" | "offset"> = {}
+  options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}
 ): Promise<AvailablePhotoFilters> {
-  const {
-    eventId,
-    bandId,
-    bandIds,
-    photographer,
-    companySlug,
-  } = options;
+  const { eventId, bandId, bandIds, photographer, companySlug } = options
   // Use bandIds if provided, otherwise fall back to bandId
-  const effectiveBandIds = bandIds && bandIds.length > 0 ? bandIds : (bandId ? [bandId] : undefined);
+  const effectiveBandIds =
+    bandIds && bandIds.length > 0 ? bandIds : bandId ? [bandId] : undefined
 
   try {
     // Run all queries in parallel for better performance
@@ -976,7 +981,7 @@ export async function getAvailablePhotoFilters(
             ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
           )
           AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         GROUP BY c.slug, c.name
@@ -994,7 +999,7 @@ export async function getAvailablePhotoFilters(
             ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
           )
           AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
           AND (
@@ -1035,7 +1040,7 @@ export async function getAvailablePhotoFilters(
             ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
           )
           AND (
             ${companySlug || null}::text IS NULL 
@@ -1073,7 +1078,7 @@ export async function getAvailablePhotoFilters(
             ${!effectiveBandIds || effectiveBandIds.length === 0 ? null : 'filter'}::text IS NULL
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] === 'none' ? 'none' : null}::text = 'none' AND p.band_id IS NULL)
             OR (${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null}::text IS NOT NULL AND p.band_id = ${effectiveBandIds && effectiveBandIds.length === 1 && effectiveBandIds[0] !== 'none' ? effectiveBandIds[0] : null})
-            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(",")}}` : null}::text[]))
+            OR (${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[] IS NOT NULL AND p.band_id = ANY(${effectiveBandIds && effectiveBandIds.length > 1 ? `{${effectiveBandIds.join(',')}}` : null}::text[]))
           )
           AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
           AND (
@@ -1081,7 +1086,7 @@ export async function getAvailablePhotoFilters(
             OR (${companySlug || null} = 'none')
           )
       `,
-    ]);
+    ])
 
     return {
       companies: companiesResult.rows.map((r) => ({
@@ -1104,13 +1109,13 @@ export async function getAvailablePhotoFilters(
         count: parseInt(r.count, 10),
       })),
       hasPhotosWithoutBand:
-        parseInt(noBandResult.rows[0]?.count || "0", 10) > 0,
+        parseInt(noBandResult.rows[0]?.count || '0', 10) > 0,
       hasPhotosWithoutCompany:
-        parseInt(noCompanyResult.rows[0]?.count || "0", 10) > 0,
-    };
+        parseInt(noCompanyResult.rows[0]?.count || '0', 10) > 0,
+    }
   } catch (error) {
-    console.error("Error fetching available photo filters:", error);
-    throw error;
+    console.error('Error fetching available photo filters:', error)
+    throw error
   }
 }
 
@@ -1122,17 +1127,17 @@ export async function updatePhotoLabels(
 ): Promise<Photo | null> {
   try {
     // Convert array to PostgreSQL array literal format
-    const labelsArrayLiteral = `{${labels.join(",")}}`;
+    const labelsArrayLiteral = `{${labels.join(',')}}`
     const { rows } = await sql<Photo>`
       UPDATE photos 
       SET labels = ${labelsArrayLiteral}::text[]
       WHERE id = ${photoId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error updating photo labels:", error);
-    throw error;
+    console.error('Error updating photo labels:', error)
+    throw error
   }
 }
 
@@ -1153,8 +1158,8 @@ export async function getPhotosByLabel(
         WHERE ${label} = ANY(p.labels)
           AND p.band_id = ${options.bandId}
         ORDER BY p.uploaded_at DESC
-      `;
-      return rows;
+      `
+      return rows
     } else if (options?.eventId) {
       // Get photos with this label for a specific event
       const { rows } = await sql<Photo>`
@@ -1167,8 +1172,8 @@ export async function getPhotosByLabel(
         WHERE ${label} = ANY(p.labels)
           AND p.event_id = ${options.eventId}
         ORDER BY p.uploaded_at DESC
-      `;
-      return rows;
+      `
+      return rows
     } else {
       // Get all photos with this label
       const { rows } = await sql<Photo>`
@@ -1180,12 +1185,12 @@ export async function getPhotosByLabel(
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
         ORDER BY p.uploaded_at DESC
-      `;
-      return rows;
+      `
+      return rows
     }
   } catch (error) {
-    console.error("Error fetching photos by label:", error);
-    throw error;
+    console.error('Error fetching photos by label:', error)
+    throw error
   }
 }
 
@@ -1196,7 +1201,7 @@ export async function getPhotosByLabel(
 export async function getAllHeroPhotos(): Promise<Photo[]> {
   try {
     // PostgreSQL array literal format for the overlap operator
-    const heroLabelsLiteral = `{${PHOTO_LABELS.BAND_HERO},${PHOTO_LABELS.EVENT_HERO},${PHOTO_LABELS.GLOBAL_HERO},${PHOTO_LABELS.PHOTOGRAPHER_HERO}}`;
+    const heroLabelsLiteral = `{${PHOTO_LABELS.BAND_HERO},${PHOTO_LABELS.EVENT_HERO},${PHOTO_LABELS.GLOBAL_HERO},${PHOTO_LABELS.PHOTOGRAPHER_HERO}}`
 
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, 
@@ -1208,11 +1213,11 @@ export async function getAllHeroPhotos(): Promise<Photo[]> {
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE p.labels && ${heroLabelsLiteral}::text[]
       ORDER BY p.uploaded_at DESC
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching hero photos:", error);
-    throw error;
+    console.error('Error fetching hero photos:', error)
+    throw error
   }
 }
 
@@ -1222,20 +1227,20 @@ export async function updateHeroFocalPoint(
 ): Promise<Photo | null> {
   try {
     // Validate focal point values
-    const x = Math.max(0, Math.min(100, focalPoint.x));
-    const y = Math.max(0, Math.min(100, focalPoint.y));
-    const focalPointJson = JSON.stringify({ x, y });
+    const x = Math.max(0, Math.min(100, focalPoint.x))
+    const y = Math.max(0, Math.min(100, focalPoint.y))
+    const focalPointJson = JSON.stringify({ x, y })
 
     const { rows } = await sql<Photo>`
       UPDATE photos 
       SET hero_focal_point = ${focalPointJson}::jsonb
       WHERE id = ${photoId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error updating hero focal point:", error);
-    throw error;
+    console.error('Error updating hero focal point:', error)
+    throw error
   }
 }
 
@@ -1244,20 +1249,20 @@ export async function updateHeroFocalPoint(
 // ============================================================
 
 interface BandScoreRow {
-  id: string;
-  name: string;
-  order: number;
-  avg_song_choice: string | null;
-  avg_performance: string | null;
-  avg_crowd_vibe: string | null;
-  avg_visuals: string | null;
-  avg_crowd_vote: string | null;
-  crowd_vote_count: string;
-  judge_vote_count: string;
-  total_crowd_votes: string;
-  crowd_noise_energy: string | null;
-  crowd_noise_peak: string | null;
-  crowd_score: number | null;
+  id: string
+  name: string
+  order: number
+  avg_song_choice: string | null
+  avg_performance: string | null
+  avg_crowd_vibe: string | null
+  avg_visuals: string | null
+  avg_crowd_vote: string | null
+  crowd_vote_count: string
+  judge_vote_count: string
+  total_crowd_votes: string
+  crowd_noise_energy: string | null
+  crowd_noise_peak: string | null
+  crowd_score: number | null
 }
 
 /**
@@ -1267,21 +1272,21 @@ export async function hasFinalizedResults(eventId: string): Promise<boolean> {
   const { rows } = await sql<{ count: number }>`
     SELECT COUNT(*) as count FROM finalized_results 
     WHERE event_id = ${eventId}
-  `;
-  return Number(rows[0]?.count) > 0;
+  `
+  return Number(rows[0]?.count) > 0
 }
 
 /**
  * Get finalized results for an event from the finalized_results table
- * 
+ *
  * ⚠️ IMPORTANT: Always use this for finalized events instead of getBandScores()
- * 
+ *
  * Finalized results are:
  * - Pre-calculated and stored when an event is finalized
  * - Frozen at finalization time (won't change if votes are modified)
  * - Much faster to query (simple SELECT vs complex aggregations)
  * - The source of truth for finalized events
- * 
+ *
  * Pattern:
  * ```typescript
  * if (event.status === 'finalized' && await hasFinalizedResults(eventId)) {
@@ -1292,10 +1297,10 @@ export async function hasFinalizedResults(eventId: string): Promise<boolean> {
  *   // Calculate dynamically
  * }
  * ```
- * 
+ *
  * @param eventId - The event ID
  * @returns Array of finalized results, sorted by final_rank (winner first)
- * 
+ *
  * @see getBandScores - Use this only for non-finalized events
  * @see hasFinalizedResults - Check if finalized results exist
  * @see finalizeEventResults - Function that creates finalized results
@@ -1307,8 +1312,8 @@ export async function getFinalizedResults(
     SELECT * FROM finalized_results 
     WHERE event_id = ${eventId}
     ORDER BY final_rank ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -1317,53 +1322,53 @@ export async function getFinalizedResults(
  */
 export async function finalizeEventResults(
   eventId: string,
-  scoringVersion: string = "2025.1"
+  scoringVersion: string = '2025.1'
 ): Promise<FinalizedResult[]> {
   // Get the current scores
-  const scores = (await getBandScores(eventId)) as BandScoreRow[];
+  const scores = (await getBandScores(eventId)) as BandScoreRow[]
 
   if (scores.length === 0) {
-    return [];
+    return []
   }
 
   // Find the maximum vote count among all bands for normalization
   const maxVoteCount = Math.max(
     ...scores.map((s) => Number(s.crowd_vote_count || 0))
-  );
+  )
 
   // Calculate final scores and rankings based on scoring version
   const bandResults = scores.map((score) => {
-    const songChoice = Number(score.avg_song_choice || 0);
-    const performance = Number(score.avg_performance || 0);
-    const crowdVibe = Number(score.avg_crowd_vibe || 0);
-    const visuals = Number(score.avg_visuals || 0);
+    const songChoice = Number(score.avg_song_choice || 0)
+    const performance = Number(score.avg_performance || 0)
+    const crowdVibe = Number(score.avg_crowd_vibe || 0)
+    const visuals = Number(score.avg_visuals || 0)
 
     // Normalized crowd vote score (max 10 points)
     const crowdVoteScore =
       maxVoteCount > 0
         ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
-        : 0;
+        : 0
 
     // Version-specific scoring
-    let judgeScore: number;
-    let totalScore: number;
-    let screamOMeterScore = 0;
-    let visualsScore = 0;
+    let judgeScore: number
+    let totalScore: number
+    let screamOMeterScore = 0
+    let visualsScore = 0
 
-    if (scoringVersion === "2022.1") {
+    if (scoringVersion === '2022.1') {
       // No scoring for 2022.1 - winner is manually set
-      judgeScore = 0;
-      totalScore = 0;
-    } else if (scoringVersion === "2025.1") {
+      judgeScore = 0
+      totalScore = 0
+    } else if (scoringVersion === '2025.1') {
       // 2025.1: Song(20) + Perf(30) + Vibe(30) + Vote(10) + Scream-o-meter(10) = 100
-      judgeScore = songChoice + performance + crowdVibe;
-      screamOMeterScore = score.crowd_score ? Number(score.crowd_score) : 0;
-      totalScore = judgeScore + crowdVoteScore + screamOMeterScore;
+      judgeScore = songChoice + performance + crowdVibe
+      screamOMeterScore = score.crowd_score ? Number(score.crowd_score) : 0
+      totalScore = judgeScore + crowdVoteScore + screamOMeterScore
     } else {
       // 2026.1: Song(20) + Perf(30) + Vibe(20) + Vote(10) + Visuals(20) = 100
-      judgeScore = songChoice + performance + crowdVibe + visuals;
-      visualsScore = visuals;
-      totalScore = judgeScore + crowdVoteScore;
+      judgeScore = songChoice + performance + crowdVibe + visuals
+      visualsScore = visuals
+      totalScore = judgeScore + crowdVoteScore
     }
 
     return {
@@ -1377,20 +1382,20 @@ export async function finalizeEventResults(
       screamOMeterScore,
       visualsScore,
       totalScore,
-    };
-  });
+    }
+  })
 
   // Sort by total score (descending)
-  bandResults.sort((a, b) => b.totalScore - a.totalScore);
+  bandResults.sort((a, b) => b.totalScore - a.totalScore)
 
   // Delete any existing finalized results for this event
-  await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`;
+  await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`
 
   // Insert the finalized results
-  const results: FinalizedResult[] = [];
+  const results: FinalizedResult[] = []
   for (let i = 0; i < bandResults.length; i++) {
-    const band = bandResults[i];
-    const finalRank = i + 1;
+    const band = bandResults[i]
+    const finalRank = i + 1
 
     const { rows } = await sql<FinalizedResult>`
       INSERT INTO finalized_results (
@@ -1402,31 +1407,31 @@ export async function finalizeEventResults(
       ) VALUES (
         ${eventId}, ${band.id}, ${band.name}, ${finalRank},
         ${band.songChoice}, ${band.performance}, ${band.crowdVibe}, ${
-      band.visuals || null
-    },
+          band.visuals || null
+        },
         ${Number(band.crowd_vote_count || 0)}, ${Number(
-      band.judge_vote_count || 0
-    )}, ${Number(band.total_crowd_votes || 0)},
+          band.judge_vote_count || 0
+        )}, ${Number(band.total_crowd_votes || 0)},
         ${band.crowd_noise_energy || null}, ${band.crowd_noise_peak || null}, ${
-      band.screamOMeterScore || null
-    },
+          band.screamOMeterScore || null
+        },
         ${band.judgeScore}, ${band.crowdVoteScore}, ${
-      band.visualsScore || null
-    }, ${band.totalScore}
+          band.visualsScore || null
+        }, ${band.totalScore}
       )
       RETURNING *
-    `;
-    results.push(rows[0]);
+    `
+    results.push(rows[0])
   }
 
-  return results;
+  return results
 }
 
 /**
  * Delete finalized results for an event
  */
 export async function deleteFinalizedResults(eventId: string): Promise<void> {
-  await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`;
+  await sql`DELETE FROM finalized_results WHERE event_id = ${eventId}`
 }
 
 // ============================================================
@@ -1446,8 +1451,8 @@ export async function getCompanies(): Promise<CompanyWithStats[]> {
     LEFT JOIN bands b ON c.slug = b.company_slug
     GROUP BY c.slug, c.name, c.logo_url, c.website, c.created_at
     ORDER BY c.name ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -1456,8 +1461,8 @@ export async function getCompanies(): Promise<CompanyWithStats[]> {
 export async function getCompanyBySlug(slug: string): Promise<Company | null> {
   const { rows } = await sql<Company>`
     SELECT * FROM companies WHERE slug = ${slug}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
@@ -1476,8 +1481,8 @@ export async function getCompanyBands(
     JOIN events e ON b.event_id = e.id
     WHERE b.company_slug = ${companySlug}
     ORDER BY e.date DESC, b."order" ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -1491,8 +1496,8 @@ export async function getDistinctCompanies(): Promise<
     FROM companies c
     INNER JOIN bands b ON c.slug = b.company_slug
     ORDER BY c.name ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 // ============================================================
@@ -1515,8 +1520,8 @@ export async function getPhotographers(): Promise<PhotographerWithStats[]> {
       GROUP BY photographer
     ) pc ON p.name = pc.name
     ORDER BY p.name ASC
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -1537,8 +1542,8 @@ export async function getPhotographerBySlug(
       GROUP BY photographer
     ) pc ON p.name = pc.name
     WHERE p.slug = ${slug}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
@@ -1557,8 +1562,8 @@ export async function getPhotographerHeroPhoto(
       AND 'photographer_hero' = ANY(p.labels)
     ORDER BY p.uploaded_at DESC
     LIMIT 1
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
@@ -1576,8 +1581,8 @@ export async function getPhotographerRandomPhoto(
     WHERE p.photographer = ${photographerName}
     ORDER BY RANDOM()
     LIMIT 1
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 // ============================================================
@@ -1585,17 +1590,19 @@ export async function getPhotographerRandomPhoto(
 // ============================================================
 
 export interface GetVideosOptions {
-  eventId?: string;
-  bandId?: string;
-  limit?: number;
-  offset?: number;
+  eventId?: string
+  bandId?: string
+  limit?: number
+  offset?: number
 }
 
 /**
  * Get videos with optional filters
  */
-export async function getVideos(options: GetVideosOptions = {}): Promise<Video[]> {
-  const { eventId, bandId, limit = 50, offset = 0 } = options;
+export async function getVideos(
+  options: GetVideosOptions = {}
+): Promise<Video[]> {
+  const { eventId, bandId, limit = 50, offset = 0 } = options
 
   try {
     const { rows } = await sql<Video>`
@@ -1614,11 +1621,11 @@ export async function getVideos(options: GetVideosOptions = {}): Promise<Video[]
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
       ORDER BY v.sort_order ASC, v.published_at DESC NULLS LAST, v.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching videos:", error);
-    throw error;
+    console.error('Error fetching videos:', error)
+    throw error
   }
 }
 
@@ -1639,18 +1646,20 @@ export async function getVideoById(videoId: string): Promise<Video | null> {
       LEFT JOIN bands b ON v.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE v.id = ${videoId}
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error fetching video:", error);
-    throw error;
+    console.error('Error fetching video:', error)
+    throw error
   }
 }
 
 /**
  * Get a video by YouTube video ID
  */
-export async function getVideoByYoutubeId(youtubeVideoId: string): Promise<Video | null> {
+export async function getVideoByYoutubeId(
+  youtubeVideoId: string
+): Promise<Video | null> {
   try {
     const { rows } = await sql<Video>`
       SELECT v.*, 
@@ -1664,11 +1673,11 @@ export async function getVideoByYoutubeId(youtubeVideoId: string): Promise<Video
       LEFT JOIN bands b ON v.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE v.youtube_video_id = ${youtubeVideoId}
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error fetching video by YouTube ID:", error);
-    throw error;
+    console.error('Error fetching video by YouTube ID:', error)
+    throw error
   }
 }
 
@@ -1676,9 +1685,9 @@ export async function getVideoByYoutubeId(youtubeVideoId: string): Promise<Video
  * Get video count with optional filters
  */
 export async function getVideoCount(
-  options: Omit<GetVideosOptions, "limit" | "offset"> = {}
+  options: Omit<GetVideosOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
-  const { eventId, bandId } = options;
+  const { eventId, bandId } = options
 
   try {
     const { rows } = await sql<{ count: string }>`
@@ -1687,11 +1696,11 @@ export async function getVideoCount(
       WHERE 
         (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
-    `;
-    return parseInt(rows[0]?.count || "0", 10);
+    `
+    return parseInt(rows[0]?.count || '0', 10)
   } catch (error) {
-    console.error("Error counting videos:", error);
-    throw error;
+    console.error('Error counting videos:', error)
+    throw error
   }
 }
 
@@ -1699,7 +1708,16 @@ export async function getVideoCount(
  * Create a new video
  */
 export async function createVideo(
-  video: Omit<Video, "id" | "created_at" | "event_name" | "band_name" | "company_name" | "company_slug" | "company_icon_url">
+  video: Omit<
+    Video,
+    | 'id'
+    | 'created_at'
+    | 'event_name'
+    | 'band_name'
+    | 'company_name'
+    | 'company_slug'
+    | 'company_icon_url'
+  >
 ): Promise<Video> {
   try {
     const { rows } = await sql<Video>`
@@ -1712,11 +1730,11 @@ export async function createVideo(
         ${video.duration_seconds}, ${video.thumbnail_url}, ${video.published_at}, ${video.sort_order}
       )
       RETURNING *
-    `;
-    return rows[0];
+    `
+    return rows[0]
   } catch (error) {
-    console.error("Error creating video:", error);
-    throw error;
+    console.error('Error creating video:', error)
+    throw error
   }
 }
 
@@ -1725,7 +1743,18 @@ export async function createVideo(
  */
 export async function updateVideo(
   videoId: string,
-  video: Partial<Omit<Video, "id" | "created_at" | "event_name" | "band_name" | "company_name" | "company_slug" | "company_icon_url">>
+  video: Partial<
+    Omit<
+      Video,
+      | 'id'
+      | 'created_at'
+      | 'event_name'
+      | 'band_name'
+      | 'company_name'
+      | 'company_slug'
+      | 'company_icon_url'
+    >
+  >
 ): Promise<Video | null> {
   try {
     const { rows } = await sql<Video>`
@@ -1739,11 +1768,11 @@ export async function updateVideo(
         sort_order = COALESCE(${video.sort_order ?? null}, sort_order)
       WHERE id = ${videoId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error updating video:", error);
-    throw error;
+    console.error('Error updating video:', error)
+    throw error
   }
 }
 
@@ -1755,11 +1784,11 @@ export async function deleteVideo(videoId: string): Promise<Video | null> {
     const { rows } = await sql<Video>`
       DELETE FROM videos WHERE id = ${videoId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error deleting video:", error);
-    throw error;
+    console.error('Error deleting video:', error)
+    throw error
   }
 }
 
@@ -1767,56 +1796,58 @@ export async function deleteVideo(videoId: string): Promise<Video | null> {
 // Setlist Song Types and Functions
 // ============================================================
 
-export type SongType = "cover" | "mashup" | "medley" | "transition";
-export type SetlistStatus = "pending" | "locked" | "conflict";
+export type SongType = 'cover' | 'mashup' | 'medley' | 'transition'
+export type SetlistStatus = 'pending' | 'locked' | 'conflict'
 
 export interface AdditionalSong {
-  title: string;
-  artist: string;
+  title: string
+  artist: string
 }
 
 export interface SetlistSong {
-  id: string;
-  band_id: string;
-  position: number;
-  song_type: SongType;
-  title: string;
-  artist: string;
-  additional_songs: AdditionalSong[];
-  transition_to_title: string | null;
-  transition_to_artist: string | null;
-  youtube_video_id: string | null;
-  status: SetlistStatus;
-  created_at: string;
-  updated_at: string;
+  id: string
+  band_id: string
+  position: number
+  song_type: SongType
+  title: string
+  artist: string
+  additional_songs: AdditionalSong[]
+  transition_to_title: string | null
+  transition_to_artist: string | null
+  youtube_video_id: string | null
+  status: SetlistStatus
+  created_at: string
+  updated_at: string
   // Joined fields (from band -> event)
-  band_name?: string;
-  event_id?: string;
-  event_name?: string;
-  event_date?: string;
-  company_slug?: string;
-  company_name?: string;
-  company_icon_url?: string;
+  band_name?: string
+  event_id?: string
+  event_name?: string
+  event_date?: string
+  company_slug?: string
+  company_name?: string
+  company_icon_url?: string
 }
 
 export interface SetlistSongInput {
-  id: string; // UUIDv7 generated by caller
-  band_id: string;
-  position: number;
-  song_type: SongType;
-  title: string;
-  artist: string;
-  additional_songs?: AdditionalSong[];
-  transition_to_title?: string;
-  transition_to_artist?: string;
-  youtube_video_id?: string;
-  status?: SetlistStatus;
+  id: string // UUIDv7 generated by caller
+  band_id: string
+  position: number
+  song_type: SongType
+  title: string
+  artist: string
+  additional_songs?: AdditionalSong[]
+  transition_to_title?: string
+  transition_to_artist?: string
+  youtube_video_id?: string
+  status?: SetlistStatus
 }
 
 /**
  * Get all setlist songs for a band
  */
-export async function getSetlistForBand(bandId: string): Promise<SetlistSong[]> {
+export async function getSetlistForBand(
+  bandId: string
+): Promise<SetlistSong[]> {
   try {
     const { rows } = await sql<SetlistSong>`
       SELECT s.*, 
@@ -1833,18 +1864,20 @@ export async function getSetlistForBand(bandId: string): Promise<SetlistSong[]> 
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE s.band_id = ${bandId}
       ORDER BY s.position ASC
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching setlist for band:", error);
-    throw error;
+    console.error('Error fetching setlist for band:', error)
+    throw error
   }
 }
 
 /**
  * Get all setlist songs for an event (all bands)
  */
-export async function getSetlistsForEvent(eventId: string): Promise<SetlistSong[]> {
+export async function getSetlistsForEvent(
+  eventId: string
+): Promise<SetlistSong[]> {
   try {
     const { rows } = await sql<SetlistSong>`
       SELECT s.*, 
@@ -1861,11 +1894,11 @@ export async function getSetlistsForEvent(eventId: string): Promise<SetlistSong[
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE b.event_id = ${eventId}
       ORDER BY b."order" ASC, s.position ASC
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching setlists for event:", error);
-    throw error;
+    console.error('Error fetching setlists for event:', error)
+    throw error
   }
 }
 
@@ -1873,20 +1906,22 @@ export async function getSetlistsForEvent(eventId: string): Promise<SetlistSong[
  * Get all setlist songs across all events (for the /songs page)
  */
 export interface GetAllSongsOptions {
-  eventId?: string;
-  bandId?: string;
-  songType?: SongType;
-  search?: string;
-  limit?: number;
-  offset?: number;
+  eventId?: string
+  bandId?: string
+  songType?: SongType
+  search?: string
+  limit?: number
+  offset?: number
 }
 
-export async function getAllSongs(options: GetAllSongsOptions = {}): Promise<SetlistSong[]> {
-  const { eventId, bandId, songType, search, limit = 100, offset = 0 } = options;
+export async function getAllSongs(
+  options: GetAllSongsOptions = {}
+): Promise<SetlistSong[]> {
+  const { eventId, bandId, songType, search, limit = 100, offset = 0 } = options
 
   try {
     // Build search pattern if provided
-    const searchPattern = search ? `%${search}%` : null;
+    const searchPattern = search ? `%${search}%` : null
 
     const { rows } = await sql<SetlistSong>`
       SELECT s.*, 
@@ -1907,27 +1942,29 @@ export async function getAllSongs(options: GetAllSongsOptions = {}): Promise<Set
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
           ${searchPattern}::text IS NULL 
-          OR s.title ILIKE ${searchPattern || ""}
-          OR s.artist ILIKE ${searchPattern || ""}
-          OR s.transition_to_title ILIKE ${searchPattern || ""}
-          OR s.transition_to_artist ILIKE ${searchPattern || ""}
+          OR s.title ILIKE ${searchPattern || ''}
+          OR s.artist ILIKE ${searchPattern || ''}
+          OR s.transition_to_title ILIKE ${searchPattern || ''}
+          OR s.transition_to_artist ILIKE ${searchPattern || ''}
         )
       ORDER BY e.date DESC, b."order" ASC, s.position ASC
       LIMIT ${limit} OFFSET ${offset}
-    `;
-    return rows;
+    `
+    return rows
   } catch (error) {
-    console.error("Error fetching all songs:", error);
-    throw error;
+    console.error('Error fetching all songs:', error)
+    throw error
   }
 }
 
 /**
  * Get total count of songs with optional filters
  */
-export async function getSongCount(options: Omit<GetAllSongsOptions, "limit" | "offset"> = {}): Promise<number> {
-  const { eventId, bandId, songType, search } = options;
-  const searchPattern = search ? `%${search}%` : null;
+export async function getSongCount(
+  options: Omit<GetAllSongsOptions, 'limit' | 'offset'> = {}
+): Promise<number> {
+  const { eventId, bandId, songType, search } = options
+  const searchPattern = search ? `%${search}%` : null
 
   try {
     const { rows } = await sql<{ count: string }>`
@@ -1940,26 +1977,28 @@ export async function getSongCount(options: Omit<GetAllSongsOptions, "limit" | "
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
           ${searchPattern}::text IS NULL 
-          OR s.title ILIKE ${searchPattern || ""}
-          OR s.artist ILIKE ${searchPattern || ""}
-          OR s.transition_to_title ILIKE ${searchPattern || ""}
-          OR s.transition_to_artist ILIKE ${searchPattern || ""}
+          OR s.title ILIKE ${searchPattern || ''}
+          OR s.artist ILIKE ${searchPattern || ''}
+          OR s.transition_to_title ILIKE ${searchPattern || ''}
+          OR s.transition_to_artist ILIKE ${searchPattern || ''}
         )
-    `;
-    return parseInt(rows[0]?.count || "0", 10);
+    `
+    return parseInt(rows[0]?.count || '0', 10)
   } catch (error) {
-    console.error("Error counting songs:", error);
-    throw error;
+    console.error('Error counting songs:', error)
+    throw error
   }
 }
 
 /**
  * Create a new setlist song
  */
-export async function createSetlistSong(song: SetlistSongInput): Promise<SetlistSong> {
+export async function createSetlistSong(
+  song: SetlistSongInput
+): Promise<SetlistSong> {
   try {
-    const additionalSongsJson = JSON.stringify(song.additional_songs || []);
-    
+    const additionalSongsJson = JSON.stringify(song.additional_songs || [])
+
     const { rows } = await sql<SetlistSong>`
       INSERT INTO setlist_songs (
         id, band_id, position, song_type, title, artist,
@@ -1970,14 +2009,14 @@ export async function createSetlistSong(song: SetlistSongInput): Promise<Setlist
         ${song.id}, ${song.band_id}, ${song.position}, ${song.song_type},
         ${song.title}, ${song.artist}, ${additionalSongsJson}::jsonb,
         ${song.transition_to_title || null}, ${song.transition_to_artist || null},
-        ${song.youtube_video_id || null}, ${song.status || "pending"}
+        ${song.youtube_video_id || null}, ${song.status || 'pending'}
       )
       RETURNING *
-    `;
-    return rows[0];
+    `
+    return rows[0]
   } catch (error) {
-    console.error("Error creating setlist song:", error);
-    throw error;
+    console.error('Error creating setlist song:', error)
+    throw error
   }
 }
 
@@ -1986,12 +2025,12 @@ export async function createSetlistSong(song: SetlistSongInput): Promise<Setlist
  */
 export async function updateSetlistSong(
   songId: string,
-  updates: Partial<Omit<SetlistSongInput, "id" | "band_id">>
+  updates: Partial<Omit<SetlistSongInput, 'id' | 'band_id'>>
 ): Promise<SetlistSong | null> {
   try {
-    const additionalSongsJson = updates.additional_songs 
-      ? JSON.stringify(updates.additional_songs) 
-      : null;
+    const additionalSongsJson = updates.additional_songs
+      ? JSON.stringify(updates.additional_songs)
+      : null
 
     const { rows } = await sql<SetlistSong>`
       UPDATE setlist_songs SET
@@ -2007,27 +2046,29 @@ export async function updateSetlistSong(
         updated_at = NOW()
       WHERE id = ${songId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error updating setlist song:", error);
-    throw error;
+    console.error('Error updating setlist song:', error)
+    throw error
   }
 }
 
 /**
  * Delete a setlist song
  */
-export async function deleteSetlistSong(songId: string): Promise<SetlistSong | null> {
+export async function deleteSetlistSong(
+  songId: string
+): Promise<SetlistSong | null> {
   try {
     const { rows } = await sql<SetlistSong>`
       DELETE FROM setlist_songs WHERE id = ${songId}
       RETURNING *
-    `;
-    return rows[0] || null;
+    `
+    return rows[0] || null
   } catch (error) {
-    console.error("Error deleting setlist song:", error);
-    throw error;
+    console.error('Error deleting setlist song:', error)
+    throw error
   }
 }
 
@@ -2046,11 +2087,11 @@ export async function reorderSetlistSongs(
         UPDATE setlist_songs 
         SET position = ${i + 1}, updated_at = NOW()
         WHERE id = ${songIds[i]} AND band_id = ${bandId}
-      `;
+      `
     }
   } catch (error) {
-    console.error("Error reordering setlist songs:", error);
-    throw error;
+    console.error('Error reordering setlist songs:', error)
+    throw error
   }
 }
 
@@ -2059,20 +2100,22 @@ export async function reorderSetlistSongs(
  * Returns songs that appear in multiple bands' setlists
  */
 export interface SongConflict {
-  title: string;
-  artist: string;
-  bands: { band_id: string; band_name: string; song_id: string }[];
+  title: string
+  artist: string
+  bands: { band_id: string; band_name: string; song_id: string }[]
 }
 
-export async function detectSongConflicts(eventId: string): Promise<SongConflict[]> {
+export async function detectSongConflicts(
+  eventId: string
+): Promise<SongConflict[]> {
   try {
     // Find songs with the same title+artist across different bands in the event
     const { rows } = await sql<{
-      title: string;
-      artist: string;
-      band_id: string;
-      band_name: string;
-      song_id: string;
+      title: string
+      artist: string
+      band_id: string
+      band_name: string
+      song_id: string
     }>`
       SELECT s.title, s.artist, s.band_id, b.name as band_name, s.id as song_id
       FROM setlist_songs s
@@ -2087,30 +2130,30 @@ export async function detectSongConflicts(eventId: string): Promise<SongConflict
           HAVING COUNT(DISTINCT s2.band_id) > 1
         )
       ORDER BY s.title, s.artist, b."order"
-    `;
+    `
 
     // Group by title+artist
-    const conflictMap = new Map<string, SongConflict>();
+    const conflictMap = new Map<string, SongConflict>()
     for (const row of rows) {
-      const key = `${row.title.toLowerCase()}|${row.artist.toLowerCase()}`;
+      const key = `${row.title.toLowerCase()}|${row.artist.toLowerCase()}`
       if (!conflictMap.has(key)) {
         conflictMap.set(key, {
           title: row.title,
           artist: row.artist,
           bands: [],
-        });
+        })
       }
       conflictMap.get(key)!.bands.push({
         band_id: row.band_id,
         band_name: row.band_name,
         song_id: row.song_id,
-      });
+      })
     }
 
-    return Array.from(conflictMap.values());
+    return Array.from(conflictMap.values())
   } catch (error) {
-    console.error("Error detecting song conflicts:", error);
-    throw error;
+    console.error('Error detecting song conflicts:', error)
+    throw error
   }
 }
 
@@ -2127,22 +2170,22 @@ export async function updateConflictStatus(eventId: string): Promise<void> {
           updated_at = NOW()
       FROM bands b
       WHERE s.band_id = b.id AND b.event_id = ${eventId}
-    `;
+    `
 
     // Then, mark conflicts
-    const conflicts = await detectSongConflicts(eventId);
+    const conflicts = await detectSongConflicts(eventId)
     for (const conflict of conflicts) {
       for (const band of conflict.bands) {
         await sql`
           UPDATE setlist_songs
           SET status = 'conflict', updated_at = NOW()
           WHERE id = ${band.song_id}
-        `;
+        `
       }
     }
   } catch (error) {
-    console.error("Error updating conflict status:", error);
-    throw error;
+    console.error('Error updating conflict status:', error)
+    throw error
   }
 }
 
@@ -2155,10 +2198,10 @@ export async function lockBandSetlist(bandId: string): Promise<void> {
       UPDATE setlist_songs
       SET status = 'locked', updated_at = NOW()
       WHERE band_id = ${bandId} AND status != 'conflict'
-    `;
+    `
   } catch (error) {
-    console.error("Error locking band setlist:", error);
-    throw error;
+    console.error('Error locking band setlist:', error)
+    throw error
   }
 }
 
@@ -2171,9 +2214,9 @@ export async function unlockBandSetlist(bandId: string): Promise<void> {
       UPDATE setlist_songs
       SET status = 'pending', updated_at = NOW()
       WHERE band_id = ${bandId}
-    `;
+    `
   } catch (error) {
-    console.error("Error unlocking band setlist:", error);
-    throw error;
+    console.error('Error unlocking band setlist:', error)
+    throw error
   }
 }

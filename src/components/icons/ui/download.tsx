@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Download icon
@@ -23,7 +23,6 @@ export const DownloadIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
     </svg>
   )
-);
+)
 
-DownloadIcon.displayName = "DownloadIcon";
-
+DownloadIcon.displayName = 'DownloadIcon'

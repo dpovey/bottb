@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Arrow pointing right - for forward navigation
@@ -23,7 +23,6 @@ export const ArrowRightIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M5 12h14M12 5l7 7-7 7" />
     </svg>
   )
-);
+)
 
-ArrowRightIcon.displayName = "ArrowRightIcon";
-
+ArrowRightIcon.displayName = 'ArrowRightIcon'

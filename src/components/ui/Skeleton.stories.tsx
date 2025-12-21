@@ -1,85 +1,86 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Skeleton, SkeletonText, SkeletonCard } from "./skeleton";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { Skeleton, SkeletonText, SkeletonCard } from './skeleton'
 
 const meta: Meta<typeof Skeleton> = {
-  title: "Display/Skeleton",
+  title: 'Display/Skeleton',
   component: Skeleton,
-  tags: ["autodocs"],
+  tags: ['autodocs'],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
     docs: {
       description: {
         component:
-          "Skeleton loading placeholder with shimmer animation. Respects prefers-reduced-motion for accessibility.",
+          'Skeleton loading placeholder with shimmer animation. Respects prefers-reduced-motion for accessibility.',
       },
     },
   },
   argTypes: {
     variant: {
-      control: "select",
-      options: ["rectangle", "circle", "text"],
-      description: "Shape variant",
+      control: 'select',
+      options: ['rectangle', 'circle', 'text'],
+      description: 'Shape variant',
     },
     className: {
-      control: "text",
-      description: "Additional CSS classes for sizing",
+      control: 'text',
+      description: 'Additional CSS classes for sizing',
     },
   },
-};
+}
 
-export default meta;
-type Story = StoryObj<typeof Skeleton>;
+export default meta
+type Story = StoryObj<typeof Skeleton>
 
 // Default rectangle
 export const Default: Story = {
   args: {
-    variant: "rectangle",
-    className: "h-8 w-48",
+    variant: 'rectangle',
+    className: 'h-8 w-48',
   },
-};
+}
 
 // Shape variants
 export const Rectangle: Story = {
   args: {
-    variant: "rectangle",
-    className: "h-32 w-64",
+    variant: 'rectangle',
+    className: 'h-32 w-64',
   },
   parameters: {
     docs: {
       description: {
-        story: "Default shape with rounded-sm corners.",
+        story: 'Default shape with rounded-sm corners.',
       },
     },
   },
-};
+}
 
 export const Circle: Story = {
   args: {
-    variant: "circle",
-    className: "h-16 w-16",
+    variant: 'circle',
+    className: 'h-16 w-16',
   },
   parameters: {
     docs: {
       description: {
-        story: "Perfect circle for avatar placeholders. Use equal width/height.",
+        story:
+          'Perfect circle for avatar placeholders. Use equal width/height.',
       },
     },
   },
-};
+}
 
 export const Text: Story = {
   args: {
-    variant: "text",
-    className: "h-4 w-full max-w-md",
+    variant: 'text',
+    className: 'h-4 w-full max-w-md',
   },
   parameters: {
     docs: {
       description: {
-        story: "Pill-shaped for text line placeholders.",
+        story: 'Pill-shaped for text line placeholders.',
       },
     },
   },
-};
+}
 
 // Pre-composed SkeletonText
 export const TextBlock: Story = {
@@ -92,11 +93,11 @@ export const TextBlock: Story = {
     docs: {
       description: {
         story:
-          "Pre-composed text skeleton. Last line is shorter for natural appearance.",
+          'Pre-composed text skeleton. Last line is shorter for natural appearance.',
       },
     },
   },
-};
+}
 
 // Pre-composed SkeletonCard
 export const CardSkeleton: Story = {
@@ -108,11 +109,11 @@ export const CardSkeleton: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Pre-composed card skeleton with avatar and text.",
+        story: 'Pre-composed card skeleton with avatar and text.',
       },
     },
   },
-};
+}
 
 // Avatar + text pattern
 export const AvatarWithText: Story = {
@@ -128,11 +129,11 @@ export const AvatarWithText: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Common pattern for loading user/band cards.",
+        story: 'Common pattern for loading user/band cards.',
       },
     },
   },
-};
+}
 
 // Image placeholder
 export const ImagePlaceholder: Story = {
@@ -146,11 +147,11 @@ export const ImagePlaceholder: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Image card loading state.",
+        story: 'Image card loading state.',
       },
     },
   },
-};
+}
 
 // Grid of cards
 export const CardGrid: Story = {
@@ -165,11 +166,11 @@ export const CardGrid: Story = {
   parameters: {
     docs: {
       description: {
-        story: "Grid of skeleton cards for list loading states.",
+        story: 'Grid of skeleton cards for list loading states.',
       },
     },
   },
-};
+}
 
 // Different text line counts
 export const TextLineCounts: Story = {
@@ -192,9 +193,8 @@ export const TextLineCounts: Story = {
   parameters: {
     docs: {
       description: {
-        story: "SkeletonText with different line counts.",
+        story: 'SkeletonText with different line counts.',
       },
     },
   },
-};
-
+}

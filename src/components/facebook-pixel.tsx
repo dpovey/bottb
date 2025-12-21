@@ -1,22 +1,22 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
+import { useEffect } from 'react'
 
 const FacebookPixel = () => {
   useEffect(() => {
     // Only initialize in production and if pixel ID is provided
-    const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
+    const pixelId = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID
 
-    if (pixelId && process.env.NODE_ENV === "production") {
+    if (pixelId && process.env.NODE_ENV === 'production') {
       // Dynamically import to avoid SSR issues
-      import("react-facebook-pixel").then((ReactPixel) => {
-        ReactPixel.default.init(pixelId);
-        ReactPixel.default.pageView();
-      });
+      import('react-facebook-pixel').then((ReactPixel) => {
+        ReactPixel.default.init(pixelId)
+        ReactPixel.default.pageView()
+      })
     }
-  }, []);
+  }, [])
 
-  return null;
-};
+  return null
+}
 
-export { FacebookPixel };
+export { FacebookPixel }

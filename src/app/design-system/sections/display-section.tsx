@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Badge,
@@ -9,7 +9,7 @@ import {
   Skeleton,
   SkeletonText,
   SkeletonCard,
-} from "@/components/ui";
+} from '@/components/ui'
 
 export function DisplaySection() {
   return (
@@ -21,18 +21,24 @@ export function DisplaySection() {
         <div className="bg-bg-elevated rounded-lg p-6 border border-white/5 space-y-6">
           {/* Accent & Neutral */}
           <div>
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Accent & Neutral Badges</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Accent & Neutral Badges
+            </h3>
             <div className="flex flex-wrap gap-3">
               <Badge variant="accent">🏆 Winner</Badge>
               <Badge variant="accent">Live</Badge>
               <Badge variant="default">Upcoming</Badge>
-              <Badge className="bg-bg border border-white/10 text-text-muted">Past</Badge>
+              <Badge className="bg-bg border border-white/10 text-text-muted">
+                Past
+              </Badge>
             </div>
           </div>
 
           {/* Semantic Badges */}
           <div>
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Semantic Badges (Rare Use)</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Semantic Badges (Rare Use)
+            </h3>
             <div className="flex flex-wrap gap-3">
               <Badge variant="error">Error</Badge>
               <Badge variant="success">Success</Badge>
@@ -44,7 +50,9 @@ export function DisplaySection() {
 
         {/* Usage Code */}
         <div className="mt-8 bg-bg-elevated rounded-lg p-6 border border-white/5">
-          <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">React Component</h3>
+          <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+            React Component
+          </h3>
           <pre className="bg-bg rounded-lg p-4 text-sm overflow-x-auto">
             <code className="text-text-dim">{`import { Badge } from "@/components/ui";
 
@@ -60,12 +68,17 @@ export function DisplaySection() {
       {/* Alerts & Messages */}
       <section id="alerts">
         <h2 className="font-semibold text-4xl mb-8">Alerts & Messages</h2>
-        <p className="text-text-muted mb-6">Semantic colors should only be used for user feedback. Keep the rest monochromatic.</p>
+        <p className="text-text-muted mb-6">
+          Semantic colors should only be used for user feedback. Keep the rest
+          monochromatic.
+        </p>
 
         <div className="space-y-4">
           <div className="bg-error/10 border border-error/20 rounded-lg p-4 text-error">
             <p className="font-medium">Error: Unable to submit vote</p>
-            <p className="text-sm opacity-80">Please try again or contact support.</p>
+            <p className="text-sm opacity-80">
+              Please try again or contact support.
+            </p>
           </div>
           <div className="bg-success/10 border border-success/20 rounded-lg p-4 text-success">
             <p className="font-medium">Success: Your vote has been recorded</p>
@@ -76,8 +89,12 @@ export function DisplaySection() {
             <p className="text-sm opacity-80">Make sure to submit your vote.</p>
           </div>
           <div className="bg-info/10 border border-info/20 rounded-lg p-4 text-info">
-            <p className="font-medium">Info: Results will be announced at 9pm</p>
-            <p className="text-sm opacity-80">Check back after the final performance.</p>
+            <p className="font-medium">
+              Info: Results will be announced at 9pm
+            </p>
+            <p className="text-sm opacity-80">
+              Check back after the final performance.
+            </p>
           </div>
         </div>
       </section>
@@ -90,20 +107,26 @@ export function DisplaySection() {
           <div className="flex flex-wrap items-end gap-8">
             {/* Large */}
             <div>
-              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">Large (Event Hero)</p>
-              <DateBadge date={new Date("2025-10-23")} size="lg" showYear />
+              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">
+                Large (Event Hero)
+              </p>
+              <DateBadge date={new Date('2025-10-23')} size="lg" showYear />
             </div>
 
             {/* Medium */}
             <div>
-              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">Medium (Card)</p>
-              <DateBadge date={new Date("2025-10-23")} size="md" />
+              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">
+                Medium (Card)
+              </p>
+              <DateBadge date={new Date('2025-10-23')} size="md" />
             </div>
 
             {/* Small */}
             <div>
-              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">Small</p>
-              <DateBadge date={new Date("2025-10-23")} size="sm" />
+              <p className="text-xs tracking-widest uppercase text-text-muted mb-4">
+                Small
+              </p>
+              <DateBadge date={new Date('2025-10-23')} size="sm" />
             </div>
           </div>
         </div>
@@ -116,7 +139,9 @@ export function DisplaySection() {
         <div className="space-y-8">
           {/* Shapes */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Shapes</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Shapes
+            </h3>
             <div className="flex flex-wrap items-center gap-6">
               <div className="text-center">
                 <NumberedIndicator number={1} shape="circle" size="lg" />
@@ -131,7 +156,9 @@ export function DisplaySection() {
 
           {/* Sizes */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Sizes</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Sizes
+            </h3>
             <div className="flex flex-wrap items-center gap-6">
               <div className="text-center">
                 <NumberedIndicator number={1} size="xs" />
@@ -158,7 +185,9 @@ export function DisplaySection() {
 
           {/* Variants */}
           <div className="bg-bg-elevated rounded-lg p-6 border border-white/5">
-            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">Variants</h3>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-4">
+              Variants
+            </h3>
             <div className="flex flex-wrap items-center gap-6">
               <div className="text-center">
                 <NumberedIndicator number={1} variant="default" size="lg" />
@@ -196,7 +225,7 @@ export function DisplaySection() {
             <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/50 to-transparent" />
 
             <div className="absolute top-4 left-4">
-              <DateBadge date={new Date("2025-10-23")} size="sm" />
+              <DateBadge date={new Date('2025-10-23')} size="sm" />
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -213,7 +242,7 @@ export function DisplaySection() {
             <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/50 to-transparent" />
 
             <div className="absolute top-4 left-4">
-              <DateBadge date={new Date("2025-03-15")} size="sm" />
+              <DateBadge date={new Date('2025-03-15')} size="sm" />
             </div>
 
             <div className="absolute top-4 right-4">
@@ -232,8 +261,15 @@ export function DisplaySection() {
           <Card className="hover:border-white/10 transition-colors">
             <CardContent className="p-6">
               <h3 className="font-medium text-xl mb-2">Simple Card</h3>
-              <p className="text-text-muted text-sm mb-4">For content without image background.</p>
-              <a href="#" className="text-text-dim text-sm hover:text-white transition-colors">Learn more →</a>
+              <p className="text-text-muted text-sm mb-4">
+                For content without image background.
+              </p>
+              <a
+                href="#"
+                className="text-text-dim text-sm hover:text-white transition-colors"
+              >
+                Learn more →
+              </a>
             </CardContent>
           </Card>
 
@@ -241,7 +277,9 @@ export function DisplaySection() {
           <Card className="bg-bg-surface">
             <CardContent className="p-6 text-center">
               <p className="text-3xl font-bold text-accent mb-2">$150k+</p>
-              <p className="text-text-muted text-sm tracking-wider uppercase">Raised for Charity</p>
+              <p className="text-text-muted text-sm tracking-wider uppercase">
+                Raised for Charity
+              </p>
             </CardContent>
           </Card>
 
@@ -249,7 +287,9 @@ export function DisplaySection() {
           <Card>
             <CardContent className="p-4">
               <div className="flex gap-6">
-                <div className="text-text-muted text-sm min-w-[80px]">7:00 PM</div>
+                <div className="text-text-muted text-sm min-w-[80px]">
+                  7:00 PM
+                </div>
                 <div>
                   <p className="font-medium">First Performance</p>
                   <p className="text-text-dim text-sm">Competition begins</p>
@@ -261,7 +301,9 @@ export function DisplaySection() {
           {/* Quote Card */}
           <Card className="bg-bg-surface">
             <CardContent className="p-6 text-center">
-              <p className="text-xl font-medium">&quot;Where tech goes loud.&quot;</p>
+              <p className="text-xl font-medium">
+                &quot;Where tech goes loud.&quot;
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -271,8 +313,9 @@ export function DisplaySection() {
       <section id="skeletons">
         <h2 className="font-semibold text-4xl mb-8">Skeletons</h2>
         <p className="text-text-muted mb-6">
-          Loading placeholders with shimmer animation. Respects{" "}
-          <code className="text-accent">prefers-reduced-motion</code> for accessibility.
+          Loading placeholders with shimmer animation. Respects{' '}
+          <code className="text-accent">prefers-reduced-motion</code> for
+          accessibility.
         </p>
 
         <div className="space-y-8">
@@ -331,8 +374,12 @@ export function DisplaySection() {
           <div className="bg-info/10 border border-info/20 rounded-lg p-4 text-info">
             <p className="font-medium">Accessibility Note</p>
             <p className="text-sm opacity-80">
-              When <code className="text-info-light">prefers-reduced-motion: reduce</code> is enabled,
-              the shimmer animation is disabled and a static gray placeholder is shown instead.
+              When{' '}
+              <code className="text-info-light">
+                prefers-reduced-motion: reduce
+              </code>{' '}
+              is enabled, the shimmer animation is disabled and a static gray
+              placeholder is shown instead.
             </p>
           </div>
 
@@ -357,6 +404,5 @@ export function DisplaySection() {
         </div>
       </section>
     </div>
-  );
+  )
 }
-

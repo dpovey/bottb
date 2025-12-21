@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Loading spinner icon
@@ -32,7 +32,6 @@ export const SpinnerIcon = forwardRef<SVGSVGElement, IconProps>(
       />
     </svg>
   )
-);
+)
 
-SpinnerIcon.displayName = "SpinnerIcon";
-
+SpinnerIcon.displayName = 'SpinnerIcon'

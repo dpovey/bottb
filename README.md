@@ -35,6 +35,7 @@ This project uses a strict separation between server-side and client-side code t
 **Critical Rule**: Once an event is finalized, **always use finalized results** from the `finalized_results` table instead of calculating scores dynamically.
 
 **Why this matters**:
+
 - **Performance**: Finalized results are pre-calculated and stored, avoiding expensive SQL queries with CTEs and aggregations
 - **Data Integrity**: Results are frozen at finalization time, preventing inconsistencies if votes are modified later
 - **Consistency**: All pages show the same results for finalized events
@@ -43,21 +44,23 @@ This project uses a strict separation between server-side and client-side code t
 
 ```typescript
 // ✅ CORRECT: Check for finalized results first
-if (event.status === 'finalized' && await hasFinalizedResults(event.id)) {
-  const results = await getFinalizedResults(event.id);
+if (event.status === 'finalized' && (await hasFinalizedResults(event.id))) {
+  const results = await getFinalizedResults(event.id)
   // Use finalized results
 } else {
   // Only calculate for non-finalized events
-  const scores = await getBandScores(event.id);
+  const scores = await getBandScores(event.id)
   // Calculate scores dynamically
 }
 ```
 
 **When to use each function**:
+
 - **`getFinalizedResults(eventId)`**: Use for finalized events (`status === 'finalized'`)
 - **`getBandScores(eventId)`**: Use only for non-finalized events (upcoming, voting, or admin preview)
 
 **Files that must follow this pattern**:
+
 - `src/app/page.tsx` - Home page past events
 - `src/app/events/page.tsx` - Events listing page
 - `src/app/results/[eventId]/page.tsx` - Results page
@@ -85,13 +88,11 @@ if (event.status === 'finalized' && await hasFinalizedResults(event.id)) {
    ```
 
 2. **Set up Neon Postgres**:
-
    - Create a Neon database
    - Add the Vercel Postgres plugin to your Vercel project
    - Run the SQL schema from `src/lib/schema.sql`
 
 3. **Environment Variables**:
-
    - Copy `env.example` to `.env.local`
    - Fill in your Neon database connection details:
      - `POSTGRES_URL`: Your Neon database connection string

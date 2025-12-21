@@ -8,14 +8,14 @@
  * - social_post_results: Per-platform results for each post
  */
 
-import { sql } from "@vercel/postgres";
+import { sql } from '@vercel/postgres'
 
 async function migrate() {
-  console.log("🚀 Starting migration: Add social sharing tables...\n");
+  console.log('🚀 Starting migration: Add social sharing tables...\n')
 
   try {
     // 1. social_accounts - stores OAuth tokens (encrypted) and account info
-    console.log("Creating social_accounts table...");
+    console.log('Creating social_accounts table...')
     await sql`
       CREATE TABLE IF NOT EXISTS social_accounts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -53,11 +53,11 @@ async function migrate() {
         -- One account per provider
         UNIQUE(provider)
       )
-    `;
-    console.log("✅ social_accounts table created\n");
+    `
+    console.log('✅ social_accounts table created\n')
 
     // 2. social_post_templates - reusable templates
-    console.log("Creating social_post_templates table...");
+    console.log('Creating social_post_templates table...')
     await sql`
       CREATE TABLE IF NOT EXISTS social_post_templates (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,11 +82,11 @@ async function migrate() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
-    `;
-    console.log("✅ social_post_templates table created\n");
+    `
+    console.log('✅ social_post_templates table created\n')
 
     // 3. social_posts - the actual post requests
-    console.log("Creating social_posts table...");
+    console.log('Creating social_posts table...')
     await sql`
       CREATE TABLE IF NOT EXISTS social_posts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -128,11 +128,11 @@ async function migrate() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
-    `;
-    console.log("✅ social_posts table created\n");
+    `
+    console.log('✅ social_posts table created\n')
 
     // 4. social_post_results - per-platform results
-    console.log("Creating social_post_results table...");
+    console.log('Creating social_post_results table...')
     await sql`
       CREATE TABLE IF NOT EXISTS social_post_results (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -163,24 +163,24 @@ async function migrate() {
         -- One result per platform per post
         UNIQUE(post_id, platform)
       )
-    `;
-    console.log("✅ social_post_results table created\n");
+    `
+    console.log('✅ social_post_results table created\n')
 
     // Create indexes
-    console.log("Creating indexes...");
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_accounts_status ON social_accounts(status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_templates_sort ON social_post_templates(sort_order)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_status ON social_posts(status)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_event ON social_posts(event_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_created ON social_posts(created_at DESC)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_post ON social_post_results(post_id)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_platform ON social_post_results(platform)`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results(status)`;
-    console.log("✅ Indexes created\n");
+    console.log('Creating indexes...')
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_accounts_status ON social_accounts(status)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_templates_sort ON social_post_templates(sort_order)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_status ON social_posts(status)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_event ON social_posts(event_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_posts_created ON social_posts(created_at DESC)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_post ON social_post_results(post_id)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_platform ON social_post_results(platform)`
+    await sql`CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results(status)`
+    console.log('✅ Indexes created\n')
 
     // Seed default templates
-    console.log("Seeding default templates...");
+    console.log('Seeding default templates...')
     await sql`
       INSERT INTO social_post_templates (name, description, title_template, caption_template, include_photographer_credit, include_event_link, default_hashtags, sort_order)
       VALUES 
@@ -221,17 +221,16 @@ They absolutely crushed it on stage!
           2
         )
       ON CONFLICT DO NOTHING
-    `;
-    console.log("✅ Default templates seeded\n");
+    `
+    console.log('✅ Default templates seeded\n')
 
-    console.log("🎉 Migration completed successfully!");
+    console.log('🎉 Migration completed successfully!')
   } catch (error) {
-    console.error("❌ Migration failed:", error);
-    throw error;
+    console.error('❌ Migration failed:', error)
+    throw error
   }
 }
 
 migrate()
   .then(() => process.exit(0))
-  .catch(() => process.exit(1));
-
+  .catch(() => process.exit(1))

@@ -1,24 +1,24 @@
-import { Header, Footer } from "@/components/nav";
-import type { BreadcrumbItem, NavEvent } from "@/components/nav";
-import { BreadcrumbsJsonLd } from "@/components/seo";
+import { Header, Footer } from '@/components/nav'
+import type { BreadcrumbItem, NavEvent } from '@/components/nav'
+import { BreadcrumbsJsonLd } from '@/components/seo'
 
 interface WebLayoutProps {
-  children: React.ReactNode;
+  children: React.ReactNode
   /** Breadcrumbs for navigation context */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
   /** Footer variant - simple for content pages, full for landing pages */
-  footerVariant?: "simple" | "full";
+  footerVariant?: 'simple' | 'full'
   /** SSR-provided nav events (optional - will fetch client-side if not provided) */
   navEvents?: {
-    upcoming: NavEvent[];
-    past: NavEvent[];
-  };
+    upcoming: NavEvent[]
+    past: NavEvent[]
+  }
 }
 
 export function WebLayout({
   children,
   breadcrumbs,
-  footerVariant = "simple",
+  footerVariant = 'simple',
   navEvents,
 }: WebLayoutProps) {
   return (
@@ -36,5 +36,5 @@ export function WebLayout({
       <main className="flex-1">{children}</main>
       <Footer variant={footerVariant} />
     </div>
-  );
+  )
 }

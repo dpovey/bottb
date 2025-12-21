@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Clock/time icon
@@ -24,7 +24,6 @@ export const ClockIcon = forwardRef<SVGSVGElement, IconProps>(
       <path d="M12 6v6l4 2" />
     </svg>
   )
-);
+)
 
-ClockIcon.displayName = "ClockIcon";
-
+ClockIcon.displayName = 'ClockIcon'

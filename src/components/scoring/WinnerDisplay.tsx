@@ -1,36 +1,36 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import { Card, Badge, BandThumbnail, CompanyBadge } from "@/components/ui";
-import { ScoringVersion, hasDetailedBreakdown } from "@/lib/scoring";
+import Image from 'next/image'
+import { Card, Badge, BandThumbnail, CompanyBadge } from '@/components/ui'
+import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 
 export interface WinnerDisplayProps {
   /** Name of the winning band */
-  winnerName: string;
+  winnerName: string
   /** Company slug for linking */
-  companySlug?: string;
+  companySlug?: string
   /** Company name */
-  companyName?: string;
+  companyName?: string
   /** Company icon URL */
-  companyIconUrl?: string;
+  companyIconUrl?: string
   /** @deprecated Use companySlug/companyName instead */
-  company?: string;
+  company?: string
   /** Total score (only shown for detailed breakdown versions) */
-  totalScore?: number;
+  totalScore?: number
   /** Logo URL for the band */
-  logoUrl?: string;
+  logoUrl?: string
   /** Hero thumbnail URL for the band */
-  heroThumbnailUrl?: string;
+  heroThumbnailUrl?: string
   /** Focal point for hero image positioning (0-100 for both x and y) */
-  heroFocalPoint?: { x: number; y: number };
+  heroFocalPoint?: { x: number; y: number }
   /** Scoring version */
-  scoringVersion: ScoringVersion;
+  scoringVersion: ScoringVersion
   /** Event name */
-  eventName?: string;
+  eventName?: string
   /** Event date */
-  eventDate?: string;
+  eventDate?: string
   /** Event location */
-  eventLocation?: string;
+  eventLocation?: string
 }
 
 export function WinnerDisplay({
@@ -48,17 +48,19 @@ export function WinnerDisplay({
   eventDate,
   eventLocation,
 }: WinnerDisplayProps) {
-  const showScore = hasDetailedBreakdown(scoringVersion) && totalScore !== undefined;
+  const showScore =
+    hasDetailedBreakdown(scoringVersion) && totalScore !== undefined
 
   return (
     <div className="relative">
       {/* Glow effect */}
       <div className="absolute inset-0 bg-linear-to-r from-warning/20 via-warning/10 to-warning/20 rounded-3xl blur-2xl" />
-      
+
       <Card
         className="relative overflow-hidden bg-bg-elevated border-warning/30 p-0"
         style={{
-          boxShadow: "0 0 60px rgba(245, 166, 35, 0.3), 0 0 100px rgba(245, 166, 35, 0.1)",
+          boxShadow:
+            '0 0 60px rgba(245, 166, 35, 0.3), 0 0 100px rgba(245, 166, 35, 0.1)',
         }}
       >
         {/* Hero Image - Full Background */}
@@ -69,29 +71,31 @@ export function WinnerDisplay({
               alt={`${winnerName} performing`}
               fill
               className="object-cover"
-              style={{ objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%` }}
+              style={{
+                objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
+              }}
               sizes="(max-width: 768px) 100vw, 80vw"
             />
             {/* Gradient overlay - fade from left */}
             <div className="absolute inset-0 bg-linear-to-r from-bg-elevated via-bg-elevated/80 via-40% to-transparent" />
           </div>
         )}
-        
+
         {/* Content - Left aligned */}
         <div className="relative py-12 px-8 md:px-12 md:max-w-md lg:max-w-lg">
           {/* Trophy */}
           <div className="text-6xl mb-4">🏆</div>
-          
+
           {/* Label */}
           <Badge variant="warning" className="mb-4">
-            {scoringVersion === "2022.1" ? "Winner" : "Champion"}
+            {scoringVersion === '2022.1' ? 'Winner' : 'Champion'}
           </Badge>
-          
+
           {/* Winner Name */}
           <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-4">
             {winnerName}
           </h2>
-          
+
           {/* Company/Logo */}
           {(companySlug || company || logoUrl) && (
             <div className="flex items-center gap-3 mb-6">
@@ -104,7 +108,7 @@ export function WinnerDisplay({
               )}
               {companySlug && companyName ? (
                 <span className="text-text-muted flex items-center gap-2">
-                  representing{" "}
+                  representing{' '}
                   <CompanyBadge
                     slug={companySlug}
                     name={companyName}
@@ -113,12 +117,16 @@ export function WinnerDisplay({
                     size="md"
                   />
                 </span>
-              ) : company && (
-                <span className="text-text-muted">representing {company}</span>
+              ) : (
+                company && (
+                  <span className="text-text-muted">
+                    representing {company}
+                  </span>
+                )
               )}
             </div>
           )}
-          
+
           {/* Score (only for detailed breakdown versions) */}
           {showScore && (
             <div className="inline-flex items-baseline gap-1">
@@ -128,7 +136,7 @@ export function WinnerDisplay({
               <span className="text-xl text-text-muted">/ 100 points</span>
             </div>
           )}
-          
+
           {/* Event info for 2022.1 single winner display */}
           {!showScore && eventName && (
             <div className="mt-6 pt-6 border-t border-white/10">
@@ -142,6 +150,5 @@ export function WinnerDisplay({
         </div>
       </Card>
     </div>
-  );
+  )
 }
-

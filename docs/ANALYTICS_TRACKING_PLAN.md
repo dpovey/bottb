@@ -13,17 +13,18 @@ Both providers receive the same events, but PostHog includes additional metadata
 
 All events automatically include the following environment properties (added by `src/lib/analytics.ts`):
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `environment` | string | Node environment: "development", "production", or "test" |
+| Property         | Type   | Description                                                                                   |
+| ---------------- | ------ | --------------------------------------------------------------------------------------------- |
+| `environment`    | string | Node environment: "development", "production", or "test"                                      |
 | `is_development` | string | "true" if in development (localhost, dev domains, or NODE_ENV=development), "false" otherwise |
-| `is_production` | string | "true" if in production and not development, "false" otherwise |
+| `is_production`  | string | "true" if in production and not development, "false" otherwise                                |
 
 **Note**: Test environment events are not tracked (automatically filtered out).
 
 ## Tracked Events
 
 **Event Naming Convention**: Following PostHog's best practices, we use the `Category:Action` format:
+
 - All events use lowercase letters
 - Present-tense verbs for actions
 - Colons (`:`) to separate category from action
@@ -36,6 +37,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: Automatically on every route change (handled by `src/components/posthog-provider.tsx`)
 
 **Properties**:
+
 - `$current_url` (string): Full URL of the current page
 - `environment` (string): Node environment
 - `is_development` (string): Development flag
@@ -52,6 +54,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: When a user clicks on a photo in the photo grid to open the slideshow
 
 **Properties**:
+
 - `photo_id` (string): Unique identifier of the photo
 - `event_id` (string | null): ID of the event the photo belongs to
 - `band_id` (string | null): ID of the band in the photo
@@ -64,6 +67,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/app/photos/photos-content.tsx` → `handlePhotoClick()`
 
 **Use Cases**:
+
 - Track which photos are most clicked
 - Understand user engagement with photo gallery
 - Identify popular photos by band or event
@@ -79,6 +83,7 @@ All events automatically include the following environment properties (added by 
 **Minimum View Duration**: 1 second - The photo must be visible for at least 1 second before a view is tracked. This filters out accidental glimpses or very brief navigations.
 
 **Properties**:
+
 - `photo_id` (string): Unique identifier of the photo
 - `event_id` (string | null): ID of the event the photo belongs to
 - `band_id` (string | null): ID of the band in the photo
@@ -92,6 +97,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/components/photos/photo-slideshow.tsx` → `useEffect` on `currentIndex` change with 1s delay
 
 **Use Cases**:
+
 - Track which photos are viewed most
 - Understand slideshow engagement
 - Measure time spent viewing photos
@@ -105,6 +111,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: When a user downloads a high-resolution photo from the slideshow
 
 **Properties**:
+
 - `photo_id` (string): Unique identifier of the photo
 - `event_id` (string | null): ID of the event the photo belongs to
 - `band_id` (string | null): ID of the band in the photo
@@ -118,6 +125,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/components/photos/photo-slideshow.tsx` → `handleDownload()`
 
 **Use Cases**:
+
 - Track most downloaded photos
 - Understand which bands/events generate most downloads
 - Measure content value and engagement
@@ -129,10 +137,12 @@ All events automatically include the following environment properties (added by 
 **Event Name**: `photo:share`
 
 **When Tracked**: When a user shares a photo via:
+
 - Copy link to clipboard
 - Social media share (LinkedIn, Facebook, Instagram)
 
 **Properties**:
+
 - `photo_id` (string): Unique identifier of the photo
 - `share_method` (string): Method used to share - one of:
   - `"copy_link"`: Link copied to clipboard
@@ -148,10 +158,12 @@ All events automatically include the following environment properties (added by 
 - `is_production` (string): Production flag (automatic)
 
 **Locations**:
+
 - Copy link: `src/components/photos/photo-slideshow.tsx` → `handleCopyLink()`
 - Social shares: `src/components/photos/share-composer-modal.tsx` → `handlePost()` (after successful post)
 
 **Use Cases**:
+
 - Track most shared photos
 - Understand which platforms are most popular for sharing
 - Measure viral potential of photos
@@ -166,12 +178,14 @@ All events automatically include the following environment properties (added by 
 **Event Name**: `photo:filter_changed`
 
 **When Tracked**: When a user changes any filter in the photo gallery:
+
 - Event filter
 - Band filter
 - Photographer filter
 - Company filter
 
 **Properties**:
+
 - `filter_type` (string): Type of filter changed - one of:
   - `"event"`: Event filter
   - `"band"`: Band filter
@@ -183,12 +197,14 @@ All events automatically include the following environment properties (added by 
 - `is_production` (string): Production flag (automatic)
 
 **Location**: `src/app/photos/photos-content.tsx` → Filter change handlers:
+
 - `handleEventChange()`
 - `handleBandChange()`
 - `handlePhotographerChange()`
 - `handleCompanyChange()`
 
 **Use Cases**:
+
 - Understand how users navigate the photo gallery
 - Identify most popular filters
 - Measure filter usage patterns
@@ -203,6 +219,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: When a user clicks on any social media icon/link throughout the site
 
 **Properties**:
+
 - `platform` (string): Social platform name (e.g., "linkedin", "instagram", "facebook", "twitter", "youtube", "tiktok", "website", "email")
 - `location` (string): Where the icon appears on the site - one of:
   - `"footer_simple"`: Simple footer variant
@@ -218,6 +235,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/components/ui/social-icon-link.tsx` - Used throughout the site
 
 **Use Cases**:
+
 - Track which social platforms are most popular
 - Understand which locations drive most social clicks
 - Measure engagement with social links
@@ -234,6 +252,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: When a user clicks on a video thumbnail to open the video modal
 
 **Properties**:
+
 - `video_id` (string): Unique identifier of the video
 - `video_title` (string): Title of the video
 - `youtube_video_id` (string): YouTube video ID
@@ -255,6 +274,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/components/video-carousel.tsx` → Video thumbnail click handler
 
 **Use Cases**:
+
 - Track which videos are most popular
 - Understand which locations drive most video engagement
 - Measure video engagement by band or event
@@ -269,6 +289,7 @@ All events automatically include the following environment properties (added by 
 **When Tracked**: When a user clicks the "Subscribe" button in the video carousel
 
 **Properties**:
+
 - `location` (string): Where the subscribe button was clicked - one of:
   - `"home_page"`: Home page video strip
   - `"event_page"`: Event detail page
@@ -283,6 +304,7 @@ All events automatically include the following environment properties (added by 
 **Location**: `src/components/video-carousel.tsx` → Subscribe button click handler
 
 **Use Cases**:
+
 - Track subscribe button effectiveness
 - Understand which pages drive most subscriptions
 - Measure conversion from video views to subscriptions
@@ -297,11 +319,13 @@ Since we use a single PostHog project for all environments, use these filters to
 ### Filter Options
 
 1. **Production Only**:
+
    ```
    is_production = "true"
    ```
 
 2. **Exclude Development**:
+
    ```
    is_development = "false"
    ```
@@ -328,6 +352,7 @@ This will show only production data, excluding all development and test events.
 ### Analytics Utility
 
 All tracking functions are defined in `src/lib/analytics.ts`:
+
 - `trackEvent()`: Base function that sends to both Vercel Analytics and PostHog
 - `trackPhotoClick()`: Photo click tracking
 - `trackPhotoView()`: Photo view tracking
@@ -381,6 +406,7 @@ Automatically disabled - no events are sent when `NODE_ENV=test`.
 ## Future Enhancements
 
 Potential additional events to track:
+
 - Video views and interactions
 - Voting interactions
 - Setlist views
@@ -394,7 +420,7 @@ Potential additional events to track:
 ## Questions or Updates
 
 If you need to add new events or modify existing tracking, update:
+
 1. `src/lib/analytics.ts` - Add new tracking functions
 2. This document - Document the new events
 3. Component files - Add tracking calls where needed
-

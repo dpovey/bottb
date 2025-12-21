@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import type { IconProps } from "../types";
+import { forwardRef } from 'react'
+import type { IconProps } from '../types'
 
 /**
  * Map pin/location icon
@@ -24,7 +24,6 @@ export const MapPinIcon = forwardRef<SVGSVGElement, IconProps>(
       <circle cx="12" cy="10" r="3" />
     </svg>
   )
-);
+)
 
-MapPinIcon.displayName = "MapPinIcon";
-
+MapPinIcon.displayName = 'MapPinIcon'

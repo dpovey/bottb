@@ -8,55 +8,58 @@
  * - maxWidth: Maximum width in pixels (optional, preserves aspect ratio)
  *
  * Used for Instagram posting which requires JPEG format.
- * 
+ *
  * Rate limited to prevent scraping/DoS (blob bandwidth costs).
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getPhotoById } from "@/lib/db";
-import { withRateLimit } from "@/lib/api-protection";
-import sharp from "sharp";
+import { NextRequest, NextResponse } from 'next/server'
+import { getPhotoById } from '@/lib/db'
+import { withRateLimit } from '@/lib/api-protection'
+import sharp from 'sharp'
 
 async function handler(
   request: NextRequest,
   context: { params: Promise<{ photoId: string }> }
 ) {
-  const { photoId } = await context.params;
+  const { photoId } = await context.params
 
   try {
-    const photo = await getPhotoById(photoId);
+    const photo = await getPhotoById(photoId)
 
     if (!photo) {
-      return NextResponse.json({ error: "Photo not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
     }
 
     // Parse query params
-    const { searchParams } = new URL(request.url);
-    const quality = Math.min(100, Math.max(1, parseInt(searchParams.get("quality") || "95", 10)));
-    const maxWidth = searchParams.get("maxWidth")
-      ? parseInt(searchParams.get("maxWidth")!, 10)
-      : undefined;
+    const { searchParams } = new URL(request.url)
+    const quality = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get('quality') || '95', 10))
+    )
+    const maxWidth = searchParams.get('maxWidth')
+      ? parseInt(searchParams.get('maxWidth')!, 10)
+      : undefined
 
     // Fetch the original image
-    const imageResponse = await fetch(photo.blob_url);
+    const imageResponse = await fetch(photo.blob_url)
     if (!imageResponse.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch original image" },
+        { error: 'Failed to fetch original image' },
         { status: 500 }
-      );
+      )
     }
 
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
 
     // Convert to JPEG using sharp
-    let sharpInstance = sharp(imageBuffer);
+    let sharpInstance = sharp(imageBuffer)
 
     // Optionally resize while preserving aspect ratio
     if (maxWidth) {
       sharpInstance = sharpInstance.resize({
         width: maxWidth,
         withoutEnlargement: true,
-      });
+      })
     }
 
     const jpegBuffer = await sharpInstance
@@ -64,32 +67,31 @@ async function handler(
         quality,
         mozjpeg: true, // Better compression
       })
-      .toBuffer();
+      .toBuffer()
 
     // Return JPEG with appropriate headers
     // Convert Buffer to Uint8Array for NextResponse compatibility
     return new NextResponse(new Uint8Array(jpegBuffer), {
       status: 200,
       headers: {
-        "Content-Type": "image/jpeg",
-        "Content-Length": jpegBuffer.length.toString(),
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "Content-Disposition": `inline; filename="${photo.original_filename?.replace(/\.[^.]+$/, ".jpg") || `photo-${photoId}.jpg`}"`,
+        'Content-Type': 'image/jpeg',
+        'Content-Length': jpegBuffer.length.toString(),
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Disposition': `inline; filename="${photo.original_filename?.replace(/\.[^.]+$/, '.jpg') || `photo-${photoId}.jpg`}"`,
       },
-    });
+    })
   } catch (error) {
-    console.error("JPEG conversion error:", error);
+    console.error('JPEG conversion error:', error)
     return NextResponse.json(
-      { error: "Failed to convert image" },
+      { error: 'Failed to convert image' },
       { status: 500 }
-    );
+    )
   }
 }
 
 // Rate limit: 20 requests per minute to prevent scraping/DoS
 export const GET = withRateLimit(
-  (request: NextRequest, context?: unknown) => 
+  (request: NextRequest, context?: unknown) =>
     handler(request, context as { params: Promise<{ photoId: string }> }),
-  "photo"
-);
-
+  'photo'
+)

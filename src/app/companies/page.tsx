@@ -1,40 +1,54 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { PublicLayout } from "@/components/layouts";
-import { CompanyCard } from "@/components/company-card";
-import { Card, Button, BandThumbnail } from "@/components/ui";
-import { getCachedCompanies, getCachedCompanyWithBands, getNavEvents, type CompanyBand } from "@/lib/nav-data";
-import type { CompanyWithStats, Company } from "@/lib/db";
-import type { BreadcrumbItem } from "@/components/nav";
+import { Suspense } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { PublicLayout } from '@/components/layouts'
+import { CompanyCard } from '@/components/company-card'
+import { Card, Button, BandThumbnail } from '@/components/ui'
+import {
+  getCachedCompanies,
+  getCachedCompanyWithBands,
+  getNavEvents,
+  type CompanyBand,
+} from '@/lib/nav-data'
+import type { CompanyWithStats, Company } from '@/lib/db'
+import type { BreadcrumbItem } from '@/components/nav'
 
 interface CompaniesPageProps {
-  searchParams: Promise<{ company?: string }>;
+  searchParams: Promise<{ company?: string }>
 }
 
 // Group bands by event for display
 function groupBandsByEvent(bands: CompanyBand[]) {
   const bandsByEvent = bands.reduce(
     (acc, band) => {
-      const eventId = band.event_id;
+      const eventId = band.event_id
       if (!acc[eventId]) {
         acc[eventId] = {
           event_id: eventId,
           event_name: band.event_name,
           event_date: band.event_date,
           bands: [],
-        };
+        }
       }
-      acc[eventId].bands.push(band);
-      return acc;
+      acc[eventId].bands.push(band)
+      return acc
     },
-    {} as Record<string, { event_id: string; event_name: string; event_date: string; bands: CompanyBand[] }>
-  );
+    {} as Record<
+      string,
+      {
+        event_id: string
+        event_name: string
+        event_date: string
+        bands: CompanyBand[]
+      }
+    >
+  )
 
   // Sort events by date descending
   return Object.values(bandsByEvent).sort(
-    (a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
-  );
+    (a, b) =>
+      new Date(b.event_date).getTime() - new Date(a.event_date).getTime()
+  )
 }
 
 // Selected company view component
@@ -43,11 +57,11 @@ function SelectedCompanyView({
   bands,
   companySlug,
 }: {
-  company: Company;
-  bands: CompanyBand[];
-  companySlug: string;
+  company: Company
+  bands: CompanyBand[]
+  companySlug: string
 }) {
-  const sortedEvents = groupBandsByEvent(bands);
+  const sortedEvents = groupBandsByEvent(bands)
 
   return (
     <>
@@ -100,11 +114,14 @@ function SelectedCompanyView({
                     {eventGroup.event_name}
                   </Link>
                   <p className="text-text-dim text-sm">
-                    {new Date(eventGroup.event_date).toLocaleDateString("en-AU", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {new Date(eventGroup.event_date).toLocaleDateString(
+                      'en-AU',
+                      {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      }
+                    )}
                   </p>
                 </div>
                 <Link href={`/event/${eventGroup.event_id}`}>
@@ -118,7 +135,11 @@ function SelectedCompanyView({
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {eventGroup.bands.map((band) => (
                   <Link key={band.id} href={`/band/${band.id}`}>
-                    <Card variant="interactive" padding="none" className="overflow-hidden">
+                    <Card
+                      variant="interactive"
+                      padding="none"
+                      className="overflow-hidden"
+                    >
                       <div className="p-4 flex items-center gap-4">
                         <BandThumbnail
                           logoUrl={band.info?.logo_url}
@@ -127,8 +148,12 @@ function SelectedCompanyView({
                           size="sm"
                         />
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-semibold truncate">{band.name}</h3>
-                          <p className="text-text-dim text-sm">View band details →</p>
+                          <h3 className="text-white font-semibold truncate">
+                            {band.name}
+                          </h3>
+                          <p className="text-text-dim text-sm">
+                            View band details →
+                          </p>
                         </div>
                       </div>
                     </Card>
@@ -140,7 +165,7 @@ function SelectedCompanyView({
         </div>
       )}
     </>
-  );
+  )
 }
 
 // Companies grid view component
@@ -152,8 +177,8 @@ function CompaniesGridView({ companies }: { companies: CompanyWithStats[] }) {
         <div>
           <h1 className="font-semibold text-4xl mb-2">Bands</h1>
           <p className="text-text-muted">
-            {companies.length} compan{companies.length !== 1 ? "ies" : "y"} have participated in
-            Battle of the Tech Bands
+            {companies.length} compan{companies.length !== 1 ? 'ies' : 'y'} have
+            participated in Battle of the Tech Bands
           </p>
         </div>
       </div>
@@ -173,27 +198,33 @@ function CompaniesGridView({ companies }: { companies: CompanyWithStats[] }) {
         </div>
       )}
     </>
-  );
+  )
 }
 
 // Main content component (async server component)
 async function CompaniesContent({ companySlug }: { companySlug?: string }) {
   if (companySlug) {
     // Fetch selected company with bands
-    const { company, bands } = await getCachedCompanyWithBands(companySlug);
+    const { company, bands } = await getCachedCompanyWithBands(companySlug)
 
     if (!company) {
       // Company not found - show all companies
-      const companies = await getCachedCompanies();
-      return <CompaniesGridView companies={companies} />;
+      const companies = await getCachedCompanies()
+      return <CompaniesGridView companies={companies} />
     }
 
-    return <SelectedCompanyView company={company} bands={bands} companySlug={companySlug} />;
+    return (
+      <SelectedCompanyView
+        company={company}
+        bands={bands}
+        companySlug={companySlug}
+      />
+    )
   }
 
   // Show all companies
-  const companies = await getCachedCompanies();
-  return <CompaniesGridView companies={companies} />;
+  const companies = await getCachedCompanies()
+  return <CompaniesGridView companies={companies} />
 }
 
 // Loading skeleton
@@ -205,37 +236,43 @@ function CompaniesLoading() {
         <p className="text-text-muted">Loading...</p>
       </div>
     </div>
-  );
+  )
 }
 
-export default async function CompaniesPage({ searchParams }: CompaniesPageProps) {
-  const { company: companySlug } = await searchParams;
-  const navEvents = await getNavEvents();
+export default async function CompaniesPage({
+  searchParams,
+}: CompaniesPageProps) {
+  const { company: companySlug } = await searchParams
+  const navEvents = await getNavEvents()
 
   // Determine breadcrumbs based on selection
   let breadcrumbs: BreadcrumbItem[] = [
-    { label: "Home", href: "/" },
-    { label: "Bands", href: "/companies" },
-  ];
+    { label: 'Home', href: '/' },
+    { label: 'Bands', href: '/companies' },
+  ]
 
   if (companySlug) {
-    const { company } = await getCachedCompanyWithBands(companySlug);
+    const { company } = await getCachedCompanyWithBands(companySlug)
     if (company) {
       breadcrumbs = [
-        { label: "Home", href: "/" },
-        { label: "Bands", href: "/companies" },
+        { label: 'Home', href: '/' },
+        { label: 'Bands', href: '/companies' },
         { label: company.name },
-      ];
+      ]
     }
   }
 
   return (
-    <PublicLayout breadcrumbs={breadcrumbs} footerVariant="simple" navEvents={navEvents}>
+    <PublicLayout
+      breadcrumbs={breadcrumbs}
+      footerVariant="simple"
+      navEvents={navEvents}
+    >
       <main className="max-w-7xl mx-auto px-6 py-8">
         <Suspense fallback={<CompaniesLoading />}>
           <CompaniesContent companySlug={companySlug} />
         </Suspense>
       </main>
     </PublicLayout>
-  );
+  )
 }

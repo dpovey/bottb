@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 
-import { config } from "dotenv";
-import { sql } from "@vercel/postgres";
+import { config } from 'dotenv'
+import { sql } from '@vercel/postgres'
 
 // Load environment variables from .env.local
-config({ path: ".env.local" });
+config({ path: '.env.local' })
 
 async function migrateAddVideosTable() {
   try {
-    console.log("🔄 Adding videos table...");
+    console.log('🔄 Adding videos table...')
 
     // Create the videos table
     await sql.query(`
@@ -24,41 +24,35 @@ async function migrateAddVideosTable() {
         sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
-    `);
+    `)
 
-    console.log("✅ Videos table created!");
+    console.log('✅ Videos table created!')
 
     // Create indexes
-    console.log("🔄 Creating indexes...");
+    console.log('🔄 Creating indexes...')
 
     await sql.query(`
       CREATE INDEX IF NOT EXISTS idx_videos_event_id ON videos(event_id)
-    `);
+    `)
 
     await sql.query(`
       CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id)
-    `);
+    `)
 
     await sql.query(`
       CREATE INDEX IF NOT EXISTS idx_videos_youtube_id ON videos(youtube_video_id)
-    `);
+    `)
 
     await sql.query(`
       CREATE INDEX IF NOT EXISTS idx_videos_sort_order ON videos(sort_order)
-    `);
+    `)
 
-    console.log("✅ Indexes created successfully!");
-    console.log("✅ Videos table migration complete!");
+    console.log('✅ Indexes created successfully!')
+    console.log('✅ Videos table migration complete!')
   } catch (error) {
-    console.error("❌ Error creating videos table:", error);
-    process.exit(1);
+    console.error('❌ Error creating videos table:', error)
+    process.exit(1)
   }
 }
 
-migrateAddVideosTable();
-
-
-
-
-
-
+migrateAddVideosTable()

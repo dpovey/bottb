@@ -1,268 +1,288 @@
-"use client";
+'use client'
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
-import { Photo } from "@/lib/db";
-import { PhotoSlideshow } from "./photo-slideshow";
-import { trackPhotoClick } from "@/lib/analytics";
-import { ChevronLeftIcon, ChevronRightIcon, SpinnerIcon } from "@/components/icons";
-import { Skeleton } from "@/components/ui";
+import { useEffect, useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
+import { Photo } from '@/lib/db'
+import { PhotoSlideshow } from './photo-slideshow'
+import { trackPhotoClick } from '@/lib/analytics'
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SpinnerIcon,
+} from '@/components/icons'
+import { Skeleton } from '@/components/ui'
 
 interface PhotoStripProps {
   /** Filter by event ID */
-  eventId?: string;
+  eventId?: string
   /** Filter by band ID */
-  bandId?: string;
+  bandId?: string
   /** Filter by company slug */
-  companySlug?: string;
+  companySlug?: string
   /** Filter by photographer name */
-  photographer?: string;
+  photographer?: string
   /** Custom title for the section (default: "Photos") */
-  title?: string;
+  title?: string
   /** Link to full gallery with filters applied */
-  viewAllLink?: string;
+  viewAllLink?: string
   /** Custom class for the container */
-  className?: string;
+  className?: string
   /** Enable slideshow on photo click (default: true) */
-  enableSlideshow?: boolean;
+  enableSlideshow?: boolean
   /** Initial photos fetched server-side (optional) */
-  initialPhotos?: Photo[];
+  initialPhotos?: Photo[]
   /** Initial total count fetched server-side (optional) */
-  initialTotalCount?: number;
+  initialTotalCount?: number
 }
 
 interface PhotosResponse {
-  photos: Photo[];
+  photos: Photo[]
   pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
 }
 
-const PAGE_SIZE = 50;
-const PREFETCH_THRESHOLD = 10; // Prefetch when within 10 photos of edge
+const PAGE_SIZE = 50
+const PREFETCH_THRESHOLD = 10 // Prefetch when within 10 photos of edge
 
 export function PhotoStrip({
   eventId,
   bandId,
   companySlug,
   photographer,
-  title = "Photos",
+  title = 'Photos',
   viewAllLink,
-  className = "",
+  className = '',
   enableSlideshow = true,
   initialPhotos,
   initialTotalCount,
 }: PhotoStripProps) {
   // All loaded photos for the strip
-  const [photos, setPhotos] = useState<Photo[]>(initialPhotos || []);
-  const [totalCount, setTotalCount] = useState(initialTotalCount || 0);
-  const [loading, setLoading] = useState(!initialPhotos);
+  const [photos, setPhotos] = useState<Photo[]>(initialPhotos || [])
+  const [totalCount, setTotalCount] = useState(initialTotalCount || 0)
+  const [loading, setLoading] = useState(!initialPhotos)
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     initialPhotos ? new Set([1]) : new Set()
-  );
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  )
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   // Strip navigation state
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const photoRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const isInitialMount = useRef(true);
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const stripRef = useRef<HTMLDivElement>(null)
+  const photoRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const isInitialMount = useRef(true)
 
   // Slideshow state
-  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null);
+  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null)
 
   // Build the view all link based on filters
-  const galleryLink = viewAllLink || (() => {
-    const params = new URLSearchParams();
-    if (eventId) params.set("event", eventId);
-    if (bandId) params.set("band", bandId);
-    if (companySlug) params.set("company", companySlug);
-    if (photographer) params.set("photographer", photographer);
-    return `/photos${params.toString() ? `?${params.toString()}` : ''}`;
-  })();
+  const galleryLink =
+    viewAllLink ||
+    (() => {
+      const params = new URLSearchParams()
+      if (eventId) params.set('event', eventId)
+      if (bandId) params.set('band', bandId)
+      if (companySlug) params.set('company', companySlug)
+      if (photographer) params.set('photographer', photographer)
+      return `/photos${params.toString() ? `?${params.toString()}` : ''}`
+    })()
 
   // Fetch a specific page of photos
-  const fetchPage = useCallback(async (page: number): Promise<Photo[]> => {
-    const params = new URLSearchParams();
-    if (eventId) params.set("event", eventId);
-    if (bandId) params.set("band", bandId);
-    if (companySlug) params.set("company", companySlug);
-    if (photographer) params.set("photographer", photographer);
-    params.set("limit", PAGE_SIZE.toString());
-    params.set("page", page.toString());
-    params.set("order", "random"); // Random order for browsing strips
+  const fetchPage = useCallback(
+    async (page: number): Promise<Photo[]> => {
+      const params = new URLSearchParams()
+      if (eventId) params.set('event', eventId)
+      if (bandId) params.set('band', bandId)
+      if (companySlug) params.set('company', companySlug)
+      if (photographer) params.set('photographer', photographer)
+      params.set('limit', PAGE_SIZE.toString())
+      params.set('page', page.toString())
+      params.set('order', 'random') // Random order for browsing strips
 
-    const res = await fetch(`/api/photos?${params.toString()}`);
-    if (!res.ok) return [];
+      const res = await fetch(`/api/photos?${params.toString()}`)
+      if (!res.ok) return []
 
-    const data: PhotosResponse = await res.json();
-    setTotalCount(data.pagination.total);
-    return data.photos;
-  }, [eventId, bandId, companySlug, photographer]);
+      const data: PhotosResponse = await res.json()
+      setTotalCount(data.pagination.total)
+      return data.photos
+    },
+    [eventId, bandId, companySlug, photographer]
+  )
 
   // Initial fetch (only if initialPhotos not provided)
   useEffect(() => {
     if (initialPhotos) {
       // Already have initial photos from server, skip fetch
-      return;
+      return
     }
 
     async function fetchInitialPhotos() {
-      setLoading(true);
+      setLoading(true)
       try {
-        const fetchedPhotos = await fetchPage(1);
+        const fetchedPhotos = await fetchPage(1)
         // Deduplicate by ID (can happen with random ordering)
-        const seen = new Set<string>();
-        const uniquePhotos = fetchedPhotos.filter(p => {
-          if (seen.has(p.id)) return false;
-          seen.add(p.id);
-          return true;
-        });
-        setPhotos(uniquePhotos);
-        setLoadedPages(new Set([1]));
+        const seen = new Set<string>()
+        const uniquePhotos = fetchedPhotos.filter((p) => {
+          if (seen.has(p.id)) return false
+          seen.add(p.id)
+          return true
+        })
+        setPhotos(uniquePhotos)
+        setLoadedPages(new Set([1]))
       } catch (error) {
-        console.error("Failed to fetch photos for strip:", error);
+        console.error('Failed to fetch photos for strip:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    fetchInitialPhotos();
-  }, [fetchPage, initialPhotos]);
+    fetchInitialPhotos()
+  }, [fetchPage, initialPhotos])
 
   // Load next page
   const loadNextPage = useCallback(async () => {
-    const nextPage = Math.max(...Array.from(loadedPages)) + 1;
-    const maxPage = Math.ceil(totalCount / PAGE_SIZE);
+    const nextPage = Math.max(...Array.from(loadedPages)) + 1
+    const maxPage = Math.ceil(totalCount / PAGE_SIZE)
 
-    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore) return;
+    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore) return
 
-    setIsLoadingMore(true);
+    setIsLoadingMore(true)
     try {
-      const newPhotos = await fetchPage(nextPage);
+      const newPhotos = await fetchPage(nextPage)
       if (newPhotos.length > 0) {
         // Filter out duplicates (can happen with random ordering)
-        setPhotos(prev => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const uniqueNew = newPhotos.filter(p => !existingIds.has(p.id));
-          return [...prev, ...uniqueNew];
-        });
-        setLoadedPages(prev => new Set([...prev, nextPage]));
+        setPhotos((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id))
+          const uniqueNew = newPhotos.filter((p) => !existingIds.has(p.id))
+          return [...prev, ...uniqueNew]
+        })
+        setLoadedPages((prev) => new Set([...prev, nextPage]))
       }
     } finally {
-      setIsLoadingMore(false);
+      setIsLoadingMore(false)
     }
-  }, [loadedPages, totalCount, isLoadingMore, fetchPage]);
+  }, [loadedPages, totalCount, isLoadingMore, fetchPage])
 
   // Check if we need to prefetch based on selected index
   useEffect(() => {
-    if (selectedIndex >= photos.length - PREFETCH_THRESHOLD && photos.length < totalCount) {
-      loadNextPage();
+    if (
+      selectedIndex >= photos.length - PREFETCH_THRESHOLD &&
+      photos.length < totalCount
+    ) {
+      loadNextPage()
     }
-  }, [selectedIndex, photos.length, totalCount, loadNextPage]);
+  }, [selectedIndex, photos.length, totalCount, loadNextPage])
 
   // Auto-scroll to keep selected photo visible
   useEffect(() => {
     // Skip scrollIntoView on initial mount to prevent page scroll
     if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
+      isInitialMount.current = false
+      return
     }
 
-    const photo = photoRefs.current[selectedIndex];
+    const photo = photoRefs.current[selectedIndex]
     if (photo && stripRef.current) {
       // Only scroll if the strip container is in the viewport
-      const rect = stripRef.current.getBoundingClientRect();
-      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
-      
+      const rect = stripRef.current.getBoundingClientRect()
+      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0
+
       if (isInViewport) {
         photo.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "center",
-        });
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center',
+        })
       }
     }
-  }, [selectedIndex]);
+  }, [selectedIndex])
 
   // Handle photo click - open slideshow
-  const handlePhotoClick = useCallback((index: number) => {
-    if (!enableSlideshow) return;
-    
-    // Track photo click
-    const photo = photos[index];
-    if (photo) {
-      trackPhotoClick({
-        photo_id: photo.id,
-        event_id: photo.event_id || null,
-        band_id: photo.band_id || null,
-        event_name: photo.event_name || null,
-        band_name: photo.band_name || null,
-      });
-    }
-    
-    setSelectedIndex(index);
-    setSlideshowIndex(index);
-  }, [enableSlideshow, photos]);
+  const handlePhotoClick = useCallback(
+    (index: number) => {
+      if (!enableSlideshow) return
+
+      // Track photo click
+      const photo = photos[index]
+      if (photo) {
+        trackPhotoClick({
+          photo_id: photo.id,
+          event_id: photo.event_id || null,
+          band_id: photo.band_id || null,
+          event_name: photo.event_name || null,
+          band_name: photo.band_name || null,
+        })
+      }
+
+      setSelectedIndex(index)
+      setSlideshowIndex(index)
+    },
+    [enableSlideshow, photos]
+  )
 
   // Keyboard navigation - works when strip or any of its children has focus
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't navigate if slideshow is open
-      if (slideshowIndex !== null) return;
-      
+      if (slideshowIndex !== null) return
+
       // Only handle if the strip container or any element inside it has focus
-      const activeElement = document.activeElement;
+      const activeElement = document.activeElement
       if (!stripRef.current?.contains(activeElement)) {
-        return;
+        return
       }
 
-      if (e.key === "ArrowRight") {
-        e.preventDefault();
-        const nextIndex = Math.min(selectedIndex + 1, photos.length - 1);
-        setSelectedIndex(nextIndex);
-        photoRefs.current[nextIndex]?.focus();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        const prevIndex = Math.max(selectedIndex - 1, 0);
-        setSelectedIndex(prevIndex);
-        photoRefs.current[prevIndex]?.focus();
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        handlePhotoClick(selectedIndex);
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        const nextIndex = Math.min(selectedIndex + 1, photos.length - 1)
+        setSelectedIndex(nextIndex)
+        photoRefs.current[nextIndex]?.focus()
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const prevIndex = Math.max(selectedIndex - 1, 0)
+        setSelectedIndex(prevIndex)
+        photoRefs.current[prevIndex]?.focus()
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        handlePhotoClick(selectedIndex)
       }
-    };
+    }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [photos.length, selectedIndex, slideshowIndex, handlePhotoClick]);
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [photos.length, selectedIndex, slideshowIndex, handlePhotoClick])
 
   // Handle slideshow close
   const handleSlideshowClose = useCallback(() => {
-    setSlideshowIndex(null);
+    setSlideshowIndex(null)
     // Re-focus the strip after closing
-    photoRefs.current[selectedIndex]?.focus();
-  }, [selectedIndex]);
+    photoRefs.current[selectedIndex]?.focus()
+  }, [selectedIndex])
 
   // Handle photo deletion from slideshow
   const handlePhotoDeleted = useCallback((photoId: string) => {
-    setPhotos(prev => prev.filter(p => p.id !== photoId));
-    setTotalCount(prev => prev - 1);
-  }, []);
+    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
+    setTotalCount((prev) => prev - 1)
+  }, [])
 
   // Handle photo crop from slideshow
-  const handlePhotoCropped = useCallback((photoId: string, newThumbnailUrl: string) => {
-    setPhotos(prev =>
-      prev.map(p => p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p)
-    );
-  }, []);
+  const handlePhotoCropped = useCallback(
+    (photoId: string, newThumbnailUrl: string) => {
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
+        )
+      )
+    },
+    []
+  )
 
   // Don't render anything if there are no photos
   if (!loading && photos.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -304,30 +324,45 @@ export function PhotoStrip({
               {/* Left chevron button */}
               {selectedIndex > 0 && (
                 <button
-                  onClick={() => setSelectedIndex(prev => Math.max(prev - 1, 0))}
+                  onClick={() =>
+                    setSelectedIndex((prev) => Math.max(prev - 1, 0))
+                  }
                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Previous photo"
                 >
-                  <ChevronLeftIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
+                  <ChevronLeftIcon
+                    size={20}
+                    className="md:w-6 md:h-6"
+                    strokeWidth={2}
+                  />
                 </button>
               )}
 
               {/* Right chevron button */}
-              {(selectedIndex < photos.length - 1 || photos.length < totalCount) && (
+              {(selectedIndex < photos.length - 1 ||
+                photos.length < totalCount) && (
                 <button
-                  onClick={() => setSelectedIndex(prev => Math.min(prev + 1, photos.length - 1))}
+                  onClick={() =>
+                    setSelectedIndex((prev) =>
+                      Math.min(prev + 1, photos.length - 1)
+                    )
+                  }
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-bg/90 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors shadow-lg"
                   aria-label="Next photo"
                 >
-                  <ChevronRightIcon size={20} className="md:w-6 md:h-6" strokeWidth={2} />
+                  <ChevronRightIcon
+                    size={20}
+                    className="md:w-6 md:h-6"
+                    strokeWidth={2}
+                  />
                 </button>
               )}
-              
+
               {/* Scrollable strip with padding for ring visibility */}
               <div
                 ref={stripRef}
                 className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 focus:outline-hidden"
-                style={{ scrollbarWidth: "thin" }}
+                style={{ scrollbarWidth: 'thin' }}
                 tabIndex={0}
                 role="listbox"
                 aria-label="Photo gallery - use arrow keys to navigate, Enter to open"
@@ -335,7 +370,9 @@ export function PhotoStrip({
                 {photos.map((photo, index) => (
                   <button
                     key={`${photo.id}-${index}`}
-                    ref={(el) => { photoRefs.current[index] = el; }}
+                    ref={(el) => {
+                      photoRefs.current[index] = el
+                    }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
                     className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
@@ -345,25 +382,36 @@ export function PhotoStrip({
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={photo.thumbnail_url || photo.blob_url?.replace('/large.webp', '/thumbnail.webp')}
+                      src={
+                        photo.thumbnail_url ||
+                        photo.blob_url?.replace(
+                          '/large.webp',
+                          '/thumbnail.webp'
+                        )
+                      }
                       alt={photo.original_filename || `Photo ${index + 1}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
                   </button>
                 ))}
-                
+
                 {/* Loading indicator at end */}
                 {isLoadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg flex items-center justify-center">
-                    <SpinnerIcon size={32} className="animate-spin text-text-dim" />
+                    <SpinnerIcon
+                      size={32}
+                      className="animate-spin text-text-dim"
+                    />
                   </div>
                 )}
-                
+
                 {/* More photos indicator */}
                 {photos.length < totalCount && !isLoadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg/50 flex items-center justify-center text-text-dim">
-                    <span className="text-lg font-medium">+{totalCount - photos.length} more</span>
+                    <span className="text-lg font-medium">
+                      +{totalCount - photos.length} more
+                    </span>
                   </div>
                 )}
               </div>
@@ -398,6 +446,5 @@ export function PhotoStrip({
         />
       )}
     </>
-  );
+  )
 }
-

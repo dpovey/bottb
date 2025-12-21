@@ -2,8 +2,8 @@
  * Database helpers for social sharing functionality
  */
 
-import { sql } from "@vercel/postgres";
-import { encryptToken, decryptToken } from "./encryption";
+import { sql } from '@vercel/postgres'
+import { encryptToken, decryptToken } from './encryption'
 import type {
   SocialAccount,
   SocialAccountWithTokens,
@@ -17,7 +17,7 @@ import type {
   SocialPostResultStatus,
   CreateSocialPostInput,
   ConnectSocialAccountInput,
-} from "./types";
+} from './types'
 
 // ============================================================================
 // Social Accounts
@@ -36,8 +36,8 @@ export async function getSocialAccounts(): Promise<SocialAccount[]> {
       connected_by, connected_at, updated_at
     FROM social_accounts
     ORDER BY provider
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -55,8 +55,8 @@ export async function getSocialAccountByProvider(
       connected_by, connected_at, updated_at
     FROM social_accounts
     WHERE provider = ${provider}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
@@ -67,25 +67,25 @@ export async function getSocialAccountWithTokens(
 ): Promise<SocialAccountWithTokens | null> {
   const { rows } = await sql<
     SocialAccount & {
-      access_token_encrypted: string;
-      refresh_token_encrypted: string | null;
+      access_token_encrypted: string
+      refresh_token_encrypted: string | null
     }
   >`
     SELECT *
     FROM social_accounts
     WHERE provider = ${provider}
-  `;
+  `
 
-  if (!rows[0]) return null;
+  if (!rows[0]) return null
 
-  const account = rows[0];
+  const account = rows[0]
   return {
     ...account,
     access_token: decryptToken(account.access_token_encrypted),
     refresh_token: account.refresh_token_encrypted
       ? decryptToken(account.refresh_token_encrypted)
       : null,
-  };
+  }
 }
 
 /**
@@ -94,13 +94,13 @@ export async function getSocialAccountWithTokens(
 export async function connectSocialAccount(
   input: ConnectSocialAccountInput
 ): Promise<SocialAccount> {
-  const accessTokenEncrypted = encryptToken(input.access_token);
+  const accessTokenEncrypted = encryptToken(input.access_token)
   const refreshTokenEncrypted = input.refresh_token
     ? encryptToken(input.refresh_token)
-    : null;
+    : null
 
   // Convert scopes array to PostgreSQL array literal
-  const scopesLiteral = `{${(input.scopes || []).join(",")}}`;
+  const scopesLiteral = `{${(input.scopes || []).join(',')}}`
 
   const { rows } = await sql<SocialAccount>`
     INSERT INTO social_accounts (
@@ -145,9 +145,9 @@ export async function connectSocialAccount(
       access_token_expires_at, refresh_token_expires_at,
       scopes, status, last_error,
       connected_by, connected_at, updated_at
-  `;
+  `
 
-  return rows[0];
+  return rows[0]
 }
 
 /**
@@ -160,10 +160,8 @@ export async function updateSocialAccountTokens(
   accessTokenExpiresAt?: Date,
   refreshTokenExpiresAt?: Date
 ): Promise<void> {
-  const accessTokenEncrypted = encryptToken(accessToken);
-  const refreshTokenEncrypted = refreshToken
-    ? encryptToken(refreshToken)
-    : null;
+  const accessTokenEncrypted = encryptToken(accessToken)
+  const refreshTokenEncrypted = refreshToken ? encryptToken(refreshToken) : null
 
   await sql`
     UPDATE social_accounts
@@ -176,7 +174,7 @@ export async function updateSocialAccountTokens(
       last_error = NULL,
       updated_at = NOW()
     WHERE provider = ${provider}
-  `;
+  `
 }
 
 /**
@@ -184,7 +182,7 @@ export async function updateSocialAccountTokens(
  */
 export async function updateSocialAccountStatus(
   provider: SocialProvider,
-  status: "active" | "expired" | "revoked" | "error",
+  status: 'active' | 'expired' | 'revoked' | 'error',
   errorMessage?: string
 ): Promise<void> {
   await sql`
@@ -194,7 +192,7 @@ export async function updateSocialAccountStatus(
       last_error = ${errorMessage || null},
       updated_at = NOW()
     WHERE provider = ${provider}
-  `;
+  `
 }
 
 /**
@@ -203,7 +201,7 @@ export async function updateSocialAccountStatus(
 export async function disconnectSocialAccount(
   provider: SocialProvider
 ): Promise<void> {
-  await sql`DELETE FROM social_accounts WHERE provider = ${provider}`;
+  await sql`DELETE FROM social_accounts WHERE provider = ${provider}`
 }
 
 // ============================================================================
@@ -218,8 +216,8 @@ export async function getSocialPostTemplates(): Promise<SocialPostTemplate[]> {
     SELECT *
     FROM social_post_templates
     ORDER BY sort_order, name
-  `;
-  return rows;
+  `
+  return rows
 }
 
 /**
@@ -230,24 +228,24 @@ export async function getSocialPostTemplateById(
 ): Promise<SocialPostTemplate | null> {
   const { rows } = await sql<SocialPostTemplate>`
     SELECT * FROM social_post_templates WHERE id = ${id}
-  `;
-  return rows[0] || null;
+  `
+  return rows[0] || null
 }
 
 /**
  * Create a new template
  */
 export async function createSocialPostTemplate(input: {
-  name: string;
-  description?: string;
-  title_template?: string;
-  caption_template?: string;
-  include_photographer_credit?: boolean;
-  include_event_link?: boolean;
-  default_hashtags?: string[];
+  name: string
+  description?: string
+  title_template?: string
+  caption_template?: string
+  include_photographer_credit?: boolean
+  include_event_link?: boolean
+  default_hashtags?: string[]
 }): Promise<SocialPostTemplate> {
   // Convert hashtags array to PostgreSQL array literal
-  const hashtagsLiteral = `{${(input.default_hashtags || []).join(",")}}`;
+  const hashtagsLiteral = `{${(input.default_hashtags || []).join(',')}}`
 
   const { rows } = await sql<SocialPostTemplate>`
     INSERT INTO social_post_templates (
@@ -263,8 +261,8 @@ export async function createSocialPostTemplate(input: {
       ${hashtagsLiteral}::text[]
     )
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
 /**
@@ -273,73 +271,73 @@ export async function createSocialPostTemplate(input: {
 export async function updateSocialPostTemplate(
   id: string,
   input: Partial<{
-    name: string;
-    description: string;
-    title_template: string;
-    caption_template: string;
-    include_photographer_credit: boolean;
-    include_event_link: boolean;
-    default_hashtags: string[];
-    sort_order: number;
+    name: string
+    description: string
+    title_template: string
+    caption_template: string
+    include_photographer_credit: boolean
+    include_event_link: boolean
+    default_hashtags: string[]
+    sort_order: number
   }>
 ): Promise<SocialPostTemplate | null> {
   // Build dynamic update - only update provided fields
-  const updates: string[] = [];
-  const values: unknown[] = [];
-  let paramIndex = 1;
+  const updates: string[] = []
+  const values: unknown[] = []
+  let paramIndex = 1
 
   if (input.name !== undefined) {
-    updates.push(`name = $${paramIndex++}`);
-    values.push(input.name);
+    updates.push(`name = $${paramIndex++}`)
+    values.push(input.name)
   }
   if (input.description !== undefined) {
-    updates.push(`description = $${paramIndex++}`);
-    values.push(input.description);
+    updates.push(`description = $${paramIndex++}`)
+    values.push(input.description)
   }
   if (input.title_template !== undefined) {
-    updates.push(`title_template = $${paramIndex++}`);
-    values.push(input.title_template);
+    updates.push(`title_template = $${paramIndex++}`)
+    values.push(input.title_template)
   }
   if (input.caption_template !== undefined) {
-    updates.push(`caption_template = $${paramIndex++}`);
-    values.push(input.caption_template);
+    updates.push(`caption_template = $${paramIndex++}`)
+    values.push(input.caption_template)
   }
   if (input.include_photographer_credit !== undefined) {
-    updates.push(`include_photographer_credit = $${paramIndex++}`);
-    values.push(input.include_photographer_credit);
+    updates.push(`include_photographer_credit = $${paramIndex++}`)
+    values.push(input.include_photographer_credit)
   }
   if (input.include_event_link !== undefined) {
-    updates.push(`include_event_link = $${paramIndex++}`);
-    values.push(input.include_event_link);
+    updates.push(`include_event_link = $${paramIndex++}`)
+    values.push(input.include_event_link)
   }
   if (input.default_hashtags !== undefined) {
-    updates.push(`default_hashtags = $${paramIndex++}`);
-    values.push(input.default_hashtags);
+    updates.push(`default_hashtags = $${paramIndex++}`)
+    values.push(input.default_hashtags)
   }
   if (input.sort_order !== undefined) {
-    updates.push(`sort_order = $${paramIndex++}`);
-    values.push(input.sort_order);
+    updates.push(`sort_order = $${paramIndex++}`)
+    values.push(input.sort_order)
   }
 
   if (updates.length === 0) {
-    return getSocialPostTemplateById(id);
+    return getSocialPostTemplateById(id)
   }
 
-  updates.push(`updated_at = NOW()`);
-  values.push(id);
+  updates.push(`updated_at = NOW()`)
+  values.push(id)
 
   const { rows } = await sql.query<SocialPostTemplate>(
-    `UPDATE social_post_templates SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+    `UPDATE social_post_templates SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
     values
-  );
-  return rows[0] || null;
+  )
+  return rows[0] || null
 }
 
 /**
  * Delete a template
  */
 export async function deleteSocialPostTemplate(id: string): Promise<void> {
-  await sql`DELETE FROM social_post_templates WHERE id = ${id}`;
+  await sql`DELETE FROM social_post_templates WHERE id = ${id}`
 }
 
 // ============================================================================
@@ -353,10 +351,10 @@ export async function createSocialPost(
   input: CreateSocialPostInput
 ): Promise<SocialPost> {
   // Convert arrays to PostgreSQL array literals
-  const platformsLiteral = `{${input.platforms.join(",")}}`;
-  const photoIdsLiteral = `{${input.photo_ids.join(",")}}`;
-  const hashtagsLiteral = `{${(input.hashtags || []).join(",")}}`;
-  const igHandlesLiteral = `{${(input.ig_collaborator_handles || []).join(",")}}`;
+  const platformsLiteral = `{${input.platforms.join(',')}}`
+  const photoIdsLiteral = `{${input.photo_ids.join(',')}}`
+  const hashtagsLiteral = `{${(input.hashtags || []).join(',')}}`
+  const igHandlesLiteral = `{${(input.ig_collaborator_handles || []).join(',')}}`
 
   const { rows } = await sql<SocialPost>`
     INSERT INTO social_posts (
@@ -381,8 +379,8 @@ export async function createSocialPost(
       ${input.created_by || null}
     )
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
 /**
@@ -401,18 +399,18 @@ export async function getSocialPostById(
     LEFT JOIN bands b ON p.band_id = b.id
     LEFT JOIN social_post_templates t ON p.template_id = t.id
     WHERE p.id = ${id}
-  `;
+  `
 
-  if (!postRows[0]) return null;
+  if (!postRows[0]) return null
 
   const { rows: resultRows } = await sql<SocialPostResult>`
     SELECT * FROM social_post_results WHERE post_id = ${id}
-  `;
+  `
 
   return {
     ...postRows[0],
     results: resultRows,
-  };
+  }
 }
 
 /**
@@ -432,29 +430,29 @@ export async function getRecentSocialPosts(
     LEFT JOIN social_post_templates t ON p.template_id = t.id
     ORDER BY p.created_at DESC
     LIMIT ${limit}
-  `;
+  `
 
-  if (postRows.length === 0) return [];
+  if (postRows.length === 0) return []
 
   // Get all results for these posts
-  const postIds = postRows.map((p) => p.id);
-  const postIdsLiteral = `{${postIds.join(",")}}`;
+  const postIds = postRows.map((p) => p.id)
+  const postIdsLiteral = `{${postIds.join(',')}}`
   const { rows: resultRows } = await sql<SocialPostResult>`
     SELECT * FROM social_post_results WHERE post_id = ANY(${postIdsLiteral}::uuid[])
-  `;
+  `
 
   // Group results by post_id
-  const resultsByPost = new Map<string, SocialPostResult[]>();
+  const resultsByPost = new Map<string, SocialPostResult[]>()
   for (const result of resultRows) {
-    const existing = resultsByPost.get(result.post_id) || [];
-    existing.push(result);
-    resultsByPost.set(result.post_id, existing);
+    const existing = resultsByPost.get(result.post_id) || []
+    existing.push(result)
+    resultsByPost.set(result.post_id, existing)
   }
 
   return postRows.map((post) => ({
     ...post,
     results: resultsByPost.get(post.id) || [],
-  }));
+  }))
 }
 
 /**
@@ -468,7 +466,7 @@ export async function updateSocialPostStatus(
     UPDATE social_posts 
     SET status = ${status}, updated_at = NOW() 
     WHERE id = ${id}
-  `;
+  `
 }
 
 // ============================================================================
@@ -479,14 +477,14 @@ export async function updateSocialPostStatus(
  * Record a post result for a platform
  */
 export async function createSocialPostResult(input: {
-  post_id: string;
-  platform: SocialPlatform;
-  status: SocialPostResultStatus;
-  external_post_id?: string;
-  external_post_url?: string;
-  error_code?: string;
-  error_message?: string;
-  response_data?: Record<string, unknown>;
+  post_id: string
+  platform: SocialPlatform
+  status: SocialPostResultStatus
+  external_post_id?: string
+  external_post_url?: string
+  error_code?: string
+  error_message?: string
+  response_data?: Record<string, unknown>
 }): Promise<SocialPostResult> {
   const { rows } = await sql<SocialPostResult>`
     INSERT INTO social_post_results (
@@ -512,8 +510,8 @@ export async function createSocialPostResult(input: {
       response_data = EXCLUDED.response_data,
       attempted_at = NOW()
     RETURNING *
-  `;
-  return rows[0];
+  `
+  return rows[0]
 }
 
 // ============================================================================
@@ -526,56 +524,55 @@ export async function createSocialPostResult(input: {
 export function applyTemplatePlaceholders(
   template: string,
   context: {
-    band?: string;
-    event?: string;
-    date?: string;
-    location?: string;
-    photographer?: string;
-    company?: string;
+    band?: string
+    event?: string
+    date?: string
+    location?: string
+    photographer?: string
+    company?: string
   }
 ): string {
-  let result = template;
-  if (context.band) result = result.replace(/{band}/g, context.band);
-  if (context.event) result = result.replace(/{event}/g, context.event);
-  if (context.date) result = result.replace(/{date}/g, context.date);
-  if (context.location) result = result.replace(/{location}/g, context.location);
+  let result = template
+  if (context.band) result = result.replace(/{band}/g, context.band)
+  if (context.event) result = result.replace(/{event}/g, context.event)
+  if (context.date) result = result.replace(/{date}/g, context.date)
+  if (context.location) result = result.replace(/{location}/g, context.location)
   if (context.photographer)
-    result = result.replace(/{photographer}/g, context.photographer);
-  if (context.company) result = result.replace(/{company}/g, context.company);
-  return result;
+    result = result.replace(/{photographer}/g, context.photographer)
+  if (context.company) result = result.replace(/{company}/g, context.company)
+  return result
 }
 
 /**
  * Check if Instagram is configured (has connected Instagram account)
  */
 export async function isInstagramConfigured(): Promise<boolean> {
-  const account = await getSocialAccountByProvider("instagram");
-  return !!(account && account.status === "active");
+  const account = await getSocialAccountByProvider('instagram')
+  return !!(account && account.status === 'active')
 }
 
 /**
  * Check which platforms are available for posting
  */
 export async function getAvailablePlatforms(): Promise<SocialPlatform[]> {
-  const accounts = await getSocialAccounts();
-  const platforms: SocialPlatform[] = [];
+  const accounts = await getSocialAccounts()
+  const platforms: SocialPlatform[] = []
 
   for (const account of accounts) {
-    if (account.status !== "active") continue;
+    if (account.status !== 'active') continue
 
-    if (account.provider === "linkedin" && account.organization_urn) {
-      platforms.push("linkedin");
+    if (account.provider === 'linkedin' && account.organization_urn) {
+      platforms.push('linkedin')
     }
 
-    if (account.provider === "facebook") {
-      platforms.push("facebook");
+    if (account.provider === 'facebook') {
+      platforms.push('facebook')
     }
 
-    if (account.provider === "instagram") {
-      platforms.push("instagram");
+    if (account.provider === 'instagram') {
+      platforms.push('instagram')
     }
   }
 
-  return platforms;
+  return platforms
 }
-

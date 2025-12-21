@@ -1,28 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 import {
   getBandScores,
   getEventById,
   hasFinalizedResults,
   getFinalizedResults,
-} from "@/lib/db";
-import { withPublicRateLimit } from "@/lib/api-protection";
+} from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
 async function handleGetScores(request: NextRequest, _context?: unknown) {
   try {
     // Extract eventId from the URL path
-    const url = new URL(request.url);
-    const pathParts = url.pathname.split("/");
-    const eventId = pathParts[pathParts.length - 2]; // scores is the last part, eventId is before it
+    const url = new URL(request.url)
+    const pathParts = url.pathname.split('/')
+    const eventId = pathParts[pathParts.length - 2] // scores is the last part, eventId is before it
 
     // Check if event is finalized and has finalized results
-    const event = await getEventById(eventId);
+    const event = await getEventById(eventId)
     if (
       event &&
-      event.status === "finalized" &&
+      event.status === 'finalized' &&
       (await hasFinalizedResults(eventId))
     ) {
       // Return finalized results
-      const finalizedResults = await getFinalizedResults(eventId);
+      const finalizedResults = await getFinalizedResults(eventId)
       // Transform to match expected format (similar to getBandScores output)
       const scores = finalizedResults.map((result) => ({
         id: result.band_id,
@@ -39,20 +39,20 @@ async function handleGetScores(request: NextRequest, _context?: unknown) {
         crowd_noise_energy: result.crowd_noise_energy,
         crowd_noise_peak: result.crowd_noise_peak,
         crowd_score: result.crowd_noise_score,
-      }));
-      return NextResponse.json(scores);
+      }))
+      return NextResponse.json(scores)
     }
 
     // For non-finalized events, calculate scores dynamically
-    const scores = await getBandScores(eventId);
-    return NextResponse.json(scores);
+    const scores = await getBandScores(eventId)
+    return NextResponse.json(scores)
   } catch (error) {
-    console.error("Error fetching band scores:", error);
+    console.error('Error fetching band scores:', error)
     return NextResponse.json(
-      { error: "Failed to fetch band scores" },
+      { error: 'Failed to fetch band scores' },
       { status: 500 }
-    );
+    )
   }
 }
 
-export const GET = withPublicRateLimit(handleGetScores);
+export const GET = withPublicRateLimit(handleGetScores)

@@ -1,22 +1,22 @@
-import { SetlistAdminClient } from "./setlist-admin-client";
-import { getEventById, getBandsForEvent } from "@/lib/db";
-import { notFound } from "next/navigation";
-import { AdminLayout } from "@/components/layouts";
+import { SetlistAdminClient } from './setlist-admin-client'
+import { getEventById, getBandsForEvent } from '@/lib/db'
+import { notFound } from 'next/navigation'
+import { AdminLayout } from '@/components/layouts'
 
 export default async function SetlistAdminPage({
   params,
 }: {
-  params: Promise<{ eventId: string }>;
+  params: Promise<{ eventId: string }>
 }) {
-  const { eventId } = await params;
+  const { eventId } = await params
 
   const [event, bands] = await Promise.all([
     getEventById(eventId),
     getBandsForEvent(eventId),
-  ]);
+  ])
 
   if (!event) {
-    notFound();
+    notFound()
   }
 
   return (
@@ -24,9 +24,9 @@ export default async function SetlistAdminPage({
       title="Setlist Management"
       subtitle={event.name}
       breadcrumbs={[
-        { label: "Events", href: "/admin/events" },
+        { label: 'Events', href: '/admin/events' },
         { label: event.name, href: `/admin/events/${eventId}` },
-        { label: "Setlists" },
+        { label: 'Setlists' },
       ]}
     >
       <SetlistAdminClient
@@ -42,5 +42,5 @@ export default async function SetlistAdminPage({
         }))}
       />
     </AdminLayout>
-  );
+  )
 }

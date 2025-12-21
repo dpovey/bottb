@@ -1,18 +1,18 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import type { BreadcrumbItem } from "@/components/nav";
-import { ChevronRightIcon } from "@/components/icons";
+import Link from 'next/link'
+import type { BreadcrumbItem } from '@/components/nav'
+import { ChevronRightIcon } from '@/components/icons'
 
 interface AdminTopBarProps {
   /** Page title */
-  title: string;
+  title: string
   /** Page subtitle/description */
-  subtitle?: string;
+  subtitle?: string
   /** Breadcrumb trail */
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItem[]
   /** Optional actions to show on the right side */
-  actions?: React.ReactNode;
+  actions?: React.ReactNode
 }
 
 export function AdminTopBar({
@@ -53,5 +53,5 @@ export function AdminTopBar({
         {actions && <div className="flex items-center gap-3">{actions}</div>}
       </div>
     </header>
-  );
+  )
 }

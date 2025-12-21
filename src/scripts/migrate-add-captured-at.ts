@@ -13,25 +13,25 @@
  * Run with: DOTENV_CONFIG_PATH=.env.local npx tsx src/scripts/migrate-add-captured-at.ts
  */
 
-import "dotenv/config";
-import { sql } from "@vercel/postgres";
+import 'dotenv/config'
+import { sql } from '@vercel/postgres'
 
 async function migrate() {
-  console.log("🚀 Starting migration: Add captured_at column to photos...\n");
+  console.log('🚀 Starting migration: Add captured_at column to photos...\n')
 
   try {
     // Add captured_at column
-    console.log("Adding captured_at column...");
+    console.log('Adding captured_at column...')
     await sql`
       ALTER TABLE photos 
       ADD COLUMN IF NOT EXISTS captured_at TIMESTAMP WITH TIME ZONE
-    `;
-    console.log("✅ Column added\n");
+    `
+    console.log('✅ Column added\n')
 
     // Backfill from xmp_metadata, with event date as fallback
     console.log(
-      "Backfilling captured_at from xmp_metadata (with event date fallback)..."
-    );
+      'Backfilling captured_at from xmp_metadata (with event date fallback)...'
+    )
     const result = await sql`
       UPDATE photos p
       SET captured_at = COALESCE(
@@ -47,15 +47,15 @@ async function migrate() {
         p.uploaded_at
       )
       WHERE p.captured_at IS NULL
-    `;
-    console.log(`✅ Updated ${result.rowCount} photos\n`);
+    `
+    console.log(`✅ Updated ${result.rowCount} photos\n`)
 
     // Create index for efficient date sorting
-    console.log("Creating index on captured_at...");
+    console.log('Creating index on captured_at...')
     await sql`
       CREATE INDEX IF NOT EXISTS idx_photos_captured_at ON photos (captured_at)
-    `;
-    console.log("✅ Index created\n");
+    `
+    console.log('✅ Index created\n')
 
     // Show summary
     const { rows: stats } = await sql`
@@ -74,21 +74,21 @@ async function migrate() {
           p.event_id IS NOT NULL
         ) as from_event_date
       FROM photos p
-    `;
+    `
 
-    console.log("📊 Summary:");
-    console.log(`   Total photos: ${stats[0].total}`);
-    console.log(`   With captured_at: ${stats[0].with_date}`);
-    console.log(`   From XMP metadata: ${stats[0].from_metadata}`);
-    console.log(`   From event date (fallback): ${stats[0].from_event_date}`);
+    console.log('📊 Summary:')
+    console.log(`   Total photos: ${stats[0].total}`)
+    console.log(`   With captured_at: ${stats[0].with_date}`)
+    console.log(`   From XMP metadata: ${stats[0].from_metadata}`)
+    console.log(`   From event date (fallback): ${stats[0].from_event_date}`)
 
-    console.log("\n✅ Migration complete!");
+    console.log('\n✅ Migration complete!')
   } catch (error) {
-    console.error("❌ Migration failed:", error);
-    process.exit(1);
+    console.error('❌ Migration failed:', error)
+    process.exit(1)
   }
 
-  process.exit(0);
+  process.exit(0)
 }
 
-migrate();
+migrate()
