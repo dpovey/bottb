@@ -80,7 +80,7 @@ interface PhotoSlideshowProps {
 }
 
 const PAGE_SIZE = 50
-const PREFETCH_THRESHOLD = 5 // Prefetch when within 5 photos of edge
+const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives time for network)
 const PLAY_INTERVAL_MS = 5000 // 5 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
@@ -663,32 +663,47 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   }, [stopPlay]) // Removed currentIndex - using ref instead
 
   // Scroll to initial photo on mount (instant, no animation)
+  // Wait for image to load so we have correct dimensions
   useEffect(() => {
     const container = scrollContainerRef.current
     if (!container) return
 
-    // Wait for layout to stabilize using requestAnimationFrame
-    const scrollToInitial = () => {
+    const scrollToPhoto = () => {
       const items = container.querySelectorAll('[data-slide-index]')
       const targetItem = items[currentIndex] as HTMLElement
       if (targetItem) {
         isScrollingRef.current = true
-        // Calculate exact scroll position to center the item
-        const containerRect = container.getBoundingClientRect()
-        const itemRect = targetItem.getBoundingClientRect()
-        const scrollLeft =
-          targetItem.offsetLeft - containerRect.width / 2 + itemRect.width / 2
-        container.scrollLeft = scrollLeft
+        // Just use scrollIntoView - it works correctly once layout is stable
+        targetItem.scrollIntoView({
+          behavior: 'instant',
+          inline: 'center',
+          block: 'nearest',
+        })
         setTimeout(() => {
           isScrollingRef.current = false
         }, 100)
       }
     }
 
-    // Use double requestAnimationFrame to ensure layout is complete
-    requestAnimationFrame(() => {
-      requestAnimationFrame(scrollToInitial)
-    })
+    // Find the current image and wait for it to load
+    const items = container.querySelectorAll('[data-slide-index]')
+    const targetItem = items[currentIndex] as HTMLElement
+    const img = targetItem?.querySelector('img')
+
+    if (img) {
+      if (img.complete) {
+        // Image already loaded (cached)
+        requestAnimationFrame(scrollToPhoto)
+      } else {
+        // Wait for image to load
+        img.addEventListener('load', scrollToPhoto, { once: true })
+        // Fallback timeout in case load event doesn't fire
+        setTimeout(scrollToPhoto, 500)
+      }
+    } else {
+      // No image found, just try to scroll
+      requestAnimationFrame(scrollToPhoto)
+    }
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1371,24 +1386,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         </button>
 
         {/* Native scroll carousel - smooth scrolling like photo strips */}
+        {/* padding-inline provides space for first/last photos to center */}
         <div
           ref={scrollContainerRef}
           className="flex items-center gap-8 overflow-x-auto w-full h-full snap-x snap-mandatory scrollbar-none"
+          style={{ paddingInline: '50vw' }}
         >
-          {/* Leading placeholder - same size as photos, allows first photo to center */}
-          <div
-            className="shrink-0 snap-center flex items-center justify-center"
-            aria-hidden="true"
-          >
-            <div
-              className="bg-transparent"
-              style={{
-                width: 'min(90vw, calc(100vw - 8rem))',
-                height: 'calc(100vh - 11rem)',
-              }}
-            />
-          </div>
-
           {/* Render all photos - browser handles lazy loading */}
           {allPhotos.map((photo, index) => {
             const isCurrent = index === currentIndex
@@ -1420,20 +1423,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               </div>
             )
           })}
-
-          {/* Trailing placeholder - same size as photos, allows last photo to center */}
-          <div
-            className="shrink-0 snap-center flex items-center justify-center"
-            aria-hidden="true"
-          >
-            <div
-              className="bg-transparent"
-              style={{
-                width: 'min(90vw, calc(100vw - 8rem))',
-                height: 'calc(100vh - 11rem)',
-              }}
-            />
-          </div>
         </div>
 
         {/* Next Button */}
