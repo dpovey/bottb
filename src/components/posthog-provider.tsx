@@ -14,6 +14,12 @@ function PostHogPageViewTracker() {
   const searchParams = useSearchParams()
 
   // Track page views on route changes with environment metadata
+  // We track the pathname + search params WITHOUT the 'photo' param, since photo
+  // navigation in the slideshow is tracked separately via trackPhotoView
+  const searchParamsWithoutPhoto = new URLSearchParams(searchParams.toString())
+  searchParamsWithoutPhoto.delete('photo')
+  const stableSearchParams = searchParamsWithoutPhoto.toString()
+
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (process.env.NODE_ENV === 'test') return
@@ -38,7 +44,8 @@ function PostHogPageViewTracker() {
       is_development: isDev ? 'true' : 'false',
       is_production: nodeEnv === 'production' && !isDev ? 'true' : 'false',
     })
-  }, [pathname, searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, stableSearchParams])
 
   return null
 }
