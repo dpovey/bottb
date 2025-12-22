@@ -527,8 +527,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const accumulatedDelta = useRef(0)
   const lastScrollTime = useRef(0)
   const isNavigating = useRef(false)
-  const SCROLL_THRESHOLD = 80 // Accumulated delta needed to trigger navigation
-  const NAVIGATION_COOLDOWN_MS = 300 // Cooldown after navigation to prevent rapid switching
+  const SCROLL_THRESHOLD = 50 // Accumulated delta needed to trigger navigation
+  const NAVIGATION_COOLDOWN_MS = 350 // Cooldown after navigation to prevent double-scrolling
   const SCROLL_DECAY_MS = 150 // Time after which accumulated delta resets
 
   useEffect(() => {
@@ -570,7 +570,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
 
       // Ignore very small scroll movements (noise)
-      if (Math.abs(delta) < 5) return
+      if (Math.abs(delta) < 3) return
 
       // If changing direction, reset accumulator to prevent fighting
       if (
@@ -662,18 +662,17 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     return () => observer.disconnect()
   }, [stopPlay]) // Removed currentIndex - using ref instead
 
-  // Scroll to initial photo on mount (instant, no animation)
+  // Scroll to initial photo on mount
   // Wait for image to load so we have correct dimensions
   useEffect(() => {
     const container = scrollContainerRef.current
-    if (!container) return
+    if (!container || allPhotos.length === 0) return
 
     const scrollToPhoto = () => {
       const items = container.querySelectorAll('[data-slide-index]')
       const targetItem = items[currentIndex] as HTMLElement
       if (targetItem) {
         isScrollingRef.current = true
-        // Just use scrollIntoView - it works correctly once layout is stable
         targetItem.scrollIntoView({
           behavior: 'instant',
           inline: 'center',
@@ -700,11 +699,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         // Fallback timeout in case load event doesn't fire
         setTimeout(scrollToPhoto, 500)
       }
-    } else {
-      // No image found, just try to scroll
-      requestAnimationFrame(scrollToPhoto)
     }
-    // Only run on mount
+    // Only run on mount - navigation handles its own scrolling
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1443,7 +1439,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       <div className="slideshow-thumbnails hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6">
         <div
           ref={thumbnailStripRef}
-          className="flex gap-3 overflow-x-auto py-3"
+          className="flex gap-3 overflow-x-auto py-3 px-2"
           style={{ scrollbarWidth: 'thin' }}
         >
           {allPhotos.map((photo, index) => {
