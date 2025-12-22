@@ -614,8 +614,12 @@ export function PhotoSlideshow({
       ) {
         stopPlay()
         if (deltaX > 0) {
+          // Swipe right -> go to previous photo (slides in from left)
+          setDirection(-1)
           goToPrevious()
         } else {
+          // Swipe left -> go to next photo (slides in from right)
+          setDirection(1)
           goToNext()
         }
       }
@@ -653,6 +657,7 @@ export function PhotoSlideshow({
     goToPrevious,
     goToNext,
     stopPlay,
+    setDirection,
     showDeleteConfirm,
     showCropModal,
     showLabelsModal,
@@ -1018,15 +1023,30 @@ export function PhotoSlideshow({
 
   const currentPhoto = allPhotos[currentIndex]
 
-  // Safety check
+  // Show loading state when photo hasn't loaded yet (e.g., deep link before photos fetch)
   if (!currentPhoto) {
-    return null
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading photo...</p>
+        </div>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+          aria-label="Close slideshow"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+      </div>
+    )
   }
 
   const slideVariants = {
     enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
+      x: direction > 0 ? '100%' : '-100%',
+      opacity: 1,
     }),
     center: {
       zIndex: 1,
@@ -1035,8 +1055,8 @@ export function PhotoSlideshow({
     },
     exit: (direction: number) => ({
       zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
+      x: direction < 0 ? '100%' : '-100%',
+      opacity: 1,
     }),
   }
 
@@ -1338,7 +1358,7 @@ export function PhotoSlideshow({
         </button>
 
         {/* Image */}
-        <AnimatePresence initial={false} custom={direction} mode="wait">
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={currentPhoto.id}
             src={currentPhoto.large_4k_url || currentPhoto.blob_url}
@@ -1361,8 +1381,7 @@ export function PhotoSlideshow({
               isPlaying
                 ? { opacity: { duration: 0.8 } }
                 : {
-                    x: { type: 'spring', stiffness: 80, damping: 20 },
-                    opacity: { duration: 0.4 },
+                    x: { type: 'spring', stiffness: 300, damping: 30 },
                   }
             }
           />

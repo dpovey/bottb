@@ -111,8 +111,10 @@ export function PhotosContent({
     initialCompanySlug
   )
 
-  // Slideshow
-  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null)
+  // Slideshow - initialize to 0 if we have a photo ID in URL (so slideshow renders immediately)
+  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(
+    initialPhotoId ? 0 : null
+  )
   const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(
     initialPhotoId
   )
@@ -141,11 +143,15 @@ export function PhotosContent({
       const urlValue = company || null
       return prev !== urlValue ? urlValue : prev
     })
-    setPendingPhotoId((prev) => {
-      const urlValue = photoId || null
-      return prev !== urlValue ? urlValue : prev
-    })
-  }, [searchParams])
+    // Only set pendingPhotoId if slideshow is not already open
+    // This prevents infinite loops when the slideshow updates the URL
+    if (slideshowIndex === null) {
+      setPendingPhotoId((prev) => {
+        const urlValue = photoId || null
+        return prev !== urlValue ? urlValue : prev
+      })
+    }
+  }, [searchParams, slideshowIndex])
 
   // Update URL when filters change
   const updateUrlParams = useCallback(
@@ -235,6 +241,9 @@ export function PhotosContent({
     [updateUrlParams, slideshowIndex]
   )
 
+  // Track if we're fetching the specific photo for the URL
+  const fetchingPendingPhoto = useRef(false)
+
   // Open slideshow when photos load and we have a pending photo ID
   useEffect(() => {
     if (pendingPhotoId && photos.length > 0 && !loading) {
@@ -242,10 +251,34 @@ export function PhotosContent({
       if (index !== -1) {
         setSlideshowIndex(index)
         setPendingPhotoId(null)
-      } else {
-        // Photo not found in current page - clear the pending ID
-        // In a more advanced implementation, we could search for the photo
-        setPendingPhotoId(null)
+        fetchingPendingPhoto.current = false
+      } else if (!fetchingPendingPhoto.current) {
+        // Photo not found in current batch - fetch it specifically
+        fetchingPendingPhoto.current = true
+
+        fetch(`/api/photos/${pendingPhotoId}`)
+          .then((res) => {
+            if (!res.ok) throw new Error('Photo not found')
+            return res.json()
+          })
+          .then((photo: Photo) => {
+            // Prepend the photo to the array so it shows at index 0
+            setPhotos((prev) => {
+              // Avoid duplicates
+              if (prev.some((p) => p.id === photo.id)) return prev
+              return [photo, ...prev]
+            })
+            loadedPhotoIds.current.add(photo.id)
+            // Open slideshow at index 0 (where we prepended the photo)
+            setSlideshowIndex(0)
+            setPendingPhotoId(null)
+            fetchingPendingPhoto.current = false
+          })
+          .catch((error) => {
+            console.error('Failed to fetch photo for URL:', error)
+            setPendingPhotoId(null)
+            fetchingPendingPhoto.current = false
+          })
       }
     }
   }, [pendingPhotoId, photos, loading])
@@ -684,7 +717,7 @@ export function PhotosContent({
       </main>
 
       {/* Slideshow modal */}
-      {slideshowIndex !== null && photos.length > 0 && (
+      {slideshowIndex !== null && (photos.length > 0 || pendingPhotoId) && (
         <PhotoSlideshow
           photos={photos}
           initialIndex={slideshowIndex}

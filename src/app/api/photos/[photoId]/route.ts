@@ -2,12 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@vercel/postgres'
 import { del, list } from '@vercel/blob'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
+import { getPhotoById } from '@/lib/db'
 
 interface PhotoRow {
   id: string
   blob_url: string
   blob_pathname: string
   original_filename: string
+}
+
+// GET a single photo by ID (public endpoint for slideshow deep links)
+export async function GET(
+  _request: NextRequest,
+  context: { params: Promise<{ photoId: string }> }
+) {
+  try {
+    const { photoId } = await context.params
+
+    if (!photoId) {
+      return NextResponse.json(
+        { error: 'Photo ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const photo = await getPhotoById(photoId)
+
+    if (!photo) {
+      return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(photo)
+  } catch (error) {
+    console.error('Error fetching photo:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch photo' },
+      { status: 500 }
+    )
+  }
 }
 
 const handleDeletePhoto: ProtectedApiHandler = async (

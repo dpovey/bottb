@@ -1,7 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { vi, beforeAll } from 'vitest'
+import { vi, beforeAll, beforeEach, describe, it, expect } from 'vitest'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { PhotosContent } from '../photos-content'
+
+// Mock next-auth/react
+vi.mock('next-auth/react', () => ({
+  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
+  SessionProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
 
 // Mock IntersectionObserver
 beforeAll(() => {
@@ -10,6 +16,17 @@ beforeAll(() => {
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   }))
+})
+
+// Mock window.history for URL updates
+beforeAll(() => {
+  Object.defineProperty(window, 'history', {
+    value: {
+      replaceState: vi.fn(),
+      pushState: vi.fn(),
+    },
+    writable: true,
+  })
 })
 
 // Mock next/navigation
@@ -38,6 +55,120 @@ vi.mock('@/lib/db', () => ({
     GLOBAL_HERO: 'global_hero',
   },
 }))
+
+// Mock photo data for slideshow tests (keeping for potential future tests)
+const _mockPhotos = [
+  {
+    id: 'photo-1',
+    blob_url: 'https://example.com/photo1.jpg',
+    blob_pathname: 'photos/photo-1/large.webp',
+    original_filename: 'photo1.jpg',
+    thumbnail_url: 'https://example.com/thumb1.jpg',
+    original_blob_url: 'https://example.com/original1.jpg',
+    event_id: 'event-1',
+    band_id: 'band-1',
+    event_name: 'Test Event',
+    band_name: 'Test Band',
+    photographer: 'Test Photographer',
+    labels: [],
+    hero_focal_point: { x: 0.5, y: 0.5 },
+    event_date: '2024-01-01',
+    company_slug: 'test-co',
+    company_name: 'Test Company',
+    company_icon_url: null,
+    is_hero_for_band: false,
+    is_hero_for_event: false,
+    is_global_hero: false,
+    created_at: '2024-01-01T00:00:00Z',
+    thumbnail_2x_url: null,
+    thumbnail_3x_url: null,
+    large_4k_url: null,
+  },
+  {
+    id: 'photo-2',
+    blob_url: 'https://example.com/photo2.jpg',
+    blob_pathname: 'photos/photo-2/large.webp',
+    original_filename: 'photo2.jpg',
+    thumbnail_url: 'https://example.com/thumb2.jpg',
+    original_blob_url: 'https://example.com/original2.jpg',
+    event_id: 'event-1',
+    band_id: 'band-2',
+    event_name: 'Test Event',
+    band_name: 'Another Band',
+    photographer: 'Test Photographer',
+    labels: [],
+    hero_focal_point: { x: 0.5, y: 0.5 },
+    event_date: '2024-01-01',
+    company_slug: 'test-co',
+    company_name: 'Test Company',
+    company_icon_url: null,
+    is_hero_for_band: false,
+    is_hero_for_event: false,
+    is_global_hero: false,
+    created_at: '2024-01-01T00:00:00Z',
+    thumbnail_2x_url: null,
+    thumbnail_3x_url: null,
+    large_4k_url: null,
+  },
+]
+
+describe('PhotosContent - Slideshow from URL', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFetch.mockReset()
+    ;(useRouter as ReturnType<typeof vi.fn>).mockReturnValue({
+      push: vi.fn(),
+      replace: vi.fn(),
+    })
+  })
+
+  it('should render slideshow immediately when initialPhotoId is provided', async () => {
+    // Mock searchParams to return the photo ID
+    ;(useSearchParams as ReturnType<typeof vi.fn>).mockReturnValue({
+      get: vi.fn((key: string) => (key === 'photo' ? 'photo-2' : null)),
+    })
+
+    // Mock API to return empty initially (simulating slow network)
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        photos: [],
+        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+        photographers: [],
+        companies: [],
+        availableFilters: {
+          companies: [],
+          events: [],
+          photographers: [],
+          hasPhotosWithoutCompany: false,
+        },
+      }),
+    })
+
+    render(
+      <PhotosContent
+        initialEventId={null}
+        initialPhotographer={null}
+        initialCompanySlug={null}
+        initialPhotoId="photo-2"
+      />
+    )
+
+    // The slideshow should render immediately (even in loading state) when initialPhotoId is provided
+    // We check for the slideshow's close button which should be visible
+    const closeButton = await screen.findByRole(
+      'button',
+      {
+        name: /close slideshow/i,
+      },
+      { timeout: 2000 }
+    )
+    expect(closeButton).toBeInTheDocument()
+
+    // The loading indicator should be visible since no photos are loaded yet
+    expect(screen.getByText(/loading photo/i)).toBeInTheDocument()
+  })
+})
 
 describe('PhotosContent - Filter Defaults', () => {
   beforeEach(() => {
