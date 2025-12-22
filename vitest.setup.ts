@@ -10,6 +10,18 @@ configure({
   asyncUtilTimeout: 5000,
 })
 
+// Mock IntersectionObserver for components that use it
+class MockIntersectionObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+  constructor(
+    _callback: IntersectionObserverCallback,
+    _options?: IntersectionObserverInit
+  ) {}
+}
+vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
+
 // Mock Next.js modules using importOriginal
 vi.mock('next/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next/server')>()

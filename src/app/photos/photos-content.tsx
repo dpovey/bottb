@@ -118,6 +118,8 @@ export function PhotosContent({
   const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(
     initialPhotoId
   )
+  // Track intentional close to prevent re-opening from stale URL params
+  const isClosingRef = useRef(false)
 
   // Track current page for ordered mode
   const currentPage = useRef(1)
@@ -143,9 +145,9 @@ export function PhotosContent({
       const urlValue = company || null
       return prev !== urlValue ? urlValue : prev
     })
-    // Only set pendingPhotoId if slideshow is not already open
+    // Only set pendingPhotoId if slideshow is not already open AND we're not intentionally closing
     // This prevents infinite loops when the slideshow updates the URL
-    if (slideshowIndex === null) {
+    if (slideshowIndex === null && !isClosingRef.current) {
       setPendingPhotoId((prev) => {
         const urlValue = photoId || null
         return prev !== urlValue ? urlValue : prev
@@ -453,39 +455,66 @@ export function PhotosContent({
   }
 
   // Handle slideshow close
-  const handleSlideshowClose = () => {
+  const handleSlideshowClose = useCallback(() => {
+    isClosingRef.current = true // Prevent searchParams effect from re-opening
     setSlideshowIndex(null)
+    setPendingPhotoId(null) // Clear pending photo to prevent re-opening
     // Clear the photo param from URL
     const url = new URL(window.location.href)
     url.searchParams.delete('photo')
     window.history.replaceState({}, '', url.pathname + url.search)
-  }
+    // Reset the closing flag after a tick to allow URL to update
+    setTimeout(() => {
+      isClosingRef.current = false
+    }, 100)
+  }, [])
 
   // Handle photo change in slideshow (update URL)
-  const handlePhotoChange = (photoId: string) => {
+  const handlePhotoChange = useCallback((photoId: string) => {
     const url = new URL(window.location.href)
     url.searchParams.set('photo', photoId)
     window.history.replaceState({}, '', url.pathname + url.search)
-  }
+  }, [])
 
   // Handle photo deletion (called from slideshow)
-  const handlePhotoDeleted = (photoId: string) => {
+  const handlePhotoDeleted = useCallback((photoId: string) => {
     // Remove the photo from local state
     setPhotos((prev) => prev.filter((p) => p.id !== photoId))
     loadedPhotoIds.current.delete(photoId)
     // Update total count
     setTotalCount((prev) => prev - 1)
-  }
+  }, [])
 
   // Handle photo crop (called from slideshow)
-  const handlePhotoCropped = (photoId: string, newThumbnailUrl: string) => {
-    // Update the thumbnail URL in local state
-    setPhotos((prev) =>
-      prev.map((p) =>
-        p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
+  const handlePhotoCropped = useCallback(
+    (photoId: string, newThumbnailUrl: string) => {
+      // Update the thumbnail URL in local state
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
+        )
       )
-    )
-  }
+    },
+    []
+  )
+
+  // Handle filter change from slideshow
+  const handleFilterChangeFromSlideshow = useCallback(
+    (filterType: string, value: string | null) => {
+      switch (filterType) {
+        case 'event':
+          handleEventChange(value)
+          break
+        case 'photographer':
+          handlePhotographerChange(value)
+          break
+        case 'company':
+          handleCompanyChange(value)
+          break
+      }
+    },
+    [handleEventChange, handlePhotographerChange, handleCompanyChange]
+  )
 
   return (
     <PublicLayout
@@ -736,19 +765,7 @@ export function PhotosContent({
                 ? 'No Company'
                 : companies.find((c) => c.slug === selectedCompanySlug)?.name,
           }}
-          onFilterChange={(filterType, value) => {
-            switch (filterType) {
-              case 'event':
-                handleEventChange(value)
-                break
-              case 'photographer':
-                handlePhotographerChange(value)
-                break
-              case 'company':
-                handleCompanyChange(value)
-                break
-            }
-          }}
+          onFilterChange={handleFilterChangeFromSlideshow}
           onClose={handleSlideshowClose}
           onPhotoDeleted={handlePhotoDeleted}
           onPhotoCropped={handlePhotoCropped}

@@ -1,11 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Photo, PHOTO_LABELS } from '@/lib/db'
 import { CompanyIcon } from '@/components/ui'
-import { motion, AnimatePresence } from 'framer-motion'
+// framer-motion no longer needed - using CSS transitions for carousel
 import Cropper, { Area } from 'react-easy-crop'
 import { ShareComposerModal } from './share-composer-modal'
 import {
@@ -82,9 +82,9 @@ interface PhotoSlideshowProps {
 const PAGE_SIZE = 50
 const PREFETCH_THRESHOLD = 5 // Prefetch when within 5 photos of edge
 const PLAY_INTERVAL_MS = 5000 // 5 seconds between photos in play mode
-const SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels
+const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
-export function PhotoSlideshow({
+export const PhotoSlideshow = memo(function PhotoSlideshow({
   photos: initialPhotos,
   initialIndex,
   totalPhotos,
@@ -103,11 +103,13 @@ export function PhotoSlideshow({
   // Internal state for all loaded photos
   const [allPhotos, setAllPhotos] = useState<Photo[]>(initialPhotos)
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const [direction, setDirection] = useState(0)
+  const [_direction, setDirection] = useState(0)
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     new Set([currentPage])
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  // Ref for debouncing URL updates (prevents navigation flooding when swiping fast)
+  const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [totalCount, setTotalCount] = useState(totalPhotos)
 
   // Track the previous initialIndex to detect filter changes
@@ -200,9 +202,14 @@ export function PhotoSlideshow({
   // Mobile controls state (will be implemented in UI update)
   const [_mobileControlsExpanded, _setMobileControlsExpanded] = useState(false)
 
-  // Touch/swipe state
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  // Touch/swipe state (reserved for future touch handling)
+  const _touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll container ref for native scroll-based carousel
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const isScrollingRef = useRef(false)
+  const _scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(
@@ -372,37 +379,65 @@ export function PhotoSlideshow({
     }
   }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage])
 
+  // Scroll to a specific photo index
+  const scrollToIndex = useCallback((index: number) => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const items = container.querySelectorAll('[data-slide-index]')
+    const targetItem = items[index] as HTMLElement
+    if (targetItem) {
+      isScrollingRef.current = true
+      targetItem.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      })
+      // Reset scrolling flag after animation
+      setTimeout(() => {
+        isScrollingRef.current = false
+      }, 500)
+    }
+  }, [])
+
   const goToIndex = useCallback(
     (index: number) => {
+      // Prevent double navigation while scrolling
+      if (isScrollingRef.current) return
+      if (index === currentIndex) return
       setDirection(index > currentIndex ? 1 : -1)
       setCurrentIndex(index)
+      scrollToIndex(index)
     },
-    [currentIndex]
+    [currentIndex, scrollToIndex]
   )
 
   const goToNext = useCallback(() => {
-    if (currentIndex < allPhotos.length - 1) {
-      setDirection(1)
-      setCurrentIndex((prev) => prev + 1)
-    } else if (
-      currentIndex === allPhotos.length - 1 &&
-      allPhotos.length < totalCount
-    ) {
-      // At the end but more photos exist - they're loading
-      // Could show a loading indicator
-    } else if (isPlaying && currentIndex === allPhotos.length - 1) {
-      // Loop back to start in play mode
-      setDirection(1)
-      setCurrentIndex(0)
-    }
-  }, [currentIndex, allPhotos.length, totalCount, isPlaying])
+    // Prevent double navigation while scrolling
+    if (isScrollingRef.current) return
+    const canGoNext =
+      currentIndex < allPhotos.length - 1 ||
+      (isPlaying && currentIndex === allPhotos.length - 1)
+
+    if (!canGoNext) return
+
+    const nextIndex =
+      currentIndex === allPhotos.length - 1 ? 0 : currentIndex + 1
+
+    setDirection(1)
+    setCurrentIndex(nextIndex)
+    scrollToIndex(nextIndex)
+  }, [currentIndex, allPhotos.length, isPlaying, scrollToIndex])
 
   const goToPrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setDirection(-1)
-      setCurrentIndex((prev) => prev - 1)
-    }
-  }, [currentIndex])
+    // Prevent double navigation while scrolling
+    if (isScrollingRef.current) return
+    if (currentIndex === 0) return
+
+    setDirection(-1)
+    setCurrentIndex((prev) => prev - 1)
+    scrollToIndex(currentIndex - 1)
+  }, [currentIndex, scrollToIndex])
 
   // Play mode auto-advance
   useEffect(() => {
@@ -575,94 +610,88 @@ export function PhotoSlideshow({
     showShareModal,
   ])
 
-  // Touch/swipe handlers for mobile
+  // Use IntersectionObserver to detect which photo is centered
+  // Store currentIndex in a ref so observer callback has latest value without re-creating observer
+  const currentIndexRef = useRef(currentIndex)
+  currentIndexRef.current = currentIndex
+
   useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      if (
-        showDeleteConfirm ||
-        showCropModal ||
-        showLabelsModal ||
-        showShareModal
-      )
-        return
+    const container = scrollContainerRef.current
+    if (!container) return
 
-      // Don't interfere with thumbnail strip scrolling
-      const target = e.target as HTMLElement
-      if (thumbnailStripRef.current?.contains(target)) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Don't update if we're programmatically scrolling
+        if (isScrollingRef.current) return
 
-      const touch = e.touches[0]
-      touchStartRef.current = { x: touch.clientX, y: touch.clientY }
-    }
+        // Find the entry with highest intersection ratio
+        let bestEntry: IntersectionObserverEntry | undefined
+        let bestRatio = 0
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!touchStartRef.current) return
-      // Prevent default to avoid scrolling while swiping
-      e.preventDefault()
-    }
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStartRef.current) return
-
-      const touch = e.changedTouches[0]
-      const deltaX = touch.clientX - touchStartRef.current.x
-      const deltaY = touch.clientY - touchStartRef.current.y
-
-      // Only handle horizontal swipes (ignore if vertical movement is greater)
-      if (
-        Math.abs(deltaX) > Math.abs(deltaY) &&
-        Math.abs(deltaX) > SWIPE_THRESHOLD
-      ) {
-        stopPlay()
-        if (deltaX > 0) {
-          // Swipe right -> go to previous photo (slides in from left)
-          setDirection(-1)
-          goToPrevious()
-        } else {
-          // Swipe left -> go to next photo (slides in from right)
-          setDirection(1)
-          goToNext()
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio
+            bestEntry = entry
+          }
         }
-      }
 
-      touchStartRef.current = null
-    }
-
-    const container = imageContainerRef.current || document
-    container.addEventListener(
-      'touchstart',
-      handleTouchStart as EventListener,
+        if (bestEntry && bestRatio > 0.5) {
+          const index = parseInt(
+            bestEntry.target.getAttribute('data-slide-index') || '0',
+            10
+          )
+          const current = currentIndexRef.current
+          if (index !== current) {
+            setDirection(index > current ? 1 : -1)
+            setCurrentIndex(index)
+            stopPlay()
+          }
+        }
+      },
       {
-        passive: true,
+        root: container,
+        rootMargin: '-40% 0px -40% 0px', // Only trigger when element is in center 20% of viewport
+        threshold: [0.5, 0.75, 1.0],
       }
     )
-    container.addEventListener('touchmove', handleTouchMove as EventListener, {
-      passive: false,
-    })
-    container.addEventListener('touchend', handleTouchEnd as EventListener, {
-      passive: true,
-    })
 
-    return () => {
-      container.removeEventListener(
-        'touchstart',
-        handleTouchStart as EventListener
-      )
-      container.removeEventListener(
-        'touchmove',
-        handleTouchMove as EventListener
-      )
-      container.removeEventListener('touchend', handleTouchEnd as EventListener)
+    // Observe all slide items
+    const items = container.querySelectorAll('[data-slide-index]')
+    items.forEach((item) => observer.observe(item))
+
+    return () => observer.disconnect()
+  }, [stopPlay]) // Removed currentIndex - using ref instead
+
+  // Scroll to initial photo on mount (instant, no animation)
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    // Wait for layout to stabilize using requestAnimationFrame
+    const scrollToInitial = () => {
+      const items = container.querySelectorAll('[data-slide-index]')
+      const targetItem = items[currentIndex] as HTMLElement
+      if (targetItem) {
+        isScrollingRef.current = true
+        // Calculate exact scroll position to center the item
+        const containerRect = container.getBoundingClientRect()
+        const itemRect = targetItem.getBoundingClientRect()
+        const scrollLeft =
+          targetItem.offsetLeft - containerRect.width / 2 + itemRect.width / 2
+        container.scrollLeft = scrollLeft
+        setTimeout(() => {
+          isScrollingRef.current = false
+        }, 100)
+      }
     }
-  }, [
-    goToPrevious,
-    goToNext,
-    stopPlay,
-    setDirection,
-    showDeleteConfirm,
-    showCropModal,
-    showLabelsModal,
-    showShareModal,
-  ])
+
+    // Use double requestAnimationFrame to ensure layout is complete
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToInitial)
+    })
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Auto-scroll thumbnail strip to keep current photo visible
   useEffect(() => {
@@ -676,11 +705,27 @@ export function PhotoSlideshow({
     }
   }, [currentIndex])
 
-  // Notify parent when current photo changes (for URL updates)
+  // Debounced URL update - prevents navigation flooding when swiping fast
   useEffect(() => {
     const photo = allPhotos[currentIndex]
-    if (photo && onPhotoChange) {
-      onPhotoChange(photo.id)
+    if (!photo) return
+
+    // Clear any pending URL update
+    if (urlUpdateTimeoutRef.current) {
+      clearTimeout(urlUpdateTimeoutRef.current)
+    }
+
+    // Update URL after user stops navigating (500ms debounce)
+    urlUpdateTimeoutRef.current = setTimeout(() => {
+      if (onPhotoChange) {
+        onPhotoChange(photo.id)
+      }
+    }, 500)
+
+    return () => {
+      if (urlUpdateTimeoutRef.current) {
+        clearTimeout(urlUpdateTimeoutRef.current)
+      }
     }
   }, [currentIndex, allPhotos, onPhotoChange])
 
@@ -1043,47 +1088,12 @@ export function PhotoSlideshow({
     )
   }
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? '100%' : '-100%',
-      opacity: 1,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? '100%' : '-100%',
-      opacity: 1,
-    }),
-  }
-
-  // Crossfade variants for play mode - smooth transitions without sliding
-  const crossfadeVariants = {
-    enter: {
-      opacity: 0,
-    },
-    center: {
-      zIndex: 1,
-      opacity: 1,
-    },
-    exit: {
-      zIndex: 0,
-      opacity: 0,
-    },
-  }
-
   // Calculate display position accounting for potentially loaded previous pages
   const minLoadedPage = Math.min(...Array.from(loadedPages))
   const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-bg flex flex-col"
-      ref={imageContainerRef}
-    >
+    <div className="fixed inset-0 z-50 bg-bg flex flex-col">
       {/* Top Bar */}
       <div className="slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
         <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
@@ -1342,8 +1352,11 @@ export function PhotoSlideshow({
         </div>
       </div>
 
-      {/* Main Image Area */}
-      <div className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-20 pb-8 md:pb-28">
+      {/* Main Image Area - Carousel Track */}
+      <div
+        ref={imageContainerRef}
+        className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-20 pb-8 md:pb-28 overflow-hidden relative"
+      >
         {/* Previous Button */}
         <button
           onClick={() => {
@@ -1357,35 +1370,71 @@ export function PhotoSlideshow({
           <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
-        {/* Image */}
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.img
-            key={currentPhoto.id}
-            src={currentPhoto.large_4k_url || currentPhoto.blob_url}
-            alt={currentPhoto.original_filename || 'Photo'}
-            className="slideshow-image object-contain rounded-lg shadow-2xl"
-            style={{
-              maxWidth: 'min(90vw, calc(100vw - 8rem))',
-              maxHeight: 'calc(100vh - 11rem)',
-              width: 'auto',
-              height: 'auto',
-              cursor: isPlaying ? 'pointer' : 'default',
-            }}
-            custom={direction}
-            variants={isPlaying ? crossfadeVariants : slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            onClick={isPlaying ? stopPlay : undefined}
-            transition={
-              isPlaying
-                ? { opacity: { duration: 0.8 } }
-                : {
-                    x: { type: 'spring', stiffness: 300, damping: 30 },
-                  }
-            }
-          />
-        </AnimatePresence>
+        {/* Native scroll carousel - smooth scrolling like photo strips */}
+        <div
+          ref={scrollContainerRef}
+          className="flex items-center gap-8 overflow-x-auto w-full h-full snap-x snap-mandatory scrollbar-none"
+        >
+          {/* Leading placeholder - same size as photos, allows first photo to center */}
+          <div
+            className="shrink-0 snap-center flex items-center justify-center"
+            aria-hidden="true"
+          >
+            <div
+              className="bg-transparent"
+              style={{
+                width: 'min(90vw, calc(100vw - 8rem))',
+                height: 'calc(100vh - 11rem)',
+              }}
+            />
+          </div>
+
+          {/* Render all photos - browser handles lazy loading */}
+          {allPhotos.map((photo, index) => {
+            const isCurrent = index === currentIndex
+            return (
+              <div
+                key={photo.id}
+                data-slide-index={index}
+                className="shrink-0 snap-center flex items-center justify-center"
+                style={{
+                  opacity: isCurrent ? 1 : 0,
+                  transition: 'opacity 400ms ease-in-out',
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.large_4k_url || photo.blob_url}
+                  alt={photo.original_filename || `Photo ${index + 1}`}
+                  className="slideshow-image object-contain rounded-lg shadow-2xl"
+                  style={{
+                    maxWidth: 'min(90vw, calc(100vw - 8rem))',
+                    maxHeight: 'calc(100vh - 11rem)',
+                    width: 'auto',
+                    height: 'auto',
+                    cursor: isPlaying ? 'pointer' : 'default',
+                  }}
+                  loading="lazy"
+                  onClick={isPlaying ? stopPlay : undefined}
+                />
+              </div>
+            )
+          })}
+
+          {/* Trailing placeholder - same size as photos, allows last photo to center */}
+          <div
+            className="shrink-0 snap-center flex items-center justify-center"
+            aria-hidden="true"
+          >
+            <div
+              className="bg-transparent"
+              style={{
+                width: 'min(90vw, calc(100vw - 8rem))',
+                height: 'calc(100vh - 11rem)',
+              }}
+            />
+          </div>
+        </div>
 
         {/* Next Button */}
         <button
@@ -1825,4 +1874,4 @@ export function PhotoSlideshow({
       )}
     </div>
   )
-}
+})
