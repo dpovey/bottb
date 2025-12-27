@@ -59,9 +59,9 @@ describe('CompanyLogoMarquee', () => {
     const techLogos = screen.getAllByAltText('Tech Inc logo')
     expect(techLogos.length).toBeGreaterThanOrEqual(2)
 
-    // Check View All Companies button
+    // Check All Companies button
     expect(
-      screen.getByRole('link', { name: /View All Companies/i })
+      screen.getByRole('link', { name: /All Companies/i })
     ).toHaveAttribute('href', '/companies')
   }, 10000)
 
@@ -167,7 +167,7 @@ describe('CompanyLogoMarquee', () => {
     render(await CompanyLogoMarquee({ showViewAll: false }))
 
     expect(
-      screen.queryByRole('link', { name: /View All Companies/i })
+      screen.queryByRole('link', { name: /All Companies/i })
     ).not.toBeInTheDocument()
   })
 

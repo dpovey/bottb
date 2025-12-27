@@ -89,7 +89,7 @@ describe('EventPage', () => {
       />
     )
 
-    const resultsLink = screen.getByRole('link', { name: 'View Results' })
+    const resultsLink = screen.getByRole('link', { name: 'Results' })
     expect(resultsLink).toBeInTheDocument()
     expect(resultsLink).toHaveAttribute('href', '/results/test-event-id')
   })

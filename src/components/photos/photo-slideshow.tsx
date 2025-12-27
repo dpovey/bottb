@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState, useRef, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import useEmblaCarousel from 'embla-carousel-react'
+import { EmblaCarouselType } from 'embla-carousel'
+import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 import { Photo, PHOTO_LABELS } from '@/lib/db'
 import { CompanyIcon } from '@/components/ui'
-// framer-motion no longer needed - using CSS transitions for carousel
 import Cropper, { Area } from 'react-easy-crop'
 import { ShareComposerModal } from './share-composer-modal'
 import {
@@ -84,6 +86,82 @@ const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives t
 const PLAY_INTERVAL_MS = 5000 // 5 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
+// Memoized thumbnail to prevent re-renders when other thumbnails' selection changes
+const Thumbnail = memo(function Thumbnail({
+  photo,
+  index,
+  isSelected,
+  thumbSrc,
+  onClick,
+}: {
+  photo: Photo
+  index: number
+  isSelected: boolean
+  thumbSrc: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
+        isSelected
+          ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100'
+          : 'opacity-50 hover:opacity-75'
+      }`}
+      aria-label={`Go to photo ${index + 1}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={thumbSrc}
+        alt={photo.original_filename || `Photo ${index + 1}`}
+        className="w-full h-full object-cover"
+        // No lazy loading - thumbnails are small (64x64) and horizontal
+        // scroll containers don't trigger browser lazy loading reliably
+      />
+    </button>
+  )
+})
+
+// Memoized slide to prevent re-renders when other slides change
+const Slide = memo(function Slide({
+  photo,
+  index,
+  inView,
+  isCurrent,
+  isPlaying,
+}: {
+  photo: Photo
+  index: number
+  inView: boolean
+  isCurrent: boolean
+  isPlaying: boolean
+}) {
+  return (
+    <div
+      className="embla__slide flex items-center justify-center"
+      style={{ flex: '0 0 100%', minWidth: 0, height: '100%' }}
+    >
+      {inView ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo.large_4k_url || photo.blob_url}
+          alt={photo.original_filename || `Photo ${index + 1}`}
+          className={`object-contain max-w-[90%] max-h-full ${
+            isPlaying ? '' : 'rounded-lg shadow-2xl'
+          }`}
+          draggable={false}
+          // Prioritize current image, deprioritize adjacent preloads
+          fetchPriority={isCurrent ? 'high' : 'low'}
+        />
+      ) : (
+        <div className="flex items-center justify-center">
+          <SpinnerIcon size={32} className="animate-spin text-text-muted" />
+        </div>
+      )}
+    </div>
+  )
+})
+
 export const PhotoSlideshow = memo(function PhotoSlideshow({
   photos: initialPhotos,
   initialIndex,
@@ -119,6 +197,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   useEffect(() => {
     setAllPhotos(initialPhotos)
   }, [initialPhotos])
+
+  // Sync totalCount when parent's totalPhotos changes (e.g., after initial fetch completes)
+  useEffect(() => {
+    if (totalPhotos > 0 && totalCount === 0) {
+      setTotalCount(totalPhotos)
+    }
+  }, [totalPhotos, totalCount])
 
   // Only reset position when filters change (indicated by initialIndex changing to 0)
   // This happens when parent explicitly resets slideshowIndex after a filter change
@@ -202,14 +287,36 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   // Mobile controls state (will be implemented in UI update)
   const [_mobileControlsExpanded, _setMobileControlsExpanded] = useState(false)
 
+  // Track if thumbnail strip should be hidden
+  // Hidden when: width < 768px (md breakpoint) OR height < 500px (landscape mobile)
+  const [thumbnailsHidden, setThumbnailsHidden] = useState(false)
+  useEffect(() => {
+    const checkThumbnails = () => {
+      const isNarrow = window.innerWidth < 768
+      const isShort = window.innerHeight < 500 // Landscape mobile
+      setThumbnailsHidden(isNarrow || isShort)
+    }
+    checkThumbnails()
+    window.addEventListener('resize', checkThumbnails)
+    return () => window.removeEventListener('resize', checkThumbnails)
+  }, [])
+
   // Touch/swipe state (reserved for future touch handling)
   const _touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
 
-  // Scroll container ref for native scroll-based carousel
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const isScrollingRef = useRef(false)
-  const _scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  // Embla Carousel - fast, physics-based carousel with touch support
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: false,
+      align: 'center',
+      containScroll: 'trimSnaps', // Prevent rubber band bounce at edges
+      dragFree: false, // Snap to slides, no momentum
+      duration: 25, // Smooth transitions
+      startIndex: initialIndex,
+    },
+    [WheelGesturesPlugin({ forceWheelAxis: 'x' })] // Horizontal wheel navigation
+  )
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(
@@ -288,7 +395,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   }, [showCropModal])
 
   const thumbnailStripRef = useRef<HTMLDivElement>(null)
-  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   // Fetch a specific page of photos
   const fetchPage = useCallback(
@@ -369,24 +475,21 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
   // Aggressive initial load - load multiple pages until thumbnail strip is full
   // Each thumbnail is 64px + 12px gap = 76px, aim for 2x screen width
-  const initialLoadDone = useRef(false)
   useEffect(() => {
-    if (initialLoadDone.current) return
+    // Skip if totalCount is 0 (not yet loaded from parent)
+    if (totalCount === 0) return
 
     // Calculate minimum photos to fill thumbnail strip (2x viewport width)
     const minThumbnailPhotos = Math.ceil((window.innerWidth * 2) / 76)
 
-    if (
-      allPhotos.length >= minThumbnailPhotos ||
-      allPhotos.length >= totalCount
-    ) {
-      initialLoadDone.current = true
-      return
-    }
+    // Need more photos and there are more to load
+    const needsMore = allPhotos.length < minThumbnailPhotos
+    const hasMore = allPhotos.length < totalCount
 
-    // Load next page to fill the strip
-    loadNextPage()
-  }, [allPhotos.length, totalCount, loadNextPage])
+    if (needsMore && hasMore && !isLoadingMore) {
+      loadNextPage()
+    }
+  }, [allPhotos.length, totalCount, isLoadingMore, loadNextPage])
 
   // Check if we need to prefetch based on navigation
   useEffect(() => {
@@ -400,65 +503,34 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage])
 
-  // Scroll to a specific photo index
-  const scrollToIndex = useCallback((index: number) => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const items = container.querySelectorAll('[data-slide-index]')
-    const targetItem = items[index] as HTMLElement
-    if (targetItem) {
-      isScrollingRef.current = true
-      targetItem.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      })
-      // Reset scrolling flag after animation
-      setTimeout(() => {
-        isScrollingRef.current = false
-      }, 500)
-    }
-  }, [])
-
+  // Navigate to specific index - call Embla directly, let it update our state via onSelect
   const goToIndex = useCallback(
     (index: number) => {
-      // Prevent double navigation while scrolling
-      if (isScrollingRef.current) return
-      if (index === currentIndex) return
-      setDirection(index > currentIndex ? 1 : -1)
-      setCurrentIndex(index)
-      scrollToIndex(index)
+      if (!emblaApi) return
+      if (index === emblaApi.selectedScrollSnap()) return
+      emblaApi.scrollTo(index)
     },
-    [currentIndex, scrollToIndex]
+    [emblaApi]
   )
 
   const goToNext = useCallback(() => {
-    // Prevent double navigation while scrolling
-    if (isScrollingRef.current) return
+    if (!emblaApi) return
+    const current = emblaApi.selectedScrollSnap()
     const canGoNext =
-      currentIndex < allPhotos.length - 1 ||
-      (isPlaying && currentIndex === allPhotos.length - 1)
+      current < allPhotos.length - 1 ||
+      (isPlaying && current === allPhotos.length - 1)
 
     if (!canGoNext) return
 
-    const nextIndex =
-      currentIndex === allPhotos.length - 1 ? 0 : currentIndex + 1
-
-    setDirection(1)
-    setCurrentIndex(nextIndex)
-    scrollToIndex(nextIndex)
-  }, [currentIndex, allPhotos.length, isPlaying, scrollToIndex])
+    const nextIndex = current === allPhotos.length - 1 ? 0 : current + 1
+    emblaApi.scrollTo(nextIndex)
+  }, [emblaApi, allPhotos.length, isPlaying])
 
   const goToPrevious = useCallback(() => {
-    // Prevent double navigation while scrolling
-    if (isScrollingRef.current) return
-    if (currentIndex === 0) return
-
-    setDirection(-1)
-    setCurrentIndex((prev) => prev - 1)
-    scrollToIndex(currentIndex - 1)
-  }, [currentIndex, scrollToIndex])
+    if (!emblaApi) return
+    if (!emblaApi.canScrollPrev()) return
+    emblaApi.scrollPrev()
+  }, [emblaApi])
 
   // Play mode auto-advance
   useEffect(() => {
@@ -543,192 +615,90 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     showShareModal,
   ])
 
-  // Scroll wheel navigation with momentum handling
-  // Accumulate scroll delta and only trigger navigation when threshold is crossed
-  const accumulatedDelta = useRef(0)
-  const lastScrollTime = useRef(0)
-  const isNavigating = useRef(false)
-  const SCROLL_THRESHOLD = 50 // Accumulated delta needed to trigger navigation
-  const NAVIGATION_COOLDOWN_MS = 350 // Cooldown after navigation to prevent double-scrolling
-  const SCROLL_DECAY_MS = 150 // Time after which accumulated delta resets
-
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (
-        showDeleteConfirm ||
-        showCropModal ||
-        showLabelsModal ||
-        showShareModal
-      )
-        return
-
-      // Check if the scroll is happening over the thumbnail strip - if so, let it scroll normally
-      const target = e.target as HTMLElement
-      if (thumbnailStripRef.current?.contains(target)) return
-
-      // Prevent default scrolling behavior on the slideshow
-      e.preventDefault()
-
-      // Still in cooldown after a navigation
-      const now = Date.now()
-      if (
-        isNavigating.current &&
-        now - lastScrollTime.current < NAVIGATION_COOLDOWN_MS
-      ) {
-        return
-      }
-      isNavigating.current = false
-
-      // Reset accumulated delta if too much time has passed (momentum ended)
-      if (now - lastScrollTime.current > SCROLL_DECAY_MS) {
-        accumulatedDelta.current = 0
-      }
-      lastScrollTime.current = now
-
-      // Use deltaY for vertical scroll, deltaX for horizontal scroll (trackpad)
-      // Prioritize horizontal scroll for photo navigation
-      const delta =
-        Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
-
-      // Ignore very small scroll movements (noise)
-      if (Math.abs(delta) < 3) return
-
-      // If changing direction, reset accumulator to prevent fighting
-      if (
-        accumulatedDelta.current !== 0 &&
-        Math.sign(delta) !== Math.sign(accumulatedDelta.current)
-      ) {
-        accumulatedDelta.current = 0
-      }
-
-      // Accumulate the scroll delta
-      accumulatedDelta.current += delta
-
-      // Check if we've crossed the threshold for navigation
-      if (Math.abs(accumulatedDelta.current) >= SCROLL_THRESHOLD) {
-        const direction = accumulatedDelta.current > 0 ? 1 : -1
-        accumulatedDelta.current = 0 // Reset after navigation
-        isNavigating.current = true
-        lastScrollTime.current = now
-
-        if (direction > 0) {
-          goToNext()
-        } else {
-          goToPrevious()
-        }
-      }
-    }
-
-    // Use passive: false to allow preventDefault
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [
-    goToPrevious,
-    goToNext,
-    showDeleteConfirm,
-    showCropModal,
-    showLabelsModal,
-    showShareModal,
-  ])
-
-  // Use IntersectionObserver to detect which photo is centered
-  // Store currentIndex in a ref so observer callback has latest value without re-creating observer
+  // Sync Embla's selected slide with our currentIndex state
+  // Embla is the source of truth - we read from it on 'select' event
   const currentIndexRef = useRef(currentIndex)
   currentIndexRef.current = currentIndex
 
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
+  // Store stopPlay in ref to avoid dependency array issues with hot reload
+  const stopPlayRef = useRef(stopPlay)
+  stopPlayRef.current = stopPlay
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Don't update if we're programmatically scrolling
-        if (isScrollingRef.current) return
+  // Embla lazy loading - track which slides have been in view
+  const [slidesInView, setSlidesInView] = useState<number[]>([initialIndex])
 
-        // Find the entry with highest intersection ratio
-        let bestEntry: IntersectionObserverEntry | undefined
-        let bestRatio = 0
-
-        for (const entry of entries) {
-          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio
-            bestEntry = entry
-          }
-        }
-
-        if (bestEntry && bestRatio > 0.5) {
-          const index = parseInt(
-            bestEntry.target.getAttribute('data-slide-index') || '0',
-            10
-          )
-          const current = currentIndexRef.current
-          if (index !== current) {
-            setDirection(index > current ? 1 : -1)
-            setCurrentIndex(index)
-            stopPlay()
-          }
-        }
-      },
-      {
-        root: container,
-        rootMargin: '-40% 0px -40% 0px', // Only trigger when element is in center 20% of viewport
-        threshold: [0.5, 0.75, 1.0],
+  const updateSlidesInView = useCallback((emblaApi: EmblaCarouselType) => {
+    setSlidesInView((slidesInView) => {
+      // Once all slides are loaded, stop listening
+      if (slidesInView.length === emblaApi.slideNodes().length) {
+        emblaApi.off('slidesInView', updateSlidesInView)
       }
-    )
-
-    // Observe all slide items
-    const items = container.querySelectorAll('[data-slide-index]')
-    items.forEach((item) => observer.observe(item))
-
-    return () => observer.disconnect()
-  }, [stopPlay]) // Removed currentIndex - using ref instead
-
-  // Scroll to initial photo on mount
-  // Wait for image to load so we have correct dimensions
-  useEffect(() => {
-    const container = scrollContainerRef.current
-    if (!container || allPhotos.length === 0) return
-
-    const scrollToPhoto = () => {
-      const items = container.querySelectorAll('[data-slide-index]')
-      const targetItem = items[currentIndex] as HTMLElement
-      if (targetItem) {
-        isScrollingRef.current = true
-        targetItem.scrollIntoView({
-          behavior: 'instant',
-          inline: 'center',
-          block: 'nearest',
-        })
-        setTimeout(() => {
-          isScrollingRef.current = false
-        }, 100)
-      }
-    }
-
-    // Find the current image and wait for it to load
-    const items = container.querySelectorAll('[data-slide-index]')
-    const targetItem = items[currentIndex] as HTMLElement
-    const img = targetItem?.querySelector('img')
-
-    if (img) {
-      if (img.complete) {
-        // Image already loaded (cached)
-        requestAnimationFrame(scrollToPhoto)
-      } else {
-        // Wait for image to load
-        img.addEventListener('load', scrollToPhoto, { once: true })
-        // Fallback timeout in case load event doesn't fire
-        setTimeout(scrollToPhoto, 500)
-      }
-    }
-    // Only run on mount - navigation handles its own scrolling
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // Add newly visible slides to the list
+      const inView = emblaApi
+        .slidesInView()
+        .filter((index: number) => !slidesInView.includes(index))
+      return slidesInView.concat(inView)
+    })
   }, [])
+
+  useEffect(() => {
+    if (!emblaApi) return
+
+    const onSelect = () => {
+      const index = emblaApi.selectedScrollSnap()
+      const current = currentIndexRef.current
+      if (index !== current) {
+        setDirection(index > current ? 1 : -1)
+        setCurrentIndex(index)
+      }
+    }
+
+    // Stop play on any user interaction (swipe/drag)
+    const onPointerDown = () => {
+      stopPlayRef.current()
+    }
+
+    // Initialize state on mount
+    onSelect()
+    updateSlidesInView(emblaApi)
+
+    // Listen for all selection changes
+    emblaApi
+      .on('select', onSelect)
+      .on('reInit', onSelect)
+      .on('pointerDown', onPointerDown)
+      .on('slidesInView', updateSlidesInView)
+
+    return () => {
+      emblaApi
+        .off('select', onSelect)
+        .off('reInit', onSelect)
+        .off('pointerDown', onPointerDown)
+        .off('slidesInView', updateSlidesInView)
+    }
+  }, [emblaApi, updateSlidesInView])
+
+  // Re-initialize Embla when photos array changes (for lazy loading)
+  const prevPhotoCountRef = useRef(allPhotos.length)
+  useEffect(() => {
+    if (!emblaApi) return
+    if (prevPhotoCountRef.current === allPhotos.length) return
+    prevPhotoCountRef.current = allPhotos.length
+
+    const currentPos = emblaApi.selectedScrollSnap()
+    emblaApi.reInit()
+    if (currentPos < allPhotos.length) {
+      emblaApi.scrollTo(currentPos, true)
+    }
+  }, [emblaApi, allPhotos.length])
 
   // Auto-scroll thumbnail strip to keep current photo visible
   useEffect(() => {
-    const thumbnail = thumbnailRefs.current[currentIndex]
-    if (thumbnail && thumbnailStripRef.current) {
+    if (!thumbnailStripRef.current) return
+    const thumbnail = thumbnailStripRef.current.children[
+      currentIndex
+    ] as HTMLElement
+    if (thumbnail) {
       thumbnail.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
@@ -1390,13 +1360,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         </div>
       </div>
 
-      {/* Main Image Area - Carousel Track */}
-      {/* Fullscreen with no padding during play mode */}
+      {/* Main Image Area - Embla Carousel */}
       <div
         ref={imageContainerRef}
-        className={`slideshow-main flex-1 flex items-center justify-center overflow-hidden relative transition-all duration-300 ${
-          isPlaying ? 'p-0' : 'px-4 md:px-20 pt-20 pb-8 md:pb-28'
-        }`}
+        className="slideshow-main flex-1 relative"
         onClick={isPlaying ? stopPlay : undefined}
       >
         {/* Previous Button - hidden during play mode */}
@@ -1406,7 +1373,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             goToPrevious()
           }}
           disabled={currentIndex === 0 && minLoadedPage === 1}
-          className={`slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-10 disabled:opacity-30 disabled:cursor-not-allowed ${
+          className={`slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-20 disabled:opacity-30 disabled:cursor-not-allowed ${
             isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           aria-label="Previous photo"
@@ -1414,47 +1381,32 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
-        {/* Native scroll carousel - smooth scrolling like photo strips */}
-        {/* padding-inline provides space for first/last photos to center */}
+        {/* Embla Carousel - using absolute positioning for fixed dimensions */}
+        {/* When thumbnails hidden (mobile or landscape), photos use full height */}
         <div
-          ref={scrollContainerRef}
-          className="flex items-center gap-8 overflow-x-auto w-full h-full snap-x snap-mandatory scrollbar-none"
-          style={{ paddingInline: '50vw' }}
+          className="embla absolute left-0 right-0"
+          style={{
+            top: isPlaying ? 0 : '4rem',
+            bottom: isPlaying || thumbnailsHidden ? 0 : '7rem',
+          }}
         >
-          {/* Render all photos - browser handles lazy loading */}
-          {allPhotos.map((photo, index) => {
-            const isCurrent = index === currentIndex
-            return (
-              <div
-                key={photo.id}
-                data-slide-index={index}
-                className="shrink-0 snap-center flex items-center justify-center"
-                style={{
-                  opacity: isCurrent ? 1 : 0,
-                  transition: 'opacity 400ms ease-in-out',
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.large_4k_url || photo.blob_url}
-                  alt={photo.original_filename || `Photo ${index + 1}`}
-                  className={`slideshow-image object-contain transition-all duration-300 ${
-                    isPlaying ? '' : 'rounded-lg shadow-2xl'
-                  }`}
-                  style={{
-                    maxWidth: isPlaying
-                      ? '100vw'
-                      : 'min(90vw, calc(100vw - 8rem))',
-                    maxHeight: isPlaying ? '100vh' : 'calc(100vh - 11rem)',
-                    width: 'auto',
-                    height: 'auto',
-                    cursor: isPlaying ? 'pointer' : 'default',
-                  }}
-                  loading="lazy"
+          <div
+            className="embla__viewport overflow-hidden w-full h-full"
+            ref={emblaRef}
+          >
+            <div className="embla__container flex h-full">
+              {allPhotos.map((photo, index) => (
+                <Slide
+                  key={photo.id}
+                  photo={photo}
+                  index={index}
+                  inView={slidesInView.includes(index)}
+                  isCurrent={index === currentIndex}
+                  isPlaying={isPlaying}
                 />
-              </div>
-            )
-          })}
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Next Button - hidden during play mode */}
@@ -1464,7 +1416,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             goToNext()
           }}
           disabled={displayPosition >= totalCount && !isPlaying}
-          className={`slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-10 disabled:opacity-30 disabled:cursor-not-allowed ${
+          className={`slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-20 disabled:opacity-30 disabled:cursor-not-allowed ${
             isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           aria-label="Next photo"
@@ -1475,49 +1427,32 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
       {/* Thumbnail Strip - hidden on mobile, landscape, and during play mode */}
       <div
-        className={`slideshow-thumbnails hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6 transition-all duration-300 ${
-          isPlaying
+        className={`slideshow-thumbnails absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6 transition-all duration-300 ${
+          isPlaying || thumbnailsHidden
             ? 'opacity-0 pointer-events-none translate-y-full'
             : 'opacity-100'
         }`}
+        style={{ display: thumbnailsHidden ? 'none' : 'block' }}
       >
         <div
           ref={thumbnailStripRef}
           className="flex gap-3 overflow-x-auto py-3 px-2"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {allPhotos.map((photo, index) => {
-            // Use freshly cropped URL if available, otherwise use stored thumbnail
-            const thumbSrc =
-              lastCroppedPhoto?.id === photo.id
-                ? lastCroppedPhoto.url
-                : photo.thumbnail_url || photo.blob_url
-            const isSelected = index === currentIndex
-            return (
-              <button
-                key={`${photo.id}-${index}`}
-                ref={(el) => {
-                  thumbnailRefs.current[index] = el
-                }}
-                onClick={() => goToIndex(index)}
-                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
-                  isSelected
-                    ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100'
-                    : 'opacity-50 hover:opacity-75'
-                }`}
-                aria-label={`Go to photo ${index + 1}`}
-              >
-                {/* Using <img> for dynamic blob URLs; small fixed-size thumbnails */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={thumbSrc}
-                  alt={photo.original_filename || `Photo ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </button>
-            )
-          })}
+          {allPhotos.map((photo, index) => (
+            <Thumbnail
+              key={photo.id}
+              photo={photo}
+              index={index}
+              isSelected={index === currentIndex}
+              thumbSrc={
+                lastCroppedPhoto?.id === photo.id
+                  ? lastCroppedPhoto.url
+                  : photo.thumbnail_url || photo.blob_url
+              }
+              onClick={() => goToIndex(index)}
+            />
+          ))}
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="shrink-0 w-16 h-16 rounded-lg bg-bg-elevated flex items-center justify-center">

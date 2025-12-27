@@ -145,9 +145,9 @@ describe('HomePage', () => {
 
     render(await HomePage())
 
-    // Hero section should have Vote Now and View Event buttons (may appear multiple times)
+    // Hero section should have Vote Now and Event buttons (may appear multiple times)
     expect(screen.getAllByText('Vote Now').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('View Event').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Event').length).toBeGreaterThan(0)
   })
 
   it('shows Live Now badge for active event', async () => {
