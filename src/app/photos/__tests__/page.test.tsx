@@ -170,6 +170,8 @@ describe('PhotosContent - Slideshow from URL', () => {
   })
 })
 
+// TODO: Add infinite scroll tests - complex to mock IntersectionObserver callbacks properly
+
 describe('PhotosContent - Filter Defaults', () => {
   beforeEach(() => {
     vi.clearAllMocks()
