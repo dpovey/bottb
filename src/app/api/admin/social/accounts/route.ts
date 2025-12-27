@@ -7,16 +7,10 @@
  */
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import { getSocialAccounts, getAvailablePlatforms } from '@/lib/social/db'
 
-export async function GET() {
-  // Check admin auth
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+const handleGetAccounts: ProtectedApiHandler = async () => {
   try {
     const accounts = await getSocialAccounts()
     const availablePlatforms = await getAvailablePlatforms()
@@ -36,3 +30,5 @@ export async function GET() {
     )
   }
 }
+
+export const GET = withAdminProtection(handleGetAccounts)

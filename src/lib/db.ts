@@ -728,113 +728,14 @@ async function getPhotosRandomWithCount(options: {
 }
 
 /**
- * Get photos in truly random order using SQL RANDOM()
- * This mixes photos from all events/bands for better discovery
- * All filters are combined with AND for proper filtering
- * @deprecated Use getPhotosWithCount instead for better performance
+ * Get photos with optional filtering and ordering.
+ * This is a convenience wrapper around getPhotosWithCount that returns only photos.
  */
-async function getPhotosRandom(options: {
-  eventId?: string
-  photographer?: string
-  companySlug?: string
-  limit: number
-}): Promise<Photo[]> {
-  const { eventId, photographer, companySlug, limit } = options
-
-  try {
-    // Use conditional SQL to combine all filters with AND
-    // Each condition is: (param IS NULL OR column = param) which passes when filter not set
-    // Special handling for "none" values which mean "filter for NULL"
-    const { rows } = await sql<Photo>`
-      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
-             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
-             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
-             p.xmp_metadata->>'large_4k_url' as large_4k_url
-      FROM photos p
-      LEFT JOIN events e ON p.event_id = e.id
-      LEFT JOIN bands b ON p.band_id = b.id
-      LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
-        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
-        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
-        AND (
-          ${companySlug || null}::text IS NULL 
-          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
-          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
-        )
-      ORDER BY RANDOM()
-      LIMIT ${limit}
-    `
-    return rows
-  } catch (error) {
-    console.error('Error fetching random photos:', error)
-    throw error
-  }
-}
-
 export async function getPhotos(
   options: GetPhotosOptions = {}
 ): Promise<Photo[]> {
-  const {
-    eventId,
-    photographer,
-    companySlug,
-    limit = 50,
-    offset = 0,
-    orderBy = 'uploaded',
-  } = options
-
-  // For random ordering, use SQL RANDOM() to get truly random photos across all data
-  // Note: pagination with random doesn't guarantee unique results across pages,
-  // but this gives better variety for discovery/browsing
-  if (orderBy === 'random') {
-    return getPhotosRandom({
-      eventId,
-      photographer,
-      companySlug,
-      limit,
-    })
-  }
-
-  // Helper to apply date sorting after fetch (for chronological slideshow viewing)
-  const applyOrdering = (photos: Photo[]): Photo[] => {
-    if (orderBy === 'date') {
-      return sortByDate(photos)
-    }
-    return photos // Already ordered by uploaded_at DESC from SQL
-  }
-
-  try {
-    // Use conditional SQL to combine all filters with AND
-    // Each condition is: (param IS NULL OR column = param) which passes when filter not set
-    // Special handling for "none" values which mean "filter for NULL"
-    const { rows } = await sql<Photo>`
-      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
-             p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
-             p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
-             p.xmp_metadata->>'large_4k_url' as large_4k_url
-      FROM photos p
-      LEFT JOIN events e ON p.event_id = e.id
-      LEFT JOIN bands b ON p.band_id = b.id
-      LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
-        (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
-        AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
-        AND (
-          ${companySlug || null}::text IS NULL 
-          OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
-          OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
-        )
-      ORDER BY p.uploaded_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
-    return applyOrdering(rows)
-  } catch (error) {
-    console.error('Error fetching photos:', error)
-    throw error
-  }
+  const { photos } = await getPhotosWithCount(options)
+  return photos
 }
 
 export async function getPhotoById(photoId: string): Promise<Photo | null> {

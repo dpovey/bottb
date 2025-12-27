@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import type { CaptionContext } from '@/lib/social/types'
@@ -82,13 +82,7 @@ Generate ONLY the caption text, nothing else. No explanations or labels.`
   return prompt
 }
 
-export async function POST(request: NextRequest) {
-  // Check admin auth
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+const handleSuggest: ProtectedApiHandler = async (request: NextRequest) => {
   // Check if OpenAI is configured
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
@@ -164,3 +158,5 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = withAdminProtection(handleSuggest)

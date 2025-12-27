@@ -2,6 +2,10 @@
   "name": "bottb",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": [
+    "*.css",
+    "*.scss"
+  ],
   "scripts": {
     "dev": "next dev",
     "dev:restart": "lsof -ti:3000 | xargs kill -9 2>/dev/null; rm -rf .next && next dev",

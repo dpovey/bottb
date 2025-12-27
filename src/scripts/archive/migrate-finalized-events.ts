@@ -2,8 +2,8 @@
 
 import { config } from 'dotenv'
 import { sql } from '@vercel/postgres'
-import { finalizeEventResults, hasFinalizedResults } from '../lib/db'
-import { parseScoringVersion } from '../lib/scoring'
+import { finalizeEventResults, hasFinalizedResults } from '../../lib/db'
+import { parseScoringVersion } from '../../lib/scoring'
 
 // Load environment variables from .env.local
 config({ path: '.env.local' })

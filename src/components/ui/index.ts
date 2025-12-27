@@ -45,3 +45,9 @@ export {
   type FocalPoint,
   type FocalPointImageProps,
 } from './focal-point-image'
+export {
+  Modal,
+  ConfirmModal,
+  type ModalProps,
+  type ConfirmModalProps,
+} from './modal'

@@ -8,19 +8,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import {
   getSocialPostTemplates,
   createSocialPostTemplate,
 } from '@/lib/social/db'
 
-export async function GET() {
-  // Check admin auth
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+const handleGetTemplates: ProtectedApiHandler = async () => {
   try {
     const templates = await getSocialPostTemplates()
     return NextResponse.json({ templates })
@@ -36,13 +30,9 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
-  // Check admin auth
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+const handleCreateTemplate: ProtectedApiHandler = async (
+  request: NextRequest
+) => {
   try {
     const body = await request.json()
 
@@ -75,3 +65,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const GET = withAdminProtection(handleGetTemplates)
+export const POST = withAdminProtection(handleCreateTemplate)

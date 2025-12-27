@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import {
   createSocialPost,
   createSocialPostResult,
@@ -43,13 +43,11 @@ interface PostRequestBody {
   >
 }
 
-export async function POST(request: NextRequest) {
-  // Check admin auth
-  const session = await auth()
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+const handlePost: ProtectedApiHandler = async (
+  request: NextRequest,
+  _context,
+  session
+) => {
   try {
     const body: PostRequestBody = await request.json()
 
@@ -89,7 +87,7 @@ export async function POST(request: NextRequest) {
       hashtags: body.hashtags,
       ig_collaborator_handles: body.ig_collaborator_handles,
       ig_crop_info: body.ig_crop_info,
-      created_by: session.user.email || session.user.id,
+      created_by: session?.user?.email || session?.user?.id || 'unknown',
     }
 
     const post = await createSocialPost(postInput)
@@ -302,3 +300,5 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = withAdminProtection(handlePost)
