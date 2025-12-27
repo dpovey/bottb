@@ -83,7 +83,7 @@ interface PhotoSlideshowProps {
 
 const PAGE_SIZE = 50
 const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives time for network)
-const PLAY_INTERVAL_MS = 5000 // 5 seconds between photos in play mode
+const PLAY_INTERVAL_MS = 3000 // 3 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
 // Memoized thumbnail to prevent re-renders when other thumbnails' selection changes
