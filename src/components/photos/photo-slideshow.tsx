@@ -367,7 +367,28 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }, [loadedPages, isLoadingMore, fetchPage])
 
-  // Check if we need to prefetch
+  // Aggressive initial load - load multiple pages until thumbnail strip is full
+  // Each thumbnail is 64px + 12px gap = 76px, aim for 2x screen width
+  const initialLoadDone = useRef(false)
+  useEffect(() => {
+    if (initialLoadDone.current) return
+
+    // Calculate minimum photos to fill thumbnail strip (2x viewport width)
+    const minThumbnailPhotos = Math.ceil((window.innerWidth * 2) / 76)
+
+    if (
+      allPhotos.length >= minThumbnailPhotos ||
+      allPhotos.length >= totalCount
+    ) {
+      initialLoadDone.current = true
+      return
+    }
+
+    // Load next page to fill the strip
+    loadNextPage()
+  }, [allPhotos.length, totalCount, loadNextPage])
+
+  // Check if we need to prefetch based on navigation
   useEffect(() => {
     // Near the end - load next page
     if (currentIndex >= allPhotos.length - PREFETCH_THRESHOLD) {
