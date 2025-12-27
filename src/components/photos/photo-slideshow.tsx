@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState, useRef, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import useEmblaCarousel from 'embla-carousel-react'
-import { EmblaCarouselType } from 'embla-carousel'
-import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Mousewheel, Autoplay, Navigation } from 'swiper/modules'
+import type { Swiper as SwiperType } from 'swiper'
+import 'swiper/css'
+import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db'
 import { CompanyIcon } from '@/components/ui'
 import Cropper, { Area } from 'react-easy-crop'
@@ -122,42 +124,28 @@ const Thumbnail = memo(function Thumbnail({
   )
 })
 
-// Memoized slide to prevent re-renders when other slides change
+// Memoized slide with native lazy loading
 const Slide = memo(function Slide({
   photo,
   index,
-  inView,
-  isCurrent,
   isPlaying,
 }: {
   photo: Photo
   index: number
-  inView: boolean
-  isCurrent: boolean
   isPlaying: boolean
 }) {
   return (
-    <div
-      className="embla__slide flex items-center justify-center"
-      style={{ flex: '0 0 100%', minWidth: 0, height: '100%' }}
-    >
-      {inView ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={photo.large_4k_url || photo.blob_url}
-          alt={photo.original_filename || `Photo ${index + 1}`}
-          className={`object-contain max-w-[90%] max-h-full ${
-            isPlaying ? '' : 'rounded-lg shadow-2xl'
-          }`}
-          draggable={false}
-          // Prioritize current image, deprioritize adjacent preloads
-          fetchPriority={isCurrent ? 'high' : 'low'}
-        />
-      ) : (
-        <div className="flex items-center justify-center">
-          <SpinnerIcon size={32} className="animate-spin text-text-muted" />
-        </div>
-      )}
+    <div className="flex items-center justify-center w-full h-full">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={photo.large_4k_url || photo.blob_url}
+        alt={photo.original_filename || `Photo ${index + 1}`}
+        className={`object-contain max-w-[90%] max-h-full ${
+          isPlaying ? '' : 'rounded-lg shadow-2xl'
+        }`}
+        draggable={false}
+        loading="lazy"
+      />
     </div>
   )
 })
@@ -280,9 +268,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const [labelsError, setLabelsError] = useState<string | null>(null)
   const focalPointPreviewRef = useRef<HTMLDivElement>(null)
 
-  // Play mode state
+  // Play mode state (Swiper Autoplay handles the interval)
   const [isPlaying, setIsPlaying] = useState(false)
-  const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Mobile controls state (will be implemented in UI update)
   const [_mobileControlsExpanded, _setMobileControlsExpanded] = useState(false)
@@ -305,18 +292,11 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const _touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
 
-  // Embla Carousel - fast, physics-based carousel with touch support
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: false,
-      align: 'center',
-      containScroll: 'trimSnaps', // Prevent rubber band bounce at edges
-      dragFree: false, // Snap to slides, no momentum
-      duration: 25, // Smooth transitions
-      startIndex: initialIndex,
-    },
-    [WheelGesturesPlugin({ forceWheelAxis: 'x' })] // Horizontal wheel navigation
-  )
+  // Swiper instance refs
+  const swiperRef = useRef<SwiperType | null>(null)
+  const thumbnailStripRef = useRef<HTMLDivElement>(null)
+  const prevButtonRef = useRef<HTMLButtonElement>(null)
+  const nextButtonRef = useRef<HTMLButtonElement>(null)
 
   // Generate cropped preview when crop area changes
   const generateCropPreview = useCallback(
@@ -393,8 +373,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       setCropPreviewUrl(null)
     }
   }, [showCropModal])
-
-  const thumbnailStripRef = useRef<HTMLDivElement>(null)
 
   // Fetch a specific page of photos
   const fetchPage = useCallback(
@@ -503,19 +481,16 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage])
 
-  // Navigate to specific index - call Embla directly, let it update our state via onSelect
-  const goToIndex = useCallback(
-    (index: number) => {
-      if (!emblaApi) return
-      if (index === emblaApi.selectedScrollSnap()) return
-      emblaApi.scrollTo(index)
-    },
-    [emblaApi]
-  )
+  // Navigate to specific index
+  const goToIndex = useCallback((index: number) => {
+    if (!swiperRef.current) return
+    if (index === swiperRef.current.activeIndex) return
+    swiperRef.current.slideTo(index)
+  }, [])
 
-  const goToNext = useCallback(() => {
-    if (!emblaApi) return
-    const current = emblaApi.selectedScrollSnap()
+  const _goToNext = useCallback(() => {
+    if (!swiperRef.current) return
+    const current = swiperRef.current.activeIndex
     const canGoNext =
       current < allPhotos.length - 1 ||
       (isPlaying && current === allPhotos.length - 1)
@@ -523,35 +498,24 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     if (!canGoNext) return
 
     const nextIndex = current === allPhotos.length - 1 ? 0 : current + 1
-    emblaApi.scrollTo(nextIndex)
-  }, [emblaApi, allPhotos.length, isPlaying])
+    swiperRef.current.slideTo(nextIndex)
+  }, [allPhotos.length, isPlaying])
 
-  const goToPrevious = useCallback(() => {
-    if (!emblaApi) return
-    if (!emblaApi.canScrollPrev()) return
-    emblaApi.scrollPrev()
-  }, [emblaApi])
+  const _goToPrevious = useCallback(() => {
+    if (!swiperRef.current) return
+    if (swiperRef.current.isBeginning) return
+    swiperRef.current.slidePrev()
+  }, [])
 
-  // Play mode auto-advance
+  // Swiper autoplay control
   useEffect(() => {
+    if (!swiperRef.current?.autoplay) return
     if (isPlaying) {
-      playIntervalRef.current = setInterval(() => {
-        goToNext()
-      }, PLAY_INTERVAL_MS)
+      swiperRef.current.autoplay.start()
     } else {
-      if (playIntervalRef.current) {
-        clearInterval(playIntervalRef.current)
-        playIntervalRef.current = null
-      }
+      swiperRef.current.autoplay.stop()
     }
-
-    return () => {
-      if (playIntervalRef.current) {
-        clearInterval(playIntervalRef.current)
-        playIntervalRef.current = null
-      }
-    }
-  }, [isPlaying, goToNext])
+  }, [isPlaying])
 
   // Stop play mode when modals open
   useEffect(() => {
@@ -576,7 +540,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     setIsPlaying(false)
   }, [])
 
-  // Keyboard navigation
+  // Keyboard navigation (Swiper handles arrows, we handle Escape + Space)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -587,17 +551,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       )
         return // Don't navigate while modals are open
       if (e.key === 'Escape') onClose()
-      if (e.key === 'ArrowRight') {
-        stopPlay()
-        goToNext()
-      }
-      if (e.key === 'ArrowLeft') {
-        stopPlay()
-        goToPrevious()
-      }
       if (e.key === ' ') {
         e.preventDefault()
         togglePlay()
+      }
+      // Arrow keys stop autoplay on user interaction
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        stopPlay()
       }
     }
 
@@ -605,8 +565,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     onClose,
-    goToPrevious,
-    goToNext,
     togglePlay,
     stopPlay,
     showDeleteConfirm,
@@ -624,82 +582,41 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const stopPlayRef = useRef(stopPlay)
   stopPlayRef.current = stopPlay
 
-  // Embla lazy loading - track which slides have been in view
-  const [slidesInView, setSlidesInView] = useState<number[]>([initialIndex])
-
-  const updateSlidesInView = useCallback((emblaApi: EmblaCarouselType) => {
-    setSlidesInView((slidesInView) => {
-      // Once all slides are loaded, stop listening
-      if (slidesInView.length === emblaApi.slideNodes().length) {
-        emblaApi.off('slidesInView', updateSlidesInView)
-      }
-      // Add newly visible slides to the list
-      const inView = emblaApi
-        .slidesInView()
-        .filter((index: number) => !slidesInView.includes(index))
-      return slidesInView.concat(inView)
-    })
+  // Swiper event handlers
+  const handleSlideChange = useCallback((swiper: SwiperType) => {
+    const index = swiper.activeIndex
+    const current = currentIndexRef.current
+    if (index !== current) {
+      setDirection(index > current ? 1 : -1)
+      setCurrentIndex(index)
+    }
   }, [])
 
-  useEffect(() => {
-    if (!emblaApi) return
+  const handleTouchStart = useCallback(() => {
+    stopPlayRef.current()
+  }, [])
 
-    const onSelect = () => {
-      const index = emblaApi.selectedScrollSnap()
-      const current = currentIndexRef.current
-      if (index !== current) {
-        setDirection(index > current ? 1 : -1)
-        setCurrentIndex(index)
-      }
-    }
-
-    // Stop play on any user interaction (swipe/drag)
-    const onPointerDown = () => {
-      stopPlayRef.current()
-    }
-
-    // Initialize state on mount
-    onSelect()
-    updateSlidesInView(emblaApi)
-
-    // Listen for all selection changes
-    emblaApi
-      .on('select', onSelect)
-      .on('reInit', onSelect)
-      .on('pointerDown', onPointerDown)
-      .on('slidesInView', updateSlidesInView)
-
-    return () => {
-      emblaApi
-        .off('select', onSelect)
-        .off('reInit', onSelect)
-        .off('pointerDown', onPointerDown)
-        .off('slidesInView', updateSlidesInView)
-    }
-  }, [emblaApi, updateSlidesInView])
-
-  // Re-initialize Embla when photos array changes (for lazy loading)
+  // Re-initialize Swiper when photos array changes
   const prevPhotoCountRef = useRef(allPhotos.length)
   useEffect(() => {
-    if (!emblaApi) return
+    if (!swiperRef.current) return
     if (prevPhotoCountRef.current === allPhotos.length) return
     prevPhotoCountRef.current = allPhotos.length
 
-    const currentPos = emblaApi.selectedScrollSnap()
-    emblaApi.reInit()
+    // Swiper auto-updates, just ensure we're at the right position
+    const currentPos = swiperRef.current.activeIndex
     if (currentPos < allPhotos.length) {
-      emblaApi.scrollTo(currentPos, true)
+      swiperRef.current.slideTo(currentPos, 0)
     }
-  }, [emblaApi, allPhotos.length])
+  }, [allPhotos.length])
 
-  // Auto-scroll thumbnail strip to keep current photo visible
+  // Auto-scroll thumbnail strip to keep current thumbnail visible
   useEffect(() => {
-    if (!thumbnailStripRef.current) return
-    const thumbnail = thumbnailStripRef.current.children[
-      currentIndex
-    ] as HTMLElement
-    if (thumbnail) {
-      thumbnail.scrollIntoView({
+    const strip = thumbnailStripRef.current
+    if (!strip) return
+    const thumb = strip.children[currentIndex] as HTMLElement | undefined
+    if (thumb) {
+      thumb.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'center',
@@ -1366,13 +1283,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         className="slideshow-main flex-1 relative"
         onClick={isPlaying ? stopPlay : undefined}
       >
-        {/* Previous Button - hidden during play mode */}
+        {/* Previous Button - Swiper Navigation (hidden during play mode) */}
         <button
-          onClick={() => {
-            stopPlay()
-            goToPrevious()
-          }}
-          disabled={currentIndex === 0 && minLoadedPage === 1}
+          ref={prevButtonRef}
+          onClick={stopPlay}
           className={`slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-20 disabled:opacity-30 disabled:cursor-not-allowed ${
             isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
@@ -1381,41 +1295,72 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           <ChevronLeftIcon size={24} strokeWidth={2} />
         </button>
 
-        {/* Embla Carousel - using absolute positioning for fixed dimensions */}
+        {/* Swiper Carousel - using absolute positioning for fixed dimensions */}
         {/* When thumbnails hidden (mobile or landscape), photos use full height */}
         <div
-          className="embla absolute left-0 right-0"
+          className="absolute left-0 right-0 overflow-hidden bg-bg"
           style={{
             top: isPlaying ? 0 : '4rem',
             bottom: isPlaying || thumbnailsHidden ? 0 : '7rem',
           }}
         >
-          <div
-            className="embla__viewport overflow-hidden w-full h-full"
-            ref={emblaRef}
+          <Swiper
+            modules={[Mousewheel, Autoplay, Navigation]}
+            onSwiper={(swiper) => {
+              swiperRef.current = swiper
+            }}
+            onSlideChange={handleSlideChange}
+            onTouchStart={handleTouchStart}
+            initialSlide={initialIndex}
+            slidesPerView={1}
+            // Mousewheel settings - aggressive thresholds to prevent double-fire
+            mousewheel={{
+              forceToAxis: true,
+              sensitivity: 0.3,
+              thresholdDelta: 50,
+              thresholdTime: 600, // 600ms debounce between slides
+              releaseOnEdges: true,
+            }}
+            // Lazy preloading (Swiper 9+ uses lazyPreloadPrevNext)
+            lazyPreloadPrevNext={2}
+            // Autoplay config (stopped on init, controlled via isPlaying state)
+            autoplay={{
+              delay: PLAY_INTERVAL_MS,
+              disableOnInteraction: true,
+              pauseOnMouseEnter: true,
+              stopOnLastSlide: false,
+            }}
+            onInit={(swiper) => {
+              // Stop autoplay immediately on init
+              swiper.autoplay?.stop()
+            }}
+            // Navigation buttons
+            navigation={{
+              prevEl: prevButtonRef.current,
+              nextEl: nextButtonRef.current,
+            }}
+            onBeforeInit={(swiper) => {
+              // Assign navigation elements before init
+              if (typeof swiper.params.navigation === 'object') {
+                swiper.params.navigation.prevEl = prevButtonRef.current
+                swiper.params.navigation.nextEl = nextButtonRef.current
+              }
+            }}
+            className="w-full h-full"
+            style={{ overflow: 'hidden' }}
           >
-            <div className="embla__container flex h-full">
-              {allPhotos.map((photo, index) => (
-                <Slide
-                  key={photo.id}
-                  photo={photo}
-                  index={index}
-                  inView={slidesInView.includes(index)}
-                  isCurrent={index === currentIndex}
-                  isPlaying={isPlaying}
-                />
-              ))}
-            </div>
-          </div>
+            {allPhotos.map((photo, index) => (
+              <SwiperSlide key={photo.id} className="!h-full">
+                <Slide photo={photo} index={index} isPlaying={isPlaying} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
 
-        {/* Next Button - hidden during play mode */}
+        {/* Next Button - Swiper Navigation (hidden during play mode) */}
         <button
-          onClick={() => {
-            stopPlay()
-            goToNext()
-          }}
-          disabled={displayPosition >= totalCount && !isPlaying}
+          ref={nextButtonRef}
+          onClick={stopPlay}
           className={`slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-20 disabled:opacity-30 disabled:cursor-not-allowed ${
             isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}

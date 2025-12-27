@@ -10,29 +10,33 @@ vi.mock('@/lib/analytics', () => ({
   trackPhotoShare: vi.fn(),
 }))
 
-// Mock Embla carousel with a simpler approach
-const mockEmblaApi = {
-  on: vi.fn().mockReturnThis(),
-  off: vi.fn().mockReturnThis(),
-  selectedScrollSnap: vi.fn().mockReturnValue(0),
-  scrollTo: vi.fn(),
-  scrollPrev: vi.fn(),
-  scrollNext: vi.fn(),
-  canScrollPrev: vi.fn().mockReturnValue(false),
-  canScrollNext: vi.fn().mockReturnValue(true),
-  slideNodes: vi.fn().mockReturnValue([]),
-  slidesInView: vi.fn().mockReturnValue([0]),
-  reInit: vi.fn(),
-}
-
-vi.mock('embla-carousel-react', () => ({
-  default: vi.fn(() => [vi.fn(), mockEmblaApi]),
+// Mock Swiper
+vi.mock('swiper/react', () => ({
+  Swiper: vi.fn(({ children, onSwiper }) => {
+    if (onSwiper) {
+      onSwiper({
+        activeIndex: 0,
+        isBeginning: true,
+        isEnd: false,
+        slideTo: vi.fn(),
+        slidePrev: vi.fn(),
+        slideNext: vi.fn(),
+      })
+    }
+    return <div data-testid="swiper">{children}</div>
+  }),
+  SwiperSlide: vi.fn(({ children }) => (
+    <div data-testid="swiper-slide">{children}</div>
+  )),
 }))
-
-// Mock Embla wheel gestures plugin
-vi.mock('embla-carousel-wheel-gestures', () => ({
-  WheelGesturesPlugin: vi.fn(() => ({})),
+vi.mock('swiper/modules', () => ({
+  Mousewheel: {},
+  Autoplay: {},
+  Navigation: {},
 }))
+vi.mock('swiper/css', () => ({}))
+vi.mock('swiper/css/navigation', () => ({}))
+vi.mock('swiper/css/thumbs', () => ({}))
 
 // Mock next-auth
 vi.mock('next-auth/react', () => ({
