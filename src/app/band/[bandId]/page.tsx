@@ -872,8 +872,11 @@ export default async function BandPage({
         </section>
       )}
 
-      {/* Photos Section */}
-      <PhotoStrip bandId={bandId} />
+      {/* Photos Section - filter by company + event */}
+      <PhotoStrip
+        eventId={eventId}
+        companySlug={band.company_slug || undefined}
+      />
 
       {/* Videos Section */}
       {videos.length > 0 && (
