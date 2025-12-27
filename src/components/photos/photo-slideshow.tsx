@@ -1105,8 +1105,14 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col">
-      {/* Top Bar */}
-      <div className="slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5">
+      {/* Top Bar - hidden during play mode */}
+      <div
+        className={`slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
+          isPlaying
+            ? 'opacity-0 pointer-events-none -translate-y-full'
+            : 'opacity-100'
+        }`}
+      >
         <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
           {/* Photo Info */}
           <div className="shrink-0 min-w-0">
@@ -1364,18 +1370,24 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       </div>
 
       {/* Main Image Area - Carousel Track */}
+      {/* Fullscreen with no padding during play mode */}
       <div
         ref={imageContainerRef}
-        className="slideshow-main flex-1 flex items-center justify-center px-4 md:px-20 pt-20 pb-8 md:pb-28 overflow-hidden relative"
+        className={`slideshow-main flex-1 flex items-center justify-center overflow-hidden relative transition-all duration-300 ${
+          isPlaying ? 'p-0' : 'px-4 md:px-20 pt-20 pb-8 md:pb-28'
+        }`}
+        onClick={isPlaying ? stopPlay : undefined}
       >
-        {/* Previous Button */}
+        {/* Previous Button - hidden during play mode */}
         <button
           onClick={() => {
             stopPlay()
             goToPrevious()
           }}
           disabled={currentIndex === 0 && minLoadedPage === 1}
-          className="slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
+          className={`slideshow-nav absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-10 disabled:opacity-30 disabled:cursor-not-allowed ${
+            isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
           aria-label="Previous photo"
         >
           <ChevronLeftIcon size={24} strokeWidth={2} />
@@ -1405,38 +1417,49 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                 <img
                   src={photo.large_4k_url || photo.blob_url}
                   alt={photo.original_filename || `Photo ${index + 1}`}
-                  className="slideshow-image object-contain rounded-lg shadow-2xl"
+                  className={`slideshow-image object-contain transition-all duration-300 ${
+                    isPlaying ? '' : 'rounded-lg shadow-2xl'
+                  }`}
                   style={{
-                    maxWidth: 'min(90vw, calc(100vw - 8rem))',
-                    maxHeight: 'calc(100vh - 11rem)',
+                    maxWidth: isPlaying
+                      ? '100vw'
+                      : 'min(90vw, calc(100vw - 8rem))',
+                    maxHeight: isPlaying ? '100vh' : 'calc(100vh - 11rem)',
                     width: 'auto',
                     height: 'auto',
                     cursor: isPlaying ? 'pointer' : 'default',
                   }}
                   loading="lazy"
-                  onClick={isPlaying ? stopPlay : undefined}
                 />
               </div>
             )
           })}
         </div>
 
-        {/* Next Button */}
+        {/* Next Button - hidden during play mode */}
         <button
           onClick={() => {
             stopPlay()
             goToNext()
           }}
           disabled={displayPosition >= totalCount && !isPlaying}
-          className="slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10 disabled:opacity-30 disabled:cursor-not-allowed"
+          className={`slideshow-nav absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-bg/80 backdrop-blur-lg border border-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all duration-300 z-10 disabled:opacity-30 disabled:cursor-not-allowed ${
+            isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
           aria-label="Next photo"
         >
           <ChevronRightIcon size={24} strokeWidth={2} />
         </button>
       </div>
 
-      {/* Thumbnail Strip - hidden on mobile and landscape with limited height */}
-      <div className="slideshow-thumbnails hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6">
+      {/* Thumbnail Strip - hidden on mobile, landscape, and during play mode */}
+      <div
+        className={`slideshow-thumbnails hidden md:block absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6 transition-all duration-300 ${
+          isPlaying
+            ? 'opacity-0 pointer-events-none translate-y-full'
+            : 'opacity-100'
+        }`}
+      >
         <div
           ref={thumbnailStripRef}
           className="flex gap-3 overflow-x-auto py-3 px-2"
