@@ -17,6 +17,7 @@
 - [x] Micro-interactions on hover/focus (Button, Card components)
 - [x] E2E tests (Playwright) - Critical flows: voting, admin, photo gallery
 - [x] Photo list rate limiting - Added to `/api/photos` endpoint
+- [x] Dependency audit - 0 vulnerabilities, minor/patch updates applied
 
 ---
 
@@ -26,7 +27,6 @@
 
 - [ ] **Signed blob URLs** - Prevent direct scraping of blob storage URLs
 - [ ] **CORS configuration** - Configure proper CORS headers in next.config.ts
-- [ ] **Dependency audit** - Run `npm audit` and fix vulnerabilities
 
 ### Performance
 
