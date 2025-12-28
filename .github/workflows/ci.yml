@@ -41,9 +41,10 @@ jobs:
         run: npm run test
 
   # Visual regression testing with Chromatic
+  # Skip for Dependabot PRs as they don't have access to secrets
   chromatic:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout code
