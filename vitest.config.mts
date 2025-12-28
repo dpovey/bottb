@@ -9,7 +9,12 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     globals: true,
     // Exclude Storybook stories and Playwright E2E tests from unit tests
-    exclude: ['**/node_modules/**', '**/dist/**', '**/*.stories.{ts,tsx}', '**/e2e/**'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/*.stories.{ts,tsx}',
+      '**/e2e/**',
+    ],
   },
   resolve: {
     alias: {
