@@ -71,3 +71,38 @@ test.describe('Photo Gallery', () => {
     await expect(filterSection).toBeVisible({ timeout: 5000 })
   })
 })
+
+test.describe('Photo API', () => {
+  test('shuffle pagination returns photos on subsequent pages', async ({
+    request,
+  }) => {
+    const seed = 'test-seed-123'
+
+    // Use small limit so test fixtures (5 photos) span multiple pages
+    // Page 2 should return photos (regression: in-memory shuffle returned 0)
+    const response = await request.get(
+      `/api/photos?shuffle=${seed}&page=2&limit=2`
+    )
+    expect(response.ok()).toBe(true)
+
+    const data = await response.json()
+    expect(data.photos.length).toBeGreaterThan(0)
+  })
+
+  test('shuffle with same seed returns consistent order', async ({
+    request,
+  }) => {
+    const seed = 'deterministic-seed'
+
+    const response1 = await request.get(`/api/photos?shuffle=${seed}&limit=5`)
+    const response2 = await request.get(`/api/photos?shuffle=${seed}&limit=5`)
+
+    const data1 = await response1.json()
+    const data2 = await response2.json()
+
+    // Same seed should return same photos in same order
+    expect(data1.photos.map((p: { id: string }) => p.id)).toEqual(
+      data2.photos.map((p: { id: string }) => p.id)
+    )
+  })
+})
