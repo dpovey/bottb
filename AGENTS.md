@@ -61,7 +61,11 @@ Review changes against:
 1. **Practices** - Do we follow them? If not, is the exception justified?
 2. **Architecture** - Are we consistent with current patterns?
 3. **Requirements** - Did we deviate from relevant specs? Compare relevant screenshots.
-4. **Tests** - Did we change any test behavior, do we need to add any new tests?
+4. **Tests** - Consider the following:
+   - Did we change any test behavior? Update affected tests.
+   - Does new functionality need new unit/integration tests?
+   - Could changes affect user-facing flows? Run and/or update Playwright e2e tests (`npm run test:e2e`).
+   - Check `e2e/` for specs that test affected routes/features.
 
 **If major deviations found**: STOP and ask whether to update docs or fix code.
 
