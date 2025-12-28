@@ -1,10 +1,17 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { getPhotoById } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
+import { SlideshowPageContent } from './slideshow-page-content'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{
+    event?: string
+    photographer?: string
+    company?: string
+    seed?: string
+  }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -44,7 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    // Canonical points to the new slideshow route
     alternates: {
       canonical: `${baseUrl}/slideshow/${id}`,
     },
@@ -70,9 +76,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PhotoPage({ params }: Props) {
-  const { id } = await params
+export default async function SlideshowPage({ params, searchParams }: Props) {
+  const [{ id }, filters] = await Promise.all([params, searchParams])
 
-  // Redirect to the slideshow route
-  redirect(`/slideshow/${id}`)
+  const photo = await getPhotoById(id)
+
+  if (!photo) {
+    notFound()
+  }
+
+  const seed = filters.seed ? parseInt(filters.seed, 10) : null
+
+  return (
+    <SlideshowPageContent
+      initialPhotoId={id}
+      initialEventId={filters.event || null}
+      initialPhotographer={filters.photographer || null}
+      initialCompanySlug={filters.company || null}
+      initialSeed={seed}
+    />
+  )
 }

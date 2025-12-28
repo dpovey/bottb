@@ -21,7 +21,7 @@ export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
           : photo.event_name
             ? `Photo from ${photo.event_name}`
             : 'A photo from Battle of the Tech Bands',
-    url: `${baseUrl}/photo/${photo.id}`,
+    url: `${baseUrl}/slideshow/${photo.id}`,
     ...(photo.photographer && {
       creator: {
         '@type': 'Person',

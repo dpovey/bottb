@@ -94,12 +94,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // Get hero photos - curated, high-quality photos worth indexing
-    // These have proper OG metadata at /photo/[id] and redirect to gallery for UX
+    // These have proper OG metadata at /slideshow/[id]
     try {
       const heroPhotos = await getAllHeroPhotos()
       for (const photo of heroPhotos) {
         sitemapEntries.push({
-          url: `${baseUrl}/photo/${photo.id}`,
+          url: `${baseUrl}/slideshow/${photo.id}`,
           lastModified: photo.uploaded_at
             ? new Date(photo.uploaded_at)
             : new Date(),

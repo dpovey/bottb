@@ -35,6 +35,10 @@ Key documentation:
 - `doc/requirements/` - Feature requirements with screenshots
 - `doc/testing/` - Testing patterns and strategies
 
+## Development Server
+
+**Always use `npm run dev:restart` to start the dev server.** This kills any existing server on port 3000 and clears the `.next` cache before starting. Never use `npm run dev` directly as it can create multiple server instances.
+
 ## Workflow
 
 ### When Designing New Features
@@ -57,6 +61,7 @@ Review changes against:
 1. **Practices** - Do we follow them? If not, is the exception justified?
 2. **Architecture** - Are we consistent with current patterns?
 3. **Requirements** - Did we deviate from relevant specs? Compare relevant screenshots.
+4. **Tests** - Did we change any test behavior, do we need to add any new tests?
 
 **If major deviations found**: STOP and ask whether to update docs or fix code.
 

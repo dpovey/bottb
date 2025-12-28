@@ -112,29 +112,43 @@ const _mockPhotos = [
   },
 ]
 
-describe('PhotosContent - Slideshow from URL', () => {
+describe('PhotosContent - Navigation to Slideshow', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetch.mockReset()
-    ;(useRouter as ReturnType<typeof vi.fn>).mockReturnValue({
-      push: vi.fn(),
-      replace: vi.fn(),
-    })
   })
 
-  it('should render slideshow immediately when initialPhotoId is provided', async () => {
-    // Mock searchParams to return the photo ID
+  it('should render gallery without slideshow modal', async () => {
+    const mockPush = vi.fn()
+    ;(useRouter as ReturnType<typeof vi.fn>).mockReturnValue({
+      push: mockPush,
+      replace: vi.fn(),
+    })
     ;(useSearchParams as ReturnType<typeof vi.fn>).mockReturnValue({
-      get: vi.fn((key: string) => (key === 'photo' ? 'photo-2' : null)),
+      get: vi.fn(() => null),
     })
 
-    // Mock API to return empty initially (simulating slow network)
+    // Mock API to return photos
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        photos: [],
-        pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
-        photographers: [],
+        photos: [
+          {
+            id: 'photo-1',
+            blob_url: 'https://example.com/photo1.jpg',
+            thumbnail_url: 'https://example.com/thumb1.jpg',
+            event_id: 'event-1',
+            band_id: 'band-1',
+            event_name: 'Test Event',
+            band_name: 'Test Band',
+            photographer: 'Test Photographer',
+            labels: [],
+            company_slug: null,
+            company_name: null,
+          },
+        ],
+        pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
+        photographers: ['Test Photographer'],
         companies: [],
         availableFilters: {
           companies: [],
@@ -150,23 +164,21 @@ describe('PhotosContent - Slideshow from URL', () => {
         initialEventId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
-        initialPhotoId="photo-2"
+        initialPhotoId={null}
       />
     )
 
-    // The slideshow should render immediately (even in loading state) when initialPhotoId is provided
-    // We check for the slideshow's close button which should be visible
-    const closeButton = await screen.findByRole(
-      'button',
-      {
-        name: /close slideshow/i,
-      },
-      { timeout: 2000 }
-    )
-    expect(closeButton).toBeInTheDocument()
+    // Wait for the gallery title to render
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: /Photo Gallery/i })
+      ).toBeInTheDocument()
+    })
 
-    // The loading indicator should be visible since no photos are loaded yet
-    expect(screen.getByText(/loading photo/i)).toBeInTheDocument()
+    // Gallery should render without a slideshow modal (slideshow is now a separate route)
+    expect(
+      screen.queryByRole('button', { name: /close slideshow/i })
+    ).not.toBeInTheDocument()
   })
 })
 

@@ -14,6 +14,14 @@ const createMockQueryResult = <T,>(rows: T[]) => ({
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  })),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
+  })),
 }))
 
 // Mock the database functions

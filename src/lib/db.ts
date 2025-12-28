@@ -572,6 +572,8 @@ export interface GetPhotosOptions {
   limit?: number
   offset?: number
   orderBy?: PhotoOrderBy
+  /** Seed for deterministic random ordering (only used when orderBy='random') */
+  seed?: number
 }
 
 /**
@@ -618,15 +620,18 @@ export async function getPhotosWithCount(
     limit = 50,
     offset = 0,
     orderBy = 'uploaded',
+    seed,
   } = options
 
-  // For random ordering, use SQL RANDOM()
+  // For random ordering, use deterministic hash-based ordering with seed
   if (orderBy === 'random') {
     return getPhotosRandomWithCount({
       eventId,
       photographer,
       companySlug,
       limit,
+      offset,
+      seed,
     })
   }
 
@@ -677,7 +682,9 @@ export async function getPhotosWithCount(
 }
 
 /**
- * Get photos in truly random order with total count using SQL RANDOM()
+ * Get photos in deterministic random order with total count using hashtext()
+ * When a seed is provided, the same seed produces the same order (reproducible shuffle)
+ * When no seed is provided, uses true random ordering
  * This mixes photos from all events/bands for better discovery
  * All filters are combined with AND for proper filtering
  */
@@ -686,11 +693,23 @@ async function getPhotosRandomWithCount(options: {
   photographer?: string
   companySlug?: string
   limit: number
+  offset?: number
+  seed?: number
 }): Promise<PhotosWithCountResult> {
-  const { eventId, photographer, companySlug, limit } = options
+  const {
+    eventId,
+    photographer,
+    companySlug,
+    limit,
+    offset = 0,
+    seed,
+  } = options
 
   try {
     // Use COUNT(*) OVER() to get total count in the same query
+    // If seed is provided, use deterministic hash-based ordering
+    // hashtext() is fast (designed for hash tables) and deterministic
+    // Secondary sort by id ensures stable ordering on hash collisions
     const { rows } = await sql<PhotoWithCount>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
@@ -710,8 +729,14 @@ async function getPhotosRandomWithCount(options: {
           OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
           OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
         )
-      ORDER BY RANDOM()
+      ORDER BY 
+        CASE WHEN ${seed ?? null}::bigint IS NOT NULL 
+          THEN hashtext(p.id || ${seed ?? 0}::text)
+          ELSE floor(random() * 2147483647)::int
+        END,
+        p.id
       LIMIT ${limit}
+      OFFSET ${offset}
     `
 
     const total = parseInt(rows[0]?.total_count || '0', 10)

@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Photo, Event } from '@/lib/db'
 import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
-import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
@@ -57,9 +56,10 @@ export function PhotosContent({
   initialEventId = null,
   initialPhotographer = null,
   initialCompanySlug = null,
-  initialPhotoId = null,
+  initialPhotoId: _initialPhotoId = null,
   initialFilterOptions,
 }: PhotosContentProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [photos, setPhotos] = useState<Photo[]>([])
   // Initialize with SSR data if available to prevent layout shift
@@ -90,6 +90,13 @@ export function PhotosContent({
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
+  // Seed for deterministic random ordering - generate once on mount or use from URL
+  // This ensures the same shuffle order is preserved when navigating to slideshow and back
+  const [seed] = useState<number>(() => {
+    const urlSeed = searchParams.get('seed')
+    return urlSeed ? parseInt(urlSeed, 10) : Date.now()
+  })
+
   // Page sizes: smaller initial load for faster first paint, larger for subsequent loads
   const INITIAL_PAGE_SIZE = 12
   const PAGE_SIZE = 50
@@ -111,16 +118,6 @@ export function PhotosContent({
     initialCompanySlug
   )
 
-  // Slideshow - initialize to 0 if we have a photo ID in URL (so slideshow renders immediately)
-  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(
-    initialPhotoId ? 0 : null
-  )
-  const [pendingPhotoId, setPendingPhotoId] = useState<string | null>(
-    initialPhotoId
-  )
-  // Track intentional close to prevent re-opening from stale URL params
-  const isClosingRef = useRef(false)
-
   // Track current page for ordered mode
   const currentPage = useRef(1)
 
@@ -129,7 +126,6 @@ export function PhotosContent({
     const eventId = searchParams.get('event') || searchParams.get('eventId')
     const photographer = searchParams.get('photographer')
     const company = searchParams.get('company')
-    const photoId = searchParams.get('photo')
 
     // Only update if URL params differ from current state (handles browser navigation)
     // Use functional updates to avoid dependency on current state values
@@ -145,15 +141,7 @@ export function PhotosContent({
       const urlValue = company || null
       return prev !== urlValue ? urlValue : prev
     })
-    // Only set pendingPhotoId if slideshow is not already open AND we're not intentionally closing
-    // This prevents infinite loops when the slideshow updates the URL
-    if (slideshowIndex === null && !isClosingRef.current) {
-      setPendingPhotoId((prev) => {
-        const urlValue = photoId || null
-        return prev !== urlValue ? urlValue : prev
-      })
-    }
-  }, [searchParams, slideshowIndex])
+  }, [searchParams])
 
   // Update URL when filters change
   const updateUrlParams = useCallback(
@@ -199,7 +187,6 @@ export function PhotosContent({
   const handleEventChange = useCallback(
     (eventId: string | null) => {
       setSelectedEventId(eventId)
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
       updateUrlParams({ event: eventId })
 
       // Track filter change
@@ -208,13 +195,12 @@ export function PhotosContent({
         filter_value: eventId,
       })
     },
-    [updateUrlParams, slideshowIndex]
+    [updateUrlParams]
   )
 
   const handlePhotographerChange = useCallback(
     (photographer: string | null) => {
       setSelectedPhotographer(photographer)
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
       updateUrlParams({ photographer })
 
       // Track filter change
@@ -223,7 +209,7 @@ export function PhotosContent({
         filter_value: photographer,
       })
     },
-    [updateUrlParams, slideshowIndex]
+    [updateUrlParams]
   )
 
   const handleCompanyChange = useCallback(
@@ -231,7 +217,6 @@ export function PhotosContent({
       setSelectedCompanySlug(company)
       // Clear event when company changes (optional - could keep it)
       setSelectedEventId(null)
-      setSlideshowIndex(slideshowIndex !== null ? 0 : null) // Reset to first photo if slideshow is open
       updateUrlParams({ company, event: null })
 
       // Track filter change
@@ -240,50 +225,8 @@ export function PhotosContent({
         filter_value: company,
       })
     },
-    [updateUrlParams, slideshowIndex]
+    [updateUrlParams]
   )
-
-  // Track if we're fetching the specific photo for the URL
-  const fetchingPendingPhoto = useRef(false)
-
-  // Open slideshow when photos load and we have a pending photo ID
-  useEffect(() => {
-    if (pendingPhotoId && photos.length > 0 && !loading) {
-      const index = photos.findIndex((p) => p.id === pendingPhotoId)
-      if (index !== -1) {
-        setSlideshowIndex(index)
-        setPendingPhotoId(null)
-        fetchingPendingPhoto.current = false
-      } else if (!fetchingPendingPhoto.current) {
-        // Photo not found in current batch - fetch it specifically
-        fetchingPendingPhoto.current = true
-
-        fetch(`/api/photos/${pendingPhotoId}`)
-          .then((res) => {
-            if (!res.ok) throw new Error('Photo not found')
-            return res.json()
-          })
-          .then((photo: Photo) => {
-            // Prepend the photo to the array so it shows at index 0
-            setPhotos((prev) => {
-              // Avoid duplicates
-              if (prev.some((p) => p.id === photo.id)) return prev
-              return [photo, ...prev]
-            })
-            loadedPhotoIds.current.add(photo.id)
-            // Open slideshow at index 0 (where we prepended the photo)
-            setSlideshowIndex(0)
-            setPendingPhotoId(null)
-            fetchingPendingPhoto.current = false
-          })
-          .catch((error) => {
-            console.error('Failed to fetch photo for URL:', error)
-            setPendingPhotoId(null)
-            fetchingPendingPhoto.current = false
-          })
-      }
-    }
-  }, [pendingPhotoId, photos, loading])
 
   // Fetch events on mount (only if not provided via SSR)
   useEffect(() => {
@@ -354,8 +297,14 @@ export function PhotosContent({
         params.set('limit', limit.toString())
         params.set('order', orderMode)
 
-        // For ordered mode, use pagination; for random, always fetch fresh
-        if (orderMode === 'date') {
+        // For random mode, use seed for deterministic ordering
+        if (orderMode === 'random') {
+          params.set('seed', seed.toString())
+        }
+
+        // Use pagination for both date mode and seeded random mode
+        // (deterministic ordering allows proper pagination)
+        if (orderMode === 'date' || (orderMode === 'random' && seed)) {
           params.set('page', currentPage.current.toString())
         }
 
@@ -387,9 +336,8 @@ export function PhotosContent({
             )
             newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
             setPhotos((prev) => [...prev, ...newPhotos])
-            if (orderMode === 'date') {
-              currentPage.current += 1
-            }
+            // Increment page for pagination (both date and seeded random modes)
+            currentPage.current += 1
           } else {
             // Initial load
             loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
@@ -405,7 +353,13 @@ export function PhotosContent({
         setLoadingMore(false)
       }
     },
-    [selectedEventId, selectedPhotographer, selectedCompanySlug, orderMode]
+    [
+      selectedEventId,
+      selectedPhotographer,
+      selectedCompanySlug,
+      orderMode,
+      seed,
+    ]
   )
 
   // Initial fetch when filters change
@@ -437,13 +391,13 @@ export function PhotosContent({
     return () => observer.disconnect()
   }, [loading, loadingMore, photos.length, totalCount, fetchPhotos])
 
-  // Handle photo click
-  const handlePhotoClick = (index: number) => {
-    setSlideshowIndex(index)
+  // Handle photo click - navigate to slideshow
+  const handlePhotoClick = useCallback(
+    (index: number) => {
+      const photo = photos[index]
+      if (!photo) return
 
-    // Track photo click
-    const photo = photos[index]
-    if (photo) {
+      // Track photo click
       trackPhotoClick({
         photo_id: photo.id,
         event_id: photo.event_id || null,
@@ -451,69 +405,27 @@ export function PhotosContent({
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
       })
-    }
-  }
 
-  // Handle slideshow close
-  const handleSlideshowClose = useCallback(() => {
-    isClosingRef.current = true // Prevent searchParams effect from re-opening
-    setSlideshowIndex(null)
-    setPendingPhotoId(null) // Clear pending photo to prevent re-opening
-    // Clear the photo param from URL
-    const url = new URL(window.location.href)
-    url.searchParams.delete('photo')
-    window.history.replaceState({}, '', url.pathname + url.search)
-    // Reset the closing flag after a tick to allow URL to update
-    setTimeout(() => {
-      isClosingRef.current = false
-    }, 100)
-  }, [])
+      // Build slideshow URL with current filters and seed (for random mode)
+      const params = new URLSearchParams()
+      if (selectedEventId) params.set('event', selectedEventId)
+      if (selectedPhotographer) params.set('photographer', selectedPhotographer)
+      if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+      if (orderMode === 'random') params.set('seed', seed.toString())
 
-  // Handle photo change in slideshow (update URL)
-  const handlePhotoChange = useCallback((photoId: string) => {
-    const url = new URL(window.location.href)
-    url.searchParams.set('photo', photoId)
-    window.history.replaceState({}, '', url.pathname + url.search)
-  }, [])
-
-  // Handle photo deletion (called from slideshow)
-  const handlePhotoDeleted = useCallback((photoId: string) => {
-    // Remove the photo from local state
-    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
-    loadedPhotoIds.current.delete(photoId)
-    // Update total count
-    setTotalCount((prev) => prev - 1)
-  }, [])
-
-  // Handle photo crop (called from slideshow)
-  const handlePhotoCropped = useCallback(
-    (photoId: string, newThumbnailUrl: string) => {
-      // Update the thumbnail URL in local state
-      setPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
-        )
-      )
+      const queryString = params.toString()
+      const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
+      router.push(slideshowUrl)
     },
-    []
-  )
-
-  // Handle filter change from slideshow
-  const handleFilterChangeFromSlideshow = useCallback(
-    (filterType: string, value: string | null) => {
-      switch (filterType) {
-        case 'event':
-          handleEventChange(value)
-          break
-        case 'photographer':
-          handlePhotographerChange(value)
-          break
-        case 'company':
-          handleCompanyChange(value)
-          break
-      }
-    },
-    [handleEventChange, handlePhotographerChange, handleCompanyChange]
+    [
+      photos,
+      router,
+      selectedEventId,
+      selectedPhotographer,
+      selectedCompanySlug,
+      orderMode,
+      seed,
+    ]
   )
 
   return (
@@ -535,7 +447,7 @@ export function PhotosContent({
             </div>
             {photos.length > 0 && (
               <button
-                onClick={() => setSlideshowIndex(0)}
+                onClick={() => handlePhotoClick(0)}
                 className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors"
               >
                 <PlayCircleIcon size={16} />
@@ -744,34 +656,6 @@ export function PhotosContent({
           )}
         </div>
       </main>
-
-      {/* Slideshow modal */}
-      {slideshowIndex !== null && (photos.length > 0 || pendingPhotoId) && (
-        <PhotoSlideshow
-          photos={photos}
-          initialIndex={slideshowIndex}
-          totalPhotos={totalCount}
-          currentPage={1}
-          filters={{
-            eventId: selectedEventId,
-            photographer: selectedPhotographer,
-            companySlug: selectedCompanySlug,
-          }}
-          filterNames={{
-            eventName: events.find((e) => e.id === selectedEventId)?.name,
-            photographer: selectedPhotographer,
-            companyName:
-              selectedCompanySlug === 'none'
-                ? 'No Company'
-                : companies.find((c) => c.slug === selectedCompanySlug)?.name,
-          }}
-          onFilterChange={handleFilterChangeFromSlideshow}
-          onClose={handleSlideshowClose}
-          onPhotoDeleted={handlePhotoDeleted}
-          onPhotoCropped={handlePhotoCropped}
-          onPhotoChange={handlePhotoChange}
-        />
-      )}
     </PublicLayout>
   )
 }

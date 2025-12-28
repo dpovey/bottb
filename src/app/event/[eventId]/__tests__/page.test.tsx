@@ -6,6 +6,14 @@ import type { Event, Band, Video, Photo } from '@/lib/db'
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
   useParams: () => ({ eventId: 'test-event-id' }),
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  })),
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
+  })),
 }))
 
 // Mock next-auth/react

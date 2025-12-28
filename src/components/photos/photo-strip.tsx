@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Photo } from '@/lib/db'
-import { PhotoSlideshow } from './photo-slideshow'
 import { trackPhotoClick } from '@/lib/analytics'
 import {
   ChevronLeftIcon,
@@ -60,6 +60,8 @@ export function PhotoStrip({
   initialPhotos,
   initialTotalCount,
 }: PhotoStripProps) {
+  const router = useRouter()
+
   // All loaded photos for the strip
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos || [])
   const [totalCount, setTotalCount] = useState(initialTotalCount || 0)
@@ -69,14 +71,15 @@ export function PhotoStrip({
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
+  // Seed for deterministic random ordering - generate once on mount
+  // This ensures the same order when navigating to slideshow and back
+  const [seed] = useState(() => Date.now())
+
   // Strip navigation state
   const [selectedIndex, setSelectedIndex] = useState(0)
   const stripRef = useRef<HTMLDivElement>(null)
   const photoRefs = useRef<(HTMLButtonElement | null)[]>([])
   const isInitialMount = useRef(true)
-
-  // Slideshow state
-  const [slideshowIndex, setSlideshowIndex] = useState<number | null>(null)
 
   // Build the view all link based on filters
   const galleryLink =
@@ -101,6 +104,7 @@ export function PhotoStrip({
       params.set('limit', PAGE_SIZE.toString())
       params.set('page', page.toString())
       params.set('order', 'random') // Random order for browsing strips
+      params.set('seed', seed.toString()) // Deterministic ordering
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (!res.ok) return []
@@ -109,7 +113,7 @@ export function PhotoStrip({
       setTotalCount(data.pagination.total)
       return data.photos
     },
-    [eventId, bandId, companySlug, photographer]
+    [eventId, bandId, companySlug, photographer, seed]
   )
 
   // Initial fetch (only if initialPhotos not provided)
@@ -200,35 +204,52 @@ export function PhotoStrip({
     }
   }, [selectedIndex])
 
-  // Handle photo click - open slideshow
+  // Handle photo click - navigate to slideshow
   const handlePhotoClick = useCallback(
     (index: number) => {
       if (!enableSlideshow) return
 
-      // Track photo click
       const photo = photos[index]
-      if (photo) {
-        trackPhotoClick({
-          photo_id: photo.id,
-          event_id: photo.event_id || null,
-          band_id: photo.band_id || null,
-          event_name: photo.event_name || null,
-          band_name: photo.band_name || null,
-        })
-      }
+      if (!photo) return
+
+      // Track photo click
+      trackPhotoClick({
+        photo_id: photo.id,
+        event_id: photo.event_id || null,
+        band_id: photo.band_id || null,
+        event_name: photo.event_name || null,
+        band_name: photo.band_name || null,
+      })
 
       setSelectedIndex(index)
-      setSlideshowIndex(index)
+
+      // Build slideshow URL with current filters and seed for deterministic ordering
+      const params = new URLSearchParams()
+      if (eventId) params.set('event', eventId)
+      if (bandId) params.set('band', bandId)
+      if (companySlug) params.set('company', companySlug)
+      if (photographer) params.set('photographer', photographer)
+      params.set('seed', seed.toString())
+
+      const queryString = params.toString()
+      const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
+      router.push(slideshowUrl)
     },
-    [enableSlideshow, photos]
+    [
+      enableSlideshow,
+      photos,
+      router,
+      eventId,
+      bandId,
+      companySlug,
+      photographer,
+      seed,
+    ]
   )
 
   // Keyboard navigation - works when strip or any of its children has focus
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't navigate if slideshow is open
-      if (slideshowIndex !== null) return
-
       // Only handle if the strip container or any element inside it has focus
       const activeElement = document.activeElement
       if (!stripRef.current?.contains(activeElement)) {
@@ -253,32 +274,7 @@ export function PhotoStrip({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [photos.length, selectedIndex, slideshowIndex, handlePhotoClick])
-
-  // Handle slideshow close
-  const handleSlideshowClose = useCallback(() => {
-    setSlideshowIndex(null)
-    // Re-focus the strip after closing
-    photoRefs.current[selectedIndex]?.focus()
-  }, [selectedIndex])
-
-  // Handle photo deletion from slideshow
-  const handlePhotoDeleted = useCallback((photoId: string) => {
-    setPhotos((prev) => prev.filter((p) => p.id !== photoId))
-    setTotalCount((prev) => prev - 1)
-  }, [])
-
-  // Handle photo crop from slideshow
-  const handlePhotoCropped = useCallback(
-    (photoId: string, newThumbnailUrl: string) => {
-      setPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
-        )
-      )
-    },
-    []
-  )
+  }, [photos.length, selectedIndex, handlePhotoClick])
 
   // Don't render anything if there are no photos
   if (!loading && photos.length === 0) {
@@ -426,25 +422,6 @@ export function PhotoStrip({
           )}
         </div>
       </section>
-
-      {/* Slideshow modal */}
-      {slideshowIndex !== null && photos.length > 0 && (
-        <PhotoSlideshow
-          photos={photos}
-          initialIndex={slideshowIndex}
-          totalPhotos={totalCount}
-          currentPage={1}
-          filters={{
-            eventId: eventId || null,
-            bandId: bandId || null,
-            companySlug: companySlug || null,
-            photographer: photographer || null,
-          }}
-          onClose={handleSlideshowClose}
-          onPhotoDeleted={handlePhotoDeleted}
-          onPhotoCropped={handlePhotoCropped}
-        />
-      )}
     </>
   )
 }

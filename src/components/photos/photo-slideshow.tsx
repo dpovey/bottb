@@ -81,6 +81,8 @@ interface PhotoSlideshowProps {
     filterType: 'event' | 'band' | 'photographer' | 'company',
     value: string | null
   ) => void
+  /** Display mode: 'modal' (fixed overlay) or 'page' (full page route) */
+  mode?: 'modal' | 'page'
 }
 
 const PAGE_SIZE = 50
@@ -162,6 +164,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   onPhotoCropped,
   onPhotoChange,
   onFilterChange,
+  mode = 'modal',
 }: PhotoSlideshowProps) {
   const { data: session } = useSession()
   const isAdmin = session?.user?.isAdmin ?? false
@@ -202,6 +205,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       setTotalCount(totalPhotos)
       setDirection(0)
       prevInitialIndexRef.current = initialIndex
+      // Also sync Swiper to the new position
+      if (swiperRef.current && swiperRef.current.activeIndex !== initialIndex) {
+        swiperRef.current.slideTo(initialIndex, 0)
+      }
     }
   }, [initialIndex, currentPage, totalPhotos])
 
@@ -516,6 +523,28 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       swiperRef.current.autoplay.stop()
     }
   }, [isPlaying])
+
+  // Initialize Swiper navigation after mount (refs are null during initial render)
+  useEffect(() => {
+    if (!swiperRef.current) return
+    const swiper = swiperRef.current
+
+    // Update navigation elements now that refs are populated
+    if (
+      swiper.params.navigation &&
+      typeof swiper.params.navigation === 'object'
+    ) {
+      swiper.params.navigation.prevEl = prevButtonRef.current
+      swiper.params.navigation.nextEl = nextButtonRef.current
+    }
+
+    // Re-initialize navigation
+    if (swiper.navigation) {
+      swiper.navigation.destroy()
+      swiper.navigation.init()
+      swiper.navigation.update()
+    }
+  }, [])
 
   // Stop play mode when modals open
   useEffect(() => {
@@ -987,19 +1016,25 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
   const currentPhoto = allPhotos[currentIndex]
 
+  // Container classes based on mode (used for both loading and main states)
+  const loadingContainerClasses =
+    mode === 'modal'
+      ? 'fixed inset-0 z-50 bg-black flex items-center justify-center'
+      : 'min-h-screen bg-black flex items-center justify-center relative'
+
   // Show loading state when photo hasn't loaded yet (e.g., deep link before photos fetch)
   if (!currentPhoto) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <div className={loadingContainerClasses}>
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-gray-400">Loading photo...</p>
         </div>
-        {/* Close button */}
+        {/* Close/Back button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
-          aria-label="Close slideshow"
+          aria-label={mode === 'page' ? 'Go back' : 'Close slideshow'}
         >
           <CloseIcon className="w-6 h-6" />
         </button>
@@ -1011,8 +1046,14 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const minLoadedPage = Math.min(...Array.from(loadedPages))
   const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1
 
+  // Container classes based on mode
+  const containerClasses =
+    mode === 'modal'
+      ? 'fixed inset-0 z-50 bg-bg flex flex-col'
+      : 'min-h-screen bg-bg flex flex-col'
+
   return (
-    <div className="fixed inset-0 z-50 bg-bg flex flex-col">
+    <div className={containerClasses}>
       {/* Top Bar - hidden during play mode */}
       <div
         className={`slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
@@ -1264,12 +1305,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               </div>
             )}
 
-            {/* Close */}
+            {/* Close / Back */}
             <button
               onClick={onClose}
               className="slideshow-close p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors ml-2"
-              aria-label="Close slideshow"
-              title="Close"
+              aria-label={mode === 'page' ? 'Go back' : 'Close slideshow'}
+              title={mode === 'page' ? 'Back' : 'Close'}
             >
               <CloseIcon size={24} />
             </button>
