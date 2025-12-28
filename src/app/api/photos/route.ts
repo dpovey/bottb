@@ -28,10 +28,6 @@ export async function GET(request: NextRequest) {
     const orderBy: PhotoOrderBy =
       orderParam === 'random' || orderParam === 'date' ? orderParam : 'uploaded'
 
-    // Seed for deterministic random ordering (same seed = same order)
-    const seedParam = searchParams.get('seed')
-    const seed = seedParam ? parseInt(seedParam, 10) : undefined
-
     // skipMeta=true skips fetching filter metadata (for "load more" requests)
     const skipMeta = searchParams.get('skipMeta') === 'true'
 

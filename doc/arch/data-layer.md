@@ -59,6 +59,14 @@ The database evolved through these phases (archived scripts in `src/scripts/arch
 - Test databases use `schema.sql` via `npm run setup-db` (fresh each time)
 - The `pgmigrations` table tracks applied migrations in production
 
+### E2E Test Database
+
+E2E tests use Docker Postgres (see `doc/testing/e2e-testing.md`):
+
+- `docker-compose.test.yml` - ephemeral Postgres 17 on port 5433
+- `e2e/fixtures/` - JSON test data and cached pg_dump
+- `npm run test:e2e` - seeds database and runs Playwright tests
+
 ## Core Tables
 
 | Table       | Primary Key | Description                                 |
