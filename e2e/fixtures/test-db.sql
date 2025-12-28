@@ -1,0 +1,1226 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict FNjBUYoy1HjpqNSTqtOqCbTSKIrC5RicNmO2pJVfALkylaTaDP67NAqCnkgwfcY
+
+-- Dumped from database version 17.7
+-- Dumped by pg_dump version 17.7
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: test
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO test;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: test
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bands; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.bands (
+    id character varying(255),
+    name character varying(255) NOT NULL,
+    description text,
+    "order" integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    info jsonb DEFAULT '{}'::jsonb,
+    event_id character varying(255),
+    company_slug character varying(255)
+);
+
+
+ALTER TABLE public.bands OWNER TO test;
+
+--
+-- Name: companies; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.companies (
+    slug character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    logo_url text,
+    website text,
+    created_at timestamp with time zone DEFAULT now(),
+    icon_url text
+);
+
+
+ALTER TABLE public.companies OWNER TO test;
+
+--
+-- Name: crowd_noise_measurements; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.crowd_noise_measurements (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    energy_level numeric(10,4) NOT NULL,
+    peak_volume numeric(10,4) NOT NULL,
+    recording_duration integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    crowd_score integer NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    CONSTRAINT crowd_noise_measurements_crowd_score_check CHECK (((crowd_score >= 1) AND (crowd_score <= 10))),
+    CONSTRAINT crowd_noise_measurements_energy_level_check CHECK ((energy_level >= (0)::numeric)),
+    CONSTRAINT crowd_noise_measurements_peak_volume_check CHECK ((peak_volume >= (0)::numeric)),
+    CONSTRAINT crowd_noise_measurements_recording_duration_check CHECK ((recording_duration > 0))
+);
+
+
+ALTER TABLE public.crowd_noise_measurements OWNER TO test;
+
+--
+-- Name: events; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.events (
+    id character varying(255),
+    name character varying(255) NOT NULL,
+    date timestamp with time zone NOT NULL,
+    location character varying(255) NOT NULL,
+    is_active boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    status character varying(20) DEFAULT 'upcoming'::character varying,
+    info jsonb DEFAULT '{}'::jsonb,
+    timezone character varying(64) DEFAULT 'Australia/Brisbane'::character varying NOT NULL,
+    CONSTRAINT events_status_check CHECK (((status)::text = ANY (ARRAY[('upcoming'::character varying)::text, ('voting'::character varying)::text, ('finalized'::character varying)::text])))
+);
+
+
+ALTER TABLE public.events OWNER TO test;
+
+--
+-- Name: finalized_results; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.finalized_results (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id character varying(255) NOT NULL,
+    band_id character varying(255) NOT NULL,
+    band_name character varying(255) NOT NULL,
+    final_rank integer NOT NULL,
+    avg_song_choice numeric(10,2),
+    avg_performance numeric(10,2),
+    avg_crowd_vibe numeric(10,2),
+    crowd_vote_count integer DEFAULT 0,
+    judge_vote_count integer DEFAULT 0,
+    total_crowd_votes integer DEFAULT 0,
+    crowd_noise_energy numeric(10,4),
+    crowd_noise_peak numeric(10,4),
+    crowd_noise_score integer,
+    judge_score numeric(10,2),
+    crowd_score numeric(10,2),
+    total_score numeric(10,2),
+    finalized_at timestamp with time zone DEFAULT now(),
+    avg_visuals numeric(10,2),
+    visuals_score numeric(10,2)
+);
+
+
+ALTER TABLE public.finalized_results OWNER TO test;
+
+--
+-- Name: photographers; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.photographers (
+    slug character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    bio text,
+    location character varying(255),
+    website text,
+    instagram text,
+    email text,
+    created_at timestamp with time zone DEFAULT now(),
+    avatar_url text
+);
+
+
+ALTER TABLE public.photographers OWNER TO test;
+
+--
+-- Name: photos; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.photos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    photographer character varying(255),
+    blob_url text NOT NULL,
+    blob_pathname text NOT NULL,
+    original_filename character varying(255),
+    width integer,
+    height integer,
+    file_size integer,
+    content_type character varying(50),
+    xmp_metadata jsonb,
+    matched_event_name character varying(255),
+    matched_band_name character varying(255),
+    match_confidence character varying(20),
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now(),
+    labels text[] DEFAULT '{}'::text[],
+    hero_focal_point jsonb DEFAULT '{"x": 50, "y": 50}'::jsonb,
+    captured_at timestamp with time zone,
+    original_blob_url text,
+    CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY (ARRAY[('exact'::character varying)::text, ('fuzzy'::character varying)::text, ('manual'::character varying)::text, ('unmatched'::character varying)::text])))
+);
+
+
+ALTER TABLE public.photos OWNER TO test;
+
+--
+-- Name: setlist_songs; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.setlist_songs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    band_id character varying(255) NOT NULL,
+    "position" integer NOT NULL,
+    song_type character varying(50) DEFAULT 'cover'::character varying NOT NULL,
+    title character varying(255) NOT NULL,
+    artist character varying(255) NOT NULL,
+    additional_songs jsonb DEFAULT '[]'::jsonb,
+    transition_to_title character varying(255),
+    transition_to_artist character varying(255),
+    youtube_video_id character varying(50),
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT setlist_songs_song_type_check CHECK (((song_type)::text = ANY (ARRAY[('cover'::character varying)::text, ('mashup'::character varying)::text, ('medley'::character varying)::text, ('transition'::character varying)::text]))),
+    CONSTRAINT setlist_songs_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('locked'::character varying)::text, ('conflict'::character varying)::text])))
+);
+
+
+ALTER TABLE public.setlist_songs OWNER TO test;
+
+--
+-- Name: social_accounts; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.social_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    provider character varying(50) NOT NULL,
+    provider_account_id character varying(255) NOT NULL,
+    provider_account_name character varying(255),
+    organization_urn character varying(255),
+    page_id character varying(255),
+    ig_business_account_id character varying(255),
+    access_token_encrypted text NOT NULL,
+    refresh_token_encrypted text,
+    access_token_expires_at timestamp with time zone,
+    refresh_token_expires_at timestamp with time zone,
+    scopes text[],
+    status character varying(20) DEFAULT 'active'::character varying,
+    last_error text,
+    connected_by character varying(255),
+    connected_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_accounts_provider_check CHECK (((provider)::text = ANY (ARRAY[('linkedin'::character varying)::text, ('facebook'::character varying)::text, ('instagram'::character varying)::text, ('threads'::character varying)::text]))),
+    CONSTRAINT social_accounts_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('expired'::character varying)::text, ('revoked'::character varying)::text, ('error'::character varying)::text])))
+);
+
+
+ALTER TABLE public.social_accounts OWNER TO test;
+
+--
+-- Name: social_post_results; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.social_post_results (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    post_id uuid NOT NULL,
+    platform character varying(50) NOT NULL,
+    status character varying(20) NOT NULL,
+    external_post_id character varying(255),
+    external_post_url text,
+    error_code character varying(100),
+    error_message text,
+    response_data jsonb,
+    attempted_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_post_results_platform_check CHECK (((platform)::text = ANY (ARRAY[('linkedin'::character varying)::text, ('facebook'::character varying)::text, ('instagram'::character varying)::text]))),
+    CONSTRAINT social_post_results_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('success'::character varying)::text, ('failed'::character varying)::text])))
+);
+
+
+ALTER TABLE public.social_post_results OWNER TO test;
+
+--
+-- Name: social_post_templates; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.social_post_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL,
+    description text,
+    title_template text,
+    caption_template text,
+    include_photographer_credit boolean DEFAULT true,
+    include_event_link boolean DEFAULT true,
+    default_hashtags text[],
+    sort_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.social_post_templates OWNER TO test;
+
+--
+-- Name: social_posts; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.social_posts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    platforms text[] NOT NULL,
+    title text,
+    caption text NOT NULL,
+    photo_ids uuid[] NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    template_id uuid,
+    include_photographer_credit boolean DEFAULT true,
+    include_event_link boolean DEFAULT true,
+    hashtags text[],
+    ig_collaborator_handles text[],
+    ig_crop_info jsonb DEFAULT '{}'::jsonb,
+    status character varying(20) DEFAULT 'pending'::character varying,
+    created_by character varying(255),
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_posts_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('processing'::character varying)::text, ('completed'::character varying)::text, ('partial'::character varying)::text, ('failed'::character varying)::text])))
+);
+
+
+ALTER TABLE public.social_posts OWNER TO test;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    name character varying(255),
+    is_admin boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    last_login timestamp with time zone
+);
+
+
+ALTER TABLE public.users OWNER TO test;
+
+--
+-- Name: videos; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.videos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    youtube_video_id character varying(20) NOT NULL,
+    title character varying(255) NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    duration_seconds integer,
+    thumbnail_url text,
+    published_at timestamp with time zone,
+    sort_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.videos OWNER TO test;
+
+--
+-- Name: votes; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.votes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    voter_type character varying(10) NOT NULL,
+    song_choice integer,
+    performance integer,
+    crowd_vibe integer,
+    crowd_vote integer,
+    created_at timestamp with time zone DEFAULT now(),
+    fingerprintjs_visitor_id character varying(255),
+    fingerprintjs_confidence numeric(3,2),
+    fingerprintjs_components text,
+    vote_fingerprint character varying(64),
+    ip_address inet,
+    user_agent text,
+    browser_name character varying(100),
+    browser_version character varying(50),
+    os_name character varying(100),
+    os_version character varying(50),
+    device_type character varying(50),
+    screen_resolution character varying(20),
+    timezone character varying(50),
+    language character varying(10),
+    google_click_id character varying(255),
+    facebook_pixel_id character varying(255),
+    utm_source character varying(100),
+    utm_medium character varying(100),
+    utm_campaign character varying(100),
+    utm_term character varying(100),
+    utm_content character varying(100),
+    fingerprintjs_confidence_comment text,
+    event_id character varying(255),
+    band_id character varying(255),
+    status character varying(20) DEFAULT 'approved'::character varying,
+    email character varying(255),
+    name character varying(255),
+    visuals integer,
+    CONSTRAINT votes_crowd_vibe_check CHECK (((crowd_vibe >= 0) AND (crowd_vibe <= 30))),
+    CONSTRAINT votes_crowd_vote_check CHECK (((crowd_vote >= 0) AND (crowd_vote <= 20))),
+    CONSTRAINT votes_performance_check CHECK (((performance >= 0) AND (performance <= 30))),
+    CONSTRAINT votes_song_choice_check CHECK (((song_choice >= 0) AND (song_choice <= 20))),
+    CONSTRAINT votes_status_check CHECK (((status)::text = ANY (ARRAY[('approved'::character varying)::text, ('pending'::character varying)::text]))),
+    CONSTRAINT votes_visuals_check CHECK (((visuals >= 0) AND (visuals <= 20))),
+    CONSTRAINT votes_voter_type_check CHECK (((voter_type)::text = ANY (ARRAY[('crowd'::character varying)::text, ('judge'::character varying)::text])))
+);
+
+
+ALTER TABLE public.votes OWNER TO test;
+
+--
+-- Data for Name: bands; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.bands (id, name, description, "order", created_at, info, event_id, company_slug) FROM stdin;
+test-band-1	The Code Rockers	Frontend specialists who know how to make the crowd dance	1	2025-12-28 05:42:24.220373+00	{"genre": "Rock", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	atlassian
+test-band-2	Database Divas	Backend engineers with killer vocals	2	2025-12-28 05:42:24.222849+00	{"genre": "Pop Rock", "logo_url": "/images/test/thumbnail-2.jpg"}	test-voting-event	canva
+test-band-3	API Avengers	Full-stack superheroes of the tech world	3	2025-12-28 05:42:24.22348+00	{"genre": "Alternative", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	google
+test-finalized-band-1	Cloud Crusaders	DevOps warriors with epic stage presence	1	2025-12-28 05:42:24.223884+00	{"genre": "Metal", "logo_url": "/images/test/thumbnail-1.jpg"}	test-finalized-event	atlassian
+test-finalized-band-2	Algorithm Angels	Data scientists who rock the algorithms	2	2025-12-28 05:42:24.224293+00	{"genre": "Indie", "logo_url": "/images/test/thumbnail-2.jpg"}	test-finalized-event	canva
+test-upcoming-band-1	Syntax Error	Debugging by day, rocking by night	1	2025-12-28 05:42:24.2247+00	{"genre": "Punk", "logo_url": "/images/test/thumbnail-1.jpg"}	test-upcoming-event	google
+test-upcoming-band-2	Null Pointers	Exception handlers of rock and roll	2	2025-12-28 05:42:24.225101+00	{"genre": "Grunge", "logo_url": "/images/test/thumbnail-2.jpg"}	test-upcoming-event	atlassian
+\.
+
+
+--
+-- Data for Name: companies; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.companies (slug, name, logo_url, website, created_at, icon_url) FROM stdin;
+atlassian	Atlassian	/images/test/thumbnail-1.jpg	https://atlassian.com	2025-12-28 05:42:24.217689+00	/images/test/thumbnail-1.jpg
+canva	Canva	/images/test/thumbnail-2.jpg	https://canva.com	2025-12-28 05:42:24.218505+00	/images/test/thumbnail-2.jpg
+google	Google	/images/test/thumbnail-1.jpg	https://google.com	2025-12-28 05:42:24.219047+00	/images/test/thumbnail-1.jpg
+\.
+
+
+--
+-- Data for Name: crowd_noise_measurements; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.crowd_noise_measurements (id, energy_level, peak_volume, recording_duration, created_at, crowd_score, event_id, band_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.events (id, name, date, location, is_active, created_at, status, info, timezone) FROM stdin;
+test-upcoming-event	Sydney Tech Battle 2025	2025-06-15 08:00:00+00	Sydney Convention Centre	f	2025-12-28 05:42:24.214525+00	upcoming	{}	Australia/Sydney
+test-voting-event	Brisbane Rock Night 2025	2025-03-20 08:00:00+00	Brisbane Powerhouse	t	2025-12-28 05:42:24.216001+00	voting	{}	Australia/Brisbane
+test-finalized-event	Melbourne Tech Bands 2024	2024-11-15 08:00:00+00	Melbourne Arts Centre	f	2025-12-28 05:42:24.216827+00	finalized	{}	Australia/Melbourne
+\.
+
+
+--
+-- Data for Name: finalized_results; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.finalized_results (id, event_id, band_id, band_name, final_rank, avg_song_choice, avg_performance, avg_crowd_vibe, crowd_vote_count, judge_vote_count, total_crowd_votes, crowd_noise_energy, crowd_noise_peak, crowd_noise_score, judge_score, crowd_score, total_score, finalized_at, avg_visuals, visuals_score) FROM stdin;
+5a216b86-f6d8-43f2-81c5-20d4f6b02ef2	test-finalized-event	test-finalized-band-1	Cloud Crusaders	1	17.00	26.00	24.50	3	2	5	\N	\N	\N	67.50	18.00	85.50	2025-12-28 05:42:24.236266+00	\N	\N
+119c16f6-b075-483a-ac30-f70f0070e650	test-finalized-event	test-finalized-band-2	Algorithm Angels	2	14.50	21.50	19.50	2	2	5	\N	\N	\N	55.50	14.50	70.00	2025-12-28 05:42:24.237827+00	\N	\N
+\.
+
+
+--
+-- Data for Name: photographers; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.photographers (slug, name, bio, location, website, instagram, email, created_at, avatar_url) FROM stdin;
+test-photographer	John Doe Photography	Professional event photographer	Sydney, Australia	https://example.com	johndoephoto	john@example.com	2025-12-28 05:42:24.219492+00	/images/test/thumbnail-1.jpg
+\.
+
+
+--
+-- Data for Name: photos; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.photos (id, event_id, band_id, photographer, blob_url, blob_pathname, original_filename, width, height, file_size, content_type, xmp_metadata, matched_event_name, matched_band_name, match_confidence, uploaded_by, uploaded_at, created_at, labels, hero_focal_point, captured_at, original_blob_url) FROM stdin;
+c8c008a3-c303-44cb-b840-5f02d32448df	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/hero-concert.jpg	photos/test-photo-1/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.232822+00	2025-12-28 05:42:24.232822+00	{global_hero}	{"x": 50, "y": 50}	\N	\N
+4018b4ed-bc7e-489b-85cb-aab81bff4871	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/band-stage.jpg	photos/test-photo-2/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.234444+00	2025-12-28 05:42:24.234444+00	{band_hero}	{"x": 50, "y": 40}	\N	\N
+c4b40c81-3fdb-4fa7-acf3-dbd9140627a0	test-finalized-event	test-finalized-band-2	test-photographer	/images/test/crowd-energy.jpg	photos/test-photo-3/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.234974+00	2025-12-28 05:42:24.234974+00	{event_hero}	{"x": 50, "y": 50}	\N	\N
+95474d46-1bad-42d7-9179-96f2df780383	test-voting-event	test-band-1	test-photographer	/images/test/thumbnail-1.jpg	photos/test-photo-4/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.235426+00	2025-12-28 05:42:24.235426+00	{}	{"x": 50, "y": 50}	\N	\N
+54e64d97-a256-405c-a001-82869cf89821	test-voting-event	test-band-2	test-photographer	/images/test/thumbnail-2.jpg	photos/test-photo-5/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.235828+00	2025-12-28 05:42:24.235828+00	{}	{"x": 50, "y": 50}	\N	\N
+\.
+
+
+--
+-- Data for Name: setlist_songs; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.setlist_songs (id, band_id, "position", song_type, title, artist, additional_songs, transition_to_title, transition_to_artist, youtube_video_id, status, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: social_accounts; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.social_accounts (id, provider, provider_account_id, provider_account_name, organization_urn, page_id, ig_business_account_id, access_token_encrypted, refresh_token_encrypted, access_token_expires_at, refresh_token_expires_at, scopes, status, last_error, connected_by, connected_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: social_post_results; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.social_post_results (id, post_id, platform, status, external_post_id, external_post_url, error_code, error_message, response_data, attempted_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: social_post_templates; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.social_post_templates (id, name, description, title_template, caption_template, include_photographer_credit, include_event_link, default_hashtags, sort_order, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: social_posts; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.social_posts (id, platforms, title, caption, photo_ids, event_id, band_id, template_id, include_photographer_credit, include_event_link, hashtags, ig_collaborator_handles, ig_crop_info, status, created_by, created_at, updated_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.users (id, email, password_hash, name, is_admin, created_at, last_login) FROM stdin;
+a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d	admin@test.com	$2b$12$j49CrwMA7QjQ/x2XZdcT8OrzV.k1YPJtixDbv0HN9PJ4pZzgOxtLO	Test Admin	t	2025-12-28 05:42:24.210368+00	\N
+\.
+
+
+--
+-- Data for Name: videos; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.videos (id, youtube_video_id, title, event_id, band_id, duration_seconds, thumbnail_url, published_at, sort_order, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: votes; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.votes (id, voter_type, song_choice, performance, crowd_vibe, crowd_vote, created_at, fingerprintjs_visitor_id, fingerprintjs_confidence, fingerprintjs_components, vote_fingerprint, ip_address, user_agent, browser_name, browser_version, os_name, os_version, device_type, screen_resolution, timezone, language, google_click_id, facebook_pixel_id, utm_source, utm_medium, utm_campaign, utm_term, utm_content, fingerprintjs_confidence_comment, event_id, band_id, status, email, name, visuals) FROM stdin;
+ece3e6ab-c92d-4026-9a28-8531d7de6dfd	judge	18	27	25	\N	2025-12-28 05:42:24.225489+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Alpha	\N
+791c4643-c0dc-4085-a7c2-3eef008fc1cc	judge	16	25	24	\N	2025-12-28 05:42:24.227409+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Beta	\N
+98b04446-3bcb-4069-b328-6809c74ef27a	judge	15	22	20	\N	2025-12-28 05:42:24.227911+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Alpha	\N
+d873b7c0-4406-4358-92ed-93f1df8880fd	judge	14	21	19	\N	2025-12-28 05:42:24.22868+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Beta	\N
+1ccff6bb-7fe8-41ea-9389-f84896b22d9d	crowd	\N	\N	\N	18	2025-12-28 05:42:24.229805+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+ccef68d6-561a-4954-97a4-803c18e448a5	crowd	\N	\N	\N	17	2025-12-28 05:42:24.230542+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+da4cf4e7-b658-4afe-abf7-697b4e9ac7ce	crowd	\N	\N	\N	19	2025-12-28 05:42:24.231063+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+1710670b-71b5-497a-b75b-33139da67154	crowd	\N	\N	\N	15	2025-12-28 05:42:24.231542+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
+0054e601-85c9-44fd-aca1-b99f06a59459	crowd	\N	\N	\N	14	2025-12-28 05:42:24.232177+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
+\.
+
+
+--
+-- Name: bands bands_slug_unique; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.bands
+    ADD CONSTRAINT bands_slug_unique UNIQUE (id);
+
+
+--
+-- Name: companies companies_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.companies
+    ADD CONSTRAINT companies_pkey PRIMARY KEY (slug);
+
+
+--
+-- Name: crowd_noise_measurements crowd_noise_measurements_event_band_unique; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.crowd_noise_measurements
+    ADD CONSTRAINT crowd_noise_measurements_event_band_unique UNIQUE (event_id, band_id);
+
+
+--
+-- Name: crowd_noise_measurements crowd_noise_measurements_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.crowd_noise_measurements
+    ADD CONSTRAINT crowd_noise_measurements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: events events_slug_unique; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT events_slug_unique UNIQUE (id);
+
+
+--
+-- Name: finalized_results finalized_results_event_id_band_id_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.finalized_results
+    ADD CONSTRAINT finalized_results_event_id_band_id_key UNIQUE (event_id, band_id);
+
+
+--
+-- Name: finalized_results finalized_results_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.finalized_results
+    ADD CONSTRAINT finalized_results_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: photographers photographers_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photographers
+    ADD CONSTRAINT photographers_pkey PRIMARY KEY (slug);
+
+
+--
+-- Name: photos photos_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photos
+    ADD CONSTRAINT photos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: setlist_songs setlist_songs_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.setlist_songs
+    ADD CONSTRAINT setlist_songs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: social_accounts social_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_accounts
+    ADD CONSTRAINT social_accounts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: social_accounts social_accounts_provider_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_accounts
+    ADD CONSTRAINT social_accounts_provider_key UNIQUE (provider);
+
+
+--
+-- Name: social_post_results social_post_results_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_post_results
+    ADD CONSTRAINT social_post_results_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: social_post_results social_post_results_post_id_platform_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_post_results
+    ADD CONSTRAINT social_post_results_post_id_platform_key UNIQUE (post_id, platform);
+
+
+--
+-- Name: social_post_templates social_post_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_post_templates
+    ADD CONSTRAINT social_post_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: social_posts social_posts_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_posts
+    ADD CONSTRAINT social_posts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: videos videos_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.videos
+    ADD CONSTRAINT videos_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: videos videos_youtube_video_id_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.videos
+    ADD CONSTRAINT videos_youtube_video_id_key UNIQUE (youtube_video_id);
+
+
+--
+-- Name: votes votes_pkey; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.votes
+    ADD CONSTRAINT votes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: votes votes_vote_fingerprint_key; Type: CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.votes
+    ADD CONSTRAINT votes_vote_fingerprint_key UNIQUE (vote_fingerprint);
+
+
+--
+-- Name: idx_bands_company_slug; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_bands_company_slug ON public.bands USING btree (company_slug);
+
+
+--
+-- Name: idx_bands_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_bands_event_id ON public.bands USING btree (event_id);
+
+
+--
+-- Name: idx_bands_info_gin; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_bands_info_gin ON public.bands USING gin (info);
+
+
+--
+-- Name: idx_companies_name; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_companies_name ON public.companies USING btree (name);
+
+
+--
+-- Name: idx_crowd_noise_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_crowd_noise_band_id ON public.crowd_noise_measurements USING btree (band_id);
+
+
+--
+-- Name: idx_crowd_noise_created_at; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_crowd_noise_created_at ON public.crowd_noise_measurements USING btree (created_at);
+
+
+--
+-- Name: idx_crowd_noise_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_crowd_noise_event_id ON public.crowd_noise_measurements USING btree (event_id);
+
+
+--
+-- Name: idx_events_info_gin; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_events_info_gin ON public.events USING gin (info);
+
+
+--
+-- Name: idx_finalized_results_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_finalized_results_band_id ON public.finalized_results USING btree (band_id);
+
+
+--
+-- Name: idx_finalized_results_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_finalized_results_event_id ON public.finalized_results USING btree (event_id);
+
+
+--
+-- Name: idx_finalized_results_final_rank; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_finalized_results_final_rank ON public.finalized_results USING btree (final_rank);
+
+
+--
+-- Name: idx_photographers_name; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photographers_name ON public.photographers USING btree (name);
+
+
+--
+-- Name: idx_photos_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_band_id ON public.photos USING btree (band_id);
+
+
+--
+-- Name: idx_photos_captured_at; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_captured_at ON public.photos USING btree (captured_at);
+
+
+--
+-- Name: idx_photos_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_event_id ON public.photos USING btree (event_id);
+
+
+--
+-- Name: idx_photos_labels; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_labels ON public.photos USING gin (labels);
+
+
+--
+-- Name: idx_photos_original_blob_url; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_original_blob_url ON public.photos USING btree (original_blob_url) WHERE (original_blob_url IS NOT NULL);
+
+
+--
+-- Name: idx_photos_photographer; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_photographer ON public.photos USING btree (photographer);
+
+
+--
+-- Name: idx_photos_uploaded_at; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photos_uploaded_at ON public.photos USING btree (uploaded_at);
+
+
+--
+-- Name: idx_setlist_songs_artist; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_artist ON public.setlist_songs USING btree (artist);
+
+
+--
+-- Name: idx_setlist_songs_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_band_id ON public.setlist_songs USING btree (band_id);
+
+
+--
+-- Name: idx_setlist_songs_position; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_position ON public.setlist_songs USING btree ("position");
+
+
+--
+-- Name: idx_setlist_songs_song_type; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_song_type ON public.setlist_songs USING btree (song_type);
+
+
+--
+-- Name: idx_setlist_songs_status; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_status ON public.setlist_songs USING btree (status);
+
+
+--
+-- Name: idx_setlist_songs_title; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_setlist_songs_title ON public.setlist_songs USING btree (title);
+
+
+--
+-- Name: idx_social_accounts_provider; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_accounts_provider ON public.social_accounts USING btree (provider);
+
+
+--
+-- Name: idx_social_accounts_status; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_accounts_status ON public.social_accounts USING btree (status);
+
+
+--
+-- Name: idx_social_post_results_platform; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_post_results_platform ON public.social_post_results USING btree (platform);
+
+
+--
+-- Name: idx_social_post_results_post; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_post_results_post ON public.social_post_results USING btree (post_id);
+
+
+--
+-- Name: idx_social_post_results_status; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_post_results_status ON public.social_post_results USING btree (status);
+
+
+--
+-- Name: idx_social_post_templates_sort; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_post_templates_sort ON public.social_post_templates USING btree (sort_order);
+
+
+--
+-- Name: idx_social_posts_created; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_posts_created ON public.social_posts USING btree (created_at DESC);
+
+
+--
+-- Name: idx_social_posts_event; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_posts_event ON public.social_posts USING btree (event_id);
+
+
+--
+-- Name: idx_social_posts_status; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_social_posts_status ON public.social_posts USING btree (status);
+
+
+--
+-- Name: idx_users_email; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_users_email ON public.users USING btree (email);
+
+
+--
+-- Name: idx_users_is_admin; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_users_is_admin ON public.users USING btree (is_admin);
+
+
+--
+-- Name: idx_videos_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_videos_band_id ON public.videos USING btree (band_id);
+
+
+--
+-- Name: idx_videos_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_videos_event_id ON public.videos USING btree (event_id);
+
+
+--
+-- Name: idx_videos_sort_order; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_videos_sort_order ON public.videos USING btree (sort_order);
+
+
+--
+-- Name: idx_videos_youtube_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_videos_youtube_id ON public.videos USING btree (youtube_video_id);
+
+
+--
+-- Name: idx_votes_band_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_band_id ON public.votes USING btree (band_id);
+
+
+--
+-- Name: idx_votes_created_at; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_created_at ON public.votes USING btree (created_at);
+
+
+--
+-- Name: idx_votes_email; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_email ON public.votes USING btree (email);
+
+
+--
+-- Name: idx_votes_event_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_event_id ON public.votes USING btree (event_id);
+
+
+--
+-- Name: idx_votes_fingerprint; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_fingerprint ON public.votes USING btree (vote_fingerprint);
+
+
+--
+-- Name: idx_votes_fingerprintjs_visitor_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_fingerprintjs_visitor_id ON public.votes USING btree (fingerprintjs_visitor_id);
+
+
+--
+-- Name: idx_votes_ip_address; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_ip_address ON public.votes USING btree (ip_address);
+
+
+--
+-- Name: idx_votes_voter_type; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_votes_voter_type ON public.votes USING btree (voter_type);
+
+
+--
+-- Name: bands bands_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.bands
+    ADD CONSTRAINT bands_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: crowd_noise_measurements crowd_noise_measurements_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.crowd_noise_measurements
+    ADD CONSTRAINT crowd_noise_measurements_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE CASCADE;
+
+
+--
+-- Name: crowd_noise_measurements crowd_noise_measurements_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.crowd_noise_measurements
+    ADD CONSTRAINT crowd_noise_measurements_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: finalized_results finalized_results_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.finalized_results
+    ADD CONSTRAINT finalized_results_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE CASCADE;
+
+
+--
+-- Name: finalized_results finalized_results_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.finalized_results
+    ADD CONSTRAINT finalized_results_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: photos photos_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photos
+    ADD CONSTRAINT photos_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE CASCADE;
+
+
+--
+-- Name: photos photos_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photos
+    ADD CONSTRAINT photos_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: photos photos_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photos
+    ADD CONSTRAINT photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id);
+
+
+--
+-- Name: setlist_songs setlist_songs_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.setlist_songs
+    ADD CONSTRAINT setlist_songs_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE CASCADE;
+
+
+--
+-- Name: social_post_results social_post_results_post_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_post_results
+    ADD CONSTRAINT social_post_results_post_id_fkey FOREIGN KEY (post_id) REFERENCES public.social_posts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: social_posts social_posts_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_posts
+    ADD CONSTRAINT social_posts_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE SET NULL;
+
+
+--
+-- Name: social_posts social_posts_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_posts
+    ADD CONSTRAINT social_posts_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE SET NULL;
+
+
+--
+-- Name: social_posts social_posts_template_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.social_posts
+    ADD CONSTRAINT social_posts_template_id_fkey FOREIGN KEY (template_id) REFERENCES public.social_post_templates(id) ON DELETE SET NULL;
+
+
+--
+-- Name: videos videos_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.videos
+    ADD CONSTRAINT videos_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE SET NULL;
+
+
+--
+-- Name: videos videos_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.videos
+    ADD CONSTRAINT videos_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE SET NULL;
+
+
+--
+-- Name: votes votes_band_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.votes
+    ADD CONSTRAINT votes_band_id_fkey FOREIGN KEY (band_id) REFERENCES public.bands(id) ON DELETE CASCADE;
+
+
+--
+-- Name: votes votes_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.votes
+    ADD CONSTRAINT votes_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: test
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict FNjBUYoy1HjpqNSTqtOqCbTSKIrC5RicNmO2pJVfALkylaTaDP67NAqCnkgwfcY
+

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "test-band-1",
+    "event_id": "test-voting-event",
+    "name": "The Code Rockers",
+    "description": "Frontend specialists who know how to make the crowd dance",
+    "company_slug": "atlassian",
+    "order": 1,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-1.jpg",
+      "genre": "Rock"
+    }
+  },
+  {
+    "id": "test-band-2",
+    "event_id": "test-voting-event",
+    "name": "Database Divas",
+    "description": "Backend engineers with killer vocals",
+    "company_slug": "canva",
+    "order": 2,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-2.jpg",
+      "genre": "Pop Rock"
+    }
+  },
+  {
+    "id": "test-band-3",
+    "event_id": "test-voting-event",
+    "name": "API Avengers",
+    "description": "Full-stack superheroes of the tech world",
+    "company_slug": "google",
+    "order": 3,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-1.jpg",
+      "genre": "Alternative"
+    }
+  },
+  {
+    "id": "test-finalized-band-1",
+    "event_id": "test-finalized-event",
+    "name": "Cloud Crusaders",
+    "description": "DevOps warriors with epic stage presence",
+    "company_slug": "atlassian",
+    "order": 1,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-1.jpg",
+      "genre": "Metal"
+    }
+  },
+  {
+    "id": "test-finalized-band-2",
+    "event_id": "test-finalized-event",
+    "name": "Algorithm Angels",
+    "description": "Data scientists who rock the algorithms",
+    "company_slug": "canva",
+    "order": 2,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-2.jpg",
+      "genre": "Indie"
+    }
+  },
+  {
+    "id": "test-upcoming-band-1",
+    "event_id": "test-upcoming-event",
+    "name": "Syntax Error",
+    "description": "Debugging by day, rocking by night",
+    "company_slug": "google",
+    "order": 1,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-1.jpg",
+      "genre": "Punk"
+    }
+  },
+  {
+    "id": "test-upcoming-band-2",
+    "event_id": "test-upcoming-event",
+    "name": "Null Pointers",
+    "description": "Exception handlers of rock and roll",
+    "company_slug": "atlassian",
+    "order": 2,
+    "image_url": "/images/test/band-stage.jpg",
+    "info": {
+      "logo_url": "/images/test/thumbnail-2.jpg",
+      "genre": "Grunge"
+    }
+  }
+]

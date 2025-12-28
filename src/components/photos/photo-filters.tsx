@@ -1,6 +1,6 @@
 'use client'
 
-import { Event } from '@/lib/db'
+import { Event } from '@/lib/db-types'
 import {
   FilterBar,
   FilterSelect,

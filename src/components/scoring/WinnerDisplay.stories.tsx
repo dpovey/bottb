@@ -54,7 +54,7 @@ export const WithHeroImage: Story = {
     companyName: 'Google',
     totalScore: 92.3,
     scoringVersion: '2025.1',
-    heroThumbnailUrl: 'https://picsum.photos/800/400',
+    heroThumbnailUrl: '/images/test/hero-concert.jpg',
     heroFocalPoint: { x: 50, y: 30 },
   },
   parameters: {
@@ -74,7 +74,7 @@ export const WithLogo: Story = {
     companyName: 'Atlassian',
     totalScore: 89.1,
     scoringVersion: '2025.1',
-    logoUrl: 'https://picsum.photos/100',
+    logoUrl: '/images/test/thumbnail-1.jpg',
   },
   parameters: {
     docs: {
@@ -112,7 +112,7 @@ export const With2026Scoring: Story = {
     companyName: 'Microsoft',
     totalScore: 94.7,
     scoringVersion: '2026.1',
-    heroThumbnailUrl: 'https://picsum.photos/800/400',
+    heroThumbnailUrl: '/images/test/hero-concert.jpg',
   },
   parameters: {
     docs: {
@@ -129,10 +129,10 @@ export const FullExample: Story = {
     winnerName: 'The Agentics',
     companySlug: 'salesforce',
     companyName: 'Salesforce',
-    companyIconUrl: 'https://picsum.photos/40',
+    companyIconUrl: '/images/test/thumbnail-2.jpg',
     totalScore: 91.8,
-    logoUrl: 'https://picsum.photos/100',
-    heroThumbnailUrl: 'https://picsum.photos/800/400',
+    logoUrl: '/images/test/thumbnail-1.jpg',
+    heroThumbnailUrl: '/images/test/hero-concert.jpg',
     heroFocalPoint: { x: 60, y: 40 },
     scoringVersion: '2025.1',
   },

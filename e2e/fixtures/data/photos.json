@@ -1,0 +1,52 @@
+[
+  {
+    "id": "test-photo-1",
+    "blob_url": "/images/test/hero-concert.jpg",
+    "blob_pathname": "photos/test-photo-1/large.webp",
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "photographer_slug": "test-photographer",
+    "labels": ["global_hero"],
+    "hero_focal_point": { "x": 50, "y": 50 }
+  },
+  {
+    "id": "test-photo-2",
+    "blob_url": "/images/test/band-stage.jpg",
+    "blob_pathname": "photos/test-photo-2/large.webp",
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "photographer_slug": "test-photographer",
+    "labels": ["band_hero"],
+    "hero_focal_point": { "x": 50, "y": 40 }
+  },
+  {
+    "id": "test-photo-3",
+    "blob_url": "/images/test/crowd-energy.jpg",
+    "blob_pathname": "photos/test-photo-3/large.webp",
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "photographer_slug": "test-photographer",
+    "labels": ["event_hero"],
+    "hero_focal_point": { "x": 50, "y": 50 }
+  },
+  {
+    "id": "test-photo-4",
+    "blob_url": "/images/test/thumbnail-1.jpg",
+    "blob_pathname": "photos/test-photo-4/large.webp",
+    "event_id": "test-voting-event",
+    "band_id": "test-band-1",
+    "photographer_slug": "test-photographer",
+    "labels": [],
+    "hero_focal_point": { "x": 50, "y": 50 }
+  },
+  {
+    "id": "test-photo-5",
+    "blob_url": "/images/test/thumbnail-2.jpg",
+    "blob_pathname": "photos/test-photo-5/large.webp",
+    "event_id": "test-voting-event",
+    "band_id": "test-band-2",
+    "photographer_slug": "test-photographer",
+    "labels": [],
+    "hero_focal_point": { "x": 50, "y": 50 }
+  }
+]

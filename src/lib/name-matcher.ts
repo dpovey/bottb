@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres'
+import { sql } from './sql'
 import { Event, Band } from './db'
 
 export interface MatchResult<T> {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 import { del, list } from '@vercel/blob'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import { getPhotoById } from '@/lib/db'

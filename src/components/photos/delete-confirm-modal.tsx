@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ConfirmModal } from '@/components/ui'
-import { Photo } from '@/lib/db'
+import { Photo } from '@/lib/db-types'
 
 interface DeleteConfirmModalProps {
   isOpen: boolean

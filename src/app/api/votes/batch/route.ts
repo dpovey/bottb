@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { submitVote, getEventById } from '@/lib/db'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 import { withAdminProtection } from '@/lib/api-protection'
 
 async function handleBatchVotes(request: NextRequest) {

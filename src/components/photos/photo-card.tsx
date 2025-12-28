@@ -1,6 +1,6 @@
 'use client'
 
-import { Photo } from '@/lib/db'
+import { Photo } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
 
 interface PhotoCardProps {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Modal } from '@/components/ui'
-import { Photo, PHOTO_LABELS } from '@/lib/db'
+import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { SpinnerIcon, CheckIcon } from '@/components/icons'
 
 // Label display info

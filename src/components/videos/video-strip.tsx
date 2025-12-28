@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Video } from '@/lib/db'
+import { Video } from '@/lib/db-types'
 import { VideoCarousel } from '@/components/video-carousel'
 import { Skeleton } from '@/components/ui'
 

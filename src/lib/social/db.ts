@@ -2,7 +2,7 @@
  * Database helpers for social sharing functionality
  */
 
-import { sql } from '@vercel/postgres'
+import { sql, sqlQuery } from '../sql'
 import { encryptToken, decryptToken } from './encryption'
 import type {
   SocialAccount,
@@ -326,7 +326,7 @@ export async function updateSocialPostTemplate(
   updates.push(`updated_at = NOW()`)
   values.push(id)
 
-  const { rows } = await sql.query<SocialPostTemplate>(
+  const { rows } = await sqlQuery<SocialPostTemplate>(
     `UPDATE social_post_templates SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
     values
   )

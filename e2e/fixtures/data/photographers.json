@@ -1,0 +1,12 @@
+[
+  {
+    "slug": "test-photographer",
+    "name": "John Doe Photography",
+    "bio": "Professional event photographer",
+    "location": "Sydney, Australia",
+    "website": "https://example.com",
+    "instagram": "johndoephoto",
+    "email": "john@example.com",
+    "avatar_url": "/images/test/thumbnail-1.jpg"
+  }
+]

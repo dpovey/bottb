@@ -1,0 +1,68 @@
+[
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "voter_type": "judge",
+    "song_choice": 18,
+    "performance": 27,
+    "crowd_vibe": 25,
+    "name": "Judge Alpha"
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "voter_type": "judge",
+    "song_choice": 16,
+    "performance": 25,
+    "crowd_vibe": 24,
+    "name": "Judge Beta"
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "voter_type": "judge",
+    "song_choice": 15,
+    "performance": 22,
+    "crowd_vibe": 20,
+    "name": "Judge Alpha"
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "voter_type": "judge",
+    "song_choice": 14,
+    "performance": 21,
+    "crowd_vibe": 19,
+    "name": "Judge Beta"
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "voter_type": "crowd",
+    "crowd_vote": 18
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "voter_type": "crowd",
+    "crowd_vote": 17
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "voter_type": "crowd",
+    "crowd_vote": 19
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "voter_type": "crowd",
+    "crowd_vote": 15
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "voter_type": "crowd",
+    "crowd_vote": 14
+  }
+]

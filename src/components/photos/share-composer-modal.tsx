@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Photo } from '@/lib/db'
+import { Photo } from '@/lib/db-types'
 import {
   SocialPlatform,
   SocialAccount,

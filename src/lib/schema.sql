@@ -1,387 +1,352 @@
+-- Schema for bottb database
+-- Generated from production Vercel/Neon database
+
 -- Users table for admin authentication
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  name VARCHAR(255),
-  is_admin BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  last_login TIMESTAMP WITH TIME ZONE
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    name character varying(255),
+    is_admin boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    last_login timestamp with time zone
 );
 
 -- Events table
 CREATE TABLE IF NOT EXISTS events (
-  id VARCHAR(255) PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  date TIMESTAMP WITH TIME ZONE NOT NULL,
-  location VARCHAR(255) NOT NULL,
-  timezone VARCHAR(64) NOT NULL DEFAULT 'Australia/Brisbane', -- IANA timezone name
-  is_active BOOLEAN DEFAULT false,
-  status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'voting', 'finalized')),
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id character varying(255),
+    name character varying(255) NOT NULL,
+    date timestamp with time zone NOT NULL,
+    location character varying(255) NOT NULL,
+    is_active boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    status character varying(20) DEFAULT 'upcoming'::character varying,
+    info jsonb DEFAULT '{}'::jsonb,
+    timezone character varying(64) DEFAULT 'Australia/Brisbane'::character varying NOT NULL,
+    CONSTRAINT events_status_check CHECK (((status)::text = ANY ((ARRAY['upcoming'::character varying, 'voting'::character varying, 'finalized'::character varying])::text[])))
 );
 
 -- Companies table
 CREATE TABLE IF NOT EXISTS companies (
-  slug VARCHAR(255) PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  logo_url TEXT,
-  icon_url TEXT,
-  website TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    slug character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    logo_url text,
+    website text,
+    created_at timestamp with time zone DEFAULT now(),
+    icon_url text
 );
 
 -- Photographers table
 CREATE TABLE IF NOT EXISTS photographers (
-  slug VARCHAR(255) PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  bio TEXT,
-  location VARCHAR(255),
-  website TEXT,
-  instagram TEXT,
-  email TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    slug character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    bio text,
+    location character varying(255),
+    website text,
+    instagram text,
+    email text,
+    created_at timestamp with time zone DEFAULT now(),
+    avatar_url text
 );
 
 -- Bands table
 CREATE TABLE IF NOT EXISTS bands (
-  id VARCHAR(255) PRIMARY KEY,
-  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  company_slug VARCHAR(255) REFERENCES companies(slug),
-  "order" INTEGER NOT NULL,
-  image_url TEXT,
-  info JSONB DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id character varying(255),
+    name character varying(255) NOT NULL,
+    description text,
+    "order" integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    info jsonb DEFAULT '{}'::jsonb,
+    event_id character varying(255),
+    company_slug character varying(255)
 );
 
 -- Votes table
 CREATE TABLE IF NOT EXISTS votes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
-  voter_type VARCHAR(10) NOT NULL CHECK (voter_type IN ('crowd', 'judge')),
-  song_choice INTEGER CHECK (song_choice >= 0 AND song_choice <= 20),
-  performance INTEGER CHECK (performance >= 0 AND performance <= 30),
-  crowd_vibe INTEGER CHECK (crowd_vibe >= 0 AND crowd_vibe <= 30),
-  crowd_vote INTEGER CHECK (crowd_vote >= 0 AND crowd_vote <= 20),
-  -- Visuals score (2026.1 scoring only) - costumes, backdrops, visual presentation
-  visuals INTEGER CHECK (visuals >= 0 AND visuals <= 20),
-  -- User context fields
-  ip_address INET,
-  user_agent TEXT,
-  browser_name VARCHAR(100),
-  browser_version VARCHAR(50),
-  os_name VARCHAR(100),
-  os_version VARCHAR(50),
-  device_type VARCHAR(50),
-  screen_resolution VARCHAR(20),
-  timezone VARCHAR(50),
-  language VARCHAR(10),
-  -- Tracking IDs
-  google_click_id VARCHAR(255),
-  facebook_pixel_id VARCHAR(255),
-  utm_source VARCHAR(100),
-  utm_medium VARCHAR(100),
-  utm_campaign VARCHAR(100),
-  utm_term VARCHAR(100),
-  utm_content VARCHAR(100),
-  -- Vote fingerprint for duplicate detection
-  vote_fingerprint VARCHAR(64) UNIQUE,
-          -- FingerprintJS fields
-          fingerprintjs_visitor_id VARCHAR(255),
-          fingerprintjs_confidence DECIMAL(3,2),
-          fingerprintjs_confidence_comment TEXT,
-  -- Optional email for voter
-  email VARCHAR(255),
-  -- Optional name for judge
-  name VARCHAR(255),
-  -- Vote status for duplicate handling
-  status VARCHAR(20) DEFAULT 'approved' CHECK (status IN ('approved', 'pending')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    voter_type character varying(10) NOT NULL,
+    song_choice integer,
+    performance integer,
+    crowd_vibe integer,
+    crowd_vote integer,
+    created_at timestamp with time zone DEFAULT now(),
+    fingerprintjs_visitor_id character varying(255),
+    fingerprintjs_confidence numeric(3,2),
+    fingerprintjs_components text,
+    vote_fingerprint character varying(64),
+    ip_address inet,
+    user_agent text,
+    browser_name character varying(100),
+    browser_version character varying(50),
+    os_name character varying(100),
+    os_version character varying(50),
+    device_type character varying(50),
+    screen_resolution character varying(20),
+    timezone character varying(50),
+    language character varying(10),
+    google_click_id character varying(255),
+    facebook_pixel_id character varying(255),
+    utm_source character varying(100),
+    utm_medium character varying(100),
+    utm_campaign character varying(100),
+    utm_term character varying(100),
+    utm_content character varying(100),
+    fingerprintjs_confidence_comment text,
+    event_id character varying(255),
+    band_id character varying(255),
+    status character varying(20) DEFAULT 'approved'::character varying,
+    email character varying(255),
+    name character varying(255),
+    visuals integer,
+    CONSTRAINT votes_crowd_vibe_check CHECK (((crowd_vibe >= 0) AND (crowd_vibe <= 30))),
+    CONSTRAINT votes_crowd_vote_check CHECK (((crowd_vote >= 0) AND (crowd_vote <= 20))),
+    CONSTRAINT votes_performance_check CHECK (((performance >= 0) AND (performance <= 30))),
+    CONSTRAINT votes_song_choice_check CHECK (((song_choice >= 0) AND (song_choice <= 20))),
+    CONSTRAINT votes_status_check CHECK (((status)::text = ANY ((ARRAY['approved'::character varying, 'pending'::character varying])::text[]))),
+    CONSTRAINT votes_visuals_check CHECK (((visuals >= 0) AND (visuals <= 20))),
+    CONSTRAINT votes_voter_type_check CHECK (((voter_type)::text = ANY ((ARRAY['crowd'::character varying, 'judge'::character varying])::text[])))
 );
 
--- Indexes for better performance
+-- Crowd noise measurements table
+CREATE TABLE IF NOT EXISTS crowd_noise_measurements (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    energy_level numeric(10,4) NOT NULL,
+    peak_volume numeric(10,4) NOT NULL,
+    recording_duration integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    crowd_score integer NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    CONSTRAINT crowd_noise_measurements_crowd_score_check CHECK (((crowd_score >= 1) AND (crowd_score <= 10))),
+    CONSTRAINT crowd_noise_measurements_energy_level_check CHECK ((energy_level >= (0)::numeric)),
+    CONSTRAINT crowd_noise_measurements_peak_volume_check CHECK ((peak_volume >= (0)::numeric)),
+    CONSTRAINT crowd_noise_measurements_recording_duration_check CHECK ((recording_duration > 0))
+);
+
+-- Finalized results table
+CREATE TABLE IF NOT EXISTS finalized_results (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id character varying(255) NOT NULL,
+    band_id character varying(255) NOT NULL,
+    band_name character varying(255) NOT NULL,
+    final_rank integer NOT NULL,
+    avg_song_choice numeric(10,2),
+    avg_performance numeric(10,2),
+    avg_crowd_vibe numeric(10,2),
+    crowd_vote_count integer DEFAULT 0,
+    judge_vote_count integer DEFAULT 0,
+    total_crowd_votes integer DEFAULT 0,
+    crowd_noise_energy numeric(10,4),
+    crowd_noise_peak numeric(10,4),
+    crowd_noise_score integer,
+    judge_score numeric(10,2),
+    crowd_score numeric(10,2),
+    total_score numeric(10,2),
+    finalized_at timestamp with time zone DEFAULT now(),
+    avg_visuals numeric(10,2),
+    visuals_score numeric(10,2)
+);
+
+-- Photos table
+CREATE TABLE IF NOT EXISTS photos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    photographer character varying(255),
+    blob_url text NOT NULL,
+    blob_pathname text NOT NULL,
+    original_filename character varying(255),
+    width integer,
+    height integer,
+    file_size integer,
+    content_type character varying(50),
+    xmp_metadata jsonb,
+    matched_event_name character varying(255),
+    matched_band_name character varying(255),
+    match_confidence character varying(20),
+    uploaded_by uuid,
+    uploaded_at timestamp with time zone DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now(),
+    labels text[] DEFAULT '{}'::text[],
+    hero_focal_point jsonb DEFAULT '{"x": 50, "y": 50}'::jsonb,
+    captured_at timestamp with time zone,
+    original_blob_url text,
+    CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[])))
+);
+
+-- Videos table
+CREATE TABLE IF NOT EXISTS videos (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    youtube_video_id character varying(20) NOT NULL,
+    title character varying(255) NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    duration_seconds integer,
+    thumbnail_url text,
+    published_at timestamp with time zone,
+    sort_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+-- Setlist songs table
+CREATE TABLE IF NOT EXISTS setlist_songs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    band_id character varying(255) NOT NULL,
+    "position" integer NOT NULL,
+    song_type character varying(50) DEFAULT 'cover'::character varying NOT NULL,
+    title character varying(255) NOT NULL,
+    artist character varying(255) NOT NULL,
+    additional_songs jsonb DEFAULT '[]'::jsonb,
+    transition_to_title character varying(255),
+    transition_to_artist character varying(255),
+    youtube_video_id character varying(50),
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT setlist_songs_song_type_check CHECK (((song_type)::text = ANY ((ARRAY['cover'::character varying, 'mashup'::character varying, 'medley'::character varying, 'transition'::character varying])::text[]))),
+    CONSTRAINT setlist_songs_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'locked'::character varying, 'conflict'::character varying])::text[])))
+);
+
+-- Social accounts table
+CREATE TABLE IF NOT EXISTS social_accounts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    provider character varying(50) NOT NULL,
+    provider_account_id character varying(255) NOT NULL,
+    provider_account_name character varying(255),
+    organization_urn character varying(255),
+    page_id character varying(255),
+    ig_business_account_id character varying(255),
+    access_token_encrypted text NOT NULL,
+    refresh_token_encrypted text,
+    access_token_expires_at timestamp with time zone,
+    refresh_token_expires_at timestamp with time zone,
+    scopes text[],
+    status character varying(20) DEFAULT 'active'::character varying,
+    last_error text,
+    connected_by character varying(255),
+    connected_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_accounts_provider_check CHECK (((provider)::text = ANY ((ARRAY['linkedin'::character varying, 'facebook'::character varying, 'instagram'::character varying, 'threads'::character varying])::text[]))),
+    CONSTRAINT social_accounts_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'expired'::character varying, 'revoked'::character varying, 'error'::character varying])::text[])))
+);
+
+-- Social post templates table
+CREATE TABLE IF NOT EXISTS social_post_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL,
+    description text,
+    title_template text,
+    caption_template text,
+    include_photographer_credit boolean DEFAULT true,
+    include_event_link boolean DEFAULT true,
+    default_hashtags text[],
+    sort_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+-- Social posts table
+CREATE TABLE IF NOT EXISTS social_posts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    platforms text[] NOT NULL,
+    title text,
+    caption text NOT NULL,
+    photo_ids uuid[] NOT NULL,
+    event_id character varying(255),
+    band_id character varying(255),
+    template_id uuid,
+    include_photographer_credit boolean DEFAULT true,
+    include_event_link boolean DEFAULT true,
+    hashtags text[],
+    ig_collaborator_handles text[],
+    ig_crop_info jsonb DEFAULT '{}'::jsonb,
+    status character varying(20) DEFAULT 'pending'::character varying,
+    created_by character varying(255),
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_posts_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'partial'::character varying, 'failed'::character varying])::text[])))
+);
+
+-- Social post results table
+CREATE TABLE IF NOT EXISTS social_post_results (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    post_id uuid NOT NULL,
+    platform character varying(50) NOT NULL,
+    status character varying(20) NOT NULL,
+    external_post_id character varying(255),
+    external_post_url text,
+    error_code character varying(100),
+    error_message text,
+    response_data jsonb,
+    attempted_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT social_post_results_platform_check CHECK (((platform)::text = ANY ((ARRAY['linkedin'::character varying, 'facebook'::character varying, 'instagram'::character varying])::text[]))),
+    CONSTRAINT social_post_results_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'success'::character varying, 'failed'::character varying])::text[])))
+);
+
+-- Primary key and unique constraints
+ALTER TABLE ONLY users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY users ADD CONSTRAINT users_email_key UNIQUE (email);
+ALTER TABLE ONLY events ADD CONSTRAINT events_slug_unique UNIQUE (id);
+ALTER TABLE ONLY companies ADD CONSTRAINT companies_pkey PRIMARY KEY (slug);
+ALTER TABLE ONLY photographers ADD CONSTRAINT photographers_pkey PRIMARY KEY (slug);
+ALTER TABLE ONLY bands ADD CONSTRAINT bands_slug_unique UNIQUE (id);
+ALTER TABLE ONLY votes ADD CONSTRAINT votes_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY votes ADD CONSTRAINT votes_vote_fingerprint_key UNIQUE (vote_fingerprint);
+ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_band_unique UNIQUE (event_id, band_id);
+ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_event_id_band_id_key UNIQUE (event_id, band_id);
+ALTER TABLE ONLY photos ADD CONSTRAINT photos_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY videos ADD CONSTRAINT videos_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY videos ADD CONSTRAINT videos_youtube_video_id_key UNIQUE (youtube_video_id);
+ALTER TABLE ONLY setlist_songs ADD CONSTRAINT setlist_songs_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY social_accounts ADD CONSTRAINT social_accounts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY social_accounts ADD CONSTRAINT social_accounts_provider_key UNIQUE (provider);
+ALTER TABLE ONLY social_post_templates ADD CONSTRAINT social_post_templates_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY social_post_results ADD CONSTRAINT social_post_results_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY social_post_results ADD CONSTRAINT social_post_results_post_id_platform_key UNIQUE (post_id, platform);
+
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users(is_admin);
+CREATE INDEX IF NOT EXISTS idx_events_info_gin ON events USING gin (info);
 CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
 CREATE INDEX IF NOT EXISTS idx_photographers_name ON photographers(name);
 CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
 CREATE INDEX IF NOT EXISTS idx_bands_company_slug ON bands(company_slug);
+CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING gin (info);
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_band_id ON votes(band_id);
 CREATE INDEX IF NOT EXISTS idx_votes_voter_type ON votes(voter_type);
 CREATE INDEX IF NOT EXISTS idx_votes_fingerprint ON votes(vote_fingerprint);
+CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
 CREATE INDEX IF NOT EXISTS idx_votes_ip_address ON votes(ip_address);
 CREATE INDEX IF NOT EXISTS idx_votes_created_at ON votes(created_at);
-
--- Crowd noise measurements table
-CREATE TABLE IF NOT EXISTS crowd_noise_measurements (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
-  energy_level DECIMAL(10,4) NOT NULL CHECK (energy_level >= 0),
-  peak_volume DECIMAL(10,4) NOT NULL CHECK (peak_volume >= 0),
-  recording_duration INTEGER NOT NULL CHECK (recording_duration > 0),
-  crowd_score INTEGER NOT NULL CHECK (crowd_score >= 1 AND crowd_score <= 10),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(event_id, band_id)
-);
-
--- Indexes for crowd noise measurements
+CREATE INDEX IF NOT EXISTS idx_votes_email ON votes(email);
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_event_id ON crowd_noise_measurements(event_id);
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_band_id ON crowd_noise_measurements(band_id);
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_created_at ON crowd_noise_measurements(created_at);
-CREATE INDEX IF NOT EXISTS idx_votes_fingerprintjs_visitor_id ON votes(fingerprintjs_visitor_id);
-
--- Finalized results table (snapshot of results when event is finalized)
-CREATE TABLE IF NOT EXISTS finalized_results (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id VARCHAR(255) NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
-  band_name VARCHAR(255) NOT NULL,
-  final_rank INTEGER NOT NULL,
-  -- Raw judge averages
-  avg_song_choice DECIMAL(10,2),
-  avg_performance DECIMAL(10,2),
-  avg_crowd_vibe DECIMAL(10,2),
-  avg_visuals DECIMAL(10,2),  -- 2026.1 scoring
-  -- Vote counts
-  crowd_vote_count INTEGER DEFAULT 0,
-  judge_vote_count INTEGER DEFAULT 0,
-  total_crowd_votes INTEGER DEFAULT 0,
-  -- Crowd noise data (2025.1 scoring)
-  crowd_noise_energy DECIMAL(10,4),
-  crowd_noise_peak DECIMAL(10,4),
-  crowd_noise_score INTEGER,
-  -- Calculated scores
-  judge_score DECIMAL(10,2),
-  crowd_score DECIMAL(10,2),
-  visuals_score DECIMAL(10,2),  -- 2026.1 scoring
-  total_score DECIMAL(10,2),
-  -- Metadata
-  finalized_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(event_id, band_id)
-);
-
--- Indexes for finalized results
 CREATE INDEX IF NOT EXISTS idx_finalized_results_event_id ON finalized_results(event_id);
 CREATE INDEX IF NOT EXISTS idx_finalized_results_band_id ON finalized_results(band_id);
 CREATE INDEX IF NOT EXISTS idx_finalized_results_final_rank ON finalized_results(final_rank);
-
--- JSONB indexes for bands info
-CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING GIN (info);
--- Use btree for text extraction instead of GIN
-CREATE INDEX IF NOT EXISTS idx_bands_info_logo ON bands ((info->>'logo_url'));
-
--- Videos table for YouTube video embeds
-CREATE TABLE IF NOT EXISTS videos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  youtube_video_id VARCHAR(20) NOT NULL UNIQUE,
-  title VARCHAR(255) NOT NULL,
-  event_id VARCHAR(255) REFERENCES events(id) ON DELETE SET NULL,
-  band_id VARCHAR(255) REFERENCES bands(id) ON DELETE SET NULL,
-  duration_seconds INTEGER,
-  thumbnail_url TEXT,
-  published_at TIMESTAMP WITH TIME ZONE,
-  sort_order INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Indexes for videos table
+CREATE INDEX IF NOT EXISTS idx_photos_event_id ON photos(event_id);
+CREATE INDEX IF NOT EXISTS idx_photos_band_id ON photos(band_id);
+CREATE INDEX IF NOT EXISTS idx_photos_photographer ON photos(photographer);
+CREATE INDEX IF NOT EXISTS idx_photos_labels ON photos USING gin(labels);
+CREATE INDEX IF NOT EXISTS idx_photos_uploaded_at ON photos(uploaded_at);
+CREATE INDEX IF NOT EXISTS idx_photos_captured_at ON photos(captured_at);
+CREATE INDEX IF NOT EXISTS idx_photos_original_blob_url ON photos(original_blob_url) WHERE (original_blob_url IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_videos_event_id ON videos(event_id);
 CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id);
 CREATE INDEX IF NOT EXISTS idx_videos_youtube_id ON videos(youtube_video_id);
 CREATE INDEX IF NOT EXISTS idx_videos_sort_order ON videos(sort_order);
-
--- Setlist songs table
--- Stores songs performed by bands at events (covers, mashups, medleys, transitions)
-CREATE TABLE IF NOT EXISTS setlist_songs (
-  id UUID PRIMARY KEY,  -- UUIDv7 generated in application
-  band_id VARCHAR(255) NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
-  position INTEGER NOT NULL,
-  
-  -- Song type: cover (single song), mashup (2+ blended), medley (2+ sequential), transition (A flows into B)
-  song_type VARCHAR(20) NOT NULL DEFAULT 'cover' CHECK (song_type IN ('cover', 'mashup', 'medley', 'transition')),
-  
-  -- Primary song info (always required)
-  title VARCHAR(255) NOT NULL,
-  artist VARCHAR(255) NOT NULL,
-  
-  -- For mashup/medley: additional songs as JSONB array
-  -- e.g., [{"title": "Song B", "artist": "Artist B"}]
-  additional_songs JSONB DEFAULT '[]',
-  
-  -- For transition: the target song it transitions into
-  transition_to_title VARCHAR(255),
-  transition_to_artist VARCHAR(255),
-  
-  -- Optional YouTube video ID for the performance recording
-  youtube_video_id VARCHAR(20),
-  
-  -- Status for admin workflow
-  -- pending: not yet confirmed, locked: confirmed/finalized, conflict: duplicate song detected
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'locked', 'conflict')),
-  
-  -- Timestamps
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- Ensure unique position per band's setlist
-  UNIQUE(band_id, position)
-);
-
--- Indexes for setlist_songs table
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_band_id ON setlist_songs(band_id);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_title ON setlist_songs(title);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_artist ON setlist_songs(artist);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_song_type ON setlist_songs(song_type);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_status ON setlist_songs(status);
-CREATE INDEX IF NOT EXISTS idx_setlist_songs_youtube ON setlist_songs(youtube_video_id);
-
--- ============================================================================
--- Social Sharing Tables
--- ============================================================================
-
--- Social accounts - OAuth connections to LinkedIn, Meta (Facebook + Instagram)
-CREATE TABLE IF NOT EXISTS social_accounts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Provider info
-  provider VARCHAR(50) NOT NULL CHECK (provider IN ('linkedin', 'facebook', 'instagram', 'threads')),
-  provider_account_id VARCHAR(255) NOT NULL,
-  provider_account_name VARCHAR(255),
-  
-  -- For LinkedIn: organization URN; For Meta: page_id + ig_business_id
-  organization_urn VARCHAR(255),
-  page_id VARCHAR(255),
-  ig_business_account_id VARCHAR(255),
-  
-  -- Encrypted OAuth tokens (AES-256-GCM encrypted, base64 encoded)
-  access_token_encrypted TEXT NOT NULL,
-  refresh_token_encrypted TEXT,
-  
-  -- Token expiry
-  access_token_expires_at TIMESTAMP WITH TIME ZONE,
-  refresh_token_expires_at TIMESTAMP WITH TIME ZONE,
-  
-  -- OAuth scopes granted
-  scopes TEXT[],
-  
-  -- Account status
-  status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'expired', 'revoked', 'error')),
-  last_error TEXT,
-  
-  -- Metadata
-  connected_by VARCHAR(255),
-  connected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- One account per provider
-  UNIQUE(provider)
-);
-
--- Social post templates - reusable templates for quick posting
-CREATE TABLE IF NOT EXISTS social_post_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Template info
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  
-  -- Template content with placeholders like {band}, {event}, {photographer}
-  title_template TEXT,
-  caption_template TEXT,
-  
-  -- Default settings
-  include_photographer_credit BOOLEAN DEFAULT true,
-  include_event_link BOOLEAN DEFAULT true,
-  default_hashtags TEXT[],
-  
-  -- Ordering
-  sort_order INTEGER DEFAULT 0,
-  
-  -- Timestamps
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Social posts - the actual post requests
-CREATE TABLE IF NOT EXISTS social_posts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Target platforms (array of providers to post to)
-  platforms TEXT[] NOT NULL,
-  
-  -- Content
-  title TEXT,
-  caption TEXT NOT NULL,
-  
-  -- Photo references (array of photo IDs)
-  photo_ids UUID[] NOT NULL,
-  
-  -- Context (for AI suggestions and auditing)
-  event_id VARCHAR(255) REFERENCES events(id) ON DELETE SET NULL,
-  band_id VARCHAR(255) REFERENCES bands(id) ON DELETE SET NULL,
-  
-  -- Template used (if any)
-  template_id UUID REFERENCES social_post_templates(id) ON DELETE SET NULL,
-  
-  -- Settings
-  include_photographer_credit BOOLEAN DEFAULT true,
-  include_event_link BOOLEAN DEFAULT true,
-  hashtags TEXT[],
-  
-  -- Instagram-specific: photographer handles for @mentions
-  ig_collaborator_handles TEXT[],
-  
-  -- For multi-photo Instagram: crop rectangles per photo (JSON)
-  ig_crop_info JSONB DEFAULT '{}',
-  
-  -- Overall status
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'partial', 'failed')),
-  
-  -- Who created this post
-  created_by VARCHAR(255),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Social post results - per-platform results for each post
-CREATE TABLE IF NOT EXISTS social_post_results (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  
-  -- Parent post
-  post_id UUID NOT NULL REFERENCES social_posts(id) ON DELETE CASCADE,
-  
-  -- Platform
-  platform VARCHAR(50) NOT NULL CHECK (platform IN ('linkedin', 'facebook', 'instagram')),
-  
-  -- Result
-  status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'success', 'failed')),
-  
-  -- External post ID/URL (if successful)
-  external_post_id VARCHAR(255),
-  external_post_url TEXT,
-  
-  -- Error info (if failed)
-  error_code VARCHAR(100),
-  error_message TEXT,
-  
-  -- Response data (full API response for debugging)
-  response_data JSONB,
-  
-  -- Timestamps
-  attempted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
-  -- One result per platform per post
-  UNIQUE(post_id, platform)
-);
-
--- Indexes for social tables
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_position ON setlist_songs("position");
 CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider);
 CREATE INDEX IF NOT EXISTS idx_social_accounts_status ON social_accounts(status);
 CREATE INDEX IF NOT EXISTS idx_social_post_templates_sort ON social_post_templates(sort_order);
@@ -392,3 +357,21 @@ CREATE INDEX IF NOT EXISTS idx_social_post_results_post ON social_post_results(p
 CREATE INDEX IF NOT EXISTS idx_social_post_results_platform ON social_post_results(platform);
 CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results(status);
 
+-- Foreign key constraints
+ALTER TABLE ONLY bands ADD CONSTRAINT bands_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY votes ADD CONSTRAINT votes_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY votes ADD CONSTRAINT votes_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY photos ADD CONSTRAINT photos_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY photos ADD CONSTRAINT photos_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY photos ADD CONSTRAINT photos_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES users(id);
+ALTER TABLE ONLY videos ADD CONSTRAINT videos_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL;
+ALTER TABLE ONLY videos ADD CONSTRAINT videos_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL;
+ALTER TABLE ONLY setlist_songs ADD CONSTRAINT setlist_songs_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL;
+ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL;
+ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_template_id_fkey FOREIGN KEY (template_id) REFERENCES social_post_templates(id) ON DELETE SET NULL;
+ALTER TABLE ONLY social_post_results ADD CONSTRAINT social_post_results_post_id_fkey FOREIGN KEY (post_id) REFERENCES social_posts(id) ON DELETE CASCADE;

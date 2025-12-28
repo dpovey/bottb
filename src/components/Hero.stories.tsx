@@ -51,7 +51,7 @@ export const WithImage: Story = {
   args: {
     title: 'Sydney Tech Battle 2025',
     subtitle: 'October 23 • The Metro Theatre',
-    backgroundImage: 'https://picsum.photos/1920/1080',
+    backgroundImage: '/images/test/hero-concert.jpg',
     size: 'lg',
     overlay: 'heavy',
     actions: [
@@ -102,7 +102,7 @@ export const LightOverlay: Story = {
   args: {
     title: 'Light Overlay',
     subtitle: 'More image visible',
-    backgroundImage: 'https://picsum.photos/1920/1080',
+    backgroundImage: '/images/test/hero-concert.jpg',
     size: 'md',
     overlay: 'light',
   },
@@ -112,7 +112,7 @@ export const MediumOverlay: Story = {
   args: {
     title: 'Medium Overlay',
     subtitle: 'Balanced visibility',
-    backgroundImage: 'https://picsum.photos/1920/1080',
+    backgroundImage: '/images/test/hero-concert.jpg',
     size: 'md',
     overlay: 'medium',
   },
@@ -122,7 +122,7 @@ export const HeavyOverlay: Story = {
   args: {
     title: 'Heavy Overlay',
     subtitle: 'Maximum text readability',
-    backgroundImage: 'https://picsum.photos/1920/1080',
+    backgroundImage: '/images/test/hero-concert.jpg',
     size: 'md',
     overlay: 'heavy',
   },
@@ -133,7 +133,7 @@ export const CustomFocalPoint: Story = {
   args: {
     title: 'Custom Focal Point',
     subtitle: 'Image centered on specific area',
-    backgroundImage: 'https://picsum.photos/1920/1080',
+    backgroundImage: '/images/test/hero-concert.jpg',
     focalPoint: { x: 30, y: 20 },
     size: 'lg',
     overlay: 'medium',

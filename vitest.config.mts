@@ -8,8 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     globals: true,
-    // Exclude Storybook stories from unit tests (they're tested visually via Chromatic)
-    exclude: ['**/node_modules/**', '**/dist/**', '**/*.stories.{ts,tsx}'],
+    // Exclude Storybook stories and Playwright E2E tests from unit tests
+    exclude: ['**/node_modules/**', '**/dist/**', '**/*.stories.{ts,tsx}', '**/e2e/**'],
   },
   resolve: {
     alias: {

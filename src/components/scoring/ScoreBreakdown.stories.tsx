@@ -152,7 +152,10 @@ export const WithBandLogos: Story = {
     scoringVersion: '2025.1',
     results: sample2025Results.map((band, i) => ({
       ...band,
-      logoUrl: `https://picsum.photos/seed/${i}/100`,
+      logoUrl:
+        i % 2 === 0
+          ? '/images/test/thumbnail-1.jpg'
+          : '/images/test/thumbnail-2.jpg',
     })),
     totalVoters: 143,
   },
@@ -171,7 +174,10 @@ export const WithHeroThumbnails: Story = {
     scoringVersion: '2025.1',
     results: sample2025Results.map((band, i) => ({
       ...band,
-      heroThumbnailUrl: `https://picsum.photos/seed/hero${i}/100`,
+      heroThumbnailUrl:
+        i % 2 === 0
+          ? '/images/test/band-stage.jpg'
+          : '/images/test/crowd-energy.jpg',
     })),
     totalVoters: 143,
   },

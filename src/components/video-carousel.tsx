@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Video } from '@/lib/db'
+import { Video } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
 import { motion, AnimatePresence } from 'framer-motion'
 import { trackVideoClick, trackSubscribeClick } from '@/lib/analytics'

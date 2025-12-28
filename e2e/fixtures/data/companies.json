@@ -1,0 +1,23 @@
+[
+  {
+    "slug": "atlassian",
+    "name": "Atlassian",
+    "logo_url": "/images/test/thumbnail-1.jpg",
+    "icon_url": "/images/test/thumbnail-1.jpg",
+    "website": "https://atlassian.com"
+  },
+  {
+    "slug": "canva",
+    "name": "Canva",
+    "logo_url": "/images/test/thumbnail-2.jpg",
+    "icon_url": "/images/test/thumbnail-2.jpg",
+    "website": "https://canva.com"
+  },
+  {
+    "slug": "google",
+    "name": "Google",
+    "logo_url": "/images/test/thumbnail-1.jpg",
+    "icon_url": "/images/test/thumbnail-1.jpg",
+    "website": "https://google.com"
+  }
+]

@@ -45,7 +45,15 @@
     "chromatic": "dotenv -e .env.local -- chromatic",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "capture-screenshots": "tsx src/scripts/capture-screenshots.ts"
+    "capture-screenshots": "tsx src/scripts/capture-screenshots.ts",
+    "e2e:docker:up": "docker compose -f docker-compose.test.yml up -d --wait",
+    "e2e:docker:down": "docker compose -f docker-compose.test.yml down -v",
+    "e2e:seed": "DATABASE_URL=postgres://test:test@localhost:5433/bottb_test tsx e2e/seed-test-db.ts",
+    "e2e:dump": "docker compose -f docker-compose.test.yml exec -T postgres-test pg_dump -U test bottb_test > e2e/fixtures/test-db.sql",
+    "e2e:restore": "docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' bottb_test && docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test bottb_test < e2e/fixtures/test-db.sql",
+    "e2e:smart-restore": "tsx e2e/smart-restore.ts",
+    "e2e:test": "playwright test",
+    "e2e": "npm run e2e:docker:up && npm run e2e:smart-restore && npm run e2e:test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.1",
@@ -124,6 +132,8 @@
     "undici": "^7.16.0",
     "vite": "^7.3.0",
     "vite-tsconfig-paths": "^6.0.2",
+    "@types/pg": "^8.11.0",
+    "pg": "^8.13.0",
     "vitest": "^3.2.4"
   },
   "overrides": {

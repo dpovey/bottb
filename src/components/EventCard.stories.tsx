@@ -39,7 +39,7 @@ const sampleEvent = {
   location: 'The Metro Theatre, Sydney',
   timezone: 'Australia/Sydney',
   info: {
-    image_url: 'https://picsum.photos/800/600',
+    image_url: '/images/test/band-stage.jpg',
   },
   status: 'upcoming',
 }
@@ -86,7 +86,7 @@ export const VisualWithImage: Story = {
     variant: 'upcoming',
     visual: true,
     heroPhoto: {
-      blob_url: 'https://picsum.photos/800/600',
+      blob_url: '/images/test/band-stage.jpg',
       hero_focal_point: { x: 50, y: 30 },
     },
   },
@@ -102,7 +102,7 @@ export const VisualPastWithWinner: Story = {
     showWinner: true,
     winner: { name: 'The Agentics', totalScore: 87.5 },
     heroPhoto: {
-      blob_url: 'https://picsum.photos/800/600',
+      blob_url: '/images/test/band-stage.jpg',
     },
   },
   parameters: {
@@ -122,7 +122,7 @@ export const VisualLiveEvent: Story = {
     variant: 'active',
     visual: true,
     heroPhoto: {
-      blob_url: 'https://picsum.photos/800/600',
+      blob_url: '/images/test/band-stage.jpg',
     },
   },
   parameters: {
@@ -202,7 +202,7 @@ export const VisualCardGrid: Story = {
         relativeDate="in 6 months"
         variant="upcoming"
         visual
-        heroPhoto={{ blob_url: 'https://picsum.photos/801/600' }}
+        heroPhoto={{ blob_url: '/images/test/crowd-energy.jpg' }}
       />
       <EventCard
         event={pastEvent}
@@ -211,7 +211,7 @@ export const VisualCardGrid: Story = {
         visual
         showWinner
         winner={{ name: 'The Agentics' }}
-        heroPhoto={{ blob_url: 'https://picsum.photos/802/600' }}
+        heroPhoto={{ blob_url: '/images/test/hero-concert.jpg' }}
       />
     </div>
   ),

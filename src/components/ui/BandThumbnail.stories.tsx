@@ -57,7 +57,7 @@ export const Default: Story = {
 export const WithLogo: Story = {
   args: {
     bandName: 'Code Rockers',
-    logoUrl: 'https://picsum.photos/200',
+    logoUrl: '/images/test/thumbnail-1.jpg',
     size: 'lg',
   },
   parameters: {
@@ -73,7 +73,7 @@ export const WithLogo: Story = {
 export const WithHeroFallback: Story = {
   args: {
     bandName: 'Bandlassian',
-    heroThumbnailUrl: 'https://picsum.photos/300/300',
+    heroThumbnailUrl: '/images/test/thumbnail-2.jpg',
     size: 'lg',
   },
   parameters: {

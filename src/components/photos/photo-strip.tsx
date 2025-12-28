@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Photo } from '@/lib/db'
+import { Photo } from '@/lib/db-types'
 import { trackPhotoClick } from '@/lib/analytics'
 import {
   ChevronLeftIcon,

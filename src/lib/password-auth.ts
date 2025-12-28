@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { sql } from '@vercel/postgres'
+import { sql } from './sql'
 
 export interface User {
   id: string

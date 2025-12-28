@@ -1,0 +1,32 @@
+[
+  {
+    "id": "test-upcoming-event",
+    "name": "Sydney Tech Battle 2025",
+    "date": "2025-06-15T08:00:00Z",
+    "location": "Sydney Convention Centre",
+    "timezone": "Australia/Sydney",
+    "is_active": false,
+    "status": "upcoming",
+    "image_url": "/images/test/hero-concert.jpg"
+  },
+  {
+    "id": "test-voting-event",
+    "name": "Brisbane Rock Night 2025",
+    "date": "2025-03-20T08:00:00Z",
+    "location": "Brisbane Powerhouse",
+    "timezone": "Australia/Brisbane",
+    "is_active": true,
+    "status": "voting",
+    "image_url": "/images/test/hero-concert.jpg"
+  },
+  {
+    "id": "test-finalized-event",
+    "name": "Melbourne Tech Bands 2024",
+    "date": "2024-11-15T08:00:00Z",
+    "location": "Melbourne Arts Centre",
+    "timezone": "Australia/Melbourne",
+    "is_active": false,
+    "status": "finalized",
+    "image_url": "/images/test/hero-concert.jpg"
+  }
+]

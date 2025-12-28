@@ -1,0 +1,19 @@
+# Docker Compose configuration for E2E testing
+# Uses port 5433 to avoid conflict with any local dev database
+# No volume - database is ephemeral for clean test runs
+
+services:
+  postgres-test:
+    image: postgres:17-alpine
+    container_name: bottb-postgres-test
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: bottb_test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test -d bottb_test']
+      interval: 2s
+      timeout: 5s
+      retries: 5

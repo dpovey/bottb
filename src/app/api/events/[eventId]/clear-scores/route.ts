@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 import { withAdminProtection } from '@/lib/api-protection'
 
 async function handleClearScores(request: NextRequest, _context?: unknown) {

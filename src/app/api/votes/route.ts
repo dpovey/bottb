@@ -5,7 +5,7 @@ import {
   hasUserVotedByEmail,
   getEventById,
 } from '@/lib/db'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 import {
   extractUserContext,
   hasUserVoted,

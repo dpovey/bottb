@@ -1,6 +1,6 @@
 'use client'
 
-import { Photo } from '@/lib/db'
+import { Photo } from '@/lib/db-types'
 import { PhotoIcon } from '@/components/icons'
 import { Skeleton } from '@/components/ui'
 import { PhotoCard } from './photo-card'

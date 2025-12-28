@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import crypto from 'crypto'
-import { sql } from '@vercel/postgres'
+import { sql } from './sql'
 import { UserContext, BrowserInfo } from './user-context'
 
 /**

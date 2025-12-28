@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 import { put } from '@vercel/blob'
 import sharp from 'sharp'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'

@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/sql'
 
 // Image metadata
 export const runtime = 'edge'

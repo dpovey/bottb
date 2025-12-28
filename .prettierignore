@@ -2,6 +2,9 @@ node_modules/
 .next/
 coverage/
 storybook-static/
+playwright-report/
+test-results/
+backups/
 
 # HTML with syntax errors
 design/header-dropdown.html

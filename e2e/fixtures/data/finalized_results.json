@@ -1,0 +1,32 @@
+[
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-1",
+    "band_name": "Cloud Crusaders",
+    "final_rank": 1,
+    "avg_song_choice": 17.0,
+    "avg_performance": 26.0,
+    "avg_crowd_vibe": 24.5,
+    "crowd_vote_count": 3,
+    "judge_vote_count": 2,
+    "total_crowd_votes": 5,
+    "judge_score": 67.5,
+    "crowd_score": 18.0,
+    "total_score": 85.5
+  },
+  {
+    "event_id": "test-finalized-event",
+    "band_id": "test-finalized-band-2",
+    "band_name": "Algorithm Angels",
+    "final_rank": 2,
+    "avg_song_choice": 14.5,
+    "avg_performance": 21.5,
+    "avg_crowd_vibe": 19.5,
+    "crowd_vote_count": 2,
+    "judge_vote_count": 2,
+    "total_crowd_votes": 5,
+    "judge_score": 55.5,
+    "crowd_score": 14.5,
+    "total_score": 70.0
+  }
+]
