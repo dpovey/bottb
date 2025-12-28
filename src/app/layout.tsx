@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Jost } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     canonical: getBaseUrl(),
   },
   manifest: '/site.webmanifest',
-  themeColor: '#0a0a0a',
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
   },
@@ -59,6 +58,10 @@ export const metadata: Metadata = {
     description:
       "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0a',
 }
 
 export default function RootLayout({
