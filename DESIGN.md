@@ -1519,7 +1519,7 @@ When adding new UI components, update the design system at `src/app/design-syste
 
 ### Legacy HTML Mockups
 
-The `design/` folder contains standalone HTML previews for reference:
+The `design/` folder contains legacy HTML mockups for reference (prefer `/design-system` and Storybook for current components):
 
 - `design-system.html` - Typography, colors, components
 - `theme.css` - Shared CSS variables and component styles

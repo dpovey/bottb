@@ -44,7 +44,8 @@
     "build-storybook": "storybook build",
     "chromatic": "dotenv -e .env.local -- chromatic",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "capture-screenshots": "tsx src/scripts/capture-screenshots.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.88",
@@ -80,6 +81,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
+    "@playwright/test": "^1.57.0",
     "@storybook/addon-a11y": "^10.1.10",
     "@storybook/addon-docs": "^10.1.10",
     "@storybook/addon-onboarding": "^10.1.10",
