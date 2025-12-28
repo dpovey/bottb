@@ -349,6 +349,11 @@ export default async function HomePage() {
             href: '/photos',
             variant: 'outline-solid' as const,
           },
+          {
+            label: 'Videos',
+            href: '/videos',
+            variant: 'outline-solid' as const,
+          },
         ]}
       />
 
