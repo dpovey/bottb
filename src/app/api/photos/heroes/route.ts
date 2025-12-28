@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPhotosByLabel, PHOTO_LABELS, PhotoLabel } from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
 // Valid labels
 const VALID_LABELS = new Set(Object.values(PHOTO_LABELS))
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRateLimit(async function GET(
+  request: NextRequest
+) {
   try {
     const searchParams = request.nextUrl.searchParams
     const label = searchParams.get('label')
@@ -51,4 +54,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

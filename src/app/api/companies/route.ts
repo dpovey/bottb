@@ -5,8 +5,11 @@ import {
   getCompanyBySlug,
   getCompanyBands,
 } from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRateLimit(async function GET(
+  request: NextRequest
+) {
   try {
     const searchParams = request.nextUrl.searchParams
     const slug = searchParams.get('slug')
@@ -42,4 +45,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

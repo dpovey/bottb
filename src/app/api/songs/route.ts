@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllSongs, getSongCount, SongType } from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
 /**
  * GET /api/songs
  * Public endpoint to list all songs with optional filters
  * Only returns songs from finalized events
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRateLimit(async function GET(
+  request: NextRequest
+) {
   try {
     // Use URL constructor for testability (nextUrl.searchParams is not available in tests)
     const searchParams = new URL(request.url).searchParams
@@ -70,4 +73,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

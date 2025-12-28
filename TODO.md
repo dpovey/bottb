@@ -15,6 +15,8 @@
 - [x] PostHog session recording CSP fix
 - [x] Skeleton shimmer animations (with reduced-motion support)
 - [x] Micro-interactions on hover/focus (Button, Card components)
+- [x] E2E tests (Playwright) - Critical flows: voting, admin, photo gallery
+- [x] Photo list rate limiting - Added to `/api/photos` endpoint
 
 ---
 
@@ -22,8 +24,6 @@
 
 ### Security & Infrastructure
 
-- [ ] **Redis-based rate limiting** - Replace in-memory with Upstash Redis for persistence across deploys
-- [ ] **Photo list rate limiting** - Add rate limit to `/api/photos` endpoint (after Redis)
 - [ ] **Signed blob URLs** - Prevent direct scraping of blob storage URLs
 - [ ] **CORS configuration** - Configure proper CORS headers in next.config.ts
 - [ ] **Dependency audit** - Run `npm audit` and fix vulnerabilities
@@ -36,7 +36,6 @@
 
 ### Testing
 
-- [ ] **E2E tests (Playwright)** - Critical flows: voting, admin, photo gallery
 - [ ] **Lighthouse CI** - Add to CI/CD pipeline
 
 ---
@@ -115,15 +114,21 @@
 
 ## 📊 Current Protection Status
 
-| Endpoint                | Auth Required | Rate Limited | Notes                   |
-| ----------------------- | ------------- | ------------ | ----------------------- |
-| `/api/votes/batch`      | ✅ Admin      | ✅ 200/min   | Batch voting            |
-| `/api/votes`            | ❌ Public     | ✅ 10/min    | Public voting           |
-| `/api/photos/[id]/jpeg` | ❌ Public     | ✅ 20/min    | Blob cost protection    |
-| `/api/events/*`         | ❌ Public     | ✅ 100/min   | Event data              |
-| `/api/bands/*`          | ❌ Public     | ✅ 100/min   | Band data               |
-| `/api/photos`           | ❌ Public     | ❌ None      | **Needs rate limiting** |
-| `/api/auth/*`           | ❌ Public     | ❌ None      | Auth endpoints          |
+| Endpoint                | Auth Required | Rate Limited | Notes                |
+| ----------------------- | ------------- | ------------ | -------------------- |
+| `/api/votes/batch`      | ✅ Admin      | ✅ 200/min   | Batch voting         |
+| `/api/votes`            | ❌ Public     | ✅ 10/min    | Public voting        |
+| `/api/photos/[id]/jpeg` | ❌ Public     | ✅ 20/min    | Blob cost protection |
+| `/api/photos`           | ❌ Public     | ✅ 100/min   | Photo list endpoint  |
+| `/api/photos/heroes`    | ❌ Public     | ✅ 100/min   | Hero photos          |
+| `/api/events/*`         | ❌ Public     | ✅ 100/min   | Event data           |
+| `/api/bands/*`          | ❌ Public     | ✅ 100/min   | Band data            |
+| `/api/songs`            | ❌ Public     | ✅ 100/min   | Song catalog         |
+| `/api/videos`           | ❌ Public     | ✅ 100/min   | Video list           |
+| `/api/companies`        | ❌ Public     | ✅ 100/min   | Company data         |
+| `/api/photographers`    | ❌ Public     | ✅ 100/min   | Photographer list    |
+| `/api/setlist/*`        | ❌ Public     | ✅ 100/min   | Band setlists        |
+| `/api/auth/*`           | ❌ Public     | ❌ None      | Auth endpoints       |
 
 ---
 
@@ -145,6 +150,6 @@ Recommended addition:
 Current implementation uses in-memory Map which:
 
 - Resets on deploy
-- Doesn't scale across serverless instances
+- Per-instance state (adequate for current scale)
 
-Upgrade path: Upstash Redis via Vercel integration
+This is acceptable for BOTTB's traffic patterns. Revisit if scraping becomes an issue.

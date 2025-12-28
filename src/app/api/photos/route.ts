@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPhotosWithCount, type PhotoOrderBy } from '@/lib/db'
 import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
-export async function GET(request: NextRequest) {
+export const GET = withPublicRateLimit(async function GET(
+  request: NextRequest
+) {
   try {
     // Use URL constructor for testability (nextUrl.searchParams is not available in tests)
     const searchParams = new URL(request.url).searchParams
@@ -118,4 +121,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
