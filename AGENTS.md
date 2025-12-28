@@ -86,7 +86,6 @@ Review changes against:
    - Could changes affect user-facing flows? Run and/or update Playwright e2e tests (`npm run test:e2e`).
    - Check `e2e/` for specs that test affected routes/features.
 
-
 **If major deviations found**: STOP and ask whether to update docs or fix code.
 
 ## Pre-commit Checklist
