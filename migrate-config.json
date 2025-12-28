@@ -1,0 +1,11 @@
+{
+  "migrationsDir": "migrations",
+  "direction": "up",
+  "migrationsTable": "pgmigrations",
+  "singleTransaction": true,
+  "checkOrder": true,
+  "verbose": true,
+  "databaseUrl": {
+    "ENV": "POSTGRES_URL"
+  }
+}

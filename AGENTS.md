@@ -13,9 +13,28 @@ src/
 Key files:
 
 - `src/lib/db.ts` - Database types and queries
+- `src/lib/schema.sql` - Full database schema (for test DBs)
 - `src/lib/scoring.ts` - Scoring version configs
 - `src/components/ui/` - Shared UI primitives
 - `next.config.ts` - Next.js configuration
+
+## Database Schema Changes
+
+When modifying the database schema, **both files must be updated**:
+
+1. **Create a migration** for production (Vercel/Neon):
+
+   ```bash
+   npm run migrate:create add-foo-column
+   # Edit migrations/TIMESTAMP_add-foo-column.js with your SQL
+   npm run migrate  # Apply to Vercel DB
+   ```
+
+2. **Update `src/lib/schema.sql`** to match the new schema (used for fresh test DBs)
+
+3. **Update types** in `src/lib/db-types.ts` if needed
+
+See `doc/arch/data-layer.md` for full migration workflow and schema evolution history.
 
 ## Documentation
 
