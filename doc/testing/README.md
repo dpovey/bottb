@@ -14,11 +14,11 @@
 ## Running Tests
 
 ```bash
-npm test              # Run all tests
-npm run test:watch    # Watch mode
-npm run test:coverage # With coverage
-npm run storybook     # Component isolation
-npm run chromatic     # Visual regression
+pnpm test             # Run all tests
+pnpm test:watch       # Watch mode
+pnpm test:coverage    # With coverage
+pnpm storybook        # Component isolation
+pnpm chromatic        # Visual regression
 npx playwright test   # E2E tests
 ```
 

@@ -35,10 +35,10 @@
 
 ```bash
 # Must pass before commit
-npm run format:check
-npm run typecheck
-npm run lint
-npm test
+pnpm format:check
+pnpm typecheck
+pnpm lint
+pnpm test
 ```
 
 ### Commits

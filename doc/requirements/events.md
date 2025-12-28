@@ -52,17 +52,17 @@ JSON format in `events/` directory:
 - Event name, date, location, timezone
 - Bands array with name, company_slug, order
 
-CLI: `npm run create-event events/sydney-2025.json`
+CLI: `pnpm create-event events/sydney-2025.json`
 
 ## CLI Commands
 
-| Command                       | Description      |
-| ----------------------------- | ---------------- |
-| `npm run create-event <json>` | Create from JSON |
-| `npm run list-events`         | List all events  |
-| `npm run activate-event <id>` | Enable voting    |
-| `npm run finalize-event <id>` | Freeze results   |
-| `npm run cleanup-event <id>`  | Clear event data |
+| Command                      | Description      |
+| ---------------------------- | ---------------- |
+| `pnpm create-event <json>`   | Create from JSON |
+| `pnpm list-events`           | List all events  |
+| `pnpm activate-event <id>`   | Enable voting    |
+| `pnpm finalize-event <id>`   | Freeze results   |
+| `pnpm cleanup-event <id>`    | Clear event data |
 
 ## Event Page Requirements
 

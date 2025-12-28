@@ -49,7 +49,7 @@
     "e2e:restore": "docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' bottb_test && docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test bottb_test < e2e/fixtures/test-db.sql",
     "e2e:smart-restore": "tsx e2e/smart-restore.ts",
     "e2e:test": "playwright test",
-    "e2e": "npm run e2e:docker:up && npm run e2e:smart-restore && npm run e2e:test"
+    "e2e": "pnpm e2e:docker:up && pnpm e2e:smart-restore && pnpm e2e:test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.1",
@@ -135,8 +135,10 @@
     "vite-tsconfig-paths": "^6.0.2",
     "vitest": "^3.2.4"
   },
-  "overrides": {
-    "@types/react": "19.2.7",
-    "@types/react-dom": "19.2.3"
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.7",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }

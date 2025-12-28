@@ -43,7 +43,7 @@ Band Score = (Band Votes / Total Votes) × 20
 
 ## Finalization
 
-CLI: `npm run finalize-event <id>`
+CLI: `pnpm finalize-event <id>`
 
 1. Calculate final scores
 2. Store in `finalized_results` table

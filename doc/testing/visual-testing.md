@@ -5,9 +5,9 @@ Storybook + Chromatic for component isolation and visual regression.
 ## Running
 
 ```bash
-npm run storybook     # Development server
-npm run build-storybook   # Build static
-npm run chromatic     # Visual regression tests
+pnpm storybook        # Development server
+pnpm build-storybook  # Build static
+pnpm chromatic        # Visual regression tests
 ```
 
 ## Writing Stories

@@ -5,10 +5,10 @@
 **Must pass before committing:**
 
 ```bash
-npm run format:check   # Prettier
-npm run typecheck      # TypeScript
-npm run lint           # ESLint
-npm test               # Vitest
+pnpm format:check      # Prettier
+pnpm typecheck         # TypeScript
+pnpm lint              # ESLint
+pnpm test              # Vitest
 ```
 
 ## Prettier

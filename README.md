@@ -7,7 +7,7 @@ A voting and scoring system for tech band competitions, built with Next.js 16 an
 ### Prerequisites
 
 - Node.js 18+
-- npm
+- pnpm
 
 ### Installation
 
@@ -17,17 +17,17 @@ git clone <repo-url>
 cd bottb
 
 # Install dependencies
-npm install
+pnpm install
 
 # Copy environment variables
 cp env.example .env.local
 # Edit .env.local with your database credentials
 
 # Set up the database
-npm run setup-db
+pnpm setup-db
 
 # Start development server
-npm run dev
+pnpm dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to see the application.
@@ -72,24 +72,24 @@ See [Architecture documentation](doc/arch/) for detailed module documentation.
 
 ```bash
 # Development
-npm run dev              # Start dev server
-npm run build            # Production build
-npm run start            # Start production server
+pnpm dev                 # Start dev server
+pnpm build               # Production build
+pnpm start               # Start production server
 
 # Quality
-npm run format:check     # Check formatting
-npm run typecheck        # TypeScript check
-npm run lint             # ESLint
-npm test                 # Run tests
+pnpm format:check        # Check formatting
+pnpm typecheck           # TypeScript check
+pnpm lint                # ESLint
+pnpm test                # Run tests
 
 # Storybook
-npm run storybook        # Component development
-npm run chromatic        # Visual regression tests
+pnpm storybook           # Component development
+pnpm chromatic           # Visual regression tests
 
 # CLI Tools
-npm run create-event     # Create event from JSON
-npm run list-events      # List all events
-npm run manage-users     # Admin user management
+pnpm create-event        # Create event from JSON
+pnpm list-events         # List all events
+pnpm manage-users        # Admin user management
 ```
 
 ### Design System
@@ -97,7 +97,7 @@ npm run manage-users     # Admin user management
 Browse the interactive design system at `/design-system` or run Storybook:
 
 ```bash
-npm run storybook
+pnpm storybook
 ```
 
 See [DESIGN.md](DESIGN.md) for design tokens and component guidelines.
@@ -107,10 +107,10 @@ See [DESIGN.md](DESIGN.md) for design tokens and component guidelines.
 All checks must pass before committing:
 
 ```bash
-npm run format:check   # Prettier
-npm run typecheck      # TypeScript
-npm run lint           # ESLint
-npm test               # Tests
+pnpm format:check      # Prettier
+pnpm typecheck         # TypeScript
+pnpm lint              # ESLint
+pnpm test              # Tests
 ```
 
 ## Tech Stack
@@ -146,10 +146,10 @@ src/
 ## Event Workflow
 
 ```
-1. Create event:     npm run create-event events/event.json
-2. Activate voting:  npm run activate-event <event-id>
+1. Create event:     pnpm create-event events/event.json
+2. Activate voting:  pnpm activate-event <event-id>
 3. Run event:        Share QR codes for voting
-4. Finalize:         npm run finalize-event <event-id>
+4. Finalize:         pnpm finalize-event <event-id>
 ```
 
 ## Scoring System
