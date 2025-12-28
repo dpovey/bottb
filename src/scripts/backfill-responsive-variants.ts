@@ -12,11 +12,12 @@
  *   DOTENV_CONFIG_PATH=.env.local npx tsx src/scripts/backfill-responsive-variants.ts [options]
  *
  * Options:
- *   --dry-run          Show what would be generated without actually processing
- *   --verbose          Show detailed progress for each photo
- *   --limit <number>   Process only the first N photos (for testing)
- *   --event <name>     Only process photos from a specific event
- *   --medium-only      Only generate medium variants (for existing photos)
+ *   --dry-run            Show what would be generated without actually processing
+ *   --verbose            Show detailed progress for each photo
+ *   --limit <number>     Process only the first N photos (for testing)
+ *   --event <name>       Only process photos from a specific event
+ *   --medium-only        Only generate medium variants (for existing photos)
+ *   --photos-path <path> Path to search for original photos (recursively searched)
  */
 
 import { config } from 'dotenv'
@@ -32,7 +33,8 @@ import { processImage } from '../lib/image-processor'
 // Load environment variables
 config({ path: '.env.local' })
 
-const PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
+// Default photos path - can be overridden with --photos-path
+let PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
 
 interface PhotoRecord {
   id: string
@@ -274,6 +276,7 @@ async function getPhotosNeedingAllVariants(
 
 /**
  * Find original file on disk by matching filename
+ * Recursively searches PHOTOS_BASE_PATH for the file
  */
 async function findOriginalFileOnDisk(
   filename: string
@@ -282,20 +285,8 @@ async function findOriginalFileOnDisk(
     return null
   }
 
-  // Recursively search event directories
-  const eventDirs = ['Brisbane 2024', 'Brisbane 2025', 'Sydney 2025']
-
-  for (const eventDir of eventDirs) {
-    const eventPath = join(PHOTOS_BASE_PATH, eventDir)
-    if (!existsSync(eventPath)) continue
-
-    const filePath = await searchForFile(eventPath, filename)
-    if (filePath) {
-      return filePath
-    }
-  }
-
-  return null
+  // Recursively search the entire photos directory
+  return searchForFile(PHOTOS_BASE_PATH, filename)
 }
 
 /**
@@ -538,6 +529,7 @@ async function main() {
       limit: { type: 'string' },
       event: { type: 'string' },
       'medium-only': { type: 'boolean' },
+      'photos-path': { type: 'string' },
     },
     allowPositionals: true,
   })
@@ -547,6 +539,12 @@ async function main() {
   const mediumOnly = values['medium-only'] || false
   const limit = values.limit ? parseInt(values.limit as string, 10) : undefined
   const eventFilter = values.event as string | undefined
+  const photosPath = values['photos-path'] as string | undefined
+
+  // Override default photos path if provided
+  if (photosPath) {
+    PHOTOS_BASE_PATH = photosPath
+  }
 
   console.log('🔄 Backfill Responsive Image Variants Script\n')
   if (isDryRun) {
@@ -556,6 +554,15 @@ async function main() {
     console.log(
       '📱 MEDIUM-ONLY MODE - Only generating medium (1200px) variants\n'
     )
+  }
+  if (photosPath) {
+    if (existsSync(photosPath)) {
+      console.log(`📂 Photos path: ${photosPath} (found)\n`)
+    } else {
+      console.log(
+        `📂 Photos path: ${photosPath} (NOT FOUND - will use blob storage)\n`
+      )
+    }
   }
   if (eventFilter) {
     console.log(`📁 Filtering by event: ${eventFilter}\n`)
