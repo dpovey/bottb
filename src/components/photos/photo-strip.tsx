@@ -71,10 +71,6 @@ export function PhotoStrip({
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
-  // Seed for deterministic random ordering - generate once on mount
-  // This ensures the same order when navigating to slideshow and back
-  const [seed] = useState(() => Date.now())
-
   // Strip navigation state
   const [selectedIndex, setSelectedIndex] = useState(0)
   const stripRef = useRef<HTMLDivElement>(null)
@@ -103,8 +99,7 @@ export function PhotoStrip({
       if (photographer) params.set('photographer', photographer)
       params.set('limit', PAGE_SIZE.toString())
       params.set('page', page.toString())
-      params.set('order', 'random') // Random order for browsing strips
-      params.set('seed', seed.toString()) // Deterministic ordering
+      params.set('shuffle', 'true') // Shuffled order for browsing strips
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (!res.ok) return []
@@ -113,7 +108,7 @@ export function PhotoStrip({
       setTotalCount(data.pagination.total)
       return data.photos
     },
-    [eventId, bandId, companySlug, photographer, seed]
+    [eventId, bandId, companySlug, photographer]
   )
 
   // Initial fetch (only if initialPhotos not provided)
@@ -223,13 +218,13 @@ export function PhotoStrip({
 
       setSelectedIndex(index)
 
-      // Build slideshow URL with current filters and seed for deterministic ordering
+      // Build slideshow URL with current filters and shuffle enabled
       const params = new URLSearchParams()
       if (eventId) params.set('event', eventId)
       if (bandId) params.set('band', bandId)
       if (companySlug) params.set('company', companySlug)
       if (photographer) params.set('photographer', photographer)
-      params.set('seed', seed.toString())
+      params.set('shuffle', 'true')
 
       const queryString = params.toString()
       const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
@@ -243,7 +238,6 @@ export function PhotoStrip({
       bandId,
       companySlug,
       photographer,
-      seed,
     ]
   )
 

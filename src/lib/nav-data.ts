@@ -11,10 +11,13 @@ import {
   getBands,
   getDistinctCompanies,
   getVideos,
+  getPhotosWithCount,
+  getAvailablePhotoFilters,
   type CompanyWithStats,
   type Company,
   type Band,
   type Video,
+  type Photo,
 } from './db'
 
 export interface NavEvent {
@@ -178,6 +181,102 @@ export async function getCachedFilterOptions(): Promise<FilterOptions> {
     })),
     companies,
   }
+}
+
+// ============================================================
+// Photos Data (with shuffle support)
+// ============================================================
+
+// Re-export shuffle utilities from dedicated module
+export { seededShuffle, getTimeBasedSeed } from './shuffle'
+import { seededShuffle, getTimeBasedSeed } from './shuffle'
+
+export interface CachedPhotosOptions {
+  eventId?: string
+  photographer?: string
+  companySlug?: string
+  shuffle?: string | null // 'true' for shared shuffle, or a specific seed
+  limit?: number
+  offset?: number
+}
+
+export interface CachedPhotosResult {
+  photos: Photo[]
+  total: number
+  seed: string | null // The actual seed used (for client to track)
+}
+
+/**
+ * Get photos with optional shuffle - cached for 15 minutes
+ *
+ * Shuffle behavior:
+ * - shuffle='true' → uses time-based seed (shared by all users in 15-min window)
+ * - shuffle='<seed>' → uses specific seed (for re-shuffles and shared links)
+ * - shuffle=null/undefined → ordered by date (no shuffle)
+ *
+ * The cache key includes the seed, so different seeds = different cache entries.
+ * Same seed always produces the same order (deterministic), with or without cache.
+ */
+export async function getCachedPhotos(
+  options: CachedPhotosOptions
+): Promise<CachedPhotosResult> {
+  const {
+    eventId,
+    photographer,
+    companySlug,
+    shuffle,
+    limit = 50,
+    offset = 0,
+  } = options
+
+  // Determine the seed to use
+  let seed: string | null = null
+  if (shuffle === 'true') {
+    // Shared shuffle: use time-based seed
+    seed = getTimeBasedSeed()
+  } else if (shuffle && shuffle !== 'false') {
+    // Specific shuffle: use provided seed
+    seed = shuffle
+  }
+
+  // Set cache profile and tags
+  // Cache key automatically includes all function arguments
+  cacheLife('fifteenMinutes')
+  cacheTag('photos', seed ? `photos-shuffle-${seed}` : 'photos-date')
+
+  // Always fetch by date order from DB, then shuffle in memory if needed
+  const { photos, total } = await getPhotosWithCount({
+    eventId,
+    photographer,
+    companySlug,
+    limit: seed ? limit * 2 : limit, // Fetch more for shuffle to allow better distribution
+    offset: seed ? 0 : offset, // For shuffle, always start from beginning
+    orderBy: 'date',
+  })
+
+  if (seed) {
+    // Apply deterministic shuffle
+    const shuffledPhotos = seededShuffle(photos, seed)
+    // Apply pagination after shuffle
+    const paginatedPhotos = shuffledPhotos.slice(offset, offset + limit)
+    return { photos: paginatedPhotos, total, seed }
+  }
+
+  return { photos, total, seed: null }
+}
+
+/**
+ * Get available photo filters - cached for 15 minutes
+ */
+export async function getCachedPhotoFilters(options: {
+  eventId?: string
+  photographer?: string
+  companySlug?: string
+}) {
+  cacheLife('fifteenMinutes')
+  cacheTag('photo-filters')
+
+  return getAvailablePhotoFilters(options)
 }
 
 // ============================================================

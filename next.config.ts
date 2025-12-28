@@ -77,6 +77,12 @@ const nextConfig: NextConfig = {
       revalidate: 300, // Revalidate after 5 minutes
       expire: 3600, // Expire after 1 hour
     },
+    // 15-minute cache - good for photo gallery with shuffle
+    fifteenMinutes: {
+      stale: 900, // Serve stale for 15 minutes
+      revalidate: 600, // Revalidate after 10 minutes
+      expire: 1200, // Expire after 20 minutes
+    },
   },
   images: {
     // Enable AVIF format for 30-50% smaller images than WebP

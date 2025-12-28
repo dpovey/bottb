@@ -86,11 +86,22 @@ Review changes against:
    - Could changes affect user-facing flows? Run and/or update Playwright e2e tests (`npm run test:e2e`).
    - Check `e2e/` for specs that test affected routes/features.
 
+
 **If major deviations found**: STOP and ask whether to update docs or fix code.
 
 ## Pre-commit Checklist
 
-**MUST run and verify these pass before committing:**
+### Step 1: ASSESS (do this FIRST, before running any commands)
+
+Read the relevant docs and explicitly confirm compliance:
+
+1. **Practices** (`doc/practices/`) - Read relevant files (react.md, typescript.md, etc.). Do we follow them? List any exceptions and justify.
+2. **Architecture** (`doc/arch/`) - Read relevant files. Are we consistent with documented patterns? **If adding new patterns, update the docs.**
+3. **Requirements** (`doc/requirements/`) - Did we deviate from specs? Compare screenshots if applicable. **If adding new features, update the docs.**
+
+Output your assessment with ✅/❌ for each area before proceeding. If docs need updating, do it now.
+
+### Step 2: Run checks (all must pass with exit code 0)
 
 - `npm run format:check` - Prettier formatting
 - `npm run typecheck` - TypeScript type checking
