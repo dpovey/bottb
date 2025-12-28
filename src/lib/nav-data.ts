@@ -189,7 +189,7 @@ export async function getCachedFilterOptions(): Promise<FilterOptions> {
 
 // Re-export shuffle utilities from dedicated module
 export { seededShuffle, getTimeBasedSeed } from './shuffle'
-import { seededShuffle, getTimeBasedSeed } from './shuffle'
+import { getTimeBasedSeed } from './shuffle'
 
 export interface CachedPhotosOptions {
   eventId?: string
@@ -207,6 +207,20 @@ export interface CachedPhotosResult {
 }
 
 /**
+ * Convert a string seed to a numeric seed for database ordering
+ * Uses a simple hash to get consistent numbers from strings
+ */
+function stringToNumericSeed(seed: string): number {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return Math.abs(hash)
+}
+
+/**
  * Get photos with optional shuffle - cached for 15 minutes
  *
  * Shuffle behavior:
@@ -216,6 +230,8 @@ export interface CachedPhotosResult {
  *
  * The cache key includes the seed, so different seeds = different cache entries.
  * Same seed always produces the same order (deterministic), with or without cache.
+ *
+ * Uses database-level deterministic ordering (hashtext) for proper pagination.
  */
 export async function getCachedPhotos(
   options: CachedPhotosOptions
@@ -244,25 +260,19 @@ export async function getCachedPhotos(
   cacheLife('fifteenMinutes')
   cacheTag('photos', seed ? `photos-shuffle-${seed}` : 'photos-date')
 
-  // Always fetch by date order from DB, then shuffle in memory if needed
+  // Use database-level ordering for proper pagination
+  // When seed is provided, uses hashtext(id || seed) for deterministic random order
   const { photos, total } = await getPhotosWithCount({
     eventId,
     photographer,
     companySlug,
-    limit: seed ? limit * 2 : limit, // Fetch more for shuffle to allow better distribution
-    offset: seed ? 0 : offset, // For shuffle, always start from beginning
-    orderBy: 'date',
+    limit,
+    offset,
+    orderBy: seed ? 'random' : 'date',
+    seed: seed ? stringToNumericSeed(seed) : undefined,
   })
 
-  if (seed) {
-    // Apply deterministic shuffle
-    const shuffledPhotos = seededShuffle(photos, seed)
-    // Apply pagination after shuffle
-    const paginatedPhotos = shuffledPhotos.slice(offset, offset + limit)
-    return { photos: paginatedPhotos, total, seed }
-  }
-
-  return { photos, total, seed: null }
+  return { photos, total, seed }
 }
 
 /**
