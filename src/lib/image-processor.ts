@@ -4,6 +4,7 @@ export interface ProcessedImage {
   thumbnail: Buffer
   thumbnail2x?: Buffer // 600px for 2x displays
   thumbnail3x?: Buffer // 900px for 3x displays
+  medium?: Buffer // 1200px for mobile slideshow (3x displays)
   large: Buffer
   large4k?: Buffer // 4000px for 4K displays
   width: number
@@ -25,7 +26,8 @@ export interface ImageVariant {
  * - thumbnail: 300x300 cover crop (1x displays)
  * - thumbnail2x: 600x600 cover crop (2x/Retina displays)
  * - thumbnail3x: 900x900 cover crop (3x displays)
- * - large: max 2000px (standard displays)
+ * - medium: max 1200px (mobile slideshow at 3x density)
+ * - large: max 2000px (tablet/desktop displays)
  * - large4k: max 4000px (4K displays)
  */
 export async function processImage(
@@ -67,8 +69,18 @@ export async function processImage(
       .toBuffer()
   }
 
-  // Create large versions
-  // Standard: max 2000px
+  // Create slideshow versions at different sizes for responsive loading
+  // Medium: max 1200px (mobile slideshow at 3x density - 400px viewport × 3)
+  let medium: Buffer | undefined
+  if (originalWidth >= 1200 || originalHeight >= 1200) {
+    medium = await image
+      .clone()
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 90 })
+      .toBuffer()
+  }
+
+  // Large: max 2000px (tablet/desktop)
   const large = await image
     .clone()
     .resize(2000, 2000, { fit: 'inside', withoutEnlargement: true })
@@ -89,6 +101,7 @@ export async function processImage(
     thumbnail,
     thumbnail2x,
     thumbnail3x,
+    medium,
     large,
     large4k,
     width: originalWidth,

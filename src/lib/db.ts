@@ -459,6 +459,7 @@ export async function getPhotosWithCount(
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
              p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
              p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'medium_url' as medium_url,
              p.xmp_metadata->>'large_4k_url' as large_4k_url,
              COUNT(*) OVER() as total_count
       FROM photos p
@@ -524,6 +525,7 @@ async function getPhotosRandomWithCount(options: {
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
              p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
              p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'medium_url' as medium_url,
              p.xmp_metadata->>'large_4k_url' as large_4k_url,
              COUNT(*) OVER() as total_count
       FROM photos p
@@ -579,6 +581,7 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
              COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
              p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
              p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+             p.xmp_metadata->>'medium_url' as medium_url,
              p.xmp_metadata->>'large_4k_url' as large_4k_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id

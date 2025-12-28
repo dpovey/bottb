@@ -128,7 +128,28 @@ const Thumbnail = memo(function Thumbnail({
   )
 })
 
-// Memoized slide with native lazy loading
+// Build responsive srcSet for slideshow images
+// Uses medium (1200px) for mobile, large (2000px) for tablet, 4K for desktop
+function buildSlideshowSrcSet(photo: Photo): string {
+  const sources: string[] = []
+
+  // Medium variant (1200px) - perfect for mobile at 3x density
+  if (photo.medium_url) {
+    sources.push(`${photo.medium_url} 1200w`)
+  }
+
+  // Large variant (2000px) - default, always available
+  sources.push(`${photo.blob_url} 2000w`)
+
+  // 4K variant (4000px) - for high-res displays
+  if (photo.large_4k_url) {
+    sources.push(`${photo.large_4k_url} 4000w`)
+  }
+
+  return sources.join(', ')
+}
+
+// Memoized slide with native lazy loading and responsive images
 const Slide = memo(function Slide({
   photo,
   index,
@@ -138,11 +159,15 @@ const Slide = memo(function Slide({
   index: number
   isPlaying: boolean
 }) {
+  const srcSet = buildSlideshowSrcSet(photo)
+
   return (
     <div className="flex items-center justify-center w-full h-full">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={photo.large_4k_url || photo.blob_url}
+        src={photo.blob_url}
+        srcSet={srcSet}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 80vw"
         alt={photo.original_filename || `Photo ${index + 1}`}
         className={`object-contain max-w-[90%] max-h-full ${
           isPlaying ? '' : 'rounded-lg shadow-2xl'

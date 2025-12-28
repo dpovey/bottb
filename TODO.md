@@ -18,6 +18,7 @@
 - [x] E2E tests (Playwright) - Critical flows: voting, admin, photo gallery
 - [x] Photo list rate limiting - Added to `/api/photos` endpoint
 - [x] Dependency audit - 0 vulnerabilities, minor/patch updates applied
+- [x] Medium image variant (1200px) - Responsive slideshow for mobile bandwidth savings
 
 ---
 
@@ -30,7 +31,6 @@
 
 ### Performance
 
-- [ ] **800px medium image variant** - Add `md` variant for mobile slideshow (4x bandwidth savings)
 - [ ] **Lighthouse baseline** - Run audit and populate `lighthouse-report.json`
 - [ ] **Bundle analyzer** - Add `@next/bundle-analyzer` to track JS payload
 
@@ -138,12 +138,14 @@
 
 Current variants:
 
-- `thumbnail.webp` - 300x300 (grid)
-- `large.webp` - 2000px max (slideshow)
+- `thumbnail.webp` - 300x300 (grid 1x)
+- `thumbnail-2x.webp` - 600x600 (grid 2x)
+- `thumbnail-3x.webp` - 900x900 (grid 3x)
+- `medium.webp` - 1200px max (mobile slideshow)
+- `large.webp` - 2000px max (tablet/desktop slideshow)
+- `large-4k.webp` - 4000px max (4K displays)
 
-Recommended addition:
-
-- `md` variant - 800px wide for mobile slideshow (biggest bandwidth win)
+Slideshow uses responsive srcSet: medium (1200w), large (2000w), large-4k (4000w)
 
 ### Rate Limiting
 
