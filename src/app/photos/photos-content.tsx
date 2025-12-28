@@ -44,6 +44,18 @@ interface PhotosContentProps {
   initialPhotoId?: string | null
   /** SSR-provided filter options to prevent layout shift */
   initialFilterOptions?: FilterOptions
+  /** SSR-provided total photo count for immediate slideshow button display */
+  initialTotalPhotos?: number
+}
+
+// localStorage key for persisting filter preferences
+const FILTERS_STORAGE_KEY = 'photos-filters'
+
+interface StoredFilters {
+  event?: string | null
+  photographer?: string | null
+  company?: string | null
+  shuffle?: string | null
 }
 
 export function PhotosContent({
@@ -52,6 +64,7 @@ export function PhotosContent({
   initialCompanySlug = null,
   initialPhotoId: _initialPhotoId = null,
   initialFilterOptions,
+  initialTotalPhotos = 0,
 }: PhotosContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -88,15 +101,11 @@ export function PhotosContent({
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  // Page sizes: smaller initial load for faster first paint, larger for subsequent loads
-  const INITIAL_PAGE_SIZE = 12
+  // Page sizes
   const PAGE_SIZE = 50
 
   // Track loaded photo IDs to prevent duplicates in random mode
   const loadedPhotoIds = useRef<Set<string>>(new Set())
-
-  // Track if this is the first load (for using smaller initial batch)
-  const isFirstLoad = useRef(true)
 
   // Filters - initialize from props (resolved server-side)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
@@ -112,31 +121,112 @@ export function PhotosContent({
   // Track current page for ordered mode
   const currentPage = useRef(1)
 
-  // Sync filters with URL params when they change (for browser back/forward)
-  useEffect(() => {
-    const eventId = searchParams.get('event') || searchParams.get('eventId')
-    const photographer = searchParams.get('photographer')
-    const company = searchParams.get('company')
-    const shuffleParam = searchParams.get('shuffle')
+  // Check if URL has any filter params (means user navigated with specific filters)
+  // This is computed once on mount and cached
+  const hasUrlFiltersRef = useRef(
+    searchParams.has('event') ||
+      searchParams.has('eventId') ||
+      searchParams.has('photographer') ||
+      searchParams.has('company') ||
+      searchParams.has('shuffle')
+  )
 
-    // Only update if URL params differ from current state (handles browser navigation)
-    // Use functional updates to avoid dependency on current state values
-    setSelectedEventId((prev) => {
-      const urlValue = eventId || null
-      return prev !== urlValue ? urlValue : prev
-    })
-    setSelectedPhotographer((prev) => {
-      const urlValue = photographer || null
-      return prev !== urlValue ? urlValue : prev
-    })
-    setSelectedCompanySlug((prev) => {
-      const urlValue = company || null
-      return prev !== urlValue ? urlValue : prev
-    })
-    setShuffle((prev) => {
-      const urlValue = shuffleParam || null
-      return prev !== urlValue ? urlValue : prev
-    })
+  // Track if filters have been initialized (localStorage checked or URL params applied)
+  // Starts as true if URL has params (no need to wait), false otherwise
+  const [filtersInitialized, setFiltersInitialized] = useState(
+    hasUrlFiltersRef.current
+  )
+
+  // Restore filters from localStorage on mount (only if no URL filters)
+  // This effect runs exactly once on mount
+  useEffect(() => {
+    // If URL has filters, we're already initialized (URL takes precedence)
+    if (hasUrlFiltersRef.current) return
+
+    // No URL filters - restore from localStorage
+    try {
+      const stored = localStorage.getItem(FILTERS_STORAGE_KEY)
+      if (stored) {
+        const filters: StoredFilters = JSON.parse(stored)
+        if (filters.event) setSelectedEventId(filters.event)
+        if (filters.photographer) setSelectedPhotographer(filters.photographer)
+        if (filters.company) setSelectedCompanySlug(filters.company)
+        if (filters.shuffle !== undefined) {
+          setShuffle(filters.shuffle)
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    // Mark as initialized after restoration
+    setFiltersInitialized(true)
+  }, []) // Empty deps - run once on mount
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    // Only save after filters are initialized (prevents saving default values)
+    if (!filtersInitialized) return
+
+    const filters: StoredFilters = {
+      event: selectedEventId,
+      photographer: selectedPhotographer,
+      company: selectedCompanySlug,
+      shuffle,
+    }
+    try {
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [
+    selectedEventId,
+    selectedPhotographer,
+    selectedCompanySlug,
+    shuffle,
+    filtersInitialized,
+  ])
+
+  // Sync filters with URL params when they change (for browser back/forward)
+  // Only update each filter if URL explicitly has that param - this preserves
+  // localStorage-restored values when navigating to /photos without params
+  useEffect(() => {
+    // Only update event if URL explicitly has an event param
+    if (searchParams.has('event') || searchParams.has('eventId')) {
+      const eventId = searchParams.get('event') || searchParams.get('eventId')
+      setSelectedEventId((prev) => {
+        const urlValue = eventId || null
+        return prev !== urlValue ? urlValue : prev
+      })
+    }
+
+    // Only update photographer if URL explicitly has the param
+    if (searchParams.has('photographer')) {
+      const photographer = searchParams.get('photographer')
+      setSelectedPhotographer((prev) => {
+        const urlValue = photographer || null
+        return prev !== urlValue ? urlValue : prev
+      })
+    }
+
+    // Only update company if URL explicitly has the param
+    if (searchParams.has('company')) {
+      const company = searchParams.get('company')
+      setSelectedCompanySlug((prev) => {
+        const urlValue = company || null
+        return prev !== urlValue ? urlValue : prev
+      })
+    }
+
+    // Only update shuffle if URL explicitly has a shuffle param
+    // This preserves the default 'true' when navigating without shuffle param
+    if (searchParams.has('shuffle')) {
+      const shuffleParam = searchParams.get('shuffle')
+      setShuffle((prev) => {
+        const urlValue = shuffleParam || null
+        return prev !== urlValue ? urlValue : prev
+      })
+    }
   }, [searchParams])
 
   // Update URL when filters change
@@ -272,7 +362,6 @@ export function PhotosContent({
     setPhotos([])
     loadedPhotoIds.current = new Set()
     currentPage.current = 1
-    isFirstLoad.current = true
     setLoading(true)
   }, [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle])
 
@@ -292,13 +381,7 @@ export function PhotosContent({
           params.set('photographer', selectedPhotographer)
         if (selectedCompanySlug) params.set('company', selectedCompanySlug)
 
-        // Use smaller batch for initial load (faster first paint), larger for subsequent loads
-        const limit = isLoadMore
-          ? PAGE_SIZE
-          : isFirstLoad.current
-            ? INITIAL_PAGE_SIZE
-            : PAGE_SIZE
-        params.set('limit', limit.toString())
+        params.set('limit', PAGE_SIZE.toString())
 
         // Set shuffle or order by date
         if (shuffle) {
@@ -307,10 +390,8 @@ export function PhotosContent({
           params.set('order', 'date')
         }
 
-        // For non-shuffle mode, use pagination
-        if (!shuffle) {
-          params.set('page', currentPage.current.toString())
-        }
+        // Always use pagination - shuffle mode is deterministic (same seed = same order)
+        params.set('page', currentPage.current.toString())
 
         // Skip filter metadata on "load more" requests (reduces API queries from 11 to 1)
         if (isLoadMore) {
@@ -321,6 +402,13 @@ export function PhotosContent({
         if (res.ok) {
           const data: PhotosResponse = await res.json()
           setTotalCount(data.pagination.total)
+
+          // Capture the actual seed from the API response
+          // This is important: when we send shuffle=true, the API generates a seed
+          // We need to use this seed for slideshow navigation
+          if (data.seed && shuffle && shuffle !== data.seed) {
+            setShuffle(data.seed)
+          }
 
           // Only update filter metadata if returned (not skipped on load-more)
           if (data.photographers && data.photographers.length > 0) {
@@ -340,15 +428,12 @@ export function PhotosContent({
             )
             newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
             setPhotos((prev) => [...prev, ...newPhotos])
-            if (!shuffle) {
-              currentPage.current += 1
-            }
+            currentPage.current += 1
           } else {
             // Initial load
             loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
             setPhotos(data.photos)
             currentPage.current = 2 // Next load will be page 2
-            isFirstLoad.current = false // Subsequent loads will use larger batch
           }
         }
       } catch (error) {
@@ -361,10 +446,11 @@ export function PhotosContent({
     [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle]
   )
 
-  // Initial fetch when filters change
+  // Initial fetch when filters change (wait until localStorage check completes)
   useEffect(() => {
+    if (!filtersInitialized) return
     fetchPhotos(false)
-  }, [fetchPhotos])
+  }, [fetchPhotos, filtersInitialized])
 
   // Infinite scroll - load more when reaching bottom
   useEffect(() => {
@@ -464,10 +550,12 @@ export function PhotosContent({
                 {events.length !== 1 ? 's' : ''}
               </p>
             </div>
-            {photos.length > 0 && (
+            {/* Show slideshow button if we have photos loaded OR SSR says there are photos */}
+            {(photos.length > 0 || initialTotalPhotos > 0) && (
               <button
                 onClick={() => handlePhotoClick(0)}
-                className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors"
+                disabled={photos.length === 0}
+                className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <PlayCircleIcon size={16} />
                 Slideshow

@@ -13,6 +13,7 @@ import {
   getVideos,
   getPhotosWithCount,
   getAvailablePhotoFilters,
+  getPhotoCount,
   type CompanyWithStats,
   type Company,
   type Band,
@@ -151,6 +152,8 @@ export interface FilterOptions {
     company_slug?: string
   }>
   companies: Array<{ slug: string; name: string }>
+  /** Total number of photos in the gallery (for SSR) */
+  totalPhotos: number
 }
 
 /**
@@ -160,10 +163,11 @@ export async function getCachedFilterOptions(): Promise<FilterOptions> {
   cacheLife('fiveMinutes')
   cacheTag('filter-options')
 
-  const [events, bands, companies] = await Promise.all([
+  const [events, bands, companies, totalPhotos] = await Promise.all([
     getEvents(),
     getBands(),
     getDistinctCompanies(),
+    getPhotoCount(),
   ])
 
   // Sort events by date descending
@@ -180,6 +184,7 @@ export async function getCachedFilterOptions(): Promise<FilterOptions> {
       company_slug: b.company_slug,
     })),
     companies,
+    totalPhotos,
   }
 }
 

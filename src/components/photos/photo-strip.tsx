@@ -43,6 +43,7 @@ interface PhotosResponse {
     limit: number
     totalPages: number
   }
+  seed?: string // The shuffle seed used by the server
 }
 
 const PAGE_SIZE = 50
@@ -70,6 +71,8 @@ export function PhotoStrip({
     initialPhotos ? new Set([1]) : new Set()
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  // The shuffle seed returned by the API (for consistent ordering across links)
+  const [shuffleSeed, setShuffleSeed] = useState<string | null>(null)
 
   // Strip navigation state
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -77,7 +80,7 @@ export function PhotoStrip({
   const photoRefs = useRef<(HTMLButtonElement | null)[]>([])
   const isInitialMount = useRef(true)
 
-  // Build the view all link based on filters
+  // Build the view all link based on filters (includes shuffle seed for consistent ordering)
   const galleryLink =
     viewAllLink ||
     (() => {
@@ -86,6 +89,8 @@ export function PhotoStrip({
       if (bandId) params.set('band', bandId)
       if (companySlug) params.set('company', companySlug)
       if (photographer) params.set('photographer', photographer)
+      // Include shuffle seed so gallery shows same order as strip
+      if (shuffleSeed) params.set('shuffle', shuffleSeed)
       return `/photos${params.toString() ? `?${params.toString()}` : ''}`
     })()
 
@@ -99,16 +104,21 @@ export function PhotoStrip({
       if (photographer) params.set('photographer', photographer)
       params.set('limit', PAGE_SIZE.toString())
       params.set('page', page.toString())
-      params.set('shuffle', 'true') // Shuffled order for browsing strips
+      // Use existing seed if we have one (for consistent pagination), otherwise request new shuffle
+      params.set('shuffle', shuffleSeed || 'true')
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (!res.ok) return []
 
       const data: PhotosResponse = await res.json()
       setTotalCount(data.pagination.total)
+      // Capture the seed from the server for consistent ordering across links
+      if (data.seed && !shuffleSeed) {
+        setShuffleSeed(data.seed)
+      }
       return data.photos
     },
-    [eventId, bandId, companySlug, photographer]
+    [eventId, bandId, companySlug, photographer, shuffleSeed]
   )
 
   // Initial fetch (only if initialPhotos not provided)
@@ -218,13 +228,14 @@ export function PhotoStrip({
 
       setSelectedIndex(index)
 
-      // Build slideshow URL with current filters and shuffle enabled
+      // Build slideshow URL with current filters and shuffle seed
       const params = new URLSearchParams()
       if (eventId) params.set('event', eventId)
       if (bandId) params.set('band', bandId)
       if (companySlug) params.set('company', companySlug)
       if (photographer) params.set('photographer', photographer)
-      params.set('shuffle', 'true')
+      // Use specific seed for consistent ordering in slideshow
+      if (shuffleSeed) params.set('shuffle', shuffleSeed)
 
       const queryString = params.toString()
       const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
@@ -238,6 +249,7 @@ export function PhotoStrip({
       bandId,
       companySlug,
       photographer,
+      shuffleSeed,
     ]
   )
 

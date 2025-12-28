@@ -83,6 +83,7 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
         initialCompanySlug={initialCompanySlug}
         initialPhotoId={initialPhotoId}
         initialFilterOptions={filterOptions}
+        initialTotalPhotos={filterOptions.totalPhotos}
       />
     </Suspense>
   )
