@@ -8,12 +8,12 @@ export interface MatchResult<T> {
   data?: T
 }
 
-const FUZZY_MATCH_THRESHOLD = 0.6
+export const FUZZY_MATCH_THRESHOLD = 0.6
 
 /**
  * Normalize a string for comparison (lowercase, remove special characters)
  */
-function normalizeString(str: string): string {
+export function normalizeString(str: string): string {
   return str
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
@@ -23,7 +23,7 @@ function normalizeString(str: string): string {
 /**
  * Calculate string similarity using Levenshtein distance
  */
-function stringSimilarity(str1: string, str2: string): number {
+export function stringSimilarity(str1: string, str2: string): number {
   const s1 = normalizeString(str1)
   const s2 = normalizeString(str2)
 

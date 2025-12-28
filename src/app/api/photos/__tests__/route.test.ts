@@ -1,10 +1,7 @@
-import { NextRequest } from 'next/server'
+// @vitest-environment node
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { GET } from '../route'
-import { getPhotosWithCount, getAvailablePhotoFilters } from '@/lib/db'
-import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 
-// Mock the database functions
+// Mock the database functions BEFORE importing the route
 vi.mock('@/lib/db', () => ({
   getPhotosWithCount: vi.fn(),
   getAvailablePhotoFilters: vi.fn(),
@@ -16,17 +13,22 @@ vi.mock('@/lib/nav-data', () => ({
   getCachedPhotoFilters: vi.fn(),
 }))
 
-const mockGetCachedPhotos = vi.mocked(getCachedPhotos)
-const mockGetCachedPhotoFilters = vi.mocked(getCachedPhotoFilters)
+import { NextRequest } from 'next/server'
+import { GET } from '../route'
+import { getPhotosWithCount, getAvailablePhotoFilters } from '@/lib/db'
+import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 
-const mockGetPhotosWithCount = vi.mocked(getPhotosWithCount)
-const mockGetAvailablePhotoFilters = vi.mocked(getAvailablePhotoFilters)
+const mockGetCachedPhotos = getCachedPhotos as ReturnType<typeof vi.fn>
+const mockGetCachedPhotoFilters = getCachedPhotoFilters as ReturnType<
+  typeof vi.fn
+>
 
-// Note: These tests verify the API route behavior by mocking the database layer.
-// Currently skipped due to module mocking issues with the @/lib/db path alias.
-// The mocks are set up correctly but Vitest is not intercepting the imports.
-// TODO: Investigate vitest/vite path alias resolution for mocking.
-describe.skip('/api/photos', () => {
+const mockGetPhotosWithCount = getPhotosWithCount as ReturnType<typeof vi.fn>
+const mockGetAvailablePhotoFilters = getAvailablePhotoFilters as ReturnType<
+  typeof vi.fn
+>
+
+describe('/api/photos', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -66,7 +68,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 100,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest('http://localhost/api/photos')
       const response = await GET(request)
@@ -96,7 +98,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 50,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?event=event-1'
@@ -119,7 +121,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 50,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?eventId=event-1'
@@ -142,7 +144,7 @@ describe.skip('/api/photos', () => {
         photos: [mockPhotos[0]],
         total: 5,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?photographer=John%20Doe'
@@ -165,7 +167,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 20,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?company=company-1'
@@ -188,7 +190,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 100,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?page=2&limit=25'
@@ -214,25 +216,28 @@ describe.skip('/api/photos', () => {
       })
     })
 
-    it('supports random order', async () => {
-      mockGetPhotosWithCount.mockResolvedValue({
+    it('supports random order (legacy - now uses cached shuffle)', async () => {
+      // order=random is now deprecated and uses cached shuffle internally
+      mockGetCachedPhotos.mockResolvedValue({
         photos: mockPhotos,
         total: 100,
+        seed: '12345678',
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?order=random'
       )
       const response = await GET(request)
 
-      expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
+      // Legacy order=random now uses cached shuffle with 'true'
+      expect(mockGetCachedPhotos).toHaveBeenCalledWith({
         eventId: undefined,
         photographer: undefined,
         companySlug: undefined,
+        shuffle: 'true',
         limit: 50,
         offset: 0,
-        orderBy: 'random',
       })
       expect(response.status).toBe(200)
     })
@@ -242,7 +247,7 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 100,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest('http://localhost/api/photos?order=date')
       const response = await GET(request)
@@ -284,12 +289,12 @@ describe.skip('/api/photos', () => {
         photos: mockPhotos,
         total: 100,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest('http://localhost/api/photos')
       const response = await GET(request)
 
-      expect(mockGetAvailablePhotoFilters).toHaveBeenCalled()
+      expect(mockGetCachedPhotoFilters).toHaveBeenCalled()
       expect(response.status).toBe(200)
 
       const data = await response.json()
@@ -324,7 +329,7 @@ describe.skip('/api/photos', () => {
         photos: [mockPhotos[0]],
         total: 3,
       })
-      mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+      mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
       const request = new NextRequest(
         'http://localhost/api/photos?event=event-1&photographer=John%20Doe&company=company-1'
@@ -403,7 +408,7 @@ describe.skip('/api/photos', () => {
           photos: mockPhotos,
           total: 100,
         })
-        mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
 
         const request = new NextRequest('http://localhost/api/photos')
         const response = await GET(request)

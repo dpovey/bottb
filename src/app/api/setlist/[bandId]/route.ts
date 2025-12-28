@@ -6,7 +6,7 @@ import {
   SetlistSongInput,
 } from '@/lib/db'
 import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
-import { uuidv7 } from '@/lib/uuid'
+import { v7 as uuidv7 } from 'uuid'
 
 interface RouteContext {
   params: Promise<{ bandId: string }>

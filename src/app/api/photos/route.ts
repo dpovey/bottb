@@ -4,7 +4,8 @@ import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
+    // Use URL constructor for testability (nextUrl.searchParams is not available in tests)
+    const searchParams = new URL(request.url).searchParams
     // Support both new (event) and legacy (eventId) param names
     const eventId =
       searchParams.get('event') || searchParams.get('eventId') || undefined

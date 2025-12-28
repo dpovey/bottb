@@ -19,9 +19,9 @@ vi.mock('@/lib/auth', () => ({
   auth: vi.fn(),
 }))
 
-// Mock uuid
-vi.mock('@/lib/uuid', () => ({
-  uuidv7: vi.fn(() => 'test-uuid-v7'),
+// Mock uuid package
+vi.mock('uuid', () => ({
+  v7: vi.fn(() => 'test-uuid-v7'),
 }))
 
 const mockGetSetlistForBand = getSetlistForBand as ReturnType<typeof vi.fn>

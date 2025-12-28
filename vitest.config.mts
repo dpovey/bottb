@@ -15,6 +15,15 @@ export default defineConfig({
       '**/*.stories.{ts,tsx}',
       '**/e2e/**',
     ],
+    coverage: {
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        '**/__tests__/**',
+        '**/__mocks__/**',
+        '**/*.stories.{ts,tsx}',
+        '**/scripts/**',
+      ],
+    },
   },
   resolve: {
     alias: {
