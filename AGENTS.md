@@ -90,8 +90,13 @@ Examples:
 git add .
 git commit -m "feat: description of changes"
 git push -u origin feature/feature-name
+
+# Switch to personal GitHub account (this repo uses personal, not enterprise)
+gh auth switch --user dpovey
 gh pr create --fill
 ```
+
+> **Note**: This repo is under a personal GitHub account, not enterprise. Run `gh auth switch --user dpovey` if you're logged into an enterprise account.
 
 ### Cleanup After Merge
 
