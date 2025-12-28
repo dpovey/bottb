@@ -111,17 +111,50 @@ function runCommand(command: string, description: string) {
   }
 }
 
+function isCI(): boolean {
+  return process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true'
+}
+
+function restoreFromDump() {
+  const dumpContent = readFileSync(DUMP_FILE, 'utf-8')
+
+  if (isCI()) {
+    // In CI, postgres runs as a GitHub Actions service, not Docker Compose
+    // Use psql directly with the dump content
+    log('CI detected - using psql directly')
+
+    // First drop and recreate schema
+    execSync(
+      `PGPASSWORD=test psql -h localhost -p 5433 -U test -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' bottb_test`,
+      { stdio: 'inherit', cwd: join(__dirname, '..') }
+    )
+
+    // Then restore from dump
+    execSync(`PGPASSWORD=test psql -h localhost -p 5433 -U test bottb_test`, {
+      input: dumpContent,
+      stdio: ['pipe', 'inherit', 'inherit'],
+      cwd: join(__dirname, '..'),
+    })
+  } else {
+    // Locally, use docker compose exec
+    runCommand('npm run e2e:restore', 'Restore from dump')
+  }
+}
+
 function main() {
   log('Checking if dump regeneration is needed...')
 
   if (needsRegeneration()) {
     log('Regenerating dump from fixtures...')
     runCommand('npm run e2e:seed', 'Seed database')
-    runCommand('npm run e2e:dump', 'Generate dump')
+    if (!isCI()) {
+      // Only dump locally - in CI we always regenerate
+      runCommand('npm run e2e:dump', 'Generate dump')
+    }
     log('✅ Dump regenerated successfully')
   } else {
     log('Dump is up to date, restoring from cache...')
-    runCommand('npm run e2e:restore', 'Restore from dump')
+    restoreFromDump()
     log('✅ Database restored from cache')
   }
 }
