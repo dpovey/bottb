@@ -35,6 +35,7 @@ import {
   CompanyLogoMarqueeSkeleton,
 } from '@/components/skeletons/home-skeletons'
 import { getBaseUrl } from '@/lib/seo'
+import { DEFAULT_HERO_IMAGE } from '@/lib/stock-images'
 
 // Dynamically import below-the-fold components to reduce initial bundle size
 const PhotoStrip = dynamic(
@@ -74,10 +75,6 @@ const VideoStrip = dynamic(
   }
 )
 
-// Default fallback hero image
-const DEFAULT_HERO_IMAGE =
-  'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2874&auto=format&fit=crop'
-
 interface BandScore {
   id: string
   name: string
@@ -108,7 +105,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const activeEvent = await getActiveEvent()
   const globalHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO)
   const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null
-  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE
+  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE.url
 
   let title = 'Battle of the Tech Bands'
   let description =
@@ -211,7 +208,7 @@ export default async function HomePage() {
 
   // Extract hero photo data
   const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null
-  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE
+  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE.url
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
 
   const initialPhotos = initialPhotosData

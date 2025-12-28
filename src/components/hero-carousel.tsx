@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useMounted } from '@/lib/hooks'
+import { DEFAULT_HERO_IMAGE } from '@/lib/stock-images'
 
 /**
  * Get object-position for mobile (portrait) - horizontal cropping.
@@ -35,7 +36,7 @@ interface HeroCarouselProps {
 export function HeroCarousel({
   images,
   interval = 10000,
-  fallbackImage = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80',
+  fallbackImage = DEFAULT_HERO_IMAGE.url,
   children,
 }: HeroCarouselProps) {
   const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }]
