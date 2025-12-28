@@ -112,7 +112,15 @@ function runCommand(command: string, description: string) {
 }
 
 function isCI(): boolean {
-  return process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true'
+  // GitHub Actions sets CI='true' and GITHUB_ACTIONS='true'
+  // Check for any truthy value to be more robust
+  const ci = process.env.CI
+  const ghActions = process.env.GITHUB_ACTIONS
+  const isInCI = !!ci || !!ghActions
+  if (isInCI) {
+    log(`CI detected (CI=${ci}, GITHUB_ACTIONS=${ghActions})`)
+  }
+  return isInCI
 }
 
 function restoreFromDump() {
