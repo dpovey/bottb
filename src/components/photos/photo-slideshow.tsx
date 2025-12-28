@@ -34,6 +34,7 @@ import {
   PlayIcon,
   PauseIcon,
 } from '@/components/icons'
+import { ShuffleButton } from './shuffle-button'
 
 // Label display info
 const LABEL_INFO = {
@@ -71,6 +72,7 @@ interface PhotoSlideshowProps {
     bandId?: string | null
     photographer?: string | null
     companySlug?: string | null
+    shuffle?: string | null
   }
   filterNames?: FilterNames
   onClose: () => void
@@ -78,7 +80,7 @@ interface PhotoSlideshowProps {
   onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void
   onPhotoChange?: (photoId: string) => void
   onFilterChange?: (
-    filterType: 'event' | 'band' | 'photographer' | 'company',
+    filterType: 'event' | 'band' | 'photographer' | 'company' | 'shuffle',
     value: string | null
   ) => void
   /** Display mode: 'modal' (fixed overlay) or 'page' (full page route) */
@@ -563,6 +565,27 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     setIsPlaying((prev) => !prev)
     _setMobileControlsExpanded(false) // Collapse mobile controls when toggling play
   }, [])
+
+  // Generate a random seed for re-shuffle
+  const generateRandomSeed = useCallback(() => {
+    return Math.random().toString(36).substring(2, 10)
+  }, [])
+
+  // Handle shuffle toggle
+  // - OFF → ON: generate new seed (reshuffle)
+  // - ON → OFF: turn off shuffle
+  const handleShuffleToggle = useCallback(() => {
+    if (!onFilterChange) return
+
+    if (!filters.shuffle) {
+      // Turn on shuffle with new unique seed
+      const newSeed = generateRandomSeed()
+      onFilterChange('shuffle', newSeed)
+    } else {
+      // Turn off shuffle
+      onFilterChange('shuffle', null)
+    }
+  }, [filters.shuffle, onFilterChange, generateRandomSeed])
 
   // Stop play mode (called on image click or manual navigation)
   const stopPlay = useCallback(() => {
@@ -1227,6 +1250,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             >
               {isPlaying ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
             </button>
+
+            {/* Shuffle Button */}
+            <ShuffleButton
+              isActive={!!filters.shuffle}
+              onClick={handleShuffleToggle}
+              size="sm"
+            />
 
             {/* Photo counter - hidden on mobile */}
             <span className="hidden sm:inline-flex items-center text-sm text-text-muted">

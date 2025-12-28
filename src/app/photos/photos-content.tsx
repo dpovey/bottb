@@ -7,13 +7,8 @@ import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
-import {
-  PlayCircleIcon,
-  RandomIcon,
-  CalendarIcon,
-  BuildingIcon,
-  SpinnerIcon,
-} from '@/components/icons'
+import { PlayCircleIcon, BuildingIcon, SpinnerIcon } from '@/components/icons'
+import { ShuffleButton } from '@/components/photos/shuffle-button'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -39,9 +34,8 @@ interface PhotosResponse {
   photographers: string[]
   companies: Company[]
   availableFilters?: AvailableFilters
+  seed?: string // The shuffle seed used by the server
 }
-
-type OrderMode = 'random' | 'date'
 
 interface PhotosContentProps {
   initialEventId?: string | null
@@ -85,17 +79,14 @@ export function PhotosContent({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  const [orderMode, setOrderMode] = useState<OrderMode>('random')
+  // Shuffle state: null = off, 'true' = shared shuffle, '<seed>' = specific seed
+  // Default to 'true' (shared shuffle) if no shuffle param in URL
+  const [shuffle, setShuffle] = useState<string | null>(
+    searchParams.get('shuffle') ?? 'true'
+  )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
   const loadMoreRef = useRef<HTMLDivElement>(null)
-
-  // Seed for deterministic random ordering - generate once on mount or use from URL
-  // This ensures the same shuffle order is preserved when navigating to slideshow and back
-  const [seed] = useState<number>(() => {
-    const urlSeed = searchParams.get('seed')
-    return urlSeed ? parseInt(urlSeed, 10) : Date.now()
-  })
 
   // Page sizes: smaller initial load for faster first paint, larger for subsequent loads
   const INITIAL_PAGE_SIZE = 12
@@ -126,6 +117,7 @@ export function PhotosContent({
     const eventId = searchParams.get('event') || searchParams.get('eventId')
     const photographer = searchParams.get('photographer')
     const company = searchParams.get('company')
+    const shuffleParam = searchParams.get('shuffle')
 
     // Only update if URL params differ from current state (handles browser navigation)
     // Use functional updates to avoid dependency on current state values
@@ -141,6 +133,10 @@ export function PhotosContent({
       const urlValue = company || null
       return prev !== urlValue ? urlValue : prev
     })
+    setShuffle((prev) => {
+      const urlValue = shuffleParam || null
+      return prev !== urlValue ? urlValue : prev
+    })
   }, [searchParams])
 
   // Update URL when filters change
@@ -149,6 +145,7 @@ export function PhotosContent({
       event?: string | null
       photographer?: string | null
       company?: string | null
+      shuffle?: string | null
     }) => {
       const url = new URL(window.location.href)
 
@@ -174,6 +171,13 @@ export function PhotosContent({
           url.searchParams.set('company', params.company)
         } else {
           url.searchParams.delete('company')
+        }
+      }
+      if (params.shuffle !== undefined) {
+        if (params.shuffle) {
+          url.searchParams.set('shuffle', params.shuffle)
+        } else {
+          url.searchParams.delete('shuffle')
         }
       }
 
@@ -263,14 +267,14 @@ export function PhotosContent({
     fetchFilters()
   }, [initialFilterOptions])
 
-  // Reset photos when filters or order mode change
+  // Reset photos when filters or shuffle change
   useEffect(() => {
     setPhotos([])
     loadedPhotoIds.current = new Set()
     currentPage.current = 1
     isFirstLoad.current = true
     setLoading(true)
-  }, [selectedEventId, selectedPhotographer, selectedCompanySlug, orderMode])
+  }, [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -295,16 +299,16 @@ export function PhotosContent({
             ? INITIAL_PAGE_SIZE
             : PAGE_SIZE
         params.set('limit', limit.toString())
-        params.set('order', orderMode)
 
-        // For random mode, use seed for deterministic ordering
-        if (orderMode === 'random') {
-          params.set('seed', seed.toString())
+        // Set shuffle or order by date
+        if (shuffle) {
+          params.set('shuffle', shuffle)
+        } else {
+          params.set('order', 'date')
         }
 
-        // Use pagination for both date mode and seeded random mode
-        // (deterministic ordering allows proper pagination)
-        if (orderMode === 'date' || (orderMode === 'random' && seed)) {
+        // For non-shuffle mode, use pagination
+        if (!shuffle) {
           params.set('page', currentPage.current.toString())
         }
 
@@ -330,14 +334,15 @@ export function PhotosContent({
           }
 
           if (isLoadMore) {
-            // Filter out duplicates (important for random mode)
+            // Filter out duplicates (important for shuffle mode)
             const newPhotos = data.photos.filter(
               (p) => !loadedPhotoIds.current.has(p.id)
             )
             newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
             setPhotos((prev) => [...prev, ...newPhotos])
-            // Increment page for pagination (both date and seeded random modes)
-            currentPage.current += 1
+            if (!shuffle) {
+              currentPage.current += 1
+            }
           } else {
             // Initial load
             loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
@@ -353,13 +358,7 @@ export function PhotosContent({
         setLoadingMore(false)
       }
     },
-    [
-      selectedEventId,
-      selectedPhotographer,
-      selectedCompanySlug,
-      orderMode,
-      seed,
-    ]
+    [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle]
   )
 
   // Initial fetch when filters change
@@ -406,12 +405,12 @@ export function PhotosContent({
         band_name: photo.band_name || null,
       })
 
-      // Build slideshow URL with current filters and seed (for random mode)
+      // Build slideshow URL with current filters and shuffle state
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedPhotographer) params.set('photographer', selectedPhotographer)
       if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-      if (orderMode === 'random') params.set('seed', seed.toString())
+      if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
       const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
@@ -423,10 +422,30 @@ export function PhotosContent({
       selectedEventId,
       selectedPhotographer,
       selectedCompanySlug,
-      orderMode,
-      seed,
+      shuffle,
     ]
   )
+
+  // Generate a random seed for re-shuffle
+  const generateRandomSeed = useCallback(() => {
+    return Math.random().toString(36).substring(2, 10)
+  }, [])
+
+  // Handle shuffle toggle
+  // - OFF → ON: generate new seed (reshuffle)
+  // - ON → OFF: turn off shuffle
+  const handleShuffleToggle = useCallback(() => {
+    if (!shuffle) {
+      // Turn on shuffle with new unique seed
+      const newSeed = generateRandomSeed()
+      setShuffle(newSeed)
+      updateUrlParams({ shuffle: newSeed })
+    } else {
+      // Turn off shuffle
+      setShuffle(null)
+      updateUrlParams({ shuffle: null })
+    }
+  }, [shuffle, updateUrlParams, generateRandomSeed])
 
   return (
     <PublicLayout
@@ -456,35 +475,14 @@ export function PhotosContent({
             )}
           </div>
 
-          {/* View controls - Order & Size */}
+          {/* View controls - Shuffle & Size */}
           <div className="flex flex-wrap items-center gap-3">
-            {/* Order toggle */}
-            <div className="flex items-center bg-bg-elevated rounded-full p-1">
-              <button
-                onClick={() => setOrderMode('random')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                  orderMode === 'random'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-white'
-                }`}
-                title="Show photos in random order"
-              >
-                <RandomIcon size={14} />
-                <span className="hidden sm:inline">Random</span>
-              </button>
-              <button
-                onClick={() => setOrderMode('date')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                  orderMode === 'date'
-                    ? 'bg-accent text-white'
-                    : 'text-text-muted hover:text-white'
-                }`}
-                title="Show photos by date"
-              >
-                <CalendarIcon size={14} strokeWidth={2} />
-                <span className="hidden sm:inline">By Date</span>
-              </button>
-            </div>
+            {/* Shuffle button */}
+            <ShuffleButton
+              isActive={!!shuffle}
+              onClick={handleShuffleToggle}
+              size="md"
+            />
 
             {/* Size selector */}
             <div className="flex items-center bg-bg-elevated rounded-full p-1">

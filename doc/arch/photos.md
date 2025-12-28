@@ -38,12 +38,30 @@ npm run bulk-upload-photos <directory> <event-id>
 - Filtering by event, band, photographer, company
 - URL state for shareable filters
 
+### Shuffle & Ordering
+
+- **Default**: Shuffle on (randomized order)
+- **URL param**: `?shuffle=true` (shared seed) or `?shuffle=<seed>` (specific seed)
+- **Two-tier model**:
+  - `?shuffle=true` → time-based seed (15-min bucket), same order for all users in window
+  - `?shuffle=<seed>` → specific seed for shareable links with exact order
+  - No param → chronological by date
+- **Deterministic**: Seeded PRNG (mulberry32) ensures same seed = same order
+
+### Caching
+
+- **TTL**: 15 minutes (`cacheLife('fifteenMinutes')`)
+- **Cache key**: filters + shuffle seed
+- **Cache tags**: `photos`, filter values for targeted invalidation
+- **Implementation**: `getCachedPhotos()` in `src/lib/nav-data.ts`
+
 ## Slideshow Features
 
 - Navigation: buttons, keyboard, swipe, thumbnails
 - URL updates for deep linking
 - Download original, copy link, share to social
 - Admin: delete, crop, set hero labels
+- Shuffle button synced with gallery state
 
 ## Hero Labels
 

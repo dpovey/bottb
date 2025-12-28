@@ -30,6 +30,14 @@
 - URL state for shareable filters
 - Active filter pills with clear all
 
+### Shuffle
+
+- Spotify-style shuffle button (default: on)
+- Toggle on: randomized order (shared across users for 15 min)
+- Toggle off: chronological order by date
+- Re-shuffle: clicking while on generates new unique seed
+- Shareable: `?shuffle=<seed>` preserves exact order in shared links
+
 ## Slideshow
 
 ### Navigation
@@ -65,3 +73,4 @@
 - Lazy load images
 - Prefetch adjacent photos
 - Skeleton loading states
+- Server-side caching (15 min TTL) for photo queries

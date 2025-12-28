@@ -2,12 +2,22 @@ import { NextRequest } from 'next/server'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { GET } from '../route'
 import { getPhotosWithCount, getAvailablePhotoFilters } from '@/lib/db'
+import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 
 // Mock the database functions
 vi.mock('@/lib/db', () => ({
   getPhotosWithCount: vi.fn(),
   getAvailablePhotoFilters: vi.fn(),
 }))
+
+// Mock the cached functions
+vi.mock('@/lib/nav-data', () => ({
+  getCachedPhotos: vi.fn(),
+  getCachedPhotoFilters: vi.fn(),
+}))
+
+const mockGetCachedPhotos = vi.mocked(getCachedPhotos)
+const mockGetCachedPhotoFilters = vi.mocked(getCachedPhotoFilters)
 
 const mockGetPhotosWithCount = vi.mocked(getPhotosWithCount)
 const mockGetAvailablePhotoFilters = vi.mocked(getAvailablePhotoFilters)
@@ -330,6 +340,131 @@ describe.skip('/api/photos', () => {
         orderBy: 'uploaded',
       })
       expect(response.status).toBe(200)
+    })
+
+    // Shuffle parameter tests
+    describe('shuffle parameter', () => {
+      it('shuffle=true uses cached function with shared seed', async () => {
+        mockGetCachedPhotos.mockResolvedValue({
+          photos: mockPhotos,
+          total: 100,
+          seed: '12345678',
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?shuffle=true'
+        )
+        const response = await GET(request)
+
+        expect(mockGetCachedPhotos).toHaveBeenCalledWith({
+          eventId: undefined,
+          photographer: undefined,
+          companySlug: undefined,
+          shuffle: 'true',
+          limit: 50,
+          offset: 0,
+        })
+        expect(response.status).toBe(200)
+
+        const data = await response.json()
+        expect(data.seed).toBe('12345678')
+      })
+
+      it('shuffle=<seed> uses provided seed', async () => {
+        mockGetCachedPhotos.mockResolvedValue({
+          photos: mockPhotos,
+          total: 100,
+          seed: 'custom-seed-123',
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?shuffle=custom-seed-123'
+        )
+        const response = await GET(request)
+
+        expect(mockGetCachedPhotos).toHaveBeenCalledWith({
+          eventId: undefined,
+          photographer: undefined,
+          companySlug: undefined,
+          shuffle: 'custom-seed-123',
+          limit: 50,
+          offset: 0,
+        })
+        expect(response.status).toBe(200)
+
+        const data = await response.json()
+        expect(data.seed).toBe('custom-seed-123')
+      })
+
+      it('no shuffle param returns date-ordered results', async () => {
+        mockGetPhotosWithCount.mockResolvedValue({
+          photos: mockPhotos,
+          total: 100,
+        })
+        mockGetAvailablePhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest('http://localhost/api/photos')
+        const response = await GET(request)
+
+        // Should use direct DB query, not cached shuffle
+        expect(mockGetPhotosWithCount).toHaveBeenCalled()
+        expect(mockGetCachedPhotos).not.toHaveBeenCalled()
+        expect(response.status).toBe(200)
+
+        const data = await response.json()
+        expect(data.seed).toBeUndefined()
+      })
+
+      it('shuffle with filters passes all params to cached function', async () => {
+        mockGetCachedPhotos.mockResolvedValue({
+          photos: mockPhotos,
+          total: 50,
+          seed: '12345678',
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?shuffle=true&event=event-1&photographer=John%20Doe'
+        )
+        const response = await GET(request)
+
+        expect(mockGetCachedPhotos).toHaveBeenCalledWith({
+          eventId: 'event-1',
+          photographer: 'John Doe',
+          companySlug: undefined,
+          shuffle: 'true',
+          limit: 50,
+          offset: 0,
+        })
+        expect(response.status).toBe(200)
+      })
+
+      it('legacy order=random uses cached shuffle', async () => {
+        mockGetCachedPhotos.mockResolvedValue({
+          photos: mockPhotos,
+          total: 100,
+          seed: '12345678',
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?order=random'
+        )
+        const response = await GET(request)
+
+        // Legacy order=random should now use cached shuffle with 'true'
+        expect(mockGetCachedPhotos).toHaveBeenCalledWith({
+          eventId: undefined,
+          photographer: undefined,
+          companySlug: undefined,
+          shuffle: 'true',
+          limit: 50,
+          offset: 0,
+        })
+        expect(response.status).toBe(200)
+      })
     })
   })
 })
