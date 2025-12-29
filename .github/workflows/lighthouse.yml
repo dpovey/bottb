@@ -15,6 +15,6 @@ jobs:
         uses: treosh/lighthouse-ci-action@v12
         with:
           urls: |
-            ${{ github.event.deployment_status.target_url }}
+            ${{ github.event.deployment_status.target_url }}?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           uploadArtifacts: true
           temporaryPublicStorage: true
