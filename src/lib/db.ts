@@ -25,7 +25,6 @@ import type {
   Event,
   Company,
   CompanyWithStats,
-  Photographer,
   PhotographerWithStats,
   Band,
   Vote,

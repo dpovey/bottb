@@ -20,7 +20,7 @@
 import { config } from 'dotenv'
 import { sql } from '@vercel/postgres'
 import { put } from '@vercel/blob'
-import { readFile, readdir, stat } from 'fs/promises'
+import { readFile, readdir } from 'fs/promises'
 import { join, basename, extname } from 'path'
 import { existsSync } from 'fs'
 import { parseArgs } from 'util'
@@ -64,7 +64,7 @@ async function isValidImage(filePath: string): Promise<boolean> {
       metadata.width > 0 &&
       metadata.height > 0
     )
-  } catch (error) {
+  } catch {
     // Not a valid image file
     return false
   }
@@ -280,7 +280,7 @@ async function uploadOriginal(
 }
 
 async function main() {
-  const { values, positionals } = parseArgs({
+  const { values } = parseArgs({
     args: process.argv.slice(2),
     options: {
       'dry-run': { type: 'boolean' },
