@@ -158,7 +158,11 @@ Review changes against:
 
 ## Pre-commit Checklist
 
-### Step 1: ASSESS (do this FIRST, before running any commands)
+> ⛔ **STOP: You MUST complete ASSESS and output your findings BEFORE running any commands.**
+
+### Step 1: ASSESS (MANDATORY - output before any commands)
+
+**Do NOT run format/typecheck/lint/test until you have read docs and output an assessment.**
 
 Read the relevant docs and explicitly confirm compliance:
 
@@ -166,7 +170,22 @@ Read the relevant docs and explicitly confirm compliance:
 2. **Architecture** (`doc/arch/`) - Read relevant files. Are we consistent with documented patterns? **If adding new patterns, update the docs.**
 3. **Requirements** (`doc/requirements/`) - Did we deviate from specs? Compare screenshots if applicable. **If adding new features, update the docs.**
 
-Output your assessment with ✅/❌ for each area before proceeding. If docs need updating, do it now.
+**Output format (copy and complete before proceeding):**
+
+```
+## ASSESS
+
+### Practices ✅/❌
+[Which files read, compliance status, any exceptions]
+
+### Architecture ✅/❌
+[Which files read, consistency status, any new patterns to document]
+
+### Requirements ✅/❌
+[Relevant specs checked, any deviations]
+```
+
+If docs need updating, do it now before Step 2.
 
 ### Step 2: Run checks (all must pass with exit code 0)
 
