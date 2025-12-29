@@ -31,13 +31,14 @@ pnpm build:search-index
 
 ### Indexed Content
 
-| Type      | Source           | Fields                            |
-| --------- | ---------------- | --------------------------------- |
-| Events    | `getEvents()`    | name, date, location              |
-| Bands     | `getBands()`     | name, company, description, genre |
-| Songs     | `getAllSongs()`  | title, artist, band               |
-| Companies | `getCompanies()` | name                              |
-| Pages     | Hardcoded        | About, FAQ content                |
+| Type          | Source               | Fields                            |
+| ------------- | -------------------- | --------------------------------- |
+| Events        | `getEvents()`        | name, date, location              |
+| Bands         | `getBands()`         | name, company, description, genre |
+| Songs         | `getAllSongs()`      | title, artist, band               |
+| Companies     | `getCompanies()`     | name                              |
+| Photographers | `getPhotographers()` | name, bio, location               |
+| Pages         | Hardcoded            | About, FAQ content                |
 
 ### Document Schema
 
