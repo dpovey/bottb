@@ -108,6 +108,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Redirects for URL restructuring (SEO-friendly routes)
+  async redirects() {
+    return [
+      {
+        // Redirect old query param URLs to new clean routes
+        source: '/companies',
+        has: [{ type: 'query', key: 'company', value: '(?<slug>.+)' }],
+        destination: '/companies/:slug',
+        permanent: true,
+      },
+    ]
+  },
   // Apply security headers to all routes
   async headers() {
     return [

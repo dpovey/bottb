@@ -189,7 +189,7 @@ async function buildSearchIndex() {
         title: company.name,
         content: `${company.name} tech company bands`,
         type: 'company',
-        url: `/companies?company=${company.slug}`,
+        url: `/companies/${company.slug}`,
         subtitle: 'Tech company',
         image: company.icon_url || company.logo_url,
       })

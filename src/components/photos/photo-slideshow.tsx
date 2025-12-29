@@ -1131,7 +1131,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                 <span className="flex items-center gap-1 truncate">
                   {currentPhoto.company_name && currentPhoto.company_slug ? (
                     <Link
-                      href={`/companies?company=${currentPhoto.company_slug}`}
+                      href={`/companies/${currentPhoto.company_slug}`}
                       className="flex items-center gap-1.5 truncate hover:text-accent transition-colors"
                     >
                       {currentPhoto.company_icon_url && (

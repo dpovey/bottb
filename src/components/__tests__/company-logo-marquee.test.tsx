@@ -115,10 +115,7 @@ describe('CompanyLogoMarquee', () => {
     // Find links to company page
     const companyLinks = screen.getAllByRole('link', { name: /Salesforce/ })
     expect(companyLinks.length).toBeGreaterThanOrEqual(2) // Duplicated for seamless loop
-    expect(companyLinks[0]).toHaveAttribute(
-      'href',
-      '/companies?company=salesforce'
-    )
+    expect(companyLinks[0]).toHaveAttribute('href', '/companies/salesforce')
   })
 
   it('renders with custom title and subtitle', async () => {
