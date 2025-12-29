@@ -31,7 +31,7 @@ jobs:
             const links = ${{ steps.lighthouse.outputs.links }};
             const formatScore = score => Math.round(score * 100);
             const getEmoji = score => score >= 0.9 ? '🟢' : score >= 0.5 ? '🟡' : '🔴';
-            
+
             const comment = `## ⚡ Lighthouse Report
 
             | Category | Score |
@@ -42,30 +42,30 @@ jobs:
             | ${getEmoji(results.summary.seo)} SEO | ${formatScore(results.summary.seo)} |
 
             [📊 Full Report](${Object.values(links)[0]})`;
-            
+
             // Find associated PR
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
               commit_sha: '${{ github.event.deployment_status.deployment.sha }}'
             });
-            
+
             if (prs.length === 0) {
               console.log('No PR found for this deployment');
               return;
             }
-            
+
             const prNumber = prs[0].number;
-            
+
             // Find existing Lighthouse comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            
+
             const existingComment = comments.find(c => c.body.includes('⚡ Lighthouse Report'));
-            
+
             if (existingComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
