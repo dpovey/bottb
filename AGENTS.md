@@ -28,6 +28,7 @@ Key files:
    git worktree add .worktrees/{description} -b {type}/{description}
    cd .worktrees/{description}
    pnpm install
+   cp ../.env.local .
    ```
 3. **Exception**: Trivial one-line fixes may go directly to main - ask user first
 
@@ -88,6 +89,9 @@ cd .worktrees/feature-name
 
 # Install dependencies (fast - pnpm shares packages across worktrees)
 pnpm install
+
+# Copy environment variables (not tracked by git)
+cp ../.env.local .
 
 # Start development
 pnpm dev:restart
