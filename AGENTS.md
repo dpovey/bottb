@@ -170,7 +170,7 @@ Output your assessment with ✅/❌ for each area before proceeding. If docs nee
 
 ### Step 2: Run checks (all must pass with exit code 0)
 
-- `pnpm format:check` - Prettier formatting
+- `pnpm format` - Auto-fix formatting (Prettier)
 - `pnpm typecheck` - TypeScript type checking
 - `pnpm lint` - ESLint (run actual command, not just read_lints)
 - `pnpm test` - All tests
@@ -182,7 +182,7 @@ All four must pass with exit code 0. If in doubt, ask before committing.
 For faster validation during development:
 
 - `pnpm exec tsc --noEmit path/to/file.ts` - Type check single file
-- `pnpm exec prettier --check path/to/file.ts` - Format check single file
+- `pnpm exec prettier --write path/to/file.ts` - Format single file
 - `pnpm exec eslint path/to/file.ts` - Lint single file
 - `pnpm exec vitest run path/to/file.test.ts` - Run single test file
 
