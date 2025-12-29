@@ -54,3 +54,6 @@ storybook-static/
 
 # Build logs
 *.log
+
+# Lighthouse reports
+lighthouse-report*

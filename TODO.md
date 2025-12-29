@@ -31,8 +31,8 @@
 
 ### Performance
 
-- [ ] **Lighthouse baseline** - Run audit and populate `lighthouse-report.json`
-- [ ] **Bundle analyzer** - Add `@next/bundle-analyzer` to track JS payload
+- [x] **Lighthouse baseline** - Run audit with `pnpm lighthouse` or `pnpm lighthouse:ci`
+- [x] **Bundle analyzer** - Run `pnpm analyze` for interactive view or `pnpm analyze:ci` for CI
 
 ### Testing
 

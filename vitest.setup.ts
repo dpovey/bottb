@@ -22,6 +22,14 @@ class MockIntersectionObserver {
 }
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
 
+// Mock scrollIntoView (not implemented in jsdom)
+// Runs in beforeAll since Element isn't available at module load time
+beforeAll(() => {
+  if (typeof Element !== 'undefined') {
+    Element.prototype.scrollIntoView = vi.fn()
+  }
+})
+
 // Mock Next.js modules using importOriginal
 vi.mock('next/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next/server')>()

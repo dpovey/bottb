@@ -51,3 +51,23 @@
 - FID < 100ms
 - CLS < 0.1
 - Lighthouse > 90
+
+## Performance Monitoring
+
+### Bundle Analysis
+
+```bash
+pnpm analyze      # Interactive UI on port 4000
+pnpm analyze:ci   # Output to .next/diagnostics/analyze/
+```
+
+### Lighthouse Audits
+
+```bash
+# For accurate results, test against production build:
+pnpm build
+pnpm start &
+pnpm lighthouse   # Outputs lighthouse-report.html and .json
+
+# Dev mode gives misleading server response times (770ms vs 10ms in prod)
+```
