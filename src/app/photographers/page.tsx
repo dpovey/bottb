@@ -5,11 +5,15 @@ import { PublicLayout } from '@/components/layouts'
 import { Card } from '@/components/ui'
 import { InstagramIcon, GlobeIcon, CameraIcon } from '@/components/icons'
 import { getPhotographers } from '@/lib/db'
+import { getBaseUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Photographers | Battle of the Tech Bands',
   description:
     'Meet the talented photographers who capture the energy and excitement of Battle of the Tech Bands events.',
+  alternates: {
+    canonical: `${getBaseUrl()}/photographers`,
+  },
   openGraph: {
     title: 'Photographers | Battle of the Tech Bands',
     description:

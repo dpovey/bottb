@@ -23,12 +23,25 @@ For pages with dynamic content, use `generateMetadata`:
 export async function generateMetadata({ params }): Promise<Metadata> {
   const data = await fetchData(params.id)
   return {
-    title: `${data.name} | BOTTB`,
+    title: `${data.name} | Battle of the Tech Bands`,
     description: data.description,
     openGraph: { ... },
     alternates: { canonical: `${baseUrl}/path/${params.id}` }
   }
 }
+```
+
+### Title Format
+
+**Always use the full name** in page titles for SEO consistency:
+
+```typescript
+// ✅ Good
+title: 'All Songs | Battle of the Tech Bands'
+title: `${band.name} at ${event.name} | Battle of the Tech Bands`
+
+// ❌ Bad - avoid abbreviations in titles
+title: 'All Songs — BOTTB'
 ```
 
 ### Base URL Resolution
@@ -39,6 +52,52 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 2. `VERCEL_PROJECT_PRODUCTION_URL` (Vercel prod)
 3. `VERCEL_URL` (Vercel preview)
 4. `localhost:3000` (development)
+
+## H1 Tags for SEO
+
+Every page needs exactly one H1 for SEO. For full-screen visual content (like slideshow), use a visually-hidden H1:
+
+```tsx
+// Slideshow page - visual content, but crawlers need an H1
+return (
+  <>
+    <h1 className="sr-only">{`${band.name} at ${event.name}`}</h1>
+    <SlideshowContent ... />
+  </>
+)
+```
+
+**Avoid multiple H1s** - Loading skeletons should use `<div>` not `<h1>`:
+
+```tsx
+// ❌ Bad - loading skeleton has H1 that duplicates actual content H1
+function Loading() {
+  return <h1>Photo Gallery</h1>
+}
+
+// ✅ Good - loading skeleton uses div
+function Loading() {
+  return <div className="font-semibold text-4xl">Photo Gallery</div>
+}
+```
+
+## SSR for Crawlability
+
+Client components that fetch data should receive initial data from the server so crawlers see content:
+
+```tsx
+// page.tsx (server)
+export default async function Page() {
+  const initialData = await fetchData()
+  return <ClientComponent initialData={initialData} />
+}
+
+// client-component.tsx
+export function ClientComponent({ initialData }) {
+  const [data, setData] = useState(initialData) // SSR sees this
+  // Client-side fetching for filters/pagination happens after hydration
+}
+```
 
 ## Structured Data (JSON-LD)
 
@@ -137,6 +196,15 @@ Standard tags on all pages:
 
 Twitter card: `summary_large_image`
 
+## LLMs.txt
+
+`public/llms.txt` provides site information for AI crawlers (similar to robots.txt for search engines). Contains:
+
+- Site description and purpose
+- URL structure and routes
+- Key content types
+- Contact information
+
 ## Key Files
 
 | File                    | Purpose               |
@@ -146,3 +214,4 @@ Twitter card: `summary_large_image`
 | `src/app/robots.ts`     | Robots.txt generation |
 | `src/components/seo/`   | JSON-LD components    |
 | `*/opengraph-image.tsx` | Dynamic OG images     |
+| `public/llms.txt`       | AI crawler info       |

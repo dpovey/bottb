@@ -85,16 +85,30 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
     notFound()
   }
 
+  // Build H1 text for SEO (visually hidden but crawlable)
+  let h1Text = 'Photo from Battle of the Tech Bands'
+  if (photo.band_name && photo.event_name) {
+    h1Text = `${photo.band_name} at ${photo.event_name}`
+  } else if (photo.band_name) {
+    h1Text = `${photo.band_name} at Battle of the Tech Bands`
+  } else if (photo.event_name) {
+    h1Text = `Photo from ${photo.event_name}`
+  }
+
   // Shuffle param: 'true' for shared shuffle, specific seed string, or null for date order
   const shuffle = filters.shuffle || null
 
   return (
-    <SlideshowPageContent
-      initialPhotoId={id}
-      initialEventId={filters.event || null}
-      initialPhotographer={filters.photographer || null}
-      initialCompanySlug={filters.company || null}
-      initialShuffle={shuffle}
-    />
+    <>
+      {/* Visually hidden H1 for SEO - slideshow is full-screen visual content */}
+      <h1 className="sr-only">{h1Text}</h1>
+      <SlideshowPageContent
+        initialPhotoId={id}
+        initialEventId={filters.event || null}
+        initialPhotographer={filters.photographer || null}
+        initialCompanySlug={filters.company || null}
+        initialShuffle={shuffle}
+      />
+    </>
   )
 }

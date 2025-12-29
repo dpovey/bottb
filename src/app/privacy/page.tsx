@@ -2,11 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
 import { ChevronLeftIcon } from '@/components/icons'
+import { getBaseUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Battle of the Tech Bands',
   description:
     'Privacy Policy for Battle of the Tech Bands. Learn how we collect, use, and protect your personal information.',
+  alternates: {
+    canonical: `${getBaseUrl()}/privacy`,
+  },
   openGraph: {
     title: 'Privacy Policy | Battle of the Tech Bands',
     description:

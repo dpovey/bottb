@@ -7,6 +7,7 @@ import { getBaseUrl } from '@/lib/seo'
 import { getCachedFilterOptions } from '@/lib/nav-data'
 
 // Loading fallback for Suspense - shows skeleton grid for better perceived performance
+// Note: No H1 here - the actual content has the H1, avoiding duplicate H1s for SEO
 function PhotosLoading() {
   return (
     <PublicLayout
@@ -16,7 +17,7 @@ function PhotosLoading() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col gap-4 mb-8">
           <div>
-            <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
+            <div className="font-semibold text-4xl mb-2">Photo Gallery</div>
             <p className="text-text-muted">Loading photos...</p>
           </div>
         </div>
