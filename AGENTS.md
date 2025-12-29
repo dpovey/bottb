@@ -58,6 +58,8 @@ Key documentation:
 
 **Use git worktrees for all new features, bugfixes, and plans.** This allows parallel development without stashing or switching branches.
 
+> **Never commit directly to main.** For trivial one-line fixes, ask the user first: "This is a small fix - do you want me to commit directly to main, or create a feature branch with a PR?" Default to creating a PR if unsure.
+
 ### Starting New Work
 
 ```bash
@@ -157,6 +159,13 @@ Review changes against:
 **If major deviations found**: STOP and ask whether to update docs or fix code.
 
 ## Pre-commit Checklist
+
+### Step 0: Verify Branch
+
+Confirm you are on a feature branch, not main. If on main, either:
+
+- Create a worktree/branch now, or
+- For trivial one-liners, ask the user for explicit approval to commit directly to main
 
 ### Step 1: ASSESS (do this FIRST, before running any commands)
 
