@@ -11,7 +11,8 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { create, load, search, type Orama, type Results } from '@orama/orama'
 import { cn } from '@/lib/utils'
-import { SearchIcon, CloseIcon, SpinnerIcon } from '@/components/icons'
+import { SearchIcon, CloseIcon } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 
 // Search result document type (matches build script)
 interface SearchDocument {
@@ -331,7 +332,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             enterKeyHint="search"
           />
           {isLoading ? (
-            <SpinnerIcon className="w-5 h-5 text-text-muted animate-spin" />
+            <VinylSpinner size="xs" className="text-text-muted" />
           ) : query ? (
             <button
               onClick={() => setQuery('')}
@@ -358,7 +359,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             </div>
           ) : isLoading && !db ? (
             <div className="px-5 py-8 text-center text-text-muted">
-              <SpinnerIcon className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <VinylSpinner size="sm" className="mx-auto mb-2" />
               <p>Loading search...</p>
             </div>
           ) : query && hits.length === 0 ? (

@@ -11,7 +11,7 @@ import {
   CircularOscilloscope,
   LEDDisplay,
 } from './components'
-import { BandThumbnail } from '@/components/ui'
+import { BandThumbnail, VinylSpinner } from '@/components/ui'
 
 interface Band {
   id: string
@@ -807,7 +807,7 @@ export default function CrowdNoiseRecordPage() {
                       className="animate-pulse"
                     />
                   ) : (
-                    <div className="w-32 sm:w-64 h-32 sm:h-64 border-2 sm:border-4 border-white rounded-full animate-spin"></div>
+                    <VinylSpinner size="md" className="sm:w-64 sm:h-64" />
                   )}
                 </div>
               </div>

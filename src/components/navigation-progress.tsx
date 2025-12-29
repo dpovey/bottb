@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { SpinnerIcon } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 
 // External store for navigation state
 // This allows us to update state outside of React's render cycle
@@ -120,7 +120,7 @@ export function NavigationProgress() {
       aria-busy="true"
     >
       <div className="flex flex-col items-center gap-3">
-        <SpinnerIcon size={32} className="animate-spin text-accent" />
+        <VinylSpinner size="sm" className="text-accent" />
         <span className="text-sm text-text-muted tracking-wide">
           Loading...
         </span>

@@ -10,7 +10,7 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { slugify } from '@/lib/utils'
-import { CompanyIcon } from '@/components/ui'
+import { CompanyIcon, VinylSpinner } from '@/components/ui'
 import Cropper, { Area } from 'react-easy-crop'
 import { ShareComposerModal } from './share-composer-modal'
 import {
@@ -20,7 +20,6 @@ import {
 } from '@/lib/analytics'
 import {
   CameraIcon,
-  SpinnerIcon,
   CheckIcon,
   LinkIcon,
   DownloadIcon,
@@ -1075,7 +1074,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     return (
       <div className={loadingContainerClasses}>
         <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+          <VinylSpinner size="md" className="mx-auto mb-4" />
           <p className="text-gray-400">Loading photo...</p>
         </div>
         {/* Close/Back button */}
@@ -1288,9 +1287,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               <span className="text-white font-medium">{displayPosition}</span>
               <span className="mx-1">/</span>
               <span>{totalCount}</span>
-              {isLoadingMore && (
-                <SpinnerIcon size={16} className="ml-2 animate-spin" />
-              )}
+              {isLoadingMore && <VinylSpinner size="xxs" className="ml-2" />}
             </span>
 
             {/* Public Controls - available to everyone */}
@@ -1497,7 +1494,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="shrink-0 w-16 h-16 rounded-lg bg-bg-elevated flex items-center justify-center">
-              <SpinnerIcon size={20} className="animate-spin text-text-dim" />
+              <VinylSpinner size="xs" className="text-text-dim" />
             </div>
           )}
         </div>
@@ -1544,7 +1541,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               >
                 {isDeleting ? (
                   <>
-                    <SpinnerIcon size={16} className="animate-spin" />
+                    <VinylSpinner size="xxs" />
                     Deleting...
                   </>
                 ) : (
@@ -1582,7 +1579,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               >
                 {isSavingCrop ? (
                   <>
-                    <SpinnerIcon size={16} className="animate-spin" />
+                    <VinylSpinner size="xxs" />
                     Saving...
                   </>
                 ) : (
@@ -1680,7 +1677,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
             {isLoadingLabels ? (
               <div className="flex items-center justify-center py-8">
-                <SpinnerIcon size={24} className="animate-spin text-accent" />
+                <VinylSpinner size="xs" className="text-accent" />
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
@@ -1842,7 +1839,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                   >
                     {isSavingFocalPoint ? (
                       <>
-                        <SpinnerIcon size={16} className="animate-spin" />
+                        <VinylSpinner size="xxs" />
                         Saving...
                       </>
                     ) : (

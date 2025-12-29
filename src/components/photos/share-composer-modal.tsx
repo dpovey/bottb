@@ -15,10 +15,10 @@ import {
   InstagramIcon,
   CloseIcon,
   CheckIcon,
-  SpinnerIcon,
   LightningIcon,
   ShareIcon,
 } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 
 // Platform icons mapping
 const PlatformIcon: Record<string, React.ReactNode> = {
@@ -345,7 +345,7 @@ export function ShareComposerModal({
             </label>
             {loadingAccounts ? (
               <div className="flex items-center gap-2 text-text-muted text-sm">
-                <SpinnerIcon className="w-4 h-4 animate-spin" />
+                <VinylSpinner size="xxs" />
                 Loading accounts...
               </div>
             ) : accounts.length === 0 ? (
@@ -459,7 +459,7 @@ export function ShareComposerModal({
               >
                 {isGeneratingAI ? (
                   <>
-                    <SpinnerIcon className="w-3.5 h-3.5 animate-spin" />
+                    <VinylSpinner size="xxs" />
                     Generating...
                   </>
                 ) : (
@@ -610,7 +610,7 @@ export function ShareComposerModal({
               >
                 {isPosting ? (
                   <>
-                    <SpinnerIcon className="w-4 h-4 animate-spin" />
+                    <VinylSpinner size="xxs" />
                     Posting...
                   </>
                 ) : (
