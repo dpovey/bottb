@@ -30,7 +30,7 @@ Admin authentication with NextAuth.js v5.
 
 ## User Management
 
-CLI tool: `npm run manage-users`
+CLI tool: `pnpm manage-users`
 
 - Create admin users
 - Update passwords

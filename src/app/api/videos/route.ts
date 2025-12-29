@@ -8,11 +8,15 @@ import {
 } from '@/lib/db'
 import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
 
+import { withPublicRateLimit } from '@/lib/api-protection'
+
 /**
  * GET /api/videos
  * Public endpoint to list videos with optional filters
  */
-export async function GET(request: NextRequest) {
+export const GET = withPublicRateLimit(async function GET(
+  request: NextRequest
+) {
   try {
     const searchParams = request.nextUrl.searchParams
     const eventId = searchParams.get('event') || undefined
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * Extract YouTube video ID from various URL formats

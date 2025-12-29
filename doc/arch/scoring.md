@@ -66,7 +66,7 @@ Band Score = (Band Votes / Total Votes) × 10
 
 ## Finalization Process
 
-CLI: `npm run finalize-event <event-id>`
+CLI: `pnpm finalize-event <event-id>`
 
 1. Parse scoring version from event info
 2. Calculate final scores using version-appropriate formula

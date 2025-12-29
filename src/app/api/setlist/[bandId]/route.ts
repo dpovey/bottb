@@ -5,7 +5,11 @@ import {
   updateConflictStatus,
   SetlistSongInput,
 } from '@/lib/db'
-import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
+import {
+  withAdminAuth,
+  withPublicRateLimit,
+  ProtectedApiHandler,
+} from '@/lib/api-protection'
 import { v7 as uuidv7 } from 'uuid'
 
 interface RouteContext {
@@ -17,9 +21,13 @@ interface RouteContext {
  * Public endpoint to get setlist for a band
  * Note: Returns empty array if event is not finalized (visibility controlled by caller)
  */
-export async function GET(_request: NextRequest, context: RouteContext) {
+async function handleGetSetlist(request: NextRequest) {
   try {
-    const { bandId } = await context.params
+    // Extract bandId from URL path
+    const url = new URL(request.url)
+    const pathParts = url.pathname.split('/')
+    const bandId = pathParts[pathParts.length - 1]
+
     const songs = await getSetlistForBand(bandId)
 
     return NextResponse.json({ songs })
@@ -31,6 +39,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     )
   }
 }
+
+export const GET = withPublicRateLimit(handleGetSetlist)
 
 /**
  * POST /api/setlist/[bandId]

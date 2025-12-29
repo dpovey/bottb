@@ -20,7 +20,7 @@ Photo upload, storage, and gallery display.
 ### Bulk Upload (CLI)
 
 ```bash
-npm run bulk-upload-photos <directory> <event-id>
+pnpm bulk-upload-photos <directory> <event-id>
 ```
 
 - Extracts EXIF/XMP metadata

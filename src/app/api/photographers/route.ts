@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getPhotographers } from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
-export async function GET() {
+export const GET = withPublicRateLimit(async function GET() {
   try {
     const photographers = await getPhotographers()
     return NextResponse.json(photographers)
@@ -12,4 +13,4 @@ export async function GET() {
       { status: 500 }
     )
   }
-}
+})

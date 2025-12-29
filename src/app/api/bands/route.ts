@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { sql } from '@/lib/sql'
 import { Band } from '@/lib/db'
+import { withPublicRateLimit } from '@/lib/api-protection'
 
-export async function GET() {
+export const GET = withPublicRateLimit(async function GET() {
   try {
     const { rows } = await sql<Band>`
       SELECT * FROM bands ORDER BY event_id, "order"
@@ -15,4 +16,4 @@ export async function GET() {
       { status: 500 }
     )
   }
-}
+})

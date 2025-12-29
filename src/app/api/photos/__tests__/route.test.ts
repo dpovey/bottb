@@ -13,6 +13,8 @@ vi.mock('@/lib/nav-data', () => ({
   getCachedPhotoFilters: vi.fn(),
 }))
 
+import { clearRateLimitStore } from '@/lib/api-protection'
+
 import { NextRequest } from 'next/server'
 import { GET } from '../route'
 import { getPhotosWithCount, getAvailablePhotoFilters } from '@/lib/db'
@@ -31,6 +33,7 @@ const mockGetAvailablePhotoFilters = getAvailablePhotoFilters as ReturnType<
 describe('/api/photos', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clearRateLimitStore()
   })
 
   describe('GET', () => {

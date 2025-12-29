@@ -14,17 +14,17 @@ Uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) for productio
 
 ### Commands
 
-| Command                         | Purpose                               |
-| ------------------------------- | ------------------------------------- |
-| `npm run migrate`               | Apply pending migrations to Vercel DB |
-| `npm run migrate:create <name>` | Create a new migration file           |
-| `npm run migrate:status`        | Preview pending migrations (dry run)  |
+| Command                      | Purpose                               |
+| ---------------------------- | ------------------------------------- |
+| `pnpm migrate`               | Apply pending migrations to Vercel DB |
+| `pnpm migrate:create <name>` | Create a new migration file           |
+| `pnpm migrate:status`        | Preview pending migrations (dry run)  |
 
 ### Workflow
 
-1. Create migration: `npm run migrate:create add-foo-column`
+1. Create migration: `pnpm migrate:create add-foo-column`
 2. Edit the generated file in `migrations/` with SQL
-3. Apply to Vercel DB: `npm run migrate`
+3. Apply to Vercel DB: `pnpm migrate`
 4. Update `src/lib/schema.sql` to match
 5. Commit both migration file and schema.sql
 
@@ -56,7 +56,7 @@ The database evolved through these phases (archived scripts in `src/scripts/arch
 ### Notes
 
 - Migrations only run manually (not in CI/deploy) - you control when production changes
-- Test databases use `schema.sql` via `npm run setup-db` (fresh each time)
+- Test databases use `schema.sql` via `pnpm setup-db` (fresh each time)
 - The `pgmigrations` table tracks applied migrations in production
 
 ### E2E Test Database
@@ -65,7 +65,7 @@ E2E tests use Docker Postgres (see `doc/testing/e2e-testing.md`):
 
 - `docker-compose.test.yml` - ephemeral Postgres 17 on port 5433
 - `e2e/fixtures/` - JSON test data and cached pg_dump
-- `npm run test:e2e` - seeds database and runs Playwright tests
+- `pnpm test:e2e` - seeds database and runs Playwright tests
 
 ## Core Tables
 

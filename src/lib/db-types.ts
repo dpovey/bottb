@@ -219,6 +219,7 @@ export interface Photo {
   thumbnail_url?: string
   thumbnail_2x_url?: string
   thumbnail_3x_url?: string
+  medium_url?: string
   large_4k_url?: string
   company_name?: string
   company_slug?: string

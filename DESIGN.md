@@ -12,10 +12,10 @@ For isolated component development and visual regression testing:
 
 ```bash
 # Run Storybook locally
-npm run storybook
+pnpm storybook
 
 # Build static Storybook site
-npm run build-storybook
+pnpm build-storybook
 ```
 
 **Storybook is deployed to GitHub Pages** on every merge to main.
@@ -23,7 +23,7 @@ npm run build-storybook
 ### For Developers
 
 - **Finding components**: Visit `/design-system` first to see what's available
-- **Isolated development**: Run `npm run storybook` for component playground
+- **Isolated development**: Run `pnpm storybook` for component playground
 - **Using components**: Import from `@/components/ui` (e.g., `import { Button, Badge, Card } from "@/components/ui"`)
 - **Adding new components**:
   1. Create component in `src/components/ui/`

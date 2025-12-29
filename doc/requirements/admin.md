@@ -11,7 +11,7 @@
 
 ## User Management
 
-CLI: `npm run manage-users`
+CLI: `pnpm manage-users`
 
 - Create, update, list, delete admin users
 
@@ -54,11 +54,11 @@ See [songs.md](./songs.md) for data model.
 ## CLI Tools
 
 ```bash
-npm run create-event <json>
-npm run activate-event <id>
-npm run finalize-event <id>
-npm run manage-users
-npm run bulk-upload-photos <dir> <event-id>
-npm run setup-db
-npm run backup-db
+pnpm create-event <json>
+pnpm activate-event <id>
+pnpm finalize-event <id>
+pnpm manage-users
+pnpm bulk-upload-photos <dir> <event-id>
+pnpm setup-db
+pnpm backup-db
 ```

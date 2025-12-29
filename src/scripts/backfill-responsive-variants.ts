@@ -3,7 +3,7 @@
 /**
  * Backfill Responsive Image Variants Script
  *
- * Generates and uploads responsive image variants (thumbnail-2x, thumbnail-3x, large-4k)
+ * Generates and uploads responsive image variants (thumbnail-2x, thumbnail-3x, medium, large-4k)
  * for existing photos that don't have them yet.
  *
  * Uses original_blob_url when available for best quality, otherwise falls back to large.webp.
@@ -12,10 +12,12 @@
  *   DOTENV_CONFIG_PATH=.env.local npx tsx src/scripts/backfill-responsive-variants.ts [options]
  *
  * Options:
- *   --dry-run          Show what would be generated without actually processing
- *   --verbose          Show detailed progress for each photo
- *   --limit <number>   Process only the first N photos (for testing)
- *   --event <name>     Only process photos from a specific event
+ *   --dry-run            Show what would be generated without actually processing
+ *   --verbose            Show detailed progress for each photo
+ *   --limit <number>     Process only the first N photos (for testing)
+ *   --event <name>       Only process photos from a specific event
+ *   --medium-only        Only generate medium variants (for existing photos)
+ *   --photos-path <path> Path to search for original photos (recursively searched)
  */
 
 import { config } from 'dotenv'
@@ -31,7 +33,8 @@ import { processImage } from '../lib/image-processor'
 // Load environment variables
 config({ path: '.env.local' })
 
-const PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
+// Default photos path - can be overridden with --photos-path
+let PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
 
 interface PhotoRecord {
   id: string
@@ -40,6 +43,7 @@ interface PhotoRecord {
   original_blob_url: string | null
   thumbnail_2x_url: string | null
   thumbnail_3x_url: string | null
+  medium_url: string | null
   large_4k_url: string | null
   event_name?: string
   band_name?: string
@@ -58,6 +62,21 @@ interface BackfillResult {
  */
 async function getPhotosNeedingVariants(
   eventName?: string,
+  limit?: number,
+  mediumOnly?: boolean
+): Promise<PhotoRecord[]> {
+  // Use separate queries for medium-only vs all variants
+  if (mediumOnly) {
+    return getPhotosNeedingMediumVariant(eventName, limit)
+  }
+  return getPhotosNeedingAllVariants(eventName, limit)
+}
+
+/**
+ * Get photos that only need the medium variant
+ */
+async function getPhotosNeedingMediumVariant(
+  eventName?: string,
   limit?: number
 ): Promise<PhotoRecord[]> {
   let query: ReturnType<typeof sql<PhotoRecord>>
@@ -71,6 +90,98 @@ async function getPhotosNeedingVariants(
         p.original_blob_url,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
         p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
+        p.xmp_metadata->>'large_4k_url' as large_4k_url,
+        e.name as event_name,
+        b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE p.xmp_metadata->>'medium_url' IS NULL
+        AND e.name = ${eventName}
+      LIMIT ${limit}
+    `
+  } else if (eventName) {
+    query = sql<PhotoRecord>`
+      SELECT 
+        p.id,
+        p.original_filename,
+        p.blob_url,
+        p.original_blob_url,
+        p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
+        p.xmp_metadata->>'large_4k_url' as large_4k_url,
+        e.name as event_name,
+        b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE p.xmp_metadata->>'medium_url' IS NULL
+        AND e.name = ${eventName}
+    `
+  } else if (limit) {
+    query = sql<PhotoRecord>`
+      SELECT 
+        p.id,
+        p.original_filename,
+        p.blob_url,
+        p.original_blob_url,
+        p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
+        p.xmp_metadata->>'large_4k_url' as large_4k_url,
+        e.name as event_name,
+        b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE p.xmp_metadata->>'medium_url' IS NULL
+      LIMIT ${limit}
+    `
+  } else {
+    query = sql<PhotoRecord>`
+      SELECT 
+        p.id,
+        p.original_filename,
+        p.blob_url,
+        p.original_blob_url,
+        p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
+        p.xmp_metadata->>'large_4k_url' as large_4k_url,
+        e.name as event_name,
+        b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE p.xmp_metadata->>'medium_url' IS NULL
+    `
+  }
+
+  const { rows } = await query
+  return rows
+}
+
+/**
+ * Get photos that need any responsive variant
+ */
+async function getPhotosNeedingAllVariants(
+  eventName?: string,
+  limit?: number
+): Promise<PhotoRecord[]> {
+  let query: ReturnType<typeof sql<PhotoRecord>>
+
+  if (eventName && limit) {
+    query = sql<PhotoRecord>`
+      SELECT 
+        p.id,
+        p.original_filename,
+        p.blob_url,
+        p.original_blob_url,
+        p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -80,6 +191,7 @@ async function getPhotosNeedingVariants(
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
         p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
+        p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
         AND e.name = ${eventName}
@@ -94,6 +206,7 @@ async function getPhotosNeedingVariants(
         p.original_blob_url,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
         p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -103,6 +216,7 @@ async function getPhotosNeedingVariants(
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
         p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
+        p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
         AND e.name = ${eventName}
@@ -116,6 +230,7 @@ async function getPhotosNeedingVariants(
         p.original_blob_url,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
         p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -125,6 +240,7 @@ async function getPhotosNeedingVariants(
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
         p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
+        p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
       LIMIT ${limit}
@@ -138,6 +254,7 @@ async function getPhotosNeedingVariants(
         p.original_blob_url,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
         p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -147,6 +264,7 @@ async function getPhotosNeedingVariants(
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
         p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
+        p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
     `
@@ -158,6 +276,7 @@ async function getPhotosNeedingVariants(
 
 /**
  * Find original file on disk by matching filename
+ * Recursively searches PHOTOS_BASE_PATH for the file
  */
 async function findOriginalFileOnDisk(
   filename: string
@@ -166,20 +285,8 @@ async function findOriginalFileOnDisk(
     return null
   }
 
-  // Recursively search event directories
-  const eventDirs = ['Brisbane 2024', 'Brisbane 2025', 'Sydney 2025']
-
-  for (const eventDir of eventDirs) {
-    const eventPath = join(PHOTOS_BASE_PATH, eventDir)
-    if (!existsSync(eventPath)) continue
-
-    const filePath = await searchForFile(eventPath, filename)
-    if (filePath) {
-      return filePath
-    }
-  }
-
-  return null
+  // Recursively search the entire photos directory
+  return searchForFile(PHOTOS_BASE_PATH, filename)
 }
 
 /**
@@ -297,7 +404,12 @@ async function backfillVariants(
         photoId: photo.id,
         filename: photo.original_filename || photo.id,
         success: true,
-        variantsGenerated: ['thumbnail-2x', 'thumbnail-3x', 'large-4k'],
+        variantsGenerated: [
+          'thumbnail-2x',
+          'thumbnail-3x',
+          'medium',
+          'large-4k',
+        ],
       }
     }
 
@@ -337,6 +449,22 @@ async function backfillVariants(
       )
       updates.push({ key: 'thumbnail_3x_url', url: thumbnail3xBlob.url })
       variantsGenerated.push('thumbnail-3x')
+    }
+
+    // Upload medium if missing and generated (for mobile slideshow)
+    if (!photo.medium_url && processed.medium) {
+      const mediumBlob = await put(
+        `photos/${photo.id}/medium.webp`,
+        processed.medium,
+        {
+          access: 'public',
+          contentType: 'image/webp',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        }
+      )
+      updates.push({ key: 'medium_url', url: mediumBlob.url })
+      variantsGenerated.push('medium')
     }
 
     // Upload large-4k if missing and generated
@@ -393,25 +521,48 @@ async function backfillVariants(
 }
 
 async function main() {
-  const { values, positionals } = parseArgs({
+  const { values } = parseArgs({
     args: process.argv.slice(2),
     options: {
       'dry-run': { type: 'boolean' },
       verbose: { type: 'boolean' },
       limit: { type: 'string' },
       event: { type: 'string' },
+      'medium-only': { type: 'boolean' },
+      'photos-path': { type: 'string' },
     },
     allowPositionals: true,
   })
 
   const isDryRun = values['dry-run'] || false
   const isVerbose = values.verbose || false
+  const mediumOnly = values['medium-only'] || false
   const limit = values.limit ? parseInt(values.limit as string, 10) : undefined
   const eventFilter = values.event as string | undefined
+  const photosPath = values['photos-path'] as string | undefined
+
+  // Override default photos path if provided
+  if (photosPath) {
+    PHOTOS_BASE_PATH = photosPath
+  }
 
   console.log('🔄 Backfill Responsive Image Variants Script\n')
   if (isDryRun) {
     console.log('🧪 DRY RUN MODE - No variants will be generated or uploaded\n')
+  }
+  if (mediumOnly) {
+    console.log(
+      '📱 MEDIUM-ONLY MODE - Only generating medium (1200px) variants\n'
+    )
+  }
+  if (photosPath) {
+    if (existsSync(photosPath)) {
+      console.log(`📂 Photos path: ${photosPath} (found)\n`)
+    } else {
+      console.log(
+        `📂 Photos path: ${photosPath} (NOT FOUND - will use blob storage)\n`
+      )
+    }
   }
   if (eventFilter) {
     console.log(`📁 Filtering by event: ${eventFilter}\n`)
@@ -422,7 +573,7 @@ async function main() {
 
   // Get photos that need variants
   console.log('💾 Fetching photos that need responsive variants...')
-  const photos = await getPhotosNeedingVariants(eventFilter, limit)
+  const photos = await getPhotosNeedingVariants(eventFilter, limit, mediumOnly)
   console.log(`   Found ${photos.length} photos needing variants\n`)
 
   if (photos.length === 0) {
@@ -433,11 +584,13 @@ async function main() {
   // Count what's missing
   const missing2x = photos.filter((p) => !p.thumbnail_2x_url).length
   const missing3x = photos.filter((p) => !p.thumbnail_3x_url).length
+  const missingMedium = photos.filter((p) => !p.medium_url).length
   const missing4k = photos.filter((p) => !p.large_4k_url).length
 
   console.log('📊 Missing variants:')
   console.log(`   thumbnail-2x: ${missing2x}`)
   console.log(`   thumbnail-3x: ${missing3x}`)
+  console.log(`   medium (1200px): ${missingMedium}`)
   console.log(`   large-4k: ${missing4k}\n`)
 
   console.log(`🔄 Processing ${photos.length} photo(s)...\n`)
@@ -467,6 +620,7 @@ async function main() {
       const missing = []
       if (!photo.thumbnail_2x_url) missing.push('2x')
       if (!photo.thumbnail_3x_url) missing.push('3x')
+      if (!photo.medium_url) missing.push('medium')
       if (!photo.large_4k_url) missing.push('4k')
       console.log(`   Missing: ${missing.join(', ') || 'none'}`)
     }

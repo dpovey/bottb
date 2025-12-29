@@ -15,10 +15,10 @@
 ### Pre-commit Commands
 
 ```bash
-npm run format:check  # Prettier
-npm run typecheck     # TypeScript
-npm run lint          # ESLint
-npm test              # Tests
+pnpm format:check     # Prettier
+pnpm typecheck        # TypeScript
+pnpm lint             # ESLint
+pnpm test             # Tests
 ```
 
 All must pass before committing.
@@ -33,5 +33,5 @@ All must pass before committing.
 ### Design System
 
 - Browse `/design-system` in the running app
-- Run `npm run storybook` for component isolation
+- Run `pnpm storybook` for component isolation
 - See `DESIGN.md` for tokens and design principles

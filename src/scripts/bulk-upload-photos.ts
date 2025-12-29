@@ -416,6 +416,16 @@ async function uploadPhoto(
       )
     }
 
+    // Upload medium variant if available (for mobile slideshow)
+    let mediumBlob = null
+    if (processed.medium) {
+      mediumBlob = await put(
+        `photos/${photoId}/medium.webp`,
+        processed.medium,
+        { access: 'public', contentType: 'image/webp' }
+      )
+    }
+
     const largeBlob = await put(
       `photos/${photoId}/large.webp`,
       processed.large,
@@ -438,6 +448,7 @@ async function uploadPhoto(
       thumbnail_url: thumbnailBlob.url,
       thumbnail_2x_url: thumbnail2xBlob?.url || null,
       thumbnail_3x_url: thumbnail3xBlob?.url || null,
+      medium_url: mediumBlob?.url || null,
       large_4k_url: large4kBlob?.url || null,
     }
 

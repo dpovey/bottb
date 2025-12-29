@@ -48,8 +48,8 @@ All UI components have stories:
 - Chromatic visual regression
 
 ```bash
-npm run storybook        # Development
-npm run chromatic        # Visual tests
+pnpm storybook           # Development
+pnpm chromatic           # Visual tests
 ```
 
 ## Design System Page

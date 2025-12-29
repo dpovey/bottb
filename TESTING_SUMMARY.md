@@ -124,16 +124,16 @@ src/
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests in watch mode
-npm run test:watch
+pnpm test:watch
 
 # Run tests with coverage
-npm run test:coverage
+pnpm test:coverage
 
 # Run tests for CI
-npm run test:ci
+pnpm test:ci
 ```
 
 ## Coverage Goals
@@ -145,8 +145,8 @@ npm run test:ci
 
 ## Next Steps
 
-1. **Install Dependencies**: Run `npm install` to install testing packages
-2. **Run Tests**: Execute `npm test` to verify everything works
+1. **Install Dependencies**: Run `pnpm install` to install testing packages
+2. **Run Tests**: Execute `pnpm test` to verify everything works
 3. **Add More Tests**: Extend coverage for any missed edge cases
 4. **Integration Tests**: Consider adding E2E tests with Playwright
 5. **Performance Tests**: Add tests for large datasets and performance

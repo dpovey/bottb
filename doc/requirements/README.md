@@ -61,10 +61,10 @@ Screenshots are stored in `doc/screenshots/`. To regenerate:
 
 ```bash
 # Start dev server in another terminal
-npm run dev
+pnpm dev
 
 # Capture screenshots
-npm run capture-screenshots
+pnpm capture-screenshots
 ```
 
 The script auto-detects the running Next.js port.

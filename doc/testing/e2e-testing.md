@@ -11,7 +11,7 @@ Playwright for critical user flows with Docker Postgres.
 docker compose -f docker-compose.test.yml up -d
 
 # Seed with fixtures and run tests
-npm run test:e2e
+pnpm test:e2e
 ```
 
 ### CI/CD
@@ -26,7 +26,7 @@ Uses GitHub Actions with Postgres service container.
 ## Running Tests
 
 ```bash
-npm run test:e2e           # Full suite (seed + test)
+pnpm test:e2e           # Full suite (seed + test)
 npx playwright test        # Run tests only (assumes DB ready)
 npx playwright test --ui   # UI mode for debugging
 npx playwright test --headed  # See browser
