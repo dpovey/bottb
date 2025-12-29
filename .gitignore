@@ -18,6 +18,9 @@
 # backups
 /backups/
 
+# worktrees
+/.worktrees/
+
 # next.js
 /.next/
 /out/

@@ -1,0 +1,3 @@
+# Allow Cursor to access worktree files (negates gitignore)
+!.worktrees/
+

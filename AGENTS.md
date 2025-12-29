@@ -18,6 +18,23 @@ Key files:
 - `src/components/ui/` - Shared UI primitives
 - `next.config.ts` - Next.js configuration
 
+## Before Starting Any Work
+
+**STOP and do this BEFORE making any code edits:**
+
+1. **Check current branch**: `git branch --show-current`
+2. **If on main**, create a worktree BEFORE editing any files:
+   ```bash
+   git worktree add .worktrees/{description} -b {type}/{description}
+   cd .worktrees/{description}
+   pnpm install
+   ```
+3. **Exception**: Trivial one-line fixes may go directly to main - ask user first
+
+Reading code to understand the task is fine. But NO edits until you're on a feature branch.
+
+> **Why worktrees give you freedom**: Once on a feature branch, make changes confidently without asking for permission. Changes are isolated, reviewable in PR, and easy to discard. Only ask for clarification when the task is ambiguous, not for approval to proceed.
+
 ## Database Schema Changes
 
 When modifying the database schema, **both files must be updated**:
@@ -64,10 +81,10 @@ Key documentation:
 
 ```bash
 # From the main bottb directory, create a worktree with a new branch
-git worktree add ../bottb-feature-name -b feature/feature-name
+git worktree add .worktrees/feature-name -b feature/feature-name
 
 # Move to the new worktree
-cd ../bottb-feature-name
+cd .worktrees/feature-name
 
 # Install dependencies (fast - pnpm shares packages across worktrees)
 pnpm install
@@ -78,13 +95,13 @@ pnpm dev:restart
 
 ### Naming Convention
 
-Worktree directories: `../bottb-{short-description}`
+Worktree directories: `.worktrees/{short-description}`
 
 Examples:
 
-- `../bottb-auth-fix` for branch `fix/auth-bug`
-- `../bottb-photo-upload` for branch `feature/photo-upload`
-- `../bottb-scoring-v2` for branch `refactor/scoring-v2`
+- `.worktrees/auth-fix` for branch `fix/auth-bug`
+- `.worktrees/photo-upload` for branch `feature/photo-upload`
+- `.worktrees/scoring-v2` for branch `refactor/scoring-v2`
 
 ### Creating a PR
 
@@ -104,12 +121,12 @@ gh pr create --fill
 ### Cleanup After Merge
 
 ```bash
-# Return to main repo
-cd ../bottb
+# From the worktree, return to main repo root
+cd ../..
 git pull
 
 # Remove the worktree and branch
-git worktree remove ../bottb-feature-name
+git worktree remove .worktrees/feature-name
 git branch -d feature/feature-name
 
 # Clean up stale references (optional)
@@ -119,9 +136,9 @@ git worktree prune
 ### Useful Commands
 
 ```bash
-git worktree list              # Show all worktrees
-git worktree add ../dir branch # Checkout existing branch
-git worktree lock ../dir       # Prevent pruning (for removable media)
+git worktree list                     # Show all worktrees
+git worktree add .worktrees/dir branch # Checkout existing branch
+git worktree lock .worktrees/dir       # Prevent pruning (for removable media)
 ```
 
 ## Development Server
