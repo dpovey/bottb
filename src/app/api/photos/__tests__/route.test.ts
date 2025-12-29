@@ -78,11 +78,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: undefined,
+        bandId: undefined,
         photographer: undefined,
         companySlug: undefined,
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
 
@@ -110,11 +112,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: 'event-1',
+        bandId: undefined,
         photographer: undefined,
         companySlug: undefined,
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
@@ -133,11 +137,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: 'event-1',
+        bandId: undefined,
         photographer: undefined,
         companySlug: undefined,
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
@@ -156,11 +162,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: undefined,
+        bandId: undefined,
         photographer: 'John Doe',
         companySlug: undefined,
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
@@ -179,11 +187,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: undefined,
+        bandId: undefined,
         photographer: undefined,
         companySlug: 'company-1',
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
@@ -202,11 +212,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: undefined,
+        bandId: undefined,
         photographer: undefined,
         companySlug: undefined,
         limit: 25,
         offset: 25,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
 
@@ -257,11 +269,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: undefined,
+        bandId: undefined,
         photographer: undefined,
         companySlug: undefined,
         limit: 50,
         offset: 0,
         orderBy: 'date',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
@@ -341,11 +355,13 @@ describe('/api/photos', () => {
 
       expect(mockGetPhotosWithCount).toHaveBeenCalledWith({
         eventId: 'event-1',
+        bandId: undefined,
         photographer: 'John Doe',
         companySlug: 'company-1',
         limit: 50,
         offset: 0,
         orderBy: 'uploaded',
+        unmatched: false,
       })
       expect(response.status).toBe(200)
     })
