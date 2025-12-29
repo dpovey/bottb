@@ -3,6 +3,7 @@
 import { useSession, signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { identifyAdmin } from '@/lib/analytics'
 
 export default function AdminLoginPage() {
   const { data: session, status } = useSession()
@@ -16,6 +17,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     if (session?.user) {
       if (session.user.isAdmin) {
+        identifyAdmin(session.user)
         router.push('/admin')
       } else {
         setError('Access denied. Admin privileges required.')

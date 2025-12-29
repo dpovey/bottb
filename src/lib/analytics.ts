@@ -209,3 +209,64 @@ export function trackNavClick(properties: {
 }): void {
   trackEvent('nav:click', properties)
 }
+
+/**
+ * Identity management for PostHog
+ * Note: Vercel Analytics does not support user identification
+ */
+
+/**
+ * Identify an admin user in PostHog
+ * Creates a person profile and associates all future events with this user
+ */
+export function identifyAdmin(user: {
+  id: string
+  email?: string | null
+  name?: string | null
+}): void {
+  if (!isAnalyticsEnabled()) return
+
+  if (typeof window !== 'undefined') {
+    try {
+      const isInitialized =
+        posthog && (posthog as { __loaded?: boolean }).__loaded === true
+
+      if (isInitialized) {
+        const envMetadata = getEnvironmentMetadata()
+        posthog.identify(user.id, {
+          email: user.email ?? undefined,
+          name: user.name ?? undefined,
+          is_admin: true,
+          ...envMetadata,
+        })
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[PostHog] Error identifying user:', error)
+      }
+    }
+  }
+}
+
+/**
+ * Reset PostHog identity on logout
+ * Clears the identified user and generates a new anonymous ID
+ */
+export function resetIdentity(): void {
+  if (!isAnalyticsEnabled()) return
+
+  if (typeof window !== 'undefined') {
+    try {
+      const isInitialized =
+        posthog && (posthog as { __loaded?: boolean }).__loaded === true
+
+      if (isInitialized) {
+        posthog.reset()
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[PostHog] Error resetting identity:', error)
+      }
+    }
+  }
+}

@@ -50,6 +50,12 @@ All events include:
 
 Use `is_production = "true"` filter in PostHog for production-only data.
 
+## User Identification (PostHog Only)
+
+Admin users are identified in PostHog on login via `identifyAdmin()`. This creates a person profile and associates all events with the admin user. Identity is reset on logout via `resetIdentity()`.
+
+Note: Vercel Analytics does not support user identification.
+
 ## Configuration
 
 ```
