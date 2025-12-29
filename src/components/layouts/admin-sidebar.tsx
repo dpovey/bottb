@@ -107,7 +107,7 @@ export function AdminSidebar() {
         <Link href="/" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/images/logos/bottb-dark-square.png"
+            src="/images/logos/bottb-dark-square.svg"
             alt="BOTTB"
             className="h-8"
           />

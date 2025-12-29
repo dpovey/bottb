@@ -110,9 +110,9 @@ export function Header({
           <div className="flex items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0">
-              {/* Square logo for mobile */}
+              {/* Square logo for mobile - SVG for sharp rendering at any size */}
               <Image
-                src="/images/logos/bottb-dark-square.png"
+                src="/images/logos/bottb-dark-square.svg"
                 alt="BOTTB"
                 width={40}
                 height={40}

@@ -91,7 +91,7 @@ function PhotographerCard({ photographer }: { photographer: Photographer }) {
                   width={56}
                   height={56}
                   className="w-full h-full object-cover"
-                  unoptimized
+                  sizes="56px"
                 />
               ) : (
                 <CameraIcon className="w-7 h-7 text-text-muted group-hover:text-accent transition-colors" />

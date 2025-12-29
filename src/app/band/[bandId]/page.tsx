@@ -617,7 +617,6 @@ export default async function BandPage({
             focalPoint={heroFocalPoint}
             sizes="100vw"
             priority
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />

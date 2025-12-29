@@ -76,8 +76,8 @@ export function CompanyIcon({
       width={pixelSize}
       height={pixelSize}
       className={cn('object-contain rounded-sm', sizeClasses[size], className)}
-      unoptimized
       loading="lazy"
+      sizes={`${pixelSize}px`}
     />
   )
 }

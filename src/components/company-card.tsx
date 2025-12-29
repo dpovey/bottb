@@ -47,7 +47,6 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                 width={320}
                 height={64}
                 className="max-h-full max-w-full object-contain"
-                unoptimized
                 loading="lazy"
                 sizes="(max-width: 640px) 200px, 320px"
               />
@@ -96,8 +95,8 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                     width={32}
                     height={32}
                     className="max-w-full max-h-full object-contain"
-                    unoptimized
                     loading="lazy"
+                    sizes="32px"
                   />
                 </div>
               )}
