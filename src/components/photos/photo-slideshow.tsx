@@ -9,6 +9,7 @@ import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
+import { slugify } from '@/lib/utils'
 import { CompanyIcon } from '@/components/ui'
 import Cropper, { Area } from 'react-easy-crop'
 import { ShareComposerModal } from './share-composer-modal'
@@ -1188,7 +1189,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                   </span>
                   <CameraIcon size={16} className="shrink-0" />
                   <Link
-                    href={`/photographer/${currentPhoto.photographer.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/photographer/${slugify(currentPhoto.photographer)}`}
                     className="truncate hover:text-accent transition-colors"
                   >
                     {currentPhoto.photographer}

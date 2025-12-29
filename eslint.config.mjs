@@ -1,7 +1,6 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from 'eslint-plugin-storybook'
 import nextConfig from 'eslint-config-next'
-import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 // Note: eslint-plugin-tailwindcss does not yet support Tailwind CSS v4's CSS-based config.
@@ -14,9 +13,8 @@ const eslintConfig = [
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
-    plugins: {
-      '@typescript-eslint': tseslint.plugin,
-    },
+    // Note: @typescript-eslint plugin is already included by eslint-config-next
+    // Just add our custom rules here
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'warn',

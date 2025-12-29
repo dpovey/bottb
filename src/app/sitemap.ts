@@ -4,8 +4,10 @@ import {
   getBandsForEvent,
   getPhotographers,
   getAllHeroPhotos,
+  getAllSongs,
 } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
+import { slugify } from '@/lib/utils'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
@@ -109,6 +111,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     } catch (error) {
       console.error('Error fetching hero photos:', error)
+    }
+
+    // Get songs for artist and song pages
+    try {
+      const songs = await getAllSongs({ limit: 10000 })
+
+      // Track unique artists and songs
+      const uniqueArtists = new Set<string>()
+      const uniqueSongs = new Map<string, { artist: string; title: string }>()
+
+      for (const song of songs) {
+        if (song.artist && song.title) {
+          const artistSlug = slugify(song.artist)
+          const songSlug = slugify(song.title)
+          const key = `${artistSlug}/${songSlug}`
+
+          // Add artist
+          uniqueArtists.add(artistSlug)
+
+          // Add song (dedupe by slug)
+          if (!uniqueSongs.has(key)) {
+            uniqueSongs.set(key, { artist: artistSlug, title: songSlug })
+          }
+        }
+      }
+
+      // Add artist pages
+      for (const artistSlug of uniqueArtists) {
+        sitemapEntries.push({
+          url: `${baseUrl}/songs/${artistSlug}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.5,
+        })
+      }
+
+      // Add song pages
+      for (const [, song] of uniqueSongs) {
+        sitemapEntries.push({
+          url: `${baseUrl}/songs/${song.artist}/${song.title}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.5,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching songs for sitemap:', error)
     }
   } catch (error) {
     console.error('Error generating sitemap:', error)

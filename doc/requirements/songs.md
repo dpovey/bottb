@@ -29,12 +29,37 @@
 
 ### Data Table
 
-- Song title (with video link if available)
-- Artist
+- Song title (link to song detail page)
+- Artist (link to artist page)
 - Song type badge
 - Band name (link)
 - Event name (link)
 - Sortable columns
+
+## Artist Page `/songs/[artist]`
+
+Shows all songs by a specific artist performed at BOTTB events.
+
+- Header with artist name
+- Count of songs performed
+- List of songs with:
+  - Song title (link to song detail)
+  - Performance count
+  - List of bands/events that performed it
+
+## Song Detail Page `/songs/[artist]/[song]`
+
+Shows all performances of a specific song.
+
+- Header with song title and artist (clickable)
+- Breadcrumbs: Home > Songs > Artist > Song
+- Performance count
+- List of performances with:
+  - Company badge
+  - Band name (link)
+  - Event name and date (link)
+  - Song type badge
+- YouTube links section (if available)
 
 ## Setlist Display (Band Page)
 

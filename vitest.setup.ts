@@ -84,6 +84,21 @@ vi.mock('@/lib/nav-data', () => ({
   getNavEvents: vi.fn().mockResolvedValue({ upcoming: [], past: [] }),
 }))
 
+// Mock next/navigation for components that use useRouter, usePathname, etc.
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  })),
+  usePathname: vi.fn(() => '/'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
+  useParams: vi.fn(() => ({})),
+}))
+
 // Establish API mocking before all tests
 beforeAll(() => server.listen())
 

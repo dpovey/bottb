@@ -17,32 +17,40 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
 
   return (
     <nav
-      className={cn('flex items-center gap-2 text-sm', className)}
+      className={cn(
+        'flex flex-wrap items-center justify-end gap-1.5 text-sm',
+        className
+      )}
       aria-label="Breadcrumb"
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1
 
         return (
-          <span key={index} className="flex items-center gap-2">
+          <span key={index} className="flex items-center gap-1.5">
             {/* Separator (except for first item) */}
             {index > 0 && (
               <ChevronRightIcon
                 size={12}
-                className="text-text-dim"
+                className="text-text-dim shrink-0"
                 strokeWidth={2}
               />
             )}
 
             {/* Breadcrumb item */}
             {isLast || !item.href ? (
-              <span className={cn(isLast ? 'text-white' : 'text-text-dim')}>
+              <span
+                className={cn(
+                  'truncate max-w-[120px] lg:max-w-[180px]',
+                  isLast ? 'text-white' : 'text-text-dim'
+                )}
+              >
                 {item.label}
               </span>
             ) : (
               <Link
                 href={item.href}
-                className="text-text-dim hover:text-text-muted transition-colors"
+                className="text-text-dim hover:text-text-muted transition-colors truncate max-w-[120px] lg:max-w-[180px]"
               >
                 {item.label}
               </Link>

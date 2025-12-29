@@ -1,5 +1,6 @@
 import { Header, Footer } from '@/components/nav'
 import type { BreadcrumbItem, NavEvent } from '@/components/nav'
+import { BreadcrumbsJsonLd } from '@/components/seo'
 
 interface PublicLayoutProps {
   children: React.ReactNode
@@ -31,6 +32,9 @@ export function PublicLayout({
 }: PublicLayoutProps) {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <BreadcrumbsJsonLd breadcrumbs={breadcrumbs} />
+      )}
       {showHeader && (
         <Header
           showNav={showNav}

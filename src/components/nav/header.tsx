@@ -9,7 +9,8 @@ import { EventsDropdown, type NavEvent } from './events-dropdown'
 import { LineupDropdown } from './lineup-dropdown'
 import { ExperienceDropdown } from './experience-dropdown'
 import { trackNavClick } from '@/lib/analytics'
-import { CloseIcon, MenuIcon } from '@/components/icons'
+import { CloseIcon, MenuIcon, SearchIcon } from '@/components/icons'
+import { SearchDialog, useSearch } from '@/components/search'
 
 export interface HeaderProps {
   /** Show main navigation links */
@@ -59,6 +60,13 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const search = useSearch()
+
+  // Detect Mac for keyboard shortcut display
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    navigator.platform.toUpperCase().indexOf('MAC') >= 0
+  const searchShortcut = isMac ? '⌘K' : 'Ctrl+K'
 
   // Track scroll position for transparent variant auto-glass effect
   useEffect(() => {
@@ -145,28 +153,47 @@ export function Header({
                 >
                   About
                 </Link>
+
+                {/* Search button */}
+                <button
+                  onClick={search.open}
+                  className="text-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-all p-2"
+                  aria-label="Search"
+                  title={`Search (${searchShortcut})`}
+                >
+                  <SearchIcon className="w-5 h-5" />
+                </button>
               </nav>
             )}
 
             {/* Breadcrumbs (right side on desktop) */}
             {breadcrumbs && breadcrumbs.length > 0 && (
-              <div className="hidden md:block shrink-0">
+              <div className="hidden md:block min-w-0 max-w-[40%] lg:max-w-[50%]">
                 <Breadcrumbs items={breadcrumbs} />
               </div>
             )}
 
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden ml-auto text-text-muted hover:text-white transition-colors p-2"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <CloseIcon className="w-6 h-6" />
-              ) : (
-                <MenuIcon className="w-6 h-6" />
-              )}
-            </button>
+            {/* Mobile Search + Menu Buttons */}
+            <div className="md:hidden ml-auto flex items-center gap-1">
+              <button
+                onClick={search.open}
+                className="text-text-muted hover:text-white transition-colors p-2"
+                aria-label="Search"
+              >
+                <SearchIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="text-text-muted hover:text-white transition-colors p-2"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? (
+                  <CloseIcon className="w-6 h-6" />
+                ) : (
+                  <MenuIcon className="w-6 h-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -235,6 +262,9 @@ export function Header({
 
       {/* Spacer for fixed header */}
       {fixed && <div className="h-16" />}
+
+      {/* Search Dialog */}
+      <SearchDialog isOpen={search.isOpen} onClose={search.close} />
     </>
   )
 }

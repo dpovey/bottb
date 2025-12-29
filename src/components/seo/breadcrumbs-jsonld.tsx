@@ -1,4 +1,5 @@
 import { getBaseUrl } from '@/lib/seo'
+import { slugify } from '@/lib/utils'
 
 interface Breadcrumb {
   label: string
@@ -34,12 +35,7 @@ export function BreadcrumbsJsonLd({ breadcrumbs, id }: BreadcrumbsJsonLdProps) {
 
   // Generate a stable id from breadcrumb labels if not provided
   const scriptId =
-    id ||
-    `breadcrumbs-${breadcrumbs
-      .map((b) => b.label)
-      .join('-')
-      .toLowerCase()
-      .replace(/\s+/g, '-')}`
+    id || `breadcrumbs-${slugify(breadcrumbs.map((b) => b.label).join('-'))}`
 
   return (
     <script

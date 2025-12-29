@@ -18,6 +18,7 @@ Next.js full-stack application for tech band competitions with voting, photos, a
 | [Voting](./voting.md)                 | Crowd/judge voting, fingerprinting |
 | [Scoring](./scoring.md)               | Score calculation, finalization    |
 | [Photos](./photos.md)                 | Photo gallery, slideshow, sharing  |
+| [Search](./search.md)                 | Orama client-side search           |
 | [API](./api.md)                       | REST endpoints, rate limiting      |
 | [Components](./components.md)         | UI component architecture          |
 | [Layouts](./layouts.md)               | Page layouts and navigation        |
