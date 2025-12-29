@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { resetIdentity } from '@/lib/analytics'
 import {
   HomeIcon,
   CalendarIcon,
@@ -158,7 +159,10 @@ export function AdminSidebar() {
             <p className="text-xs text-dim truncate">Admin</p>
           </div>
           <button
-            onClick={() => signOut()}
+            onClick={() => {
+              resetIdentity()
+              signOut()
+            }}
             className="text-dim hover:text-white transition-colors"
             title="Sign out"
           >
