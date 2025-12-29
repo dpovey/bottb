@@ -90,7 +90,7 @@ export function CompanyBadge({
 
   if (asLink) {
     return (
-      <Link href={`/companies?company=${slug}`} className={combinedClassName}>
+      <Link href={`/companies/${slug}`} className={combinedClassName}>
         {content}
       </Link>
     )

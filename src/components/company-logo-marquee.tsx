@@ -105,7 +105,7 @@ export async function CompanyLogoMarquee({
 function LogoItem({ company }: { company: CompanyWithLogo }) {
   return (
     <Link
-      href={`/companies?company=${company.slug}`}
+      href={`/companies/${company.slug}`}
       className="logo-wrapper relative shrink-0 group"
     >
       <div className="logo-item h-12 w-auto flex items-center justify-center px-4">

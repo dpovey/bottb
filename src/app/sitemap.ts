@@ -3,6 +3,7 @@ import {
   getEvents,
   getBandsForEvent,
   getPhotographers,
+  getCompanies,
   getAllHeroPhotos,
   getAllSongs,
 } from '@/lib/db'
@@ -93,6 +94,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     } catch (error) {
       console.error('Error fetching photographers:', error)
+    }
+
+    // Get companies
+    try {
+      const companies = await getCompanies()
+      for (const company of companies) {
+        sitemapEntries.push({
+          url: `${baseUrl}/companies/${company.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error)
     }
 
     // Get hero photos - curated, high-quality photos worth indexing

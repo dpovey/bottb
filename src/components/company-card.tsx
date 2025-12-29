@@ -28,7 +28,7 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
   const iconUrl = company.icon_url || company.logo_url
 
   return (
-    <Link href={`/companies?company=${company.slug}`}>
+    <Link href={`/companies/${company.slug}`}>
       <Card
         variant="interactive"
         padding="none"
