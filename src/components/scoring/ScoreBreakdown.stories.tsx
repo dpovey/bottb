@@ -90,11 +90,13 @@ const sample2025Results: BandResultData[] = [
   },
 ]
 
-const sample2026Results: BandResultData[] = sample2025Results.map((band) => ({
-  ...band,
-  screamOMeter: undefined,
-  visuals: 8.5 + Math.random() * 1.5,
-}))
+const sample2026Results: BandResultData[] = sample2025Results.map(
+  (band, i) => ({
+    ...band,
+    screamOMeter: undefined,
+    visuals: [9.2, 8.8, 9.5, 8.3][i] ?? 8.5, // Static values per band
+  })
+)
 
 // 2025.1 scoring (with scream-o-meter)
 export const Scoring2025: Story = {
