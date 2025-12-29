@@ -4,6 +4,9 @@ import nextConfig from 'eslint-config-next'
 import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
+// Note: eslint-plugin-tailwindcss does not yet support Tailwind CSS v4's CSS-based config.
+// Use prettier-plugin-tailwindcss for class sorting and Tailwind CSS IntelliSense for editor linting.
+
 const eslintConfig = [
   ...nextConfig,
   {

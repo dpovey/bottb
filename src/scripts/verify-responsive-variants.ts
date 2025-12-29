@@ -139,7 +139,7 @@ async function verifyPhoto(
 }
 
 async function main() {
-  const { values, positionals } = parseArgs({
+  const { values } = parseArgs({
     args: process.argv.slice(2),
     options: {
       'check-blobs': { type: 'boolean' },
@@ -174,7 +174,6 @@ async function main() {
   console.log('🔍 Verifying variants...\n')
 
   const results: VerificationResult[] = []
-  let processed = 0
 
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i]
@@ -185,7 +184,6 @@ async function main() {
 
     const result = await verifyPhoto(photo, checkBlobs)
     results.push(result)
-    processed++
   }
 
   // Analyze results

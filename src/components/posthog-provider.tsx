@@ -44,7 +44,6 @@ function PostHogPageViewTracker() {
       is_development: isDev ? 'true' : 'false',
       is_production: nodeEnv === 'production' && !isDev ? 'true' : 'false',
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, stableSearchParams])
 
   return null

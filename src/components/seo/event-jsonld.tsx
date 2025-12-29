@@ -5,9 +5,6 @@ import { getBaseUrl } from '@/lib/seo'
 const DEFAULT_EVENT_IMAGE =
   'https://www.battleofthetechbands.com/images/logos/bottb-dark-square.png'
 
-// Estimate event duration in hours (typical concert)
-const EVENT_DURATION_HOURS = 4
-
 interface EventJsonLdProps {
   event: Event
   bands?: Band[]

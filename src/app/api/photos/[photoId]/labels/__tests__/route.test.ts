@@ -1,11 +1,6 @@
 import { NextRequest } from 'next/server'
 import { GET, PATCH } from '../route'
-import {
-  getPhotoById,
-  updatePhotoLabels,
-  updateHeroFocalPoint,
-  PHOTO_LABELS,
-} from '@/lib/db'
+import { getPhotoById, PHOTO_LABELS } from '@/lib/db'
 import { auth } from '@/lib/auth'
 import { vi } from 'vitest'
 
@@ -27,10 +22,6 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 const mockGetPhotoById = getPhotoById as ReturnType<typeof vi.fn>
-const mockUpdatePhotoLabels = updatePhotoLabels as ReturnType<typeof vi.fn>
-const mockUpdateHeroFocalPoint = updateHeroFocalPoint as ReturnType<
-  typeof vi.fn
->
 const mockAuth = auth as ReturnType<typeof vi.fn>
 
 describe('/api/photos/[photoId]/labels', () => {

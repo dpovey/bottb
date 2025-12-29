@@ -25,7 +25,7 @@ import { sql } from '@vercel/postgres'
 import { put } from '@vercel/blob'
 import { parseArgs } from 'util'
 import { readFile, readdir } from 'fs/promises'
-import { join, basename, extname } from 'path'
+import { join } from 'path'
 import { existsSync } from 'fs'
 import sharp from 'sharp'
 import { processImage } from '../lib/image-processor'
@@ -326,7 +326,7 @@ async function searchForFile(
         }
       }
     }
-  } catch (error) {
+  } catch {
     // Directory might not be accessible, skip
   }
 
@@ -344,7 +344,6 @@ async function backfillVariants(
 
   try {
     let imageBuffer: Buffer
-    let sourceType: string
 
     // Try to find original file on disk first
     if (photo.original_filename) {
@@ -355,7 +354,6 @@ async function backfillVariants(
       if (localFilePath) {
         // Use original from disk (best quality)
         imageBuffer = await readFile(localFilePath)
-        sourceType = 'local original'
       } else if (photo.original_blob_url) {
         // Fall back to original from blob storage
         const imageResponse = await fetch(photo.original_blob_url)
@@ -365,7 +363,6 @@ async function backfillVariants(
           )
         }
         imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-        sourceType = 'blob original'
       } else {
         // Fall back to large.webp
         const imageResponse = await fetch(photo.blob_url)
@@ -375,7 +372,6 @@ async function backfillVariants(
           )
         }
         imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-        sourceType = 'large.webp'
       }
     } else if (photo.original_blob_url) {
       // Use original from blob storage
@@ -386,7 +382,6 @@ async function backfillVariants(
         )
       }
       imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-      sourceType = 'blob original'
     } else {
       // Fall back to large.webp
       const imageResponse = await fetch(photo.blob_url)
@@ -396,7 +391,6 @@ async function backfillVariants(
         )
       }
       imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-      sourceType = 'large.webp'
     }
 
     if (dryRun) {

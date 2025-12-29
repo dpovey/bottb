@@ -26,6 +26,14 @@ pnpm test              # Vitest
 - React hooks rules enforced
 - Effect dependency checking
 
+### Tailwind CSS Linting
+
+`eslint-plugin-tailwindcss` does not yet support Tailwind CSS v4's CSS-based config. For Tailwind class linting:
+
+- **Class sorting**: Use `prettier-plugin-tailwindcss` (works with v4)
+- **Editor linting**: Use Tailwind CSS IntelliSense VS Code extension
+- **Class conflicts**: Rely on editor IntelliSense warnings
+
 ## Commit Messages
 
 Format: `<type>: <description>`
