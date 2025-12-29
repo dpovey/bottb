@@ -92,7 +92,6 @@ export default async function PhotographerPage({ params }: Props) {
             focalPoint={heroFocalPoint}
             sizes="100vw"
             priority
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
@@ -113,7 +112,7 @@ export default async function PhotographerPage({ params }: Props) {
                   width={96}
                   height={96}
                   className="w-full h-full object-cover"
-                  unoptimized
+                  sizes="96px"
                 />
               ) : (
                 <CameraIcon className="w-12 h-12 text-accent" />

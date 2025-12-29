@@ -83,7 +83,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
           <div className="md:col-span-2">
             <Link href="/" className="inline-block mb-4">
               <Image
-                src="/images/logos/bottb-dark-square.png"
+                src="/images/logos/bottb-dark-square.svg"
                 alt="BOTTB"
                 width={64}
                 height={64}

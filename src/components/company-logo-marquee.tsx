@@ -116,7 +116,6 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
           height={48}
           className="h-full w-auto object-contain max-w-[180px]"
           loading="lazy"
-          unoptimized
           sizes="(max-width: 768px) 120px, 180px"
         />
       </div>

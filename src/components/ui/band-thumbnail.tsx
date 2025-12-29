@@ -101,7 +101,7 @@ export function BandThumbnail({
             'w-full h-full',
             isHeroImage ? 'object-cover' : 'object-contain'
           )}
-          unoptimized
+          sizes={`${config.image}px`}
         />
       </div>
     )

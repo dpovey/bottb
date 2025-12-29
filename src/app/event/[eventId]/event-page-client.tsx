@@ -102,7 +102,6 @@ export function EventPageClient({
             focalPoint={heroPhoto.hero_focal_point}
             sizes="100vw"
             priority
-            unoptimized
           />
         ) : eventInfo?.image_url ? (
           <div className="absolute inset-0">
@@ -113,7 +112,6 @@ export function EventPageClient({
               className="object-cover"
               sizes="100vw"
               priority
-              unoptimized
             />
           </div>
         ) : (

@@ -75,7 +75,7 @@ function SelectedCompanyView({
               width={320}
               height={64}
               className="h-16 w-auto max-w-xs object-contain"
-              unoptimized
+              sizes="(max-width: 640px) 200px, 320px"
             />
           ) : (
             <h1 className="font-semibold text-4xl">{company.name}</h1>
