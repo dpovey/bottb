@@ -7,7 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier'
 const eslintConfig = [
   ...nextConfig,
   {
-    ignores: ['coverage/**', 'storybook-static/**'],
+    ignores: ['coverage/**', 'storybook-static/**', '.worktrees/**'],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
