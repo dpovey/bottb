@@ -375,6 +375,7 @@ export async function deleteCrowdNoiseMeasurement(
 
 export interface GetPhotosOptions {
   eventId?: string
+  bandId?: string
   photographer?: string
   companySlug?: string
   limit?: number
@@ -382,6 +383,8 @@ export interface GetPhotosOptions {
   orderBy?: PhotoOrderBy
   /** Seed for deterministic random ordering (only used when orderBy='random') */
   seed?: number
+  /** Filter to show only photos with missing event_id or band_id */
+  unmatched?: boolean
 }
 
 /**
@@ -423,12 +426,14 @@ export async function getPhotosWithCount(
 ): Promise<PhotosWithCountResult> {
   const {
     eventId,
+    bandId,
     photographer,
     companySlug,
     limit = 50,
     offset = 0,
     orderBy = 'uploaded',
     seed,
+    unmatched,
   } = options
 
   // For random ordering, use deterministic hash-based ordering with seed
@@ -467,11 +472,16 @@ export async function getPhotosWithCount(
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE 
         (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
+        AND (${bandId || null}::text IS NULL OR p.band_id = ${bandId || null})
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
           ${companySlug || null}::text IS NULL 
           OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
           OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+        AND (
+          ${unmatched ? 'true' : 'false'}::boolean = false
+          OR (p.event_id IS NULL OR p.band_id IS NULL)
         )
       ORDER BY p.uploaded_at DESC
       LIMIT ${limit} OFFSET ${offset}

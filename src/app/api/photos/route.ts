@@ -12,6 +12,7 @@ export const GET = withPublicRateLimit(async function GET(
     // Support both new (event) and legacy (eventId) param names
     const eventId =
       searchParams.get('event') || searchParams.get('eventId') || undefined
+    const bandId = searchParams.get('band') || undefined
     const photographer = searchParams.get('photographer') || undefined
     // Support both company and companySlug for backwards compatibility
     const companySlug =
@@ -34,6 +35,9 @@ export const GET = withPublicRateLimit(async function GET(
 
     // skipMeta=true skips fetching filter metadata (for "load more" requests)
     const skipMeta = searchParams.get('skipMeta') === 'true'
+
+    // unmatched=true filters to photos with missing event_id or band_id
+    const unmatched = searchParams.get('unmatched') === 'true'
 
     let photos
     let total
@@ -70,11 +74,13 @@ export const GET = withPublicRateLimit(async function GET(
       // Non-shuffle requests: use direct DB query
       const result = await getPhotosWithCount({
         eventId,
+        bandId,
         photographer,
         companySlug,
         limit,
         offset,
         orderBy,
+        unmatched,
       })
       photos = result.photos
       total = result.total

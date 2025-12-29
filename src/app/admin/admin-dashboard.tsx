@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { VideoIcon, ShareIcon, PhotoIcon } from '@/components/icons'
+import {
+  VideoIcon,
+  ShareIcon,
+  PhotoIcon,
+  BuildingIcon,
+  CameraIcon,
+} from '@/components/icons'
 
 interface Event {
   id: string
@@ -97,7 +103,7 @@ export default function AdminDashboard({
   return (
     <div className="space-y-8">
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Link
           href="/admin/videos"
           className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
@@ -108,9 +114,60 @@ export default function AdminDashboard({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Manage Videos
+                Videos
               </h3>
-              <p className="text-sm text-muted">Add YouTube videos to events</p>
+              <p className="text-sm text-muted">YouTube videos</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/photos"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <PhotoIcon className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Photos
+              </h3>
+              <p className="text-sm text-muted">Edit metadata</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/companies"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <BuildingIcon className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Companies
+              </h3>
+              <p className="text-sm text-muted">Manage orgs</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/photographers"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
+              <CameraIcon className="w-6 h-6 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Photographers
+              </h3>
+              <p className="text-sm text-muted">Manage credits</p>
             </div>
           </div>
         </Link>
@@ -125,28 +182,9 @@ export default function AdminDashboard({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Social Accounts
+                Social
               </h3>
-              <p className="text-sm text-muted">
-                Connect social media accounts
-              </p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/photos"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <PhotoIcon className="w-6 h-6 text-accent" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Photo Gallery
-              </h3>
-              <p className="text-sm text-muted">Manage event photos</p>
+              <p className="text-sm text-muted">Connections</p>
             </div>
           </div>
         </Link>

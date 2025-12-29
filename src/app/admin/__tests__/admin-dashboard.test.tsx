@@ -38,9 +38,11 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard session={mockSession} />)
 
     // Check quick action cards are rendered
-    expect(screen.getByText('Manage Videos')).toBeInTheDocument()
-    expect(screen.getByText('Social Accounts')).toBeInTheDocument()
-    expect(screen.getByText('Photo Gallery')).toBeInTheDocument()
+    expect(screen.getByText('Videos')).toBeInTheDocument()
+    expect(screen.getByText('Social')).toBeInTheDocument()
+    expect(screen.getByText('Photos')).toBeInTheDocument()
+    expect(screen.getByText('Companies')).toBeInTheDocument()
+    expect(screen.getByText('Photographers')).toBeInTheDocument()
   })
 
   it('shows loading state initially', () => {
@@ -190,14 +192,24 @@ describe('AdminDashboard', () => {
     render(<AdminDashboard session={mockSession} />)
 
     // Check quick action links
+    expect(screen.getByRole('link', { name: /Videos/i })).toHaveAttribute(
+      'href',
+      '/admin/videos'
+    )
+    expect(screen.getByRole('link', { name: /Social/i })).toHaveAttribute(
+      'href',
+      '/admin/social'
+    )
+    expect(screen.getByRole('link', { name: /Photos/i })).toHaveAttribute(
+      'href',
+      '/admin/photos'
+    )
+    expect(screen.getByRole('link', { name: /Companies/i })).toHaveAttribute(
+      'href',
+      '/admin/companies'
+    )
     expect(
-      screen.getByRole('link', { name: /Manage Videos/i })
-    ).toHaveAttribute('href', '/admin/videos')
-    expect(
-      screen.getByRole('link', { name: /Social Accounts/i })
-    ).toHaveAttribute('href', '/admin/social')
-    expect(
-      screen.getByRole('link', { name: /Photo Gallery/i })
-    ).toHaveAttribute('href', '/photos')
+      screen.getByRole('link', { name: /Photographers/i })
+    ).toHaveAttribute('href', '/admin/photographers')
   })
 })
