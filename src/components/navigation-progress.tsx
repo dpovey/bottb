@@ -120,7 +120,7 @@ export function NavigationProgress() {
       aria-busy="true"
     >
       <div className="flex flex-col items-center gap-3">
-        <VinylSpinner size="xs" className="text-accent" />
+        <VinylSpinner size="sm" className="text-accent" />
         <span className="text-sm text-text-muted tracking-wide">
           Loading...
         </span>
