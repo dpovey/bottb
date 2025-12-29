@@ -134,20 +134,40 @@ gh pr create --fill
 
 > **Note**: This repo is under a personal GitHub account, not enterprise. Run `gh auth switch --user dpovey` if you're logged into an enterprise account.
 
-### Cleanup After Merge
+### Merging a PR
+
+From your worktree directory:
 
 ```bash
-# From the worktree, return to main repo root
-cd ../..
-git pull
-
-# Remove the worktree and branch
-git worktree remove .worktrees/feature-name
-git branch -d feature/feature-name
-
-# Clean up stale references (optional)
-git worktree prune
+# Merge without --delete-branch (avoids conflicts with worktree)
+gh pr merge --squash
 ```
+
+### Cleanup After Merge
+
+**Important**: Always clean up from the main repo, not from inside the worktree. Running cleanup commands from within a worktree causes errors because the branch is still in use.
+
+```bash
+# Step 1: Go to main repo (not the worktree)
+cd /Users/deapovey/src/bottb
+
+# Step 2: Remove worktree first (releases the branch)
+git worktree remove .worktrees/feature-name
+
+# Step 3: Fetch with prune to clean up deleted remote branches
+git fetch -p
+
+# Step 4: Pull latest main
+git pull
+```
+
+**One-liner** (after PR is merged):
+
+```bash
+cd /Users/deapovey/src/bottb && git worktree remove .worktrees/feature-name && git fetch -p && git pull
+```
+
+> **Why this order matters**: The worktree holds a lock on the branch. You must remove the worktree before git can delete the local branch. Running `gh pr merge --delete-branch` from inside a worktree will fail because it tries to checkout main (already checked out elsewhere) and delete a branch that's in use.
 
 ### Useful Commands
 
