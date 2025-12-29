@@ -288,11 +288,12 @@ export async function generateMetadata({
 
   const band = bandData[0]
 
-  // Build title
+  // Build title - include event name to differentiate bands across years
   const titleParts = [band.name]
   if (band.company_name) {
     titleParts.push(`(${band.company_name})`)
   }
+  titleParts.push(`at ${band.event_name}`)
   titleParts.push('| Battle of the Tech Bands')
   const title = titleParts.join(' ')
 

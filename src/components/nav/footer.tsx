@@ -81,7 +81,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Logo and tagline */}
           <div className="md:col-span-2">
-            <Link href="/" className="inline-block mb-4">
+            <Link href="/" className="inline-block mb-4" aria-label="Home">
               <Image
                 src="/images/logos/bottb-dark-square.svg"
                 alt="BOTTB"

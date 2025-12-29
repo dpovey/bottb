@@ -109,7 +109,11 @@ export function Header({
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center shrink-0">
+            <Link
+              href="/"
+              className="flex items-center shrink-0"
+              aria-label="Home"
+            >
               {/* Square logo for mobile - SVG for sharp rendering at any size */}
               <Image
                 src="/images/logos/bottb-dark-square.svg"

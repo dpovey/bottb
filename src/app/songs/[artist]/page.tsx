@@ -69,12 +69,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!artistName) {
     return {
-      title: 'Artist Not Found — BOTTB',
+      title: 'Artist Not Found | Battle of the Tech Bands',
     }
   }
 
   return {
-    title: `${artistName} Songs — BOTTB`,
+    title: `${artistName} Songs | Battle of the Tech Bands`,
     description: `All ${artistName} songs performed at Battle of the Tech Bands events.`,
     alternates: {
       canonical: `${getBaseUrl()}/songs/${artistSlug}`,

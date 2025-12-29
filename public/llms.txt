@@ -1,0 +1,47 @@
+# Battle of the Tech Bands (BOTTB)
+
+> A community charity event where bands made up of technology professionals compete in a live music battle. All proceeds support Youngcare, an Australian charity helping young people with high care needs.
+
+## About
+
+Battle of the Tech Bands is Brisbane's premier tech industry music competition. Technology companies form bands and perform live covers, mashups, and medleys in front of judges and a crowd vote. The event raises money for Youngcare while celebrating the musical talents within the tech community.
+
+## Site Structure
+
+- `/` - Homepage with upcoming events and recent results
+- `/events` - List of all past, current, and upcoming events
+- `/event/[eventId]` - Individual event page with bands and details
+- `/results/[eventId]` - Event results with scores and winner
+- `/band/[bandId]` - Individual band page with scores, setlist, photos, and videos
+- `/companies` - Browse all participating companies and their bands
+- `/photos` - Photo gallery with filters by event, photographer, and company
+- `/slideshow/[id]` - Full-screen photo viewer
+- `/videos` - Video gallery of performances
+- `/songs` - Every song performed across all events
+- `/songs/[artist]` - Songs by a specific artist
+- `/songs/[artist]/[song]` - Specific song performances
+- `/photographers` - Featured event photographers
+- `/photographer/[slug]` - Individual photographer portfolio
+- `/about` - About BOTTB and Youngcare
+- `/faq` - Frequently asked questions
+
+## Key Information
+
+- **Location**: Brisbane, Australia (with expansion to Sydney)
+- **Charity**: Youngcare (https://youngcare.com.au)
+- **Scoring**: Events use judge scores (Song Choice, Performance, Crowd Vibe) plus crowd voting
+- **History**: Running since 2022 with multiple events per year
+
+## Content Types
+
+- **Events**: Live music competitions with multiple bands
+- **Bands**: Tech company bands with members, setlists, and performance data
+- **Photos**: Professional photography from events
+- **Videos**: YouTube performance videos
+- **Songs**: Setlist data including covers, mashups, and medleys
+
+## Contact
+
+- Email: info@bottb.com
+- Website: https://www.battleofthetechbands.com
+

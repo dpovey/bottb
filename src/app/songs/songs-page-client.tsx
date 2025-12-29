@@ -12,18 +12,26 @@ import { PublicLayout } from '@/components/layouts/public-layout'
 interface SongsPageClientProps {
   events: { id: string; name: string }[]
   companies: { slug: string; name: string }[]
+  initialSongs: SetlistSong[]
+  initialTotal: number
 }
 
 type SortField = 'title' | 'artist' | 'event' | 'band'
 type SortDirection = 'asc' | 'desc'
 
-export function SongsPageClient({ events, companies }: SongsPageClientProps) {
+export function SongsPageClient({
+  events,
+  companies,
+  initialSongs,
+  initialTotal,
+}: SongsPageClientProps) {
   const searchParams = useSearchParams()
   const initialSearch = searchParams.get('search') || ''
 
-  const [songs, setSongs] = useState<SetlistSong[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [total, setTotal] = useState(0)
+  // Use server-provided initial data for SSR, then client takes over
+  const [songs, setSongs] = useState<SetlistSong[]>(initialSongs)
+  const [isLoading, setIsLoading] = useState(false) // Start false since we have initial data
+  const [total, setTotal] = useState(initialTotal)
 
   // Filters
   const [search, setSearch] = useState(initialSearch)
@@ -57,7 +65,14 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
     return () => clearTimeout(timer)
   }, [search])
 
-  // Fetch songs
+  // Track if filters have changed from initial state (to skip unnecessary initial fetch)
+  const hasFiltersChanged =
+    eventFilter !== '' ||
+    typeFilter !== '' ||
+    debouncedSearch !== '' ||
+    page !== 1
+
+  // Fetch songs when filters change (skip initial mount since we have SSR data)
   const fetchSongs = useCallback(async () => {
     setIsLoading(true)
     try {
@@ -82,8 +97,12 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
   }, [eventFilter, typeFilter, debouncedSearch, page])
 
   useEffect(() => {
-    fetchSongs()
-  }, [fetchSongs])
+    // Skip fetch on initial mount - we have SSR data
+    // Only fetch when user applies filters or changes page
+    if (hasFiltersChanged) {
+      fetchSongs()
+    }
+  }, [fetchSongs, hasFiltersChanged])
 
   // Filter songs by company (client-side since it's not in the API)
   const filteredSongs = companyFilter

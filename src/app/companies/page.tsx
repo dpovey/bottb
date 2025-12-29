@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -12,6 +13,22 @@ import {
 } from '@/lib/nav-data'
 import type { CompanyWithStats, Company } from '@/lib/db'
 import type { BreadcrumbItem } from '@/components/nav'
+import { getBaseUrl } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: 'Bands | Battle of the Tech Bands',
+  description:
+    'Browse all companies and their bands that have participated in Battle of the Tech Bands events.',
+  alternates: {
+    canonical: `${getBaseUrl()}/companies`,
+  },
+  openGraph: {
+    title: 'Bands | Battle of the Tech Bands',
+    description:
+      'Browse all companies and their bands that have participated in Battle of the Tech Bands events.',
+    type: 'website',
+  },
+}
 
 interface CompaniesPageProps {
   searchParams: Promise<{ company?: string }>
