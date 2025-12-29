@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Photo, Event } from '@/lib/db'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
+import { buildPhotoApiParams, type ShuffleParam } from '@/lib/shuffle-types'
 
 interface Company {
   slug: string
@@ -20,6 +21,7 @@ interface PhotosResponse {
   }
   photographers: string[]
   companies: Company[]
+  seed?: string
 }
 
 interface SlideshowPageContentProps {
@@ -27,7 +29,8 @@ interface SlideshowPageContentProps {
   initialEventId: string | null
   initialPhotographer: string | null
   initialCompanySlug: string | null
-  initialSeed: number | null
+  /** Shuffle param from URL: 'true', specific seed, or null for date order */
+  initialShuffle: string | null
 }
 
 export function SlideshowPageContent({
@@ -35,7 +38,7 @@ export function SlideshowPageContent({
   initialEventId,
   initialPhotographer,
   initialCompanySlug,
-  initialSeed,
+  initialShuffle,
 }: SlideshowPageContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -47,8 +50,8 @@ export function SlideshowPageContent({
   const [totalCount, setTotalCount] = useState(0)
   const [slideshowIndex, setSlideshowIndex] = useState(0)
 
-  // Seed for deterministic random ordering (from gallery URL)
-  const seed = initialSeed
+  // Shuffle state - preserves the seed from gallery for consistent ordering
+  const [shuffle, setShuffle] = useState<ShuffleParam>(initialShuffle)
 
   // Filters from URL
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
@@ -69,11 +72,13 @@ export function SlideshowPageContent({
     const eventId = searchParams.get('event')
     const photographer = searchParams.get('photographer')
     const company = searchParams.get('company')
+    const shuffleParam = searchParams.get('shuffle')
 
     setSelectedEventId(eventId || null)
     setSelectedPhotographer(photographer || null)
     setSelectedCompanySlug(company || null)
-  }, [searchParams])
+    setShuffle(shuffleParam || initialShuffle)
+  }, [searchParams, initialShuffle])
 
   // Fetch events on mount
   useEffect(() => {
@@ -110,24 +115,25 @@ export function SlideshowPageContent({
     setLoading(true)
 
     try {
-      const params = new URLSearchParams()
-      if (selectedEventId) params.set('event', selectedEventId)
-      if (selectedPhotographer) params.set('photographer', selectedPhotographer)
-      if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-      params.set('limit', '50')
-      // Use same random order as gallery if seed is provided, otherwise date order
-      if (seed) {
-        params.set('order', 'random')
-        params.set('seed', seed.toString())
-      } else {
-        params.set('order', 'date')
-      }
+      // Use type-safe buildPhotoApiParams to ensure consistent API calls
+      const params = buildPhotoApiParams({
+        eventId: selectedEventId || undefined,
+        photographer: selectedPhotographer || undefined,
+        companySlug: selectedCompanySlug || undefined,
+        shuffle, // Uses 'shuffle' param, not deprecated 'order=random&seed=X'
+        limit: 50,
+      })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (res.ok) {
         const data: PhotosResponse = await res.json()
         setTotalCount(data.pagination.total)
         if (data.companies) setCompanies(data.companies)
+
+        // Resolve seed from API response if we sent 'true'
+        if (data.seed && shuffle === 'true') {
+          setShuffle(data.seed)
+        }
 
         // Find the initial photo in the results or fetch it
         let photosToSet = data.photos
@@ -170,7 +176,7 @@ export function SlideshowPageContent({
     selectedPhotographer,
     selectedCompanySlug,
     initialPhotoId,
-    seed,
+    shuffle,
   ])
 
   // Fetch photos on mount and when filters change
@@ -241,6 +247,15 @@ export function SlideshowPageContent({
             url.searchParams.delete('company')
           }
           break
+        case 'shuffle':
+          // Handle shuffle toggle from slideshow
+          setShuffle(value)
+          if (value) {
+            url.searchParams.set('shuffle', value)
+          } else {
+            url.searchParams.delete('shuffle')
+          }
+          break
       }
 
       window.history.replaceState({}, '', url.pathname + url.search)
@@ -273,6 +288,7 @@ export function SlideshowPageContent({
         eventId: selectedEventId,
         photographer: selectedPhotographer,
         companySlug: selectedCompanySlug,
+        shuffle: shuffle || undefined,
       }}
       filterNames={{
         eventName: events.find((e) => e.id === selectedEventId)?.name,

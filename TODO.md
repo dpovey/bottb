@@ -96,6 +96,8 @@
 - [ ] **Database connection pooling** - Configure Neon pooling limits
 - [ ] **Console error review** - Audit `suppressHydrationWarning` usage
 - [ ] **Separate PostHog projects** - Dev vs prod environments
+- [ ] **Migrate PhotosContent to useShuffledPhotos** - Refactor `src/app/photos/photos-content.tsx` to use the unified hook for consistency
+- [ ] **Remove manual useCallback/useMemo** - React Compiler handles memoization automatically (see `doc/practices/react.md`). ~83 occurrences across 16 files to clean up
 
 ### Testing (Extended)
 

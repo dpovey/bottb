@@ -1,5 +1,10 @@
 export { usePaginatedData } from './use-paginated-data'
 export {
+  useShuffledPhotos,
+  type UseShuffledPhotosOptions,
+  type UseShuffledPhotosResult,
+} from './use-shuffled-photos'
+export {
   apiFetch,
   isRateLimitError,
   getRateLimitInfo,

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Photo } from '@/lib/db-types'
+import type { Photo } from '@/lib/db-types'
 import { trackPhotoClick } from '@/lib/analytics'
 import {
   ChevronLeftIcon,
@@ -11,6 +11,7 @@ import {
   SpinnerIcon,
 } from '@/components/icons'
 import { Skeleton } from '@/components/ui'
+import { useShuffledPhotos } from '@/lib/hooks/use-shuffled-photos'
 
 interface PhotoStripProps {
   /** Filter by event ID */
@@ -35,17 +36,6 @@ interface PhotoStripProps {
   initialTotalCount?: number
 }
 
-interface PhotosResponse {
-  photos: Photo[]
-  pagination: {
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-  }
-  seed?: string // The shuffle seed used by the server
-}
-
 const PAGE_SIZE = 50
 const PREFETCH_THRESHOLD = 10 // Prefetch when within 10 photos of edge
 
@@ -63,16 +53,26 @@ export function PhotoStrip({
 }: PhotoStripProps) {
   const router = useRouter()
 
-  // All loaded photos for the strip
-  const [photos, setPhotos] = useState<Photo[]>(initialPhotos || [])
-  const [totalCount, setTotalCount] = useState(initialTotalCount || 0)
-  const [loading, setLoading] = useState(!initialPhotos)
-  const [loadedPages, setLoadedPages] = useState<Set<number>>(
-    initialPhotos ? new Set([1]) : new Set()
-  )
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  // The shuffle seed returned by the API (for consistent ordering across links)
-  const [shuffleSeed, setShuffleSeed] = useState<string | null>(null)
+  // Use the unified hook for photo fetching and shuffle management
+  const {
+    photos,
+    totalCount,
+    shuffle,
+    loading,
+    loadingMore,
+    loadMore,
+    hasMore,
+    buildSlideshowUrl,
+  } = useShuffledPhotos({
+    eventId,
+    bandId,
+    photographer,
+    companySlug,
+    initialShuffle: 'true', // Photo strips always default to shuffled
+    pageSize: PAGE_SIZE,
+    initialPhotos,
+    initialTotalCount,
+  })
 
   // Strip navigation state
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -81,109 +81,25 @@ export function PhotoStrip({
   const isInitialMount = useRef(true)
 
   // Build the view all link based on filters (includes shuffle seed for consistent ordering)
-  const galleryLink =
-    viewAllLink ||
-    (() => {
-      const params = new URLSearchParams()
-      if (eventId) params.set('event', eventId)
-      if (bandId) params.set('band', bandId)
-      if (companySlug) params.set('company', companySlug)
-      if (photographer) params.set('photographer', photographer)
-      // Include shuffle seed so gallery shows same order as strip
-      if (shuffleSeed) params.set('shuffle', shuffleSeed)
-      return `/photos${params.toString() ? `?${params.toString()}` : ''}`
-    })()
+  const galleryLink = useMemo(() => {
+    if (viewAllLink) return viewAllLink
 
-  // Fetch a specific page of photos
-  const fetchPage = useCallback(
-    async (page: number): Promise<Photo[]> => {
-      const params = new URLSearchParams()
-      if (eventId) params.set('event', eventId)
-      if (bandId) params.set('band', bandId)
-      if (companySlug) params.set('company', companySlug)
-      if (photographer) params.set('photographer', photographer)
-      params.set('limit', PAGE_SIZE.toString())
-      params.set('page', page.toString())
-      // Use existing seed if we have one (for consistent pagination), otherwise request new shuffle
-      params.set('shuffle', shuffleSeed || 'true')
-
-      const res = await fetch(`/api/photos?${params.toString()}`)
-      if (!res.ok) return []
-
-      const data: PhotosResponse = await res.json()
-      setTotalCount(data.pagination.total)
-      // Capture the seed from the server for consistent ordering across links
-      if (data.seed && !shuffleSeed) {
-        setShuffleSeed(data.seed)
-      }
-      return data.photos
-    },
-    [eventId, bandId, companySlug, photographer, shuffleSeed]
-  )
-
-  // Initial fetch (only if initialPhotos not provided)
-  useEffect(() => {
-    if (initialPhotos) {
-      // Already have initial photos from server, skip fetch
-      return
-    }
-
-    async function fetchInitialPhotos() {
-      setLoading(true)
-      try {
-        const fetchedPhotos = await fetchPage(1)
-        // Deduplicate by ID (can happen with random ordering)
-        const seen = new Set<string>()
-        const uniquePhotos = fetchedPhotos.filter((p) => {
-          if (seen.has(p.id)) return false
-          seen.add(p.id)
-          return true
-        })
-        setPhotos(uniquePhotos)
-        setLoadedPages(new Set([1]))
-      } catch (error) {
-        console.error('Failed to fetch photos for strip:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchInitialPhotos()
-  }, [fetchPage, initialPhotos])
-
-  // Load next page
-  const loadNextPage = useCallback(async () => {
-    const nextPage = Math.max(...Array.from(loadedPages)) + 1
-    const maxPage = Math.ceil(totalCount / PAGE_SIZE)
-
-    if (nextPage > maxPage || loadedPages.has(nextPage) || isLoadingMore) return
-
-    setIsLoadingMore(true)
-    try {
-      const newPhotos = await fetchPage(nextPage)
-      if (newPhotos.length > 0) {
-        // Filter out duplicates (can happen with random ordering)
-        setPhotos((prev) => {
-          const existingIds = new Set(prev.map((p) => p.id))
-          const uniqueNew = newPhotos.filter((p) => !existingIds.has(p.id))
-          return [...prev, ...uniqueNew]
-        })
-        setLoadedPages((prev) => new Set([...prev, nextPage]))
-      }
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }, [loadedPages, totalCount, isLoadingMore, fetchPage])
+    const params = new URLSearchParams()
+    if (eventId) params.set('event', eventId)
+    if (bandId) params.set('band', bandId)
+    if (companySlug) params.set('company', companySlug)
+    if (photographer) params.set('photographer', photographer)
+    // Include shuffle seed so gallery shows same order as strip
+    if (shuffle.seed) params.set('shuffle', shuffle.seed)
+    return `/photos${params.toString() ? `?${params.toString()}` : ''}`
+  }, [viewAllLink, eventId, bandId, companySlug, photographer, shuffle.seed])
 
   // Check if we need to prefetch based on selected index
   useEffect(() => {
-    if (
-      selectedIndex >= photos.length - PREFETCH_THRESHOLD &&
-      photos.length < totalCount
-    ) {
-      loadNextPage()
+    if (selectedIndex >= photos.length - PREFETCH_THRESHOLD && hasMore) {
+      loadMore()
     }
-  }, [selectedIndex, photos.length, totalCount, loadNextPage])
+  }, [selectedIndex, photos.length, hasMore, loadMore])
 
   // Auto-scroll to keep selected photo visible
   useEffect(() => {
@@ -228,29 +144,11 @@ export function PhotoStrip({
 
       setSelectedIndex(index)
 
-      // Build slideshow URL with current filters and shuffle seed
-      const params = new URLSearchParams()
-      if (eventId) params.set('event', eventId)
-      if (bandId) params.set('band', bandId)
-      if (companySlug) params.set('company', companySlug)
-      if (photographer) params.set('photographer', photographer)
-      // Use specific seed for consistent ordering in slideshow
-      if (shuffleSeed) params.set('shuffle', shuffleSeed)
-
-      const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
+      // Use the type-safe URL builder from the hook
+      const slideshowUrl = buildSlideshowUrl(photo.id)
       router.push(slideshowUrl)
     },
-    [
-      enableSlideshow,
-      photos,
-      router,
-      eventId,
-      bandId,
-      companySlug,
-      photographer,
-      shuffleSeed,
-    ]
+    [enableSlideshow, photos, router, buildSlideshowUrl]
   )
 
   // Keyboard navigation - works when strip or any of its children has focus
@@ -341,8 +239,7 @@ export function PhotoStrip({
               )}
 
               {/* Right chevron button */}
-              {(selectedIndex < photos.length - 1 ||
-                photos.length < totalCount) && (
+              {(selectedIndex < photos.length - 1 || hasMore) && (
                 <button
                   onClick={() =>
                     setSelectedIndex((prev) =>
@@ -399,7 +296,7 @@ export function PhotoStrip({
                 ))}
 
                 {/* Loading indicator at end */}
-                {isLoadingMore && (
+                {loadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg flex items-center justify-center">
                     <SpinnerIcon
                       size={32}
@@ -409,7 +306,7 @@ export function PhotoStrip({
                 )}
 
                 {/* More photos indicator */}
-                {photos.length < totalCount && !isLoadingMore && (
+                {hasMore && !loadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg/50 flex items-center justify-center text-text-dim">
                     <span className="text-lg font-medium">
                       +{totalCount - photos.length} more
