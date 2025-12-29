@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Jost } from 'next/font/google'
+import { Suspense } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Analytics } from '@vercel/analytics/react'
@@ -9,6 +10,7 @@ import { AdminToggle } from '@/components/admin-toggle'
 import { AdminToolbar } from '@/components/admin-toolbar'
 import { ScrollRestoration } from '@/components/scroll-restoration'
 import { PostHogProvider } from '@/components/posthog-provider'
+import { NavigationProgress } from '@/components/navigation-progress'
 import { getBaseUrl } from '@/lib/seo'
 import { OrganizationJsonLd } from '@/components/seo'
 
@@ -110,6 +112,9 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ScrollRestoration />
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <PostHogProvider>
           <Providers>
             {children}
