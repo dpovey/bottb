@@ -23,14 +23,16 @@ Key files:
 **STOP and do this BEFORE making any code edits:**
 
 1. **Check current branch**: `git branch --show-current`
-2. **If on main**, create a worktree BEFORE editing any files:
+2. **If NOT on main**: Ask the user what to do. They may be in an existing worktree (continue working there), or need to navigate to the main repo first.
+3. **If on main**, fetch and create a worktree from origin/main BEFORE editing any files:
    ```bash
-   git worktree add .worktrees/{description} -b {type}/{description}
+   git fetch origin main
+   git worktree add .worktrees/{description} -b {type}/{description} origin/main
    cd .worktrees/{description}
    pnpm install
    cp ../.env.local .
    ```
-3. **Exception**: Trivial one-line fixes may go directly to main - ask user first
+4. **Exception**: Trivial one-line fixes may go directly to main - ask user first
 
 Reading code to understand the task is fine. But NO edits until you're on a feature branch.
 
@@ -81,8 +83,9 @@ Key documentation:
 ### Starting New Work
 
 ```bash
-# From the main bottb directory, create a worktree with a new branch
-git worktree add .worktrees/feature-name -b feature/feature-name
+# From the main bottb directory, fetch latest and create a worktree from origin/main
+git fetch origin main
+git worktree add .worktrees/feature-name -b feature/feature-name origin/main
 
 # Move to the new worktree
 cd .worktrees/feature-name
