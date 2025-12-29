@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:restart": "lsof -ti:3000 | xargs kill -9 2>/dev/null; rm -rf .next && next dev",
-    "build": "next build",
+    "build": "pnpm build:search-index && next build",
+    "build:search-index": "dotenv -e .env.local -- tsx src/scripts/build-search-index.ts",
     "analyze": "next experimental-analyze",
     "analyze:ci": "next experimental-analyze --output",
     "lighthouse": "lighthouse http://localhost:3000 --output=json --output=html --output-path=./lighthouse-report --chrome-flags='--headless=new' --preset=desktop",
@@ -57,6 +58,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.1",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@orama/orama": "^3.1.18",
     "@posthog/nextjs-config": "^1.7.3",
     "@types/bcrypt": "^6.0.0",
     "@vercel/analytics": "^1.5.0",

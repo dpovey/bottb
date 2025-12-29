@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SetlistSong, SongType } from '@/lib/db'
+import { slugify } from '@/lib/utils'
 import { CompanyBadge, FilterSelect, FilterSearch } from '@/components/ui'
 import { YouTubeIcon } from '@/components/icons'
 import { PublicLayout } from '@/components/layouts/public-layout'
@@ -16,12 +18,15 @@ type SortField = 'title' | 'artist' | 'event' | 'band'
 type SortDirection = 'asc' | 'desc'
 
 export function SongsPageClient({ events, companies }: SongsPageClientProps) {
+  const searchParams = useSearchParams()
+  const initialSearch = searchParams.get('search') || ''
+
   const [songs, setSongs] = useState<SetlistSong[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [total, setTotal] = useState(0)
 
   // Filters
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch)
   const [eventFilter, setEventFilter] = useState('')
   const [companyFilter, setCompanyFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState<SongType | ''>('')
@@ -35,7 +40,14 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
   const limit = 50
 
   // Debounced search
-  const [debouncedSearch, setDebouncedSearch] = useState(search)
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch)
+
+  // Sync search state with URL params on external navigation only
+  const urlSearch = searchParams.get('search') || ''
+  useEffect(() => {
+    setSearch(urlSearch)
+    setDebouncedSearch(urlSearch)
+  }, [urlSearch]) // Only trigger when URL param changes, not when search state changes
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -318,20 +330,43 @@ export function SongsPageClient({ events, companies }: SongsPageClientProps) {
                         className="hover:bg-white/2 transition-colors"
                       >
                         <td className="px-6 py-4">
-                          <span className="font-medium">{song.title}</span>
+                          <Link
+                            href={`/songs/${slugify(song.artist)}/${slugify(song.title)}`}
+                            className="font-medium hover:text-accent transition-colors"
+                          >
+                            {song.title}
+                          </Link>
                           {song.song_type === 'transition' &&
                             song.transition_to_title && (
                               <span className="text-text-dim">
-                                {' '}
-                                → {song.transition_to_title}
+                                {' → '}
+                                <Link
+                                  href={`/songs/${slugify(song.transition_to_artist || song.artist)}/${slugify(song.transition_to_title)}`}
+                                  className="hover:text-accent transition-colors"
+                                >
+                                  {song.transition_to_title}
+                                </Link>
                               </span>
                             )}
                         </td>
                         <td className="px-6 py-4 text-text-muted">
-                          {song.artist}
+                          <Link
+                            href={`/songs/${slugify(song.artist)}`}
+                            className="hover:text-accent transition-colors"
+                          >
+                            {song.artist}
+                          </Link>
                           {song.song_type === 'transition' &&
                             song.transition_to_artist && (
-                              <> / {song.transition_to_artist}</>
+                              <>
+                                {' / '}
+                                <Link
+                                  href={`/songs/${slugify(song.transition_to_artist)}`}
+                                  className="hover:text-accent transition-colors"
+                                >
+                                  {song.transition_to_artist}
+                                </Link>
+                              </>
                             )}
                           {song.additional_songs &&
                             song.additional_songs.length > 0 && (

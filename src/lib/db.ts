@@ -1850,3 +1850,36 @@ export async function unlockBandSetlist(bandId: string): Promise<void> {
     throw error
   }
 }
+
+/**
+ * Get all performances of a specific song (by title and artist).
+ * Returns all instances where this song was performed across events/bands.
+ */
+export async function getSongPerformances(
+  title: string,
+  artist: string
+): Promise<SetlistSong[]> {
+  try {
+    const { rows } = await sql<SetlistSong>`
+      SELECT s.*, 
+             b.name as band_name,
+             b.event_id,
+             e.name as event_name,
+             e.date as event_date,
+             b.company_slug,
+             c.name as company_name,
+             c.icon_url as company_icon_url
+      FROM setlist_songs s
+      JOIN bands b ON s.band_id = b.id
+      JOIN events e ON b.event_id = e.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE LOWER(s.title) = LOWER(${title})
+        AND LOWER(s.artist) = LOWER(${artist})
+      ORDER BY e.date DESC, b.name ASC
+    `
+    return rows
+  } catch (error) {
+    console.error('Error fetching song performances:', error)
+    throw error
+  }
+}

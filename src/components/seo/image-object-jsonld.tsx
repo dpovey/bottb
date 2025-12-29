@@ -1,5 +1,6 @@
 import { Photo } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
+import { slugify } from '@/lib/utils'
 
 interface ImageObjectJsonLdProps {
   photo: Photo
@@ -27,9 +28,7 @@ export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
         '@type': 'Person',
         name: photo.photographer,
         url: photo.photographer
-          ? `${baseUrl}/photographer/${encodeURIComponent(
-              photo.photographer.toLowerCase().replace(/\s+/g, '-')
-            )}`
+          ? `${baseUrl}/photographer/${slugify(photo.photographer)}`
           : undefined,
       },
     }),

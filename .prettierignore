@@ -5,6 +5,7 @@ storybook-static/
 playwright-report/
 test-results/
 backups/
+pnpm-lock.yaml
 
 # HTML with syntax errors
 design/header-dropdown.html
