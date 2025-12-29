@@ -18,14 +18,20 @@ import { join } from 'path'
 import 'dotenv/config'
 
 // Import database functions
-import { getEvents, getBands, getCompanies, getAllSongs } from '../lib/db'
+import {
+  getEvents,
+  getBands,
+  getCompanies,
+  getAllSongs,
+  getPhotographers,
+} from '../lib/db'
 
 // Search document type
 interface SearchDocument {
   id: string
   title: string
   content: string
-  type: 'event' | 'band' | 'song' | 'company' | 'page'
+  type: 'event' | 'band' | 'song' | 'company' | 'photographer' | 'page'
   url: string
   subtitle?: string
   image?: string
@@ -116,17 +122,19 @@ async function buildSearchIndex() {
     // Fetch all data from database
     console.log('📊 Fetching data from database...')
 
-    const [events, bands, companies, songs] = await Promise.all([
+    const [events, bands, companies, songs, photographers] = await Promise.all([
       getEvents(),
       getBands(),
       getCompanies(),
       getAllSongs({ limit: 1000 }), // Get all songs
+      getPhotographers(),
     ])
 
     console.log(`  ✓ ${events.length} events`)
     console.log(`  ✓ ${bands.length} bands`)
     console.log(`  ✓ ${companies.length} companies`)
     console.log(`  ✓ ${songs.length} songs`)
+    console.log(`  ✓ ${photographers.length} photographers`)
 
     // Index events
     for (const event of events) {
@@ -209,6 +217,22 @@ async function buildSearchIndex() {
         type: 'song',
         url: `/songs/${artistSlug}/${songSlug}`,
         subtitle: song.artist,
+      })
+    }
+
+    // Index photographers
+    for (const photographer of photographers) {
+      const bio = photographer.bio || ''
+      const location = photographer.location || ''
+      documents.push({
+        id: `photographer-${photographer.slug}`,
+        title: photographer.name,
+        content:
+          `${photographer.name} ${bio} ${location} photographer photography`.trim(),
+        type: 'photographer',
+        url: `/photographer/${photographer.slug}`,
+        subtitle: location || 'Event photographer',
+        image: photographer.avatar_url || undefined,
       })
     }
 

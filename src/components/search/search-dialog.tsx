@@ -18,7 +18,7 @@ interface SearchDocument {
   id: string
   title: string
   content: string
-  type: 'event' | 'band' | 'song' | 'company' | 'page'
+  type: 'event' | 'band' | 'song' | 'company' | 'photographer' | 'page'
   url: string
   subtitle?: string
   image?: string
@@ -30,6 +30,7 @@ const typeIcons: Record<SearchDocument['type'], string> = {
   band: '🎸',
   song: '🎵',
   company: '🏢',
+  photographer: '📷',
   page: '📄',
 }
 
@@ -38,6 +39,7 @@ const typeLabels: Record<SearchDocument['type'], string> = {
   band: 'Band',
   song: 'Song',
   company: 'Company',
+  photographer: 'Photographer',
   page: 'Page',
 }
 
