@@ -327,6 +327,8 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
+            inputMode="search"
+            enterKeyHint="search"
           />
           {isLoading ? (
             <SpinnerIcon className="w-5 h-5 text-text-muted animate-spin" />
@@ -344,7 +346,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
         {/* Results */}
         <div
           ref={resultsRef}
-          className="max-h-[60vh] overflow-y-auto"
+          className="max-h-[60vh] overflow-y-auto overscroll-y-contain touch-pan-y"
           role="listbox"
         >
           {error ? (
@@ -433,26 +435,6 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
           ) : (
             <div className="px-5 py-6 text-center text-text-dim text-sm">
               <p>Start typing to search</p>
-              <div className="flex items-center justify-center gap-4 mt-3 text-xs">
-                <span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
-                    ↑↓
-                  </kbd>{' '}
-                  Navigate
-                </span>
-                <span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
-                    ↵
-                  </kbd>{' '}
-                  Select
-                </span>
-                <span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-text-muted">
-                    esc
-                  </kbd>{' '}
-                  Close
-                </span>
-              </div>
             </div>
           )}
         </div>
