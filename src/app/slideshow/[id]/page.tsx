@@ -10,7 +10,7 @@ interface Props {
     event?: string
     photographer?: string
     company?: string
-    seed?: string
+    shuffle?: string
   }>
 }
 
@@ -85,7 +85,8 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  const seed = filters.seed ? parseInt(filters.seed, 10) : null
+  // Shuffle param: 'true' for shared shuffle, specific seed string, or null for date order
+  const shuffle = filters.shuffle || null
 
   return (
     <SlideshowPageContent
@@ -93,7 +94,7 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
       initialEventId={filters.event || null}
       initialPhotographer={filters.photographer || null}
       initialCompanySlug={filters.company || null}
-      initialSeed={seed}
+      initialShuffle={shuffle}
     />
   )
 }

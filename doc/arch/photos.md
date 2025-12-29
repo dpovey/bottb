@@ -48,6 +48,50 @@ pnpm bulk-upload-photos <directory> <event-id>
   - No param → chronological by date
 - **Deterministic**: Seeded PRNG (mulberry32) ensures same seed = same order
 
+### Type-Safe Shuffle Architecture
+
+To prevent parameter confusion bugs, shuffle logic is centralized in `src/lib/shuffle-types.ts`:
+
+| Export                  | Purpose                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `ShuffleParam`          | Type for shuffle URL param (`'true'` \| string \| null)                             |
+| `ShuffleState`          | Resolved state after API call (`{ enabled, seed }`)                                 |
+| `buildPhotoApiParams()` | Type-safe API param builder (always uses `shuffle`, never `seed` or `order=random`) |
+| `buildSlideshowUrl()`   | Type-safe slideshow URL builder                                                     |
+| `parseShuffleFromUrl()` | Parse shuffle from URL search params                                                |
+| `generateShuffleSeed()` | Generate random shuffle seed                                                        |
+
+**Important**: Always use `buildPhotoApiParams()` for API calls to ensure consistent parameter naming. Never use `order=random&seed=X` pattern (deprecated).
+
+### useShuffledPhotos Hook
+
+For components that need shuffle state management, use `useShuffledPhotos` from `src/lib/hooks/use-shuffled-photos.ts`:
+
+```tsx
+const {
+  photos,
+  shuffle,
+  toggleShuffle,
+  reshuffle,
+  loadMore,
+  buildSlideshowUrl,
+} = useShuffledPhotos({
+  eventId: 'event-123',
+  initialShuffle: 'true',
+})
+
+// Navigate to slideshow preserving shuffle order
+router.push(buildSlideshowUrl(photos[0].id))
+```
+
+Benefits:
+
+- Single source of truth for shuffle behavior
+- Type-safe API params via `buildPhotoApiParams()`
+- Consistent URL building via `buildSlideshowUrl()`
+- Handles seed resolution from API response
+- Pagination with infinite scroll support
+
 ### Caching
 
 - **TTL**: 15 minutes (`cacheLife('fifteenMinutes')`)
