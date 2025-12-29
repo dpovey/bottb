@@ -7,7 +7,8 @@ import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
-import { PlayCircleIcon, BuildingIcon, SpinnerIcon } from '@/components/icons'
+import { PlayCircleIcon, BuildingIcon } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
 import type { FilterOptions } from '@/lib/nav-data'
 
@@ -731,7 +732,7 @@ export function PhotosContent({
         >
           {loadingMore && (
             <div className="flex items-center gap-3 text-text-muted">
-              <SpinnerIcon size={20} className="animate-spin" />
+              <VinylSpinner size="xs" />
               <span className="text-sm">Loading more photos...</span>
             </div>
           )}

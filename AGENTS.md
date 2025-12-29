@@ -25,10 +25,11 @@ Key files:
 1. **Check current branch**: `git branch --show-current`
 2. **If NOT on main**: Ask the user what to do. They may be in an existing worktree (continue working there), or need to navigate to the main repo first.
 3. **If on main**, fetch and create a worktree from origin/main BEFORE editing any files:
+
    ```bash
    # First, check existing worktrees to ensure your name is unique
    git worktree list
-   
+
    # Then fetch and create a new worktree with a unique name
    git fetch origin main
    git worktree add .worktrees/{description} -b {type}/{description} origin/main
@@ -36,8 +37,9 @@ Key files:
    pnpm install
    cp ../.env.local .
    ```
-   
+
    > **Naming**: Review the `git worktree list` output and choose a unique directory name. If a worktree with your intended name already exists, either continue work there or pick a different name (e.g., append `-v2` or use a more specific description).
+
 4. **Exception**: Trivial one-line fixes may go directly to main - ask user first
 
 Reading code to understand the task is fine. But NO edits until you're on a feature branch.

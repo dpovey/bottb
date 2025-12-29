@@ -51,3 +51,4 @@ export {
   type ModalProps,
   type ConfirmModalProps,
 } from './modal'
+export { VinylSpinner, type VinylSpinnerProps } from './vinyl-spinner'

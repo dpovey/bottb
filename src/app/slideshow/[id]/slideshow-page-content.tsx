@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Photo, Event } from '@/lib/db'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
 import { buildPhotoApiParams, type ShuffleParam } from '@/lib/shuffle-types'
+import { VinylSpinner } from '@/components/ui'
 
 interface Company {
   slug: string
@@ -271,7 +272,7 @@ export function SlideshowPageContent({
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white mx-auto mb-4"></div>
+          <VinylSpinner size="md" className="mx-auto mb-4" />
           <p className="text-gray-400">Loading photos...</p>
         </div>
       </div>

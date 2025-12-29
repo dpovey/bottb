@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Modal } from '@/components/ui'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
-import { SpinnerIcon, CheckIcon } from '@/components/icons'
+import { CheckIcon } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 
 // Label display info
 const LABEL_INFO = {
@@ -203,7 +204,7 @@ export function HeroLabelsModal({
     >
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <SpinnerIcon size={32} className="animate-spin text-text-muted" />
+          <VinylSpinner size="xs" className="text-text-muted" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -256,9 +257,7 @@ export function HeroLabelsModal({
                 disabled={isSavingFocalPoint}
                 className="text-sm px-3 py-1.5 bg-accent hover:bg-accent-light rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {isSavingFocalPoint && (
-                  <SpinnerIcon size={14} className="animate-spin" />
-                )}
+                {isSavingFocalPoint && <VinylSpinner size="xxs" />}
                 Save Point
               </button>
             </div>

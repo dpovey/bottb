@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Video } from '@/lib/db'
-import { EditIcon, DeleteIcon, SpinnerIcon } from '@/components/icons'
+import { EditIcon, DeleteIcon } from '@/components/icons'
+import { VinylSpinner } from '@/components/ui'
 
 interface VideoAdminClientProps {
   initialVideos: Video[]
@@ -428,7 +429,7 @@ function VideoRow({
           title="Delete video"
         >
           {isDeleting ? (
-            <SpinnerIcon className="w-5 h-5" />
+            <VinylSpinner size="xxs" />
           ) : (
             <DeleteIcon className="w-5 h-5" />
           )}

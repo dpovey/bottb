@@ -6,12 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Photo } from '@/lib/db-types'
 import { trackPhotoClick } from '@/lib/analytics'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  SpinnerIcon,
-} from '@/components/icons'
-import { Skeleton } from '@/components/ui'
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
+import { Skeleton, VinylSpinner } from '@/components/ui'
 import { useShuffledPhotos } from '@/lib/hooks/use-shuffled-photos'
 
 interface PhotoStripProps {
@@ -301,10 +297,7 @@ export function PhotoStrip({
                 {/* Loading indicator at end */}
                 {loadingMore && (
                   <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg flex items-center justify-center">
-                    <SpinnerIcon
-                      size={32}
-                      className="animate-spin text-text-dim"
-                    />
+                    <VinylSpinner size="xs" className="text-text-dim" />
                   </div>
                 )}
 
