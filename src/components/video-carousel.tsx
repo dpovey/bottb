@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 import { Video } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -189,11 +190,12 @@ export function VideoCarousel({
             >
               {/* Thumbnail */}
               <div className="relative aspect-video rounded-lg overflow-hidden bg-bg-elevated border border-white/5 group-hover:border-white/20 transition-colors">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={getThumbnailUrl(video)}
                   alt={video.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 280px, 320px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
 
