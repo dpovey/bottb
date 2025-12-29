@@ -10,7 +10,13 @@ import {
   CloseIcon,
   PlusIcon,
 } from '@/components/icons'
-import { VinylSpinner } from '@/components/ui'
+import {
+  VinylSpinner,
+  Modal,
+  ConfirmModal,
+  Button,
+  Card,
+} from '@/components/ui'
 
 interface Event {
   id: string
@@ -46,9 +52,15 @@ export default function EventAdminDashboard({
   const [isLoading, setIsLoading] = useState(true)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
+  const [clearSuccess, setClearSuccess] = useState<string | null>(null)
   const [bands, setBands] = useState<Band[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoadingBands, setIsLoadingBands] = useState(true)
+  const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Delete band confirmation modal state
+  const [deleteBandTarget, setDeleteBandTarget] = useState<Band | null>(null)
+  const [isDeletingBand, setIsDeletingBand] = useState(false)
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -99,6 +111,8 @@ export default function EventAdminDashboard({
 
   const handleClearScores = async () => {
     setIsClearing(true)
+    setOperationError(null)
+    setClearSuccess(null)
     try {
       const response = await fetch(`/api/events/${eventId}/clear-scores`, {
         method: 'DELETE',
@@ -106,15 +120,15 @@ export default function EventAdminDashboard({
 
       if (response.ok) {
         const result = await response.json()
-        alert(`✅ ${result.message}`)
+        setClearSuccess(result.message)
         setShowClearConfirm(false)
       } else {
         const error = await response.json()
-        alert(`❌ Error: ${error.error}`)
+        setOperationError(error.error || 'Failed to clear scores')
       }
     } catch (error) {
       console.error('Error clearing scores:', error)
-      alert('❌ Failed to clear scores')
+      setOperationError('Failed to clear scores')
     } finally {
       setIsClearing(false)
     }
@@ -122,6 +136,7 @@ export default function EventAdminDashboard({
 
   // Band management handlers
   const handleAddBand = async (name: string, companySlug: string | null) => {
+    setOperationError(null)
     try {
       const response = await fetch('/api/bands', {
         method: 'POST',
@@ -143,12 +158,12 @@ export default function EventAdminDashboard({
         return true
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        setOperationError(error.error || 'Failed to add band')
         return false
       }
     } catch (error) {
       console.error('Error adding band:', error)
-      alert('Failed to add band')
+      setOperationError('Failed to add band')
       return false
     }
   }
@@ -157,6 +172,7 @@ export default function EventAdminDashboard({
     bandId: string,
     updates: { name?: string; company_slug?: string | null }
   ) => {
+    setOperationError(null)
     try {
       const response = await fetch(`/api/band/${bandId}`, {
         method: 'PATCH',
@@ -182,37 +198,39 @@ export default function EventAdminDashboard({
         return true
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        setOperationError(error.error || 'Failed to update band')
         return false
       }
     } catch (error) {
       console.error('Error updating band:', error)
+      setOperationError('Failed to update band')
       return false
     }
   }
 
-  const handleDeleteBand = async (bandId: string) => {
-    const band = bands.find((b) => b.id === bandId)
-    if (!band) return
+  const confirmDeleteBand = async () => {
+    if (!deleteBandTarget) return
 
-    if (!confirm(`Delete band "${band.name}"? This cannot be undone.`)) {
-      return
-    }
+    setIsDeletingBand(true)
+    setOperationError(null)
 
     try {
-      const response = await fetch(`/api/band/${bandId}`, {
+      const response = await fetch(`/api/band/${deleteBandTarget.id}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        setBands(bands.filter((b) => b.id !== bandId))
+        setBands(bands.filter((b) => b.id !== deleteBandTarget.id))
+        setDeleteBandTarget(null)
       } else {
         const error = await response.json()
-        alert(`Error: ${error.error}`)
+        setOperationError(error.error || 'Failed to delete band')
       }
     } catch (error) {
       console.error('Error deleting band:', error)
-      alert('Failed to delete band')
+      setOperationError('Failed to delete band')
+    } finally {
+      setIsDeletingBand(false)
     }
   }
 
@@ -234,6 +252,32 @@ export default function EventAdminDashboard({
 
   return (
     <div className="space-y-8">
+      {/* Operation Error Banner */}
+      {operationError && (
+        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{operationError}</span>
+          <button
+            onClick={() => setOperationError(null)}
+            className="text-error hover:text-white cursor-pointer"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Success Banner */}
+      {clearSuccess && (
+        <div className="bg-success/20 border border-success/50 text-success px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>✅ {clearSuccess}</span>
+          <button
+            onClick={() => setClearSuccess(null)}
+            className="text-success hover:text-white cursor-pointer"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Status Badge */}
       <div className="flex items-center gap-4">
         <span
@@ -316,7 +360,7 @@ export default function EventAdminDashboard({
       </div>
 
       {/* Band Management */}
-      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+      <Card>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-2xl font-bold text-white">
             Bands ({bands.length})
@@ -343,15 +387,15 @@ export default function EventAdminDashboard({
                   index={index}
                   companies={companies}
                   onUpdate={handleUpdateBand}
-                  onDelete={handleDeleteBand}
+                  onRequestDelete={setDeleteBandTarget}
                 />
               ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Additional Actions */}
-      <div className="bg-elevated rounded-2xl p-8 border border-white/5">
+      <Card padding="lg">
         <h3 className="text-2xl font-bold text-white mb-6 text-center">
           Quick Actions
         </h3>
@@ -374,55 +418,78 @@ export default function EventAdminDashboard({
           >
             ⚖️ Test Judge Scoring
           </Link>
-          <button
+          <Button
+            variant="danger"
             onClick={() => setShowClearConfirm(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
             disabled={isClearing}
+            className="py-4"
           >
             {isClearing ? '⏳ Clearing...' : '🗑️ Clear Scores'}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
-      {/* Clear Scores Confirmation Dialog */}
-      {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md mx-4">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Clear All Scores?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              This will permanently delete all voting data for{' '}
-              <strong>{event?.name}</strong>:
-            </p>
-            <ul className="text-gray-600 mb-6 ml-4 list-disc">
-              <li>All judge votes (song choice, performance, crowd vibe)</li>
-              <li>All crowd votes</li>
-              <li>
-                All crowd noise measurements (energy levels, peak volume, crowd
-                scores)
-              </li>
-            </ul>
-            <p className="text-gray-600 mb-6">This action cannot be undone.</p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-                disabled={isClearing}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClearScores}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-                disabled={isClearing}
-              >
-                {isClearing ? 'Clearing...' : 'Yes, Clear All Scores'}
-              </button>
-            </div>
+      {/* Clear Scores Confirmation Modal */}
+      <Modal
+        isOpen={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        title="Clear All Scores?"
+        disabled={isClearing}
+        size="md"
+        footer={
+          <div className="flex gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => setShowClearConfirm(false)}
+              disabled={isClearing}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleClearScores}
+              disabled={isClearing}
+              className="flex-1"
+            >
+              {isClearing ? (
+                <>
+                  <VinylSpinner size="xxs" />
+                  Clearing...
+                </>
+              ) : (
+                'Yes, Clear All Scores'
+              )}
+            </Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <p className="text-text-muted mb-4">
+          This will permanently delete all voting data for{' '}
+          <strong className="text-white">{event?.name}</strong>:
+        </p>
+        <ul className="text-text-muted mb-4 ml-4 list-disc space-y-1">
+          <li>All judge votes (song choice, performance, crowd vibe)</li>
+          <li>All crowd votes</li>
+          <li>
+            All crowd noise measurements (energy levels, peak volume, crowd
+            scores)
+          </li>
+        </ul>
+        <p className="text-error">This action cannot be undone.</p>
+      </Modal>
+
+      {/* Delete Band Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteBandTarget}
+        onClose={() => setDeleteBandTarget(null)}
+        onConfirm={confirmDeleteBand}
+        title="Delete Band"
+        message={`Are you sure you want to delete "${deleteBandTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={isDeletingBand}
+        variant="danger"
+      />
     </div>
   )
 }
@@ -456,13 +523,10 @@ function AddBandForm({
 
   if (!isAdding) {
     return (
-      <button
-        onClick={() => setIsAdding(true)}
-        className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-      >
+      <Button variant="accent" onClick={() => setIsAdding(true)}>
         <PlusIcon size={20} />
         Add Band
-      </button>
+      </Button>
     )
   }
 
@@ -492,22 +556,22 @@ function AddBandForm({
       <button
         type="submit"
         disabled={isSubmitting || !name.trim()}
-        className="px-4 py-2 bg-success hover:bg-success-light text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+        className="px-4 py-2 bg-success hover:bg-success-light text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
       >
         {isSubmitting ? <VinylSpinner size="xxs" /> : <CheckIcon size={18} />}
         Add
       </button>
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => {
           setIsAdding(false)
           setName('')
           setCompanySlug('')
         }}
-        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
       >
         Cancel
-      </button>
+      </Button>
     </form>
   )
 }
@@ -518,7 +582,7 @@ function BandRow({
   index,
   companies,
   onUpdate,
-  onDelete,
+  onRequestDelete,
 }: {
   band: Band
   index: number
@@ -527,7 +591,7 @@ function BandRow({
     bandId: string,
     updates: { name?: string; company_slug?: string | null }
   ) => Promise<boolean>
-  onDelete: (bandId: string) => Promise<void>
+  onRequestDelete: (band: Band) => void
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(band.name)
@@ -535,7 +599,6 @@ function BandRow({
     band.company_slug || ''
   )
   const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -553,12 +616,6 @@ function BandRow({
     setIsEditing(false)
     setEditName(band.name)
     setEditCompanySlug(band.company_slug || '')
-  }
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    await onDelete(band.id)
-    setIsDeleting(false)
   }
 
   return (
@@ -627,22 +684,17 @@ function BandRow({
           <>
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Edit"
             >
               <EditIcon size={18} />
             </button>
             <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => onRequestDelete(band)}
+              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors cursor-pointer"
               title="Delete"
             >
-              {isDeleting ? (
-                <VinylSpinner size="xxs" />
-              ) : (
-                <DeleteIcon size={18} />
-              )}
+              <DeleteIcon size={18} />
             </button>
           </>
         )}

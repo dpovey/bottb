@@ -589,6 +589,193 @@ export const handlers = [
     })
   }),
 
+  // Companies API (Admin)
+  http.get('/api/companies', ({ request }) => {
+    const url = new URL(request.url)
+    const mode = url.searchParams.get('mode')
+
+    if (mode === 'list') {
+      return HttpResponse.json({
+        companies: [
+          { slug: 'company-1', name: 'Test Company 1' },
+          { slug: 'company-2', name: 'Test Company 2' },
+        ],
+      })
+    }
+
+    return HttpResponse.json({
+      companies: [
+        {
+          slug: 'company-1',
+          name: 'Test Company 1',
+          website: 'https://company1.com',
+          icon_url: 'https://example.com/icon1.png',
+          band_count: 5,
+          event_count: 3,
+          created_at: '2024-01-01T00:00:00Z',
+        },
+        {
+          slug: 'company-2',
+          name: 'Test Company 2',
+          website: null,
+          icon_url: null,
+          band_count: 0,
+          event_count: 0,
+          created_at: '2024-01-02T00:00:00Z',
+        },
+      ],
+    })
+  }),
+
+  http.post('/api/companies', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    if (body.slug === 'duplicate') {
+      return HttpResponse.json(
+        { error: 'Company with this slug already exists' },
+        { status: 409 }
+      )
+    }
+
+    return HttpResponse.json({
+      company: {
+        slug: body.slug || 'new-company',
+        name: body.name,
+        website: body.website || null,
+        icon_url: body.icon_url || null,
+        created_at: '2024-01-01T00:00:00Z',
+      },
+    })
+  }),
+
+  http.patch('/api/companies/:slug', async ({ params, request }) => {
+    const { slug } = params
+    const body = (await request.json()) as Record<string, unknown>
+
+    if (slug === 'not-found') {
+      return HttpResponse.json({ error: 'Company not found' }, { status: 404 })
+    }
+
+    return HttpResponse.json({
+      company: {
+        slug,
+        name: body.name || 'Test Company',
+        website: body.website,
+        icon_url: body.icon_url,
+        created_at: '2024-01-01T00:00:00Z',
+      },
+    })
+  }),
+
+  http.delete('/api/companies/:slug', ({ params }) => {
+    const { slug } = params
+
+    if (slug === 'not-found') {
+      return HttpResponse.json({ error: 'Company not found' }, { status: 404 })
+    }
+
+    if (slug === 'has-bands') {
+      return HttpResponse.json(
+        { error: 'Cannot delete company with existing bands' },
+        { status: 400 }
+      )
+    }
+
+    return HttpResponse.json({ success: true })
+  }),
+
+  // Photographers API (Admin)
+  http.post('/api/photographers', async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>
+
+    if (body.slug === 'duplicate') {
+      return HttpResponse.json(
+        { error: 'Photographer with this slug already exists' },
+        { status: 409 }
+      )
+    }
+
+    return HttpResponse.json({
+      photographer: {
+        slug: body.slug || 'new-photographer',
+        name: body.name,
+        bio: body.bio || null,
+        location: body.location || null,
+        website: body.website || null,
+        instagram: body.instagram || null,
+        email: body.email || null,
+        avatar_url: body.avatar_url || null,
+        created_at: '2024-01-01T00:00:00Z',
+      },
+    })
+  }),
+
+  http.patch('/api/photographers/:slug', async ({ params, request }) => {
+    const { slug } = params
+    const body = (await request.json()) as Record<string, unknown>
+
+    if (slug === 'not-found') {
+      return HttpResponse.json(
+        { error: 'Photographer not found' },
+        { status: 404 }
+      )
+    }
+
+    return HttpResponse.json({
+      photographer: {
+        slug,
+        name: body.name || 'Test Photographer',
+        bio: body.bio,
+        location: body.location,
+        website: body.website,
+        instagram: body.instagram,
+        email: body.email,
+        avatar_url: body.avatar_url,
+        created_at: '2024-01-01T00:00:00Z',
+      },
+    })
+  }),
+
+  http.delete('/api/photographers/:slug', ({ params }) => {
+    const { slug } = params
+
+    if (slug === 'not-found') {
+      return HttpResponse.json(
+        { error: 'Photographer not found' },
+        { status: 404 }
+      )
+    }
+
+    if (slug === 'has-photos') {
+      return HttpResponse.json(
+        { error: 'Cannot delete photographer with existing photos' },
+        { status: 400 }
+      )
+    }
+
+    return HttpResponse.json({ success: true })
+  }),
+
+  // Photos PATCH API (Admin)
+  http.patch('/api/photos/:photoId', async ({ params, request }) => {
+    const { photoId } = params
+    const body = (await request.json()) as Record<string, unknown>
+
+    if (photoId === 'not-found') {
+      return HttpResponse.json({ error: 'Photo not found' }, { status: 404 })
+    }
+
+    return HttpResponse.json({
+      photo: {
+        id: photoId,
+        event_id: body.event_id,
+        band_id: body.band_id,
+        photographer: body.photographer,
+        match_confidence: 'manual',
+      },
+    })
+  }),
+
   // Fallback handler for unhandled requests
   http.all('*', () => {
     return HttpResponse.json(

@@ -3,7 +3,14 @@
 import { useState, useCallback } from 'react'
 import { Photo } from '@/lib/db-types'
 import { EditIcon, CheckIcon, CloseIcon, WarningIcon } from '@/components/icons'
-import { VinylSpinner } from '@/components/ui'
+import {
+  VinylSpinner,
+  FilterBar,
+  FilterSelect,
+  FilterClearButton,
+  Button,
+  Card,
+} from '@/components/ui'
 
 interface PhotoAdminClientProps {
   initialPhotos: Photo[]
@@ -163,105 +170,80 @@ export function PhotoAdminClient({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-elevated rounded-xl p-4 border border-white/5">
-        <div className="flex flex-wrap gap-4 items-end">
-          {/* Event Filter */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Event
-            </label>
-            <select
-              value={filterEvent}
-              onChange={(e) => {
-                setFilterEvent(e.target.value)
-                setFilterBand('')
-              }}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
-            >
-              <option value="">All Events</option>
-              {events.map((event) => (
-                <option key={event.id} value={event.id}>
-                  {event.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <FilterBar>
+        <FilterSelect
+          label="Event"
+          value={filterEvent}
+          onChange={(e) => {
+            setFilterEvent(e.target.value)
+            setFilterBand('')
+          }}
+          containerClassName="min-w-[200px]"
+        >
+          <option value="">All Events</option>
+          {events.map((event) => (
+            <option key={event.id} value={event.id}>
+              {event.name}
+            </option>
+          ))}
+        </FilterSelect>
 
-          {/* Band Filter */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Band
-            </label>
-            <select
-              value={filterBand}
-              onChange={(e) => setFilterBand(e.target.value)}
-              disabled={!filterEvent}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
-            >
-              <option value="">All Bands</option>
-              {filterEvent &&
-                bandsMap[filterEvent]?.map((band) => (
-                  <option key={band.id} value={band.id}>
-                    {band.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+        <FilterSelect
+          label="Band"
+          value={filterBand}
+          onChange={(e) => setFilterBand(e.target.value)}
+          disabled={!filterEvent}
+          containerClassName="min-w-[200px]"
+        >
+          <option value="">All Bands</option>
+          {filterEvent &&
+            bandsMap[filterEvent]?.map((band) => (
+              <option key={band.id} value={band.id}>
+                {band.name}
+              </option>
+            ))}
+        </FilterSelect>
 
-          {/* Photographer Filter */}
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Photographer
-            </label>
-            <select
-              value={filterPhotographer}
-              onChange={(e) => setFilterPhotographer(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
-            >
-              <option value="">All Photographers</option>
-              {photographers.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <FilterSelect
+          label="Photographer"
+          value={filterPhotographer}
+          onChange={(e) => setFilterPhotographer(e.target.value)}
+          containerClassName="min-w-[200px]"
+        >
+          <option value="">All Photographers</option>
+          {photographers.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </FilterSelect>
 
-          {/* Unmatched Filter */}
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterUnmatched}
-                onChange={(e) => setFilterUnmatched(e.target.checked)}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
-              />
-              <span className="text-sm text-gray-300">
-                Unmatched only
-                {unmatchedCount > 0 && (
-                  <span className="ml-1 text-warning">({unmatchedCount})</span>
-                )}
-              </span>
-            </label>
-          </div>
-
-          {/* Filter Buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleApplyFilters}
-              className="px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm rounded-lg transition-colors"
-            >
-              Apply
-            </button>
-            <button
-              onClick={handleClearFilters}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors"
-            >
-              Clear
-            </button>
-          </div>
+        {/* Unmatched Filter */}
+        <div className="flex items-end pb-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filterUnmatched}
+              onChange={(e) => setFilterUnmatched(e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
+            />
+            <span className="text-sm text-gray-300">
+              Unmatched only
+              {unmatchedCount > 0 && (
+                <span className="ml-1 text-warning">({unmatchedCount})</span>
+              )}
+            </span>
+          </label>
         </div>
-      </div>
+
+        {/* Filter Buttons */}
+        <div className="flex items-end gap-2">
+          <Button variant="accent" size="sm" onClick={handleApplyFilters}>
+            Apply
+          </Button>
+          <FilterClearButton onClick={handleClearFilters} />
+        </div>
+      </FilterBar>
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
@@ -271,22 +253,20 @@ export function PhotoAdminClient({
               {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}{' '}
               selected
             </span>
-            <button
-              onClick={clearSelection}
-              className="text-sm text-gray-300 hover:text-white"
-            >
+            <Button variant="ghost" size="sm" onClick={clearSelection}>
               Clear selection
-            </button>
+            </Button>
           </div>
           <div className="flex items-center gap-3">
             {!bulkEditMode ? (
-              <button
+              <Button
+                variant="accent"
+                size="sm"
                 onClick={() => setBulkEditMode(true)}
-                className="px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm rounded-lg transition-colors flex items-center gap-2"
               >
                 <EditIcon size={16} />
                 Bulk Edit
-              </button>
+              </Button>
             ) : (
               <div className="flex items-center gap-3">
                 <select
@@ -337,7 +317,7 @@ export function PhotoAdminClient({
                     isBulkSaving ||
                     (!bulkEventId && !bulkBandId && !bulkPhotographer)
                   }
-                  className="px-4 py-1.5 bg-success hover:bg-success-light text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-1.5 bg-success hover:bg-success-light text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                 >
                   {isBulkSaving ? (
                     <VinylSpinner size="xxs" />
@@ -346,17 +326,18 @@ export function PhotoAdminClient({
                   )}
                   Apply
                 </button>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setBulkEditMode(false)
                     setBulkEventId('')
                     setBulkBandId('')
                     setBulkPhotographer('')
                   }}
-                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -364,37 +345,36 @@ export function PhotoAdminClient({
       )}
 
       {/* Photos Table */}
-      <div className="bg-elevated rounded-xl border border-white/5 overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-semibold text-white">
               Photos ({total})
             </h2>
-            <button
-              onClick={selectAll}
-              className="text-sm text-gray-400 hover:text-white"
-            >
+            <Button variant="ghost" size="sm" onClick={selectAll}>
               Select all on page
-            </button>
+            </Button>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <span>
               Page {page} of {Math.ceil(total / pageSize)}
             </span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handlePrevPage}
               disabled={page <= 1 || isLoading}
-              className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded disabled:opacity-50"
             >
               Prev
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleNextPage}
               disabled={page >= Math.ceil(total / pageSize) || isLoading}
-              className="px-3 py-1 bg-white/10 hover:bg-white/20 rounded disabled:opacity-50"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -448,7 +428,7 @@ export function PhotoAdminClient({
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   )
 }

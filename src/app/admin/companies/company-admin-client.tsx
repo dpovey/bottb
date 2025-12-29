@@ -9,7 +9,13 @@ import {
   CloseIcon,
   PlusIcon,
 } from '@/components/icons'
-import { VinylSpinner, CompanyIcon } from '@/components/ui'
+import {
+  VinylSpinner,
+  CompanyIcon,
+  ConfirmModal,
+  Button,
+  Card,
+} from '@/components/ui'
 
 interface CompanyAdminClientProps {
   initialCompanies: CompanyWithStats[]
@@ -27,6 +33,13 @@ export function CompanyAdminClient({
   const [newIconUrl, setNewIconUrl] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState<CompanyWithStats | null>(
+    null
+  )
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Helper to generate slug from name
   const generateSlug = (name: string) => {
@@ -86,6 +99,7 @@ export function CompanyAdminClient({
       icon_url?: string | null
     }
   ) => {
+    setOperationError(null)
     try {
       const response = await fetch(`/api/companies/${slug}`, {
         method: 'PATCH',
@@ -103,61 +117,68 @@ export function CompanyAdminClient({
         return true
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to update company')
+        setOperationError(data.error || 'Failed to update company')
         return false
       }
     } catch (err) {
-      alert('Failed to update company')
+      setOperationError('Failed to update company')
       console.error(err)
       return false
     }
   }
 
-  const handleDeleteCompany = async (slug: string) => {
-    const company = companies.find((c) => c.slug === slug)
-    if (!company) return
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
 
-    if (
-      !confirm(
-        `Are you sure you want to delete "${company.name}"? This cannot be undone.`
-      )
-    ) {
-      return
-    }
+    setIsDeleting(true)
+    setOperationError(null)
 
     try {
-      const response = await fetch(`/api/companies/${slug}`, {
+      const response = await fetch(`/api/companies/${deleteTarget.slug}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        setCompanies(companies.filter((c) => c.slug !== slug))
+        setCompanies(companies.filter((c) => c.slug !== deleteTarget.slug))
+        setDeleteTarget(null)
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to delete company')
+        setOperationError(data.error || 'Failed to delete company')
       }
     } catch (err) {
-      alert('Failed to delete company')
+      setOperationError('Failed to delete company')
       console.error(err)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   return (
     <div className="space-y-6">
+      {/* Operation Error Banner */}
+      {operationError && (
+        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{operationError}</span>
+          <button
+            onClick={() => setOperationError(null)}
+            className="text-error hover:text-white"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Add Company Button */}
       <div className="flex justify-end">
-        <button
-          onClick={() => setIsAddingCompany(true)}
-          className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-        >
+        <Button variant="accent" onClick={() => setIsAddingCompany(true)}>
           <PlusIcon size={20} />
           Add Company
-        </button>
+        </Button>
       </div>
 
       {/* Add Company Form */}
       {isAddingCompany && (
-        <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+        <Card>
           <h2 className="text-xl font-bold text-white mb-4">Add New Company</h2>
           <form onSubmit={handleAddCompany} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
@@ -221,21 +242,18 @@ export function CompanyAdminClient({
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg">
+              <div className="bg-error/20 border border-error/50 text-error px-4 py-2 rounded-lg">
                 {error}
               </div>
             )}
 
             <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
-              >
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting ? 'Adding...' : 'Add Company'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setIsAddingCompany(false)
                   setError(null)
@@ -244,17 +262,16 @@ export function CompanyAdminClient({
                   setNewWebsite('')
                   setNewIconUrl('')
                 }}
-                className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* Companies List */}
-      <div className="bg-elevated rounded-2xl border border-white/5 overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         <div className="px-4 py-3 border-b border-white/5">
           <h2 className="text-lg font-semibold text-white">
             Companies ({companies.length})
@@ -275,12 +292,24 @@ export function CompanyAdminClient({
                 key={company.slug}
                 company={company}
                 onUpdate={handleUpdateCompany}
-                onDelete={handleDeleteCompany}
+                onRequestDelete={setDeleteTarget}
               />
             ))}
           </div>
         )}
-      </div>
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Company"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </div>
   )
 }
@@ -295,16 +324,15 @@ interface CompanyRowProps {
       icon_url?: string | null
     }
   ) => Promise<boolean>
-  onDelete: (slug: string) => Promise<void>
+  onRequestDelete: (company: CompanyWithStats) => void
 }
 
-function CompanyRow({ company, onUpdate, onDelete }: CompanyRowProps) {
+function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(company.name)
   const [editWebsite, setEditWebsite] = useState(company.website || '')
   const [editIconUrl, setEditIconUrl] = useState(company.icon_url || '')
   const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -324,12 +352,6 @@ function CompanyRow({ company, onUpdate, onDelete }: CompanyRowProps) {
     setEditName(company.name)
     setEditWebsite(company.website || '')
     setEditIconUrl(company.icon_url || '')
-  }
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    await onDelete(company.slug)
-    setIsDeleting(false)
   }
 
   return (
@@ -448,26 +470,22 @@ function CompanyRow({ company, onUpdate, onDelete }: CompanyRowProps) {
           <>
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Edit"
             >
               <EditIcon size={18} />
             </button>
             <button
-              onClick={handleDelete}
-              disabled={isDeleting || company.band_count > 0}
-              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => onRequestDelete(company)}
+              disabled={company.band_count > 0}
+              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
               title={
                 company.band_count > 0
                   ? 'Cannot delete - company has bands'
                   : 'Delete'
               }
             >
-              {isDeleting ? (
-                <VinylSpinner size="xxs" />
-              ) : (
-                <DeleteIcon size={18} />
-              )}
+              <DeleteIcon size={18} />
             </button>
           </>
         )}

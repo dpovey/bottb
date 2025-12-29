@@ -8,8 +8,9 @@ import {
   CheckIcon,
   PlusIcon,
   CameraIcon,
+  CloseIcon,
 } from '@/components/icons'
-import { VinylSpinner } from '@/components/ui'
+import { VinylSpinner, ConfirmModal, Button, Card } from '@/components/ui'
 
 interface PhotographerAdminClientProps {
   initialPhotographers: PhotographerWithStats[]
@@ -30,6 +31,12 @@ export function PhotographerAdminClient({
   const [newEmail, setNewEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] =
+    useState<PhotographerWithStats | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Helper to generate slug from name
   const generateSlug = (name: string) => {
@@ -92,6 +99,7 @@ export function PhotographerAdminClient({
       email?: string | null
     }
   ) => {
+    setOperationError(null)
     try {
       const response = await fetch(`/api/photographers/${slug}`, {
         method: 'PATCH',
@@ -109,42 +117,41 @@ export function PhotographerAdminClient({
         return true
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to update photographer')
+        setOperationError(data.error || 'Failed to update photographer')
         return false
       }
     } catch (err) {
-      alert('Failed to update photographer')
+      setOperationError('Failed to update photographer')
       console.error(err)
       return false
     }
   }
 
-  const handleDelete = async (slug: string) => {
-    const photographer = photographers.find((p) => p.slug === slug)
-    if (!photographer) return
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
 
-    if (
-      !confirm(
-        `Are you sure you want to delete "${photographer.name}"? This cannot be undone.`
-      )
-    ) {
-      return
-    }
+    setIsDeleting(true)
+    setOperationError(null)
 
     try {
-      const response = await fetch(`/api/photographers/${slug}`, {
+      const response = await fetch(`/api/photographers/${deleteTarget.slug}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        setPhotographers(photographers.filter((p) => p.slug !== slug))
+        setPhotographers(
+          photographers.filter((p) => p.slug !== deleteTarget.slug)
+        )
+        setDeleteTarget(null)
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to delete photographer')
+        setOperationError(data.error || 'Failed to delete photographer')
       }
     } catch (err) {
-      alert('Failed to delete photographer')
+      setOperationError('Failed to delete photographer')
       console.error(err)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -161,20 +168,30 @@ export function PhotographerAdminClient({
 
   return (
     <div className="space-y-6">
+      {/* Operation Error Banner */}
+      {operationError && (
+        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{operationError}</span>
+          <button
+            onClick={() => setOperationError(null)}
+            className="text-error hover:text-white cursor-pointer"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Add Button */}
       <div className="flex justify-end">
-        <button
-          onClick={() => setIsAdding(true)}
-          className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-        >
+        <Button variant="accent" onClick={() => setIsAdding(true)}>
           <PlusIcon size={20} />
           Add Photographer
-        </button>
+        </Button>
       </div>
 
       {/* Add Form */}
       {isAdding && (
-        <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+        <Card>
           <h2 className="text-xl font-bold text-white mb-4">
             Add New Photographer
           </h2>
@@ -274,36 +291,32 @@ export function PhotographerAdminClient({
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg">
+              <div className="bg-error/20 border border-error/50 text-error px-4 py-2 rounded-lg">
                 {error}
               </div>
             )}
 
             <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
-              >
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting ? 'Adding...' : 'Add Photographer'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setIsAdding(false)
                   resetForm()
                 }}
-                className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* Photographers List */}
-      <div className="bg-elevated rounded-2xl border border-white/5 overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         <div className="px-4 py-3 border-b border-white/5">
           <h2 className="text-lg font-semibold text-white">
             Photographers ({photographers.length})
@@ -324,12 +337,24 @@ export function PhotographerAdminClient({
                 key={photographer.slug}
                 photographer={photographer}
                 onUpdate={handleUpdate}
-                onDelete={handleDelete}
+                onRequestDelete={setDeleteTarget}
               />
             ))}
           </div>
         )}
-      </div>
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Photographer"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </div>
   )
 }
@@ -347,13 +372,13 @@ interface PhotographerRowProps {
       email?: string | null
     }
   ) => Promise<boolean>
-  onDelete: (slug: string) => Promise<void>
+  onRequestDelete: (photographer: PhotographerWithStats) => void
 }
 
 function PhotographerRow({
   photographer,
   onUpdate,
-  onDelete,
+  onRequestDelete,
 }: PhotographerRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(photographer.name)
@@ -365,7 +390,6 @@ function PhotographerRow({
   )
   const [editEmail, setEditEmail] = useState(photographer.email || '')
   const [isSaving, setIsSaving] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -391,12 +415,6 @@ function PhotographerRow({
     setEditWebsite(photographer.website || '')
     setEditInstagram(photographer.instagram || '')
     setEditEmail(photographer.email || '')
-  }
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    await onDelete(photographer.slug)
-    setIsDeleting(false)
   }
 
   return (
@@ -533,26 +551,22 @@ function PhotographerRow({
           <div className="shrink-0 flex items-center gap-2">
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
               title="Edit"
             >
               <EditIcon size={18} />
             </button>
             <button
-              onClick={handleDelete}
-              disabled={isDeleting || photographer.photo_count > 0}
-              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => onRequestDelete(photographer)}
+              disabled={photographer.photo_count > 0}
+              className="p-2 hover:bg-error/20 text-gray-400 hover:text-error rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
               title={
                 photographer.photo_count > 0
                   ? 'Cannot delete - photographer has photos'
                   : 'Delete'
               }
             >
-              {isDeleting ? (
-                <VinylSpinner size="xxs" />
-              ) : (
-                <DeleteIcon size={18} />
-              )}
+              <DeleteIcon size={18} />
             </button>
           </div>
         </div>

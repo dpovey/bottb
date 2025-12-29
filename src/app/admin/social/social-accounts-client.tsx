@@ -15,7 +15,9 @@ import {
   EditIcon,
   InfoIcon,
   PlusIcon,
+  CloseIcon,
 } from '@/components/icons'
+import { ConfirmModal } from '@/components/ui'
 
 interface SocialAccountsClientProps {
   initialAccounts: SocialAccount[]
@@ -54,6 +56,10 @@ export function SocialAccountsClient({
   const [templates] = useState(initialTemplates)
   const [recentPosts] = useState(initialRecentPosts)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Disconnect confirmation modal state
+  const [disconnectTarget, setDisconnectTarget] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -68,30 +74,32 @@ export function SocialAccountsClient({
     router.replace('/admin/social')
   }
 
-  const handleDisconnect = async (provider: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to disconnect your ${provider} account? You will need to reconnect to post.`
-      )
-    ) {
-      return
-    }
+  const confirmDisconnect = async () => {
+    if (!disconnectTarget) return
 
-    setDisconnecting(provider)
+    setDisconnecting(disconnectTarget)
+    setOperationError(null)
+
     try {
-      const response = await fetch(`/api/admin/social/${provider}/disconnect`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+        `/api/admin/social/${disconnectTarget}/disconnect`,
+        {
+          method: 'DELETE',
+        }
+      )
 
       if (response.ok) {
-        setAccounts((prev) => prev.filter((a) => a.provider !== provider))
+        setAccounts((prev) =>
+          prev.filter((a) => a.provider !== disconnectTarget)
+        )
+        setDisconnectTarget(null)
       } else {
         const data = await response.json()
-        alert(`Failed to disconnect: ${data.error}`)
+        setOperationError(data.error || 'Failed to disconnect account')
       }
     } catch (err) {
       console.error('Disconnect error:', err)
-      alert('Failed to disconnect account')
+      setOperationError('Failed to disconnect account')
     } finally {
       setDisconnecting(null)
     }
@@ -136,9 +144,22 @@ export function SocialAccountsClient({
           </div>
           <button
             onClick={clearParams}
-            className="text-green-400 hover:text-green-300"
+            className="text-green-400 hover:text-green-300 cursor-pointer"
           >
             ✕
+          </button>
+        </div>
+      )}
+
+      {/* Operation Error Banner */}
+      {operationError && (
+        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{operationError}</span>
+          <button
+            onClick={() => setOperationError(null)}
+            className="text-error hover:text-white cursor-pointer"
+          >
+            <CloseIcon size={16} />
           </button>
         </div>
       )}
@@ -239,9 +260,9 @@ export function SocialAccountsClient({
                       Reconnect
                     </a>
                     <button
-                      onClick={() => handleDisconnect('linkedin')}
+                      onClick={() => setDisconnectTarget('linkedin')}
                       disabled={disconnecting === 'linkedin'}
-                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50"
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50 cursor-pointer"
                       title="Disconnect"
                     >
                       <DeleteIcon className="w-4 h-4" />
@@ -318,9 +339,9 @@ export function SocialAccountsClient({
                       Reconnect
                     </a>
                     <button
-                      onClick={() => handleDisconnect('meta')}
+                      onClick={() => setDisconnectTarget('meta')}
                       disabled={disconnecting === 'meta'}
-                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50"
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50 cursor-pointer"
                       title="Disconnect"
                     >
                       <DeleteIcon className="w-4 h-4" />
@@ -466,6 +487,18 @@ export function SocialAccountsClient({
           </div>
         </div>
       )}
+
+      {/* Disconnect Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!disconnectTarget}
+        onClose={() => setDisconnectTarget(null)}
+        onConfirm={confirmDisconnect}
+        title="Disconnect Account"
+        message={`Are you sure you want to disconnect your ${disconnectTarget} account? You will need to reconnect to post.`}
+        confirmLabel="Disconnect"
+        isLoading={!!disconnecting}
+        variant="danger"
+      />
     </div>
   )
 }

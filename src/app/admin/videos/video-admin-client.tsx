@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { Video } from '@/lib/db'
-import { EditIcon, DeleteIcon } from '@/components/icons'
-import { VinylSpinner } from '@/components/ui'
+import { EditIcon, DeleteIcon, CloseIcon, PlusIcon } from '@/components/icons'
+import { ConfirmModal, Button, Card } from '@/components/ui'
 
 interface VideoAdminClientProps {
   initialVideos: Video[]
@@ -24,7 +24,11 @@ export function VideoAdminClient({
   const [selectedBandId, setSelectedBandId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState<Video | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Get bands for selected event
   const availableBands = selectedEventId ? bandsMap[selectedEventId] || [] : []
@@ -69,26 +73,29 @@ export function VideoAdminClient({
     }
   }
 
-  const handleDeleteVideo = async (videoId: string) => {
-    if (!confirm('Are you sure you want to delete this video?')) return
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
 
-    setDeletingId(videoId)
+    setIsDeleting(true)
+    setOperationError(null)
+
     try {
-      const response = await fetch(`/api/videos/${videoId}`, {
+      const response = await fetch(`/api/videos/${deleteTarget.id}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        setVideos(videos.filter((v) => v.id !== videoId))
+        setVideos(videos.filter((v) => v.id !== deleteTarget.id))
+        setDeleteTarget(null)
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to delete video')
+        setOperationError(data.error || 'Failed to delete video')
       }
     } catch (err) {
-      alert('Failed to delete video')
+      setOperationError('Failed to delete video')
       console.error(err)
     } finally {
-      setDeletingId(null)
+      setIsDeleting(false)
     }
   }
 
@@ -98,6 +105,7 @@ export function VideoAdminClient({
     eventId: string | null,
     bandId: string | null
   ) => {
+    setOperationError(null)
     try {
       const response = await fetch(`/api/videos/${videoId}`, {
         method: 'PATCH',
@@ -112,29 +120,40 @@ export function VideoAdminClient({
         )
       } else {
         const data = await response.json()
-        alert(data.error || 'Failed to update video')
+        setOperationError(data.error || 'Failed to update video')
       }
     } catch (err) {
-      alert('Failed to update video')
+      setOperationError('Failed to update video')
       console.error(err)
     }
   }
 
   return (
     <div className="space-y-8">
+      {/* Operation Error Banner */}
+      {operationError && (
+        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{operationError}</span>
+          <button
+            onClick={() => setOperationError(null)}
+            className="text-error hover:text-white cursor-pointer"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Add Video Button */}
       <div className="flex justify-end">
-        <button
-          onClick={() => setIsAddingVideo(true)}
-          className="bg-accent hover:bg-accent-light text-white font-bold py-2 px-4 rounded-lg transition-colors"
-        >
-          + Add Video
-        </button>
+        <Button variant="accent" onClick={() => setIsAddingVideo(true)}>
+          <PlusIcon size={20} />
+          Add Video
+        </Button>
       </div>
 
       {/* Add Video Form */}
       {isAddingVideo && (
-        <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+        <Card>
           <h2 className="text-xl font-bold text-white mb-4">Add New Video</h2>
           <form onSubmit={handleAddVideo} className="space-y-4">
             <div>
@@ -208,36 +227,32 @@ export function VideoAdminClient({
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg">
+              <div className="bg-error/20 border border-error/50 text-error px-4 py-2 rounded-lg">
                 {error}
               </div>
             )}
 
             <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
-              >
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting ? 'Adding...' : 'Add Video'}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setIsAddingVideo(false)
                   setError(null)
                 }}
-                className="bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-6 rounded-lg transition-colors"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* Videos List */}
-      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
+      <Card>
         <h2 className="text-2xl font-bold text-white mb-6">
           Videos ({videos.length})
         </h2>
@@ -258,13 +273,24 @@ export function VideoAdminClient({
                 events={events}
                 bandsMap={bandsMap}
                 onUpdate={handleUpdateVideo}
-                onDelete={handleDeleteVideo}
-                isDeleting={deletingId === video.id}
+                onRequestDelete={setDeleteTarget}
               />
             ))}
           </div>
         )}
-      </div>
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Video"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </div>
   )
 }
@@ -279,8 +305,7 @@ interface VideoRowProps {
     eventId: string | null,
     bandId: string | null
   ) => Promise<void>
-  onDelete: (videoId: string) => Promise<void>
-  isDeleting: boolean
+  onRequestDelete: (video: Video) => void
 }
 
 function VideoRow({
@@ -288,8 +313,7 @@ function VideoRow({
   events,
   bandsMap,
   onUpdate,
-  onDelete,
-  isDeleting,
+  onRequestDelete,
 }: VideoRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(video.title)
@@ -417,22 +441,17 @@ function VideoRow({
       <div className="shrink-0 flex items-center gap-2">
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white cursor-pointer"
           title="Edit video"
         >
           <EditIcon className="w-5 h-5" />
         </button>
         <button
-          onClick={() => onDelete(video.id)}
-          disabled={isDeleting}
-          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-gray-400 hover:text-red-400 disabled:opacity-50"
+          onClick={() => onRequestDelete(video)}
+          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-gray-400 hover:text-red-400 cursor-pointer"
           title="Delete video"
         >
-          {isDeleting ? (
-            <VinylSpinner size="xxs" />
-          ) : (
-            <DeleteIcon className="w-5 h-5" />
-          )}
+          <DeleteIcon className="w-5 h-5" />
         </button>
       </div>
     </div>
