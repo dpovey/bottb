@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Photo } from '@/lib/db-types'
 import { trackPhotoClick } from '@/lib/analytics'
 import {
@@ -274,23 +275,25 @@ export function PhotoStrip({
                     }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
-                    className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
+                    className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
                     aria-label={`Photo ${index + 1} of ${totalCount}`}
                     aria-selected={index === selectedIndex}
                     role="option"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={
                         photo.thumbnail_url ||
                         photo.blob_url?.replace(
                           '/large.webp',
                           '/thumbnail.webp'
-                        )
+                        ) ||
+                        ''
                       }
                       alt={photo.original_filename || `Photo ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
+                      className="object-cover"
+                      loading={index < 4 ? 'eager' : 'lazy'}
                     />
                   </button>
                 ))}

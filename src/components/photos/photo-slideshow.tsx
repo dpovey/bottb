@@ -173,7 +173,6 @@ const Slide = memo(function Slide({
           isPlaying ? '' : 'rounded-lg shadow-2xl'
         }`}
         draggable={false}
-        loading="lazy"
       />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { PublicLayout } from '@/components/layouts'
 import { Video } from '@/lib/db'
 import { CompanyIcon, FilterSelect, Skeleton } from '@/components/ui'
@@ -283,10 +284,13 @@ export function VideosContent({
                 className="group relative aspect-video rounded-lg overflow-hidden bg-bg-elevated text-left"
               >
                 {/* Thumbnail */}
-                <img
+                <Image
                   src={getThumbnailUrl(video)}
                   alt={video.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
                 />
 
                 {/* Gradient overlay */}
