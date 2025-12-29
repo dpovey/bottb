@@ -79,6 +79,7 @@ pnpm dev:restart
 Worktree directories: `../bottb-{short-description}`
 
 Examples:
+
 - `../bottb-auth-fix` for branch `fix/auth-bug`
 - `../bottb-photo-upload` for branch `feature/photo-upload`
 - `../bottb-scoring-v2` for branch `refactor/scoring-v2`

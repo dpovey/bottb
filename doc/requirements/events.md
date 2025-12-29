@@ -56,13 +56,13 @@ CLI: `pnpm create-event events/sydney-2025.json`
 
 ## CLI Commands
 
-| Command                      | Description      |
-| ---------------------------- | ---------------- |
-| `pnpm create-event <json>`   | Create from JSON |
-| `pnpm list-events`           | List all events  |
-| `pnpm activate-event <id>`   | Enable voting    |
-| `pnpm finalize-event <id>`   | Freeze results   |
-| `pnpm cleanup-event <id>`    | Clear event data |
+| Command                    | Description      |
+| -------------------------- | ---------------- |
+| `pnpm create-event <json>` | Create from JSON |
+| `pnpm list-events`         | List all events  |
+| `pnpm activate-event <id>` | Enable voting    |
+| `pnpm finalize-event <id>` | Freeze results   |
+| `pnpm cleanup-event <id>`  | Clear event data |
 
 ## Event Page Requirements
 

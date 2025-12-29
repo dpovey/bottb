@@ -14,11 +14,11 @@ Uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) for productio
 
 ### Commands
 
-| Command                        | Purpose                               |
-| ------------------------------ | ------------------------------------- |
-| `pnpm migrate`                 | Apply pending migrations to Vercel DB |
-| `pnpm migrate:create <name>`   | Create a new migration file           |
-| `pnpm migrate:status`          | Preview pending migrations (dry run)  |
+| Command                      | Purpose                               |
+| ---------------------------- | ------------------------------------- |
+| `pnpm migrate`               | Apply pending migrations to Vercel DB |
+| `pnpm migrate:create <name>` | Create a new migration file           |
+| `pnpm migrate:status`        | Preview pending migrations (dry run)  |
 
 ### Workflow
 
