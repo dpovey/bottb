@@ -1,3 +1,5 @@
 # Allow Cursor to access worktree files (negates gitignore)
 !.worktrees/
 
+# Explicitly block sensitive files (redundant with .gitignore, but clear)
+.env*
