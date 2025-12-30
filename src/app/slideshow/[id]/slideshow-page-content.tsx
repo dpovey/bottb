@@ -204,18 +204,6 @@ export function SlideshowPageContent({
     setTotalCount((prev) => prev - 1)
   }, [])
 
-  // Handle photo cropped
-  const handlePhotoCropped = useCallback(
-    (photoId: string, newThumbnailUrl: string) => {
-      setPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photoId ? { ...p, thumbnail_url: newThumbnailUrl } : p
-        )
-      )
-    },
-    []
-  )
-
   // Handle filter change from slideshow
   const handleFilterChange = useCallback(
     (filterType: string, value: string | null) => {
@@ -302,7 +290,6 @@ export function SlideshowPageContent({
       onFilterChange={handleFilterChange}
       onClose={handleClose}
       onPhotoDeleted={handlePhotoDeleted}
-      onPhotoCropped={handlePhotoCropped}
       onPhotoChange={handlePhotoChange}
       mode="page"
     />

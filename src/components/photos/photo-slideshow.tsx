@@ -10,9 +10,9 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { slugify } from '@/lib/utils'
-import { CompanyIcon, VinylSpinner } from '@/components/ui'
-import Cropper, { Area } from 'react-easy-crop'
+import { CompanyIcon, VinylSpinner, Modal } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
+import { FocalPointEditor } from './focal-point-editor'
 import {
   trackPhotoDownload,
   trackPhotoShare,
@@ -78,7 +78,6 @@ interface PhotoSlideshowProps {
   filterNames?: FilterNames
   onClose: () => void
   onPhotoDeleted?: (photoId: string) => void
-  onPhotoCropped?: (photoId: string, newThumbnailUrl: string) => void
   onPhotoChange?: (photoId: string) => void
   onFilterChange?: (
     filterType: 'event' | 'band' | 'photographer' | 'company' | 'shuffle',
@@ -188,7 +187,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   filterNames,
   onClose,
   onPhotoDeleted,
-  onPhotoCropped,
   onPhotoChange,
   onFilterChange,
   mode = 'modal',
@@ -265,22 +263,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-
-  // Track the most recently cropped photo to ensure immediate update
-  const [lastCroppedPhoto, setLastCroppedPhoto] = useState<{
-    id: string
-    url: string
-  } | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // Crop state
-  const [showCropModal, setShowCropModal] = useState(false)
-  const [crop, setCrop] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
-  const [isSavingCrop, setIsSavingCrop] = useState(false)
-  const [cropError, setCropError] = useState<string | null>(null)
-  const [cropPreviewUrl, setCropPreviewUrl] = useState<string | null>(null)
+  // Focal point editor state (replaces old crop modal)
+  const [showFocalPointModal, setShowFocalPointModal] = useState(false)
 
   // Link copy state
   const [linkCopied, setLinkCopied] = useState(false)
@@ -288,19 +274,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false)
 
-  // Hero labels state
+  // Hero labels state (labels only, focal point now in separate modal)
   const [showLabelsModal, setShowLabelsModal] = useState(false)
   const [photoLabels, setPhotoLabels] = useState<string[]>([])
-  const [heroFocalPoint, setHeroFocalPoint] = useState<{
-    x: number
-    y: number
-  }>({ x: 50, y: 50 })
   const [isLoadingLabels, setIsLoadingLabels] = useState(false)
   const [isSavingLabels, setIsSavingLabels] = useState(false)
-  const [isSavingFocalPoint, setIsSavingFocalPoint] = useState(false)
-  const [isDraggingFocalPoint, setIsDraggingFocalPoint] = useState(false)
   const [labelsError, setLabelsError] = useState<string | null>(null)
-  const focalPointPreviewRef = useRef<HTMLDivElement>(null)
 
   // Metadata editing state (admin only)
   const [showMetadataModal, setShowMetadataModal] = useState(false)
@@ -349,82 +328,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const thumbnailStripRef = useRef<HTMLDivElement>(null)
   const prevButtonRef = useRef<HTMLButtonElement>(null)
   const nextButtonRef = useRef<HTMLButtonElement>(null)
-
-  // Generate cropped preview when crop area changes
-  const generateCropPreview = useCallback(
-    async (pixelCrop: Area, imageSrc: string) => {
-      const image = new Image()
-      image.crossOrigin = 'anonymous'
-
-      return new Promise<string>((resolve, reject) => {
-        image.onload = () => {
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'))
-            return
-          }
-
-          // Set canvas size to 80x80 for preview
-          canvas.width = 80
-          canvas.height = 80
-
-          // Draw the cropped region scaled to 80x80
-          ctx.drawImage(
-            image,
-            pixelCrop.x,
-            pixelCrop.y,
-            pixelCrop.width,
-            pixelCrop.height,
-            0,
-            0,
-            80,
-            80
-          )
-
-          resolve(canvas.toDataURL('image/jpeg', 0.8))
-        }
-        image.onerror = () => reject(new Error('Failed to load image'))
-        image.src = imageSrc
-      })
-    },
-    []
-  )
-
-  // Update preview when crop changes (debounced)
-  useEffect(() => {
-    if (!showCropModal || !croppedAreaPixels) return
-
-    const currentPhoto = allPhotos[currentIndex]
-    if (!currentPhoto) return
-
-    const timeoutId = setTimeout(async () => {
-      try {
-        const previewUrl = await generateCropPreview(
-          croppedAreaPixels,
-          currentPhoto.blob_url
-        )
-        setCropPreviewUrl(previewUrl)
-      } catch (_error) {
-        // Preview generation failed - not critical
-      }
-    }, 100)
-
-    return () => clearTimeout(timeoutId)
-  }, [
-    croppedAreaPixels,
-    showCropModal,
-    currentIndex,
-    allPhotos,
-    generateCropPreview,
-  ])
-
-  // Clear preview when modal closes
-  useEffect(() => {
-    if (!showCropModal) {
-      setCropPreviewUrl(null)
-    }
-  }, [showCropModal])
 
   // Fetch a specific page of photos
   const fetchPage = useCallback(
@@ -595,7 +498,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   useEffect(() => {
     if (
       showDeleteConfirm ||
-      showCropModal ||
+      showFocalPointModal ||
       showLabelsModal ||
       showShareModal ||
       showMetadataModal
@@ -604,7 +507,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }, [
     showDeleteConfirm,
-    showCropModal,
+    showFocalPointModal,
     showLabelsModal,
     showShareModal,
     showMetadataModal,
@@ -647,7 +550,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         showDeleteConfirm ||
-        showCropModal ||
+        showFocalPointModal ||
         showLabelsModal ||
         showShareModal ||
         showMetadataModal
@@ -671,7 +574,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     togglePlay,
     stopPlay,
     showDeleteConfirm,
-    showCropModal,
+    showFocalPointModal,
     showLabelsModal,
     showShareModal,
     showMetadataModal,
@@ -851,81 +754,38 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }
 
-  // Handle crop completion callback
-  const onCropComplete = useCallback(
-    (_croppedArea: Area, croppedAreaPixels: Area) => {
-      setCroppedAreaPixels(croppedAreaPixels)
-    },
-    []
-  )
+  // Handle saving focal point
+  const handleSaveFocalPoint = async (focalPoint: { x: number; y: number }) => {
+    const photo = allPhotos[currentIndex]
+    if (!photo) return
 
-  // Handle saving the crop
-  const handleSaveCrop = async () => {
-    const photoToCrop = allPhotos[currentIndex]
-    if (!photoToCrop || !croppedAreaPixels) return
+    const response = await fetch(`/api/photos/${photo.id}/labels`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ heroFocalPoint: focalPoint }),
+    })
 
-    setIsSavingCrop(true)
-    setCropError(null)
-
-    try {
-      // Get the image dimensions to calculate percentages
-      const img = new Image()
-      img.src = photoToCrop.blob_url
-      await new Promise((resolve) => {
-        img.onload = resolve
-      })
-
-      // Convert pixel coordinates to percentages
-      const cropArea = {
-        x: (croppedAreaPixels.x / img.naturalWidth) * 100,
-        y: (croppedAreaPixels.y / img.naturalHeight) * 100,
-        width: (croppedAreaPixels.width / img.naturalWidth) * 100,
-        height: (croppedAreaPixels.height / img.naturalHeight) * 100,
-      }
-
-      const response = await fetch(`/api/photos/${photoToCrop.id}/crop`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cropArea }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to save crop')
-      }
-
-      const result = await response.json()
-      const newUrl = result.thumbnailUrl // This is a NEW unique URL, not the same path
-      const photoId = photoToCrop.id
-
-      // Update the thumbnail URL in local state
-      setAllPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photoId ? { ...p, thumbnail_url: newUrl } : p
-        )
-      )
-
-      // Track the just-cropped photo for immediate update
-      setLastCroppedPhoto({ id: photoId, url: newUrl })
-
-      // Notify parent to update gallery view
-      onPhotoCropped?.(photoId, newUrl)
-
-      // Close crop modal and reset state
-      setShowCropModal(false)
-      setCrop({ x: 0, y: 0 })
-      setZoom(1)
-      setCroppedAreaPixels(null)
-    } catch (error) {
-      setCropError(
-        error instanceof Error ? error.message : 'Failed to save crop'
-      )
-    } finally {
-      setIsSavingCrop(false)
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Failed to save focal point')
     }
+
+    const result = await response.json()
+
+    // Update the photo in local state
+    setAllPhotos((prev) =>
+      prev.map((p) =>
+        p.id === photo.id
+          ? { ...p, hero_focal_point: result.heroFocalPoint }
+          : p
+      )
+    )
+
+    // Close modal
+    setShowFocalPointModal(false)
   }
 
-  // Fetch photo labels and focal point when opening the labels modal
+  // Fetch photo labels when opening the labels modal
   const fetchPhotoLabels = useCallback(async (photoId: string) => {
     setIsLoadingLabels(true)
     setLabelsError(null)
@@ -936,7 +796,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       }
       const data = await response.json()
       setPhotoLabels(data.labels || [])
-      setHeroFocalPoint(data.heroFocalPoint || { x: 50, y: 50 })
     } catch (error) {
       setLabelsError(
         error instanceof Error ? error.message : 'Failed to load labels'
@@ -954,100 +813,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       fetchPhotoLabels(photo.id)
     }
   }, [allPhotos, currentIndex, fetchPhotoLabels])
-
-  // Calculate focal point position from mouse event
-  const calculateFocalPoint = useCallback(
-    (
-      e: React.MouseEvent<HTMLDivElement> | MouseEvent,
-      element: HTMLDivElement
-    ) => {
-      const rect = element.getBoundingClientRect()
-      const x = Math.max(
-        0,
-        Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
-      )
-      const y = Math.max(
-        0,
-        Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
-      )
-      return { x, y }
-    },
-    []
-  )
-
-  // Handle focal point drag start
-  const handleFocalPointMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      setIsDraggingFocalPoint(true)
-      const newPoint = calculateFocalPoint(e, e.currentTarget)
-      setHeroFocalPoint(newPoint)
-    },
-    [calculateFocalPoint]
-  )
-
-  // Handle focal point drag
-  useEffect(() => {
-    if (!isDraggingFocalPoint) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!focalPointPreviewRef.current) return
-      const newPoint = calculateFocalPoint(e, focalPointPreviewRef.current)
-      setHeroFocalPoint(newPoint)
-    }
-
-    const handleMouseUp = () => {
-      setIsDraggingFocalPoint(false)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDraggingFocalPoint, calculateFocalPoint])
-
-  // Save focal point
-  const handleSaveFocalPoint = async () => {
-    const photo = allPhotos[currentIndex]
-    if (!photo) return
-
-    setIsSavingFocalPoint(true)
-    setLabelsError(null)
-
-    try {
-      const response = await fetch(`/api/photos/${photo.id}/labels`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heroFocalPoint: heroFocalPoint }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to save focal point')
-      }
-
-      const result = await response.json()
-      setHeroFocalPoint(result.heroFocalPoint)
-
-      // Update the photo in local state
-      setAllPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photo.id
-            ? { ...p, hero_focal_point: result.heroFocalPoint }
-            : p
-        )
-      )
-    } catch (error) {
-      setLabelsError(
-        error instanceof Error ? error.message : 'Failed to save focal point'
-      )
-    } finally {
-      setIsSavingFocalPoint(false)
-    }
-  }
 
   // Toggle a label on/off
   const handleToggleLabel = async (label: string) => {
@@ -1494,10 +1259,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                   )}
                 </button>
                 <button
-                  onClick={() => setShowCropModal(true)}
+                  onClick={() => setShowFocalPointModal(true)}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors"
-                  aria-label="Adjust thumbnail crop (Admin)"
-                  title="Edit crop (Admin)"
+                  aria-label="Set focal point for hero images (Admin)"
+                  title="Edit focal point (Admin)"
                 >
                   <CropIcon size={20} />
                 </button>
@@ -1638,11 +1403,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               photo={photo}
               index={index}
               isSelected={index === currentIndex}
-              thumbSrc={
-                lastCroppedPhoto?.id === photo.id
-                  ? lastCroppedPhoto.url
-                  : photo.thumbnail_url || photo.blob_url
-              }
+              thumbSrc={photo.thumbnail_url || photo.blob_url}
               onClick={() => goToIndex(index)}
             />
           ))}
@@ -1708,114 +1469,36 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         </div>
       )}
 
-      {/* Crop modal */}
-      {showCropModal && currentPhoto && (
-        <div className="fixed inset-0 z-60 bg-black/90 flex flex-col">
-          {/* Crop Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-            <h3 className="font-semibold text-xl">Adjust Thumbnail Crop</h3>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setShowCropModal(false)
-                  setCrop({ x: 0, y: 0 })
-                  setZoom(1)
-                  setCropError(null)
-                }}
-                disabled={isSavingCrop}
-                className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveCrop}
-                disabled={isSavingCrop || !croppedAreaPixels}
-                className="bg-accent hover:bg-accent-light px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
-              >
-                {isSavingCrop ? (
-                  <>
-                    <VinylSpinner size="xxs" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Crop'
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Crop Area */}
-          <div className="flex-1 relative">
-            <Cropper
-              image={currentPhoto.blob_url}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-              showGrid={true}
-              cropShape="rect"
-              objectFit="contain"
-            />
-          </div>
-
-          {/* Crop Preview */}
-          <div className="flex items-center justify-center gap-8 px-6 py-4 border-t border-white/10">
-            <div className="text-center">
-              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">
-                Preview
-              </p>
-              <div className="w-20 h-20 rounded-lg overflow-hidden border border-white/10">
-                {cropPreviewUrl ? (
-                  /* Using <img> for client-side generated data URL from canvas crop */
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={cropPreviewUrl}
-                    alt="Crop preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-bg-elevated flex items-center justify-center">
-                    <span className="text-xs text-text-dim">...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <p className="text-xs tracking-widest uppercase text-text-dim mb-2">
-                Zoom
-              </p>
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-32 accent-accent"
-              />
-            </div>
-            {cropError && (
-              <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
-                {cropError}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Focal Point Editor Modal */}
+      {showFocalPointModal && currentPhoto && (
+        <Modal
+          isOpen={showFocalPointModal}
+          onClose={() => setShowFocalPointModal(false)}
+          title="Hero Image Focal Point"
+          description="Set the focal point to control how this image crops at different aspect ratios."
+          size="full"
+        >
+          <FocalPointEditor
+            imageUrl={currentPhoto.blob_url}
+            initialFocalPoint={
+              currentPhoto.hero_focal_point ?? { x: 50, y: 50 }
+            }
+            onSave={handleSaveFocalPoint}
+            width={currentPhoto.width ?? undefined}
+            height={currentPhoto.height ?? undefined}
+          />
+        </Modal>
       )}
 
       {/* Hero Labels Modal */}
       {showLabelsModal && currentPhoto && (
         <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6 overflow-y-auto">
-          <div className="bg-bg-elevated rounded-xl p-6 max-w-3xl w-full border border-white/10 my-auto">
+          <div className="bg-bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10 my-auto">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="font-semibold text-xl mb-1">
-                  Hero Image Settings
-                </h3>
+                <h3 className="font-semibold text-xl mb-1">Hero Labels</h3>
                 <p className="text-text-muted text-sm">
-                  Configure how this photo appears as a hero image
+                  Select where this photo should be featured
                 </p>
               </div>
               <button
@@ -1835,184 +1518,71 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                 <VinylSpinner size="xs" className="text-accent" />
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Labels Section */}
-                <div>
-                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">
-                    Use as Hero For
-                  </h4>
-                  <div className="space-y-2">
-                    {Object.entries(LABEL_INFO).map(([label, info]) => {
-                      const isActive = photoLabels.includes(label)
-                      const isDisabled = isSavingLabels
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {Object.entries(LABEL_INFO).map(([label, info]) => {
+                    const isActive = photoLabels.includes(label)
+                    const isDisabled = isSavingLabels
 
-                      return (
-                        <button
-                          key={label}
-                          onClick={() => handleToggleLabel(label)}
-                          disabled={isDisabled}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => handleToggleLabel(label)}
+                        disabled={isDisabled}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          isActive
+                            ? 'border-accent bg-accent/10 text-white'
+                            : 'border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10'
+                        } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <span className="text-xl">{info.icon}</span>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-sm">{info.name}</div>
+                          <div className="text-xs text-text-dim">
+                            {info.description}
+                          </div>
+                        </div>
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
                             isActive
-                              ? 'border-accent bg-accent/10 text-white'
-                              : 'border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10'
-                          } ${
-                            isDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                              ? 'border-accent bg-accent'
+                              : 'border-white/30'
                           }`}
                         >
-                          <span className="text-xl">{info.icon}</span>
-                          <div className="flex-1 text-left">
-                            <div className="font-medium text-sm">
-                              {info.name}
-                            </div>
-                            <div className="text-xs text-text-dim">
-                              {info.description}
-                            </div>
-                          </div>
-                          <div
-                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              isActive
-                                ? 'border-accent bg-accent'
-                                : 'border-white/30'
-                            }`}
-                          >
-                            {isActive && (
-                              <CheckIcon
-                                size={12}
-                                className="text-white"
-                                strokeWidth={2}
-                              />
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Context info */}
-                  {currentPhoto.band_name && (
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                      <p className="text-xs text-text-dim">
-                        <span className="text-text-muted">Band:</span>{' '}
-                        {currentPhoto.band_name}
-                      </p>
-                      {currentPhoto.event_name && (
-                        <p className="text-xs text-text-dim mt-1">
-                          <span className="text-text-muted">Event:</span>{' '}
-                          {currentPhoto.event_name}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                          {isActive && (
+                            <CheckIcon
+                              size={12}
+                              className="text-white"
+                              strokeWidth={2}
+                            />
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
 
-                {/* Focal Point Section */}
-                <div>
-                  <h4 className="text-sm font-medium text-text-muted mb-3 uppercase tracking-wider">
-                    Focal Point
-                  </h4>
-                  <p className="text-xs text-text-dim mb-3">
-                    Click and drag to set where the image should center when
-                    cropped for hero display.
-                  </p>
-
-                  {/* Focal Point Picker */}
-                  <div
-                    ref={focalPointPreviewRef}
-                    className={`relative w-full aspect-video rounded-lg overflow-hidden border transition-colors select-none ${
-                      isDraggingFocalPoint
-                        ? 'border-accent cursor-grabbing'
-                        : 'border-white/10 cursor-crosshair hover:border-white/30'
-                    }`}
-                    onMouseDown={handleFocalPointMouseDown}
-                  >
-                    {/* Using <img> for dynamic object-position styling */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={currentPhoto.blob_url}
-                      alt="Focal point picker"
-                      className="w-full h-full object-cover pointer-events-none"
-                      draggable={false}
-                      style={{
-                        objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
-                      }}
-                    />
-
-                    {/* Focal point indicator */}
-                    <div
-                      className={`absolute w-8 h-8 -ml-4 -mt-4 pointer-events-none transition-transform ${
-                        isDraggingFocalPoint ? 'scale-125' : ''
-                      }`}
-                      style={{
-                        left: `${heroFocalPoint.x}%`,
-                        top: `${heroFocalPoint.y}%`,
-                      }}
-                    >
-                      <div
-                        className={`absolute inset-0 rounded-full border-2 border-white shadow-lg ${
-                          isDraggingFocalPoint ? '' : 'animate-pulse'
-                        }`}
-                      />
-                      <div className="absolute inset-2 rounded-full bg-accent" />
-                    </div>
-
-                    {/* Crosshair guides */}
-                    <div
-                      className="absolute inset-y-0 w-px bg-white/30 pointer-events-none"
-                      style={{ left: `${heroFocalPoint.x}%` }}
-                    />
-                    <div
-                      className="absolute inset-x-0 h-px bg-white/30 pointer-events-none"
-                      style={{ top: `${heroFocalPoint.y}%` }}
-                    />
-                  </div>
-
-                  {/* Hero Preview */}
-                  <div className="mt-4">
-                    <p className="text-xs text-text-dim mb-2">
-                      Preview (wide hero crop):
+                {/* Context info */}
+                {currentPhoto.band_name && (
+                  <div className="pt-4 border-t border-white/10">
+                    <p className="text-xs text-text-dim">
+                      <span className="text-text-muted">Band:</span>{' '}
+                      {currentPhoto.band_name}
                     </p>
-                    <div className="relative w-full h-16 rounded-lg overflow-hidden border border-white/10">
-                      {/* Using <img> for dynamic object-position styling */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={currentPhoto.blob_url}
-                        alt="Hero preview"
-                        className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: `${heroFocalPoint.x}% ${heroFocalPoint.y}%`,
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-                    </div>
-                  </div>
-
-                  {/* Save Button */}
-                  <button
-                    onClick={handleSaveFocalPoint}
-                    disabled={isSavingFocalPoint}
-                    className="mt-4 w-full bg-accent hover:bg-accent-light px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSavingFocalPoint ? (
-                      <>
-                        <VinylSpinner size="xxs" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Focal Point'
+                    {currentPhoto.event_name && (
+                      <p className="text-xs text-text-dim mt-1">
+                        <span className="text-text-muted">Event:</span>{' '}
+                        {currentPhoto.event_name}
+                      </p>
                     )}
-                  </button>
+                  </div>
+                )}
 
-                  <p className="text-xs text-text-dim mt-2 text-center">
-                    Position: {Math.round(heroFocalPoint.x)}%,{' '}
-                    {Math.round(heroFocalPoint.y)}%
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {labelsError && (
-              <div className="mt-4 p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
-                {labelsError}
+                {labelsError && (
+                  <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
+                    {labelsError}
+                  </div>
+                )}
               </div>
             )}
           </div>
