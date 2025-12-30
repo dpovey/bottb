@@ -786,7 +786,8 @@ export async function getPhotosByLabel(
       // Get photos with this label for a specific band
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -800,7 +801,8 @@ export async function getPhotosByLabel(
       // Get photos with this label for a specific event
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -814,7 +816,8 @@ export async function getPhotosByLabel(
       // Get all photos with this label
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
-               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
@@ -842,7 +845,8 @@ export async function getAllHeroPhotos(): Promise<Photo[]> {
     const { rows } = await sql<Photo>`
       SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, 
              b.company_slug as company_slug, c.icon_url as company_icon_url,
-             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id

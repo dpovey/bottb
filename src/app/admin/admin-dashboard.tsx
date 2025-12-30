@@ -8,6 +8,7 @@ import {
   PhotoIcon,
   BuildingIcon,
   CameraIcon,
+  StarIcon,
 } from '@/components/icons'
 import { Button, VinylSpinner } from '@/components/ui'
 
@@ -130,7 +131,7 @@ export default function AdminDashboard({
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Link
           href="/admin/videos"
           className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
@@ -161,6 +162,23 @@ export default function AdminDashboard({
                 Photos
               </h3>
               <p className="text-sm text-muted">Edit metadata</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/heroes"
+          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
+              <StarIcon className="w-6 h-6 text-warning" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+                Heroes
+              </h3>
+              <p className="text-sm text-muted">Focal points</p>
             </div>
           </div>
         </Link>

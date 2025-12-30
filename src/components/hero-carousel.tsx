@@ -23,6 +23,8 @@ function getDesktopObjectPosition(focalPoint?: { x: number; y: number }) {
 
 interface HeroImage {
   url: string
+  /** High-resolution URL (e.g., 4K version) for large displays */
+  urlHigh?: string
   focalPoint?: { x: number; y: number }
 }
 
@@ -98,8 +100,9 @@ export function HeroCarousel({
               priority={index === currentIndex}
             />
             {/* Desktop: vertical cropping, use focal Y */}
+            {/* Uses high-res source when available for better quality on large displays */}
             <Image
-              src={image.url}
+              src={image.urlHigh || image.url}
               alt="Battle of the Tech Bands event"
               fill
               className="object-cover hidden md:block"

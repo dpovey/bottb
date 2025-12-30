@@ -12,6 +12,11 @@ export interface FocalPointImageProps {
   src: string
   alt: string
   /**
+   * Optional high-resolution source (e.g., 4K version).
+   * When provided, used for desktop displays for better quality on large screens.
+   */
+  srcHigh?: string
+  /**
    * Focal point coordinates (0-100 for both x and y).
    * Controls which part of the image stays visible when cropped.
    */
@@ -37,9 +42,13 @@ export interface FocalPointImageProps {
  * and 50% (centered) for the non-cropped dimension. No scaling needed!
  *
  * Uses responsive breakpoints: mobile (portrait) vs md+ (landscape).
+ *
+ * When srcHigh is provided, it's used for desktop displays for better quality
+ * on large/4K screens.
  */
 export function FocalPointImage({
   src,
+  srcHigh,
   alt,
   focalPoint = { x: 50, y: 50 },
   priority = false,
@@ -47,6 +56,9 @@ export function FocalPointImage({
   className,
   unoptimized = false,
 }: FocalPointImageProps) {
+  // Use high-res source for desktop if available
+  const desktopSrc = srcHigh || src
+
   return (
     <div className={cn('absolute inset-0', className)}>
       {/* Mobile/Portrait: horizontal cropping, use focal X, center Y */}
@@ -62,8 +74,9 @@ export function FocalPointImage({
         unoptimized={unoptimized}
       />
       {/* Desktop/Landscape: vertical cropping, center X, use focal Y */}
+      {/* Uses high-res source when available for better quality on large displays */}
       <Image
-        src={src}
+        src={desktopSrc}
         alt={alt}
         fill
         className="object-cover hidden md:block"

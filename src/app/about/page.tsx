@@ -35,6 +35,7 @@ export default async function AboutPage() {
   ])
   const heroImages = eventHeroPhotos.map((photo) => ({
     url: photo.blob_url,
+    urlHigh: photo.large_4k_url ?? undefined,
     focalPoint: photo.hero_focal_point,
   }))
 
