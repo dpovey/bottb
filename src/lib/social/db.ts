@@ -204,6 +204,21 @@ export async function disconnectSocialAccount(
   await sql`DELETE FROM social_accounts WHERE provider = ${provider}`
 }
 
+/**
+ * Disconnect (delete) a social account by provider and provider_account_id
+ * Used by webhooks when Meta notifies us of deauthorization or data deletion
+ */
+export async function disconnectSocialAccountByProviderId(
+  provider: SocialProvider,
+  providerAccountId: string
+): Promise<void> {
+  await sql`
+    DELETE FROM social_accounts 
+    WHERE provider = ${provider} 
+    AND provider_account_id = ${providerAccountId}
+  `
+}
+
 // ============================================================================
 // Post Templates
 // ============================================================================
