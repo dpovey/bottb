@@ -88,9 +88,10 @@ Cursor supports **Background Agents** — autonomous AI agents that work indepen
 
 ### When to Suggest Background Agents
 
-Prompt the user with: *"This task is well-suited for a background agent — want me to run it that way so you can continue working on other things?"*
+Prompt the user with: _"This task is well-suited for a background agent — want me to run it that way so you can continue working on other things?"_
 
 **Good candidates for background agents:**
+
 - Well-defined, self-contained tasks with clear completion criteria
 - Mechanical refactors (rename across files, update imports, fix lint errors)
 - Adding tests for existing code
@@ -98,6 +99,7 @@ Prompt the user with: *"This task is well-suited for a background agent — want
 - Tasks that don't need interactive feedback
 
 **Keep as interactive (worktree) workflow:**
+
 - Complex features requiring design decisions
 - Tasks where you need to guide the AI step-by-step
 - Changes that need your review before committing
