@@ -15,7 +15,6 @@ import {
   getLongLivedToken,
   getMetaPages,
   getInstagramAccount,
-  getThreadsAccount,
 } from '@/lib/social/meta'
 import { getBaseUrl } from '@/lib/social/linkedin'
 import { connectSocialAccount } from '@/lib/social/db'
@@ -92,7 +91,6 @@ export async function GET(request: NextRequest) {
     // Store accounts for each page
     let connectedCount = 0
     let igConnectedCount = 0
-    let threadsConnectedCount = 0
 
     for (const page of pages) {
       // Store Facebook Page account
@@ -150,55 +148,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Try to connect Threads account (uses user token, not page token)
-    try {
-      console.log('[Meta Callback] Checking for Threads account...')
-      const threadsAccount = await getThreadsAccount(
-        longLivedToken.access_token
-      )
-
-      if (threadsAccount) {
-        console.log(
-          '[Meta Callback] Found Threads account:',
-          threadsAccount.username
-        )
-        await connectSocialAccount({
-          provider: 'threads',
-          provider_account_id: threadsAccount.id,
-          provider_account_name:
-            threadsAccount.username ||
-            threadsAccount.name ||
-            `Threads ${threadsAccount.id}`,
-          // Threads uses the user access token
-          access_token: longLivedToken.access_token,
-          access_token_expires_at: accessTokenExpiresAt,
-          scopes: ['threads_basic', 'threads_content_publish'],
-          connected_by: session.user.email || session.user.id,
-          metadata: {
-            threads_biography: threadsAccount.threads_biography,
-            threads_profile_picture_url:
-              threadsAccount.threads_profile_picture_url,
-          },
-        })
-        threadsConnectedCount++
-      } else {
-        console.log(
-          '[Meta Callback] No Threads account found or not authorized'
-        )
-      }
-    } catch (threadsError) {
-      console.error('[Meta Callback] Failed to connect Threads:', threadsError)
-    }
-
     // Redirect back with success message
-    const messageParts = [`Connected ${connectedCount} Facebook Page(s)`]
-    if (igConnectedCount > 0) {
-      messageParts.push(`${igConnectedCount} Instagram account(s)`)
-    }
-    if (threadsConnectedCount > 0) {
-      messageParts.push(`${threadsConnectedCount} Threads account(s)`)
-    }
-    const message = messageParts.join(' and ')
+    const message =
+      igConnectedCount > 0
+        ? `Connected ${connectedCount} Facebook Page(s) and ${igConnectedCount} Instagram account(s)`
+        : `Connected ${connectedCount} Facebook Page(s)`
 
     return NextResponse.redirect(
       `${redirectUrl}?connected=meta&message=${encodeURIComponent(message)}`

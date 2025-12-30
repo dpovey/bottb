@@ -3,7 +3,8 @@
  *
  * DELETE /api/admin/social/meta/disconnect
  *
- * Removes Facebook Page, Instagram, and Threads accounts.
+ * Removes Facebook Page and Instagram accounts.
+ * Threads uses a separate OAuth flow and has its own disconnect endpoint.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -26,21 +27,17 @@ export async function DELETE(request: NextRequest) {
         DELETE FROM social_accounts
         WHERE id = ${accountId}
       `
-    } else if (
-      provider === 'facebook' ||
-      provider === 'instagram' ||
-      provider === 'threads'
-    ) {
+    } else if (provider === 'facebook' || provider === 'instagram') {
       // Delete all accounts for the provider
       await sql`
         DELETE FROM social_accounts
         WHERE provider = ${provider}
       `
     } else {
-      // Delete all Meta accounts (Facebook, Instagram, and Threads)
+      // Delete all Meta accounts (Facebook and Instagram only - Threads has its own endpoint)
       await sql`
         DELETE FROM social_accounts
-        WHERE provider IN ('facebook', 'instagram', 'threads')
+        WHERE provider IN ('facebook', 'instagram')
       `
     }
 

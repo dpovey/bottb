@@ -55,8 +55,9 @@ describe('Meta Provider', () => {
       expect(url).toContain('redirect_uri=')
       expect(url).toContain('pages_show_list')
       expect(url).toContain('instagram_content_publish')
-      expect(url).toContain('threads_basic')
-      expect(url).toContain('threads_content_publish')
+      // Note: Threads scopes are NOT in Meta OAuth - Threads has its own OAuth flow
+      expect(url).not.toContain('threads_basic')
+      expect(url).not.toContain('threads_content_publish')
     })
 
     it('throws if META_APP_ID is missing', () => {
