@@ -9,6 +9,7 @@ import {
   BuildingIcon,
   CameraIcon,
 } from '@/components/icons'
+import { Button, VinylSpinner } from '@/components/ui'
 
 interface Event {
   id: string
@@ -37,6 +38,10 @@ export default function AdminDashboard({
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error'
+    text: string
+  } | null>(null)
 
   useEffect(() => {
     fetchEvents()
@@ -65,6 +70,7 @@ export default function AdminDashboard({
 
   const handleStatusChange = async (eventId: string, newStatus: string) => {
     setUpdatingStatus(eventId)
+    setStatusMessage(null)
     try {
       const response = await fetch(`/api/events/${eventId}/status`, {
         method: 'PATCH',
@@ -87,14 +93,16 @@ export default function AdminDashboard({
               : event
           )
         )
-        alert(`✅ ${result.message}`)
+        setStatusMessage({ type: 'success', text: result.message })
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => setStatusMessage(null), 3000)
       } else {
         const error = await response.json()
-        alert(`❌ Error: ${error.error}`)
+        setStatusMessage({ type: 'error', text: error.error })
       }
     } catch (error) {
       console.error('Error updating event status:', error)
-      alert('❌ Failed to update event status')
+      setStatusMessage({ type: 'error', text: 'Failed to update event status' })
     } finally {
       setUpdatingStatus(null)
     }
@@ -102,6 +110,25 @@ export default function AdminDashboard({
 
   return (
     <div className="space-y-8">
+      {/* Status Message */}
+      {statusMessage && (
+        <div
+          className={`px-4 py-3 rounded-lg flex items-center justify-between ${
+            statusMessage.type === 'success'
+              ? 'bg-success/20 border border-success/50 text-success'
+              : 'bg-error/20 border border-error/50 text-error'
+          }`}
+        >
+          <span>{statusMessage.text}</span>
+          <button
+            onClick={() => setStatusMessage(null)}
+            className="hover:opacity-70"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Link
@@ -218,39 +245,45 @@ export default function AdminDashboard({
                   <p className="text-muted">{event.location}</p>
                   <p className="text-sm text-dim">{event.date}</p>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <select
                       value={event.status}
                       onChange={(e) =>
                         handleStatusChange(event.id, e.target.value)
                       }
                       disabled={updatingStatus === event.id}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 ${
-                        event.status === 'voting'
-                          ? 'bg-green-500/30 text-green-300 border-green-400 hover:bg-green-500/40'
-                          : event.status === 'upcoming'
-                            ? 'bg-blue-500/30 text-blue-300 border-blue-400 hover:bg-blue-500/40'
-                            : 'bg-gray-500/30 text-gray-300 border-gray-400 hover:bg-gray-500/40'
-                      } ${
-                        updatingStatus === event.id
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'cursor-pointer transition-all duration-200 hover:scale-105'
-                      }`}
+                      className={`
+                        px-4 py-2 rounded-lg text-sm font-medium
+                        bg-bg border border-white/10 
+                        focus:outline-hidden focus:border-accent 
+                        hover:border-white/20 transition-colors
+                        disabled:opacity-50 disabled:cursor-not-allowed
+                        appearance-none cursor-pointer
+                        bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')]
+                        bg-[length:1.25em_1.25em] bg-[position:right_0.5rem_center] bg-no-repeat
+                        pr-8
+                        ${
+                          event.status === 'voting'
+                            ? 'text-success'
+                            : event.status === 'upcoming'
+                              ? 'text-blue-400'
+                              : 'text-text-muted'
+                        }
+                      `}
                     >
                       <option value="upcoming">Upcoming</option>
                       <option value="voting">Voting</option>
                       <option value="finalized">Finalized</option>
                     </select>
                     {updatingStatus === event.id && (
-                      <span className="text-xs text-dim">Updating...</span>
+                      <VinylSpinner size="xxs" />
                     )}
                   </div>
-                  <Link
-                    href={`/admin/events/${event.id}`}
-                    className="bg-accent hover:bg-accent-light text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                  >
-                    Manage Event
+                  <Link href={`/admin/events/${event.id}`}>
+                    <Button variant="accent" size="sm">
+                      Manage Event
+                    </Button>
                   </Link>
                 </div>
               </div>

@@ -79,20 +79,20 @@ describe('AdminDashboard', () => {
         const statusSelects = screen.getAllByRole('combobox')
         expect(statusSelects).toHaveLength(3)
 
-        // Check first event (voting) - green badge
+        // Check first event (voting)
         const votingSelect = statusSelects[0]
         expect(votingSelect).toHaveValue('voting')
-        expect(votingSelect).toHaveClass('bg-green-500/30', 'text-green-300')
+        expect(votingSelect).toHaveClass('text-success')
 
-        // Check second event (upcoming) - blue badge
+        // Check second event (upcoming)
         const upcomingSelect = statusSelects[1]
         expect(upcomingSelect).toHaveValue('upcoming')
-        expect(upcomingSelect).toHaveClass('bg-blue-500/30', 'text-blue-300')
+        expect(upcomingSelect).toHaveClass('text-blue-400')
 
-        // Check third event (finalized) - gray badge
+        // Check third event (finalized)
         const finalizedSelect = statusSelects[2]
         expect(finalizedSelect).toHaveValue('finalized')
-        expect(finalizedSelect).toHaveClass('bg-gray-500/30', 'text-gray-300')
+        expect(finalizedSelect).toHaveClass('text-text-muted')
       },
       { timeout: 10000 }
     )
