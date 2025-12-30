@@ -96,7 +96,8 @@ export function getMetaAuthUrl(state: string): string {
   const baseUrl = getBaseUrl()
   const redirectUri = `${baseUrl}/api/admin/social/meta/callback`
 
-  // Request permissions for Facebook Pages, Instagram, and Threads
+  // Request permissions for Facebook Pages and Instagram
+  // Note: Threads uses a separate OAuth flow at /api/admin/social/threads/connect
   const scopes = [
     'pages_show_list',
     'pages_read_engagement',
@@ -104,8 +105,6 @@ export function getMetaAuthUrl(state: string): string {
     'business_management',
     'instagram_basic',
     'instagram_content_publish',
-    'threads_basic',
-    'threads_content_publish',
   ].join(',')
 
   const params = new URLSearchParams({
@@ -186,6 +185,112 @@ export async function getLongLivedToken(
     const error = await response.json()
     throw new Error(
       `Failed to get long-lived token: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  return response.json()
+}
+
+// ============================================================================
+// Threads OAuth (separate from Facebook Login)
+// ============================================================================
+
+const THREADS_AUTH_BASE = 'https://threads.net/oauth'
+
+/**
+ * Get the Threads OAuth authorization URL
+ * Threads uses a separate OAuth endpoint from Facebook
+ */
+export function getThreadsAuthUrl(state: string): string {
+  const appId = process.env.META_APP_ID
+
+  if (!appId) {
+    throw new Error('META_APP_ID environment variable is required')
+  }
+
+  const baseUrl = getBaseUrl()
+  const redirectUri = `${baseUrl}/api/admin/social/threads/callback`
+
+  const scopes = ['threads_basic', 'threads_content_publish'].join(',')
+
+  const params = new URLSearchParams({
+    client_id: appId,
+    redirect_uri: redirectUri,
+    state,
+    scope: scopes,
+    response_type: 'code',
+  })
+
+  return `${THREADS_AUTH_BASE}/authorize?${params.toString()}`
+}
+
+/**
+ * Exchange Threads authorization code for access token
+ */
+export async function exchangeThreadsCode(
+  code: string
+): Promise<MetaTokenResponse> {
+  const appId = process.env.META_APP_ID
+  const appSecret = process.env.META_APP_SECRET
+
+  if (!appId || !appSecret) {
+    throw new Error(
+      'Meta OAuth environment variables are required (META_APP_ID, META_APP_SECRET)'
+    )
+  }
+
+  const baseUrl = getBaseUrl()
+  const redirectUri = `${baseUrl}/api/admin/social/threads/callback`
+
+  const params = new URLSearchParams({
+    client_id: appId,
+    client_secret: appSecret,
+    redirect_uri: redirectUri,
+    code,
+    grant_type: 'authorization_code',
+  })
+
+  const response = await fetch(
+    `${THREADS_AUTH_BASE}/access_token?${params.toString()}`,
+    { method: 'POST' }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Threads token exchange failed: ${error.error_message || error.error?.message || response.statusText}`
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Exchange short-lived Threads token for long-lived token (60 days)
+ */
+export async function getThreadsLongLivedToken(
+  shortLivedToken: string
+): Promise<MetaTokenResponse> {
+  const appSecret = process.env.META_APP_SECRET
+
+  if (!appSecret) {
+    throw new Error('META_APP_SECRET environment variable is required')
+  }
+
+  const params = new URLSearchParams({
+    grant_type: 'th_exchange_token',
+    client_secret: appSecret,
+    access_token: shortLivedToken,
+  })
+
+  const response = await fetch(
+    `${THREADS_API_BASE}/access_token?${params.toString()}`
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Failed to get Threads long-lived token: ${error.error_message || error.error?.message || response.statusText}`
     )
   }
 

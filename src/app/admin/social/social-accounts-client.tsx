@@ -96,9 +96,18 @@ export function SocialAccountsClient({
       )
 
       if (response.ok) {
-        setAccounts((prev) =>
-          prev.filter((a) => a.provider !== disconnectTarget)
-        )
+        // For 'meta', remove both facebook and instagram (not threads)
+        if (disconnectTarget === 'meta') {
+          setAccounts((prev) =>
+            prev.filter(
+              (a) => a.provider !== 'facebook' && a.provider !== 'instagram'
+            )
+          )
+        } else {
+          setAccounts((prev) =>
+            prev.filter((a) => a.provider !== disconnectTarget)
+          )
+        }
         setDisconnectTarget(null)
       } else {
         const data = await response.json()
@@ -288,24 +297,22 @@ export function SocialAccountsClient({
             </div>
           </div>
 
-          {/* Meta (Facebook + Instagram + Threads) */}
+          {/* Meta (Facebook + Instagram) */}
           <div className="bg-elevated rounded-xl border border-white/5 p-5">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#0866FF]/20 via-[#E4405F]/20 to-[#000000]/20 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#0866FF]/20 to-[#E4405F]/20 flex items-center justify-center shrink-0">
                 <MetaIcon size={24} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold">
-                    Meta (Facebook + Instagram + Threads)
-                  </h3>
-                  {(facebookAccount || instagramAccount || threadsAccount) && (
+                  <h3 className="font-semibold">Meta (Facebook + Instagram)</h3>
+                  {(facebookAccount || instagramAccount) && (
                     <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
                       Connected
                     </span>
                   )}
                 </div>
-                {facebookAccount || instagramAccount || threadsAccount ? (
+                {facebookAccount || instagramAccount ? (
                   <div className="space-y-2">
                     {facebookAccount && (
                       <div className="flex items-center gap-2 text-sm">
@@ -327,16 +334,6 @@ export function SocialAccountsClient({
                         </span>
                       </div>
                     )}
-                    {threadsAccount && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-white">
-                          {platformInfo.threads.icon}
-                        </span>
-                        <span className="text-muted">
-                          @{threadsAccount.provider_account_name}
-                        </span>
-                      </div>
-                    )}
                     {facebookAccount && (
                       <p className="text-xs text-dim mt-2">
                         Connected {formatDate(facebookAccount.connected_at)}
@@ -345,13 +342,12 @@ export function SocialAccountsClient({
                   </div>
                 ) : (
                   <p className="text-sm text-muted">
-                    Connect a Facebook Page, Instagram Business account, and
-                    Threads
+                    Connect a Facebook Page and Instagram Business account
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {facebookAccount || instagramAccount || threadsAccount ? (
+                {facebookAccount || instagramAccount ? (
                   <>
                     <a
                       href="/api/admin/social/meta/connect"
@@ -371,6 +367,69 @@ export function SocialAccountsClient({
                 ) : (
                   <a
                     href="/api/admin/social/meta/connect"
+                    className="px-4 py-2 rounded-lg text-sm bg-accent hover:bg-accent-light transition-colors"
+                  >
+                    Connect
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Threads (separate OAuth) */}
+          <div className="bg-elevated rounded-xl border border-white/5 p-5">
+            <div className="flex items-start gap-4">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
+              >
+                <ThreadsIcon size={24} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold">Threads</h3>
+                  {threadsAccount?.status === 'active' && (
+                    <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
+                      Connected
+                    </span>
+                  )}
+                </div>
+                {threadsAccount ? (
+                  <>
+                    <p className="text-sm text-muted mb-2">
+                      @{threadsAccount.provider_account_name}
+                    </p>
+                    <p className="text-xs text-dim">
+                      Connected {formatDate(threadsAccount.connected_at)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted">
+                    Connect your Threads account to post updates
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {threadsAccount ? (
+                  <>
+                    <a
+                      href="/api/admin/social/threads/connect"
+                      className="px-3 py-1.5 rounded-sm text-xs border border-white/20 hover:bg-white/5 transition-colors"
+                    >
+                      Reconnect
+                    </a>
+                    <button
+                      onClick={() => setDisconnectTarget('threads')}
+                      disabled={disconnecting === 'threads'}
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-dim hover:text-red-400 transition-colors disabled:opacity-50 cursor-pointer"
+                      title="Disconnect"
+                    >
+                      <DeleteIcon className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <a
+                    href="/api/admin/social/threads/connect"
                     className="px-4 py-2 rounded-lg text-sm bg-accent hover:bg-accent-light transition-colors"
                   >
                     Connect
