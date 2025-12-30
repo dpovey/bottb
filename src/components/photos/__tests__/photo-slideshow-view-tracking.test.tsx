@@ -53,6 +53,7 @@ vi.mock('framer-motion', () => ({
       <div {...props}>{children}</div>
     ),
     img: (props: React.ImgHTMLAttributes<HTMLImageElement>) => (
+      // eslint-disable-next-line @next/next/no-img-element
       <img {...props} alt="" />
     ),
     button: ({
