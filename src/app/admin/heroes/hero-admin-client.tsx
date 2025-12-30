@@ -580,7 +580,7 @@ function HeroPreviewModal({
               imageUrl={photo.blob_url}
               focalPoint={focalPoint}
               objectPosition={`${focalPoint.x}% 50%`}
-              containerClass="max-h-[200px]"
+              maxHeight={180}
             />
 
             {/* Event Card (4:3) */}
@@ -657,7 +657,7 @@ function CropPreview({
   imageUrl,
   focalPoint,
   objectPosition,
-  containerClass = '',
+  maxHeight,
 }: {
   title: string
   subtitle: string
@@ -665,17 +665,31 @@ function CropPreview({
   imageUrl: string
   focalPoint: { x: number; y: number }
   objectPosition: string
-  containerClass?: string
+  /** Optional max height for tall aspect ratios (e.g., mobile portrait) */
+  maxHeight?: number
 }) {
+  // Parse aspect ratio to calculate dimensions when maxHeight is set
+  const [w, h] = aspectRatio.split('/').map(Number)
+
+  // For portrait aspect ratios with maxHeight, calculate the width
+  const style: React.CSSProperties = maxHeight
+    ? {
+        height: maxHeight,
+        width: (maxHeight * w) / h,
+      }
+    : { aspectRatio }
+
   return (
-    <div className={`space-y-1 ${containerClass}`}>
+    <div className="space-y-1">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium">{title}</span>
         <span className="text-xs text-text-dim">{subtitle}</span>
       </div>
       <div
-        className="relative rounded-lg overflow-hidden border border-white/10 bg-black/50"
-        style={{ aspectRatio }}
+        className={`relative rounded-lg overflow-hidden border border-white/10 bg-black/50 ${
+          maxHeight ? 'mx-auto' : ''
+        }`}
+        style={style}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
