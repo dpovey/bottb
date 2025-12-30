@@ -3,7 +3,11 @@
 import { useSession, signIn } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { identifyAdmin } from '@/lib/analytics'
+import { Button, VinylSpinner } from '@/components/ui'
+import { ArrowLeftIcon } from '@/components/icons'
 
 export default function AdminLoginPage() {
   const { data: session, status } = useSession()
@@ -39,10 +43,6 @@ export default function AdminLoginPage() {
 
       if (result?.error) {
         setError('Invalid email or password')
-      } else if (result?.ok) {
-        // Wait for session to update, then check admin status
-        // The useEffect will handle the redirect when session updates
-        // If not admin, the error will be shown by the useEffect
       }
     } catch (error) {
       console.error('Sign in error:', error)
@@ -54,56 +54,120 @@ export default function AdminLoginPage() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <VinylSpinner size="md" />
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="max-w-md mx-auto text-center">
-        <h1 className="text-3xl font-bold text-white mb-6">Admin Access</h1>
-        <p className="text-gray-300 mb-8">
-          Please sign in to access admin features.
-        </p>
-
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSignIn} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-lg text-white placeholder-gray-400 border border-white/20 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 backdrop-blur-lg text-white placeholder-gray-400 border border-white/20 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSigningIn}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 px-6 rounded-xl transition-colors"
-          >
-            {isSigningIn ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
+    <div className="min-h-screen flex flex-col">
+      {/* Background Effect */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/5 to-cyan-900/5" />
       </div>
+
+      {/* Header */}
+      <header className="relative z-10 p-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-text-muted hover:text-white transition-colors text-sm"
+        >
+          <ArrowLeftIcon size={16} />
+          Back to Home
+        </Link>
+      </header>
+
+      {/* Main Content */}
+      <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block">
+              <Image
+                src="/images/logos/bottb-horizontal.png"
+                alt="Battle of the Tech Bands"
+                width={200}
+                height={48}
+                className="h-12 w-auto mx-auto mb-6"
+                priority
+              />
+            </Link>
+            <h1 className="font-semibold text-2xl mb-2 text-white">
+              Welcome Back
+            </h1>
+            <p className="text-text-muted">
+              Sign in to your account to continue
+            </p>
+          </div>
+
+          {/* Login Card */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/5">
+            {error && (
+              <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg mb-6 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSignIn}>
+              {/* Email */}
+              <div className="mb-5">
+                <label className="block text-[10px] tracking-widest uppercase text-text-muted mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-gray-500 transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="mb-6">
+                <label className="block text-[10px] tracking-widest uppercase text-text-muted mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-gray-500 transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                variant="filled"
+                disabled={isSigningIn}
+                className="w-full"
+              >
+                {isSigningIn ? (
+                  <>
+                    <VinylSpinner size="xxs" />
+                    Signing In...
+                  </>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 p-6 text-center text-text-dim text-sm">
+        © {new Date().getFullYear()} Battle of the Tech Bands
+      </footer>
     </div>
   )
 }
