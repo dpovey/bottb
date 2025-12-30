@@ -82,6 +82,36 @@ Key documentation:
 - `doc/requirements/` - Feature requirements with screenshots
 - `doc/testing/` - Testing patterns and strategies
 
+## Background Agents vs. Worktrees
+
+Cursor supports **Background Agents** — autonomous AI agents that work independently while you continue other work. Consider suggesting this when the task fits.
+
+### When to Suggest Background Agents
+
+Prompt the user with: *"This task is well-suited for a background agent — want me to run it that way so you can continue working on other things?"*
+
+**Good candidates for background agents:**
+- Well-defined, self-contained tasks with clear completion criteria
+- Mechanical refactors (rename across files, update imports, fix lint errors)
+- Adding tests for existing code
+- Documentation updates
+- Tasks that don't need interactive feedback
+
+**Keep as interactive (worktree) workflow:**
+- Complex features requiring design decisions
+- Tasks where you need to guide the AI step-by-step
+- Changes that need your review before committing
+- Debugging sessions requiring back-and-forth
+- Anything touching database migrations or sensitive config
+
+### How Users Access Background Agents
+
+- **In Chat**: Ask "Do this as a background agent" or look for "Run in background" option
+- **Command Palette**: `Cmd+Shift+P` → search "Background Agent"
+- **Agent Panel**: Check sidebar for running background tasks
+
+Background agents automatically create isolated environments (similar to worktrees) and can create PRs when done.
+
 ## Feature Branch Workflow
 
 **Use git worktrees for all new features, bugfixes, and plans.** This allows parallel development without stashing or switching branches.
