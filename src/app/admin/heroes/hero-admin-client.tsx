@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { Button, VinylSpinner, Modal } from '@/components/ui'
 import { CheckIcon } from '@/components/icons'
+import { CropPreview } from '@/components/photos/focal-point-editor'
 
 // Label display info
 const LABEL_INFO = {
@@ -646,66 +647,5 @@ function HeroPreviewModal({
         </div>
       </div>
     </Modal>
-  )
-}
-
-// Crop Preview Component
-function CropPreview({
-  title,
-  subtitle,
-  aspectRatio,
-  imageUrl,
-  focalPoint,
-  objectPosition,
-  maxHeight,
-}: {
-  title: string
-  subtitle: string
-  aspectRatio: string
-  imageUrl: string
-  focalPoint: { x: number; y: number }
-  objectPosition: string
-  /** Optional max height for tall aspect ratios (e.g., mobile portrait) */
-  maxHeight?: number
-}) {
-  // Parse aspect ratio to calculate dimensions when maxHeight is set
-  const [w, h] = aspectRatio.split('/').map(Number)
-
-  // For portrait aspect ratios with maxHeight, calculate the width
-  const style: React.CSSProperties = maxHeight
-    ? {
-        height: maxHeight,
-        width: (maxHeight * w) / h,
-      }
-    : { aspectRatio }
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium">{title}</span>
-        <span className="text-xs text-text-dim">{subtitle}</span>
-      </div>
-      <div
-        className={`relative rounded-lg overflow-hidden border border-white/10 bg-black/50 ${
-          maxHeight ? 'mx-auto' : ''
-        }`}
-        style={style}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          style={{ objectPosition }}
-        />
-        {/* Small focal point indicator */}
-        <div
-          className="absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ left: `${focalPoint.x}%`, top: `${focalPoint.y}%` }}
-        >
-          <div className="absolute inset-0 border border-white/50 rounded-full" />
-        </div>
-      </div>
-    </div>
   )
 }
