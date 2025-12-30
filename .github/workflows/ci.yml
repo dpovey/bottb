@@ -46,10 +46,12 @@ jobs:
         run: pnpm test
 
   # Visual regression testing with Chromatic
+  # - On PRs: Run comparison against main baseline
+  # - On main push: Auto-accept changes to update baselines
   # Skip for Dependabot PRs as they don't have access to secrets
   chromatic:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+    if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout code
@@ -78,6 +80,7 @@ jobs:
           onlyChanged: true # TurboSnap - only test changed stories
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}
+          autoAcceptChanges: ${{ github.ref == 'refs/heads/main' }} # Auto-accept on main to update baselines
 
   # Deploy Storybook to GitHub Pages
   deploy-storybook:
