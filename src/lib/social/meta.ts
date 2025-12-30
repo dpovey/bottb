@@ -195,7 +195,7 @@ export async function getLongLivedToken(
 // Threads OAuth (separate from Facebook Login)
 // ============================================================================
 
-const THREADS_AUTH_BASE = 'https://threads.net/oauth'
+const THREADS_AUTH_BASE = 'https://www.threads.com/oauth'
 
 /**
  * Get the Threads OAuth authorization URL
