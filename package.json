@@ -7,13 +7,13 @@
     "*.scss"
   ],
   "scripts": {
-    "dev": "next dev",
-    "dev:restart": "lsof -ti:3000 | xargs kill -9 2>/dev/null; rm -rf .next && next dev",
+    "dev": "next dev -p 3030",
+    "dev:restart": "lsof -ti:3030 | xargs kill -9 2>/dev/null; rm -rf .next && next dev -p 3030",
     "build": "pnpm build:search-index && next build",
     "build:search-index": "dotenv -e .env.local -- tsx src/scripts/build-search-index.ts",
     "analyze": "next experimental-analyze",
     "analyze:ci": "next experimental-analyze --output",
-    "lighthouse": "lighthouse http://localhost:3000 --output=json --output=html --output-path=./lighthouse-report --chrome-flags='--headless=new' --preset=desktop",
+    "lighthouse": "lighthouse http://localhost:3030 --output=json --output=html --output-path=./lighthouse-report --chrome-flags='--headless=new' --preset=desktop",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "typecheck": "tsc --noEmit",

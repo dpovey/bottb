@@ -30,7 +30,7 @@ pnpm setup-db
 pnpm dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see the application.
+Visit [http://localhost:3030](http://localhost:3030) to see the application.
 
 ## Features
 

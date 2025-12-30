@@ -213,7 +213,9 @@ git worktree lock .worktrees/dir       # Prevent pruning (for removable media)
 
 ## Development Server
 
-**Always use `pnpm dev:restart` to start the dev server.** This kills any existing server on port 3000 and clears the `.next` cache before starting. Never use `pnpm dev` directly as it can create multiple server instances.
+**Always use `pnpm dev:restart` to start the dev server.** This kills any existing server on port 3030 and clears the `.next` cache before starting. Never use `pnpm dev` directly as it can create multiple server instances.
+
+The dev server runs on **port 3030** (not the default 3000).
 
 ## Workflow
 

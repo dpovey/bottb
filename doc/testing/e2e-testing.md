@@ -71,7 +71,7 @@ This makes subsequent test runs much faster.
 `playwright.config.ts`:
 
 - Test dir: `e2e/`
-- Base URL: `http://localhost:3000`
+- Base URL: `http://localhost:3030`
 - Auto-starts dev server
 - Global setup: seeds database
 
