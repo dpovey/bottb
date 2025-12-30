@@ -5,6 +5,8 @@ export { InstagramIcon } from './social/instagram'
 export { YouTubeIcon } from './social/youtube'
 export { TikTokIcon } from './social/tiktok'
 export { TwitterIcon } from './social/twitter'
+export { MetaIcon } from './social/meta'
+export { ThreadsIcon } from './social/threads'
 
 // UI Action Icons
 export { CloseIcon } from './ui/close'

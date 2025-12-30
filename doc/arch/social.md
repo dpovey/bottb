@@ -1,6 +1,6 @@
 # Social Integration
 
-Posting to LinkedIn and Meta (Facebook/Instagram) via OAuth.
+Posting to LinkedIn and Meta (Facebook/Instagram/Threads) via OAuth.
 
 ## Supported Platforms
 
@@ -9,6 +9,7 @@ Posting to LinkedIn and Meta (Facebook/Instagram) via OAuth.
 | LinkedIn  | OAuth 2.0         | Image posts with text |
 | Facebook  | Meta Business SDK | Image posts with text |
 | Instagram | Meta Business SDK | Image posts with text |
+| Threads   | Meta Business SDK | Image posts with text |
 
 ## OAuth Flow
 
@@ -39,7 +40,7 @@ Posting to LinkedIn and Meta (Facebook/Instagram) via OAuth.
 
 ```
 {
-  platform: 'linkedin' | 'facebook' | 'instagram',
+  platform: 'linkedin' | 'facebook' | 'instagram' | 'threads',
   accountId: string,
   text: string,
   photoIds: string[]

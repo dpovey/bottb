@@ -1,5 +1,5 @@
 /**
- * Tests for Meta (Facebook/Instagram) provider
+ * Tests for Meta (Facebook/Instagram/Threads) provider
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -19,6 +19,9 @@ import {
   postMultipleToFacebookPage,
   postToInstagram,
   postCarouselToInstagram,
+  getThreadsAccount,
+  postToThreads,
+  postCarouselToThreads,
 } from '../meta'
 
 describe('Meta Provider', () => {
@@ -52,6 +55,8 @@ describe('Meta Provider', () => {
       expect(url).toContain('redirect_uri=')
       expect(url).toContain('pages_show_list')
       expect(url).toContain('instagram_content_publish')
+      expect(url).toContain('threads_basic')
+      expect(url).toContain('threads_content_publish')
     })
 
     it('throws if META_APP_ID is missing', () => {
@@ -347,6 +352,130 @@ describe('Meta Provider', () => {
 
       await expect(
         postCarouselToInstagram('ig-account', 'access-token', urls, 'Caption')
+      ).rejects.toThrow('Carousel supports maximum 10 images')
+    })
+  })
+
+  describe('getThreadsAccount', () => {
+    it('fetches Threads account details', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 'threads-123',
+            username: 'testuser',
+            name: 'Test User',
+          }),
+      })
+
+      const account = await getThreadsAccount('access-token')
+
+      expect(account?.id).toBe('threads-123')
+      expect(account?.username).toBe('testuser')
+    })
+
+    it('returns null if Threads API fails', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Unauthorized',
+        json: () =>
+          Promise.resolve({
+            error: { message: 'Access denied' },
+          }),
+      })
+
+      const account = await getThreadsAccount('access-token')
+
+      expect(account).toBeNull()
+    })
+  })
+
+  describe('postToThreads', () => {
+    it('creates and publishes single image', async () => {
+      // Create container
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'container-123' }),
+      })
+      // Publish
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'media-456' }),
+      })
+
+      const result = await postToThreads(
+        'threads-account',
+        'access-token',
+        'https://example.com/photo.jpg',
+        'Threads caption'
+      )
+
+      expect(result.id).toBe('media-456')
+      expect(mockFetch).toHaveBeenCalledTimes(2)
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('graph.threads.net'),
+        expect.objectContaining({ method: 'POST' })
+      )
+    })
+  })
+
+  describe('postCarouselToThreads', () => {
+    it('creates carousel with multiple images', async () => {
+      // Create carousel item 1
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'item-1' }),
+      })
+      // Create carousel item 2
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'item-2' }),
+      })
+      // Create carousel container
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'carousel-123' }),
+      })
+      // Publish
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 'media-789' }),
+      })
+
+      const result = await postCarouselToThreads(
+        'threads-account',
+        'access-token',
+        ['https://example.com/photo1.jpg', 'https://example.com/photo2.jpg'],
+        'Carousel caption'
+      )
+
+      expect(result.id).toBe('media-789')
+      expect(mockFetch).toHaveBeenCalledTimes(4)
+    })
+
+    it('throws if less than 2 images', async () => {
+      await expect(
+        postCarouselToThreads(
+          'threads-account',
+          'access-token',
+          ['https://example.com/photo1.jpg'],
+          'Caption'
+        )
+      ).rejects.toThrow('Carousel requires at least 2 images')
+    })
+
+    it('throws if more than 10 images', async () => {
+      const urls = Array(11)
+        .fill(null)
+        .map((_, i) => `https://example.com/photo${i}.jpg`)
+
+      await expect(
+        postCarouselToThreads(
+          'threads-account',
+          'access-token',
+          urls,
+          'Caption'
+        )
       ).rejects.toThrow('Carousel supports maximum 10 images')
     })
   })

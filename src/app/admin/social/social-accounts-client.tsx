@@ -11,6 +11,8 @@ import {
   LinkedInIcon,
   FacebookIcon,
   InstagramIcon,
+  ThreadsIcon,
+  MetaIcon,
   DeleteIcon,
   EditIcon,
   InfoIcon,
@@ -44,6 +46,11 @@ const platformInfo: Record<
     name: 'Instagram',
     color: '#E4405F',
     icon: <InstagramIcon className="w-5 h-5" />,
+  },
+  threads: {
+    name: 'Threads',
+    color: '#000000',
+    icon: <ThreadsIcon className="w-5 h-5" />,
   },
 }
 
@@ -111,6 +118,7 @@ export function SocialAccountsClient({
   const linkedinAccount = getAccountByProvider('linkedin')
   const facebookAccount = getAccountByProvider('facebook')
   const instagramAccount = getAccountByProvider('instagram')
+  const threadsAccount = getAccountByProvider('threads')
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-AU', {
@@ -280,22 +288,24 @@ export function SocialAccountsClient({
             </div>
           </div>
 
-          {/* Meta (Facebook + Instagram) */}
+          {/* Meta (Facebook + Instagram + Threads) */}
           <div className="bg-elevated rounded-xl border border-white/5 p-5">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#0866FF]/20 to-[#E4405F]/20 flex items-center justify-center shrink-0">
-                <FacebookIcon size={24} className="text-white" />
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#0866FF]/20 via-[#E4405F]/20 to-[#000000]/20 flex items-center justify-center shrink-0">
+                <MetaIcon size={24} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold">Meta (Facebook + Instagram)</h3>
-                  {(facebookAccount || instagramAccount) && (
+                  <h3 className="font-semibold">
+                    Meta (Facebook + Instagram + Threads)
+                  </h3>
+                  {(facebookAccount || instagramAccount || threadsAccount) && (
                     <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-sm text-[10px]">
                       Connected
                     </span>
                   )}
                 </div>
-                {facebookAccount || instagramAccount ? (
+                {facebookAccount || instagramAccount || threadsAccount ? (
                   <div className="space-y-2">
                     {facebookAccount && (
                       <div className="flex items-center gap-2 text-sm">
@@ -317,6 +327,16 @@ export function SocialAccountsClient({
                         </span>
                       </div>
                     )}
+                    {threadsAccount && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-white">
+                          {platformInfo.threads.icon}
+                        </span>
+                        <span className="text-muted">
+                          @{threadsAccount.provider_account_name}
+                        </span>
+                      </div>
+                    )}
                     {facebookAccount && (
                       <p className="text-xs text-dim mt-2">
                         Connected {formatDate(facebookAccount.connected_at)}
@@ -325,12 +345,13 @@ export function SocialAccountsClient({
                   </div>
                 ) : (
                   <p className="text-sm text-muted">
-                    Connect a Facebook Page and Instagram Business account
+                    Connect a Facebook Page, Instagram Business account, and
+                    Threads
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {facebookAccount || instagramAccount ? (
+                {facebookAccount || instagramAccount || threadsAccount ? (
                   <>
                     <a
                       href="/api/admin/social/meta/connect"
