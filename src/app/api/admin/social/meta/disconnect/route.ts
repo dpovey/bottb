@@ -3,7 +3,7 @@
  *
  * DELETE /api/admin/social/meta/disconnect
  *
- * Removes both Facebook Page and Instagram accounts.
+ * Removes Facebook Page, Instagram, and Threads accounts.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -26,17 +26,21 @@ export async function DELETE(request: NextRequest) {
         DELETE FROM social_accounts
         WHERE id = ${accountId}
       `
-    } else if (provider === 'facebook' || provider === 'instagram') {
+    } else if (
+      provider === 'facebook' ||
+      provider === 'instagram' ||
+      provider === 'threads'
+    ) {
       // Delete all accounts for the provider
       await sql`
         DELETE FROM social_accounts
         WHERE provider = ${provider}
       `
     } else {
-      // Delete all Meta accounts (both Facebook and Instagram)
+      // Delete all Meta accounts (Facebook, Instagram, and Threads)
       await sql`
         DELETE FROM social_accounts
-        WHERE provider IN ('facebook', 'instagram')
+        WHERE provider IN ('facebook', 'instagram', 'threads')
       `
     }
 

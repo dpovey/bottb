@@ -1,10 +1,11 @@
 /**
- * Meta (Facebook/Instagram) API client
+ * Meta (Facebook/Instagram/Threads) API client
  *
  * Uses the Facebook Graph API for:
  * - OAuth 2.0 authorization
  * - Facebook Page photo posting
  * - Instagram Business Account carousel/single image posting
+ * - Threads posting
  *
  * Required scopes:
  * - pages_show_list - list pages user manages
@@ -12,6 +13,8 @@
  * - pages_manage_posts - post to pages
  * - instagram_basic - basic IG info
  * - instagram_content_publish - publish to IG
+ * - threads_basic - basic Threads info
+ * - threads_content_publish - publish to Threads
  *
  * Environment variables:
  * - META_APP_ID
@@ -23,6 +26,7 @@ import { getBaseUrl } from './linkedin'
 
 const GRAPH_API_VERSION = 'v21.0'
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+const THREADS_API_BASE = `https://graph.threads.net/${GRAPH_API_VERSION}`
 
 // ============================================================================
 // Types
@@ -58,6 +62,14 @@ export interface InstagramAccount {
   name?: string
 }
 
+export interface ThreadsAccount {
+  id: string
+  username: string
+  name?: string
+  threads_profile_picture_url?: string
+  threads_biography?: string
+}
+
 export interface MetaMediaResponse {
   id: string
 }
@@ -84,7 +96,7 @@ export function getMetaAuthUrl(state: string): string {
   const baseUrl = getBaseUrl()
   const redirectUri = `${baseUrl}/api/admin/social/meta/callback`
 
-  // Request permissions for both Facebook Pages and Instagram
+  // Request permissions for Facebook Pages, Instagram, and Threads
   const scopes = [
     'pages_show_list',
     'pages_read_engagement',
@@ -92,6 +104,8 @@ export function getMetaAuthUrl(state: string): string {
     'business_management',
     'instagram_basic',
     'instagram_content_publish',
+    'threads_basic',
+    'threads_content_publish',
   ].join(',')
 
   const params = new URLSearchParams({
@@ -550,4 +564,224 @@ export async function postCarouselToInstagram(
 
   // Publish
   return publishInstagramMedia(igAccountId, accessToken, carouselId)
+}
+
+// ============================================================================
+// Threads Posting
+// ============================================================================
+
+/**
+ * Get Threads user profile
+ * Note: Threads uses the user's ID from Meta OAuth, not Instagram business account ID
+ */
+export async function getThreadsAccount(
+  accessToken: string
+): Promise<ThreadsAccount | null> {
+  try {
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      fields: 'id,username,name,threads_profile_picture_url,threads_biography',
+    })
+
+    const response = await fetch(`${THREADS_API_BASE}/me?${params.toString()}`)
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('[Threads] Failed to get account:', error)
+      return null
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('[Threads] Error fetching account:', error)
+    return null
+  }
+}
+
+/**
+ * Create a Threads media container for a single image post
+ *
+ * Note: Threads requires images to be publicly accessible URLs
+ */
+export async function createThreadsMediaContainer(
+  threadsUserId: string,
+  accessToken: string,
+  imageUrl: string,
+  caption: string
+): Promise<string> {
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    media_type: 'IMAGE',
+    image_url: imageUrl,
+    text: caption,
+  })
+
+  const response = await fetch(
+    `${THREADS_API_BASE}/${threadsUserId}/threads?${params.toString()}`,
+    { method: 'POST' }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Failed to create Threads media container: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  const result: MetaMediaResponse = await response.json()
+  return result.id
+}
+
+/**
+ * Create a Threads carousel item container
+ */
+export async function createThreadsCarouselItem(
+  threadsUserId: string,
+  accessToken: string,
+  imageUrl: string
+): Promise<string> {
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    media_type: 'IMAGE',
+    image_url: imageUrl,
+    is_carousel_item: 'true',
+  })
+
+  const response = await fetch(
+    `${THREADS_API_BASE}/${threadsUserId}/threads?${params.toString()}`,
+    { method: 'POST' }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Failed to create Threads carousel item: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  const result: MetaMediaResponse = await response.json()
+  return result.id
+}
+
+/**
+ * Create a Threads carousel container
+ */
+export async function createThreadsCarouselContainer(
+  threadsUserId: string,
+  accessToken: string,
+  childrenIds: string[],
+  caption: string
+): Promise<string> {
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    media_type: 'CAROUSEL',
+    text: caption,
+  })
+
+  // Add children IDs
+  params.append('children', childrenIds.join(','))
+
+  const response = await fetch(
+    `${THREADS_API_BASE}/${threadsUserId}/threads?${params.toString()}`,
+    { method: 'POST' }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Failed to create Threads carousel container: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  const result: MetaMediaResponse = await response.json()
+  return result.id
+}
+
+/**
+ * Publish a Threads media container
+ */
+export async function publishThreadsMedia(
+  threadsUserId: string,
+  accessToken: string,
+  containerId: string
+): Promise<MetaPostResponse> {
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    creation_id: containerId,
+  })
+
+  const response = await fetch(
+    `${THREADS_API_BASE}/${threadsUserId}/threads_publish?${params.toString()}`,
+    { method: 'POST' }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(
+      `Failed to publish Threads media: ${error.error?.message || response.statusText}`
+    )
+  }
+
+  return response.json()
+}
+
+/**
+ * Post a single image to Threads
+ */
+export async function postToThreads(
+  threadsUserId: string,
+  accessToken: string,
+  imageUrl: string,
+  caption: string
+): Promise<MetaPostResponse> {
+  // Create container
+  const containerId = await createThreadsMediaContainer(
+    threadsUserId,
+    accessToken,
+    imageUrl,
+    caption
+  )
+
+  // Publish
+  return publishThreadsMedia(threadsUserId, accessToken, containerId)
+}
+
+/**
+ * Post multiple images to Threads as a carousel
+ */
+export async function postCarouselToThreads(
+  threadsUserId: string,
+  accessToken: string,
+  imageUrls: string[],
+  caption: string
+): Promise<MetaPostResponse> {
+  if (imageUrls.length < 2) {
+    throw new Error('Carousel requires at least 2 images')
+  }
+
+  if (imageUrls.length > 10) {
+    throw new Error('Carousel supports maximum 10 images')
+  }
+
+  // Create carousel item containers for each image
+  const childrenIds: string[] = []
+  for (const imageUrl of imageUrls) {
+    const itemId = await createThreadsCarouselItem(
+      threadsUserId,
+      accessToken,
+      imageUrl
+    )
+    childrenIds.push(itemId)
+  }
+
+  // Create carousel container
+  const carouselId = await createThreadsCarouselContainer(
+    threadsUserId,
+    accessToken,
+    childrenIds,
+    caption
+  )
+
+  // Publish
+  return publishThreadsMedia(threadsUserId, accessToken, carouselId)
 }

@@ -572,6 +572,10 @@ export async function getAvailablePlatforms(): Promise<SocialPlatform[]> {
     if (account.provider === 'instagram') {
       platforms.push('instagram')
     }
+
+    if (account.provider === 'threads') {
+      platforms.push('threads')
+    }
   }
 
   return platforms

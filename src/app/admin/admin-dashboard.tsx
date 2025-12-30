@@ -276,9 +276,7 @@ export default function AdminDashboard({
                       <option value="voting">Voting</option>
                       <option value="finalized">Finalized</option>
                     </select>
-                    {updatingStatus === event.id && (
-                      <VinylSpinner size="xxs" />
-                    )}
+                    {updatingStatus === event.id && <VinylSpinner size="xxs" />}
                   </div>
                   <Link href={`/admin/events/${event.id}`}>
                     <Button variant="accent" size="sm">

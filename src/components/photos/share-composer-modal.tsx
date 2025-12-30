@@ -13,6 +13,7 @@ import {
   LinkedInIcon,
   FacebookIcon,
   InstagramIcon,
+  ThreadsIcon,
   CloseIcon,
   CheckIcon,
   LightningIcon,
@@ -25,6 +26,7 @@ const PlatformIcon: Record<string, React.ReactNode> = {
   linkedin: <LinkedInIcon className="w-5 h-5" />,
   facebook: <FacebookIcon className="w-5 h-5" />,
   instagram: <InstagramIcon className="w-5 h-5" />,
+  threads: <ThreadsIcon className="w-5 h-5" />,
 }
 
 interface ShareComposerModalProps {
@@ -361,7 +363,12 @@ export function ShareComposerModal({
             ) : (
               <div className="flex flex-wrap gap-2">
                 {(
-                  ['linkedin', 'facebook', 'instagram'] as SocialPlatform[]
+                  [
+                    'linkedin',
+                    'facebook',
+                    'instagram',
+                    'threads',
+                  ] as SocialPlatform[]
                 ).map((platform) => {
                   const connected = isPlatformConnected(platform)
                   const selected = selectedPlatforms.includes(platform)

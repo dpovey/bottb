@@ -5,8 +5,8 @@
 // Supported platforms/providers
 // Provider = account type stored in DB
 // Platform = where posts are published
-export type SocialProvider = 'linkedin' | 'facebook' | 'instagram'
-export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram'
+export type SocialProvider = 'linkedin' | 'facebook' | 'instagram' | 'threads'
+export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram' | 'threads'
 
 // Account status
 export type SocialAccountStatus = 'active' | 'expired' | 'revoked' | 'error'

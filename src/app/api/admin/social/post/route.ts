@@ -21,6 +21,8 @@ import {
   postMultipleToFacebookPage,
   postToInstagram,
   postCarouselToInstagram,
+  postToThreads,
+  postCarouselToThreads,
 } from '@/lib/social/meta'
 import type { SocialPlatform, CreateSocialPostInput } from '@/lib/social/types'
 import { getBaseUrl } from '@/lib/social/linkedin'
@@ -257,6 +259,49 @@ const handlePost: ProtectedApiHandler = async (
           })
 
           results.instagram = { success: true, postUrl }
+          hasSuccess = true
+        } else if (platform === 'threads') {
+          const account = await getSocialAccountWithTokens('threads')
+
+          if (!account || account.status !== 'active') {
+            throw new Error('Threads account not connected or inactive')
+          }
+
+          let postId: string
+
+          // Use JPEG URLs for Threads (similar to Instagram)
+          if (jpegUrls.length === 1) {
+            // Single photo post
+            const result = await postToThreads(
+              account.provider_account_id,
+              account.access_token,
+              jpegUrls[0],
+              body.caption
+            )
+            postId = result.id
+          } else {
+            // Carousel post (2-10 photos)
+            const result = await postCarouselToThreads(
+              account.provider_account_id,
+              account.access_token,
+              jpegUrls,
+              body.caption
+            )
+            postId = result.id
+          }
+
+          // Threads post URL format
+          const postUrl = `https://www.threads.net/post/${postId}`
+
+          await createSocialPostResult({
+            post_id: post.id,
+            platform: 'threads',
+            status: 'success',
+            external_post_id: postId,
+            external_post_url: postUrl,
+          })
+
+          results.threads = { success: true, postUrl }
           hasSuccess = true
         }
       } catch (error) {
