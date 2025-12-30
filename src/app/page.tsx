@@ -209,6 +209,7 @@ export default async function HomePage() {
   // Extract hero photo data
   const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null
   const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE.url
+  const heroImageUrlHigh = heroPhoto?.large_4k_url ?? undefined
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
 
   const initialPhotos = initialPhotosData
@@ -323,6 +324,7 @@ export default async function HomePage() {
         title="Battle of the Tech Bands"
         subtitle="Where technology meets rock 'n' roll. A community charity event supporting Youngcare."
         backgroundImage={heroImageUrl}
+        backgroundImageHigh={heroImageUrlHigh}
         focalPoint={heroFocalPoint}
         size="lg"
         overlay="heavy"

@@ -14,6 +14,8 @@ export interface HeroProps {
   subtitle?: string
   /** Background image URL (or placeholder gradient if not provided) */
   backgroundImage?: string
+  /** High-resolution background image URL (e.g., 4K version) for large displays */
+  backgroundImageHigh?: string
   /** Focal point for image positioning (0-100 for both x and y) */
   focalPoint?: HeroFocalPoint
   /** CTA buttons */
@@ -35,6 +37,7 @@ export function Hero({
   title,
   subtitle,
   backgroundImage,
+  backgroundImageHigh,
   focalPoint = { x: 50, y: 50 },
   actions,
   size = 'lg',
@@ -59,6 +62,7 @@ export function Hero({
       {backgroundImage ? (
         <FocalPointImage
           src={backgroundImage}
+          srcHigh={backgroundImageHigh}
           alt=""
           focalPoint={focalPoint}
           priority

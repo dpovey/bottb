@@ -389,6 +389,7 @@ export default async function BandPage({
   })
   const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null
   const heroPhotoUrl = heroPhoto?.blob_url ?? null
+  const heroPhotoUrlHigh = heroPhoto?.large_4k_url ?? undefined
   const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
 
   // Fetch all bands for the event to enable navigation
@@ -614,6 +615,7 @@ export default async function BandPage({
         {heroPhotoUrl ? (
           <FocalPointImage
             src={heroPhotoUrl}
+            srcHigh={heroPhotoUrlHigh}
             alt={`${band.name}`}
             focalPoint={heroFocalPoint}
             sizes="100vw"

@@ -98,6 +98,7 @@ export function EventPageClient({
         {heroPhoto ? (
           <FocalPointImage
             src={heroPhoto.blob_url}
+            srcHigh={heroPhoto.large_4k_url ?? undefined}
             alt={`${event.name} event`}
             focalPoint={heroPhoto.hero_focal_point}
             sizes="100vw"
