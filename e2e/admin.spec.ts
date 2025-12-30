@@ -17,20 +17,20 @@ test.describe('Admin Authentication', () => {
   test('shows login page when not authenticated', async ({ page }) => {
     await page.goto('/admin/login')
 
-    await expect(page.getByText('Admin Access')).toBeVisible()
+    await expect(page.getByText('Welcome Back')).toBeVisible()
     await expect(
-      page.getByText('Please sign in to access admin features')
+      page.getByText('Sign in to your account to continue')
     ).toBeVisible()
-    await expect(page.getByPlaceholder('Email')).toBeVisible()
-    await expect(page.getByPlaceholder('Password')).toBeVisible()
+    await expect(page.getByPlaceholder('you@example.com')).toBeVisible()
+    await expect(page.getByPlaceholder('••••••••')).toBeVisible()
   })
 
   test('shows error for invalid credentials', async ({ page }) => {
     await page.goto('/admin/login')
 
     // Fill in wrong credentials
-    await page.getByPlaceholder('Email').fill('wrong@email.com')
-    await page.getByPlaceholder('Password').fill('wrongpassword')
+    await page.getByPlaceholder('you@example.com').fill('wrong@email.com')
+    await page.getByPlaceholder('••••••••').fill('wrongpassword')
 
     // Submit form
     await page.getByRole('button', { name: /Sign In/i }).click()
@@ -45,8 +45,8 @@ test.describe('Admin Authentication', () => {
     await page.goto('/admin/login')
 
     // Fill in test admin credentials from fixtures
-    await page.getByPlaceholder('Email').fill('admin@test.com')
-    await page.getByPlaceholder('Password').fill('testpassword123')
+    await page.getByPlaceholder('you@example.com').fill('admin@test.com')
+    await page.getByPlaceholder('••••••••').fill('testpassword123')
 
     // Submit form
     await page.getByRole('button', { name: /Sign In/i }).click()
@@ -58,8 +58,8 @@ test.describe('Admin Authentication', () => {
   test('admin dashboard shows event management', async ({ page }) => {
     // Login first
     await page.goto('/admin/login')
-    await page.getByPlaceholder('Email').fill('admin@test.com')
-    await page.getByPlaceholder('Password').fill('testpassword123')
+    await page.getByPlaceholder('you@example.com').fill('admin@test.com')
+    await page.getByPlaceholder('••••••••').fill('testpassword123')
     await page.getByRole('button', { name: /Sign In/i }).click()
 
     // Wait for redirect
