@@ -510,7 +510,7 @@ function PhotoRow({
       </td>
       <td className="px-4 py-3">
         <a
-          href={`/photos?photo=${photo.id}`}
+          href={`/slideshow/${photo.id}`}
           target="_blank"
           rel="noopener noreferrer"
         >

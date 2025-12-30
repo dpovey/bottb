@@ -183,7 +183,6 @@ describe('PhotosContent - Navigation to Slideshow', () => {
         initialEventId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
-        initialPhotoId={null}
       />
     )
 
@@ -265,7 +264,6 @@ describe('PhotosContent - Navigation to Slideshow', () => {
         initialEventId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
-        initialPhotoId={null}
       />
     )
 
@@ -351,7 +349,6 @@ describe('PhotosContent - Filter Defaults', () => {
         initialEventId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
-        initialPhotoId={null}
       />
     )
 
@@ -408,7 +405,6 @@ describe('PhotosContent - Filter Defaults', () => {
         initialEventId={null}
         initialPhotographer={null}
         initialCompanySlug={null}
-        initialPhotoId={null}
       />
     )
 

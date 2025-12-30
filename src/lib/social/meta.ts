@@ -200,12 +200,13 @@ const THREADS_AUTH_BASE = 'https://threads.net/oauth'
 /**
  * Get the Threads OAuth authorization URL
  * Threads uses a separate OAuth endpoint from Facebook
+ * Note: Threads has its own app ID separate from the main Meta app
  */
 export function getThreadsAuthUrl(state: string): string {
-  const appId = process.env.META_APP_ID
+  const appId = process.env.THREADS_APP_ID
 
   if (!appId) {
-    throw new Error('META_APP_ID environment variable is required')
+    throw new Error('THREADS_APP_ID environment variable is required')
   }
 
   const baseUrl = getBaseUrl()
@@ -230,12 +231,12 @@ export function getThreadsAuthUrl(state: string): string {
 export async function exchangeThreadsCode(
   code: string
 ): Promise<MetaTokenResponse> {
-  const appId = process.env.META_APP_ID
-  const appSecret = process.env.META_APP_SECRET
+  const appId = process.env.THREADS_APP_ID
+  const appSecret = process.env.THREADS_APP_SECRET
 
   if (!appId || !appSecret) {
     throw new Error(
-      'Meta OAuth environment variables are required (META_APP_ID, META_APP_SECRET)'
+      'Threads OAuth environment variables are required (THREADS_APP_ID, THREADS_APP_SECRET)'
     )
   }
 
@@ -271,10 +272,10 @@ export async function exchangeThreadsCode(
 export async function getThreadsLongLivedToken(
   shortLivedToken: string
 ): Promise<MetaTokenResponse> {
-  const appSecret = process.env.META_APP_SECRET
+  const appSecret = process.env.THREADS_APP_SECRET
 
   if (!appSecret) {
-    throw new Error('META_APP_SECRET environment variable is required')
+    throw new Error('THREADS_APP_SECRET environment variable is required')
   }
 
   const params = new URLSearchParams({

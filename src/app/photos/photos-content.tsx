@@ -42,7 +42,6 @@ interface PhotosContentProps {
   initialEventId?: string | null
   initialPhotographer?: string | null
   initialCompanySlug?: string | null
-  initialPhotoId?: string | null
   /** SSR-provided filter options to prevent layout shift */
   initialFilterOptions?: FilterOptions
   /** SSR-provided total photo count for immediate slideshow button display */
@@ -63,7 +62,6 @@ export function PhotosContent({
   initialEventId = null,
   initialPhotographer = null,
   initialCompanySlug = null,
-  initialPhotoId: _initialPhotoId = null,
   initialFilterOptions,
   initialTotalPhotos = 0,
 }: PhotosContentProps) {

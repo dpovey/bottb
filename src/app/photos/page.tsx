@@ -59,7 +59,6 @@ interface PhotosPageProps {
     eventId?: string
     photographer?: string
     company?: string
-    photo?: string
   }>
 }
 
@@ -74,7 +73,6 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
   const initialEventId = params.event || params.eventId || null
   const initialPhotographer = params.photographer || null
   const initialCompanySlug = params.company || null
-  const initialPhotoId = params.photo || null
 
   return (
     <Suspense fallback={<PhotosLoading />}>
@@ -82,7 +80,6 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
         initialEventId={initialEventId}
         initialPhotographer={initialPhotographer}
         initialCompanySlug={initialCompanySlug}
-        initialPhotoId={initialPhotoId}
         initialFilterOptions={filterOptions}
         initialTotalPhotos={filterOptions.totalPhotos}
       />
