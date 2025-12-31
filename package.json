@@ -56,7 +56,7 @@
     "e2e": "pnpm e2e:docker:up && pnpm e2e:smart-restore && pnpm e2e:test"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.1",
+    "@ai-sdk/openai": "^3.0.2",
     "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@orama/orama": "^3.1.18",
     "@posthog/nextjs-config": "^1.7.3",
