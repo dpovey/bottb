@@ -1,0 +1,23 @@
+# Docker Compose for Photo Intelligence Pipeline
+# Useful for local development and testing
+
+services:
+  photo-intelligence:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bottb-photo-intelligence:latest
+    volumes:
+      # Mount photo directory (adjust path as needed)
+      - /Volumes/Extreme SSD/Photos:/photos:ro
+      # Mount output directory
+      - ./output:/app/output
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Override command to run pipeline
+    command: >
+      python pipeline.py
+      /photos
+      /app/output
+      --batch-size 100
+      --verbose
