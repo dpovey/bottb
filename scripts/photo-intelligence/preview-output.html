@@ -387,7 +387,19 @@
           <h3>Related Photos</h3>
           <div id="relatedInfo"></div>
           <div class="cluster-tags" id="clusterTags"></div>
-          <button onclick="clearSelection()" style="margin-top: 10px; padding: 6px 12px; background: #51cf66; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+          <button
+            onclick="clearSelection()"
+            style="
+              margin-top: 10px;
+              padding: 6px 12px;
+              background: #51cf66;
+              color: #000;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-weight: bold;
+            "
+          >
             Clear Selection
           </button>
         </div>
@@ -396,14 +408,20 @@
         <div class="section">
           <div class="tabs">
             <button class="tab active" data-tab="all">All Photos</button>
-            <button class="tab" data-tab="near-duplicates">Near Duplicates</button>
+            <button class="tab" data-tab="near-duplicates">
+              Near Duplicates
+            </button>
             <button class="tab" data-tab="scenes">Scenes</button>
             <button class="tab" data-tab="people">People</button>
           </div>
 
           <!-- Search Box -->
           <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search photos by filename..." />
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search photos by filename..."
+            />
           </div>
 
           <!-- All Photos Tab -->
@@ -445,7 +463,7 @@
         byPhoto: new Map(), // filename -> [cluster types and IDs]
         nearDuplicates: new Map(), // cluster_id -> cluster
         scenes: new Map(), // cluster_id -> cluster
-        people: new Map() // person_id -> cluster
+        people: new Map(), // person_id -> cluster
       }
 
       function showError(message) {
@@ -500,7 +518,7 @@
               }
               clusterIndex.byPhoto.get(filename).push({
                 type: 'near_duplicate',
-                id: cluster.cluster_id
+                id: cluster.cluster_id,
               })
             })
           })
@@ -516,7 +534,7 @@
               }
               clusterIndex.byPhoto.get(filename).push({
                 type: 'scene',
-                id: cluster.cluster_id
+                id: cluster.cluster_id,
               })
             })
           })
@@ -532,7 +550,7 @@
               }
               clusterIndex.byPhoto.get(filename).push({
                 type: 'person',
-                id: cluster.person_id
+                id: cluster.person_id,
               })
             })
           })
@@ -578,11 +596,18 @@
 
         if (related.length > 0) {
           relatedInfo.innerHTML = `<strong>${related.length}</strong> related photo(s) found in <strong>${clusters.length}</strong> cluster(s)`
-          clusterTags.innerHTML = clusters.map(({ type, id, cluster }) => {
-            const typeLabel = type === 'near_duplicate' ? 'Near Duplicate' : type === 'scene' ? 'Scene' : 'Person'
-            const count = cluster.photo_filenames.length
-            return `<span class="cluster-tag">${typeLabel} #${id} (${count} photos)</span>`
-          }).join('')
+          clusterTags.innerHTML = clusters
+            .map(({ type, id, cluster }) => {
+              const typeLabel =
+                type === 'near_duplicate'
+                  ? 'Near Duplicate'
+                  : type === 'scene'
+                    ? 'Scene'
+                    : 'Person'
+              const count = cluster.photo_filenames.length
+              return `<span class="cluster-tag">${typeLabel} #${id} (${count} photos)</span>`
+            })
+            .join('')
           banner.classList.add('show')
         } else {
           banner.classList.remove('show')
@@ -670,7 +695,8 @@
         const hasFaces = photo.faces && photo.faces.length > 0
         const hasPersons = photo.persons && photo.persons.length > 0
         const cropCount = photo.crops ? Object.keys(photo.crops).length : 0
-        const isSelected = selectedPhoto && selectedPhoto.filename === photo.filename
+        const isSelected =
+          selectedPhoto && selectedPhoto.filename === photo.filename
         const hasClusters = clusterIndex.byPhoto.has(photo.filename)
 
         // Get image file if available
@@ -740,8 +766,9 @@
         if (isSelected) cardClasses.push('selected')
         if (isRelated) cardClasses.push('related')
 
+        const photoJson = JSON.stringify(photo).replace(/"/g, '&quot;')
         return `
-                <div class="${cardClasses.join(' ')}" onclick="selectPhoto(${JSON.stringify(photo).replace(/"/g, '&quot;')})">
+                <div class="${cardClasses.join(' ')}" onclick="selectPhotoByFilename('${photo.filename.replace(/'/g, "\\'")}')">
                     ${previewContent}
                     <div class="photo-info">
                         <h3>${photo.filename}</h3>
@@ -807,7 +834,9 @@
           currentPage = page
           updatePhotoDisplay()
           // Scroll to top
-          document.getElementById('photoGrid').scrollIntoView({ behavior: 'smooth', block: 'start' })
+          document
+            .getElementById('photoGrid')
+            .scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
       }
 
@@ -815,7 +844,10 @@
         if (!clustersData) return
 
         // Near Duplicates
-        if (clustersData.near_duplicates && clustersData.near_duplicates.length > 0) {
+        if (
+          clustersData.near_duplicates &&
+          clustersData.near_duplicates.length > 0
+        ) {
           let html = '<div class="cluster-list">'
           clustersData.near_duplicates.forEach((cluster) => {
             html += `
@@ -823,7 +855,10 @@
                 <h4>Near Duplicate Cluster #${cluster.cluster_id}</h4>
                 <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
                 <div class="cluster-photo-list">
-                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
                   ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
                 </div>
               </div>
@@ -832,7 +867,8 @@
           html += '</div>'
           document.getElementById('nearDuplicatesContent').innerHTML = html
         } else {
-          document.getElementById('nearDuplicatesContent').innerHTML = '<p style="color: #888;">No near-duplicate clusters found</p>'
+          document.getElementById('nearDuplicatesContent').innerHTML =
+            '<p style="color: #888;">No near-duplicate clusters found</p>'
         }
 
         // Scenes
@@ -844,7 +880,10 @@
                 <h4>Scene Cluster #${cluster.cluster_id}</h4>
                 <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
                 <div class="cluster-photo-list">
-                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
                   ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
                 </div>
               </div>
@@ -853,7 +892,8 @@
           html += '</div>'
           document.getElementById('scenesContent').innerHTML = html
         } else {
-          document.getElementById('scenesContent').innerHTML = '<p style="color: #888;">No scene clusters found</p>'
+          document.getElementById('scenesContent').innerHTML =
+            '<p style="color: #888;">No scene clusters found</p>'
         }
 
         // People
@@ -866,7 +906,10 @@
                 <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
                 ${cluster.representative_face ? `<div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">Quality: ${cluster.representative_face.quality_score?.toFixed(2) || 'N/A'}</div>` : ''}
                 <div class="cluster-photo-list">
-                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
                   ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
                 </div>
               </div>
@@ -875,15 +918,20 @@
           html += '</div>'
           document.getElementById('peopleContent').innerHTML = html
         } else {
-          document.getElementById('peopleContent').innerHTML = '<p style="color: #888;">No people clusters found</p>'
+          document.getElementById('peopleContent').innerHTML =
+            '<p style="color: #888;">No people clusters found</p>'
         }
       }
 
       function viewCluster(type, id) {
         // Switch to All Photos tab and filter to show cluster photos
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'))
         document.querySelector('[data-tab="all"]').classList.add('active')
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'))
         document.getElementById('tab-all').classList.add('active')
         currentFilter = 'all'
 
@@ -899,7 +947,9 @@
 
         if (cluster && cluster.photo_filenames.length > 0) {
           // Select first photo in cluster
-          const firstPhoto = photosData.find(p => p.filename === cluster.photo_filenames[0])
+          const firstPhoto = photosData.find(
+            (p) => p.filename === cluster.photo_filenames[0]
+          )
           if (firstPhoto) {
             selectPhoto(firstPhoto)
           }
@@ -911,11 +961,17 @@
         currentPage = 1
 
         // Update tab buttons
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active')
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'))
+        document
+          .querySelector(`[data-tab="${tabName}"]`)
+          .classList.add('active')
 
         // Update tab content
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'))
         document.getElementById(`tab-${tabName}`).classList.add('active')
 
         if (tabName === 'all') {
@@ -982,7 +1038,7 @@
       })
 
       // Tab switching
-      document.querySelectorAll('.tab').forEach(tab => {
+      document.querySelectorAll('.tab').forEach((tab) => {
         tab.addEventListener('click', () => {
           switchTab(tab.dataset.tab)
         })
@@ -995,8 +1051,16 @@
         updatePhotoDisplay()
       })
 
+      function selectPhotoByFilename(filename) {
+        const photo = photosData.find((p) => p.filename === filename)
+        if (photo) {
+          selectPhoto(photo)
+        }
+      }
+
       // Make functions global for onclick handlers
       window.selectPhoto = selectPhoto
+      window.selectPhotoByFilename = selectPhotoByFilename
       window.clearSelection = clearSelection
       window.goToPage = goToPage
       window.viewCluster = viewCluster
