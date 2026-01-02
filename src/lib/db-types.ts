@@ -237,3 +237,24 @@ export const PHOTO_LABELS = {
 export type PhotoLabel = (typeof PHOTO_LABELS)[keyof typeof PHOTO_LABELS]
 
 export type PhotoOrderBy = 'random' | 'date' | 'uploaded'
+
+// Photo intelligence types
+
+export interface PhotoCrop {
+  id: string
+  photo_id: string
+  aspect_ratio: string // '4:5', '16:9', '1:1', '9:16'
+  crop_box: { x: number; y: number; width: number; height: number }
+  confidence: number
+  method: 'face' | 'person' | 'saliency' | 'manual'
+  created_at: string
+}
+
+export interface PhotoCluster {
+  id: string
+  cluster_type: 'near_duplicate' | 'scene' | 'person'
+  photo_ids: string[]
+  representative_photo_id: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
