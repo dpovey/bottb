@@ -3,11 +3,13 @@ import { getPhotosByPerson } from '@/lib/db'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 
 const handleGetClusterPhotos: ProtectedApiHandler = async (
-  request: NextRequest,
-  context: { params: Promise<{ clusterId: string }> }
+  _request: NextRequest,
+  context: unknown
 ) => {
   try {
-    const { clusterId } = await context.params
+    const { clusterId } = await (
+      context as { params: Promise<{ clusterId: string }> }
+    ).params
 
     if (!clusterId) {
       return NextResponse.json(
