@@ -3,8 +3,35 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Photo } from '@/lib/db-types'
+
+// Build srcSet for responsive thumbnails (1x: 300px, 2x: 600px, 3x: 900px)
+function buildThumbnailSrcSet(photo: Photo): string | undefined {
+  const sources: string[] = []
+
+  if (photo.thumbnail_url) {
+    sources.push(`${photo.thumbnail_url} 300w`)
+  }
+  if (photo.thumbnail_2x_url) {
+    sources.push(`${photo.thumbnail_2x_url} 600w`)
+  }
+  if (photo.thumbnail_3x_url) {
+    sources.push(`${photo.thumbnail_3x_url} 900w`)
+  }
+
+  return sources.length > 1 ? sources.join(', ') : undefined
+}
+
+// Get best available thumbnail source (prefer highest res)
+function getBestThumbnailSrc(photo: Photo): string {
+  return (
+    photo.thumbnail_3x_url ||
+    photo.thumbnail_2x_url ||
+    photo.thumbnail_url ||
+    photo.blob_url?.replace('/large.webp', '/thumbnail.webp') ||
+    ''
+  )
+}
 import { trackPhotoClick } from '@/lib/analytics'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
 import { Skeleton, VinylSpinner } from '@/components/ui'
@@ -276,19 +303,13 @@ export function PhotoStrip({
                     aria-selected={index === selectedIndex}
                     role="option"
                   >
-                    <Image
-                      src={
-                        photo.thumbnail_url ||
-                        photo.blob_url?.replace(
-                          '/large.webp',
-                          '/thumbnail.webp'
-                        ) ||
-                        ''
-                      }
-                      alt={photo.original_filename || `Photo ${index + 1}`}
-                      fill
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getBestThumbnailSrc(photo)}
+                      srcSet={buildThumbnailSrcSet(photo)}
                       sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
-                      className="object-cover"
+                      alt={photo.original_filename || `Photo ${index + 1}`}
+                      className="absolute inset-0 w-full h-full object-cover"
                       style={{
                         objectPosition: `${photo.hero_focal_point?.x ?? 50}% ${photo.hero_focal_point?.y ?? 50}%`,
                       }}

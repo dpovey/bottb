@@ -92,18 +92,43 @@ const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives t
 const PLAY_INTERVAL_MS = 3000 // 3 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
+// Build srcSet for responsive thumbnails (1x: 300px, 2x: 600px, 3x: 900px)
+function buildThumbnailSrcSet(photo: Photo): string | undefined {
+  const sources: string[] = []
+
+  if (photo.thumbnail_url) {
+    sources.push(`${photo.thumbnail_url} 300w`)
+  }
+  if (photo.thumbnail_2x_url) {
+    sources.push(`${photo.thumbnail_2x_url} 600w`)
+  }
+  if (photo.thumbnail_3x_url) {
+    sources.push(`${photo.thumbnail_3x_url} 900w`)
+  }
+
+  return sources.length > 1 ? sources.join(', ') : undefined
+}
+
+// Get best available thumbnail source (prefer highest res)
+function getBestThumbnailSrc(photo: Photo): string {
+  return (
+    photo.thumbnail_3x_url ||
+    photo.thumbnail_2x_url ||
+    photo.thumbnail_url ||
+    photo.blob_url
+  )
+}
+
 // Memoized thumbnail to prevent re-renders when other thumbnails' selection changes
 const Thumbnail = memo(function Thumbnail({
   photo,
   index,
   isSelected,
-  thumbSrc,
   onClick,
 }: {
   photo: Photo
   index: number
   isSelected: boolean
-  thumbSrc: string
   onClick: () => void
 }) {
   // Use smart focal point for intelligent cropping
@@ -121,7 +146,9 @@ const Thumbnail = memo(function Thumbnail({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={thumbSrc}
+        src={getBestThumbnailSrc(photo)}
+        srcSet={buildThumbnailSrcSet(photo)}
+        sizes="64px"
         alt={photo.original_filename || `Photo ${index + 1}`}
         className="w-full h-full object-cover"
         style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
@@ -1418,7 +1445,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               photo={photo}
               index={index}
               isSelected={index === currentIndex}
-              thumbSrc={photo.thumbnail_url || photo.blob_url}
               onClick={() => goToIndex(index)}
             />
           ))}
