@@ -1,7 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 
 export interface FocalPoint {
   x: number // 0-100 percentage from left
@@ -14,8 +14,14 @@ export interface FocalPointImageProps {
   /**
    * Optional high-resolution source (e.g., 4K version).
    * When provided, used for desktop displays for better quality on large screens.
+   * @deprecated Use photoUrls instead for full srcset support
    */
   srcHigh?: string
+  /**
+   * Optional photo URLs for responsive srcset.
+   * Includes medium_url (1200px), blob_url (2000px), large_4k_url (4000px).
+   */
+  photoUrls?: PhotoImageUrls
   /**
    * Focal point coordinates (0-100 for both x and y).
    * Controls which part of the image stays visible when cropped.
@@ -27,8 +33,6 @@ export interface FocalPointImageProps {
   sizes?: string
   /** Additional className for the container */
   className?: string
-  /** Whether to skip image optimization (for blob URLs) */
-  unoptimized?: boolean
 }
 
 /**
@@ -43,48 +47,53 @@ export interface FocalPointImageProps {
  *
  * Uses responsive breakpoints: mobile (portrait) vs md+ (landscape).
  *
- * When srcHigh is provided, it's used for desktop displays for better quality
- * on large/4K screens.
+ * When photoUrls is provided, builds a responsive srcset with medium/large/4K variants.
+ * Falls back to srcHigh for desktop when photoUrls is not available.
  */
 export function FocalPointImage({
   src,
   srcHigh,
+  photoUrls,
   alt,
   focalPoint = { x: 50, y: 50 },
   priority = false,
   sizes = '100vw',
   className,
-  unoptimized = false,
 }: FocalPointImageProps) {
-  // Use high-res source for desktop if available
-  const desktopSrc = srcHigh || src
+  // Build srcset if photoUrls available
+  const srcSet = photoUrls ? buildHeroSrcSet(photoUrls) : undefined
+
+  // Use high-res source for desktop if available (fallback to srcHigh for backwards compat)
+  const desktopSrc = photoUrls?.large_4k_url || srcHigh || src
 
   return (
     <div className={cn('absolute inset-0', className)}>
       {/* Mobile/Portrait: horizontal cropping, use focal X, center Y */}
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={src}
-        alt={alt}
-        fill
-        className="object-cover md:hidden"
-        style={{ objectPosition: `${focalPoint.x}% 50%` }}
-        priority={priority}
-        fetchPriority={priority ? 'high' : 'auto'}
+        srcSet={srcSet}
         sizes={sizes}
-        unoptimized={unoptimized}
+        alt={alt}
+        className="absolute inset-0 w-full h-full object-cover md:hidden"
+        style={{ objectPosition: `${focalPoint.x}% 50%` }}
+        fetchPriority={priority ? 'high' : 'auto'}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding={priority ? 'sync' : 'async'}
       />
       {/* Desktop/Landscape: vertical cropping, center X, use focal Y */}
       {/* Uses high-res source when available for better quality on large displays */}
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={desktopSrc}
-        alt={alt}
-        fill
-        className="object-cover hidden md:block"
-        style={{ objectPosition: `50% ${focalPoint.y}%` }}
-        priority={priority}
-        fetchPriority={priority ? 'high' : 'auto'}
+        srcSet={srcSet}
         sizes={sizes}
-        unoptimized={unoptimized}
+        alt={alt}
+        className="absolute inset-0 w-full h-full object-cover hidden md:block"
+        style={{ objectPosition: `50% ${focalPoint.y}%` }}
+        fetchPriority={priority ? 'high' : 'auto'}
+        loading={priority ? 'eager' : 'lazy'}
+        decoding={priority ? 'sync' : 'async'}
       />
     </div>
   )

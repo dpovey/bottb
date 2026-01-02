@@ -2,6 +2,7 @@
 
 import { Photo } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
+import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
 
 interface PhotoCardProps {
   photo: Photo
@@ -9,34 +10,13 @@ interface PhotoCardProps {
   showCompanyLogo?: boolean
 }
 
-// Build srcSet for responsive thumbnails (1x: 300px, 2x: 600px, 3x: 900px)
-function buildThumbnailSrcSet(photo: Photo): string | undefined {
-  const sources: string[] = []
-
-  if (photo.thumbnail_url) {
-    sources.push(`${photo.thumbnail_url} 300w`)
-  }
-  if (photo.thumbnail_2x_url) {
-    sources.push(`${photo.thumbnail_2x_url} 600w`)
-  }
-  if (photo.thumbnail_3x_url) {
-    sources.push(`${photo.thumbnail_3x_url} 900w`)
-  }
-
-  return sources.length > 1 ? sources.join(', ') : undefined
-}
-
 export function PhotoCard({
   photo,
   onClick,
   showCompanyLogo = true,
 }: PhotoCardProps) {
-  // Use best available thumbnail: prefer 3x (900px), fallback to 2x, then 1x, then blob
-  const thumbSrc =
-    photo.thumbnail_3x_url ||
-    photo.thumbnail_2x_url ||
-    photo.thumbnail_url ||
-    photo.blob_url
+  // Use best available thumbnail with responsive srcset
+  const thumbSrc = getBestThumbnailSrc(photo)
   const srcSet = buildThumbnailSrcSet(photo)
   // Use smart focal point for intelligent cropping (defaults to center)
   const focalPoint = photo.hero_focal_point ?? { x: 50, y: 50 }
