@@ -33,6 +33,7 @@ vi.mock('swiper/modules', () => ({
   Mousewheel: {},
   Autoplay: {},
   Navigation: {},
+  Keyboard: {},
 }))
 vi.mock('swiper/css', () => ({}))
 vi.mock('swiper/css/navigation', () => ({}))

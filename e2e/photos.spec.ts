@@ -106,3 +106,32 @@ test.describe('Photo API', () => {
     )
   })
 })
+
+test.describe('Slideshow Keyboard Navigation', () => {
+  test('arrow keys navigate between photos', async ({ page }) => {
+    await page.goto('/photos')
+    await page.waitForLoadState('networkidle')
+
+    // Click first photo to open slideshow
+    const photoLink = page.locator('a[href*="/slideshow/"]').first()
+    if ((await photoLink.count()) === 0) {
+      test.skip()
+      return
+    }
+    await photoLink.click()
+    await page.waitForURL(/\/slideshow\//)
+
+    // Get initial photo counter - the counter shows current position as first number
+    const getCounter = () =>
+      page.locator('.slideshow-topbar').getByText(/^\d+$/).first()
+    await expect(getCounter()).toHaveText('1')
+
+    // Press right arrow - should go to photo 2
+    await page.keyboard.press('ArrowRight')
+    await expect(getCounter()).toHaveText('2', { timeout: 2000 })
+
+    // Press left arrow - should go back to photo 1
+    await page.keyboard.press('ArrowLeft')
+    await expect(getCounter()).toHaveText('1', { timeout: 2000 })
+  })
+})

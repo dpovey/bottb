@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useRef, memo } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Mousewheel, Autoplay, Navigation } from 'swiper/modules'
+import { Mousewheel, Autoplay, Navigation, Keyboard } from 'swiper/modules'
 import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import 'swiper/css/navigation'
@@ -1318,7 +1318,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           }}
         >
           <Swiper
-            modules={[Mousewheel, Autoplay, Navigation]}
+            modules={[Mousewheel, Autoplay, Navigation, Keyboard]}
             onSwiper={(swiper) => {
               swiperRef.current = swiper
             }}
@@ -1351,6 +1351,11 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             navigation={{
               prevEl: prevButtonRef.current,
               nextEl: nextButtonRef.current,
+            }}
+            // Keyboard navigation - arrow keys to navigate slides
+            keyboard={{
+              enabled: true,
+              onlyInViewport: true,
             }}
             onBeforeInit={(swiper) => {
               // Assign navigation elements before init
