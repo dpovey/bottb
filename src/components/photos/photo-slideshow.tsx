@@ -339,7 +339,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       if (filters.companySlug) params.set('company', filters.companySlug)
       params.set('page', page.toString())
       params.set('limit', PAGE_SIZE.toString())
-      params.set('order', 'date') // Chronological order for slideshow viewing
+
+      // Use shuffle param when shuffle is enabled, otherwise use chronological order
+      if (filters.shuffle) {
+        params.set('shuffle', filters.shuffle)
+      } else {
+        params.set('order', 'date')
+      }
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (!res.ok) return []
