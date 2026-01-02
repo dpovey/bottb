@@ -280,11 +280,15 @@ Shared utilities in `src/lib/photo-srcset.ts` build srcset strings:
 ```tsx
 import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
 
-;<img
-  src={getBestThumbnailSrc(photo)}
-  srcSet={buildThumbnailSrcSet(photo)}
-  sizes="(max-width: 640px) 50vw, 25vw"
-/>
+function PhotoExample({ photo }) {
+  return (
+    <img
+      src={getBestThumbnailSrc(photo)}
+      srcSet={buildThumbnailSrcSet(photo)}
+      sizes="(max-width: 640px) 50vw, 25vw"
+    />
+  )
+}
 ```
 
 Components using these utilities:
