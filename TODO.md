@@ -57,6 +57,23 @@
 - [ ] **Band registration form** - Replace mailto with proper form
 - [ ] **Live leaderboard** - Real-time crowd scores during events
 
+### Photo Intelligence
+
+- [ ] **Investigate face detection issues** - Pipeline detected 0 faces across 1,465 photos. Need to:
+  - Re-run pipeline with `--verbose` flag to capture error messages
+  - Check if `face_recognition` (dlib) is working correctly in Docker container
+  - Verify MediaPipe fallback is being triggered when face_recognition finds no faces
+  - Test face detection on known photos with faces to verify detection works
+  - Review stderr output for `face_recognition failed` or `Error detecting faces with MediaPipe` messages
+  - Check if MediaPipe model file path is correct in Docker container (`/app/models/blaze_face_short_range.tflite`)
+  - Consider lowering MediaPipe `min_detection_confidence` threshold if faces exist but aren't detected
+- [ ] **Partial intelligence update script** - Create script to update intelligence data for specific photos without re-processing entire dataset:
+  - Accept list of photo IDs or filenames
+  - Re-run pipeline on selected photos only
+  - Update only changed intelligence data (crops, hashes, embeddings, faces, clusters)
+  - Preserve existing data for photos not in update list
+  - Useful for fixing issues or adding new photos incrementally
+
 ### Content Pages
 
 - [ ] **Contact page** - Replace email link with proper contact form
