@@ -24,6 +24,7 @@ import numpy as np
 from PIL import Image
 from typing import List, Dict, Tuple, Optional
 import os
+import sys
 
 
 def detect_faces(
@@ -58,56 +59,63 @@ def detect_faces(
                 number_of_times_to_upsample=1
             )
             
-            # Get face landmarks for quality assessment
-            face_landmarks_list = face_recognition.face_landmarks(image, face_locations)
-            
-            results = []
-            for i, (top, right, bottom, left) in enumerate(face_locations):
-                # Calculate face size and position
-                face_width = right - left
-                face_height = bottom - top
-                face_area = face_width * face_height
+            if len(face_locations) > 0:
+                # Get face landmarks for quality assessment
+                face_landmarks_list = face_recognition.face_landmarks(image, face_locations)
                 
-                # Get landmarks for this face
-                landmarks = face_landmarks_list[i] if i < len(face_landmarks_list) else {}
+                results = []
+                for i, (top, right, bottom, left) in enumerate(face_locations):
+                    # Calculate face size and position
+                    face_width = right - left
+                    face_height = bottom - top
+                    face_area = face_width * face_height
+                    
+                    # Get landmarks for this face
+                    landmarks = face_landmarks_list[i] if i < len(face_landmarks_list) else {}
+                    
+                    # Calculate quality score based on size and position
+                    # Larger, more central faces score higher
+                    img_height, img_width = image.shape[:2]
+                    center_x = (left + right) / 2
+                    center_y = (top + bottom) / 2
+                    distance_from_center = np.sqrt(
+                        ((center_x - img_width / 2) / img_width) ** 2 +
+                        ((center_y - img_height / 2) / img_height) ** 2
+                    )
+                    
+                    # Normalize face area (0-1, assuming faces are typically 5-30% of image)
+                    area_score = min(1.0, max(0.0, (face_area / (img_width * img_height) - 0.05) / 0.25))
+                    
+                    # Quality score: area (70%) + centrality (30%)
+                    quality_score = area_score * 0.7 + (1.0 - min(1.0, distance_from_center)) * 0.3
+                    
+                    results.append({
+                        "box": {
+                            "x": int(left),
+                            "y": int(top),
+                            "width": int(face_width),
+                            "height": int(face_height)
+                        },
+                        "confidence": 1.0,  # face_recognition doesn't provide confidence
+                        "quality_score": float(quality_score),
+                        "landmarks": landmarks
+                    })
                 
-                # Calculate quality score based on size and position
-                # Larger, more central faces score higher
-                img_height, img_width = image.shape[:2]
-                center_x = (left + right) / 2
-                center_y = (top + bottom) / 2
-                distance_from_center = np.sqrt(
-                    ((center_x - img_width / 2) / img_width) ** 2 +
-                    ((center_y - img_height / 2) / img_height) ** 2
-                )
-                
-                # Normalize face area (0-1, assuming faces are typically 5-30% of image)
-                area_score = min(1.0, max(0.0, (face_area / (img_width * img_height) - 0.05) / 0.25))
-                
-                # Quality score: area (70%) + centrality (30%)
-                quality_score = area_score * 0.7 + (1.0 - min(1.0, distance_from_center)) * 0.3
-                
-                results.append({
-                    "box": {
-                        "x": int(left),
-                        "y": int(top),
-                        "width": int(face_width),
-                        "height": int(face_height)
-                    },
-                    "confidence": 1.0,  # face_recognition doesn't provide confidence
-                    "quality_score": float(quality_score),
-                    "landmarks": landmarks
-                })
-            
-            return results
+                return results
+            else:
+                # No faces found with face_recognition, try MediaPipe
+                if MEDIAPIPE_AVAILABLE:
+                    return _detect_faces_mediapipe(image_path)
+                return []
         except Exception as e:
-            print(f"face_recognition failed: {e}, trying MediaPipe")
+            print(f"face_recognition failed for {os.path.basename(image_path)}: {e}, trying MediaPipe", file=sys.stderr)
             # Fall through to MediaPipe
     
     # Fallback to MediaPipe if face_recognition not available
     if MEDIAPIPE_AVAILABLE:
         return _detect_faces_mediapipe(image_path)
     else:
+        print(f"Warning: No face detection library available for {os.path.basename(image_path)}", file=sys.stderr)
         return []
 
 
@@ -163,7 +171,7 @@ def _detect_faces_mediapipe(image_path: str) -> List[Dict[str, any]]:
         model_path = os.path.abspath(model_path)
         
         if not os.path.exists(model_path):
-            print(f"Warning: MediaPipe model not found at {model_path}, skipping face detection")
+            print(f"Warning: MediaPipe model not found at {model_path}, skipping face detection", file=sys.stderr)
             return []
         
         # Create FaceDetector with model file
@@ -224,7 +232,9 @@ def _detect_faces_mediapipe(image_path: str) -> List[Dict[str, any]]:
         # MediaPipe not installed
         return []
     except Exception as e:
-        print(f"Error detecting faces with MediaPipe in {image_path}: {e}")
+        print(f"Error detecting faces with MediaPipe in {os.path.basename(image_path)}: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return []
 
 
