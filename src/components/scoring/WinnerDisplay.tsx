@@ -1,8 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import { Card, Badge, BandThumbnail, CompanyBadge } from '@/components/ui'
 import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
+import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 
 /**
  * Get object-position for the focal point.
@@ -28,6 +28,8 @@ export interface WinnerDisplayProps {
   logoUrl?: string
   /** Hero thumbnail URL for the band */
   heroThumbnailUrl?: string
+  /** Photo URLs for responsive srcset (medium, blob_url, large_4k) */
+  heroPhotoUrls?: PhotoImageUrls
   /** Focal point for hero image positioning (0-100 for both x and y) */
   heroFocalPoint?: { x: number; y: number }
   /** Scoring version */
@@ -49,6 +51,7 @@ export function WinnerDisplay({
   totalScore,
   logoUrl,
   heroThumbnailUrl,
+  heroPhotoUrls,
   heroFocalPoint = { x: 50, y: 50 },
   scoringVersion,
   eventName,
@@ -57,6 +60,9 @@ export function WinnerDisplay({
 }: WinnerDisplayProps) {
   const showScore =
     hasDetailedBreakdown(scoringVersion) && totalScore !== undefined
+
+  // Build srcset if photo URLs available
+  const srcSet = heroPhotoUrls ? buildHeroSrcSet(heroPhotoUrls) : undefined
 
   return (
     <div className="relative">
@@ -73,13 +79,15 @@ export function WinnerDisplay({
         {/* Hero Image - Full Background */}
         {heroThumbnailUrl && (
           <div className="absolute inset-0">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={heroThumbnailUrl}
-              alt={`${winnerName} performing`}
-              fill
-              className="object-cover"
-              style={{ objectPosition: getObjectPosition(heroFocalPoint) }}
+              srcSet={srcSet}
               sizes="(max-width: 768px) 100vw, 80vw"
+              alt={`${winnerName} performing`}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: getObjectPosition(heroFocalPoint) }}
+              loading="lazy"
             />
             {/* Gradient overlay - fade from left */}
             <div className="absolute inset-0 bg-linear-to-r from-bg-elevated via-bg-elevated/80 via-40% to-transparent" />

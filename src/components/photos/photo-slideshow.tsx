@@ -10,6 +10,11 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { slugify } from '@/lib/utils'
+import {
+  buildThumbnailSrcSet,
+  getBestThumbnailSrc,
+  buildHeroSrcSet,
+} from '@/lib/photo-srcset'
 import { CompanyIcon, VinylSpinner, Modal } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
 import { FocalPointEditor } from './focal-point-editor'
@@ -92,33 +97,6 @@ const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives t
 const PLAY_INTERVAL_MS = 3000 // 3 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
-// Build srcSet for responsive thumbnails (1x: 300px, 2x: 600px, 3x: 900px)
-function buildThumbnailSrcSet(photo: Photo): string | undefined {
-  const sources: string[] = []
-
-  if (photo.thumbnail_url) {
-    sources.push(`${photo.thumbnail_url} 300w`)
-  }
-  if (photo.thumbnail_2x_url) {
-    sources.push(`${photo.thumbnail_2x_url} 600w`)
-  }
-  if (photo.thumbnail_3x_url) {
-    sources.push(`${photo.thumbnail_3x_url} 900w`)
-  }
-
-  return sources.length > 1 ? sources.join(', ') : undefined
-}
-
-// Get best available thumbnail source (prefer highest res)
-function getBestThumbnailSrc(photo: Photo): string {
-  return (
-    photo.thumbnail_3x_url ||
-    photo.thumbnail_2x_url ||
-    photo.thumbnail_url ||
-    photo.blob_url
-  )
-}
-
 // Memoized thumbnail to prevent re-renders when other thumbnails' selection changes
 const Thumbnail = memo(function Thumbnail({
   photo,
@@ -159,27 +137,6 @@ const Thumbnail = memo(function Thumbnail({
   )
 })
 
-// Build responsive srcSet for slideshow images
-// Uses medium (1200px) for mobile, large (2000px) for tablet, 4K for desktop
-function buildSlideshowSrcSet(photo: Photo): string {
-  const sources: string[] = []
-
-  // Medium variant (1200px) - perfect for mobile at 3x density
-  if (photo.medium_url) {
-    sources.push(`${photo.medium_url} 1200w`)
-  }
-
-  // Large variant (2000px) - default, always available
-  sources.push(`${photo.blob_url} 2000w`)
-
-  // 4K variant (4000px) - for high-res displays
-  if (photo.large_4k_url) {
-    sources.push(`${photo.large_4k_url} 4000w`)
-  }
-
-  return sources.join(', ')
-}
-
 // Memoized slide with native lazy loading and responsive images
 const Slide = memo(function Slide({
   photo,
@@ -190,7 +147,7 @@ const Slide = memo(function Slide({
   index: number
   isPlaying: boolean
 }) {
-  const srcSet = buildSlideshowSrcSet(photo)
+  const srcSet = buildHeroSrcSet(photo)
 
   return (
     <div className="flex items-center justify-center w-full h-full">

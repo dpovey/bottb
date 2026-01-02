@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { formatEventDate } from '@/lib/date-utils'
 import { Card, Badge, DateBadge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 
 /**
  * Get object-position for the focal point.
@@ -13,7 +13,7 @@ function getObjectPosition(focalPoint?: { x: number; y: number }) {
   return `${focalPoint.x}% ${focalPoint.y}%`
 }
 
-interface HeroPhoto {
+interface HeroPhoto extends Partial<PhotoImageUrls> {
   blob_url: string
   hero_focal_point?: { x: number; y: number }
 }
@@ -96,13 +96,15 @@ export function EventCard({
           {/* Image if available - zooms on hover */}
           {imageUrl && (
             <div className="absolute inset-0 overflow-hidden group-hover:scale-105 transition-transform duration-500 ease-out">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={imageUrl}
-                alt={`${event.name} event image`}
-                fill
-                className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ objectPosition: getObjectPosition(focalPoint) }}
+                srcSet={heroPhoto ? buildHeroSrcSet(heroPhoto) : undefined}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                alt={`${event.name} event image`}
+                className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ objectPosition: getObjectPosition(focalPoint) }}
+                loading="lazy"
               />
             </div>
           )}
@@ -264,13 +266,15 @@ export function EventCard({
         {/* Event Image - Desktop only */}
         {imageUrl && (
           <div className="hidden lg:block relative w-64 min-h-[200px]">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={imageUrl}
-              alt={`${event.name} event image`}
-              fill
-              className="object-cover"
-              style={{ objectPosition: getObjectPosition(focalPoint) }}
+              srcSet={heroPhoto ? buildHeroSrcSet(heroPhoto) : undefined}
               sizes="256px"
+              alt={`${event.name} event image`}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: getObjectPosition(focalPoint) }}
+              loading="lazy"
             />
             {/* Gradient overlay to blend with card */}
             <div className="absolute inset-0 bg-linear-to-r from-bg-elevated to-transparent" />

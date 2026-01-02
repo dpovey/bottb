@@ -264,6 +264,38 @@ p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
 p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url
 ```
 
+### Responsive srcset Utilities
+
+Shared utilities in `src/lib/photo-srcset.ts` build srcset strings:
+
+| Function | Purpose | Output |
+| --- | --- | --- |
+| `buildThumbnailSrcSet(photo)` | Thumbnails (grids, strips) | `url 300w, url 600w, url 900w` |
+| `getBestThumbnailSrc(photo)` | Best single thumbnail | 3x → 2x → 1x → blob_url |
+| `buildHeroSrcSet(photo)` | Full-size images (hero, slideshow) | `url 1200w, url 2000w, url 4000w` |
+| `getBestHeroSrc(photo, context)` | Best hero source for context | desktop: 4K, mobile: medium |
+
+**Usage**:
+
+```tsx
+import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
+
+<img
+  src={getBestThumbnailSrc(photo)}
+  srcSet={buildThumbnailSrcSet(photo)}
+  sizes="(max-width: 640px) 50vw, 25vw"
+/>
+```
+
+Components using these utilities:
+- `photo-card.tsx` - Gallery grid cards
+- `photo-strip.tsx` - Horizontal photo strips
+- `photo-slideshow.tsx` - Slideshow main image and thumbnails
+- `event-card.tsx` - Event hero images
+- `focal-point-image.tsx` - Hero sections with focal point
+- `hero-carousel.tsx` - Home page carousel
+- `WinnerDisplay.tsx` - Results page winner banner
+
 ## Focal Points vs Smart Crops
 
 Two separate systems for different use cases.
