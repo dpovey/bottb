@@ -40,18 +40,19 @@ Uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) for productio
 
 The database evolved through these phases (archived scripts in `src/scripts/archive/`):
 
-| Phase          | Changes                                                                   |
-| -------------- | ------------------------------------------------------------------------- |
-| Core           | events, bands, votes, users tables                                        |
-| UUID to Slugs  | Changed event/band IDs from UUIDs to human-readable slugs                 |
-| Crowd Features | crowd_noise_measurements table, crowd_score column                        |
-| Scoring 2026   | visuals column for costumes/visual presentation scoring                   |
-| Companies      | companies table to group bands by organization                            |
-| Photos         | photos table with labels, hero_focal_point, responsive variants           |
-| Photographers  | photographers table with profile info                                     |
-| Videos         | videos table for YouTube integration                                      |
-| Setlists       | setlist_songs table with conflict detection                               |
-| Social         | social_accounts, social_posts, social_post_templates, social_post_results |
+| Phase              | Changes                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core               | events, bands, votes, users tables                                                                                                          |
+| UUID to Slugs      | Changed event/band IDs from UUIDs to human-readable slugs                                                                                   |
+| Crowd Features     | crowd_noise_measurements table, crowd_score column                                                                                          |
+| Scoring 2026       | visuals column for costumes/visual presentation scoring                                                                                     |
+| Companies          | companies table to group bands by organization                                                                                              |
+| Photos             | photos table with labels, hero_focal_point, responsive variants                                                                             |
+| Photographers      | photographers table with profile info                                                                                                       |
+| Videos             | videos table for YouTube integration                                                                                                        |
+| Setlists           | setlist_songs table with conflict detection                                                                                                 |
+| Social             | social_accounts, social_posts, social_post_templates, social_post_results                                                                   |
+| Photo Intelligence | photo_crops, photo_hashes, photo_embeddings, detected_faces, photo_clusters tables; intelligence_processed_at, intelligence_version columns |
 
 ### Notes
 
@@ -78,14 +79,79 @@ E2E tests use Docker Postgres (see `doc/testing/e2e-testing.md`):
 
 ## Supporting Tables
 
-| Table               | Description                               |
-| ------------------- | ----------------------------------------- |
-| `photos`            | Photo with blob URLs, labels, focal_point |
-| `photographers`     | Photographer profiles                     |
-| `setlist_songs`     | Songs with band_id, position, song_type   |
-| `finalized_results` | Cached event results (JSONB)              |
-| `users`             | Admin users with password_hash            |
-| `social_accounts`   | OAuth tokens for LinkedIn/Meta            |
+| Table               | Description                                                      |
+| ------------------- | ---------------------------------------------------------------- |
+| `photos`            | Photo with blob URLs, labels, focal_point, intelligence metadata |
+| `photographers`     | Photographer profiles                                            |
+| `setlist_songs`     | Songs with band_id, position, song_type                          |
+| `finalized_results` | Cached event results (JSONB)                                     |
+| `users`             | Admin users with password_hash                                   |
+| `social_accounts`   | OAuth tokens for LinkedIn/Meta                                   |
+
+## Photo Intelligence Tables
+
+ML-powered photo analysis and organization.
+
+| Table              | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| `photo_crops`      | Smart crop boxes for different aspect ratios   |
+| `photo_hashes`     | Perceptual hashes for near-duplicate detection |
+| `photo_embeddings` | Image embeddings for scene clustering          |
+| `detected_faces`   | Face detections with embeddings                |
+| `photo_clusters`   | Clusters (near-duplicates, scenes, people)     |
+
+### `photo_crops`
+
+Smart crop boxes calculated by ML pipeline:
+
+- `photo_id` (UUID, FK)
+- `aspect_ratio` (VARCHAR): '4:5', '16:9', '1:1', '9:16'
+- `crop_box` (JSONB): `{x, y, width, height}` in pixels
+- `confidence` (NUMERIC): 0.0-1.0
+- `method` (VARCHAR): 'face', 'person', 'saliency'
+
+### `photo_hashes`
+
+Perceptual hashes for duplicate detection:
+
+- `photo_id` (UUID, FK, unique)
+- `phash` (VARCHAR): Perceptual hash
+- `dhash` (VARCHAR): Difference hash
+
+### `photo_embeddings`
+
+Image embeddings for scene similarity:
+
+- `photo_id` (UUID, FK)
+- `embedding` (JSONB): 512-dimensional vector (CLIP)
+- `model` (VARCHAR): 'clip' (currently only CLIP)
+
+### `detected_faces`
+
+Face detections with embeddings:
+
+- `photo_id` (UUID, FK)
+- `face_box` (JSONB): `{x, y, width, height}` bounding box
+- `face_embedding` (JSONB): 128-dimensional vector
+- `confidence` (NUMERIC): Detection confidence
+- `quality_score` (NUMERIC): Face quality (size, position, sharpness)
+
+### `photo_clusters`
+
+Clusters of related photos:
+
+- `id` (UUID, PK)
+- `cluster_type` (VARCHAR): 'near_duplicate', 'scene', 'person'
+- `photo_ids` (UUID[]): Array of photo IDs in cluster
+- `representative_photo_id` (UUID, FK, nullable)
+- `metadata` (JSONB): Cluster-specific data
+
+### `photos` (updated)
+
+New columns for intelligence tracking:
+
+- `intelligence_processed_at` (TIMESTAMP): When photo was processed
+- `intelligence_version` (VARCHAR): Pipeline version (e.g., "1.0.0")
 
 ## Key Types
 

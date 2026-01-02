@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Intelligence Pipeline - Output Preview</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: #1a1a1a;
+        color: #e0e0e0;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: #888;
+        margin-bottom: 30px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+      .stat-card {
+        background: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #333;
+      }
+      .stat-card h3 {
+        color: #888;
+        font-size: 14px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .stat-card .value {
+        font-size: 32px;
+        font-weight: bold;
+        color: #4a9eff;
+      }
+      .section {
+        background: #2a2a2a;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border: 1px solid #333;
+      }
+      .section h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #4a9eff;
+      }
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 0;
+      }
+      .tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+      }
+      .tab:hover {
+        color: #fff;
+      }
+      .tab.active {
+        color: #4a9eff;
+        border-bottom-color: #4a9eff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .photo-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .photo-card:hover {
+        border-color: #4a9eff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+      }
+      .photo-card.selected {
+        border-color: #4a9eff;
+        border-width: 3px;
+        box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+      }
+      .photo-card.related {
+        border-color: #51cf66;
+        border-width: 2px;
+      }
+      .photo-info {
+        padding: 15px;
+      }
+      .photo-info h3 {
+        color: #fff;
+        font-size: 14px;
+        margin-bottom: 10px;
+        word-break: break-all;
+      }
+      .photo-meta {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 5px;
+      }
+      .crop-preview {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        background: #0a0a0a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #444;
+        font-size: 12px;
+      }
+      .crop-box {
+        position: absolute;
+        border: 2px solid #4a9eff;
+        background: rgba(74, 158, 255, 0.1);
+        pointer-events: none;
+      }
+      .crop-label {
+        position: absolute;
+        top: -20px;
+        left: 0;
+        font-size: 10px;
+        color: #4a9eff;
+        background: #1a1a1a;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-right: 5px;
+        margin-top: 5px;
+      }
+      .badge.faces {
+        background: #4a9eff;
+        color: #fff;
+      }
+      .badge.persons {
+        background: #ff6b6b;
+        color: #fff;
+      }
+      .badge.crops {
+        background: #51cf66;
+        color: #fff;
+      }
+      .badge.cluster {
+        background: #ffe66d;
+        color: #000;
+      }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 30px;
+        padding: 20px;
+      }
+      .pagination button {
+        padding: 8px 16px;
+        background: #2a2a2a;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .pagination button:hover:not(:disabled) {
+        background: #4a9eff;
+        border-color: #4a9eff;
+      }
+      .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .pagination .page-info {
+        color: #888;
+        font-size: 14px;
+        min-width: 120px;
+        text-align: center;
+      }
+      .cluster-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .cluster-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .cluster-card:hover {
+        border-color: #4a9eff;
+        transform: translateY(-2px);
+      }
+      .cluster-card h4 {
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .cluster-photos {
+        font-size: 12px;
+        color: #888;
+      }
+      .cluster-photo-list {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #666;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+      .related-photos-banner {
+        background: #2a4a2a;
+        border: 1px solid #51cf66;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: none;
+      }
+      .related-photos-banner.show {
+        display: block;
+      }
+      .related-photos-banner h3 {
+        color: #51cf66;
+        margin-bottom: 10px;
+      }
+      .related-photos-banner .cluster-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .cluster-tag {
+        background: #51cf66;
+        color: #000;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
+      }
+      .error {
+        color: #ff6b6b;
+        padding: 20px;
+        background: #2a1a1a;
+        border: 1px solid #ff6b6b;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #888;
+      }
+      .file-input {
+        margin-bottom: 20px;
+      }
+      .file-input label {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #4a9eff;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .file-input input {
+        display: none;
+      }
+      .file-path {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #888;
+      }
+      .search-box {
+        margin-bottom: 20px;
+      }
+      .search-box input {
+        width: 100%;
+        padding: 12px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+      }
+      .search-box input:focus {
+        outline: none;
+        border-color: #4a9eff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Photo Intelligence Pipeline - Output Preview</h1>
+      <p class="subtitle">
+        Visualize pipeline results: crops, clusters, and detections
+      </p>
+
+      <div class="file-input">
+        <label for="photosFile">Load photos.json</label>
+        <input type="file" id="photosFile" accept=".json" />
+        <div class="file-path" id="photosPath"></div>
+      </div>
+
+      <div class="file-input">
+        <label for="clustersFile">Load clusters.json</label>
+        <input type="file" id="clustersFile" accept=".json" />
+        <div class="file-path" id="clustersPath"></div>
+      </div>
+
+      <div class="file-input">
+        <label for="photosDir"
+          >Select Photos Directory (for image preview)</label
+        >
+        <input type="file" id="photosDir" webkitdirectory directory multiple />
+        <div class="file-path" id="photosDirPath"></div>
+        <small style="color: #888; display: block; margin-top: 5px">
+          Select the directory containing the photos (e.g., /Volumes/Extreme
+          SSD/Photos)
+        </small>
+      </div>
+
+      <div id="error" class="error" style="display: none"></div>
+      <div id="loading" class="loading" style="display: none">
+        Loading data...
+      </div>
+
+      <div id="content" style="display: none">
+        <!-- Stats Section -->
+        <div class="section">
+          <h2>Statistics</h2>
+          <div class="stats" id="stats"></div>
+        </div>
+
+        <!-- Related Photos Banner -->
+        <div class="related-photos-banner" id="relatedBanner">
+          <h3>Related Photos</h3>
+          <div id="relatedInfo"></div>
+          <div class="cluster-tags" id="clusterTags"></div>
+          <button
+            onclick="clearSelection()"
+            style="
+              margin-top: 10px;
+              padding: 6px 12px;
+              background: #51cf66;
+              color: #000;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-weight: bold;
+            "
+          >
+            Clear Selection
+          </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="section">
+          <div class="tabs">
+            <button class="tab active" data-tab="all">All Photos</button>
+            <button class="tab" data-tab="near-duplicates">
+              Near Duplicates
+            </button>
+            <button class="tab" data-tab="scenes">Scenes</button>
+            <button class="tab" data-tab="people">People</button>
+          </div>
+
+          <!-- Search Box -->
+          <div class="search-box">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search photos by filename..."
+            />
+          </div>
+
+          <!-- All Photos Tab -->
+          <div class="tab-content active" id="tab-all">
+            <div class="photo-grid" id="photoGrid"></div>
+            <div class="pagination" id="pagination"></div>
+          </div>
+
+          <!-- Near Duplicates Tab -->
+          <div class="tab-content" id="tab-near-duplicates">
+            <div id="nearDuplicatesContent"></div>
+          </div>
+
+          <!-- Scenes Tab -->
+          <div class="tab-content" id="tab-scenes">
+            <div id="scenesContent"></div>
+          </div>
+
+          <!-- People Tab -->
+          <div class="tab-content" id="tab-people">
+            <div id="peopleContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let photosData = null
+      let clustersData = null
+      let photoFileMap = new Map()
+      let selectedPhoto = null
+      let currentPage = 1
+      let photosPerPage = 20
+      let currentFilter = 'all'
+      let searchQuery = ''
+
+      // Build cluster index for fast lookups
+      let clusterIndex = {
+        byPhoto: new Map(), // filename -> [cluster types and IDs]
+        nearDuplicates: new Map(), // cluster_id -> cluster
+        scenes: new Map(), // cluster_id -> cluster
+        people: new Map(), // person_id -> cluster
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById('error')
+        errorDiv.textContent = message
+        errorDiv.style.display = 'block'
+      }
+
+      function hideError() {
+        document.getElementById('error').style.display = 'none'
+      }
+
+      function showLoading() {
+        document.getElementById('loading').style.display = 'block'
+        document.getElementById('content').style.display = 'none'
+      }
+
+      function hideLoading() {
+        document.getElementById('loading').style.display = 'none'
+        document.getElementById('content').style.display = 'block'
+      }
+
+      function loadJSON(file, callback) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result)
+            callback(data)
+          } catch (err) {
+            showError(`Error parsing JSON: ${err.message}`)
+          }
+        }
+        reader.onerror = () => showError('Error reading file')
+        reader.readAsText(file)
+      }
+
+      function buildClusterIndex() {
+        clusterIndex.byPhoto.clear()
+        clusterIndex.nearDuplicates.clear()
+        clusterIndex.scenes.clear()
+        clusterIndex.people.clear()
+
+        if (!clustersData) return
+
+        // Index near duplicates
+        if (clustersData.near_duplicates) {
+          clustersData.near_duplicates.forEach((cluster) => {
+            clusterIndex.nearDuplicates.set(cluster.cluster_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'near_duplicate',
+                id: cluster.cluster_id,
+              })
+            })
+          })
+        }
+
+        // Index scenes
+        if (clustersData.scenes) {
+          clustersData.scenes.forEach((cluster) => {
+            clusterIndex.scenes.set(cluster.cluster_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'scene',
+                id: cluster.cluster_id,
+              })
+            })
+          })
+        }
+
+        // Index people
+        if (clustersData.people) {
+          clustersData.people.forEach((cluster) => {
+            clusterIndex.people.set(cluster.person_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'person',
+                id: cluster.person_id,
+              })
+            })
+          })
+        }
+      }
+
+      function getRelatedPhotos(filename) {
+        const clusters = clusterIndex.byPhoto.get(filename) || []
+        const related = new Set()
+        const clusterInfo = []
+
+        clusters.forEach(({ type, id }) => {
+          let cluster
+          if (type === 'near_duplicate') {
+            cluster = clusterIndex.nearDuplicates.get(id)
+          } else if (type === 'scene') {
+            cluster = clusterIndex.scenes.get(id)
+          } else if (type === 'person') {
+            cluster = clusterIndex.people.get(id)
+          }
+
+          if (cluster) {
+            cluster.photo_filenames.forEach((f) => {
+              if (f !== filename) {
+                related.add(f)
+              }
+            })
+            clusterInfo.push({ type, id, cluster })
+          }
+        })
+
+        return { related: Array.from(related), clusters: clusterInfo }
+      }
+
+      function selectPhoto(photo) {
+        selectedPhoto = photo
+        const { related, clusters } = getRelatedPhotos(photo.filename)
+
+        // Update banner
+        const banner = document.getElementById('relatedBanner')
+        const relatedInfo = document.getElementById('relatedInfo')
+        const clusterTags = document.getElementById('clusterTags')
+
+        if (related.length > 0) {
+          relatedInfo.innerHTML = `<strong>${related.length}</strong> related photo(s) found in <strong>${clusters.length}</strong> cluster(s)`
+          clusterTags.innerHTML = clusters
+            .map(({ type, id, cluster }) => {
+              const typeLabel =
+                type === 'near_duplicate'
+                  ? 'Near Duplicate'
+                  : type === 'scene'
+                    ? 'Scene'
+                    : 'Person'
+              const count = cluster.photo_filenames.length
+              return `<span class="cluster-tag">${typeLabel} #${id} (${count} photos)</span>`
+            })
+            .join('')
+          banner.classList.add('show')
+        } else {
+          banner.classList.remove('show')
+        }
+
+        // Update photo cards
+        updatePhotoDisplay()
+      }
+
+      function clearSelection() {
+        selectedPhoto = null
+        document.getElementById('relatedBanner').classList.remove('show')
+        updatePhotoDisplay()
+      }
+
+      function updateStats() {
+        if (!photosData) return
+
+        const stats = {
+          totalPhotos: photosData.length,
+          photosWithFaces: photosData.filter(
+            (p) => p.faces && p.faces.length > 0
+          ).length,
+          photosWithPersons: photosData.filter(
+            (p) => p.persons && p.persons.length > 0
+          ).length,
+          photosWithCrops: photosData.filter(
+            (p) => p.crops && Object.keys(p.crops).length > 0
+          ).length,
+          totalFaces: photosData.reduce(
+            (sum, p) => sum + (p.faces?.length || 0),
+            0
+          ),
+          totalPersons: photosData.reduce(
+            (sum, p) => sum + (p.persons?.length || 0),
+            0
+          ),
+          totalCrops: photosData.reduce(
+            (sum, p) => sum + (p.crops ? Object.keys(p.crops).length : 0),
+            0
+          ),
+        }
+
+        if (clustersData) {
+          stats.nearDuplicateClusters =
+            clustersData.near_duplicates?.length || 0
+          stats.sceneClusters = clustersData.scenes?.length || 0
+          stats.peopleClusters = clustersData.people?.length || 0
+        }
+
+        const statsHtml = Object.entries(stats)
+          .map(([key, value]) => {
+            const label = key
+              .replace(/([A-Z])/g, ' $1')
+              .replace(/^./, (str) => str.toUpperCase())
+            return `
+                    <div class="stat-card">
+                        <h3>${label}</h3>
+                        <div class="value">${value.toLocaleString()}</div>
+                    </div>
+                `
+          })
+          .join('')
+
+        document.getElementById('stats').innerHTML = statsHtml
+      }
+
+      function filterPhotos() {
+        if (!photosData) return photosData
+
+        let filtered = photosData
+
+        // Apply search filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase()
+          filtered = filtered.filter((p) =>
+            p.filename.toLowerCase().includes(query)
+          )
+        }
+
+        return filtered
+      }
+
+      function renderPhotoCard(photo, isRelated = false) {
+        const hasFaces = photo.faces && photo.faces.length > 0
+        const hasPersons = photo.persons && photo.persons.length > 0
+        const cropCount = photo.crops ? Object.keys(photo.crops).length : 0
+        const isSelected =
+          selectedPhoto && selectedPhoto.filename === photo.filename
+        const hasClusters = clusterIndex.byPhoto.has(photo.filename)
+
+        // Get image file if available
+        let imageFile = photoFileMap.get(photo.filename)
+        if (!imageFile) {
+          imageFile = photoFileMap.get(photo.filename.toLowerCase())
+        }
+        const imageUrl = imageFile ? URL.createObjectURL(imageFile) : null
+
+        // Create crop preview
+        const cropBoxes = []
+        let previewContent = ''
+
+        if (photo.crops && photo.width && photo.height) {
+          const previewWidth = 300
+          const previewHeight = 300
+          const scaleX = previewWidth / photo.width
+          const scaleY = previewHeight / photo.height
+          const scale = Math.min(scaleX, scaleY)
+          const scaledWidth = photo.width * scale
+          const scaledHeight = photo.height * scale
+          const offsetX = (previewWidth - scaledWidth) / 2
+          const offsetY = (previewHeight - scaledHeight) / 2
+
+          Object.entries(photo.crops).forEach(([aspect, crop]) => {
+            if (crop.crop_box) {
+              const x = offsetX + crop.crop_box.x * scale
+              const y = offsetY + crop.crop_box.y * scale
+              const w = crop.crop_box.width * scale
+              const h = crop.crop_box.height * scale
+              cropBoxes.push({ aspect, x, y, w, h, method: crop.method })
+            }
+          })
+
+          previewContent = `
+                    <div class="crop-preview-container" style="position: relative; width: ${previewWidth}px; height: ${previewHeight}px; margin: 0 auto; background: #111; border: 1px solid #333;">
+                        ${
+                          imageUrl
+                            ? `
+                            <img src="${imageUrl}" 
+                                 style="position: absolute; left: ${offsetX}px; top: ${offsetY}px; width: ${scaledWidth}px; height: ${scaledHeight}px; object-fit: contain;"
+                                 alt="${photo.filename}">
+                        `
+                            : `
+                            <div style="position: absolute; left: ${offsetX}px; top: ${offsetY}px; width: ${scaledWidth}px; height: ${scaledHeight}px; background: #222; display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px;">
+                                ${photo.width} × ${photo.height}
+                            </div>
+                        `
+                        }
+                        ${cropBoxes
+                          .map(
+                            (crop) => `
+                            <div class="crop-box" style="left: ${crop.x}px; top: ${crop.y}px; width: ${crop.w}px; height: ${crop.h}px; border: 2px solid ${getCropColor(crop.aspect)};">
+                                <div class="crop-label">${crop.aspect} (${crop.method})</div>
+                            </div>
+                        `
+                          )
+                          .join('')}
+                    </div>
+                `
+        } else {
+          previewContent =
+            '<div style="color: #444; padding: 20px; text-align: center;">No crops available</div>'
+        }
+
+        const cardClasses = ['photo-card']
+        if (isSelected) cardClasses.push('selected')
+        if (isRelated) cardClasses.push('related')
+
+        const photoJson = JSON.stringify(photo).replace(/"/g, '&quot;')
+        return `
+                <div class="${cardClasses.join(' ')}" onclick="selectPhotoByFilename('${photo.filename.replace(/'/g, "\\'")}')">
+                    ${previewContent}
+                    <div class="photo-info">
+                        <h3>${photo.filename}</h3>
+                        <div class="photo-meta">Dimensions: ${photo.width} × ${photo.height}</div>
+                        ${hasFaces ? `<span class="badge faces">${photo.faces.length} Face(s)</span>` : ''}
+                        ${hasPersons ? `<span class="badge persons">${photo.persons.length} Person(s)</span>` : ''}
+                        ${cropCount > 0 ? `<span class="badge crops">${cropCount} Crop(s)</span>` : ''}
+                        ${hasClusters ? `<span class="badge cluster">In Cluster</span>` : ''}
+                        ${photo.hashes?.phash ? `<div class="photo-meta">pHash: ${photo.hashes.phash.substring(0, 16)}...</div>` : ''}
+                        ${photo.image_embedding ? `<div class="photo-meta">Embedding: ${photo.image_embedding.length}D</div>` : ''}
+                    </div>
+                </div>
+            `
+      }
+
+      function getCropColor(aspect) {
+        const colors = {
+          '4:5': '#ff6b6b',
+          '16:9': '#4ecdc4',
+          '1:1': '#ffe66d',
+          '9:16': '#a8e6cf',
+        }
+        return colors[aspect] || '#fff'
+      }
+
+      function updatePhotoDisplay() {
+        if (!photosData) return
+
+        const filtered = filterPhotos()
+        const relatedFilenames = selectedPhoto
+          ? new Set(getRelatedPhotos(selectedPhoto.filename).related)
+          : new Set()
+
+        if (currentFilter === 'all') {
+          // Pagination
+          const totalPages = Math.ceil(filtered.length / photosPerPage)
+          const start = (currentPage - 1) * photosPerPage
+          const end = start + photosPerPage
+          const pagePhotos = filtered.slice(start, end)
+
+          // Render photos
+          document.getElementById('photoGrid').innerHTML = pagePhotos
+            .map((photo) => {
+              const isRelated = relatedFilenames.has(photo.filename)
+              return renderPhotoCard(photo, isRelated)
+            })
+            .join('')
+
+          // Render pagination
+          const pagination = document.getElementById('pagination')
+          pagination.innerHTML = `
+            <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+            <div class="page-info">Page ${currentPage} of ${totalPages} (${filtered.length} photos)</div>
+            <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+          `
+        }
+      }
+
+      function goToPage(page) {
+        const filtered = filterPhotos()
+        const totalPages = Math.ceil(filtered.length / photosPerPage)
+        if (page >= 1 && page <= totalPages) {
+          currentPage = page
+          updatePhotoDisplay()
+          // Scroll to top
+          document
+            .getElementById('photoGrid')
+            .scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }
+
+      function renderClusters() {
+        if (!clustersData) return
+
+        // Near Duplicates
+        if (
+          clustersData.near_duplicates &&
+          clustersData.near_duplicates.length > 0
+        ) {
+          let html = '<div class="cluster-list">'
+          clustersData.near_duplicates.forEach((cluster) => {
+            html += `
+              <div class="cluster-card" onclick="viewCluster('near_duplicate', ${cluster.cluster_id})">
+                <h4>Near Duplicate Cluster #${cluster.cluster_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
+          })
+          html += '</div>'
+          document.getElementById('nearDuplicatesContent').innerHTML = html
+        } else {
+          document.getElementById('nearDuplicatesContent').innerHTML =
+            '<p style="color: #888;">No near-duplicate clusters found</p>'
+        }
+
+        // Scenes
+        if (clustersData.scenes && clustersData.scenes.length > 0) {
+          let html = '<div class="cluster-list">'
+          clustersData.scenes.forEach((cluster) => {
+            html += `
+              <div class="cluster-card" onclick="viewCluster('scene', ${cluster.cluster_id})">
+                <h4>Scene Cluster #${cluster.cluster_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
+          })
+          html += '</div>'
+          document.getElementById('scenesContent').innerHTML = html
+        } else {
+          document.getElementById('scenesContent').innerHTML =
+            '<p style="color: #888;">No scene clusters found</p>'
+        }
+
+        // People
+        if (clustersData.people && clustersData.people.length > 0) {
+          let html = '<div class="cluster-list">'
+          clustersData.people.forEach((cluster) => {
+            html += `
+              <div class="cluster-card" onclick="viewCluster('person', ${cluster.person_id})">
+                <h4>Person Cluster #${cluster.person_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                ${cluster.representative_face ? `<div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">Quality: ${cluster.representative_face.quality_score?.toFixed(2) || 'N/A'}</div>` : ''}
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames
+                    .slice(0, 5)
+                    .map((f) => `<div>${f}</div>`)
+                    .join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
+          })
+          html += '</div>'
+          document.getElementById('peopleContent').innerHTML = html
+        } else {
+          document.getElementById('peopleContent').innerHTML =
+            '<p style="color: #888;">No people clusters found</p>'
+        }
+      }
+
+      function viewCluster(type, id) {
+        // Switch to All Photos tab and filter to show cluster photos
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'))
+        document.querySelector('[data-tab="all"]').classList.add('active')
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'))
+        document.getElementById('tab-all').classList.add('active')
+        currentFilter = 'all'
+
+        // Find cluster
+        let cluster
+        if (type === 'near_duplicate') {
+          cluster = clusterIndex.nearDuplicates.get(id)
+        } else if (type === 'scene') {
+          cluster = clusterIndex.scenes.get(id)
+        } else if (type === 'person') {
+          cluster = clusterIndex.people.get(id)
+        }
+
+        if (cluster && cluster.photo_filenames.length > 0) {
+          // Select first photo in cluster
+          const firstPhoto = photosData.find(
+            (p) => p.filename === cluster.photo_filenames[0]
+          )
+          if (firstPhoto) {
+            selectPhoto(firstPhoto)
+          }
+        }
+      }
+
+      function switchTab(tabName) {
+        currentFilter = tabName
+        currentPage = 1
+
+        // Update tab buttons
+        document
+          .querySelectorAll('.tab')
+          .forEach((t) => t.classList.remove('active'))
+        document
+          .querySelector(`[data-tab="${tabName}"]`)
+          .classList.add('active')
+
+        // Update tab content
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'))
+        document.getElementById(`tab-${tabName}`).classList.add('active')
+
+        if (tabName === 'all') {
+          updatePhotoDisplay()
+        }
+      }
+
+      function updateDisplay() {
+        if (!photosData) return
+
+        hideError()
+        hideLoading()
+
+        buildClusterIndex()
+        updateStats()
+        updatePhotoDisplay()
+        renderClusters()
+      }
+
+      // File input handlers
+      document.getElementById('photosFile').addEventListener('change', (e) => {
+        const file = e.target.files[0]
+        if (file) {
+          document.getElementById('photosPath').textContent =
+            `Loaded: ${file.name}`
+          showLoading()
+          loadJSON(file, (data) => {
+            photosData = data
+            updateDisplay()
+          })
+        }
+      })
+
+      document
+        .getElementById('clustersFile')
+        .addEventListener('change', (e) => {
+          const file = e.target.files[0]
+          if (file) {
+            document.getElementById('clustersPath').textContent =
+              `Loaded: ${file.name}`
+            loadJSON(file, (data) => {
+              clustersData = data
+              updateDisplay()
+            })
+          }
+        })
+
+      document.getElementById('photosDir').addEventListener('change', (e) => {
+        const files = Array.from(e.target.files)
+        photoFileMap.clear()
+
+        files.forEach((file) => {
+          const filename = file.name
+          photoFileMap.set(filename, file)
+          photoFileMap.set(filename.toLowerCase(), file)
+        })
+
+        document.getElementById('photosDirPath').textContent =
+          `Loaded ${files.length} image files`
+
+        if (photosData) {
+          updateDisplay()
+        }
+      })
+
+      // Tab switching
+      document.querySelectorAll('.tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          switchTab(tab.dataset.tab)
+        })
+      })
+
+      // Search
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value
+        currentPage = 1
+        updatePhotoDisplay()
+      })
+
+      function selectPhotoByFilename(filename) {
+        const photo = photosData.find((p) => p.filename === filename)
+        if (photo) {
+          selectPhoto(photo)
+        }
+      }
+
+      // Make functions global for onclick handlers
+      window.selectPhoto = selectPhoto
+      window.selectPhotoByFilename = selectPhotoByFilename
+      window.clearSelection = clearSelection
+      window.goToPage = goToPage
+      window.viewCluster = viewCluster
+    </script>
+  </body>
+</html>

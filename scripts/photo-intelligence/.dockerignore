@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output files
+*.parquet
+*.json
+checkpoint.json
+photo-intelligence-output/
+output/
+
+# Logs
+*.log
+
+# Test files
+test_*.py
+*_test.py
+
+# Documentation
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+

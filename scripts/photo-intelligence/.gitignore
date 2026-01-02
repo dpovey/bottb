@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output files
+*.parquet
+checkpoint.json
+photo-intelligence-output/
+output/
+
+# Logs
+*.log
+upload.log
+
+# ML Models (too large for git)
+*.tflite
+*.pt
+*.pth
+*.h5
+models/
+
+# Test files (keep test_crops.py for now as it's useful)
+# test_*.py
+# *_test.py
+
+# Temporary scripts
+run-pipeline-fresh.sh
+re-upload-data.sh
+RE_RUN_PIPELINE.md
+SUMMARY.md
+VERIFICATION_CHECKLIST.md
+
