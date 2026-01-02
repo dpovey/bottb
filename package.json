@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.2",
-    "@fingerprintjs/fingerprintjs": "^4.6.2",
+    "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@orama/orama": "^3.1.18",
     "@posthog/nextjs-config": "^1.7.3",
     "@types/bcrypt": "^6.0.0",
