@@ -174,6 +174,33 @@ CREATE TABLE IF NOT EXISTS photos (
     CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[])))
 );
 
+-- Photo intelligence tables
+
+-- Photo crops - Smart crop calculations for different aspect ratios
+CREATE TABLE IF NOT EXISTS photo_crops (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    photo_id uuid NOT NULL REFERENCES photos(id) ON DELETE CASCADE,
+    aspect_ratio character varying(20) NOT NULL,
+    crop_box jsonb NOT NULL,
+    confidence numeric(5,4),
+    method character varying(20),
+    created_at timestamp with time zone DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_photo_crops_photo_id ON photo_crops(photo_id);
+CREATE UNIQUE INDEX IF NOT EXISTS photo_crops_photo_aspect_unique ON photo_crops(photo_id, aspect_ratio);
+
+-- Photo clusters - Groups of related photos (near-duplicates, scenes, people)
+CREATE TABLE IF NOT EXISTS photo_clusters (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    cluster_type character varying(20) NOT NULL,
+    photo_ids uuid[] NOT NULL,
+    representative_photo_id uuid,
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT photo_clusters_type_check CHECK ((cluster_type)::text = ANY ((ARRAY['near_duplicate'::character varying, 'scene'::character varying, 'person'::character varying])::text[]))
+);
+CREATE INDEX IF NOT EXISTS idx_photo_clusters_type ON photo_clusters(cluster_type);
+
 -- Videos table
 CREATE TABLE IF NOT EXISTS videos (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
