@@ -67,6 +67,38 @@
         padding-bottom: 10px;
         border-bottom: 2px solid #4a9eff;
       }
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #333;
+        padding-bottom: 0;
+      }
+      .tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+      }
+      .tab:hover {
+        color: #fff;
+      }
+      .tab.active {
+        color: #4a9eff;
+        border-bottom-color: #4a9eff;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
       .photo-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -79,6 +111,22 @@
         border-radius: 8px;
         overflow: hidden;
         position: relative;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .photo-card:hover {
+        border-color: #4a9eff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+      }
+      .photo-card.selected {
+        border-color: #4a9eff;
+        border-width: 3px;
+        box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.3);
+      }
+      .photo-card.related {
+        border-color: #51cf66;
+        border-width: 2px;
       }
       .photo-info {
         padding: 15px;
@@ -142,9 +190,45 @@
         background: #51cf66;
         color: #fff;
       }
+      .badge.cluster {
+        background: #ffe66d;
+        color: #000;
+      }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 30px;
+        padding: 20px;
+      }
+      .pagination button {
+        padding: 8px 16px;
+        background: #2a2a2a;
+        border: 1px solid #333;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .pagination button:hover:not(:disabled) {
+        background: #4a9eff;
+        border-color: #4a9eff;
+      }
+      .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .pagination .page-info {
+        color: #888;
+        font-size: 14px;
+        min-width: 120px;
+        text-align: center;
+      }
       .cluster-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 15px;
         margin-top: 20px;
       }
@@ -153,6 +237,12 @@
         border: 1px solid #333;
         border-radius: 8px;
         padding: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .cluster-card:hover {
+        border-color: #4a9eff;
+        transform: translateY(-2px);
       }
       .cluster-card h4 {
         color: #fff;
@@ -161,6 +251,42 @@
       .cluster-photos {
         font-size: 12px;
         color: #888;
+      }
+      .cluster-photo-list {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #666;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+      .related-photos-banner {
+        background: #2a4a2a;
+        border: 1px solid #51cf66;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        display: none;
+      }
+      .related-photos-banner.show {
+        display: block;
+      }
+      .related-photos-banner h3 {
+        color: #51cf66;
+        margin-bottom: 10px;
+      }
+      .related-photos-banner .cluster-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .cluster-tag {
+        background: #51cf66;
+        color: #000;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: bold;
       }
       .error {
         color: #ff6b6b;
@@ -194,6 +320,22 @@
         margin-top: 10px;
         font-size: 12px;
         color: #888;
+      }
+      .search-box {
+        margin-bottom: 20px;
+      }
+      .search-box input {
+        width: 100%;
+        padding: 12px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+      }
+      .search-box input:focus {
+        outline: none;
+        border-color: #4a9eff;
       }
     </style>
   </head>
@@ -240,16 +382,50 @@
           <div class="stats" id="stats"></div>
         </div>
 
-        <!-- Sample Photos Section -->
-        <div class="section">
-          <h2>Sample Photos (First 20)</h2>
-          <div class="photo-grid" id="photoGrid"></div>
+        <!-- Related Photos Banner -->
+        <div class="related-photos-banner" id="relatedBanner">
+          <h3>Related Photos</h3>
+          <div id="relatedInfo"></div>
+          <div class="cluster-tags" id="clusterTags"></div>
+          <button onclick="clearSelection()" style="margin-top: 10px; padding: 6px 12px; background: #51cf66; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            Clear Selection
+          </button>
         </div>
 
-        <!-- Clusters Section -->
+        <!-- Tabs -->
         <div class="section">
-          <h2>Clusters</h2>
-          <div id="clustersContent"></div>
+          <div class="tabs">
+            <button class="tab active" data-tab="all">All Photos</button>
+            <button class="tab" data-tab="near-duplicates">Near Duplicates</button>
+            <button class="tab" data-tab="scenes">Scenes</button>
+            <button class="tab" data-tab="people">People</button>
+          </div>
+
+          <!-- Search Box -->
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search photos by filename..." />
+          </div>
+
+          <!-- All Photos Tab -->
+          <div class="tab-content active" id="tab-all">
+            <div class="photo-grid" id="photoGrid"></div>
+            <div class="pagination" id="pagination"></div>
+          </div>
+
+          <!-- Near Duplicates Tab -->
+          <div class="tab-content" id="tab-near-duplicates">
+            <div id="nearDuplicatesContent"></div>
+          </div>
+
+          <!-- Scenes Tab -->
+          <div class="tab-content" id="tab-scenes">
+            <div id="scenesContent"></div>
+          </div>
+
+          <!-- People Tab -->
+          <div class="tab-content" id="tab-people">
+            <div id="peopleContent"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -257,7 +433,20 @@
     <script>
       let photosData = null
       let clustersData = null
-      let photoFileMap = new Map() // Maps filename -> File object
+      let photoFileMap = new Map()
+      let selectedPhoto = null
+      let currentPage = 1
+      let photosPerPage = 20
+      let currentFilter = 'all'
+      let searchQuery = ''
+
+      // Build cluster index for fast lookups
+      let clusterIndex = {
+        byPhoto: new Map(), // filename -> [cluster types and IDs]
+        nearDuplicates: new Map(), // cluster_id -> cluster
+        scenes: new Map(), // cluster_id -> cluster
+        people: new Map() // person_id -> cluster
+      }
 
       function showError(message) {
         const errorDiv = document.getElementById('error')
@@ -291,6 +480,122 @@
         }
         reader.onerror = () => showError('Error reading file')
         reader.readAsText(file)
+      }
+
+      function buildClusterIndex() {
+        clusterIndex.byPhoto.clear()
+        clusterIndex.nearDuplicates.clear()
+        clusterIndex.scenes.clear()
+        clusterIndex.people.clear()
+
+        if (!clustersData) return
+
+        // Index near duplicates
+        if (clustersData.near_duplicates) {
+          clustersData.near_duplicates.forEach((cluster) => {
+            clusterIndex.nearDuplicates.set(cluster.cluster_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'near_duplicate',
+                id: cluster.cluster_id
+              })
+            })
+          })
+        }
+
+        // Index scenes
+        if (clustersData.scenes) {
+          clustersData.scenes.forEach((cluster) => {
+            clusterIndex.scenes.set(cluster.cluster_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'scene',
+                id: cluster.cluster_id
+              })
+            })
+          })
+        }
+
+        // Index people
+        if (clustersData.people) {
+          clustersData.people.forEach((cluster) => {
+            clusterIndex.people.set(cluster.person_id, cluster)
+            cluster.photo_filenames.forEach((filename) => {
+              if (!clusterIndex.byPhoto.has(filename)) {
+                clusterIndex.byPhoto.set(filename, [])
+              }
+              clusterIndex.byPhoto.get(filename).push({
+                type: 'person',
+                id: cluster.person_id
+              })
+            })
+          })
+        }
+      }
+
+      function getRelatedPhotos(filename) {
+        const clusters = clusterIndex.byPhoto.get(filename) || []
+        const related = new Set()
+        const clusterInfo = []
+
+        clusters.forEach(({ type, id }) => {
+          let cluster
+          if (type === 'near_duplicate') {
+            cluster = clusterIndex.nearDuplicates.get(id)
+          } else if (type === 'scene') {
+            cluster = clusterIndex.scenes.get(id)
+          } else if (type === 'person') {
+            cluster = clusterIndex.people.get(id)
+          }
+
+          if (cluster) {
+            cluster.photo_filenames.forEach((f) => {
+              if (f !== filename) {
+                related.add(f)
+              }
+            })
+            clusterInfo.push({ type, id, cluster })
+          }
+        })
+
+        return { related: Array.from(related), clusters: clusterInfo }
+      }
+
+      function selectPhoto(photo) {
+        selectedPhoto = photo
+        const { related, clusters } = getRelatedPhotos(photo.filename)
+
+        // Update banner
+        const banner = document.getElementById('relatedBanner')
+        const relatedInfo = document.getElementById('relatedInfo')
+        const clusterTags = document.getElementById('clusterTags')
+
+        if (related.length > 0) {
+          relatedInfo.innerHTML = `<strong>${related.length}</strong> related photo(s) found in <strong>${clusters.length}</strong> cluster(s)`
+          clusterTags.innerHTML = clusters.map(({ type, id, cluster }) => {
+            const typeLabel = type === 'near_duplicate' ? 'Near Duplicate' : type === 'scene' ? 'Scene' : 'Person'
+            const count = cluster.photo_filenames.length
+            return `<span class="cluster-tag">${typeLabel} #${id} (${count} photos)</span>`
+          }).join('')
+          banner.classList.add('show')
+        } else {
+          banner.classList.remove('show')
+        }
+
+        // Update photo cards
+        updatePhotoDisplay()
+      }
+
+      function clearSelection() {
+        selectedPhoto = null
+        document.getElementById('relatedBanner').classList.remove('show')
+        updatePhotoDisplay()
       }
 
       function updateStats() {
@@ -345,26 +650,37 @@
         document.getElementById('stats').innerHTML = statsHtml
       }
 
-      function renderPhotoCard(photo) {
+      function filterPhotos() {
+        if (!photosData) return photosData
+
+        let filtered = photosData
+
+        // Apply search filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase()
+          filtered = filtered.filter((p) =>
+            p.filename.toLowerCase().includes(query)
+          )
+        }
+
+        return filtered
+      }
+
+      function renderPhotoCard(photo, isRelated = false) {
         const hasFaces = photo.faces && photo.faces.length > 0
         const hasPersons = photo.persons && photo.persons.length > 0
         const cropCount = photo.crops ? Object.keys(photo.crops).length : 0
+        const isSelected = selectedPhoto && selectedPhoto.filename === photo.filename
+        const hasClusters = clusterIndex.byPhoto.has(photo.filename)
 
-        // Get image file if available (try exact match, then case-insensitive)
+        // Get image file if available
         let imageFile = photoFileMap.get(photo.filename)
         if (!imageFile) {
           imageFile = photoFileMap.get(photo.filename.toLowerCase())
         }
         const imageUrl = imageFile ? URL.createObjectURL(imageFile) : null
 
-        // Debug missing images
-        if (!imageUrl && photoFileMap.size > 0) {
-          console.log(
-            `Image not found for: ${photo.filename} (available: ${Array.from(photoFileMap.keys()).slice(0, 3).join(', ')}...)`
-          )
-        }
-
-        // Create crop preview with actual image or placeholder
+        // Create crop preview
         const cropBoxes = []
         let previewContent = ''
 
@@ -420,8 +736,12 @@
             '<div style="color: #444; padding: 20px; text-align: center;">No crops available</div>'
         }
 
+        const cardClasses = ['photo-card']
+        if (isSelected) cardClasses.push('selected')
+        if (isRelated) cardClasses.push('related')
+
         return `
-                <div class="photo-card">
+                <div class="${cardClasses.join(' ')}" onclick="selectPhoto(${JSON.stringify(photo).replace(/"/g, '&quot;')})">
                     ${previewContent}
                     <div class="photo-info">
                         <h3>${photo.filename}</h3>
@@ -429,6 +749,7 @@
                         ${hasFaces ? `<span class="badge faces">${photo.faces.length} Face(s)</span>` : ''}
                         ${hasPersons ? `<span class="badge persons">${photo.persons.length} Person(s)</span>` : ''}
                         ${cropCount > 0 ? `<span class="badge crops">${cropCount} Crop(s)</span>` : ''}
+                        ${hasClusters ? `<span class="badge cluster">In Cluster</span>` : ''}
                         ${photo.hashes?.phash ? `<div class="photo-meta">pHash: ${photo.hashes.phash.substring(0, 16)}...</div>` : ''}
                         ${photo.image_embedding ? `<div class="photo-meta">Embedding: ${photo.image_embedding.length}D</div>` : ''}
                     </div>
@@ -446,74 +767,160 @@
         return colors[aspect] || '#fff'
       }
 
+      function updatePhotoDisplay() {
+        if (!photosData) return
+
+        const filtered = filterPhotos()
+        const relatedFilenames = selectedPhoto
+          ? new Set(getRelatedPhotos(selectedPhoto.filename).related)
+          : new Set()
+
+        if (currentFilter === 'all') {
+          // Pagination
+          const totalPages = Math.ceil(filtered.length / photosPerPage)
+          const start = (currentPage - 1) * photosPerPage
+          const end = start + photosPerPage
+          const pagePhotos = filtered.slice(start, end)
+
+          // Render photos
+          document.getElementById('photoGrid').innerHTML = pagePhotos
+            .map((photo) => {
+              const isRelated = relatedFilenames.has(photo.filename)
+              return renderPhotoCard(photo, isRelated)
+            })
+            .join('')
+
+          // Render pagination
+          const pagination = document.getElementById('pagination')
+          pagination.innerHTML = `
+            <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+            <div class="page-info">Page ${currentPage} of ${totalPages} (${filtered.length} photos)</div>
+            <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+          `
+        }
+      }
+
+      function goToPage(page) {
+        const filtered = filterPhotos()
+        const totalPages = Math.ceil(filtered.length / photosPerPage)
+        if (page >= 1 && page <= totalPages) {
+          currentPage = page
+          updatePhotoDisplay()
+          // Scroll to top
+          document.getElementById('photoGrid').scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }
+
       function renderClusters() {
-        if (!clustersData) {
-          document.getElementById('clustersContent').innerHTML =
-            '<p style="color: #888;">Load clusters.json to see cluster data</p>'
-          return
-        }
+        if (!clustersData) return
 
-        let html = ''
-
-        if (
-          clustersData.near_duplicates &&
-          clustersData.near_duplicates.length > 0
-        ) {
-          html +=
-            '<h3 style="color: #fff; margin-top: 20px; margin-bottom: 15px;">Near Duplicate Clusters</h3>'
-          html += '<div class="cluster-list">'
-          clustersData.near_duplicates.slice(0, 10).forEach((cluster) => {
+        // Near Duplicates
+        if (clustersData.near_duplicates && clustersData.near_duplicates.length > 0) {
+          let html = '<div class="cluster-list">'
+          clustersData.near_duplicates.forEach((cluster) => {
             html += `
-                        <div class="cluster-card">
-                            <h4>Cluster ${cluster.cluster_id}</h4>
-                            <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
-                            <div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">
-                                ${cluster.photo_filenames.slice(0, 3).join(', ')}${cluster.photo_filenames.length > 3 ? '...' : ''}
-                            </div>
-                        </div>
-                    `
+              <div class="cluster-card" onclick="viewCluster('near_duplicate', ${cluster.cluster_id})">
+                <h4>Near Duplicate Cluster #${cluster.cluster_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
           })
           html += '</div>'
-        }
-
-        if (clustersData.scenes && clustersData.scenes.length > 0) {
-          html +=
-            '<h3 style="color: #fff; margin-top: 30px; margin-bottom: 15px;">Scene Clusters</h3>'
-          html += '<div class="cluster-list">'
-          clustersData.scenes.slice(0, 10).forEach((cluster) => {
-            html += `
-                        <div class="cluster-card">
-                            <h4>Cluster ${cluster.cluster_id}</h4>
-                            <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
-                            <div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">
-                                ${cluster.photo_filenames.slice(0, 3).join(', ')}${cluster.photo_filenames.length > 3 ? '...' : ''}
-                            </div>
-                        </div>
-                    `
-          })
-          html += '</div>'
-        }
-
-        if (clustersData.people && clustersData.people.length > 0) {
-          html +=
-            '<h3 style="color: #fff; margin-top: 30px; margin-bottom: 15px;">People Clusters</h3>'
-          html += '<div class="cluster-list">'
-          clustersData.people.slice(0, 10).forEach((cluster) => {
-            html += `
-                        <div class="cluster-card">
-                            <h4>Person ${cluster.person_id}</h4>
-                            <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
-                            ${cluster.representative_face ? `<div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">Quality: ${cluster.representative_face.quality_score?.toFixed(2) || 'N/A'}</div>` : ''}
-                        </div>
-                    `
-          })
-          html += '</div>'
+          document.getElementById('nearDuplicatesContent').innerHTML = html
         } else {
-          html +=
-            '<p style="color: #888; margin-top: 20px;">No people clusters found</p>'
+          document.getElementById('nearDuplicatesContent').innerHTML = '<p style="color: #888;">No near-duplicate clusters found</p>'
         }
 
-        document.getElementById('clustersContent').innerHTML = html
+        // Scenes
+        if (clustersData.scenes && clustersData.scenes.length > 0) {
+          let html = '<div class="cluster-list">'
+          clustersData.scenes.forEach((cluster) => {
+            html += `
+              <div class="cluster-card" onclick="viewCluster('scene', ${cluster.cluster_id})">
+                <h4>Scene Cluster #${cluster.cluster_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
+          })
+          html += '</div>'
+          document.getElementById('scenesContent').innerHTML = html
+        } else {
+          document.getElementById('scenesContent').innerHTML = '<p style="color: #888;">No scene clusters found</p>'
+        }
+
+        // People
+        if (clustersData.people && clustersData.people.length > 0) {
+          let html = '<div class="cluster-list">'
+          clustersData.people.forEach((cluster) => {
+            html += `
+              <div class="cluster-card" onclick="viewCluster('person', ${cluster.person_id})">
+                <h4>Person Cluster #${cluster.person_id}</h4>
+                <div class="cluster-photos">${cluster.photo_filenames.length} photos</div>
+                ${cluster.representative_face ? `<div class="cluster-photos" style="margin-top: 5px; font-size: 10px; color: #666;">Quality: ${cluster.representative_face.quality_score?.toFixed(2) || 'N/A'}</div>` : ''}
+                <div class="cluster-photo-list">
+                  ${cluster.photo_filenames.slice(0, 5).map(f => `<div>${f}</div>`).join('')}
+                  ${cluster.photo_filenames.length > 5 ? `<div>... and ${cluster.photo_filenames.length - 5} more</div>` : ''}
+                </div>
+              </div>
+            `
+          })
+          html += '</div>'
+          document.getElementById('peopleContent').innerHTML = html
+        } else {
+          document.getElementById('peopleContent').innerHTML = '<p style="color: #888;">No people clusters found</p>'
+        }
+      }
+
+      function viewCluster(type, id) {
+        // Switch to All Photos tab and filter to show cluster photos
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+        document.querySelector('[data-tab="all"]').classList.add('active')
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+        document.getElementById('tab-all').classList.add('active')
+        currentFilter = 'all'
+
+        // Find cluster
+        let cluster
+        if (type === 'near_duplicate') {
+          cluster = clusterIndex.nearDuplicates.get(id)
+        } else if (type === 'scene') {
+          cluster = clusterIndex.scenes.get(id)
+        } else if (type === 'person') {
+          cluster = clusterIndex.people.get(id)
+        }
+
+        if (cluster && cluster.photo_filenames.length > 0) {
+          // Select first photo in cluster
+          const firstPhoto = photosData.find(p => p.filename === cluster.photo_filenames[0])
+          if (firstPhoto) {
+            selectPhoto(firstPhoto)
+          }
+        }
+      }
+
+      function switchTab(tabName) {
+        currentFilter = tabName
+        currentPage = 1
+
+        // Update tab buttons
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active')
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+        document.getElementById(`tab-${tabName}`).classList.add('active')
+
+        if (tabName === 'all') {
+          updatePhotoDisplay()
+        }
       }
 
       function updateDisplay() {
@@ -522,14 +929,9 @@
         hideError()
         hideLoading()
 
+        buildClusterIndex()
         updateStats()
-
-        // Render sample photos
-        const samplePhotos = photosData.slice(0, 20)
-        document.getElementById('photoGrid').innerHTML = samplePhotos
-          .map(renderPhotoCard)
-          .join('')
-
+        updatePhotoDisplay()
         renderClusters()
       }
 
@@ -565,10 +967,8 @@
         const files = Array.from(e.target.files)
         photoFileMap.clear()
 
-        // Build map of filename -> File (case-insensitive matching)
         files.forEach((file) => {
           const filename = file.name
-          // Store with both original and lowercase for matching
           photoFileMap.set(filename, file)
           photoFileMap.set(filename.toLowerCase(), file)
         })
@@ -576,25 +976,30 @@
         document.getElementById('photosDirPath').textContent =
           `Loaded ${files.length} image files`
 
-        // Debug: show first few filenames
-        if (files.length > 0) {
-          console.log(
-            'Sample filenames loaded:',
-            files.slice(0, 5).map((f) => f.name)
-          )
-        }
-
-        // Re-render if photos data is already loaded
         if (photosData) {
           updateDisplay()
         }
       })
 
-      // Try to auto-load if files are in same directory
-      window.addEventListener('load', () => {
-        // Note: Browser security prevents direct file access, so user must select files
-        console.log('Ready to load photos.json and clusters.json files')
+      // Tab switching
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          switchTab(tab.dataset.tab)
+        })
       })
+
+      // Search
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value
+        currentPage = 1
+        updatePhotoDisplay()
+      })
+
+      // Make functions global for onclick handlers
+      window.selectPhoto = selectPhoto
+      window.clearSelection = clearSelection
+      window.goToPage = goToPage
+      window.viewCluster = viewCluster
     </script>
   </body>
 </html>
