@@ -107,4 +107,3 @@ export function getBestHeroSrc(
       return photo.blob_url
   }
 }
-
