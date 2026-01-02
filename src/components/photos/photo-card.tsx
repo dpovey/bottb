@@ -16,6 +16,8 @@ export function PhotoCard({
   showCompanyLogo = true,
 }: PhotoCardProps) {
   const thumbSrc = photo.thumbnail_url || photo.blob_url
+  // Use smart focal point for intelligent cropping (defaults to center)
+  const focalPoint = photo.hero_focal_point ?? { x: 50, y: 50 }
 
   return (
     <div
@@ -30,6 +32,7 @@ export function PhotoCard({
         fill
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         className="object-cover transition-transform duration-500 group-hover:scale-110"
+        style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
         loading="lazy"
       />
 

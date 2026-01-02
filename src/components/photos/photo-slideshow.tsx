@@ -106,6 +106,9 @@ const Thumbnail = memo(function Thumbnail({
   thumbSrc: string
   onClick: () => void
 }) {
+  // Use smart focal point for intelligent cropping
+  const focalPoint = photo.hero_focal_point ?? { x: 50, y: 50 }
+
   return (
     <button
       onClick={onClick}
@@ -121,6 +124,7 @@ const Thumbnail = memo(function Thumbnail({
         src={thumbSrc}
         alt={photo.original_filename || `Photo ${index + 1}`}
         className="w-full h-full object-cover"
+        style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
         // No lazy loading - thumbnails are small (64x64) and horizontal
         // scroll containers don't trigger browser lazy loading reliably
       />

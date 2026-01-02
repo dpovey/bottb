@@ -289,6 +289,9 @@ export function PhotoStrip({
                       fill
                       sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
                       className="object-cover"
+                      style={{
+                        objectPosition: `${photo.hero_focal_point?.x ?? 50}% ${photo.hero_focal_point?.y ?? 50}%`,
+                      }}
                       loading={index < 4 ? 'eager' : 'lazy'}
                     />
                   </button>
