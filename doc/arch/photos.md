@@ -65,6 +65,26 @@ Settings:
 - **Visual indicator**: Icon with count badge on grouped photos
 - **Cycling**: Click the badge to cycle through similar photos in-place
 
+#### Auto-Cycling
+
+Grouped photos automatically cycle through similar images in the gallery:
+
+- **Interval**: 1 second between transitions
+- **Color-aware**: Only cycles through photos of the same color type
+  - If viewing a color photo, only cycles through other color photos
+  - If viewing a B&W photo, only cycles through other B&W photos
+- **Pause on hover**: Stops cycling when user hovers over the card
+- **Manual skip**: Click the badge to manually advance to next photo
+
+#### B&W Detection (is_monochrome)
+
+Photos can be classified as B&W/monochrome or color:
+
+- **Detection**: Saturation-based analysis in the ML pipeline
+- **Threshold**: Average saturation < 0.1 is considered monochrome
+- **Storage**: `photos.is_monochrome` column (boolean, nullable)
+- **Usage**: Used by auto-cycling to group same-color photos together
+
 #### Query-Level Grouping
 
 Grouping is done at the database query level to ensure correct pagination:
@@ -439,9 +459,20 @@ Three types of clusters for organizing and discovering photos.
 
 **API Endpoints**:
 
-- `GET /api/admin/photos/clusters?type=near_duplicate|scene`
+- `GET /api/admin/photos/clusters?type=near_duplicate|scene` - List clusters
+- `POST /api/admin/photos/clusters` - Create manual cluster
+- `GET /api/admin/photos/clusters/:id` - Get cluster with photos
+- `PATCH /api/admin/photos/clusters/:id` - Update cluster (add/remove photos, set representative, sync focal points)
+- `DELETE /api/admin/photos/clusters/:id` - Delete cluster
 - `GET /api/admin/photos/people/clusters`
 - `GET /api/admin/photos/people/clusters/[clusterId]/photos`
+
+**Admin Features**:
+
+- Remove individual photos from clusters
+- Delete entire clusters
+- Set representative photo
+- Sync focal points across cluster (copy from one photo to all others)
 
 ### Database Functions
 

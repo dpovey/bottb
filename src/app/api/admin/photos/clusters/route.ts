@@ -86,4 +86,85 @@ const handleGetClusters: ProtectedApiHandler = async (
   }
 }
 
+/**
+ * POST /api/admin/photos/clusters
+ * Create a new cluster (manually group photos)
+ *
+ * Body:
+ * - clusterType: 'near_duplicate' | 'scene'
+ * - photoIds: string[] - Array of at least 2 photo IDs to group
+ * - representativePhotoId?: string - Optional representative photo ID (defaults to first)
+ */
+const handleCreateCluster: ProtectedApiHandler = async (
+  request: NextRequest,
+  _context?: unknown
+) => {
+  try {
+    const body = await request.json()
+
+    // Validate cluster type
+    const clusterType = body.clusterType as 'near_duplicate' | 'scene'
+    if (clusterType !== 'near_duplicate' && clusterType !== 'scene') {
+      return NextResponse.json(
+        { error: 'clusterType must be "near_duplicate" or "scene"' },
+        { status: 400 }
+      )
+    }
+
+    // Validate photo IDs
+    const photoIds = body.photoIds as string[]
+    if (!Array.isArray(photoIds) || photoIds.length < 2) {
+      return NextResponse.json(
+        { error: 'At least 2 photo IDs required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify all photos exist
+    const photoIdsLiteral = `{${photoIds.join(',')}}`
+    const { rows: existingPhotos } = await sql`
+      SELECT id FROM photos WHERE id = ANY(${photoIdsLiteral}::uuid[])
+    `
+
+    if (existingPhotos.length !== photoIds.length) {
+      return NextResponse.json(
+        { error: 'Some photo IDs do not exist' },
+        { status: 400 }
+      )
+    }
+
+    // Set representative photo
+    const representativePhotoId =
+      body.representativePhotoId &&
+      photoIds.includes(body.representativePhotoId)
+        ? body.representativePhotoId
+        : photoIds[0]
+
+    // Create the cluster
+    const { rows } = await sql`
+      INSERT INTO photo_clusters (
+        cluster_type, photo_ids, representative_photo_id, metadata
+      ) VALUES (
+        ${clusterType},
+        ${photoIdsLiteral}::uuid[],
+        ${representativePhotoId}::uuid,
+        ${JSON.stringify({ source: 'manual' })}::jsonb
+      )
+      RETURNING *
+    `
+
+    return NextResponse.json({
+      cluster: rows[0],
+      message: 'Cluster created successfully',
+    })
+  } catch (error) {
+    console.error('Error creating cluster:', error)
+    return NextResponse.json(
+      { error: 'Failed to create cluster' },
+      { status: 500 }
+    )
+  }
+}
+
 export const GET = withAdminProtection(handleGetClusters)
+export const POST = withAdminProtection(handleCreateCluster)

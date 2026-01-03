@@ -157,6 +157,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      is_monochrome: null,
       cluster_photos: null,
     },
     {
@@ -185,6 +186,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      is_monochrome: null,
       cluster_photos: null,
     },
   ]
@@ -313,6 +315,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
         captured_at: null,
         labels: [],
         hero_focal_point: { x: 0.5, y: 0.5 },
+        is_monochrome: null,
         cluster_photos: null,
       },
     ]

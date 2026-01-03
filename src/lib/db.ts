@@ -704,6 +704,7 @@ export async function getGroupedPhotosWithCount(options: {
               'captured_at', cp.captured_at,
               'labels', cp.labels,
               'hero_focal_point', cp.hero_focal_point,
+              'is_monochrome', cp.is_monochrome,
               'thumbnail_url', COALESCE(cp.xmp_metadata->>'thumbnail_url', REPLACE(cp.blob_url, '/large.webp', '/thumbnail.webp')),
               'thumbnail_2x_url', cp.xmp_metadata->>'thumbnail_2x_url',
               'thumbnail_3x_url', cp.xmp_metadata->>'thumbnail_3x_url',

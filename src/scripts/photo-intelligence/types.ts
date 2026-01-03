@@ -37,6 +37,8 @@ export interface PhotoIntelligenceResult {
       reason: string
     }
   >
+  // B&W vs color classification
+  is_monochrome?: boolean
 }
 
 export interface ClusterData {

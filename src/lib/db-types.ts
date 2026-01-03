@@ -213,6 +213,8 @@ export interface Photo {
   labels: string[]
   // Focal point for hero image display
   hero_focal_point: HeroFocalPoint
+  // Whether the image is B&W or largely monochrome (null = not yet classified)
+  is_monochrome: boolean | null
   // Joined fields
   event_name?: string
   band_name?: string

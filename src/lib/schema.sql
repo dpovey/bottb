@@ -171,6 +171,7 @@ CREATE TABLE IF NOT EXISTS photos (
     hero_focal_point jsonb DEFAULT '{"x": 50, "y": 50}'::jsonb,
     captured_at timestamp with time zone,
     original_blob_url text,
+    is_monochrome boolean DEFAULT NULL,
     CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[])))
 );
 
@@ -363,6 +364,7 @@ CREATE INDEX IF NOT EXISTS idx_photos_photographer ON photos(photographer);
 CREATE INDEX IF NOT EXISTS idx_photos_labels ON photos USING gin(labels);
 CREATE INDEX IF NOT EXISTS idx_photos_uploaded_at ON photos(uploaded_at);
 CREATE INDEX IF NOT EXISTS idx_photos_captured_at ON photos(captured_at);
+CREATE INDEX IF NOT EXISTS idx_photos_is_monochrome ON photos(is_monochrome) WHERE (is_monochrome IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_photos_original_blob_url ON photos(original_blob_url) WHERE (original_blob_url IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_videos_event_id ON videos(event_id);
 CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id);
