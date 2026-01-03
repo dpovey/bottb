@@ -886,6 +886,20 @@ CREATE INDEX idx_photo_clusters_type ON public.photo_clusters USING btree (clust
 
 
 --
+-- Name: idx_photo_clusters_photo_ids_gin; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photo_clusters_photo_ids_gin ON public.photo_clusters USING gin (photo_ids);
+
+
+--
+-- Name: idx_photo_clusters_representative; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photo_clusters_representative ON public.photo_clusters USING btree (representative_photo_id) WHERE (representative_photo_id IS NOT NULL);
+
+
+--
 -- Name: idx_photo_crops_photo_id; Type: INDEX; Schema: public; Owner: test
 --
 
