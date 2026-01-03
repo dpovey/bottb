@@ -46,16 +46,17 @@ export default defineConfig({
   },
 
   // Configure projects for major browsers
+  // Include Firefox to catch browser-specific rendering differences
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Uncomment to test on more browsers
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    // Uncomment to also test on Safari
     // {
     //   name: 'webkit',
     //   use: { ...devices['Desktop Safari'] },
