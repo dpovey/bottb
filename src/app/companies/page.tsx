@@ -62,12 +62,12 @@ async function CompaniesContent() {
   return <CompaniesGridView companies={companies} />
 }
 
-// Loading skeleton
+// Loading skeleton - uses div not h1 to avoid duplicate H1 when Suspense resolves
 function CompaniesLoading() {
   return (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
       <div>
-        <h1 className="font-semibold text-4xl mb-2">Bands</h1>
+        <div className="font-semibold text-4xl mb-2">Bands</div>
         <p className="text-text-muted">Loading...</p>
       </div>
     </div>
