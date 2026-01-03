@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, type ReactNode } from 'react'
 import { LayersIcon } from '@/components/icons'
 
 interface GroupingButtonProps {
@@ -12,11 +12,21 @@ interface GroupingButtonProps {
   size?: 'sm' | 'md'
   /** Optional additional className */
   className?: string
+  /** Title shown when active (tooltip) */
+  activeTitle?: string
+  /** Title shown when inactive (tooltip) */
+  inactiveTitle?: string
+  /** Aria label when active */
+  activeLabel?: string
+  /** Aria label when inactive */
+  inactiveLabel?: string
+  /** Optional custom icon */
+  icon?: ReactNode
 }
 
 /**
  * Toggle button for grouping similar photos.
- * When active, near-duplicate photos are collapsed in the gallery.
+ * When active, photos are collapsed in the gallery.
  *
  * Visual states:
  * - Inactive: dimmed text color
@@ -28,23 +38,37 @@ interface GroupingButtonProps {
 export const GroupingButton = forwardRef<
   HTMLButtonElement,
   GroupingButtonProps
->(({ isActive, onClick, size = 'md', className = '' }, ref) => {
-  const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-  }
+>(
+  (
+    {
+      isActive,
+      onClick,
+      size = 'md',
+      className = '',
+      activeTitle = 'Grouping on',
+      inactiveTitle = 'Group similar photos',
+      activeLabel = 'Show all photos',
+      inactiveLabel = 'Group similar photos',
+      icon,
+    },
+    ref
+  ) => {
+    const sizeClasses = {
+      sm: 'w-8 h-8',
+      md: 'w-10 h-10',
+    }
 
-  const iconSize = size === 'sm' ? 16 : 18
+    const iconSize = size === 'sm' ? 16 : 18
 
-  return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onClick}
-      aria-label={isActive ? 'Show all photos' : 'Group similar photos'}
-      aria-pressed={isActive}
-      title={isActive ? 'Grouping on' : 'Group similar photos'}
-      className={`
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        aria-label={isActive ? activeLabel : inactiveLabel}
+        aria-pressed={isActive}
+        title={isActive ? activeTitle : inactiveTitle}
+        className={`
           ${sizeClasses[size]}
           rounded-full
           flex items-center justify-center
@@ -57,17 +81,18 @@ export const GroupingButton = forwardRef<
           }
           ${className}
         `}
-    >
-      <LayersIcon size={iconSize} />
-      {/* Active indicator dot (like Spotify) */}
-      {isActive && (
-        <span
-          className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-accent"
-          aria-hidden="true"
-        />
-      )}
-    </button>
-  )
-})
+      >
+        {icon ?? <LayersIcon size={iconSize} />}
+        {/* Active indicator dot (like Spotify) */}
+        {isActive && (
+          <span
+            className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-accent"
+            aria-hidden="true"
+          />
+        )}
+      </button>
+    )
+  }
+)
 
 GroupingButton.displayName = 'GroupingButton'

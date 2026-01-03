@@ -51,13 +51,18 @@ pnpm bulk-upload-photos <directory> <event-id>
 
 ### Photo Grouping
 
-Groups near-duplicate photos in the gallery, showing only the representative photo with an indicator.
+Groups similar photos in the gallery, showing only the representative photo with an indicator.
 
-- **Default**: Grouping on (duplicates collapsed)
-- **URL param**: `?grouping=false` to disable (no param = enabled)
-- **Visual indicator**: Overlapping squares icon with count badge on grouped photos
+Two independent toggles:
+- **Group Duplicates**: Collapses near-identical photos (burst shots, minor variations)
+- **Group Scenes**: Collapses same-moment different-angle photos
+
+Settings:
+- **Default**: Both groupings on
+- **URL params**: `?groupDuplicates=false` and/or `?groupScenes=false` to disable
+- **Visual indicator**: Icon with count badge on grouped photos
 - **Cycling**: Click the badge to cycle through similar photos in-place
-- **API**: `/api/photos/clusters` returns near-duplicate cluster data
+- **API**: `/api/photos/clusters?types=near_duplicate,scene` returns cluster data
 - **Implementation**: `photos-content.tsx` fetches clusters and builds a `clusterMap` for the grid
 
 ### Type-Safe Shuffle Architecture

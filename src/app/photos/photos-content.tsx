@@ -11,7 +11,7 @@ import {
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
-import { PlayCircleIcon, BuildingIcon } from '@/components/icons'
+import { PlayCircleIcon, BuildingIcon, ScenesIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
 import { GroupingButton } from '@/components/photos/grouping-button'
@@ -61,7 +61,8 @@ interface StoredFilters {
   photographer?: string | null
   company?: string | null
   shuffle?: string | null
-  grouping?: boolean
+  groupDuplicates?: boolean
+  groupScenes?: boolean
 }
 
 // API response for clusters endpoint
@@ -70,6 +71,7 @@ interface ClustersResponse {
     id: string
     photo_ids: string[]
     representative_photo_id: string | null
+    cluster_type: string
   }>
   total: number
 }
@@ -114,10 +116,13 @@ export function PhotosContent({
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
-  // Grouping state: true = collapse similar photos, false = show all
-  // Default to true (grouping enabled)
-  const [grouping, setGrouping] = useState<boolean>(
-    searchParams.get('grouping') !== 'false'
+  // Grouping states: collapse near-duplicate and/or scene photos
+  // Both default to true (grouping enabled)
+  const [groupDuplicates, setGroupDuplicates] = useState<boolean>(
+    searchParams.get('groupDuplicates') !== 'false'
+  )
+  const [groupScenes, setGroupScenes] = useState<boolean>(
+    searchParams.get('groupScenes') !== 'false'
   )
   // Cluster data for grouping similar photos
   const [clusters, setClusters] = useState<ClustersResponse['clusters']>([])
@@ -153,7 +158,8 @@ export function PhotosContent({
       searchParams.has('photographer') ||
       searchParams.has('company') ||
       searchParams.has('shuffle') ||
-      searchParams.has('grouping')
+      searchParams.has('groupDuplicates') ||
+      searchParams.has('groupScenes')
   )
 
   // Track if filters have been initialized (localStorage checked or URL params applied)
@@ -179,8 +185,11 @@ export function PhotosContent({
         if (filters.shuffle !== undefined) {
           setShuffle(filters.shuffle)
         }
-        if (filters.grouping !== undefined) {
-          setGrouping(filters.grouping)
+        if (filters.groupDuplicates !== undefined) {
+          setGroupDuplicates(filters.groupDuplicates)
+        }
+        if (filters.groupScenes !== undefined) {
+          setGroupScenes(filters.groupScenes)
         }
       }
     } catch {
@@ -201,7 +210,8 @@ export function PhotosContent({
       photographer: selectedPhotographer,
       company: selectedCompanySlug,
       shuffle,
-      grouping,
+      groupDuplicates,
+      groupScenes,
     }
     try {
       localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
@@ -213,7 +223,8 @@ export function PhotosContent({
     selectedPhotographer,
     selectedCompanySlug,
     shuffle,
-    grouping,
+    groupDuplicates,
+    groupScenes,
     filtersInitialized,
   ])
 
@@ -258,10 +269,14 @@ export function PhotosContent({
       })
     }
 
-    // Only update grouping if URL explicitly has the param
-    if (searchParams.has('grouping')) {
-      const groupingParam = searchParams.get('grouping')
-      setGrouping(groupingParam !== 'false')
+    // Only update grouping if URL explicitly has the params
+    if (searchParams.has('groupDuplicates')) {
+      const param = searchParams.get('groupDuplicates')
+      setGroupDuplicates(param !== 'false')
+    }
+    if (searchParams.has('groupScenes')) {
+      const param = searchParams.get('groupScenes')
+      setGroupScenes(param !== 'false')
     }
   }, [searchParams])
 
@@ -272,7 +287,8 @@ export function PhotosContent({
       photographer?: string | null
       company?: string | null
       shuffle?: string | null
-      grouping?: boolean
+      groupDuplicates?: boolean
+      groupScenes?: boolean
     }) => {
       const url = new URL(window.location.href)
 
@@ -308,11 +324,18 @@ export function PhotosContent({
         }
       }
       // Grouping: only add to URL when disabled (default is ON)
-      if (params.grouping !== undefined) {
-        if (!params.grouping) {
-          url.searchParams.set('grouping', 'false')
+      if (params.groupDuplicates !== undefined) {
+        if (!params.groupDuplicates) {
+          url.searchParams.set('groupDuplicates', 'false')
         } else {
-          url.searchParams.delete('grouping')
+          url.searchParams.delete('groupDuplicates')
+        }
+      }
+      if (params.groupScenes !== undefined) {
+        if (!params.groupScenes) {
+          url.searchParams.set('groupScenes', 'false')
+        } else {
+          url.searchParams.delete('groupScenes')
         }
       }
 
@@ -417,6 +440,12 @@ export function PhotosContent({
         const params = new URLSearchParams()
         if (selectedEventId) params.set('eventId', selectedEventId)
 
+        // Build types parameter based on enabled grouping options
+        const types: string[] = []
+        if (groupDuplicates) types.push('near_duplicate')
+        if (groupScenes) types.push('scene')
+        params.set('types', types.join(','))
+
         const res = await fetch(`/api/photos/clusters?${params.toString()}`)
         if (res.ok) {
           const data: ClustersResponse = await res.json()
@@ -427,17 +456,19 @@ export function PhotosContent({
       }
     }
 
-    // Only fetch if grouping is enabled
-    if (grouping && filtersInitialized) {
+    // Only fetch if at least one grouping option is enabled
+    const anyGroupingEnabled = groupDuplicates || groupScenes
+    if (anyGroupingEnabled && filtersInitialized) {
       fetchClusters()
     } else {
       setClusters([])
     }
-  }, [selectedEventId, grouping, filtersInitialized])
+  }, [selectedEventId, groupDuplicates, groupScenes, filtersInitialized])
 
   // Build cluster map when photos or clusters change
   useEffect(() => {
-    if (!grouping || !clusters?.length || !photos?.length) {
+    const anyGroupingEnabled = groupDuplicates || groupScenes
+    if (!anyGroupingEnabled || !clusters?.length || !photos?.length) {
       setClusterMap(new Map())
       return
     }
@@ -485,7 +516,7 @@ export function PhotosContent({
     }
 
     setClusterMap(newClusterMap)
-  }, [photos, clusters, grouping])
+  }, [photos, clusters, groupDuplicates, groupScenes])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -601,7 +632,8 @@ export function PhotosContent({
   // Filter photos for display when grouping is enabled
   // When grouping is ON, only show representative photos (hide duplicates)
   const displayPhotos = (() => {
-    if (!grouping || clusterMap.size === 0) {
+    const anyGroupingEnabled = groupDuplicates || groupScenes
+    if (!anyGroupingEnabled || clusterMap.size === 0) {
       return photos
     }
 
@@ -681,12 +713,18 @@ export function PhotosContent({
     }
   }, [shuffle, updateUrlParams, generateRandomSeed])
 
-  // Handle grouping toggle
-  const handleGroupingToggle = useCallback(() => {
-    const newGrouping = !grouping
-    setGrouping(newGrouping)
-    updateUrlParams({ grouping: newGrouping })
-  }, [grouping, updateUrlParams])
+  // Handle grouping toggles
+  const handleGroupDuplicatesToggle = useCallback(() => {
+    const newValue = !groupDuplicates
+    setGroupDuplicates(newValue)
+    updateUrlParams({ groupDuplicates: newValue })
+  }, [groupDuplicates, updateUrlParams])
+
+  const handleGroupScenesToggle = useCallback(() => {
+    const newValue = !groupScenes
+    setGroupScenes(newValue)
+    updateUrlParams({ groupScenes: newValue })
+  }, [groupScenes, updateUrlParams])
 
   // Handle cycling through cluster photos
   const handleCycleClusterPhoto = useCallback(
@@ -718,7 +756,7 @@ export function PhotosContent({
                 {displayPhotos.length} of {totalCount} photo
                 {totalCount !== 1 ? 's' : ''} from {events.length} event
                 {events.length !== 1 ? 's' : ''}
-                {grouping && clusterMap.size > 0 && (
+                {(groupDuplicates || groupScenes) && clusterMap.size > 0 && (
                   <span className="text-text-dim">
                     {' '}
                     ({photos.length - displayPhotos.length} similar grouped)
@@ -748,11 +786,27 @@ export function PhotosContent({
               size="md"
             />
 
-            {/* Grouping button */}
+            {/* Group duplicates button */}
             <GroupingButton
-              isActive={grouping}
-              onClick={handleGroupingToggle}
+              isActive={groupDuplicates}
+              onClick={handleGroupDuplicatesToggle}
               size="md"
+              activeTitle="Duplicate grouping on"
+              inactiveTitle="Group duplicate photos"
+              activeLabel="Show all duplicate photos"
+              inactiveLabel="Group duplicate photos"
+            />
+
+            {/* Group scenes button */}
+            <GroupingButton
+              isActive={groupScenes}
+              onClick={handleGroupScenesToggle}
+              size="md"
+              activeTitle="Scene grouping on"
+              inactiveTitle="Group similar scenes"
+              activeLabel="Show all scenes"
+              inactiveLabel="Group similar scenes"
+              icon={<ScenesIcon size={18} />}
             />
 
             {/* Size selector */}
@@ -904,7 +958,9 @@ export function PhotosContent({
             loading={loading}
             size={gridSize}
             showCompanyLogos={showCompanyLogos}
-            clusterMap={grouping ? clusterMap : undefined}
+            clusterMap={
+              groupDuplicates || groupScenes ? clusterMap : undefined
+            }
             onCycleClusterPhoto={handleCycleClusterPhoto}
           />
         </div>
