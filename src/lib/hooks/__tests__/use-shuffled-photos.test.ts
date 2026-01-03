@@ -32,6 +32,8 @@ function createMockPhoto(id: string): Photo {
     event_name: 'Test Event',
     band_name: 'Test Band',
     thumbnail_url: `https://example.com/${id}-thumb.jpg`,
+    slug: `test-band-test-event-${id}`,
+    slug_prefix: 'test-band-test-event',
   }
 }
 
@@ -171,7 +173,7 @@ describe('useShuffledPhotos', () => {
       expect(params.get('company')).toBe('acme')
     })
 
-    it('does not include shuffle when disabled', async () => {
+    it('does not include shuffle when disabled, uses order=date instead', async () => {
       renderHook(() => useShuffledPhotos({ initialShuffle: null }))
 
       await waitFor(
@@ -185,6 +187,8 @@ describe('useShuffledPhotos', () => {
       const params = new URL(fetchUrl, 'http://localhost').searchParams
 
       expect(params.has('shuffle')).toBe(false)
+      // When shuffle is disabled, order defaults to 'date' (chronological)
+      expect(params.get('order')).toBe('date')
     })
 
     it('resolves seed from API response when initial is true', async () => {
@@ -312,7 +316,7 @@ describe('useShuffledPhotos', () => {
     })
   })
 
-  describe('buildSlideshowUrl', () => {
+  describe('buildPhotoUrl', () => {
     it('includes shuffle seed in URL', () => {
       const { result } = renderHook(() =>
         useShuffledPhotos({
@@ -322,9 +326,9 @@ describe('useShuffledPhotos', () => {
         })
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
-      expect(url).toContain('/slideshow/photo-123')
+      expect(url).toContain('/photos/band-event-123')
       expect(url).toContain('shuffle=my-seed')
       expect(url).toContain('event=event-1')
     })
@@ -337,9 +341,9 @@ describe('useShuffledPhotos', () => {
         })
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
-      expect(url).toBe('/slideshow/photo-123')
+      expect(url).toBe('/photos/band-event-123')
       expect(url).not.toContain('shuffle')
     })
 
@@ -356,7 +360,7 @@ describe('useShuffledPhotos', () => {
         { timeout: 1000 }
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
       expect(url).toContain('shuffle=resolved-seed-123')
       expect(url).not.toContain('shuffle=true')
@@ -447,6 +451,126 @@ describe('useShuffledPhotos', () => {
       expect(result.current.hasMore).toBe(false)
     })
   })
+
+  describe('groupTypes parameter', () => {
+    it('defaults to near_duplicate,scene for consistent grouping', async () => {
+      renderHook(() =>
+        useShuffledPhotos({
+          initialShuffle: 'test-seed',
+          // No groupTypes option - should use default
+        })
+      )
+
+      await waitFor(
+        () => {
+          expect(fetchCalls.length).toBeGreaterThan(0)
+        },
+        { timeout: 1000 }
+      )
+
+      const fetchUrl = fetchCalls[0]
+      const params = new URL(fetchUrl, 'http://localhost').searchParams
+
+      // CRITICAL: groupTypes defaults to 'near_duplicate,scene' for consistent photo grouping
+      expect(params.get('groupTypes')).toBe('near_duplicate,scene')
+    })
+
+    it('allows custom groupTypes to be specified', async () => {
+      renderHook(() =>
+        useShuffledPhotos({
+          initialShuffle: 'test-seed',
+          groupTypes: 'near_duplicate', // Only near_duplicate, not scene
+        })
+      )
+
+      await waitFor(
+        () => {
+          expect(fetchCalls.length).toBeGreaterThan(0)
+        },
+        { timeout: 1000 }
+      )
+
+      const fetchUrl = fetchCalls[0]
+      const params = new URL(fetchUrl, 'http://localhost').searchParams
+
+      expect(params.get('groupTypes')).toBe('near_duplicate')
+    })
+
+    it('allows groupTypes to be disabled with false', async () => {
+      renderHook(() =>
+        useShuffledPhotos({
+          initialShuffle: 'test-seed',
+          groupTypes: false, // Explicitly disable grouping
+        })
+      )
+
+      await waitFor(
+        () => {
+          expect(fetchCalls.length).toBeGreaterThan(0)
+        },
+        { timeout: 1000 }
+      )
+
+      const fetchUrl = fetchCalls[0]
+      const params = new URL(fetchUrl, 'http://localhost').searchParams
+
+      expect(params.has('groupTypes')).toBe(false)
+    })
+
+    it('includes groupTypes in loadMore API calls', async () => {
+      // Setup initial response with more pages
+      mockFetch.mockImplementationOnce(async (url: string) => {
+        fetchCalls.push(url)
+        return {
+          ok: true,
+          json: async () => ({
+            photos: mockPhotos.slice(0, 2),
+            pagination: { page: 1, limit: 2, total: 3, totalPages: 2 },
+            seed: 'test-seed',
+          }),
+        }
+      })
+
+      const { result } = renderHook(() =>
+        useShuffledPhotos({
+          initialShuffle: 'test-seed',
+          // Uses default groupTypes
+          pageSize: 2,
+        })
+      )
+
+      // Wait for initial load
+      await waitFor(
+        () => {
+          expect(result.current.photos.length).toBe(2)
+        },
+        { timeout: 1000 }
+      )
+
+      // Setup mock for page 2
+      mockFetch.mockImplementationOnce(async (url: string) => {
+        fetchCalls.push(url)
+        return {
+          ok: true,
+          json: async () => ({
+            photos: [mockPhotos[2]],
+            pagination: { page: 2, limit: 2, total: 3, totalPages: 2 },
+            seed: 'test-seed',
+          }),
+        }
+      })
+
+      await act(async () => {
+        await result.current.loadMore()
+      })
+
+      // Verify page 2 request includes default groupTypes
+      const lastFetchUrl = fetchCalls[fetchCalls.length - 1]
+      const params = new URL(lastFetchUrl, 'http://localhost').searchParams
+
+      expect(params.get('groupTypes')).toBe('near_duplicate,scene')
+    })
+  })
 })
 
 describe('Type safety guarantees', () => {
@@ -486,7 +610,7 @@ describe('Type safety guarantees', () => {
     }
   })
 
-  it('buildSlideshowUrl produces gallery-compatible URLs', () => {
+  it('buildPhotoUrl produces gallery-compatible URLs', () => {
     const { result } = renderHook(() =>
       useShuffledPhotos({
         eventId: 'event-1',
@@ -496,10 +620,10 @@ describe('Type safety guarantees', () => {
       })
     )
 
-    const url = result.current.buildSlideshowUrl('photo-123')
+    const url = result.current.buildPhotoUrl('band-event-123')
 
     // URL must be compatible with what gallery produces
-    expect(url).toMatch(/^\/slideshow\/photo-123/)
+    expect(url).toMatch(/^\/photos\/band-event-123/)
     expect(url).toContain('shuffle=test-seed')
     expect(url).not.toContain('seed=') // No separate seed param
     expect(url).not.toContain('order=')

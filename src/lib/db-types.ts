@@ -215,6 +215,10 @@ export interface Photo {
   hero_focal_point: HeroFocalPoint
   // Whether the image is B&W or largely monochrome (null = not yet classified)
   is_monochrome: boolean | null
+  // SEO-friendly slug (e.g., "the-fuggles-brisbane-2024-1")
+  slug: string | null
+  // Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
+  slug_prefix: string | null
   // Joined fields
   event_name?: string
   band_name?: string

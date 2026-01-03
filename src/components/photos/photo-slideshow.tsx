@@ -43,6 +43,7 @@ import {
   LayersIcon,
 } from '@/components/icons'
 import { ShuffleButton } from './shuffle-button'
+import { buildPhotoApiParams } from '@/lib/shuffle-types'
 
 // Label display info
 const LABEL_INFO = {
@@ -458,26 +459,20 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const prevButtonRef = useRef<HTMLButtonElement>(null)
   const nextButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Fetch a specific page of photos (with grouping enabled)
+  // Fetch a specific page of photos
+  // Uses buildPhotoApiParams for consistent behavior with gallery/photo-strip
   const fetchPage = useCallback(
     async (page: number): Promise<PhotoWithCluster[]> => {
-      const params = new URLSearchParams()
-      if (filters.eventId) params.set('event', filters.eventId)
-      if (filters.bandId) params.set('band', filters.bandId)
-      if (filters.photographer) params.set('photographer', filters.photographer)
-      if (filters.companySlug) params.set('company', filters.companySlug)
-      params.set('page', page.toString())
-      params.set('limit', PAGE_SIZE.toString())
-
-      // Enable photo grouping (same as gallery) for consistent experience
-      params.set('groupTypes', 'near_duplicate,scene')
-
-      // Use shuffle param when shuffle is enabled, otherwise use chronological order
-      if (filters.shuffle) {
-        params.set('shuffle', filters.shuffle)
-      } else {
-        params.set('order', 'date')
-      }
+      const params = buildPhotoApiParams({
+        eventId: filters.eventId || undefined,
+        bandId: filters.bandId || undefined,
+        photographer: filters.photographer || undefined,
+        companySlug: filters.companySlug || undefined,
+        shuffle: filters.shuffle,
+        page,
+        limit: PAGE_SIZE,
+        // groupTypes defaults to 'near_duplicate,scene'
+      })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (!res.ok) return []

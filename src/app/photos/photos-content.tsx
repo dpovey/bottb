@@ -15,6 +15,7 @@ import { PlayCircleIcon, BuildingIcon, ScenesIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
 import { GroupingButton } from '@/components/photos/grouping-button'
+import { buildPhotoApiParams } from '@/lib/shuffle-types'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -98,10 +99,10 @@ export function PhotosContent({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  // Shuffle state: null = off, 'true' = shared shuffle, '<seed>' = specific seed
-  // Default to 'true' (shared shuffle) if no shuffle param in URL
+  // Shuffle state: null = off (date order), 'true' = shared shuffle, '<seed>' = specific seed
+  // Default to null (date order) for SEO - consistent content for crawlers
   const [shuffle, setShuffle] = useState<string | null>(
-    searchParams.get('shuffle') ?? 'true'
+    searchParams.get('shuffle') ?? null
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
@@ -459,36 +460,28 @@ export function PhotosContent({
       }
 
       try {
-        const params = new URLSearchParams()
-        if (selectedEventId) params.set('event', selectedEventId)
-        if (selectedPhotographer)
-          params.set('photographer', selectedPhotographer)
-        if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-
-        params.set('limit', PAGE_SIZE.toString())
-
-        // Set shuffle or order by date
-        if (shuffle) {
-          params.set('shuffle', shuffle)
+        // Build groupTypes based on user toggles (can be disabled via UI)
+        let groupTypesValue: string | false
+        if (!groupDuplicates && !groupScenes) {
+          groupTypesValue = false // Disable grouping entirely
         } else {
-          params.set('order', 'date')
+          const types: string[] = []
+          if (groupDuplicates) types.push('near_duplicate')
+          if (groupScenes) types.push('scene')
+          groupTypesValue = types.join(',')
         }
 
-        // Build groupTypes parameter based on enabled toggles
-        const groupTypes: string[] = []
-        if (groupDuplicates) groupTypes.push('near_duplicate')
-        if (groupScenes) groupTypes.push('scene')
-        if (groupTypes.length > 0) {
-          params.set('groupTypes', groupTypes.join(','))
-        }
-
-        // Always use pagination - shuffle mode is deterministic (same seed = same order)
-        params.set('page', currentPage.current.toString())
-
-        // Skip filter metadata on "load more" requests (reduces API queries from 11 to 1)
-        if (isLoadMore) {
-          params.set('skipMeta', 'true')
-        }
+        // Use buildPhotoApiParams for consistent API calls across gallery/slideshow/strip
+        const params = buildPhotoApiParams({
+          eventId: selectedEventId || undefined,
+          photographer: selectedPhotographer || undefined,
+          companySlug: selectedCompanySlug || undefined,
+          shuffle,
+          page: currentPage.current,
+          limit: PAGE_SIZE,
+          skipMeta: isLoadMore,
+          groupTypes: groupTypesValue,
+        })
 
         const res = await fetch(`/api/photos?${params.toString()}`)
         if (res.ok) {
@@ -594,7 +587,7 @@ export function PhotosContent({
         band_name: actualPhoto.band_name || null,
       })
 
-      // Build slideshow URL with current filters and shuffle state
+      // Build photo page URL with current filters and shuffle state (use slug for SEO)
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedPhotographer) params.set('photographer', selectedPhotographer)
@@ -602,8 +595,9 @@ export function PhotosContent({
       if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${actualPhoto.id}${queryString ? `?${queryString}` : ''}`
-      router.push(slideshowUrl)
+      const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
+      const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+      router.push(photoUrl)
     },
     [
       photos,

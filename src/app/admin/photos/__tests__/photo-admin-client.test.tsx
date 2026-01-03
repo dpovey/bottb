@@ -34,6 +34,8 @@ const mockPhotos: Photo[] = [
     uploaded_by: null,
     captured_at: null,
     original_blob_url: null,
+    slug: 'test-band-test-event-1',
+    slug_prefix: 'test-band-test-event',
   },
   {
     id: 'photo-2',
@@ -62,6 +64,8 @@ const mockPhotos: Photo[] = [
     uploaded_by: null,
     captured_at: null,
     original_blob_url: null,
+    slug: 'photo-2',
+    slug_prefix: 'photo',
   },
 ]
 

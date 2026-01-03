@@ -8,6 +8,10 @@ interface ImageObjectJsonLdProps {
 
 export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
   const baseUrl = getBaseUrl()
+  // Use slug URL if available, otherwise fall back to UUID
+  const photoUrl = photo.slug
+    ? `${baseUrl}/photos/${photo.slug}`
+    : `${baseUrl}/slideshow/${photo.id}`
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'ImageObject',
@@ -22,7 +26,7 @@ export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
           : photo.event_name
             ? `Photo from ${photo.event_name}`
             : 'A photo from Battle of the Tech Bands',
-    url: `${baseUrl}/slideshow/${photo.id}`,
+    url: photoUrl,
     ...(photo.photographer && {
       creator: {
         '@type': 'Person',

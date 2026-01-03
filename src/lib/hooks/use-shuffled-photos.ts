@@ -6,7 +6,7 @@ import {
   type ShuffleParam,
   type ShuffleState,
   buildPhotoApiParams,
-  buildSlideshowUrl,
+  buildPhotoUrl,
   generateShuffleSeed,
   createShuffleStateFromParam,
 } from '@/lib/shuffle-types'
@@ -49,6 +49,13 @@ export interface UseShuffledPhotosOptions {
   initialTotalCount?: number
   /** Callback when shuffle state changes */
   onShuffleChange?: (shuffle: ShuffleState) => void
+  /**
+   * Group types for photo clustering.
+   * - undefined: uses default ('near_duplicate,scene') via buildPhotoApiParams
+   * - string: custom group types
+   * - false: disable grouping entirely
+   */
+  groupTypes?: string | false
 }
 
 /**
@@ -75,8 +82,8 @@ export interface UseShuffledPhotosResult {
   loadMore: () => Promise<void>
   /** Refresh photos (re-fetch current page) */
   refresh: () => Promise<void>
-  /** Build slideshow URL with correct shuffle param */
-  buildSlideshowUrl: (photoId: string) => string
+  /** Build photo page URL with correct shuffle param */
+  buildPhotoUrl: (photoSlug: string) => string
   /** Whether there are more photos to load */
   hasMore: boolean
   /** Current page number */
@@ -131,6 +138,7 @@ export function useShuffledPhotos(
     initialPhotos,
     initialTotalCount,
     onShuffleChange,
+    groupTypes,
   } = options
 
   // Photos state
@@ -189,6 +197,7 @@ export function useShuffledPhotos(
         page,
         limit: pageSize,
         skipMeta: isLoadMore, // Skip metadata on load-more
+        groupTypes,
       })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
@@ -285,11 +294,12 @@ export function useShuffledPhotos(
   }
 
   /**
-   * Build slideshow URL with correct shuffle param
+   * Build photo page URL with correct shuffle param
+   * @param photoSlug - The photo's slug (preferred) or ID (fallback)
    */
-  function buildSlideshowUrlForPhoto(photoId: string): string {
-    return buildSlideshowUrl({
-      photoId,
+  function buildPhotoUrlForPhoto(photoSlug: string): string {
+    return buildPhotoUrl({
+      photoSlug,
       eventId: eventId || undefined,
       bandId: bandId || undefined,
       photographer: photographer || undefined,
@@ -321,6 +331,7 @@ export function useShuffledPhotos(
     companySlug,
     shuffle.enabled,
     shuffle.seed,
+    groupTypes,
   ])
 
   return {
@@ -334,7 +345,7 @@ export function useShuffledPhotos(
     loadingMore,
     loadMore,
     refresh,
-    buildSlideshowUrl: buildSlideshowUrlForPhoto,
+    buildPhotoUrl: buildPhotoUrlForPhoto,
     hasMore,
     currentPage: currentPageNum,
   }

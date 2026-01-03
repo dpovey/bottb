@@ -51,6 +51,7 @@ export function PhotoStrip({
   const router = useRouter()
 
   // Use the unified hook for photo fetching and shuffle management
+  // groupTypes defaults to 'near_duplicate,scene' via buildPhotoApiParams
   const {
     photos,
     totalCount,
@@ -59,7 +60,7 @@ export function PhotoStrip({
     loadingMore,
     loadMore,
     hasMore,
-    buildSlideshowUrl,
+    buildPhotoUrl,
   } = useShuffledPhotos({
     eventId,
     bandId,
@@ -122,7 +123,7 @@ export function PhotoStrip({
     }
   }, [selectedIndex])
 
-  // Handle photo click - navigate to slideshow
+  // Handle photo click - navigate to photo page
   const handlePhotoClick = useCallback(
     (index: number) => {
       if (!enableSlideshow) return
@@ -141,11 +142,11 @@ export function PhotoStrip({
 
       setSelectedIndex(index)
 
-      // Use the type-safe URL builder from the hook
-      const slideshowUrl = buildSlideshowUrl(photo.id)
-      router.push(slideshowUrl)
+      // Use slug for SEO-friendly URL, fallback to id for legacy photos
+      const photoUrl = buildPhotoUrl(photo.slug || photo.id)
+      router.push(photoUrl)
     },
-    [enableSlideshow, photos, router, buildSlideshowUrl]
+    [enableSlideshow, photos, router, buildPhotoUrl]
   )
 
   // Keyboard navigation - works when strip or any of its children has focus
