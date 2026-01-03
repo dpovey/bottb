@@ -86,8 +86,8 @@ export function PhotoCard({
       {showClusterBadge && (
         <button
           onClick={handleCycleClick}
-          className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all z-10"
-          title={`${clusterSize} similar photos - click to cycle`}
+          className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all z-10 cursor-pointer"
+          title={`${clusterSize} similar photos – click to cycle`}
           aria-label={`View ${clusterSize} similar photos`}
         >
           <LayersIcon size={14} />
