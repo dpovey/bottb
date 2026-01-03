@@ -197,10 +197,10 @@ gh pr merge --squash
 
 ### Cleanup After Merge
 
-**Important**: Always clean up from the main repo, not from inside the worktree. Running cleanup commands from within a worktree causes errors because the branch is still in use.
+**Important**: Always change to the main repo directory BEFORE removing the worktree. If you run `git worktree remove` while your shell is inside the worktree being removed, your shell's working directory becomes invalid and you'll get "shell not found" errors.
 
 ```bash
-# Step 1: Go to main repo (not the worktree)
+# Step 1: FIRST change to main repo (critical - do this before removing!)
 cd /Users/deapovey/src/bottb
 
 # Step 2: Remove worktree first (releases the branch)
@@ -219,7 +219,7 @@ git pull
 cd /Users/deapovey/src/bottb && git worktree remove .worktrees/feature-name && git fetch -p && git pull
 ```
 
-> **Why this order matters**: The worktree holds a lock on the branch. You must remove the worktree before git can delete the local branch. Running `gh pr merge --delete-branch` from inside a worktree will fail because it tries to checkout main (already checked out elsewhere) and delete a branch that's in use.
+> **Why this order matters**: You must `cd` out of the worktree first because removing a directory while your shell is inside it leaves the shell in an invalid state (causing "shell not found" errors). The worktree also holds a lock on the branch, so you must remove it before git can delete the local branch. Running `gh pr merge --delete-branch` from inside a worktree will fail because it tries to checkout main (already checked out elsewhere) and delete a branch that's in use.
 
 ### Useful Commands
 
