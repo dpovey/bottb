@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Photo, Event } from '@/lib/db'
+import { Event, PhotoWithCluster } from '@/lib/db'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
 import { buildPhotoApiParams, type ShuffleParam } from '@/lib/shuffle-types'
 import { VinylSpinner } from '@/components/ui'
@@ -13,7 +13,7 @@ interface Company {
 }
 
 interface PhotosResponse {
-  photos: Photo[]
+  photos: PhotoWithCluster[]
   pagination: {
     page: number
     limit: number
@@ -44,12 +44,16 @@ export function SlideshowPageContent({
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [photos, setPhotos] = useState<Photo[]>([])
+  const [photos, setPhotos] = useState<PhotoWithCluster[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
   const [slideshowIndex, setSlideshowIndex] = useState(0)
+  // Initial cluster index map for deep links to non-representative photos
+  const [initialClusterIndexes, setInitialClusterIndexes] = useState<
+    Map<string, number>
+  >(new Map())
 
   // Shuffle state - preserves the seed from gallery for consistent ordering
   const [shuffle, setShuffle] = useState<ShuffleParam>(initialShuffle)
@@ -125,6 +129,9 @@ export function SlideshowPageContent({
         limit: 50,
       })
 
+      // Enable photo grouping (same as gallery) for consistent experience
+      params.set('groupTypes', 'near_duplicate,scene')
+
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (res.ok) {
         const data: PhotosResponse = await res.json()
@@ -136,18 +143,49 @@ export function SlideshowPageContent({
           setShuffle(data.seed)
         }
 
-        // Find the initial photo in the results or fetch it
+        // Find the initial photo in the results
+        // It could be a representative photo OR inside a cluster
         let photosToSet = data.photos
-        const initialIndex = data.photos.findIndex(
-          (p) => p.id === initialPhotoId
-        )
+        let foundIndex = -1
+        let foundClusterIndex = -1
+        let foundRepPhotoId: string | null = null
 
-        if (initialIndex !== -1) {
-          // Photo found in filtered results
-          setSlideshowIndex(initialIndex)
+        // First, check if it's a representative photo (top level)
+        foundIndex = data.photos.findIndex((p) => p.id === initialPhotoId)
+
+        // If not found at top level, search within clusters
+        if (foundIndex === -1) {
+          for (let i = 0; i < data.photos.length; i++) {
+            const repPhoto = data.photos[i]
+            if (repPhoto.cluster_photos && repPhoto.cluster_photos.length > 1) {
+              const clusterIdx = repPhoto.cluster_photos.findIndex(
+                (cp) => cp.id === initialPhotoId
+              )
+              if (clusterIdx !== -1) {
+                foundIndex = i
+                foundClusterIndex = clusterIdx
+                foundRepPhotoId = repPhoto.id
+                break
+              }
+            }
+          }
+        }
+
+        if (foundIndex !== -1) {
+          // Photo found (either as representative or within a cluster)
+          setSlideshowIndex(foundIndex)
+
+          // If found within a cluster, set the initial cluster index
+          if (foundClusterIndex !== -1 && foundRepPhotoId) {
+            const newClusterIndexes = new Map<string, number>()
+            newClusterIndexes.set(foundRepPhotoId, foundClusterIndex)
+            setInitialClusterIndexes(newClusterIndexes)
+          }
+
           initialPhotoLoaded.current = true
         } else if (!initialPhotoLoaded.current) {
           // Photo not in current batch - fetch it directly and prepend
+          // This happens when the photo doesn't match current filters
           try {
             const photoRes = await fetch(`/api/photos/${initialPhotoId}`)
             if (photoRes.ok) {
@@ -292,6 +330,9 @@ export function SlideshowPageContent({
       onPhotoDeleted={handlePhotoDeleted}
       onPhotoChange={handlePhotoChange}
       mode="page"
+      initialClusterIndexes={
+        initialClusterIndexes.size > 0 ? initialClusterIndexes : undefined
+      }
     />
   )
 }

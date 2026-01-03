@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { PhotoSlideshow } from '../photo-slideshow'
-import { Photo } from '@/lib/db'
+import { PhotoWithCluster } from '@/lib/db'
 
 // Mock next-auth
 vi.mock('next-auth/react', () => ({
@@ -52,7 +52,7 @@ vi.mock('@/lib/analytics', () => ({
 const mockFetch = vi.fn()
 global.fetch = mockFetch
 
-const mockPhotos: Photo[] = [
+const mockPhotos: PhotoWithCluster[] = [
   {
     id: 'photo-1',
     event_id: 'event-1',
@@ -82,6 +82,7 @@ const mockPhotos: Photo[] = [
     company_name: 'Test Company',
     company_slug: 'test-company',
     company_icon_url: undefined,
+    cluster_photos: null,
   },
   {
     id: 'photo-2',
@@ -112,6 +113,7 @@ const mockPhotos: Photo[] = [
     company_name: 'Test Company',
     company_slug: 'test-company',
     company_icon_url: undefined,
+    cluster_photos: null,
   },
 ]
 

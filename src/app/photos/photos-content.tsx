@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Photo, Event, PhotoWithCluster } from '@/lib/db'
+import { Event, PhotoWithCluster } from '@/lib/db'
 import {
   PhotoGrid,
   type GridSize,

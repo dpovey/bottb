@@ -22,6 +22,15 @@ class MockIntersectionObserver {
 }
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
 
+// Mock ResizeObserver for components that use it (e.g., PhotoSlideshow badge positioning)
+class MockResizeObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+  constructor(_callback: ResizeObserverCallback) {}
+}
+vi.stubGlobal('ResizeObserver', MockResizeObserver)
+
 // Mock scrollIntoView (not implemented in jsdom)
 // Runs in beforeAll since Element isn't available at module load time
 beforeAll(() => {
