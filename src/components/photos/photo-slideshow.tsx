@@ -9,6 +9,7 @@ import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
+import { PhotoWithCluster } from '@/lib/db'
 import { slugify } from '@/lib/utils'
 import {
   buildThumbnailSrcSet,
@@ -39,6 +40,7 @@ import {
   PlayIcon,
   PauseIcon,
   EditIcon,
+  LayersIcon,
 } from '@/components/icons'
 import { ShuffleButton } from './shuffle-button'
 
@@ -69,7 +71,7 @@ interface FilterNames {
 }
 
 interface PhotoSlideshowProps {
-  photos: Photo[]
+  photos: PhotoWithCluster[]
   initialIndex: number
   totalPhotos: number
   currentPage: number
@@ -90,6 +92,12 @@ interface PhotoSlideshowProps {
   ) => void
   /** Display mode: 'modal' (fixed overlay) or 'page' (full page route) */
   mode?: 'modal' | 'page'
+  /**
+   * Initial cluster indexes to set on mount.
+   * Map of representative photo ID -> cluster index.
+   * Used when deep linking to a non-representative photo.
+   */
+  initialClusterIndexes?: Map<string, number>
 }
 
 const PAGE_SIZE = 50
@@ -143,20 +151,36 @@ const Slide = memo(function Slide({
   index,
   isPlaying,
   isMobile,
+  clusterSize,
+  clusterIndex,
+  onCycleCluster,
 }: {
   photo: Photo
   index: number
   isPlaying: boolean
   isMobile: boolean
+  /** Total number of photos in the cluster (1 if not clustered) */
+  clusterSize: number
+  /** Current index within the cluster */
+  clusterIndex: number
+  /** Callback to cycle to next photo in cluster */
+  onCycleCluster?: () => void
 }) {
   const srcSet = buildHeroSrcSet(photo)
+  const showClusterBadge = clusterSize > 1
 
   // On mobile (portrait or landscape) or during play mode: full bleed, no decorations
   // On tablet/desktop: constrained size with rounded corners and shadow
   const isMobileOrPlaying = isMobile || isPlaying
 
+  // Handle badge click to cycle through cluster
+  const handleBadgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onCycleCluster?.()
+  }
+
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="relative flex items-center justify-center w-full h-full">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={photo.blob_url}
@@ -170,6 +194,20 @@ const Slide = memo(function Slide({
         }`}
         draggable={false}
       />
+      {/* Cluster badge - bottom-right corner, positioned relative to the flex container */}
+      {showClusterBadge && !isPlaying && (
+        <button
+          onClick={handleBadgeClick}
+          className="absolute bottom-20 right-8 sm:bottom-24 sm:right-12 z-30 px-2.5 py-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg"
+          title={`${clusterIndex + 1} of ${clusterSize} similar photos – click to cycle`}
+          aria-label={`View ${clusterSize} similar photos (currently ${clusterIndex + 1} of ${clusterSize})`}
+        >
+          <LayersIcon size={16} />
+          <span className="text-sm font-medium">
+            {clusterIndex + 1}/{clusterSize}
+          </span>
+        </button>
+      )}
     </div>
   )
 })
@@ -186,18 +224,25 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   onPhotoChange,
   onFilterChange,
   mode = 'modal',
+  initialClusterIndexes,
 }: PhotoSlideshowProps) {
   const { data: session } = useSession()
   const isAdmin = session?.user?.isAdmin ?? false
 
-  // Internal state for all loaded photos
-  const [allPhotos, setAllPhotos] = useState<Photo[]>(initialPhotos)
+  // Internal state for all loaded photos (representative photos with clusters)
+  const [allPhotos, setAllPhotos] = useState<PhotoWithCluster[]>(initialPhotos)
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [_direction, setDirection] = useState(0)
   const [loadedPages, setLoadedPages] = useState<Set<number>>(
     new Set([currentPage])
   )
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+
+  // Cluster state: maps representative photo ID to current index within its cluster
+  // Initialize from props if provided (for deep links to non-representative photos)
+  const [clusterIndexMap, setClusterIndexMap] = useState<Map<string, number>>(
+    () => initialClusterIndexes ?? new Map()
+  )
   // Ref for debouncing URL updates (prevents navigation flooding when swiping fast)
   const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [totalCount, setTotalCount] = useState(totalPhotos)
@@ -325,9 +370,9 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const prevButtonRef = useRef<HTMLButtonElement>(null)
   const nextButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Fetch a specific page of photos
+  // Fetch a specific page of photos (with grouping enabled)
   const fetchPage = useCallback(
-    async (page: number): Promise<Photo[]> => {
+    async (page: number): Promise<PhotoWithCluster[]> => {
       const params = new URLSearchParams()
       if (filters.eventId) params.set('event', filters.eventId)
       if (filters.bandId) params.set('band', filters.bandId)
@@ -335,6 +380,9 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       if (filters.companySlug) params.set('company', filters.companySlug)
       params.set('page', page.toString())
       params.set('limit', PAGE_SIZE.toString())
+
+      // Enable photo grouping (same as gallery) for consistent experience
+      params.set('groupTypes', 'near_duplicate,scene')
 
       // Use shuffle param when shuffle is enabled, otherwise use chronological order
       if (filters.shuffle) {
@@ -634,9 +682,18 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   }, [currentIndex])
 
   // Debounced URL update - prevents navigation flooding when swiping fast
+  // Uses display photo (accounting for cluster cycling) for correct URL
   useEffect(() => {
-    const photo = allPhotos[currentIndex]
-    if (!photo) return
+    const repPhoto = allPhotos[currentIndex]
+    if (!repPhoto) return
+
+    // Get the actual display photo (may be different if cycling within cluster)
+    const cluster = repPhoto.cluster_photos
+    const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
+    const displayPhoto =
+      cluster && cluster.length > 1
+        ? (cluster[clusterIdx] ?? repPhoto)
+        : repPhoto
 
     // Clear any pending URL update
     if (urlUpdateTimeoutRef.current) {
@@ -646,7 +703,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     // Update URL after user stops navigating (500ms debounce)
     urlUpdateTimeoutRef.current = setTimeout(() => {
       if (onPhotoChange) {
-        onPhotoChange(photo.id)
+        onPhotoChange(displayPhoto.id)
       }
     }, 500)
 
@@ -655,7 +712,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         clearTimeout(urlUpdateTimeoutRef.current)
       }
     }
-  }, [currentIndex, allPhotos, onPhotoChange])
+  }, [currentIndex, allPhotos, clusterIndexMap, onPhotoChange])
 
   // Handle photo deletion
   const handleDelete = async () => {
@@ -974,7 +1031,48 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }
 
-  const currentPhoto = allPhotos[currentIndex]
+  // Get the representative photo at current slide index
+  const currentRepPhoto = allPhotos[currentIndex]
+
+  // Get the actual display photo (may be different if cycling within a cluster)
+  const getDisplayPhoto = useCallback(
+    (repPhoto: PhotoWithCluster | undefined): Photo | undefined => {
+      if (!repPhoto) return undefined
+      const cluster = repPhoto.cluster_photos
+      if (!cluster || cluster.length <= 1) return repPhoto
+      const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
+      return cluster[clusterIdx] ?? repPhoto
+    },
+    [clusterIndexMap]
+  )
+
+  // Handle cycling through cluster photos
+  const handleCycleCluster = useCallback(
+    (repPhotoId: string) => {
+      const repPhoto = allPhotos.find((p) => p.id === repPhotoId)
+      if (!repPhoto?.cluster_photos || repPhoto.cluster_photos.length <= 1)
+        return
+
+      const currentClusterIdx = clusterIndexMap.get(repPhotoId) ?? 0
+      const nextIdx = (currentClusterIdx + 1) % repPhoto.cluster_photos.length
+
+      setClusterIndexMap((prev) => {
+        const next = new Map(prev)
+        next.set(repPhotoId, nextIdx)
+        return next
+      })
+
+      // Update URL to reflect the new photo being viewed
+      const newPhoto = repPhoto.cluster_photos[nextIdx]
+      if (newPhoto && onPhotoChange) {
+        onPhotoChange(newPhoto.id)
+      }
+    },
+    [allPhotos, clusterIndexMap, onPhotoChange]
+  )
+
+  // The actual photo to display (accounting for cluster cycling)
+  const currentPhoto = getDisplayPhoto(currentRepPhoto)
 
   // Container classes based on mode (used for both loading and main states)
   const loadingContainerClasses =
@@ -1201,6 +1299,14 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               <span className="text-white font-medium">{displayPosition}</span>
               <span className="mx-1">/</span>
               <span>{totalCount}</span>
+              {/* Show cluster indicator when viewing a grouped photo */}
+              {currentRepPhoto?.cluster_photos &&
+                currentRepPhoto.cluster_photos.length > 1 && (
+                  <span className="ml-2 text-xs text-accent">
+                    ({(clusterIndexMap.get(currentRepPhoto.id) ?? 0) + 1}/
+                    {currentRepPhoto.cluster_photos.length} in group)
+                  </span>
+                )}
               {isLoadingMore && <VinylSpinner size="xxs" className="ml-2" />}
             </span>
 
@@ -1370,16 +1476,29 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             className="w-full h-full"
             style={{ overflow: 'hidden' }}
           >
-            {allPhotos.map((photo, index) => (
-              <SwiperSlide key={photo.id} className="!h-full">
-                <Slide
-                  photo={photo}
-                  index={index}
-                  isPlaying={isPlaying}
-                  isMobile={thumbnailsHidden}
-                />
-              </SwiperSlide>
-            ))}
+            {allPhotos.map((repPhoto, index) => {
+              const cluster = repPhoto.cluster_photos
+              const clusterSize = cluster?.length ?? 1
+              const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
+              const displayPhoto =
+                cluster && cluster.length > 1
+                  ? (cluster[clusterIdx] ?? repPhoto)
+                  : repPhoto
+
+              return (
+                <SwiperSlide key={repPhoto.id} className="!h-full">
+                  <Slide
+                    photo={displayPhoto}
+                    index={index}
+                    isPlaying={isPlaying}
+                    isMobile={thumbnailsHidden}
+                    clusterSize={clusterSize}
+                    clusterIndex={clusterIdx}
+                    onCycleCluster={() => handleCycleCluster(repPhoto.id)}
+                  />
+                </SwiperSlide>
+              )
+            })}
           </Swiper>
         </div>
 
@@ -1410,15 +1529,25 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           className="flex gap-3 overflow-x-auto py-3 px-2"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {allPhotos.map((photo, index) => (
-            <Thumbnail
-              key={photo.id}
-              photo={photo}
-              index={index}
-              isSelected={index === currentIndex}
-              onClick={() => goToIndex(index)}
-            />
-          ))}
+          {allPhotos.map((repPhoto, index) => {
+            // Show the currently displayed photo from cluster in thumbnail
+            const cluster = repPhoto.cluster_photos
+            const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
+            const displayPhoto =
+              cluster && cluster.length > 1
+                ? (cluster[clusterIdx] ?? repPhoto)
+                : repPhoto
+
+            return (
+              <Thumbnail
+                key={repPhoto.id}
+                photo={displayPhoto}
+                index={index}
+                isSelected={index === currentIndex}
+                onClick={() => goToIndex(index)}
+              />
+            )
+          })}
           {/* Loading indicator at the end if more photos exist */}
           {allPhotos.length < totalCount && (
             <div className="shrink-0 w-16 h-16 rounded-lg bg-bg-elevated flex items-center justify-center">

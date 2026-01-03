@@ -1,7 +1,7 @@
 import { render, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { PhotoSlideshow } from '../photo-slideshow'
-import type { Photo } from '@/lib/db'
+import type { PhotoWithCluster } from '@/lib/db'
 
 // Mock analytics
 vi.mock('@/lib/analytics', () => ({
@@ -130,7 +130,7 @@ afterEach(() => {
 
 // TODO: Fix Embla carousel mocking - currently crashes test runner
 describe.skip('PhotoSlideshow - View Tracking', () => {
-  const mockPhotos: Photo[] = [
+  const mockPhotos: PhotoWithCluster[] = [
     {
       id: 'photo1',
       blob_url: 'https://example.com/photo1.jpg',
@@ -157,6 +157,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      cluster_photos: null,
     },
     {
       id: 'photo2',
@@ -184,6 +185,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      cluster_photos: null,
     },
   ]
 
@@ -286,7 +288,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
   it('should handle null event_id and band_id correctly', async () => {
     const { trackPhotoView } = await import('@/lib/analytics')
 
-    const photoWithoutIds: Photo[] = [
+    const photoWithoutIds: PhotoWithCluster[] = [
       {
         id: 'photo3',
         blob_url: 'https://example.com/photo3.jpg',
@@ -311,6 +313,7 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
         captured_at: null,
         labels: [],
         hero_focal_point: { x: 0.5, y: 0.5 },
+        cluster_photos: null,
       },
     ]
 
