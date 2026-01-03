@@ -186,7 +186,7 @@ function getClientEnv(): ClientEnv {
       'NEXT_PUBLIC_BASE_URL',
       process.env.VERCEL_URL
         ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3030'
+        : `http://localhost:${process.env.PORT || '3030'}`
     ),
   }
 
@@ -214,7 +214,7 @@ export const env = {
         'NEXT_PUBLIC_BASE_URL',
         process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : 'http://localhost:3000'
+          : `http://localhost:${process.env.PORT || '3030'}`
       ),
     }
   },
