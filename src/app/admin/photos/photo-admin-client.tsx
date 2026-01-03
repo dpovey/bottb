@@ -403,7 +403,7 @@ export function PhotoAdminClient({
                       className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
                     />
                   </th>
-                  <th className="px-4 py-3 w-28">Preview</th>
+                  <th className="px-4 py-3 w-32">Preview</th>
                   <th className="px-4 py-3">Event</th>
                   <th className="px-4 py-3">Band</th>
                   <th className="px-4 py-3">Photographer</th>
@@ -509,18 +509,31 @@ function PhotoRow({
         />
       </td>
       <td className="px-4 py-3">
-        <a
-          href={`/slideshow/${photo.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.thumbnail_url || photo.blob_url}
-            alt={photo.original_filename || 'Photo'}
-            className="w-24 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
-          />
-        </a>
+        <div className="relative group">
+          <a
+            href={`/slideshow/${photo.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.thumbnail_url || photo.blob_url}
+              alt={photo.original_filename || 'Photo'}
+              className="w-24 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
+            />
+          </a>
+          {/* Hover popup with larger image */}
+          <div className="absolute left-full top-0 ml-2 z-50 hidden group-hover:block pointer-events-none">
+            <div className="bg-black/90 p-2 rounded-xl shadow-2xl border border-white/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.blob_url}
+                alt={photo.original_filename || 'Photo'}
+                className="w-80 h-auto rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
       </td>
       <td className="px-4 py-3">
         {isEditing ? (
