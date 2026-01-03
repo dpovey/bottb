@@ -958,9 +958,7 @@ export function PhotosContent({
             loading={loading}
             size={gridSize}
             showCompanyLogos={showCompanyLogos}
-            clusterMap={
-              groupDuplicates || groupScenes ? clusterMap : undefined
-            }
+            clusterMap={groupDuplicates || groupScenes ? clusterMap : undefined}
             onCycleClusterPhoto={handleCycleClusterPhoto}
           />
         </div>

@@ -7,7 +7,7 @@ import { sql } from '@/lib/sql'
  *
  * Query params:
  * - eventId (optional): Filter clusters to only include photos from this event
- * - types (optional): Comma-separated cluster types to fetch. 
+ * - types (optional): Comma-separated cluster types to fetch.
  *   Values: 'near_duplicate', 'scene'. Defaults to 'near_duplicate'.
  *
  * Response: { clusters: Array<{ id, photo_ids, representative_photo_id, cluster_type }> }

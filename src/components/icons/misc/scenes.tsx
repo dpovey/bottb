@@ -34,4 +34,3 @@ export const ScenesIcon = forwardRef<SVGSVGElement, IconProps>(
 )
 
 ScenesIcon.displayName = 'ScenesIcon'
-

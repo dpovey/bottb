@@ -54,10 +54,12 @@ pnpm bulk-upload-photos <directory> <event-id>
 Groups similar photos in the gallery, showing only the representative photo with an indicator.
 
 Two independent toggles:
+
 - **Group Duplicates**: Collapses near-identical photos (burst shots, minor variations)
 - **Group Scenes**: Collapses same-moment different-angle photos
 
 Settings:
+
 - **Default**: Both groupings on
 - **URL params**: `?groupDuplicates=false` and/or `?groupScenes=false` to disable
 - **Visual indicator**: Icon with count badge on grouped photos
