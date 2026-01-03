@@ -706,11 +706,12 @@ export async function getGroupedPhotosWithCount(options: {
               'medium_url', cp.xmp_metadata->>'medium_url',
               'large_4k_url', cp.xmp_metadata->>'large_4k_url'
             )
-            ORDER BY array_position(pcm.cluster_photo_ids, cp.id)
+            ORDER BY array_position(pc.photo_ids, cp.id)
           )
-          FROM photo_cluster_membership pcm
-          JOIN photos cp ON cp.id = ANY(pcm.cluster_photo_ids)
-          WHERE pcm.representative_id = vp.id
+          FROM photo_clusters pc
+          JOIN photos cp ON cp.id = ANY(pc.photo_ids)
+          WHERE pc.cluster_type = ANY($1::text[])
+            AND COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = vp.id
         ) as cluster_photos
       FROM visible_photos vp
       LEFT JOIN events e ON vp.event_id = e.id
