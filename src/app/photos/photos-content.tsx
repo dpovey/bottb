@@ -594,7 +594,7 @@ export function PhotosContent({
         band_name: actualPhoto.band_name || null,
       })
 
-      // Build slideshow URL with current filters and shuffle state
+      // Build photo page URL with current filters and shuffle state (use slug for SEO)
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedPhotographer) params.set('photographer', selectedPhotographer)
@@ -602,8 +602,9 @@ export function PhotosContent({
       if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${actualPhoto.id}${queryString ? `?${queryString}` : ''}`
-      router.push(slideshowUrl)
+      const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
+      const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+      router.push(photoUrl)
     },
     [
       photos,

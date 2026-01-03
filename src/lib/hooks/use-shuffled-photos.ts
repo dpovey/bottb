@@ -6,7 +6,7 @@ import {
   type ShuffleParam,
   type ShuffleState,
   buildPhotoApiParams,
-  buildSlideshowUrl,
+  buildPhotoUrl,
   generateShuffleSeed,
   createShuffleStateFromParam,
 } from '@/lib/shuffle-types'
@@ -75,8 +75,8 @@ export interface UseShuffledPhotosResult {
   loadMore: () => Promise<void>
   /** Refresh photos (re-fetch current page) */
   refresh: () => Promise<void>
-  /** Build slideshow URL with correct shuffle param */
-  buildSlideshowUrl: (photoId: string) => string
+  /** Build photo page URL with correct shuffle param */
+  buildPhotoUrl: (photoSlug: string) => string
   /** Whether there are more photos to load */
   hasMore: boolean
   /** Current page number */
@@ -285,11 +285,12 @@ export function useShuffledPhotos(
   }
 
   /**
-   * Build slideshow URL with correct shuffle param
+   * Build photo page URL with correct shuffle param
+   * @param photoSlug - The photo's slug (preferred) or ID (fallback)
    */
-  function buildSlideshowUrlForPhoto(photoId: string): string {
-    return buildSlideshowUrl({
-      photoId,
+  function buildPhotoUrlForPhoto(photoSlug: string): string {
+    return buildPhotoUrl({
+      photoSlug,
       eventId: eventId || undefined,
       bandId: bandId || undefined,
       photographer: photographer || undefined,
@@ -334,7 +335,7 @@ export function useShuffledPhotos(
     loadingMore,
     loadMore,
     refresh,
-    buildSlideshowUrl: buildSlideshowUrlForPhoto,
+    buildPhotoUrl: buildPhotoUrlForPhoto,
     hasMore,
     currentPage: currentPageNum,
   }

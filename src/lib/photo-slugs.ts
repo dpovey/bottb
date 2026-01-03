@@ -2,11 +2,10 @@
  * Photo slug generation and lookup utilities
  *
  * Provides SEO-friendly URL slugs for photos following this hierarchy:
- * 1. band + event: {band-slug}-{event-slug}-{n}
- * 2. event only:   {event-slug}-{n}
- * 3. band only:    {band-slug}-{n}
- * 4. photographer: {photographer-slug}-{n}
- * 5. fallback:     photo-{n}
+ * 1. band (includes event): {band-id}-{n} (e.g., the-fuggles-brisbane-2024-1)
+ * 2. event only:            {event-slug}-{n}
+ * 3. photographer:          {photographer-slug}-{n}
+ * 4. fallback:              photo-{n}
  *
  * Slugs are immutable once generated - retagging a photo does NOT change its slug.
  */
@@ -21,9 +20,7 @@ import type { Photo } from './db-types'
 interface PhotoSlugContext {
   id: string
   band_id: string | null
-  band_name?: string | null
-  event_id: string | null
-  event_name?: string | null
+  event_name?: string | null // Only needed for fallback when no band
   photographer: string | null
 }
 
@@ -51,31 +48,24 @@ export async function getNextSequenceForPrefix(
  */
 function buildSlugPrefix(photo: PhotoSlugContext): {
   prefix: string
-  type: 'band-event' | 'event' | 'band' | 'photographer' | 'fallback'
+  type: 'band-event' | 'event' | 'photographer' | 'fallback'
 } {
-  // Priority 1: Band + Event (most SEO value)
-  if (photo.band_name && photo.event_name) {
-    const bandSlug = slugify(photo.band_name)
-    const eventSlug = slugify(photo.event_name)
-    return { prefix: `${bandSlug}-${eventSlug}`, type: 'band-event' }
+  // Priority 1: Band ID (already includes event in format like "the-fuggles-brisbane-2024")
+  if (photo.band_id) {
+    return { prefix: photo.band_id, type: 'band-event' }
   }
 
-  // Priority 2: Event only
+  // Priority 2: Event only (slugify the event name)
   if (photo.event_name) {
     return { prefix: slugify(photo.event_name), type: 'event' }
   }
 
-  // Priority 3: Band only (rare - bands usually have events)
-  if (photo.band_name) {
-    return { prefix: slugify(photo.band_name), type: 'band' }
-  }
-
-  // Priority 4: Photographer
+  // Priority 3: Photographer
   if (photo.photographer) {
     return { prefix: slugify(photo.photographer), type: 'photographer' }
   }
 
-  // Priority 5: Fallback
+  // Priority 4: Fallback
   return { prefix: 'photo', type: 'fallback' }
 }
 
@@ -101,12 +91,10 @@ export async function generatePhotoSlug(
 export async function generateAndSavePhotoSlug(
   photoId: string
 ): Promise<{ slug: string; prefix: string } | null> {
-  // First, fetch the photo with band and event names
+  // First, fetch the photo with event name (for fallback when no band)
   const { rows: photos } = await sql<PhotoSlugContext>`
-    SELECT p.id, p.band_id, p.event_id, p.photographer,
-           b.name as band_name, e.name as event_name
+    SELECT p.id, p.band_id, p.photographer, e.name as event_name
     FROM photos p
-    LEFT JOIN bands b ON p.band_id = b.id
     LEFT JOIN events e ON p.event_id = e.id
     WHERE p.id = ${photoId}
   `
@@ -219,10 +207,8 @@ export async function backfillPhotoSlugs(limit = 100): Promise<{
 }> {
   // Get photos without slugs, ordered by upload date for consistent sequencing
   const { rows: photos } = await sql<PhotoSlugContext>`
-    SELECT p.id, p.band_id, p.event_id, p.photographer,
-           b.name as band_name, e.name as event_name
+    SELECT p.id, p.band_id, p.photographer, e.name as event_name
     FROM photos p
-    LEFT JOIN bands b ON p.band_id = b.id
     LEFT JOIN events e ON p.event_id = e.id
     WHERE p.slug IS NULL
     ORDER BY p.uploaded_at ASC

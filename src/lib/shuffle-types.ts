@@ -146,11 +146,11 @@ export function buildPhotoApiParams(
 }
 
 /**
- * Options for building slideshow URL
+ * Options for building photo URL
  */
-export interface SlideshowUrlOptions {
-  /** Photo ID (required) */
-  photoId: string
+export interface PhotoUrlOptions {
+  /** Photo slug or ID (slug preferred for SEO) */
+  photoSlug: string
   /** Filter by event ID */
   eventId?: string
   /** Filter by band ID */
@@ -164,23 +164,28 @@ export interface SlideshowUrlOptions {
 }
 
 /**
- * Build slideshow URL with correct shuffle param
+ * @deprecated Use buildPhotoUrl instead
+ */
+export type SlideshowUrlOptions = PhotoUrlOptions
+
+/**
+ * Build photo page URL with correct shuffle param
  *
- * This ensures the shuffle seed is passed correctly to the slideshow page,
+ * This ensures the shuffle seed is passed correctly to the photo page,
  * maintaining the same photo order as the gallery/photo-strip.
  *
  * @example
  * ```ts
- * const url = buildSlideshowUrl({
- *   photoId: 'photo-123',
+ * const url = buildPhotoUrl({
+ *   photoSlug: 'the-fuggles-brisbane-2024-1',
  *   eventId: 'event-456',
  *   shuffle: 'abc123',
  * })
- * // Returns: /slideshow/photo-123?event=event-456&shuffle=abc123
+ * // Returns: /photos/the-fuggles-brisbane-2024-1?event=event-456&shuffle=abc123
  * ```
  */
-export function buildSlideshowUrl(options: SlideshowUrlOptions): string {
-  const { photoId, eventId, bandId, photographer, companySlug, shuffle } =
+export function buildPhotoUrl(options: PhotoUrlOptions): string {
+  const { photoSlug, eventId, bandId, photographer, companySlug, shuffle } =
     options
 
   const params = new URLSearchParams()
@@ -198,7 +203,21 @@ export function buildSlideshowUrl(options: SlideshowUrlOptions): string {
   }
 
   const queryString = params.toString()
-  return `/slideshow/${photoId}${queryString ? `?${queryString}` : ''}`
+  return `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+}
+
+/**
+ * @deprecated Use buildPhotoUrl instead
+ */
+export function buildSlideshowUrl(options: SlideshowUrlOptions): string {
+  // Map old photoId to new photoSlug
+  const { photoId, ...rest } = options as SlideshowUrlOptions & {
+    photoId?: string
+  }
+  return buildPhotoUrl({
+    ...rest,
+    photoSlug: photoId || (options as PhotoUrlOptions).photoSlug,
+  })
 }
 
 /**
