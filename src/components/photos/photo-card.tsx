@@ -45,7 +45,7 @@ export function PhotoCard({
   // Use smart focal point for intelligent cropping (defaults to center)
   const focalPoint = displayPhoto.hero_focal_point ?? { x: 50, y: 50 }
 
-  // Handle cycling through cluster photos
+  // Handle manual cycling through cluster photos (on click)
   const handleCycleClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent triggering onClick
     if (!cluster || !onCyclePhoto) return
@@ -54,11 +54,12 @@ export function PhotoCard({
     setIsTransitioning(true)
     setTimeout(() => setIsTransitioning(false), 200)
 
-    // Cycle to next photo (wrap around)
+    // Cycle to next photo in cluster
     const nextIndex = (cluster.currentIndex + 1) % cluster.photos.length
     onCyclePhoto(nextIndex)
   }
 
+  // Show cluster size in badge
   const clusterSize = cluster?.photos.length ?? 0
   const showClusterBadge = clusterSize > 1
 

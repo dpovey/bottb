@@ -171,6 +171,7 @@ CREATE TABLE IF NOT EXISTS photos (
     hero_focal_point jsonb DEFAULT '{"x": 50, "y": 50}'::jsonb,
     captured_at timestamp with time zone,
     original_blob_url text,
+    is_monochrome boolean DEFAULT NULL,
     -- SEO-friendly slug (e.g., "the-fuggles-brisbane-2024-1")
     slug character varying(255) UNIQUE,
     -- Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
@@ -367,6 +368,7 @@ CREATE INDEX IF NOT EXISTS idx_photos_photographer ON photos(photographer);
 CREATE INDEX IF NOT EXISTS idx_photos_labels ON photos USING gin(labels);
 CREATE INDEX IF NOT EXISTS idx_photos_uploaded_at ON photos(uploaded_at);
 CREATE INDEX IF NOT EXISTS idx_photos_captured_at ON photos(captured_at);
+CREATE INDEX IF NOT EXISTS idx_photos_is_monochrome ON photos(is_monochrome) WHERE (is_monochrome IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_photos_original_blob_url ON photos(original_blob_url) WHERE (original_blob_url IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_photos_slug ON photos(slug) WHERE (slug IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_photos_slug_prefix ON photos(slug_prefix) WHERE (slug_prefix IS NOT NULL);

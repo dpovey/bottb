@@ -97,6 +97,45 @@ ASPECT_RATIOS = [
     (1, 1),   # Square
 ]
 
+# Saturation threshold below which an image is considered monochrome
+MONOCHROME_SATURATION_THRESHOLD = 0.1
+
+
+def detect_monochrome(image_path: str) -> bool:
+    """
+    Detect if an image is B&W or largely monochrome.
+    
+    Uses color saturation analysis - low average saturation indicates monochrome.
+    
+    Args:
+        image_path: Path to the image file
+        
+    Returns:
+        True if the image is monochrome/B&W, False if color
+    """
+    import numpy as np
+    
+    with Image.open(image_path) as img:
+        # Convert to RGB if needed (handles grayscale, RGBA, etc.)
+        rgb_img = img.convert('RGB')
+        arr = np.array(rgb_img)
+    
+    # Extract R, G, B channels
+    r, g, b = arr[:, :, 0].astype(float), arr[:, :, 1].astype(float), arr[:, :, 2].astype(float)
+    
+    # Calculate saturation for each pixel
+    # Saturation = (max(R,G,B) - min(R,G,B)) / max(R,G,B) for non-black pixels
+    max_rgb = np.maximum(np.maximum(r, g), b)
+    min_rgb = np.minimum(np.minimum(r, g), b)
+    
+    # Avoid division by zero for black pixels
+    saturation = np.where(max_rgb > 0, (max_rgb - min_rgb) / max_rgb, 0)
+    
+    # Calculate average saturation
+    avg_saturation = np.mean(saturation)
+    
+    return avg_saturation < MONOCHROME_SATURATION_THRESHOLD
+
 
 def process_photo(
     image_path: str,
@@ -153,6 +192,9 @@ def process_photo(
             aspect_key = f"{aspect_ratio[0]}:{aspect_ratio[1]}"
             crops[aspect_key] = crop_result
         
+        # 7. Monochrome detection (B&W vs color)
+        is_monochrome = detect_monochrome(image_path)
+        
         # Build result dictionary
         result = {
             "filename": filename,
@@ -187,6 +229,7 @@ def process_photo(
                 for p in persons
             ],
             "crops": crops,
+            "is_monochrome": is_monochrome,
         }
         
         return result
@@ -466,6 +509,7 @@ def main():
                     "dhash": r["hashes"]["dhash"],
                     "num_faces": len(r["faces"]),
                     "num_persons": len(r["persons"]),
+                    "is_monochrome": r.get("is_monochrome", None),
                 }
                 for r in all_results
             ])
@@ -494,6 +538,7 @@ def main():
                 "dhash": r["hashes"]["dhash"],
                 "num_faces": len(r["faces"]),
                 "num_persons": len(r["persons"]),
+                "is_monochrome": r.get("is_monochrome", None),
             }
             for r in all_results
         ])

@@ -79,6 +79,7 @@ interface Photo {
   photographer_slug: string
   labels: string[]
   hero_focal_point: { x: number; y: number }
+  is_monochrome?: boolean | null
 }
 
 interface User {

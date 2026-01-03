@@ -225,6 +225,7 @@ CREATE TABLE public.photos (
     hero_focal_point jsonb DEFAULT '{"x": 50, "y": 50}'::jsonb,
     captured_at timestamp with time zone,
     original_blob_url text,
+    is_monochrome boolean DEFAULT NULL,
     CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY (ARRAY[('exact'::character varying)::text, ('fuzzy'::character varying)::text, ('manual'::character varying)::text, ('unmatched'::character varying)::text])))
 );
 
@@ -531,12 +532,12 @@ test-photographer	John Doe Photography	Professional event photographer	Sydney, A
 -- Data for Name: photos; Type: TABLE DATA; Schema: public; Owner: test
 --
 
-COPY public.photos (id, event_id, band_id, photographer, blob_url, blob_pathname, original_filename, width, height, file_size, content_type, xmp_metadata, matched_event_name, matched_band_name, match_confidence, uploaded_by, uploaded_at, created_at, labels, hero_focal_point, captured_at, original_blob_url) FROM stdin;
-11111111-1111-1111-1111-111111111111	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/hero-concert.jpg	photos/test-photo-1/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.462206+00	2026-01-03 02:57:54.462206+00	{global_hero}	{"x": 50, "y": 50}	\N	\N
-22222222-2222-2222-2222-222222222222	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/band-stage.jpg	photos/test-photo-2/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463351+00	2026-01-03 02:57:54.463351+00	{band_hero}	{"x": 50, "y": 40}	\N	\N
-33333333-3333-3333-3333-333333333333	test-finalized-event	test-finalized-band-2	test-photographer	/images/test/crowd-energy.jpg	photos/test-photo-3/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463924+00	2026-01-03 02:57:54.463924+00	{event_hero}	{"x": 50, "y": 50}	\N	\N
-44444444-4444-4444-4444-444444444444	test-voting-event	test-band-1	test-photographer	/images/test/thumbnail-1.jpg	photos/test-photo-4/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.464632+00	2026-01-03 02:57:54.464632+00	{}	{"x": 50, "y": 50}	\N	\N
-55555555-5555-5555-5555-555555555555	test-voting-event	test-band-2	test-photographer	/images/test/thumbnail-2.jpg	photos/test-photo-5/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.465174+00	2026-01-03 02:57:54.465174+00	{}	{"x": 50, "y": 50}	\N	\N
+COPY public.photos (id, event_id, band_id, photographer, blob_url, blob_pathname, original_filename, width, height, file_size, content_type, xmp_metadata, matched_event_name, matched_band_name, match_confidence, uploaded_by, uploaded_at, created_at, labels, hero_focal_point, captured_at, original_blob_url, is_monochrome) FROM stdin;
+11111111-1111-1111-1111-111111111111	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/hero-concert.jpg	photos/test-photo-1/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.462206+00	2026-01-03 02:57:54.462206+00	{global_hero}	{"x": 50, "y": 50}	\N	\N	\N
+22222222-2222-2222-2222-222222222222	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/band-stage.jpg	photos/test-photo-2/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463351+00	2026-01-03 02:57:54.463351+00	{band_hero}	{"x": 50, "y": 40}	\N	\N	\N
+33333333-3333-3333-3333-333333333333	test-finalized-event	test-finalized-band-2	test-photographer	/images/test/crowd-energy.jpg	photos/test-photo-3/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463924+00	2026-01-03 02:57:54.463924+00	{event_hero}	{"x": 50, "y": 50}	\N	\N	\N
+44444444-4444-4444-4444-444444444444	test-voting-event	test-band-1	test-photographer	/images/test/thumbnail-1.jpg	photos/test-photo-4/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.464632+00	2026-01-03 02:57:54.464632+00	{}	{"x": 50, "y": 50}	\N	\N	\N
+55555555-5555-5555-5555-555555555555	test-voting-event	test-band-2	test-photographer	/images/test/thumbnail-2.jpg	photos/test-photo-5/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.465174+00	2026-01-03 02:57:54.465174+00	{}	{"x": 50, "y": 50}	\N	\N	\N
 \.
 
 

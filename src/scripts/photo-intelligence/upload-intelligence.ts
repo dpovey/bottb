@@ -41,6 +41,7 @@ interface UploadStats {
   hashesInserted: number
   embeddingsInserted: number
   facesInserted: number
+  monochromeUpdated: number
   clustersInserted: number
   errors: number
 }
@@ -174,14 +175,29 @@ async function uploadPhotoIntelligence(
       }
     }
 
-    // 5. Update photo intelligence metadata
+    // 5. Update photo with monochrome classification and intelligence metadata
     if (!dryRun) {
-      await sql`
-        UPDATE photos
-        SET intelligence_processed_at = NOW(),
-            intelligence_version = ${version}
-        WHERE id = ${photoId}::uuid
-      `
+      // Use separate queries since is_monochrome may or may not be present
+      if (result.is_monochrome !== undefined) {
+        await sql`
+          UPDATE photos
+          SET is_monochrome = ${result.is_monochrome},
+              intelligence_processed_at = NOW(),
+              intelligence_version = ${version}
+          WHERE id = ${photoId}::uuid
+        `
+      } else {
+        await sql`
+          UPDATE photos
+          SET intelligence_processed_at = NOW(),
+              intelligence_version = ${version}
+          WHERE id = ${photoId}::uuid
+        `
+      }
+    } else if (result.is_monochrome !== undefined) {
+      console.log(
+        `  Would set is_monochrome: ${result.is_monochrome ? 'B&W' : 'color'}`
+      )
     }
 
     return { success: true }
@@ -383,6 +399,7 @@ Examples:
     hashesInserted: 0,
     embeddingsInserted: 0,
     facesInserted: 0,
+    monochromeUpdated: 0,
     clustersInserted: 0,
     errors: 0,
   }
@@ -419,6 +436,7 @@ Examples:
       if (result.hashes.phash) stats.hashesInserted++
       if (result.image_embedding.length > 0) stats.embeddingsInserted++
       stats.facesInserted += result.face_encodings.length
+      if (result.is_monochrome !== undefined) stats.monochromeUpdated++
 
       if (verbose) {
         console.log(`  ✅ Uploaded`)
@@ -454,6 +472,7 @@ Examples:
   console.log(`   Hashes inserted: ${stats.hashesInserted}`)
   console.log(`   Embeddings inserted: ${stats.embeddingsInserted}`)
   console.log(`   Faces inserted: ${stats.facesInserted}`)
+  console.log(`   Monochrome classified: ${stats.monochromeUpdated}`)
   console.log(`   Clusters inserted: ${stats.clustersInserted}`)
   console.log(`   Errors: ${stats.errors}`)
 

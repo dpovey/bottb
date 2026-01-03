@@ -213,6 +213,8 @@ export interface Photo {
   labels: string[]
   // Focal point for hero image display
   hero_focal_point: HeroFocalPoint
+  // Whether the image is B&W or largely monochrome (null = not yet classified)
+  is_monochrome: boolean | null
   // SEO-friendly slug (e.g., "the-fuggles-brisbane-2024-1")
   slug: string | null
   // Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
