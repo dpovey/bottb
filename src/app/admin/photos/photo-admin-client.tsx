@@ -403,7 +403,7 @@ export function PhotoAdminClient({
                       className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
                     />
                   </th>
-                  <th className="px-4 py-3 w-16">Preview</th>
+                  <th className="px-4 py-3 w-28">Preview</th>
                   <th className="px-4 py-3">Event</th>
                   <th className="px-4 py-3">Band</th>
                   <th className="px-4 py-3">Photographer</th>
@@ -518,7 +518,7 @@ function PhotoRow({
           <img
             src={photo.thumbnail_url || photo.blob_url}
             alt={photo.original_filename || 'Photo'}
-            className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity"
+            className="w-24 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
           />
         </a>
       </td>
