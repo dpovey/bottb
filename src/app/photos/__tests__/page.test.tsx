@@ -146,36 +146,45 @@ describe('PhotosContent - Navigation to Slideshow', () => {
       has: vi.fn(() => false),
     })
 
-    // Mock API to return photos
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        photos: [
-          {
-            id: 'photo-1',
-            blob_url: 'https://example.com/photo1.jpg',
-            thumbnail_url: 'https://example.com/thumb1.jpg',
-            event_id: 'event-1',
-            band_id: 'band-1',
-            event_name: 'Test Event',
-            band_name: 'Test Band',
-            photographer: 'Test Photographer',
-            labels: [],
-            company_slug: null,
-            company_name: null,
-          },
-        ],
-        pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
-        photographers: ['Test Photographer'],
-        companies: [],
-        availableFilters: {
+    // Mock API to return photos and clusters
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/photos/clusters')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ clusters: [], total: 0 }),
+        })
+      }
+      // Default: /api/photos
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          photos: [
+            {
+              id: 'photo-1',
+              blob_url: 'https://example.com/photo1.jpg',
+              thumbnail_url: 'https://example.com/thumb1.jpg',
+              event_id: 'event-1',
+              band_id: 'band-1',
+              event_name: 'Test Event',
+              band_name: 'Test Band',
+              photographer: 'Test Photographer',
+              labels: [],
+              company_slug: null,
+              company_name: null,
+            },
+          ],
+          pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
+          photographers: ['Test Photographer'],
           companies: [],
-          events: [],
-          photographers: [],
-          hasPhotosWithoutCompany: false,
-        },
-        seed: 'abc123',
-      }),
+          availableFilters: {
+            companies: [],
+            events: [],
+            photographers: [],
+            hasPhotosWithoutCompany: false,
+          },
+          seed: 'abc123',
+        }),
+      })
     })
 
     const { container } = render(
@@ -228,35 +237,44 @@ describe('PhotosContent - Navigation to Slideshow', () => {
       has: vi.fn(() => false),
     })
 
-    // Mock API to return photos
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        photos: [
-          {
-            id: 'photo-1',
-            blob_url: 'https://example.com/photo1.jpg',
-            thumbnail_url: 'https://example.com/thumb1.jpg',
-            event_id: 'event-1',
-            band_id: 'band-1',
-            event_name: 'Test Event',
-            band_name: 'Test Band',
-            photographer: 'Test Photographer',
-            labels: [],
-            company_slug: null,
-            company_name: null,
-          },
-        ],
-        pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
-        photographers: ['Test Photographer'],
-        companies: [],
-        availableFilters: {
+    // Mock API to return photos and clusters
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/photos/clusters')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ clusters: [], total: 0 }),
+        })
+      }
+      // Default: /api/photos
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          photos: [
+            {
+              id: 'photo-1',
+              blob_url: 'https://example.com/photo1.jpg',
+              thumbnail_url: 'https://example.com/thumb1.jpg',
+              event_id: 'event-1',
+              band_id: 'band-1',
+              event_name: 'Test Event',
+              band_name: 'Test Band',
+              photographer: 'Test Photographer',
+              labels: [],
+              company_slug: null,
+              company_name: null,
+            },
+          ],
+          pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
+          photographers: ['Test Photographer'],
           companies: [],
-          events: [],
-          photographers: [],
-          hasPhotosWithoutCompany: false,
-        },
-      }),
+          availableFilters: {
+            companies: [],
+            events: [],
+            photographers: [],
+            hasPhotosWithoutCompany: false,
+          },
+        }),
+      })
     })
 
     render(

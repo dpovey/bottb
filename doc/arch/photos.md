@@ -37,6 +37,7 @@ pnpm bulk-upload-photos <directory> <event-id>
 - Responsive grid with lazy loading
 - Filtering by event, band, photographer, company
 - URL state for shareable filters
+- Photo grouping (collapse near-duplicates)
 
 ### Shuffle & Ordering
 
@@ -47,6 +48,17 @@ pnpm bulk-upload-photos <directory> <event-id>
   - `?shuffle=<seed>` → specific seed for shareable links with exact order
   - No param → chronological by date
 - **Deterministic**: Seeded PRNG (mulberry32) ensures same seed = same order
+
+### Photo Grouping
+
+Groups near-duplicate photos in the gallery, showing only the representative photo with an indicator.
+
+- **Default**: Grouping on (duplicates collapsed)
+- **URL param**: `?grouping=false` to disable (no param = enabled)
+- **Visual indicator**: Overlapping squares icon with count badge on grouped photos
+- **Cycling**: Click the badge to cycle through similar photos in-place
+- **API**: `/api/photos/clusters` returns near-duplicate cluster data
+- **Implementation**: `photos-content.tsx` fetches clusters and builds a `clusterMap` for the grid
 
 ### Type-Safe Shuffle Architecture
 
@@ -416,12 +428,13 @@ Three types of clusters for organizing and discovering photos.
 
 ## API Endpoints
 
-| Endpoint                                | Description                      |
-| --------------------------------------- | -------------------------------- |
-| `GET /api/photos`                       | List with filters                |
-| `GET /api/photos/[id]/jpeg`             | Download original (rate limited) |
-| `GET /api/photos/[id]/smart-crop`       | Get smart crop for aspect ratio  |
-| `PATCH /api/photos/[id]`                | Update metadata (admin)          |
-| `DELETE /api/photos/[id]`               | Delete (admin)                   |
-| `GET /api/admin/photos/clusters`        | Get clusters (admin)             |
-| `GET /api/admin/photos/people/clusters` | Get people clusters (admin)      |
+| Endpoint                                | Description                          |
+| --------------------------------------- | ------------------------------------ |
+| `GET /api/photos`                       | List with filters                    |
+| `GET /api/photos/[id]/jpeg`             | Download original (rate limited)     |
+| `GET /api/photos/[id]/smart-crop`       | Get smart crop for aspect ratio      |
+| `PATCH /api/photos/[id]`                | Update metadata (admin)              |
+| `DELETE /api/photos/[id]`               | Delete (admin)                       |
+| `GET /api/photos/clusters`              | Get near-duplicate clusters (public) |
+| `GET /api/admin/photos/clusters`        | Get clusters (admin)                 |
+| `GET /api/admin/photos/people/clusters` | Get people clusters (admin)          |

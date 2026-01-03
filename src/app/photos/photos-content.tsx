@@ -3,13 +3,18 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Photo, Event } from '@/lib/db'
-import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
+import {
+  PhotoGrid,
+  type GridSize,
+  type ClusterMap,
+} from '@/components/photos/photo-grid'
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
 import { PlayCircleIcon, BuildingIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
+import { GroupingButton } from '@/components/photos/grouping-button'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -56,6 +61,17 @@ interface StoredFilters {
   photographer?: string | null
   company?: string | null
   shuffle?: string | null
+  grouping?: boolean
+}
+
+// API response for clusters endpoint
+interface ClustersResponse {
+  clusters: Array<{
+    id: string
+    photo_ids: string[]
+    representative_photo_id: string | null
+  }>
+  total: number
 }
 
 export function PhotosContent({
@@ -98,6 +114,15 @@ export function PhotosContent({
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
+  // Grouping state: true = collapse similar photos, false = show all
+  // Default to true (grouping enabled)
+  const [grouping, setGrouping] = useState<boolean>(
+    searchParams.get('grouping') !== 'false'
+  )
+  // Cluster data for grouping similar photos
+  const [clusters, setClusters] = useState<ClustersResponse['clusters']>([])
+  // Map of representative photo ID to cluster data (photos + current display index)
+  const [clusterMap, setClusterMap] = useState<ClusterMap>(new Map())
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Page sizes
@@ -127,7 +152,8 @@ export function PhotosContent({
       searchParams.has('eventId') ||
       searchParams.has('photographer') ||
       searchParams.has('company') ||
-      searchParams.has('shuffle')
+      searchParams.has('shuffle') ||
+      searchParams.has('grouping')
   )
 
   // Track if filters have been initialized (localStorage checked or URL params applied)
@@ -153,6 +179,9 @@ export function PhotosContent({
         if (filters.shuffle !== undefined) {
           setShuffle(filters.shuffle)
         }
+        if (filters.grouping !== undefined) {
+          setGrouping(filters.grouping)
+        }
       }
     } catch {
       // Ignore localStorage errors
@@ -172,6 +201,7 @@ export function PhotosContent({
       photographer: selectedPhotographer,
       company: selectedCompanySlug,
       shuffle,
+      grouping,
     }
     try {
       localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
@@ -183,6 +213,7 @@ export function PhotosContent({
     selectedPhotographer,
     selectedCompanySlug,
     shuffle,
+    grouping,
     filtersInitialized,
   ])
 
@@ -226,6 +257,12 @@ export function PhotosContent({
         return prev !== urlValue ? urlValue : prev
       })
     }
+
+    // Only update grouping if URL explicitly has the param
+    if (searchParams.has('grouping')) {
+      const groupingParam = searchParams.get('grouping')
+      setGrouping(groupingParam !== 'false')
+    }
   }, [searchParams])
 
   // Update URL when filters change
@@ -235,6 +272,7 @@ export function PhotosContent({
       photographer?: string | null
       company?: string | null
       shuffle?: string | null
+      grouping?: boolean
     }) => {
       const url = new URL(window.location.href)
 
@@ -267,6 +305,14 @@ export function PhotosContent({
           url.searchParams.set('shuffle', params.shuffle)
         } else {
           url.searchParams.delete('shuffle')
+        }
+      }
+      // Grouping: only add to URL when disabled (default is ON)
+      if (params.grouping !== undefined) {
+        if (!params.grouping) {
+          url.searchParams.set('grouping', 'false')
+        } else {
+          url.searchParams.delete('grouping')
         }
       }
 
@@ -363,6 +409,83 @@ export function PhotosContent({
     currentPage.current = 1
     setLoading(true)
   }, [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle])
+
+  // Fetch clusters for grouping similar photos
+  useEffect(() => {
+    async function fetchClusters() {
+      try {
+        const params = new URLSearchParams()
+        if (selectedEventId) params.set('eventId', selectedEventId)
+
+        const res = await fetch(`/api/photos/clusters?${params.toString()}`)
+        if (res.ok) {
+          const data: ClustersResponse = await res.json()
+          setClusters(data.clusters)
+        }
+      } catch (error) {
+        console.error('Failed to fetch clusters:', error)
+      }
+    }
+
+    // Only fetch if grouping is enabled
+    if (grouping && filtersInitialized) {
+      fetchClusters()
+    } else {
+      setClusters([])
+    }
+  }, [selectedEventId, grouping, filtersInitialized])
+
+  // Build cluster map when photos or clusters change
+  useEffect(() => {
+    if (!grouping || !clusters?.length || !photos?.length) {
+      setClusterMap(new Map())
+      return
+    }
+
+    // Build a lookup from photo ID to its cluster
+    const photoToCluster = new Map<
+      string,
+      ClustersResponse['clusters'][number]
+    >()
+    for (const cluster of clusters) {
+      for (const photoId of cluster.photo_ids) {
+        photoToCluster.set(photoId, cluster)
+      }
+    }
+
+    // Build cluster map: for each representative photo in our loaded photos,
+    // create an entry with all cluster photos that are also loaded
+    const newClusterMap: ClusterMap = new Map()
+    const processedClusters = new Set<string>()
+
+    for (const photo of photos) {
+      const cluster = photoToCluster.get(photo.id)
+      if (!cluster || processedClusters.has(cluster.id)) continue
+
+      // Get all photos from this cluster that we have loaded
+      const clusterPhotos = photos.filter((p) =>
+        cluster.photo_ids.includes(p.id)
+      )
+      if (clusterPhotos.length <= 1) continue
+
+      // Determine representative: use cluster's representative if in our photos,
+      // otherwise use first loaded photo
+      const representativeId =
+        cluster.representative_photo_id &&
+        clusterPhotos.some((p) => p.id === cluster.representative_photo_id)
+          ? cluster.representative_photo_id
+          : clusterPhotos[0].id
+
+      // Store under the representative photo's ID
+      newClusterMap.set(representativeId, {
+        photos: clusterPhotos,
+        currentIndex: 0,
+      })
+      processedClusters.add(cluster.id)
+    }
+
+    setClusterMap(newClusterMap)
+  }, [photos, clusters, grouping])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -475,19 +598,44 @@ export function PhotosContent({
     return () => observer.disconnect()
   }, [loading, loadingMore, photos.length, totalCount, fetchPhotos])
 
+  // Filter photos for display when grouping is enabled
+  // When grouping is ON, only show representative photos (hide duplicates)
+  const displayPhotos = (() => {
+    if (!grouping || clusterMap.size === 0) {
+      return photos
+    }
+
+    // Build a set of all non-representative photo IDs
+    const hiddenPhotoIds = new Set<string>()
+    for (const [representativeId, cluster] of clusterMap) {
+      for (const photo of cluster.photos) {
+        if (photo.id !== representativeId) {
+          hiddenPhotoIds.add(photo.id)
+        }
+      }
+    }
+
+    // Return only photos that aren't hidden (representatives + non-clustered)
+    return photos.filter((p) => !hiddenPhotoIds.has(p.id))
+  })()
+
   // Handle photo click - navigate to slideshow
   const handlePhotoClick = useCallback(
     (index: number) => {
-      const photo = photos[index]
+      const photo = displayPhotos[index]
       if (!photo) return
+
+      // If this is a clustered photo, get the currently displayed photo from the cluster
+      const cluster = clusterMap.get(photo.id)
+      const actualPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
 
       // Track photo click
       trackPhotoClick({
-        photo_id: photo.id,
-        event_id: photo.event_id || null,
-        band_id: photo.band_id || null,
-        event_name: photo.event_name || null,
-        band_name: photo.band_name || null,
+        photo_id: actualPhoto.id,
+        event_id: actualPhoto.event_id || null,
+        band_id: actualPhoto.band_id || null,
+        event_name: actualPhoto.event_name || null,
+        band_name: actualPhoto.band_name || null,
       })
 
       // Build slideshow URL with current filters and shuffle state
@@ -498,11 +646,12 @@ export function PhotosContent({
       if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
+      const slideshowUrl = `/slideshow/${actualPhoto.id}${queryString ? `?${queryString}` : ''}`
       router.push(slideshowUrl)
     },
     [
-      photos,
+      displayPhotos,
+      clusterMap,
       router,
       selectedEventId,
       selectedPhotographer,
@@ -532,6 +681,28 @@ export function PhotosContent({
     }
   }, [shuffle, updateUrlParams, generateRandomSeed])
 
+  // Handle grouping toggle
+  const handleGroupingToggle = useCallback(() => {
+    const newGrouping = !grouping
+    setGrouping(newGrouping)
+    updateUrlParams({ grouping: newGrouping })
+  }, [grouping, updateUrlParams])
+
+  // Handle cycling through cluster photos
+  const handleCycleClusterPhoto = useCallback(
+    (photoId: string, newIndex: number) => {
+      setClusterMap((prev) => {
+        const newMap = new Map(prev)
+        const cluster = newMap.get(photoId)
+        if (cluster) {
+          newMap.set(photoId, { ...cluster, currentIndex: newIndex })
+        }
+        return newMap
+      })
+    },
+    []
+  )
+
   return (
     <PublicLayout
       breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Photos' }]}
@@ -544,9 +715,15 @@ export function PhotosContent({
             <div>
               <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
               <p className="text-text-muted">
-                {photos.length} of {totalCount} photo
+                {displayPhotos.length} of {totalCount} photo
                 {totalCount !== 1 ? 's' : ''} from {events.length} event
                 {events.length !== 1 ? 's' : ''}
+                {grouping && clusterMap.size > 0 && (
+                  <span className="text-text-dim">
+                    {' '}
+                    ({photos.length - displayPhotos.length} similar grouped)
+                  </span>
+                )}
               </p>
             </div>
             {/* Show slideshow button if we have photos loaded OR SSR says there are photos */}
@@ -568,6 +745,13 @@ export function PhotosContent({
             <ShuffleButton
               isActive={!!shuffle}
               onClick={handleShuffleToggle}
+              size="md"
+            />
+
+            {/* Grouping button */}
+            <GroupingButton
+              isActive={grouping}
+              onClick={handleGroupingToggle}
               size="md"
             />
 
@@ -715,11 +899,13 @@ export function PhotosContent({
         {/* Photo grid */}
         <div className="mt-8">
           <PhotoGrid
-            photos={photos}
+            photos={displayPhotos}
             onPhotoClick={handlePhotoClick}
             loading={loading}
             size={gridSize}
             showCompanyLogos={showCompanyLogos}
+            clusterMap={grouping ? clusterMap : undefined}
+            onCycleClusterPhoto={handleCycleClusterPhoto}
           />
         </div>
 
