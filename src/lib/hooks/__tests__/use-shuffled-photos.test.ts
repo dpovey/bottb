@@ -31,6 +31,8 @@ function createMockPhoto(id: string): Photo {
     event_name: 'Test Event',
     band_name: 'Test Band',
     thumbnail_url: `https://example.com/${id}-thumb.jpg`,
+    slug: `test-band-test-event-${id}`,
+    slug_prefix: 'test-band-test-event',
   }
 }
 
@@ -313,7 +315,7 @@ describe('useShuffledPhotos', () => {
     })
   })
 
-  describe('buildSlideshowUrl', () => {
+  describe('buildPhotoUrl', () => {
     it('includes shuffle seed in URL', () => {
       const { result } = renderHook(() =>
         useShuffledPhotos({
@@ -323,9 +325,9 @@ describe('useShuffledPhotos', () => {
         })
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
-      expect(url).toContain('/slideshow/photo-123')
+      expect(url).toContain('/photos/band-event-123')
       expect(url).toContain('shuffle=my-seed')
       expect(url).toContain('event=event-1')
     })
@@ -338,9 +340,9 @@ describe('useShuffledPhotos', () => {
         })
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
-      expect(url).toBe('/slideshow/photo-123')
+      expect(url).toBe('/photos/band-event-123')
       expect(url).not.toContain('shuffle')
     })
 
@@ -357,7 +359,7 @@ describe('useShuffledPhotos', () => {
         { timeout: 1000 }
       )
 
-      const url = result.current.buildSlideshowUrl('photo-123')
+      const url = result.current.buildPhotoUrl('band-event-123')
 
       expect(url).toContain('shuffle=resolved-seed-123')
       expect(url).not.toContain('shuffle=true')
@@ -607,7 +609,7 @@ describe('Type safety guarantees', () => {
     }
   })
 
-  it('buildSlideshowUrl produces gallery-compatible URLs', () => {
+  it('buildPhotoUrl produces gallery-compatible URLs', () => {
     const { result } = renderHook(() =>
       useShuffledPhotos({
         eventId: 'event-1',
@@ -617,10 +619,10 @@ describe('Type safety guarantees', () => {
       })
     )
 
-    const url = result.current.buildSlideshowUrl('photo-123')
+    const url = result.current.buildPhotoUrl('band-event-123')
 
     // URL must be compatible with what gallery produces
-    expect(url).toMatch(/^\/slideshow\/photo-123/)
+    expect(url).toMatch(/^\/photos\/band-event-123/)
     expect(url).toContain('shuffle=test-seed')
     expect(url).not.toContain('seed=') // No separate seed param
     expect(url).not.toContain('order=')

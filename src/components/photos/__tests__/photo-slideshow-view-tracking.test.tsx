@@ -157,6 +157,8 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      slug: 'test-band-test-event-1',
+      slug_prefix: 'test-band-test-event',
       cluster_photos: null,
     },
     {
@@ -185,6 +187,8 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
       captured_at: null,
       labels: [],
       hero_focal_point: { x: 0.5, y: 0.5 },
+      slug: 'test-band-2-test-event-1',
+      slug_prefix: 'test-band-2-test-event',
       cluster_photos: null,
     },
   ]
@@ -313,6 +317,8 @@ describe.skip('PhotoSlideshow - View Tracking', () => {
         captured_at: null,
         labels: [],
         hero_focal_point: { x: 0.5, y: 0.5 },
+        slug: 'photo-3',
+        slug_prefix: 'photo',
         cluster_photos: null,
       },
     ]

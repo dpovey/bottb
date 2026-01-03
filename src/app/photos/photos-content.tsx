@@ -99,10 +99,10 @@ export function PhotosContent({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  // Shuffle state: null = off, 'true' = shared shuffle, '<seed>' = specific seed
-  // Default to 'true' (shared shuffle) if no shuffle param in URL
+  // Shuffle state: null = off (date order), 'true' = shared shuffle, '<seed>' = specific seed
+  // Default to null (date order) for SEO - consistent content for crawlers
   const [shuffle, setShuffle] = useState<string | null>(
-    searchParams.get('shuffle') ?? 'true'
+    searchParams.get('shuffle') ?? null
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
@@ -587,7 +587,7 @@ export function PhotosContent({
         band_name: actualPhoto.band_name || null,
       })
 
-      // Build slideshow URL with current filters and shuffle state
+      // Build photo page URL with current filters and shuffle state (use slug for SEO)
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedPhotographer) params.set('photographer', selectedPhotographer)
@@ -595,8 +595,9 @@ export function PhotosContent({
       if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${actualPhoto.id}${queryString ? `?${queryString}` : ''}`
-      router.push(slideshowUrl)
+      const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
+      const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+      router.push(photoUrl)
     },
     [
       photos,

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { getPhotoById } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 import { SlideshowPageContent } from './slideshow-page-content'
+import { ImageObjectJsonLd } from '@/components/seo'
+import { ensurePhotoSlug } from '@/lib/photo-slugs'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -47,12 +49,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = getBaseUrl()
+  // Canonical points to the SEO-friendly slug route
+  const canonicalSlug = photo.slug || id
 
   return {
     title,
     description,
     alternates: {
-      canonical: `${baseUrl}/slideshow/${id}`,
+      canonical: `${baseUrl}/photos/${canonicalSlug}`,
     },
     openGraph: {
       title,
@@ -85,6 +89,15 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
     notFound()
   }
 
+  // Ensure the photo has a slug (generates one if missing)
+  // This is important for the canonical URL and JSON-LD
+  if (!photo.slug) {
+    const slug = await ensurePhotoSlug(id)
+    if (slug) {
+      photo.slug = slug
+    }
+  }
+
   // Build H1 text for SEO (visually hidden but crawlable)
   let h1Text = 'Photo from Battle of the Tech Bands'
   if (photo.band_name && photo.event_name) {
@@ -100,6 +113,8 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
 
   return (
     <>
+      {/* JSON-LD structured data for search engines */}
+      <ImageObjectJsonLd photo={photo} />
       {/* Visually hidden H1 for SEO - slideshow is full-screen visual content */}
       <h1 className="sr-only">{h1Text}</h1>
       <SlideshowPageContent

@@ -213,6 +213,10 @@ export interface Photo {
   labels: string[]
   // Focal point for hero image display
   hero_focal_point: HeroFocalPoint
+  // SEO-friendly slug (e.g., "the-fuggles-brisbane-2024-1")
+  slug: string | null
+  // Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
+  slug_prefix: string | null
   // Joined fields
   event_name?: string
   band_name?: string

@@ -82,6 +82,8 @@ const mockPhotos: PhotoWithCluster[] = [
     company_name: 'Test Company',
     company_slug: 'test-company',
     company_icon_url: undefined,
+    slug: 'test-band-test-event-1',
+    slug_prefix: 'test-band-test-event',
     cluster_photos: null,
   },
   {
@@ -113,6 +115,8 @@ const mockPhotos: PhotoWithCluster[] = [
     company_name: 'Test Company',
     company_slug: 'test-company',
     company_icon_url: undefined,
+    slug: 'another-band-test-event-1',
+    slug_prefix: 'another-band-test-event',
     cluster_photos: null,
   },
 ]

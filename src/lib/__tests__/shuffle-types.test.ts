@@ -4,7 +4,7 @@ import {
   parseShuffleFromUrl,
   generateShuffleSeed,
   buildPhotoApiParams,
-  buildSlideshowUrl,
+  buildPhotoUrl,
   createShuffleStateFromParam,
   resolveShuffleSeed,
   type ShuffleParam,
@@ -182,31 +182,31 @@ describe('buildPhotoApiParams', () => {
   })
 })
 
-describe('buildSlideshowUrl', () => {
-  it('builds basic slideshow URL', () => {
-    const url = buildSlideshowUrl({ photoId: 'photo-1' })
-    expect(url).toBe('/slideshow/photo-1')
+describe('buildPhotoUrl', () => {
+  it('builds basic photo URL', () => {
+    const url = buildPhotoUrl({ photoSlug: 'band-event-1' })
+    expect(url).toBe('/photos/band-event-1')
   })
 
   it('includes shuffle param when provided', () => {
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       shuffle: 'abc123',
     })
-    expect(url).toBe('/slideshow/photo-1?shuffle=abc123')
+    expect(url).toBe('/photos/band-event-1?shuffle=abc123')
   })
 
   it('includes event filter', () => {
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       eventId: 'event-1',
     })
-    expect(url).toBe('/slideshow/photo-1?event=event-1')
+    expect(url).toBe('/photos/band-event-1?event=event-1')
   })
 
   it('includes all filters and shuffle', () => {
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       eventId: 'event-1',
       photographer: 'John Doe',
       companySlug: 'acme',
@@ -215,7 +215,7 @@ describe('buildSlideshowUrl', () => {
 
     // Parse the URL to check params
     const urlObj = new URL(url, 'http://localhost')
-    expect(urlObj.pathname).toBe('/slideshow/photo-1')
+    expect(urlObj.pathname).toBe('/photos/band-event-1')
     expect(urlObj.searchParams.get('event')).toBe('event-1')
     expect(urlObj.searchParams.get('photographer')).toBe('John Doe')
     expect(urlObj.searchParams.get('company')).toBe('acme')
@@ -223,19 +223,19 @@ describe('buildSlideshowUrl', () => {
   })
 
   it('does not include shuffle when null', () => {
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       shuffle: null,
     })
-    expect(url).toBe('/slideshow/photo-1')
+    expect(url).toBe('/photos/band-event-1')
   })
 
   it('does not include shuffle when "false"', () => {
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       shuffle: 'false',
     })
-    expect(url).toBe('/slideshow/photo-1')
+    expect(url).toBe('/photos/band-event-1')
   })
 })
 
@@ -311,12 +311,12 @@ describe('Type safety guarantees', () => {
     expect(params.get('shuffle')).toBe('seed')
   })
 
-  it('buildSlideshowUrl produces URLs compatible with gallery URLs', () => {
-    // Gallery builds: /slideshow/{photoId}?shuffle={seed}
-    // Slideshow page should parse: ?shuffle={seed}
+  it('buildPhotoUrl produces URLs compatible with gallery URLs', () => {
+    // Gallery builds: /photos/{slug}?shuffle={seed}
+    // Photo page should parse: ?shuffle={seed}
 
-    const url = buildSlideshowUrl({
-      photoId: 'photo-1',
+    const url = buildPhotoUrl({
+      photoSlug: 'band-event-1',
       eventId: 'event-1',
       shuffle: 'gallery-seed',
     })
