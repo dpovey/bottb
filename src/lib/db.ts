@@ -639,7 +639,7 @@ export async function getGroupedPhotosWithCount(options: {
       WITH visible_photos AS (
         -- Photos that should be displayed: non-clustered OR cluster representatives
         -- Using EXISTS to avoid duplicate rows from multiple cluster memberships
-        SELECT p.*
+        SELECT DISTINCT p.*
         FROM photos p
         LEFT JOIN bands b ON p.band_id = b.id
         WHERE 
@@ -710,12 +710,17 @@ export async function getGroupedPhotosWithCount(options: {
               'medium_url', cp.xmp_metadata->>'medium_url',
               'large_4k_url', cp.xmp_metadata->>'large_4k_url'
             )
-            ORDER BY array_position(pc.photo_ids, cp.id)
+            ORDER BY cp.id
           )
-          FROM photo_clusters pc
-          JOIN photos cp ON cp.id = ANY(pc.photo_ids)
-          WHERE pc.cluster_type = ANY($1::text[])
-            AND COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = vp.id
+          FROM (
+            -- Deduplicate photos that appear in multiple clusters
+            SELECT DISTINCT ON (p.id) p.*
+            FROM photo_clusters pc
+            JOIN photos p ON p.id = ANY(pc.photo_ids)
+            WHERE pc.cluster_type = ANY($1::text[])
+              AND COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = vp.id
+            ORDER BY p.id
+          ) cp
         ) as cluster_photos
       FROM visible_photos vp
       LEFT JOIN events e ON vp.event_id = e.id
