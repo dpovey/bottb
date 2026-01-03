@@ -193,11 +193,27 @@ function extractSEOData(
   }
 
   const getH1Info = (): { count: number; text: string | null } => {
-    const matches =
-      html.match(/<h1[^>]*>([^<]*(?:<[^/h][^>]*>[^<]*)*)<\/h1>/gi) || []
-    const firstH1 = matches[0]
-    const text = firstH1?.replace(/<[^>]+>/g, '').trim() || null
-    return { count: matches.length, text }
+    // Match H1 tags including those with nested elements (br, span, etc.)
+    // Use a simpler approach: find all H1 opening tags and closing tags
+    const openTags = html.match(/<h1[^>]*>/gi) || []
+    const closeTags = html.match(/<\/h1>/gi) || []
+    // Count is minimum of open/close tags (properly nested H1s)
+    const count = Math.min(openTags.length, closeTags.length)
+
+    // Extract first H1 content for display
+    let text: string | null = null
+    if (count > 0) {
+      // Find content between first <h1...> and </h1>
+      const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)
+      if (h1Match) {
+        // Strip HTML tags and normalize whitespace
+        text = h1Match[1]
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+      }
+    }
+    return { count, text }
   }
 
   const h1Info = getH1Info()
