@@ -708,15 +708,29 @@ export async function getGroupedPhotosWithCount(options: {
               'thumbnail_2x_url', cp.xmp_metadata->>'thumbnail_2x_url',
               'thumbnail_3x_url', cp.xmp_metadata->>'thumbnail_3x_url',
               'medium_url', cp.xmp_metadata->>'medium_url',
-              'large_4k_url', cp.xmp_metadata->>'large_4k_url'
+              'large_4k_url', cp.xmp_metadata->>'large_4k_url',
+              'event_name', cp.event_name,
+              'band_name', cp.band_name,
+              'company_name', cp.company_name,
+              'company_slug', cp.company_slug,
+              'company_icon_url', cp.company_icon_url
             )
             ORDER BY cp.id
           )
           FROM (
-            -- Deduplicate photos that appear in multiple clusters
-            SELECT DISTINCT ON (p.id) p.*
+            -- Deduplicate photos that appear in multiple clusters, with joined metadata
+            SELECT DISTINCT ON (p.id) 
+              p.*,
+              ev.name as event_name,
+              bd.name as band_name,
+              co.name as company_name,
+              bd.company_slug as company_slug,
+              co.icon_url as company_icon_url
             FROM photo_clusters pc
             JOIN photos p ON p.id = ANY(pc.photo_ids)
+            LEFT JOIN events ev ON p.event_id = ev.id
+            LEFT JOIN bands bd ON p.band_id = bd.id
+            LEFT JOIN companies co ON bd.company_slug = co.slug
             WHERE pc.cluster_type = ANY($1::text[])
               AND COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = vp.id
             ORDER BY p.id
