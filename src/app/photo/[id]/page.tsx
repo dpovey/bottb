@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getPhotoById } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
+import { ensurePhotoSlug } from '@/lib/photo-slugs'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -40,13 +41,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const baseUrl = getBaseUrl()
+  // Canonical points to the new SEO-friendly slug route
+  const canonicalSlug = photo.slug || id
 
   return {
     title,
     description,
-    // Canonical points to the new slideshow route
     alternates: {
-      canonical: `${baseUrl}/slideshow/${id}`,
+      canonical: `${baseUrl}/photos/${canonicalSlug}`,
     },
     openGraph: {
       title,
@@ -73,6 +75,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PhotoPage({ params }: Props) {
   const { id } = await params
 
-  // Redirect to the slideshow route
-  redirect(`/slideshow/${id}`)
+  // Try to get/generate a slug for this photo
+  const slug = await ensurePhotoSlug(id)
+
+  // Redirect to the new SEO-friendly slug route
+  redirect(`/photos/${slug || id}`)
 }

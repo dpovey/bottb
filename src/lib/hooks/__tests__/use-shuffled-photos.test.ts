@@ -31,6 +31,8 @@ function createMockPhoto(id: string): Photo {
     event_name: 'Test Event',
     band_name: 'Test Band',
     thumbnail_url: `https://example.com/${id}-thumb.jpg`,
+    slug: `test-band-test-event-${id}`,
+    slug_prefix: 'test-band-test-event',
   }
 }
 

@@ -98,10 +98,10 @@ export function PhotosContent({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  // Shuffle state: null = off, 'true' = shared shuffle, '<seed>' = specific seed
-  // Default to 'true' (shared shuffle) if no shuffle param in URL
+  // Shuffle state: null = off (date order), 'true' = shared shuffle, '<seed>' = specific seed
+  // Default to null (date order) for SEO - consistent content for crawlers
   const [shuffle, setShuffle] = useState<string | null>(
-    searchParams.get('shuffle') ?? 'true'
+    searchParams.get('shuffle') ?? null
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)

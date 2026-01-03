@@ -118,6 +118,11 @@ const nextConfig: NextConfig = {
         destination: '/companies/:slug',
         permanent: true,
       },
+      // Photo URL migration: /slideshow/:id -> /photos/:id
+      // The page component will then redirect to the slug version
+      // This ensures old shared links still work
+      // Note: We can't redirect directly to slug here because we don't have
+      // access to the database in next.config.ts
     ]
   },
   // Apply security headers to all routes

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 import { PhotosContent } from './photos-content'
 import { PublicLayout } from '@/components/layouts'
 import { Skeleton } from '@/components/ui'
 import { getBaseUrl } from '@/lib/seo'
 import { getCachedFilterOptions } from '@/lib/nav-data'
+import { ensurePhotoSlug, isUuid } from '@/lib/photo-slugs'
 
 // Loading fallback for Suspense - shows skeleton grid for better perceived performance
 // Note: No H1 here - the actual content has the H1, avoiding duplicate H1s for SEO
@@ -59,6 +61,8 @@ interface PhotosPageProps {
     eventId?: string
     photographer?: string
     company?: string
+    // Legacy param - redirects to /photos/[slug]
+    photo?: string
   }>
 }
 
@@ -68,6 +72,22 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
     searchParams,
     getCachedFilterOptions(),
   ])
+
+  // Handle legacy ?photo= URLs - redirect to the new /photos/[slug] route
+  if (params.photo) {
+    const photoId = params.photo
+    // If it's a UUID, try to get/generate a slug
+    if (isUuid(photoId)) {
+      const slug = await ensurePhotoSlug(photoId)
+      if (slug) {
+        redirect(`/photos/${slug}`)
+      }
+      // Fallback: redirect using UUID (the new route will handle it)
+      redirect(`/photos/${photoId}`)
+    }
+    // It's already a slug
+    redirect(`/photos/${photoId}`)
+  }
 
   // Support both new (event) and legacy (eventId) param names
   const initialEventId = params.event || params.eventId || null
