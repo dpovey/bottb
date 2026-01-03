@@ -120,7 +120,7 @@ export function Header({
                 alt="BOTTB"
                 width={40}
                 height={40}
-                className="h-10 w-auto sm:hidden transition-transform duration-200 hover:scale-105"
+                className="h-10 w-auto sm:hidden transition-transform duration-200 motion-safe:hover:scale-105"
               />
               {/* Horizontal logo for desktop */}
               <Image
@@ -128,7 +128,7 @@ export function Header({
                 alt="Battle of the Tech Bands"
                 width={160}
                 height={40}
-                className="h-10 w-auto hidden sm:block transition-transform duration-200 hover:scale-105"
+                className="h-10 w-auto hidden sm:block transition-transform duration-200 motion-safe:hover:scale-105"
               />
             </Link>
 

@@ -75,7 +75,7 @@ export function PhotoCard({
         srcSet={srcSet}
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         alt={displayPhoto.original_filename || 'Photo'}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 motion-safe:group-hover:scale-110 ${
           isTransitioning ? 'opacity-70' : 'opacity-100'
         }`}
         style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}

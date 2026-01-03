@@ -115,7 +115,7 @@ const Thumbnail = memo(function Thumbnail({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
+      className={`group shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-opacity ${
         isSelected
           ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg/90 opacity-100'
           : 'opacity-50 hover:opacity-75'
@@ -128,7 +128,7 @@ const Thumbnail = memo(function Thumbnail({
         srcSet={buildThumbnailSrcSet(photo)}
         sizes="64px"
         alt={photo.original_filename || `Photo ${index + 1}`}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover transition-transform duration-200 motion-safe:group-hover:scale-110"
         style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
         // No lazy loading - thumbnails are small (64x64) and horizontal
         // scroll containers don't trigger browser lazy loading reliably

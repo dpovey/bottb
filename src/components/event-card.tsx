@@ -95,7 +95,7 @@ export function EventCard({
 
           {/* Image if available - zooms on hover */}
           {imageUrl && (
-            <div className="absolute inset-0 overflow-hidden group-hover:scale-105 transition-transform duration-500 ease-out">
+            <div className="absolute inset-0 overflow-hidden motion-safe:group-hover:scale-105 transition-transform duration-500 ease-out">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}

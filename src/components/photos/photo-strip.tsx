@@ -271,7 +271,7 @@ export function PhotoStrip({
                     }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
-                    className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
+                    className="group relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
                     aria-label={`Photo ${index + 1} of ${totalCount}`}
                     aria-selected={index === selectedIndex}
                     role="option"
@@ -282,7 +282,7 @@ export function PhotoStrip({
                       srcSet={buildThumbnailSrcSet(photo)}
                       sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
                       alt={photo.original_filename || `Photo ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-110"
                       style={{
                         objectPosition: `${photo.hero_focal_point?.x ?? 50}% ${photo.hero_focal_point?.y ?? 50}%`,
                       }}

@@ -195,7 +195,7 @@ export function VideoCarousel({
                   alt={video.title}
                   fill
                   sizes="(max-width: 640px) 280px, 320px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
                   loading="lazy"
                 />
 

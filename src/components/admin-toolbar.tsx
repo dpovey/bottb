@@ -63,7 +63,7 @@ export function AdminToolbar() {
           'shadow-lg shadow-black/40',
           'flex items-center justify-center',
           'text-accent hover:text-accent-light',
-          'hover:border-accent hover:scale-105',
+          'hover:border-accent motion-safe:hover:scale-105',
           'transition-all duration-200'
         )}
         title="Open Admin Panel"
