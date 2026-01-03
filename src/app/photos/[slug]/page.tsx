@@ -24,6 +24,15 @@ interface Props {
 }
 
 /**
+ * Extract the photo number from a slug (e.g., "band-event-85" -> "85")
+ */
+function getPhotoNumberFromSlug(slug: string | null): string | null {
+  if (!slug) return null
+  const match = slug.match(/-(\d+)$/)
+  return match ? match[1] : null
+}
+
+/**
  * Build metadata for the photo page
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -36,14 +45,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  // Build a descriptive title
+  // Extract photo number from slug for uniqueness
+  const photoNumber = getPhotoNumberFromSlug(photo.slug)
+
+  // Build a descriptive title with photo number
   const parts: string[] = []
   if (photo.band_name) parts.push(photo.band_name)
   if (photo.event_name) parts.push(photo.event_name)
-  const title =
-    parts.length > 0
-      ? `${parts.join(' at ')} | Battle of the Tech Bands`
-      : 'Battle of the Tech Bands'
+  const baseTitle = parts.length > 0 ? parts.join(' at ') : 'Photo'
+  const title = photoNumber
+    ? `${baseTitle} #${photoNumber} | Battle of the Tech Bands`
+    : `${baseTitle} | Battle of the Tech Bands`
 
   // Build description
   let description = 'A photo from Battle of the Tech Bands'
@@ -113,7 +125,10 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Build H1 text for SEO
+  // Extract photo number from slug for uniqueness
+  const photoNumber = getPhotoNumberFromSlug(photo.slug)
+
+  // Build H1 text for SEO (with photo number for uniqueness)
   let h1Text = 'Photo from Battle of the Tech Bands'
   if (photo.band_name && photo.event_name) {
     h1Text = `${photo.band_name} at ${photo.event_name}`
@@ -121,6 +136,9 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     h1Text = `${photo.band_name} at Battle of the Tech Bands`
   } else if (photo.event_name) {
     h1Text = `Photo from ${photo.event_name}`
+  }
+  if (photoNumber) {
+    h1Text += ` #${photoNumber}`
   }
 
   // Build breadcrumbs
