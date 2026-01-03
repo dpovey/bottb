@@ -214,3 +214,4 @@ const handleDeleteCluster: ProtectedApiHandler = async (
 export const GET = withAdminProtection(handleGetCluster)
 export const PATCH = withAdminProtection(handlePatchCluster)
 export const DELETE = withAdminProtection(handleDeleteCluster)
+
