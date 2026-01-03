@@ -20,6 +20,7 @@ interface Props {
     event?: string
     photographer?: string
     company?: string
+    shuffle?: string
   }>
 }
 
@@ -141,10 +142,19 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     h1Text += ` #${photoNumber}`
   }
 
+  // Build gallery URL with filters preserved
+  const galleryParams = new URLSearchParams()
+  if (filters.event) galleryParams.set('event', filters.event)
+  if (filters.photographer)
+    galleryParams.set('photographer', filters.photographer)
+  if (filters.company) galleryParams.set('company', filters.company)
+  if (filters.shuffle) galleryParams.set('shuffle', filters.shuffle)
+  const galleryUrl = `/photos${galleryParams.toString() ? `?${galleryParams.toString()}` : ''}`
+
   // Build breadcrumbs
   const breadcrumbs: { label: string; href?: string }[] = [
     { label: 'Home', href: '/' },
-    { label: 'Photos', href: '/photos' },
+    { label: 'Photos', href: galleryUrl },
   ]
   if (photo.event_name) {
     breadcrumbs.push({
@@ -164,6 +174,7 @@ export default async function PhotoPage({ params, searchParams }: Props) {
   if (filters.photographer)
     slideshowParams.set('photographer', filters.photographer)
   if (filters.company) slideshowParams.set('company', filters.company)
+  if (filters.shuffle) slideshowParams.set('shuffle', filters.shuffle)
   const slideshowUrl = `/slideshow/${photo.id}${slideshowParams.toString() ? `?${slideshowParams.toString()}` : ''}`
 
   return (
@@ -280,7 +291,7 @@ export default async function PhotoPage({ params, searchParams }: Props) {
         {/* Navigation */}
         <div className="mt-8 text-sm text-text-muted">
           <Link
-            href="/photos"
+            href={galleryUrl}
             className="flex items-center gap-1 hover:text-text transition-colors"
           >
             <ChevronLeftIcon size={16} />
