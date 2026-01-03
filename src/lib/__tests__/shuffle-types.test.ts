@@ -139,7 +139,7 @@ describe('buildPhotoApiParams', () => {
     expect(params.get('skipMeta')).toBe('true')
   })
 
-  it('builds complete params for gallery request', () => {
+  it('builds complete params for gallery request (with default groupTypes)', () => {
     const params = buildPhotoApiParams({
       eventId: 'event-1',
       shuffle: 'my-seed',
@@ -147,9 +147,38 @@ describe('buildPhotoApiParams', () => {
       limit: 50,
     })
 
+    // groupTypes defaults to 'near_duplicate,scene' for consistent photo grouping
+    expect(params.toString()).toBe(
+      'event=event-1&shuffle=my-seed&page=1&limit=50&groupTypes=near_duplicate%2Cscene'
+    )
+  })
+
+  it('allows groupTypes to be disabled with false', () => {
+    const params = buildPhotoApiParams({
+      eventId: 'event-1',
+      shuffle: 'my-seed',
+      page: 1,
+      limit: 50,
+      groupTypes: false,
+    })
+
+    // groupTypes should not be included when explicitly disabled
     expect(params.toString()).toBe(
       'event=event-1&shuffle=my-seed&page=1&limit=50'
     )
+  })
+
+  it('sets order=date when shuffle is disabled', () => {
+    const params = buildPhotoApiParams({
+      eventId: 'event-1',
+      shuffle: null,
+      page: 1,
+      limit: 50,
+    })
+
+    // When shuffle is disabled, order defaults to 'date' (chronological)
+    expect(params.get('order')).toBe('date')
+    expect(params.has('shuffle')).toBe(false)
   })
 })
 

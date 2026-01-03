@@ -49,6 +49,13 @@ export interface UseShuffledPhotosOptions {
   initialTotalCount?: number
   /** Callback when shuffle state changes */
   onShuffleChange?: (shuffle: ShuffleState) => void
+  /**
+   * Group types for photo clustering.
+   * - undefined: uses default ('near_duplicate,scene') via buildPhotoApiParams
+   * - string: custom group types
+   * - false: disable grouping entirely
+   */
+  groupTypes?: string | false
 }
 
 /**
@@ -131,6 +138,7 @@ export function useShuffledPhotos(
     initialPhotos,
     initialTotalCount,
     onShuffleChange,
+    groupTypes,
   } = options
 
   // Photos state
@@ -189,6 +197,7 @@ export function useShuffledPhotos(
         page,
         limit: pageSize,
         skipMeta: isLoadMore, // Skip metadata on load-more
+        groupTypes,
       })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
@@ -321,6 +330,7 @@ export function useShuffledPhotos(
     companySlug,
     shuffle.enabled,
     shuffle.seed,
+    groupTypes,
   ])
 
   return {

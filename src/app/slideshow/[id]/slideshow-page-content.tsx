@@ -121,6 +121,7 @@ export function SlideshowPageContent({
 
     try {
       // Use type-safe buildPhotoApiParams to ensure consistent API calls
+      // groupTypes defaults to 'near_duplicate,scene', order defaults to 'date'
       const params = buildPhotoApiParams({
         eventId: selectedEventId || undefined,
         photographer: selectedPhotographer || undefined,
@@ -128,9 +129,6 @@ export function SlideshowPageContent({
         shuffle, // Uses 'shuffle' param, not deprecated 'order=random&seed=X'
         limit: 50,
       })
-
-      // Enable photo grouping (same as gallery) for consistent experience
-      params.set('groupTypes', 'near_duplicate,scene')
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (res.ok) {
