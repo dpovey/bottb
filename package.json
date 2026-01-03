@@ -53,7 +53,8 @@
     "e2e:restore": "docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' bottb_test && docker compose -f docker-compose.test.yml exec -T postgres-test psql -U test bottb_test < e2e/fixtures/test-db.sql",
     "e2e:smart-restore": "tsx e2e/smart-restore.ts",
     "e2e:test": "playwright test",
-    "e2e": "pnpm e2e:docker:up && pnpm e2e:smart-restore && pnpm e2e:test"
+    "e2e": "pnpm e2e:docker:up && pnpm e2e:smart-restore && pnpm e2e:test",
+    "seo:audit": "dotenv -e .env.local -- tsx src/scripts/seo-audit.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.2",

@@ -2,6 +2,67 @@
 
 Search engine optimization implementation across the application.
 
+## SEO Audit
+
+Run the SEO audit script to validate all public pages:
+
+```bash
+# Start the dev server first
+pnpm dev:restart
+
+# Run audit against local server (default)
+pnpm seo:audit
+
+# Run against production
+pnpm seo:audit --url=https://www.battleofthetechbands.com
+
+# Additional options
+pnpm seo:audit --verbose   # Show detailed output per page
+pnpm seo:audit --json      # Output as JSON (for CI)
+pnpm seo:audit --max=10    # Limit to first 10 pages (for testing)
+```
+
+The audit checks:
+
+- HTTP status (must be 200)
+- Page title uniqueness and format
+- Meta description length (50-160 chars)
+- Canonical URLs
+- OpenGraph tags (og:title, og:description)
+- H1 tag (exactly one per page)
+- Duplicate title detection
+
+## SEO Checklist for New Pages
+
+When creating a new page, ensure:
+
+| Requirement        | Details                                            |
+| ------------------ | -------------------------------------------------- |
+| **Title**          | `{Unique Identifier} \| Battle of the Tech Bands`  |
+| **Description**    | 50-160 chars, include key terms                    |
+| **Canonical URL**  | `alternates: { canonical: \`\${baseUrl}/path\` }`  |
+| **OpenGraph tags** | og:title, og:description, og:image (if applicable) |
+| **H1 tag**         | Exactly one, matches page content                  |
+| **Sitemap entry**  | Add to `src/app/sitemap.ts` if dynamic             |
+| **robots.txt**     | Ensure not blocked (unless intentional)            |
+
+### Description Guidelines
+
+- **Length**: 50-160 characters (optimal: 120-155)
+- **Content**: Summarize what visitors will find
+- **Keywords**: Include naturally, don't stuff
+- **Action**: For interactive pages, hint at what users can do
+
+```typescript
+// ✅ Good descriptions
+description: 'Browse photos from Battle of the Tech Bands events. Filter by event, photographer, or company.'
+description: `${band.name} from ${company} performing at ${event.name}. View scores, setlist, photos and videos.`
+
+// ❌ Bad descriptions
+description: 'Photos' // Too short
+description: 'Battle of the Tech Bands photos gallery browse filter search event band company photographer...' // Keyword stuffed
+```
+
 ## Metadata System
 
 ### Static Metadata
@@ -162,8 +223,16 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 Disallow: /vote/
+Disallow: /live/
 Sitemap: https://bottb.com/sitemap.xml
 ```
+
+Blocked paths:
+
+- `/admin/` - Admin dashboard (authentication required)
+- `/api/` - API endpoints (not for human visitors)
+- `/vote/` - Voting pages (event-specific, behind QR codes)
+- `/live/` - Live event tools (QR codes, crowd noise recording)
 
 ## URL Structure
 
@@ -207,11 +276,12 @@ Twitter card: `summary_large_image`
 
 ## Key Files
 
-| File                    | Purpose               |
-| ----------------------- | --------------------- |
-| `src/lib/seo.ts`        | Base URL utility      |
-| `src/app/sitemap.ts`    | Sitemap generation    |
-| `src/app/robots.ts`     | Robots.txt generation |
-| `src/components/seo/`   | JSON-LD components    |
-| `*/opengraph-image.tsx` | Dynamic OG images     |
-| `public/llms.txt`       | AI crawler info       |
+| File                       | Purpose               |
+| -------------------------- | --------------------- |
+| `src/lib/seo.ts`           | Base URL utility      |
+| `src/app/sitemap.ts`       | Sitemap generation    |
+| `src/app/robots.ts`        | Robots.txt generation |
+| `src/components/seo/`      | JSON-LD components    |
+| `*/opengraph-image.tsx`    | Dynamic OG images     |
+| `public/llms.txt`          | AI crawler info       |
+| `src/scripts/seo-audit.ts` | SEO validation script |
