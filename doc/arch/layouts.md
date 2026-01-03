@@ -19,9 +19,56 @@ Three primary layout patterns for different contexts.
 
 ## AdminLayout
 
-- Sidebar navigation (Dashboard, Events, Videos, Social)
+- Sidebar navigation with hierarchical sections
 - Topbar with page title and user info
 - Main content area with padding
+
+### Admin Sidebar Structure
+
+The admin sidebar organizes navigation into logical sections. Configuration is in `src/components/layouts/admin-sidebar.tsx`.
+
+**Current sections:**
+
+| Section   | Items                            | Collapsible |
+| --------- | -------------------------------- | ----------- |
+| (top)     | Dashboard                        | No          |
+| Events    | Events                           | No          |
+| Photos    | Photos, Grouping, People, Heroes | Yes         |
+| Content   | Videos                           | No          |
+| Directory | Companies, Photographers         | No          |
+| Settings  | Social Accounts                  | No          |
+
+**Section types:**
+
+1. **Header-less section**: Items displayed at top level (Dashboard)
+2. **Labeled section**: Section header shown above items
+3. **Collapsible section**: Can expand/collapse; auto-expands when any child route is active
+
+### Adding New Admin Pages
+
+To add a new page to the sidebar:
+
+1. Create the admin page under `src/app/admin/`
+2. Add an entry to the appropriate section in `navSections` array:
+
+```tsx
+{
+  label: 'My Page',
+  href: '/admin/my-page',
+  icon: <MyIcon className="w-5 h-5" />,
+  matchPath: ['/admin/my-page'],
+}
+```
+
+3. If adding to a collapsible section, items appear nested with smaller text
+4. Use `matchPath` to control when the item shows as active (supports prefix matching for child routes)
+
+### Collapsible Section Behavior
+
+- Sections with `collapsible: true` show a chevron indicator
+- Auto-expands when navigating to any child route
+- Remembers user's manual expand/collapse preference
+- Items in collapsible sections are indented and use smaller text
 
 ## PublicLayout
 
