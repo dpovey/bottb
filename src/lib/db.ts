@@ -636,24 +636,28 @@ export async function getGroupedPhotosWithCount(options: {
     // Build the full query with parameterized values
     // Using sqlQuery for dynamic ORDER BY clause
     const queryText = `
-      WITH photo_cluster_membership AS (
-        -- Map each photo to its cluster representative
-        SELECT 
-          unnest(pc.photo_ids) as photo_id,
-          pc.id as cluster_id,
-          pc.photo_ids as cluster_photo_ids,
-          COALESCE(pc.representative_photo_id, pc.photo_ids[1]) as representative_id
-        FROM photo_clusters pc
-        WHERE pc.cluster_type = ANY($1::text[])
-      ),
-      visible_photos AS (
+      WITH visible_photos AS (
         -- Photos that should be displayed: non-clustered OR cluster representatives
-        SELECT DISTINCT p.*
+        -- Using EXISTS to avoid duplicate rows from multiple cluster memberships
+        SELECT p.*
         FROM photos p
-        LEFT JOIN photo_cluster_membership pcm ON p.id = pcm.photo_id
         LEFT JOIN bands b ON p.band_id = b.id
         WHERE 
-          (pcm.photo_id IS NULL OR p.id = pcm.representative_id)
+          (
+            -- Not in any cluster of the requested types
+            NOT EXISTS (
+              SELECT 1 FROM photo_clusters pc 
+              WHERE p.id = ANY(pc.photo_ids) 
+                AND pc.cluster_type = ANY($1::text[])
+            )
+            OR
+            -- Is the representative of at least one cluster
+            EXISTS (
+              SELECT 1 FROM photo_clusters pc 
+              WHERE COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = p.id 
+                AND pc.cluster_type = ANY($1::text[])
+            )
+          )
           AND ($2::text IS NULL OR p.event_id = $2)
           AND ($3::text IS NULL OR p.band_id = $3)
           AND ($4::text IS NULL OR p.photographer = $4)
