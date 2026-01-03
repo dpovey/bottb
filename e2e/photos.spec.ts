@@ -216,17 +216,14 @@ test.describe('Photo Grouping API', () => {
 
 test.describe('Slideshow Keyboard Navigation', () => {
   test('arrow keys navigate between photos', async ({ page }) => {
-    await page.goto('/photos')
-    await page.waitForLoadState('networkidle')
+    // Navigate directly to slideshow with a test photo ID
+    // Test photos are seeded with known IDs
+    await page.goto('/slideshow/11111111-1111-1111-1111-111111111111', {
+      waitUntil: 'networkidle',
+    })
 
-    // Click first photo to open slideshow
-    const photoLink = page.locator('a[href*="/slideshow/"]').first()
-    if ((await photoLink.count()) === 0) {
-      test.skip()
-      return
-    }
-    await photoLink.click()
-    await page.waitForURL(/\/slideshow\//)
+    // Wait for slideshow to load
+    await page.waitForSelector('.slideshow-main', { timeout: 10000 })
 
     // Get initial photo counter - the counter shows current position as first number
     const getCounter = () =>

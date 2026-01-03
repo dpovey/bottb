@@ -141,32 +141,14 @@ function assertImageFitsContainer(
 test.describe('Slideshow Responsive Behavior', () => {
   // Navigate to slideshow before each test
   test.beforeEach(async ({ page }) => {
-    // Navigate to photos page first - use reload instead of goto for cleaner state
-    await page.goto('/photos', { waitUntil: 'networkidle' })
-
-    // Wait for photos to load - target photo cards specifically
-    const photoCard = page
-      .locator('.aspect-square.rounded-lg.overflow-hidden')
-      .first()
-
-    // Wait for photos to appear (up to 15 seconds)
-    try {
-      await photoCard.waitFor({ state: 'visible', timeout: 15000 })
-    } catch {
-      // If no photos in gallery, skip the test
-      test.skip()
-      return
-    }
-
-    // Click on the first photo card
-    await photoCard.click({ force: true })
-
-    // Wait for navigation to slideshow page
-    await page.waitForURL(/\/slideshow\//, { timeout: 15000 })
+    // Navigate directly to slideshow with a test photo ID
+    // Test photos are seeded with known IDs (11111111-1111-1111-1111-111111111111, etc.)
+    await page.goto('/slideshow/11111111-1111-1111-1111-111111111111', {
+      waitUntil: 'networkidle',
+    })
 
     // Wait for slideshow to fully load - with retry logic for resilience
     // The slideshow shows "Loading photo..." before .slideshow-main appears
-    // After many tests, the API might be slower to respond
     const maxRetries = 3
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -519,24 +501,12 @@ test.describe('Browser-Specific Behavior', () => {
     page,
     browserName,
   }) => {
-    // Navigate to slideshow
-    await page.goto('/photos')
-    await page.waitForLoadState('networkidle')
+    // Navigate directly to slideshow with a test photo ID
+    await page.goto('/slideshow/11111111-1111-1111-1111-111111111111', {
+      waitUntil: 'networkidle',
+    })
 
-    // Wait for photos to load - target photo cards specifically
-    const photoCard = page
-      .locator('.aspect-square.rounded-lg.overflow-hidden')
-      .first()
-    try {
-      await photoCard.waitFor({ state: 'visible', timeout: 15000 })
-    } catch {
-      test.skip()
-      return
-    }
-    await photoCard.click({ force: true })
-    await page.waitForURL(/\/slideshow\//, { timeout: 15000 })
-
-    // Wait for slideshow to be ready (this was missing and caused timeouts!)
+    // Wait for slideshow to be ready
     await page.waitForSelector('.slideshow-main', { timeout: 10000 })
 
     // Test all viewport sizes and record metrics
