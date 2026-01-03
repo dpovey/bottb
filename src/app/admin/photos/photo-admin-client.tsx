@@ -403,7 +403,7 @@ export function PhotoAdminClient({
                       className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
                     />
                   </th>
-                  <th className="px-4 py-3 w-16">Preview</th>
+                  <th className="px-4 py-3 w-32">Preview</th>
                   <th className="px-4 py-3">Event</th>
                   <th className="px-4 py-3">Band</th>
                   <th className="px-4 py-3">Photographer</th>
@@ -509,18 +509,31 @@ function PhotoRow({
         />
       </td>
       <td className="px-4 py-3">
-        <a
-          href={`/slideshow/${photo.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.thumbnail_url || photo.blob_url}
-            alt={photo.original_filename || 'Photo'}
-            className="w-12 h-12 object-cover rounded-lg hover:opacity-80 transition-opacity"
-          />
-        </a>
+        <div className="relative group/thumb">
+          <a
+            href={`/slideshow/${photo.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.thumbnail_url || photo.blob_url}
+              alt={photo.original_filename || 'Photo'}
+              className="w-24 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
+            />
+          </a>
+          {/* Hover popup with larger image - fixed position to escape overflow */}
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] hidden group-hover/thumb:block pointer-events-none">
+            <div className="bg-black/95 p-3 rounded-xl shadow-2xl border border-white/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.blob_url}
+                alt={photo.original_filename || 'Photo'}
+                className="max-w-md max-h-[70vh] w-auto h-auto rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
       </td>
       <td className="px-4 py-3">
         {isEditing ? (
