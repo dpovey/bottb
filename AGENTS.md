@@ -35,10 +35,21 @@ Key files:
    git worktree add .worktrees/{description} -b {type}/{description} origin/main
    cd .worktrees/{description}
    pnpm install
-   cp ../.env.local .
+
+   # Copy environment variables and assign a unique port
+   cp /Users/deapovey/src/bottb/.env.local .
+   # Find next available port starting from 3030
+   PORT=3030
+   while lsof -i :$PORT >/dev/null 2>&1 || grep -rq "^PORT=$PORT$" /Users/deapovey/src/bottb/.worktrees/*/.env.local 2>/dev/null; do
+     PORT=$((PORT + 1))
+   done
+   echo "PORT=$PORT" >> .env.local
+   echo "Assigned port $PORT to this worktree"
    ```
 
    > **Naming**: Review the `git worktree list` output and choose a unique directory name. If a worktree with your intended name already exists, either continue work there or pick a different name (e.g., append `-v2` or use a more specific description).
+
+   > **Ports**: Each worktree gets a unique port (3030, 3031, 3032...) so multiple dev servers can run simultaneously. The port is stored in `.env.local` and used automatically by `pnpm dev` and `pnpm dev:restart`.
 
 4. **Exception**: Trivial one-line fixes may go directly to main - ask user first
 
@@ -136,10 +147,17 @@ cd .worktrees/feature-name
 # Install dependencies (fast - pnpm shares packages across worktrees)
 pnpm install
 
-# Copy environment variables (not tracked by git)
-cp ../.env.local .
+# Copy environment variables and assign a unique port
+cp /Users/deapovey/src/bottb/.env.local .
+# Find next available port starting from 3030
+PORT=3030
+while lsof -i :$PORT >/dev/null 2>&1 || grep -rq "^PORT=$PORT$" /Users/deapovey/src/bottb/.worktrees/*/.env.local 2>/dev/null; do
+  PORT=$((PORT + 1))
+done
+echo "PORT=$PORT" >> .env.local
+echo "Assigned port $PORT to this worktree"
 
-# Start development
+# Start development (will use the PORT from .env.local)
 pnpm dev:restart
 ```
 
@@ -213,9 +231,14 @@ git worktree lock .worktrees/dir       # Prevent pruning (for removable media)
 
 ## Development Server
 
-**Always use `pnpm dev:restart` to start the dev server.** This kills any existing server on port 3030 and clears the `.next` cache before starting. Never use `pnpm dev` directly as it can create multiple server instances.
+**Always use `pnpm dev:restart` to start the dev server.** This kills any existing server on the configured port and clears the `.next` cache before starting. Never use `pnpm dev` directly as it can create multiple server instances.
 
-The dev server runs on **port 3030** (not the default 3000).
+The dev server port is configured via the `PORT` environment variable in `.env.local`:
+
+- **Main repo**: Uses port 3030 by default (no `PORT` in `.env.local`)
+- **Worktrees**: Each worktree has a unique port (3031, 3032, etc.) set in its `.env.local`
+
+This allows multiple dev servers to run simultaneously across different worktrees. The port assignment happens automatically when creating a new worktree (see "Starting New Work" above).
 
 ## Workflow
 
