@@ -173,6 +173,89 @@ const Slide = memo(function Slide({
   // On tablet/desktop: constrained size with rounded corners and shadow
   const isMobileOrPlaying = isMobile || isPlaying
 
+  // Track the image element to calculate rendered image bounds for badge positioning
+  const imgRef = useRef<HTMLImageElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [badgePosition, setBadgePosition] = useState<{
+    bottom: number
+    right: number
+  } | null>(null)
+
+  // Calculate the actual rendered image bounds within the object-contain element
+  const updateBadgePosition = useCallback(() => {
+    const img = imgRef.current
+    const container = containerRef.current
+    if (!img || !container) return
+
+    // Get the natural dimensions
+    const naturalWidth = img.naturalWidth
+    const naturalHeight = img.naturalHeight
+    if (!naturalWidth || !naturalHeight) return
+
+    // Get the element dimensions
+    const elementWidth = img.clientWidth
+    const elementHeight = img.clientHeight
+    const containerRect = container.getBoundingClientRect()
+    const imgRect = img.getBoundingClientRect()
+
+    // Calculate the aspect ratios
+    const naturalAspect = naturalWidth / naturalHeight
+    const elementAspect = elementWidth / elementHeight
+
+    // Calculate rendered image dimensions within object-contain
+    let renderedWidth: number
+    let renderedHeight: number
+    if (naturalAspect > elementAspect) {
+      // Image is wider - constrained by width
+      renderedWidth = elementWidth
+      renderedHeight = elementWidth / naturalAspect
+    } else {
+      // Image is taller - constrained by height
+      renderedHeight = elementHeight
+      renderedWidth = elementHeight * naturalAspect
+    }
+
+    // Calculate the offset from the element bounds to the rendered image bounds
+    const horizontalPadding = (elementWidth - renderedWidth) / 2
+    const verticalPadding = (elementHeight - renderedHeight) / 2
+
+    // Calculate position relative to container
+    const imgOffsetLeft = imgRect.left - containerRect.left
+    const imgOffsetTop = imgRect.top - containerRect.top
+
+    // Badge position: offset from container bottom-right to image bottom-right
+    const right =
+      containerRect.width - (imgOffsetLeft + elementWidth - horizontalPadding)
+    const bottom =
+      containerRect.height - (imgOffsetTop + elementHeight - verticalPadding)
+
+    // Add a small margin from the edge (12px on mobile, 16px on desktop)
+    const margin = window.innerWidth < 640 ? 12 : 16
+    setBadgePosition({ bottom: bottom + margin, right: right + margin })
+  }, [])
+
+  // Update badge position when image loads or resizes
+  useEffect(() => {
+    const img = imgRef.current
+    if (!img) return
+
+    // Update when image loads
+    const handleLoad = () => updateBadgePosition()
+    img.addEventListener('load', handleLoad)
+
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateBadgePosition)
+    resizeObserver.observe(img)
+
+    // Initial calculation if image is already loaded
+    if (img.complete) updateBadgePosition()
+
+    return () => {
+      img.removeEventListener('load', handleLoad)
+      resizeObserver.disconnect()
+    }
+  }, [updateBadgePosition])
+
   // Handle badge click to cycle through cluster
   const handleBadgeClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -180,9 +263,13 @@ const Slide = memo(function Slide({
   }
 
   return (
-    <div className="relative flex items-center justify-center w-full h-full">
+    <div
+      ref={containerRef}
+      className="relative flex items-center justify-center w-full h-full"
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={photo.blob_url}
         srcSet={srcSet}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 80vw"
@@ -194,11 +281,12 @@ const Slide = memo(function Slide({
         }`}
         draggable={false}
       />
-      {/* Cluster badge - bottom-right corner, positioned relative to the flex container */}
-      {showClusterBadge && !isPlaying && (
+      {/* Cluster badge - positioned at the actual image corner */}
+      {showClusterBadge && !isPlaying && badgePosition && (
         <button
           onClick={handleBadgeClick}
-          className="absolute bottom-20 right-8 sm:bottom-24 sm:right-12 z-30 px-2.5 py-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg"
+          style={{ bottom: badgePosition.bottom, right: badgePosition.right }}
+          className="absolute z-30 px-3 py-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-2 text-white/90 hover:text-white hover:bg-black/80 transition-all cursor-pointer shadow-lg"
           title={`${clusterIndex + 1} of ${clusterSize} similar photos – click to cycle`}
           aria-label={`View ${clusterSize} similar photos (currently ${clusterIndex + 1} of ${clusterSize})`}
         >
