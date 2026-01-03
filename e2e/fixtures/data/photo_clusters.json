@@ -1,0 +1,16 @@
+[
+  {
+    "id": "test-cluster-duplicate-1",
+    "cluster_type": "near_duplicate",
+    "photo_ids": ["test-photo-1", "test-photo-2"],
+    "representative_photo_id": "test-photo-1",
+    "metadata": null
+  },
+  {
+    "id": "test-cluster-scene-1",
+    "cluster_type": "scene",
+    "photo_ids": ["test-photo-3", "test-photo-4", "test-photo-5"],
+    "representative_photo_id": "test-photo-3",
+    "metadata": null
+  }
+]

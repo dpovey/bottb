@@ -76,6 +76,7 @@ Grouping is done at the database query level to ensure correct pagination:
 - **Pagination**: Works correctly - LIMIT 50 returns 50 visible gallery slots
 
 **SQL approach** (CTE-based):
+
 1. `photo_cluster_membership` CTE maps each photo to its cluster representative
 2. `visible_photos` CTE filters to representatives + non-clustered
 3. Main query joins cluster photos as JSON array for cycling

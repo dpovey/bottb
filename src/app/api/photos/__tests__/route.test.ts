@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 // Mock the database functions BEFORE importing the route
 vi.mock('@/lib/db', () => ({
   getPhotosWithCount: vi.fn(),
+  getGroupedPhotosWithCount: vi.fn(),
   getAvailablePhotoFilters: vi.fn(),
 }))
 
@@ -17,7 +18,11 @@ import { clearRateLimitStore } from '@/lib/api-protection'
 
 import { NextRequest } from 'next/server'
 import { GET } from '../route'
-import { getPhotosWithCount, getAvailablePhotoFilters } from '@/lib/db'
+import {
+  getPhotosWithCount,
+  getGroupedPhotosWithCount,
+  getAvailablePhotoFilters,
+} from '@/lib/db'
 import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 
 const mockGetCachedPhotos = getCachedPhotos as ReturnType<typeof vi.fn>
@@ -26,6 +31,9 @@ const mockGetCachedPhotoFilters = getCachedPhotoFilters as ReturnType<
 >
 
 const mockGetPhotosWithCount = getPhotosWithCount as ReturnType<typeof vi.fn>
+const mockGetGroupedPhotosWithCount = getGroupedPhotosWithCount as ReturnType<
+  typeof vi.fn
+>
 const mockGetAvailablePhotoFilters = getAvailablePhotoFilters as ReturnType<
   typeof vi.fn
 >
@@ -488,6 +496,170 @@ describe('/api/photos', () => {
           offset: 0,
         })
         expect(response.status).toBe(200)
+      })
+    })
+
+    // groupTypes parameter tests
+    describe('groupTypes parameter', () => {
+      const mockGroupedPhotos = [
+        {
+          id: 'photo-1',
+          blob_url: 'https://example.com/photo1.jpg',
+          event_id: 'event-1',
+          band_id: 'band-1',
+          photographer: 'John Doe',
+          event_name: 'Test Event',
+          band_name: 'Test Band',
+          cluster_photos: null, // Not clustered
+        },
+        {
+          id: 'photo-2',
+          blob_url: 'https://example.com/photo2.jpg',
+          event_id: 'event-1',
+          band_id: 'band-2',
+          photographer: 'Jane Doe',
+          event_name: 'Test Event',
+          band_name: 'Another Band',
+          cluster_photos: [
+            // Representative with 2 grouped photos
+            {
+              id: 'photo-2',
+              blob_url: 'https://example.com/photo2.jpg',
+            },
+            {
+              id: 'photo-3',
+              blob_url: 'https://example.com/photo3.jpg',
+            },
+          ],
+        },
+      ] as unknown as import('@/lib/db').PhotoWithCluster[]
+
+      it('groupTypes=near_duplicate uses grouped query', async () => {
+        mockGetGroupedPhotosWithCount.mockResolvedValue({
+          photos: mockGroupedPhotos,
+          total: 50, // Total visible photos (not raw)
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?groupTypes=near_duplicate'
+        )
+        const response = await GET(request)
+
+        expect(mockGetGroupedPhotosWithCount).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupTypes: ['near_duplicate'],
+            limit: 50,
+            offset: 0,
+          })
+        )
+        expect(mockGetPhotosWithCount).not.toHaveBeenCalled()
+        expect(response.status).toBe(200)
+
+        const data = await response.json()
+        expect(data.photos).toEqual(mockGroupedPhotos)
+        expect(data.pagination.total).toBe(50)
+      })
+
+      it('groupTypes=near_duplicate,scene groups both types', async () => {
+        mockGetGroupedPhotosWithCount.mockResolvedValue({
+          photos: mockGroupedPhotos,
+          total: 40,
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?groupTypes=near_duplicate,scene'
+        )
+        const response = await GET(request)
+
+        expect(mockGetGroupedPhotosWithCount).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupTypes: ['near_duplicate', 'scene'],
+          })
+        )
+        expect(response.status).toBe(200)
+      })
+
+      it('groupTypes with shuffle uses seed', async () => {
+        mockGetGroupedPhotosWithCount.mockResolvedValue({
+          photos: mockGroupedPhotos,
+          total: 50,
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?groupTypes=near_duplicate&shuffle=test-seed'
+        )
+        const response = await GET(request)
+
+        expect(mockGetGroupedPhotosWithCount).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupTypes: ['near_duplicate'],
+            orderBy: 'random',
+            seed: expect.any(Number), // Converted to numeric seed
+          })
+        )
+        expect(response.status).toBe(200)
+
+        const data = await response.json()
+        expect(data.seed).toBe('test-seed')
+      })
+
+      it('groupTypes with filters passes all params', async () => {
+        mockGetGroupedPhotosWithCount.mockResolvedValue({
+          photos: mockGroupedPhotos,
+          total: 20,
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?groupTypes=scene&event=event-1&photographer=John%20Doe'
+        )
+        const response = await GET(request)
+
+        expect(mockGetGroupedPhotosWithCount).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupTypes: ['scene'],
+            eventId: 'event-1',
+            photographer: 'John Doe',
+          })
+        )
+        expect(response.status).toBe(200)
+      })
+
+      it('no groupTypes param uses regular query', async () => {
+        mockGetPhotosWithCount.mockResolvedValue({
+          photos: mockPhotos,
+          total: 100,
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest('http://localhost/api/photos')
+        const response = await GET(request)
+
+        expect(mockGetPhotosWithCount).toHaveBeenCalled()
+        expect(mockGetGroupedPhotosWithCount).not.toHaveBeenCalled()
+        expect(response.status).toBe(200)
+      })
+
+      it('returns cluster_photos for grouped photos', async () => {
+        mockGetGroupedPhotosWithCount.mockResolvedValue({
+          photos: mockGroupedPhotos,
+          total: 50,
+        })
+        mockGetCachedPhotoFilters.mockResolvedValue(mockFilters)
+
+        const request = new NextRequest(
+          'http://localhost/api/photos?groupTypes=near_duplicate'
+        )
+        const response = await GET(request)
+
+        const data = await response.json()
+        // First photo has no cluster
+        expect(data.photos[0].cluster_photos).toBeNull()
+        // Second photo has cluster with 2 photos
+        expect(data.photos[1].cluster_photos).toHaveLength(2)
       })
     })
   })
