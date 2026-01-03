@@ -294,6 +294,17 @@ If docs need updating, do it now before Step 2.
 
 All four must pass with exit code 0. If in doubt, ask before committing.
 
+### FINAL STEP BEFORE PUSHING
+
+Ask yourself
+
+- Have I completed the assessment
+- Have run the checks (including running the format to fix new files)
+- Does everything pass, even stuff I didn't change?
+- Do I need to update doc
+- Do I need to update tests
+- If the answer is no, do these things, if unsure ask the user what they want to do.
+
 ### File-Scoped Commands
 
 For faster validation during development:
