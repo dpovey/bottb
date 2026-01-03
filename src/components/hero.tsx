@@ -37,7 +37,7 @@ export function Hero({
   title,
   subtitle,
   backgroundImage,
-  backgroundImageHigh,
+  backgroundImageHigh: _backgroundImageHigh, // Kept for backwards compat, no longer used
   focalPoint = { x: 50, y: 50 },
   actions,
   size = 'lg',
@@ -62,11 +62,11 @@ export function Hero({
       {backgroundImage ? (
         <FocalPointImage
           src={backgroundImage}
-          srcHigh={backgroundImageHigh}
           alt=""
           focalPoint={focalPoint}
           priority
-          sizes="100vw"
+          // Use smart default sizes from FocalPointImage (caps at 1920px)
+          // which prevents loading 4K images on standard displays
         />
       ) : (
         // Gradient fallback
