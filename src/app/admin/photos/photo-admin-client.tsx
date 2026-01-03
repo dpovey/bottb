@@ -509,7 +509,7 @@ function PhotoRow({
         />
       </td>
       <td className="px-4 py-3">
-        <div className="relative group">
+        <div className="relative group/thumb">
           <a
             href={`/slideshow/${photo.id}`}
             target="_blank"
@@ -522,14 +522,14 @@ function PhotoRow({
               className="w-24 h-24 object-cover rounded-lg hover:opacity-80 transition-opacity"
             />
           </a>
-          {/* Hover popup with larger image */}
-          <div className="absolute left-full top-0 ml-2 z-50 hidden group-hover:block pointer-events-none">
-            <div className="bg-black/90 p-2 rounded-xl shadow-2xl border border-white/20">
+          {/* Hover popup with larger image - fixed position to escape overflow */}
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] hidden group-hover/thumb:block pointer-events-none">
+            <div className="bg-black/95 p-3 rounded-xl shadow-2xl border border-white/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.blob_url}
                 alt={photo.original_filename || 'Photo'}
-                className="w-80 h-auto rounded-lg"
+                className="max-w-md max-h-[70vh] w-auto h-auto rounded-lg"
               />
             </div>
           </div>
