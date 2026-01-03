@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Photo, Event } from '@/lib/db'
+import { Photo, Event, PhotoWithCluster } from '@/lib/db'
 import {
   PhotoGrid,
   type GridSize,
@@ -30,7 +30,7 @@ interface AvailableFilters {
 }
 
 interface PhotosResponse {
-  photos: Photo[]
+  photos: PhotoWithCluster[]
   pagination: {
     page: number
     limit: number
@@ -65,17 +65,6 @@ interface StoredFilters {
   groupScenes?: boolean
 }
 
-// API response for clusters endpoint
-interface ClustersResponse {
-  clusters: Array<{
-    id: string
-    photo_ids: string[]
-    representative_photo_id: string | null
-    cluster_type: string
-  }>
-  total: number
-}
-
 export function PhotosContent({
   initialEventId = null,
   initialPhotographer = null,
@@ -85,7 +74,7 @@ export function PhotosContent({
 }: PhotosContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [photos, setPhotos] = useState<Photo[]>([])
+  const [photos, setPhotos] = useState<PhotoWithCluster[]>([])
   // Initialize with SSR data if available to prevent layout shift
   const [events, setEvents] = useState<Event[]>(
     initialFilterOptions?.events.map((e) => ({
@@ -124,8 +113,6 @@ export function PhotosContent({
   const [groupScenes, setGroupScenes] = useState<boolean>(
     searchParams.get('groupScenes') !== 'false'
   )
-  // Cluster data for grouping similar photos
-  const [clusters, setClusters] = useState<ClustersResponse['clusters']>([])
   // Map of representative photo ID to cluster data (photos + current display index)
   const [clusterMap, setClusterMap] = useState<ClusterMap>(new Map())
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -425,98 +412,42 @@ export function PhotosContent({
     fetchFilters()
   }, [initialFilterOptions])
 
-  // Reset photos when filters or shuffle change
+  // Reset photos when filters, shuffle, or grouping changes
   useEffect(() => {
     setPhotos([])
     loadedPhotoIds.current = new Set()
     currentPage.current = 1
     setLoading(true)
-  }, [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle])
+  }, [
+    selectedEventId,
+    selectedPhotographer,
+    selectedCompanySlug,
+    shuffle,
+    groupDuplicates,
+    groupScenes,
+  ])
 
-  // Fetch clusters for grouping similar photos
-  useEffect(() => {
-    async function fetchClusters() {
-      try {
-        const params = new URLSearchParams()
-        if (selectedEventId) params.set('eventId', selectedEventId)
-
-        // Build types parameter based on enabled grouping options
-        const types: string[] = []
-        if (groupDuplicates) types.push('near_duplicate')
-        if (groupScenes) types.push('scene')
-        params.set('types', types.join(','))
-
-        const res = await fetch(`/api/photos/clusters?${params.toString()}`)
-        if (res.ok) {
-          const data: ClustersResponse = await res.json()
-          setClusters(data.clusters)
-        }
-      } catch (error) {
-        console.error('Failed to fetch clusters:', error)
-      }
-    }
-
-    // Only fetch if at least one grouping option is enabled
-    const anyGroupingEnabled = groupDuplicates || groupScenes
-    if (anyGroupingEnabled && filtersInitialized) {
-      fetchClusters()
-    } else {
-      setClusters([])
-    }
-  }, [selectedEventId, groupDuplicates, groupScenes, filtersInitialized])
-
-  // Build cluster map when photos or clusters change
+  // Build cluster map from embedded cluster_photos data
   useEffect(() => {
     const anyGroupingEnabled = groupDuplicates || groupScenes
-    if (!anyGroupingEnabled || !clusters?.length || !photos?.length) {
+    if (!anyGroupingEnabled || !photos?.length) {
       setClusterMap(new Map())
       return
     }
 
-    // Build a lookup from photo ID to its cluster
-    const photoToCluster = new Map<
-      string,
-      ClustersResponse['clusters'][number]
-    >()
-    for (const cluster of clusters) {
-      for (const photoId of cluster.photo_ids) {
-        photoToCluster.set(photoId, cluster)
+    // Build cluster map from embedded cluster_photos
+    const newClusterMap: ClusterMap = new Map()
+    for (const photo of photos) {
+      if (photo.cluster_photos && photo.cluster_photos.length > 1) {
+        newClusterMap.set(photo.id, {
+          photos: photo.cluster_photos,
+          currentIndex: 0,
+        })
       }
     }
 
-    // Build cluster map: for each representative photo in our loaded photos,
-    // create an entry with all cluster photos that are also loaded
-    const newClusterMap: ClusterMap = new Map()
-    const processedClusters = new Set<string>()
-
-    for (const photo of photos) {
-      const cluster = photoToCluster.get(photo.id)
-      if (!cluster || processedClusters.has(cluster.id)) continue
-
-      // Get all photos from this cluster that we have loaded
-      const clusterPhotos = photos.filter((p) =>
-        cluster.photo_ids.includes(p.id)
-      )
-      if (clusterPhotos.length <= 1) continue
-
-      // Determine representative: use cluster's representative if in our photos,
-      // otherwise use first loaded photo
-      const representativeId =
-        cluster.representative_photo_id &&
-        clusterPhotos.some((p) => p.id === cluster.representative_photo_id)
-          ? cluster.representative_photo_id
-          : clusterPhotos[0].id
-
-      // Store under the representative photo's ID
-      newClusterMap.set(representativeId, {
-        photos: clusterPhotos,
-        currentIndex: 0,
-      })
-      processedClusters.add(cluster.id)
-    }
-
     setClusterMap(newClusterMap)
-  }, [photos, clusters, groupDuplicates, groupScenes])
+  }, [photos, groupDuplicates, groupScenes])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -541,6 +472,14 @@ export function PhotosContent({
           params.set('shuffle', shuffle)
         } else {
           params.set('order', 'date')
+        }
+
+        // Build groupTypes parameter based on enabled toggles
+        const groupTypes: string[] = []
+        if (groupDuplicates) groupTypes.push('near_duplicate')
+        if (groupScenes) groupTypes.push('scene')
+        if (groupTypes.length > 0) {
+          params.set('groupTypes', groupTypes.join(','))
         }
 
         // Always use pagination - shuffle mode is deterministic (same seed = same order)
@@ -596,7 +535,14 @@ export function PhotosContent({
         setLoadingMore(false)
       }
     },
-    [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle]
+    [
+      selectedEventId,
+      selectedPhotographer,
+      selectedCompanySlug,
+      shuffle,
+      groupDuplicates,
+      groupScenes,
+    ]
   )
 
   // Initial fetch when filters change (wait until localStorage check completes)
@@ -629,32 +575,10 @@ export function PhotosContent({
     return () => observer.disconnect()
   }, [loading, loadingMore, photos.length, totalCount, fetchPhotos])
 
-  // Filter photos for display when grouping is enabled
-  // When grouping is ON, only show representative photos (hide duplicates)
-  const displayPhotos = (() => {
-    const anyGroupingEnabled = groupDuplicates || groupScenes
-    if (!anyGroupingEnabled || clusterMap.size === 0) {
-      return photos
-    }
-
-    // Build a set of all non-representative photo IDs
-    const hiddenPhotoIds = new Set<string>()
-    for (const [representativeId, cluster] of clusterMap) {
-      for (const photo of cluster.photos) {
-        if (photo.id !== representativeId) {
-          hiddenPhotoIds.add(photo.id)
-        }
-      }
-    }
-
-    // Return only photos that aren't hidden (representatives + non-clustered)
-    return photos.filter((p) => !hiddenPhotoIds.has(p.id))
-  })()
-
   // Handle photo click - navigate to slideshow
   const handlePhotoClick = useCallback(
     (index: number) => {
-      const photo = displayPhotos[index]
+      const photo = photos[index]
       if (!photo) return
 
       // If this is a clustered photo, get the currently displayed photo from the cluster
@@ -682,7 +606,7 @@ export function PhotosContent({
       router.push(slideshowUrl)
     },
     [
-      displayPhotos,
+      photos,
       clusterMap,
       router,
       selectedEventId,
@@ -753,13 +677,13 @@ export function PhotosContent({
             <div>
               <h1 className="font-semibold text-4xl mb-2">Photo Gallery</h1>
               <p className="text-text-muted">
-                {displayPhotos.length} of {totalCount} photo
+                {photos.length} of {totalCount} photo
                 {totalCount !== 1 ? 's' : ''} from {events.length} event
                 {events.length !== 1 ? 's' : ''}
                 {(groupDuplicates || groupScenes) && clusterMap.size > 0 && (
                   <span className="text-text-dim">
                     {' '}
-                    ({photos.length - displayPhotos.length} similar grouped)
+                    ({clusterMap.size} groups)
                   </span>
                 )}
               </p>
@@ -953,7 +877,7 @@ export function PhotosContent({
         {/* Photo grid */}
         <div className="mt-8">
           <PhotoGrid
-            photos={displayPhotos}
+            photos={photos}
             onPhotoClick={handlePhotoClick}
             loading={loading}
             size={gridSize}

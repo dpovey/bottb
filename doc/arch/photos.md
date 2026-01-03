@@ -64,8 +64,23 @@ Settings:
 - **URL params**: `?groupDuplicates=false` and/or `?groupScenes=false` to disable
 - **Visual indicator**: Icon with count badge on grouped photos
 - **Cycling**: Click the badge to cycle through similar photos in-place
-- **API**: `/api/photos/clusters?types=near_duplicate,scene` returns cluster data
-- **Implementation**: `photos-content.tsx` fetches clusters and builds a `clusterMap` for the grid
+
+#### Query-Level Grouping
+
+Grouping is done at the database query level to ensure correct pagination:
+
+- **API param**: `?groupTypes=near_duplicate,scene` controls which cluster types to group
+- **Query behavior**: When groupTypes is set, the query returns only representative photos + non-clustered photos
+- **Embedded cluster data**: Each photo includes `cluster_photos[]` array with full photo data for cycling
+- **Total count**: Reflects the grouped count (visible photos), not raw photo count
+- **Pagination**: Works correctly - LIMIT 50 returns 50 visible gallery slots
+
+**SQL approach** (CTE-based):
+1. `photo_cluster_membership` CTE maps each photo to its cluster representative
+2. `visible_photos` CTE filters to representatives + non-clustered
+3. Main query joins cluster photos as JSON array for cycling
+
+**Implementation**: `getGroupedPhotosWithCount()` in `src/lib/db.ts`
 
 ### Type-Safe Shuffle Architecture
 
