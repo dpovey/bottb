@@ -1,6 +1,6 @@
 [
   {
-    "id": "test-photo-1",
+    "id": "11111111-1111-1111-1111-111111111111",
     "blob_url": "/images/test/hero-concert.jpg",
     "blob_pathname": "photos/test-photo-1/large.webp",
     "event_id": "test-finalized-event",
@@ -10,7 +10,7 @@
     "hero_focal_point": { "x": 50, "y": 50 }
   },
   {
-    "id": "test-photo-2",
+    "id": "22222222-2222-2222-2222-222222222222",
     "blob_url": "/images/test/band-stage.jpg",
     "blob_pathname": "photos/test-photo-2/large.webp",
     "event_id": "test-finalized-event",
@@ -20,7 +20,7 @@
     "hero_focal_point": { "x": 50, "y": 40 }
   },
   {
-    "id": "test-photo-3",
+    "id": "33333333-3333-3333-3333-333333333333",
     "blob_url": "/images/test/crowd-energy.jpg",
     "blob_pathname": "photos/test-photo-3/large.webp",
     "event_id": "test-finalized-event",
@@ -30,7 +30,7 @@
     "hero_focal_point": { "x": 50, "y": 50 }
   },
   {
-    "id": "test-photo-4",
+    "id": "44444444-4444-4444-4444-444444444444",
     "blob_url": "/images/test/thumbnail-1.jpg",
     "blob_pathname": "photos/test-photo-4/large.webp",
     "event_id": "test-voting-event",
@@ -40,7 +40,7 @@
     "hero_focal_point": { "x": 50, "y": 50 }
   },
   {
-    "id": "test-photo-5",
+    "id": "55555555-5555-5555-5555-555555555555",
     "blob_url": "/images/test/thumbnail-2.jpg",
     "blob_pathname": "photos/test-photo-5/large.webp",
     "event_id": "test-voting-event",
