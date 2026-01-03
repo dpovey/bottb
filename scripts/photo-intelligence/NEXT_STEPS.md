@@ -3,6 +3,7 @@
 ## Current Status
 
 The pipeline is processing photos from `/Volumes/Extreme SSD/Photos`. It will:
+
 1. Find all image files (recursively, skipping macOS files)
 2. Process them in batches of 100
 3. Generate intelligence data (hashes, embeddings, crops, face detections)
@@ -11,12 +12,14 @@ The pipeline is processing photos from `/Volumes/Extreme SSD/Photos`. It will:
 ## Step 1: Wait for Pipeline to Complete
 
 The pipeline will create these output files:
+
 - `photos.parquet` - Summary data (filename, dimensions, hash counts)
 - `photos.json` - Full results (embeddings, crops, faces, persons)
 - `clusters.json` - Near-duplicate and scene clusters
 - `people.json` - Person clusters
 
 **Check progress:**
+
 ```bash
 cd .worktrees/photo-intelligence
 ls -lh photo-intelligence-output/
@@ -34,10 +37,12 @@ npx tsx src/scripts/photo-intelligence/upload-intelligence.ts \
 ```
 
 **Options:**
+
 - `--dry-run` - Preview what would be uploaded without actually uploading
 - `--version <v>` - Set intelligence pipeline version (default: "1.0.0")
 
 This script will:
+
 1. Match photos by filename to existing database records
 2. Insert crop data into `photo_crops` table
 3. Insert hashes into `photo_hashes` table
@@ -51,6 +56,7 @@ This script will:
 ### Smart Cropping (Already Implemented)
 
 The smart crop API is already available:
+
 - **Endpoint:** `GET /api/photos/[photoId]/smart-crop?aspect=4:5`
 - **Used in:** Social post composer (`ShareComposerModal`)
 - **Status:** ✅ Ready to use once data is uploaded
@@ -58,20 +64,24 @@ The smart crop API is already available:
 ### Photo Grouping (Admin UI)
 
 View near-duplicate and scene clusters:
+
 - **Page:** `/admin/photos/grouping`
 - **Status:** ✅ UI created, needs API endpoints
 
 **To complete:**
+
 1. Create API endpoint: `GET /api/admin/photos/clusters?type=near_duplicate|scene`
 2. Update `photo-grouping-client.tsx` to fetch from API
 
 ### Person Clusters (Admin UI)
 
 Browse photos by person:
+
 - **Page:** `/admin/photos/people`
 - **Status:** ✅ UI created, needs API endpoints
 
 **To complete:**
+
 1. Create API endpoint: `GET /api/admin/photos/people/clusters`
 2. Update `people-clusters-client.tsx` to fetch from API
 
@@ -81,7 +91,7 @@ Browse photos by person:
 
 ```sql
 -- See how many photos have been processed
-SELECT 
+SELECT
   COUNT(*) as total_photos,
   COUNT(intelligence_processed_at) as processed,
   COUNT(*) - COUNT(intelligence_processed_at) as pending
@@ -116,6 +126,7 @@ npx tsx src/scripts/photo-intelligence/run-pipeline.ts \
 ### Pipeline Errors
 
 If the pipeline fails:
+
 1. Check Python dependencies: `source scripts/photo-intelligence/.venv/bin/activate && python -c "import mediapipe, ultralytics, sentence_transformers"`
 2. Check disk space: `df -h`
 3. Check logs in terminal output
@@ -123,6 +134,7 @@ If the pipeline fails:
 ### Upload Errors
 
 If upload fails:
+
 1. Check database connection: `echo $DATABASE_URL`
 2. Verify output files exist: `ls -lh photo-intelligence-output/`
 3. Use `--dry-run` to preview changes
@@ -131,6 +143,7 @@ If upload fails:
 ### Missing Intelligence Data
 
 If photos don't have intelligence data:
+
 1. Verify photos exist in database: `SELECT id, original_filename FROM photos LIMIT 10`
 2. Check filename matching (case-sensitive)
 3. Re-run upload script with `--verbose` to see matching details
@@ -143,6 +156,3 @@ If photos don't have intelligence data:
 4. **Face Recognition** - Install dlib/cmake for better face recognition (currently using MediaPipe)
 5. **Performance** - Optimize clustering for large photo sets
 6. **Caching** - Cache embeddings and crops for faster retrieval
-
-
-
