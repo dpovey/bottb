@@ -77,6 +77,7 @@ export const ShuffleButton = forwardRef<HTMLButtonElement, ShuffleButtonProps>(
         aria-pressed={isActive}
         title={isActive ? 'Shuffle on' : 'Shuffle'}
         className={`
+          relative
           ${sizeClasses[size]}
           rounded-full
           flex items-center justify-center

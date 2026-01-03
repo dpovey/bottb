@@ -69,6 +69,7 @@ export const GroupingButton = forwardRef<
         aria-pressed={isActive}
         title={isActive ? activeTitle : inactiveTitle}
         className={`
+          relative
           ${sizeClasses[size]}
           rounded-full
           flex items-center justify-center
