@@ -51,6 +51,7 @@ export function PhotoStrip({
   const router = useRouter()
 
   // Use the unified hook for photo fetching and shuffle management
+  // groupTypes defaults to 'near_duplicate,scene' via buildPhotoApiParams
   const {
     photos,
     totalCount,

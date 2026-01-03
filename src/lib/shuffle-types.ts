@@ -7,6 +7,21 @@
  */
 
 /**
+ * Default group types for photo galleries
+ *
+ * When grouping is enabled (default), these cluster types are collapsed:
+ * - 'near_duplicate': Nearly identical photos (burst shots, minor variations)
+ * - 'scene': Same scene with different framing/crops
+ *
+ * All photo-fetching code should use this constant (or buildPhotoApiParams
+ * which uses it by default) to ensure consistent behavior across:
+ * - Gallery grid
+ * - Photo strips
+ * - Slideshow
+ */
+export const DEFAULT_GROUP_TYPES = 'near_duplicate,scene'
+
+/**
  * Shuffle parameter: controls photo ordering
  *
  * Values:
@@ -65,6 +80,11 @@ export function generateShuffleSeed(): string {
 }
 
 /**
+ * Photo order types for non-shuffle mode
+ */
+export type PhotoOrder = 'date' | 'uploaded'
+
+/**
  * Options for building photo API params
  */
 export interface PhotoApiParamsOptions {
@@ -78,12 +98,21 @@ export interface PhotoApiParamsOptions {
   companySlug?: string
   /** Shuffle parameter: 'true', specific seed, or null/undefined for no shuffle */
   shuffle?: ShuffleParam
+  /** Order when shuffle is disabled (default: 'date' for chronological) */
+  order?: PhotoOrder
   /** Page number (1-indexed) */
   page?: number
   /** Items per page */
   limit?: number
   /** Skip metadata (for load-more requests) */
   skipMeta?: boolean
+  /**
+   * Group types for photo clustering.
+   * - undefined: uses DEFAULT_GROUP_TYPES ('near_duplicate,scene')
+   * - string: custom group types (e.g., 'near_duplicate' only)
+   * - false: disable grouping entirely
+   */
+  groupTypes?: string | false
 }
 
 /**
@@ -117,9 +146,11 @@ export function buildPhotoApiParams(
     photographer,
     companySlug,
     shuffle,
+    order = 'date', // Default to chronological order when shuffle disabled
     page,
     limit,
     skipMeta,
+    groupTypes,
   } = options
 
   const params = new URLSearchParams()
@@ -130,9 +161,11 @@ export function buildPhotoApiParams(
   if (photographer) params.set('photographer', photographer)
   if (companySlug) params.set('company', companySlug)
 
-  // Shuffle - ALWAYS use 'shuffle' param, never 'order=random' or 'seed'
+  // Ordering: shuffle takes precedence, otherwise use order param
   if (isShuffleEnabled(shuffle)) {
     params.set('shuffle', shuffle!)
+  } else {
+    params.set('order', order)
   }
 
   // Pagination
@@ -141,6 +174,13 @@ export function buildPhotoApiParams(
 
   // Optimization flags
   if (skipMeta) params.set('skipMeta', 'true')
+
+  // Photo grouping - defaults to DEFAULT_GROUP_TYPES for consistent behavior
+  // Pass groupTypes: false to disable grouping
+  if (groupTypes !== false) {
+    const resolvedGroupTypes = groupTypes ?? DEFAULT_GROUP_TYPES
+    params.set('groupTypes', resolvedGroupTypes)
+  }
 
   return params
 }
