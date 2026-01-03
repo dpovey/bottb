@@ -90,17 +90,29 @@ export function buildHeroSrcSet(photo: PhotoImageUrls): string {
 
 /**
  * Get best available hero source for a given display context.
- * - 'desktop': prefer 4K → blob_url
- * - 'mobile': prefer medium_url → blob_url
+ *
+ * PERFORMANCE NOTE: We intentionally use blob_url (2000px) as the default
+ * for desktop instead of large_4k_url (4000px). The 4K variant is 2.3MB vs
+ * ~500KB for the 2000px version. Let srcSet handle upgrading to 4K only
+ * when truly needed (actual 4K displays with sizes > 2000px).
+ *
+ * - 'desktop': blob_url (2000px - sufficient for most displays at 2x DPR)
+ * - 'mobile': prefer medium_url (1200px) → blob_url
+ * - '4k': explicitly request 4K (for true 4K displays)
  * - 'default': blob_url
  */
 export function getBestHeroSrc(
   photo: PhotoImageUrls,
-  context: 'desktop' | 'mobile' | 'default' = 'default'
+  context: 'desktop' | 'mobile' | '4k' | 'default' = 'default'
 ): string {
   switch (context) {
-    case 'desktop':
+    case '4k':
+      // Only use 4K when explicitly requested (true 4K displays)
       return photo.large_4k_url || photo.blob_url
+    case 'desktop':
+      // Use 2000px for desktop - sufficient for 1920px displays at 2x DPR
+      // srcSet will upgrade to 4K if sizes indicates need for larger
+      return photo.blob_url
     case 'mobile':
       return photo.medium_url || photo.blob_url
     default:

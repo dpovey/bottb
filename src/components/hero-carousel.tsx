@@ -90,7 +90,9 @@ export function HeroCarousel({
               : undefined
 
           const isCurrent = index === currentIndex
-          const desktopSrc = image.urlHigh || image.large_4k_url || image.url
+          // Use blob_url (2000px) as default - sufficient for 1920px displays at 2x DPR
+          // Let srcSet upgrade to 4K only when truly needed (saves ~1.8MB per image)
+          const desktopSrc = image.blob_url || image.url
 
           return (
             <div
@@ -104,7 +106,7 @@ export function HeroCarousel({
               <img
                 src={image.url}
                 srcSet={srcSet}
-                sizes="100vw"
+                sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
                 alt="Battle of the Tech Bands event"
                 className="absolute inset-0 w-full h-full object-cover md:hidden"
                 style={{
@@ -115,12 +117,12 @@ export function HeroCarousel({
                 decoding={isCurrent ? 'sync' : 'async'}
               />
               {/* Desktop: vertical cropping, use focal Y */}
-              {/* Uses high-res source when available for better quality on large displays */}
+              {/* Uses 2000px by default - srcSet upgrades to 4K only for true 4K displays */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={desktopSrc}
                 srcSet={srcSet}
-                sizes="100vw"
+                sizes="(max-width: 1920px) 100vw, 1920px"
                 alt="Battle of the Tech Bands event"
                 className="absolute inset-0 w-full h-full object-cover hidden md:block"
                 style={{

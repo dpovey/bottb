@@ -57,14 +57,16 @@ export function FocalPointImage({
   alt,
   focalPoint = { x: 50, y: 50 },
   priority = false,
-  sizes = '100vw',
+  sizes = '(max-width: 1920px) 100vw, 1920px',
   className,
 }: FocalPointImageProps) {
   // Build srcset if photoUrls available
   const srcSet = photoUrls ? buildHeroSrcSet(photoUrls) : undefined
 
-  // Use high-res source for desktop if available (fallback to srcHigh for backwards compat)
-  const desktopSrc = photoUrls?.large_4k_url || srcHigh || src
+  // Use blob_url (2000px) as default - sufficient for 1920px displays at 2x DPR
+  // srcSet will upgrade to 4K only when sizes indicates need for larger
+  // Fall back to srcHigh for backwards compat when photoUrls not available
+  const desktopSrc = photoUrls?.blob_url || srcHigh || src
 
   return (
     <div className={cn('absolute inset-0', className)}>
@@ -82,7 +84,7 @@ export function FocalPointImage({
         decoding={priority ? 'sync' : 'async'}
       />
       {/* Desktop/Landscape: vertical cropping, center X, use focal Y */}
-      {/* Uses high-res source when available for better quality on large displays */}
+      {/* Uses 2000px by default - srcSet upgrades to 4K only for true 4K displays */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={desktopSrc}
