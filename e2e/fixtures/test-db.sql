@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict FNjBUYoy1HjpqNSTqtOqCbTSKIrC5RicNmO2pJVfALkylaTaDP67NAqCnkgwfcY
+\restrict LcNtE41inI6gwlmyOk4mC3UsYJTH2GkQDJwyHwhOoecIfncR2Rx8cFpS0x3f9DG
 
 -- Dumped from database version 17.7
 -- Dumped by pg_dump version 17.7
@@ -144,6 +144,40 @@ CREATE TABLE public.finalized_results (
 
 
 ALTER TABLE public.finalized_results OWNER TO test;
+
+--
+-- Name: photo_clusters; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.photo_clusters (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    cluster_type character varying(20) NOT NULL,
+    photo_ids uuid[] NOT NULL,
+    representative_photo_id uuid,
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT photo_clusters_type_check CHECK (((cluster_type)::text = ANY (ARRAY[('near_duplicate'::character varying)::text, ('scene'::character varying)::text, ('person'::character varying)::text])))
+);
+
+
+ALTER TABLE public.photo_clusters OWNER TO test;
+
+--
+-- Name: photo_crops; Type: TABLE; Schema: public; Owner: test
+--
+
+CREATE TABLE public.photo_crops (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    photo_id uuid NOT NULL,
+    aspect_ratio character varying(20) NOT NULL,
+    crop_box jsonb NOT NULL,
+    confidence numeric(5,4),
+    method character varying(20),
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.photo_crops OWNER TO test;
 
 --
 -- Name: photographers; Type: TABLE; Schema: public; Owner: test
@@ -416,13 +450,13 @@ ALTER TABLE public.votes OWNER TO test;
 --
 
 COPY public.bands (id, name, description, "order", created_at, info, event_id, company_slug) FROM stdin;
-test-band-1	The Code Rockers	Frontend specialists who know how to make the crowd dance	1	2025-12-28 05:42:24.220373+00	{"genre": "Rock", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	atlassian
-test-band-2	Database Divas	Backend engineers with killer vocals	2	2025-12-28 05:42:24.222849+00	{"genre": "Pop Rock", "logo_url": "/images/test/thumbnail-2.jpg"}	test-voting-event	canva
-test-band-3	API Avengers	Full-stack superheroes of the tech world	3	2025-12-28 05:42:24.22348+00	{"genre": "Alternative", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	google
-test-finalized-band-1	Cloud Crusaders	DevOps warriors with epic stage presence	1	2025-12-28 05:42:24.223884+00	{"genre": "Metal", "logo_url": "/images/test/thumbnail-1.jpg"}	test-finalized-event	atlassian
-test-finalized-band-2	Algorithm Angels	Data scientists who rock the algorithms	2	2025-12-28 05:42:24.224293+00	{"genre": "Indie", "logo_url": "/images/test/thumbnail-2.jpg"}	test-finalized-event	canva
-test-upcoming-band-1	Syntax Error	Debugging by day, rocking by night	1	2025-12-28 05:42:24.2247+00	{"genre": "Punk", "logo_url": "/images/test/thumbnail-1.jpg"}	test-upcoming-event	google
-test-upcoming-band-2	Null Pointers	Exception handlers of rock and roll	2	2025-12-28 05:42:24.225101+00	{"genre": "Grunge", "logo_url": "/images/test/thumbnail-2.jpg"}	test-upcoming-event	atlassian
+test-band-1	The Code Rockers	Frontend specialists who know how to make the crowd dance	1	2026-01-03 02:57:54.451411+00	{"genre": "Rock", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	atlassian
+test-band-2	Database Divas	Backend engineers with killer vocals	2	2026-01-03 02:57:54.452421+00	{"genre": "Pop Rock", "logo_url": "/images/test/thumbnail-2.jpg"}	test-voting-event	canva
+test-band-3	API Avengers	Full-stack superheroes of the tech world	3	2026-01-03 02:57:54.452925+00	{"genre": "Alternative", "logo_url": "/images/test/thumbnail-1.jpg"}	test-voting-event	google
+test-finalized-band-1	Cloud Crusaders	DevOps warriors with epic stage presence	1	2026-01-03 02:57:54.453372+00	{"genre": "Metal", "logo_url": "/images/test/thumbnail-1.jpg"}	test-finalized-event	atlassian
+test-finalized-band-2	Algorithm Angels	Data scientists who rock the algorithms	2	2026-01-03 02:57:54.453783+00	{"genre": "Indie", "logo_url": "/images/test/thumbnail-2.jpg"}	test-finalized-event	canva
+test-upcoming-band-1	Syntax Error	Debugging by day, rocking by night	1	2026-01-03 02:57:54.454191+00	{"genre": "Punk", "logo_url": "/images/test/thumbnail-1.jpg"}	test-upcoming-event	google
+test-upcoming-band-2	Null Pointers	Exception handlers of rock and roll	2	2026-01-03 02:57:54.454751+00	{"genre": "Grunge", "logo_url": "/images/test/thumbnail-2.jpg"}	test-upcoming-event	atlassian
 \.
 
 
@@ -431,9 +465,9 @@ test-upcoming-band-2	Null Pointers	Exception handlers of rock and roll	2	2025-12
 --
 
 COPY public.companies (slug, name, logo_url, website, created_at, icon_url) FROM stdin;
-atlassian	Atlassian	/images/test/thumbnail-1.jpg	https://atlassian.com	2025-12-28 05:42:24.217689+00	/images/test/thumbnail-1.jpg
-canva	Canva	/images/test/thumbnail-2.jpg	https://canva.com	2025-12-28 05:42:24.218505+00	/images/test/thumbnail-2.jpg
-google	Google	/images/test/thumbnail-1.jpg	https://google.com	2025-12-28 05:42:24.219047+00	/images/test/thumbnail-1.jpg
+atlassian	Atlassian	/images/test/thumbnail-1.jpg	https://atlassian.com	2026-01-03 02:57:54.447751+00	/images/test/thumbnail-1.jpg
+canva	Canva	/images/test/thumbnail-2.jpg	https://canva.com	2026-01-03 02:57:54.44935+00	/images/test/thumbnail-2.jpg
+google	Google	/images/test/thumbnail-1.jpg	https://google.com	2026-01-03 02:57:54.449972+00	/images/test/thumbnail-1.jpg
 \.
 
 
@@ -450,9 +484,9 @@ COPY public.crowd_noise_measurements (id, energy_level, peak_volume, recording_d
 --
 
 COPY public.events (id, name, date, location, is_active, created_at, status, info, timezone) FROM stdin;
-test-upcoming-event	Sydney Tech Battle 2025	2025-06-15 08:00:00+00	Sydney Convention Centre	f	2025-12-28 05:42:24.214525+00	upcoming	{}	Australia/Sydney
-test-voting-event	Brisbane Rock Night 2025	2025-03-20 08:00:00+00	Brisbane Powerhouse	t	2025-12-28 05:42:24.216001+00	voting	{}	Australia/Brisbane
-test-finalized-event	Melbourne Tech Bands 2024	2024-11-15 08:00:00+00	Melbourne Arts Centre	f	2025-12-28 05:42:24.216827+00	finalized	{}	Australia/Melbourne
+test-upcoming-event	Sydney Tech Battle 2025	2025-06-15 08:00:00+00	Sydney Convention Centre	f	2026-01-03 02:57:54.444875+00	upcoming	{}	Australia/Sydney
+test-voting-event	Brisbane Rock Night 2025	2025-03-20 08:00:00+00	Brisbane Powerhouse	t	2026-01-03 02:57:54.445828+00	voting	{}	Australia/Brisbane
+test-finalized-event	Melbourne Tech Bands 2024	2024-11-15 08:00:00+00	Melbourne Arts Centre	f	2026-01-03 02:57:54.446584+00	finalized	{}	Australia/Melbourne
 \.
 
 
@@ -461,8 +495,26 @@ test-finalized-event	Melbourne Tech Bands 2024	2024-11-15 08:00:00+00	Melbourne 
 --
 
 COPY public.finalized_results (id, event_id, band_id, band_name, final_rank, avg_song_choice, avg_performance, avg_crowd_vibe, crowd_vote_count, judge_vote_count, total_crowd_votes, crowd_noise_energy, crowd_noise_peak, crowd_noise_score, judge_score, crowd_score, total_score, finalized_at, avg_visuals, visuals_score) FROM stdin;
-5a216b86-f6d8-43f2-81c5-20d4f6b02ef2	test-finalized-event	test-finalized-band-1	Cloud Crusaders	1	17.00	26.00	24.50	3	2	5	\N	\N	\N	67.50	18.00	85.50	2025-12-28 05:42:24.236266+00	\N	\N
-119c16f6-b075-483a-ac30-f70f0070e650	test-finalized-event	test-finalized-band-2	Algorithm Angels	2	14.50	21.50	19.50	2	2	5	\N	\N	\N	55.50	14.50	70.00	2025-12-28 05:42:24.237827+00	\N	\N
+09a251f7-b726-4419-9c8b-077d7c4f6c0e	test-finalized-event	test-finalized-band-1	Cloud Crusaders	1	17.00	26.00	24.50	3	2	5	\N	\N	\N	67.50	18.00	85.50	2026-01-03 02:57:54.465816+00	\N	\N
+2263d30f-26b8-4fad-8adf-d1afe584f773	test-finalized-event	test-finalized-band-2	Algorithm Angels	2	14.50	21.50	19.50	2	2	5	\N	\N	\N	55.50	14.50	70.00	2026-01-03 02:57:54.466884+00	\N	\N
+\.
+
+
+--
+-- Data for Name: photo_clusters; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.photo_clusters (id, cluster_type, photo_ids, representative_photo_id, metadata, created_at) FROM stdin;
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa	near_duplicate	{11111111-1111-1111-1111-111111111111,22222222-2222-2222-2222-222222222222}	11111111-1111-1111-1111-111111111111	\N	2026-01-03 02:57:54.467415+00
+bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb	scene	{33333333-3333-3333-3333-333333333333,44444444-4444-4444-4444-444444444444,55555555-5555-5555-5555-555555555555}	33333333-3333-3333-3333-333333333333	\N	2026-01-03 02:57:54.467978+00
+\.
+
+
+--
+-- Data for Name: photo_crops; Type: TABLE DATA; Schema: public; Owner: test
+--
+
+COPY public.photo_crops (id, photo_id, aspect_ratio, crop_box, confidence, method, created_at) FROM stdin;
 \.
 
 
@@ -471,7 +523,7 @@ COPY public.finalized_results (id, event_id, band_id, band_name, final_rank, avg
 --
 
 COPY public.photographers (slug, name, bio, location, website, instagram, email, created_at, avatar_url) FROM stdin;
-test-photographer	John Doe Photography	Professional event photographer	Sydney, Australia	https://example.com	johndoephoto	john@example.com	2025-12-28 05:42:24.219492+00	/images/test/thumbnail-1.jpg
+test-photographer	John Doe Photography	Professional event photographer	Sydney, Australia	https://example.com	johndoephoto	john@example.com	2026-01-03 02:57:54.450506+00	/images/test/thumbnail-1.jpg
 \.
 
 
@@ -480,11 +532,11 @@ test-photographer	John Doe Photography	Professional event photographer	Sydney, A
 --
 
 COPY public.photos (id, event_id, band_id, photographer, blob_url, blob_pathname, original_filename, width, height, file_size, content_type, xmp_metadata, matched_event_name, matched_band_name, match_confidence, uploaded_by, uploaded_at, created_at, labels, hero_focal_point, captured_at, original_blob_url) FROM stdin;
-c8c008a3-c303-44cb-b840-5f02d32448df	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/hero-concert.jpg	photos/test-photo-1/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.232822+00	2025-12-28 05:42:24.232822+00	{global_hero}	{"x": 50, "y": 50}	\N	\N
-4018b4ed-bc7e-489b-85cb-aab81bff4871	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/band-stage.jpg	photos/test-photo-2/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.234444+00	2025-12-28 05:42:24.234444+00	{band_hero}	{"x": 50, "y": 40}	\N	\N
-c4b40c81-3fdb-4fa7-acf3-dbd9140627a0	test-finalized-event	test-finalized-band-2	test-photographer	/images/test/crowd-energy.jpg	photos/test-photo-3/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.234974+00	2025-12-28 05:42:24.234974+00	{event_hero}	{"x": 50, "y": 50}	\N	\N
-95474d46-1bad-42d7-9179-96f2df780383	test-voting-event	test-band-1	test-photographer	/images/test/thumbnail-1.jpg	photos/test-photo-4/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.235426+00	2025-12-28 05:42:24.235426+00	{}	{"x": 50, "y": 50}	\N	\N
-54e64d97-a256-405c-a001-82869cf89821	test-voting-event	test-band-2	test-photographer	/images/test/thumbnail-2.jpg	photos/test-photo-5/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2025-12-28 05:42:24.235828+00	2025-12-28 05:42:24.235828+00	{}	{"x": 50, "y": 50}	\N	\N
+11111111-1111-1111-1111-111111111111	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/hero-concert.jpg	photos/test-photo-1/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.462206+00	2026-01-03 02:57:54.462206+00	{global_hero}	{"x": 50, "y": 50}	\N	\N
+22222222-2222-2222-2222-222222222222	test-finalized-event	test-finalized-band-1	test-photographer	/images/test/band-stage.jpg	photos/test-photo-2/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463351+00	2026-01-03 02:57:54.463351+00	{band_hero}	{"x": 50, "y": 40}	\N	\N
+33333333-3333-3333-3333-333333333333	test-finalized-event	test-finalized-band-2	test-photographer	/images/test/crowd-energy.jpg	photos/test-photo-3/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.463924+00	2026-01-03 02:57:54.463924+00	{event_hero}	{"x": 50, "y": 50}	\N	\N
+44444444-4444-4444-4444-444444444444	test-voting-event	test-band-1	test-photographer	/images/test/thumbnail-1.jpg	photos/test-photo-4/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.464632+00	2026-01-03 02:57:54.464632+00	{}	{"x": 50, "y": 50}	\N	\N
+55555555-5555-5555-5555-555555555555	test-voting-event	test-band-2	test-photographer	/images/test/thumbnail-2.jpg	photos/test-photo-5/large.webp	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2026-01-03 02:57:54.465174+00	2026-01-03 02:57:54.465174+00	{}	{"x": 50, "y": 50}	\N	\N
 \.
 
 
@@ -533,7 +585,7 @@ COPY public.social_posts (id, platforms, title, caption, photo_ids, event_id, ba
 --
 
 COPY public.users (id, email, password_hash, name, is_admin, created_at, last_login) FROM stdin;
-a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d	admin@test.com	$2b$12$j49CrwMA7QjQ/x2XZdcT8OrzV.k1YPJtixDbv0HN9PJ4pZzgOxtLO	Test Admin	t	2025-12-28 05:42:24.210368+00	\N
+a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d	admin@test.com	$2b$12$GpILut1ZnXifnEqJKEUHmOA/1P2oWtYrFfTgfDwy4tpTxw23vIot.	Test Admin	t	2026-01-03 02:57:54.44082+00	\N
 \.
 
 
@@ -550,15 +602,15 @@ COPY public.videos (id, youtube_video_id, title, event_id, band_id, duration_sec
 --
 
 COPY public.votes (id, voter_type, song_choice, performance, crowd_vibe, crowd_vote, created_at, fingerprintjs_visitor_id, fingerprintjs_confidence, fingerprintjs_components, vote_fingerprint, ip_address, user_agent, browser_name, browser_version, os_name, os_version, device_type, screen_resolution, timezone, language, google_click_id, facebook_pixel_id, utm_source, utm_medium, utm_campaign, utm_term, utm_content, fingerprintjs_confidence_comment, event_id, band_id, status, email, name, visuals) FROM stdin;
-ece3e6ab-c92d-4026-9a28-8531d7de6dfd	judge	18	27	25	\N	2025-12-28 05:42:24.225489+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Alpha	\N
-791c4643-c0dc-4085-a7c2-3eef008fc1cc	judge	16	25	24	\N	2025-12-28 05:42:24.227409+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Beta	\N
-98b04446-3bcb-4069-b328-6809c74ef27a	judge	15	22	20	\N	2025-12-28 05:42:24.227911+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Alpha	\N
-d873b7c0-4406-4358-92ed-93f1df8880fd	judge	14	21	19	\N	2025-12-28 05:42:24.22868+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Beta	\N
-1ccff6bb-7fe8-41ea-9389-f84896b22d9d	crowd	\N	\N	\N	18	2025-12-28 05:42:24.229805+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
-ccef68d6-561a-4954-97a4-803c18e448a5	crowd	\N	\N	\N	17	2025-12-28 05:42:24.230542+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
-da4cf4e7-b658-4afe-abf7-697b4e9ac7ce	crowd	\N	\N	\N	19	2025-12-28 05:42:24.231063+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
-1710670b-71b5-497a-b75b-33139da67154	crowd	\N	\N	\N	15	2025-12-28 05:42:24.231542+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
-0054e601-85c9-44fd-aca1-b99f06a59459	crowd	\N	\N	\N	14	2025-12-28 05:42:24.232177+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
+b0c159be-3564-4ee2-b349-728134e05deb	judge	18	27	25	\N	2026-01-03 02:57:54.455599+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Alpha	\N
+aec29624-3b7b-4a74-8baf-df59f719766f	judge	16	25	24	\N	2026-01-03 02:57:54.457142+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	Judge Beta	\N
+657d10b1-a1e2-4cdc-b590-8b52846fee65	judge	15	22	20	\N	2026-01-03 02:57:54.457843+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Alpha	\N
+8c51ddc7-6a63-46fe-a56b-1ca0ee070df6	judge	14	21	19	\N	2026-01-03 02:57:54.458628+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	Judge Beta	\N
+0717177f-20c4-48a1-8b66-b3c921336a1c	crowd	\N	\N	\N	18	2026-01-03 02:57:54.459212+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+dcc68747-7bdc-4939-8e91-125bcdb86e87	crowd	\N	\N	\N	17	2026-01-03 02:57:54.459751+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+b8811632-dc1c-40e1-a9d9-4a6ec523088d	crowd	\N	\N	\N	19	2026-01-03 02:57:54.46049+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-1	approved	\N	\N	\N
+46a536fb-4031-4bb9-8f73-5fafbd7334f5	crowd	\N	\N	\N	15	2026-01-03 02:57:54.461092+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
+130b239d-5812-4d6b-8834-17f7db530ad2	crowd	\N	\N	\N	14	2026-01-03 02:57:54.461516+00	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	test-finalized-event	test-finalized-band-2	approved	\N	\N	\N
 \.
 
 
@@ -813,6 +865,20 @@ CREATE INDEX idx_finalized_results_event_id ON public.finalized_results USING bt
 --
 
 CREATE INDEX idx_finalized_results_final_rank ON public.finalized_results USING btree (final_rank);
+
+
+--
+-- Name: idx_photo_clusters_type; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photo_clusters_type ON public.photo_clusters USING btree (cluster_type);
+
+
+--
+-- Name: idx_photo_crops_photo_id; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_photo_crops_photo_id ON public.photo_crops USING btree (photo_id);
 
 
 --
@@ -1075,6 +1141,13 @@ CREATE INDEX idx_votes_voter_type ON public.votes USING btree (voter_type);
 
 
 --
+-- Name: photo_crops_photo_aspect_unique; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE UNIQUE INDEX photo_crops_photo_aspect_unique ON public.photo_crops USING btree (photo_id, aspect_ratio);
+
+
+--
 -- Name: bands bands_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
 --
 
@@ -1112,6 +1185,14 @@ ALTER TABLE ONLY public.finalized_results
 
 ALTER TABLE ONLY public.finalized_results
     ADD CONSTRAINT finalized_results_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: photo_crops photo_crops_photo_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: test
+--
+
+ALTER TABLE ONLY public.photo_crops
+    ADD CONSTRAINT photo_crops_photo_id_fkey FOREIGN KEY (photo_id) REFERENCES public.photos(id) ON DELETE CASCADE;
 
 
 --
@@ -1222,5 +1303,5 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FNjBUYoy1HjpqNSTqtOqCbTSKIrC5RicNmO2pJVfALkylaTaDP67NAqCnkgwfcY
+\unrestrict LcNtE41inI6gwlmyOk4mC3UsYJTH2GkQDJwyHwhOoecIfncR2Rx8cFpS0x3f9DG
 

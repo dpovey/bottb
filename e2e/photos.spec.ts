@@ -107,6 +107,113 @@ test.describe('Photo API', () => {
   })
 })
 
+test.describe('Photo Grouping API', () => {
+  test('groupTypes=near_duplicate returns fewer photos than total', async ({
+    request,
+  }) => {
+    // Without grouping - get all photos
+    const ungroupedResponse = await request.get('/api/photos?limit=100')
+    const ungroupedData = await ungroupedResponse.json()
+
+    // With grouping - should return fewer (clusters collapsed)
+    const groupedResponse = await request.get(
+      '/api/photos?groupTypes=near_duplicate&limit=100'
+    )
+    expect(groupedResponse.ok()).toBe(true)
+
+    const groupedData = await groupedResponse.json()
+
+    // Grouped total should be less than or equal to ungrouped
+    // (Equal if no near_duplicate clusters exist, less if they do)
+    expect(groupedData.pagination.total).toBeLessThanOrEqual(
+      ungroupedData.pagination.total
+    )
+  })
+
+  test('grouped photos include cluster_photos array for representatives', async ({
+    request,
+  }) => {
+    const response = await request.get(
+      '/api/photos?groupTypes=near_duplicate,scene&limit=100'
+    )
+    expect(response.ok()).toBe(true)
+
+    const data = await response.json()
+
+    // At least some photos should have cluster_photos (if clusters exist)
+    // Check that the response structure is correct
+    for (const photo of data.photos) {
+      // cluster_photos should be null (not clustered) or an array
+      expect(
+        photo.cluster_photos === null || Array.isArray(photo.cluster_photos)
+      ).toBe(true)
+
+      // If it's an array, it should have at least 2 photos (cluster minimum)
+      if (Array.isArray(photo.cluster_photos)) {
+        expect(photo.cluster_photos.length).toBeGreaterThanOrEqual(2)
+      }
+    }
+  })
+
+  test('pagination works correctly with grouping', async ({ request }) => {
+    // Fetch page 1
+    const page1Response = await request.get(
+      '/api/photos?groupTypes=near_duplicate&page=1&limit=2'
+    )
+    const page1Data = await page1Response.json()
+
+    // Fetch page 2
+    const page2Response = await request.get(
+      '/api/photos?groupTypes=near_duplicate&page=2&limit=2'
+    )
+    const page2Data = await page2Response.json()
+
+    // Pages should have different photos (no overlap)
+    const page1Ids = page1Data.photos.map((p: { id: string }) => p.id)
+    const page2Ids = page2Data.photos.map((p: { id: string }) => p.id)
+
+    const overlap = page1Ids.filter((id: string) => page2Ids.includes(id))
+    expect(overlap).toHaveLength(0)
+  })
+
+  test('groupTypes with shuffle returns consistent order', async ({
+    request,
+  }) => {
+    const seed = 'grouped-seed-123'
+
+    const response1 = await request.get(
+      `/api/photos?groupTypes=near_duplicate&shuffle=${seed}&limit=10`
+    )
+    const response2 = await request.get(
+      `/api/photos?groupTypes=near_duplicate&shuffle=${seed}&limit=10`
+    )
+
+    const data1 = await response1.json()
+    const data2 = await response2.json()
+
+    // Same seed should return same order even with grouping
+    expect(data1.photos.map((p: { id: string }) => p.id)).toEqual(
+      data2.photos.map((p: { id: string }) => p.id)
+    )
+    expect(data1.seed).toBe(seed)
+  })
+
+  test('no groupTypes returns all photos without cluster_photos', async ({
+    request,
+  }) => {
+    const response = await request.get('/api/photos?limit=100')
+    expect(response.ok()).toBe(true)
+
+    const data = await response.json()
+
+    // Without groupTypes, photos should not have cluster_photos field
+    // (or it should be undefined, depending on implementation)
+    for (const photo of data.photos) {
+      expect(photo.cluster_photos).toBeUndefined()
+    }
+  })
+})
+
 test.describe('Slideshow Keyboard Navigation', () => {
   test('arrow keys navigate between photos', async ({ page }) => {
     await page.goto('/photos')

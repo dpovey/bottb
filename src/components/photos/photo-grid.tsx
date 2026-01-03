@@ -3,7 +3,7 @@
 import { Photo } from '@/lib/db-types'
 import { PhotoIcon } from '@/components/icons'
 import { Skeleton } from '@/components/ui'
-import { PhotoCard } from './photo-card'
+import { PhotoCard, type PhotoClusterData } from './photo-card'
 
 export type GridSize = 'xs' | 'sm' | 'md' | 'lg'
 
@@ -15,12 +15,21 @@ const gridClasses: Record<GridSize, string> = {
   lg: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2', // Compact
 }
 
+/**
+ * Map of photo ID to cluster data for grouped photos
+ */
+export type ClusterMap = Map<string, { photos: Photo[]; currentIndex: number }>
+
 interface PhotoGridProps {
   photos: Photo[]
   onPhotoClick: (index: number) => void
   loading?: boolean
   size?: GridSize
   showCompanyLogos?: boolean
+  /** Map of photo IDs to their cluster data (for grouping similar photos) */
+  clusterMap?: ClusterMap
+  /** Callback when cycling through cluster photos */
+  onCycleClusterPhoto?: (photoId: string, newIndex: number) => void
 }
 
 export function PhotoGrid({
@@ -29,6 +38,8 @@ export function PhotoGrid({
   loading,
   size = 'md',
   showCompanyLogos = true,
+  clusterMap,
+  onCycleClusterPhoto,
 }: PhotoGridProps) {
   const gridClass = gridClasses[size]
 
@@ -58,14 +69,27 @@ export function PhotoGrid({
 
   return (
     <div className={`grid ${gridClass}`}>
-      {photos.map((photo, index) => (
-        <PhotoCard
-          key={`${photo.id}-${photo.thumbnail_url}`}
-          photo={photo}
-          onClick={() => onPhotoClick(index)}
-          showCompanyLogo={showCompanyLogos}
-        />
-      ))}
+      {photos.map((photo, index) => {
+        const cluster = clusterMap?.get(photo.id)
+        const clusterData: PhotoClusterData | undefined = cluster
+          ? { photos: cluster.photos, currentIndex: cluster.currentIndex }
+          : undefined
+
+        return (
+          <PhotoCard
+            key={`${photo.id}-${photo.thumbnail_url}`}
+            photo={photo}
+            onClick={() => onPhotoClick(index)}
+            showCompanyLogo={showCompanyLogos}
+            cluster={clusterData}
+            onCyclePhoto={
+              cluster && onCycleClusterPhoto
+                ? (newIndex) => onCycleClusterPhoto(photo.id, newIndex)
+                : undefined
+            }
+          />
+        )
+      })}
     </div>
   )
 }

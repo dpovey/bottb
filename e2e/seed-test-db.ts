@@ -105,6 +105,14 @@ interface FinalizedResult {
   total_score: number | null
 }
 
+interface PhotoCluster {
+  id: string
+  cluster_type: string
+  photo_ids: string[]
+  representative_photo_id: string | null
+  metadata: Record<string, unknown> | null
+}
+
 function loadFixture<T>(filename: string): T {
   const filepath = join(FIXTURES_DIR, filename)
   const content = readFileSync(filepath, 'utf-8')
@@ -131,6 +139,7 @@ async function main() {
     const finalizedResults = loadFixture<FinalizedResult[]>(
       'finalized_results.json'
     )
+    const photoClusters = loadFixture<PhotoCluster[]>('photo_clusters.json')
 
     console.log('Dropping and recreating schema...')
     await client.query('DROP SCHEMA public CASCADE')
@@ -246,9 +255,10 @@ async function main() {
     console.log('Seeding photos...')
     for (const photo of photos) {
       await client.query(
-        `INSERT INTO photos (blob_url, blob_pathname, event_id, band_id, photographer, labels, hero_focal_point)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO photos (id, blob_url, blob_pathname, event_id, band_id, photographer, labels, hero_focal_point)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
+          photo.id, // Use explicit ID from fixture for cluster references
           photo.blob_url,
           photo.blob_pathname,
           photo.event_id,
@@ -288,6 +298,22 @@ async function main() {
       )
     }
     console.log(`  Inserted ${finalizedResults.length} finalized results`)
+
+    console.log('Seeding photo clusters...')
+    for (const cluster of photoClusters) {
+      await client.query(
+        `INSERT INTO photo_clusters (id, cluster_type, photo_ids, representative_photo_id, metadata)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          cluster.id,
+          cluster.cluster_type,
+          cluster.photo_ids,
+          cluster.representative_photo_id,
+          cluster.metadata ? JSON.stringify(cluster.metadata) : null,
+        ]
+      )
+    }
+    console.log(`  Inserted ${photoClusters.length} photo clusters`)
 
     console.log('\n✅ Database seeded successfully!')
     console.log('\nTo cache for CI, run:')

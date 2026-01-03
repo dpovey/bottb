@@ -18,6 +18,7 @@ const FIXTURES_DIR = join(E2E_DIR, 'fixtures')
 const DATA_DIR = join(FIXTURES_DIR, 'data')
 const DUMP_FILE = join(FIXTURES_DIR, 'test-db.sql')
 const SEED_SCRIPT = join(E2E_DIR, 'seed-test-db.ts')
+const SCHEMA_FILE = join(__dirname, '..', 'src', 'lib', 'schema.sql')
 
 // Minimum size for a valid dump (placeholder is ~500 bytes, real dump is much larger)
 const MIN_DUMP_SIZE = 5000
@@ -68,6 +69,14 @@ function getNewestFixtureTime(): number {
   // Check seed script
   if (existsSync(SEED_SCRIPT)) {
     const mtime = statSync(SEED_SCRIPT).mtimeMs
+    if (mtime > newest) {
+      newest = mtime
+    }
+  }
+
+  // Check schema file - schema changes require dump regeneration
+  if (existsSync(SCHEMA_FILE)) {
+    const mtime = statSync(SCHEMA_FILE).mtimeMs
     if (mtime > newest) {
       newest = mtime
     }

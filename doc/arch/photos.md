@@ -37,6 +37,7 @@ pnpm bulk-upload-photos <directory> <event-id>
 - Responsive grid with lazy loading
 - Filtering by event, band, photographer, company
 - URL state for shareable filters
+- Photo grouping (collapse near-duplicates)
 
 ### Shuffle & Ordering
 
@@ -47,6 +48,40 @@ pnpm bulk-upload-photos <directory> <event-id>
   - `?shuffle=<seed>` → specific seed for shareable links with exact order
   - No param → chronological by date
 - **Deterministic**: Seeded PRNG (mulberry32) ensures same seed = same order
+
+### Photo Grouping
+
+Groups similar photos in the gallery, showing only the representative photo with an indicator.
+
+Two independent toggles:
+
+- **Group Duplicates**: Collapses near-identical photos (burst shots, minor variations)
+- **Group Scenes**: Collapses same-moment different-angle photos
+
+Settings:
+
+- **Default**: Both groupings on
+- **URL params**: `?groupDuplicates=false` and/or `?groupScenes=false` to disable
+- **Visual indicator**: Icon with count badge on grouped photos
+- **Cycling**: Click the badge to cycle through similar photos in-place
+
+#### Query-Level Grouping
+
+Grouping is done at the database query level to ensure correct pagination:
+
+- **API param**: `?groupTypes=near_duplicate,scene` controls which cluster types to group
+- **Query behavior**: When groupTypes is set, the query returns only representative photos + non-clustered photos
+- **Embedded cluster data**: Each photo includes `cluster_photos[]` array with full photo data for cycling
+- **Total count**: Reflects the grouped count (visible photos), not raw photo count
+- **Pagination**: Works correctly - LIMIT 50 returns 50 visible gallery slots
+
+**SQL approach** (CTE-based):
+
+1. `photo_cluster_membership` CTE maps each photo to its cluster representative
+2. `visible_photos` CTE filters to representatives + non-clustered
+3. Main query joins cluster photos as JSON array for cycling
+
+**Implementation**: `getGroupedPhotosWithCount()` in `src/lib/db.ts`
 
 ### Type-Safe Shuffle Architecture
 
@@ -416,12 +451,13 @@ Three types of clusters for organizing and discovering photos.
 
 ## API Endpoints
 
-| Endpoint                                | Description                      |
-| --------------------------------------- | -------------------------------- |
-| `GET /api/photos`                       | List with filters                |
-| `GET /api/photos/[id]/jpeg`             | Download original (rate limited) |
-| `GET /api/photos/[id]/smart-crop`       | Get smart crop for aspect ratio  |
-| `PATCH /api/photos/[id]`                | Update metadata (admin)          |
-| `DELETE /api/photos/[id]`               | Delete (admin)                   |
-| `GET /api/admin/photos/clusters`        | Get clusters (admin)             |
-| `GET /api/admin/photos/people/clusters` | Get people clusters (admin)      |
+| Endpoint                                | Description                          |
+| --------------------------------------- | ------------------------------------ |
+| `GET /api/photos`                       | List with filters                    |
+| `GET /api/photos/[id]/jpeg`             | Download original (rate limited)     |
+| `GET /api/photos/[id]/smart-crop`       | Get smart crop for aspect ratio      |
+| `PATCH /api/photos/[id]`                | Update metadata (admin)              |
+| `DELETE /api/photos/[id]`               | Delete (admin)                       |
+| `GET /api/photos/clusters`              | Get near-duplicate clusters (public) |
+| `GET /api/admin/photos/clusters`        | Get clusters (admin)                 |
+| `GET /api/admin/photos/people/clusters` | Get people clusters (admin)          |

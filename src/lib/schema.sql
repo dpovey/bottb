@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS finalized_results (
 
 -- Photos table
 CREATE TABLE IF NOT EXISTS photos (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     event_id character varying(255),
     band_id character varying(255),
     photographer character varying(255),
@@ -323,7 +323,7 @@ ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurement
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_band_unique UNIQUE (event_id, band_id);
 ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_event_id_band_id_key UNIQUE (event_id, band_id);
-ALTER TABLE ONLY photos ADD CONSTRAINT photos_pkey PRIMARY KEY (id);
+-- photos_pkey is defined inline in CREATE TABLE
 ALTER TABLE ONLY videos ADD CONSTRAINT videos_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY videos ADD CONSTRAINT videos_youtube_video_id_key UNIQUE (youtube_video_id);
 ALTER TABLE ONLY setlist_songs ADD CONSTRAINT setlist_songs_pkey PRIMARY KEY (id);

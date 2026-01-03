@@ -61,6 +61,8 @@ export { StarIcon } from './misc/star'
 export { WarningIcon } from './misc/warning'
 export { GlobeIcon } from './misc/globe'
 export { HeartIcon } from './misc/heart'
+export { LayersIcon } from './misc/layers'
+export { ScenesIcon } from './misc/scenes'
 
 // Icon types
 export type { IconProps } from './types'

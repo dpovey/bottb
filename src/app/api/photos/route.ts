@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPhotosWithCount, type PhotoOrderBy } from '@/lib/db'
+import {
+  getPhotosWithCount,
+  getGroupedPhotosWithCount,
+  type PhotoOrderBy,
+  type Photo,
+  type PhotoWithCluster,
+} from '@/lib/db'
 import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 import { withPublicRateLimit } from '@/lib/api-protection'
+import { getTimeBasedSeed } from '@/lib/shuffle'
+
+// Convert string seed to numeric seed for database ordering
+function stringToNumericSeed(seed: string): number {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i)
+  }
+  return Math.abs(hash)
+}
 
 export const GET = withPublicRateLimit(async function GET(
   request: NextRequest
@@ -39,13 +55,50 @@ export const GET = withPublicRateLimit(async function GET(
     // unmatched=true filters to photos with missing event_id or band_id
     const unmatched = searchParams.get('unmatched') === 'true'
 
-    let photos
-    let total
+    // groupTypes: comma-separated list of cluster types to group by
+    // e.g., groupTypes=near_duplicate,scene
+    const groupTypesParam = searchParams.get('groupTypes')
+    const groupTypes = groupTypesParam
+      ? (groupTypesParam.split(',').filter((t) => t) as (
+          | 'near_duplicate'
+          | 'scene'
+        )[])
+      : undefined
+
+    let photos: Photo[] | PhotoWithCluster[]
+    let total: number
     let seed: string | null = null
 
-    // Use cached function for shuffle requests (initial load only)
-    // For "load more" (offset > 0), we still use cached but with pagination
-    if (shuffle) {
+    // When groupTypes is specified, use the grouped query
+    // This returns only representative photos with embedded cluster data
+    if (groupTypes && groupTypes.length > 0) {
+      // Determine seed for shuffle mode
+      let numericSeed: number | undefined
+      if (shuffle === 'true') {
+        seed = getTimeBasedSeed()
+        numericSeed = stringToNumericSeed(seed)
+      } else if (shuffle) {
+        seed = shuffle
+        numericSeed = stringToNumericSeed(shuffle)
+      }
+
+      const result = await getGroupedPhotosWithCount({
+        eventId,
+        bandId,
+        photographer,
+        companySlug,
+        limit,
+        offset,
+        orderBy: shuffle ? 'random' : orderBy,
+        seed: numericSeed,
+        unmatched,
+        groupTypes,
+      })
+      photos = result.photos
+      total = result.total
+    } else if (shuffle) {
+      // Use cached function for shuffle requests (initial load only)
+      // For "load more" (offset > 0), we still use cached but with pagination
       const result = await getCachedPhotos({
         eventId,
         photographer,

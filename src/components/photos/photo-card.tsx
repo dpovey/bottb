@@ -1,25 +1,66 @@
 'use client'
 
+import { useState } from 'react'
 import { Photo } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
+import { LayersIcon } from '@/components/icons'
 import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
+
+/**
+ * Cluster data for grouped photos
+ */
+export interface PhotoClusterData {
+  /** All photos in this cluster */
+  photos: Photo[]
+  /** Current index being displayed */
+  currentIndex: number
+}
 
 interface PhotoCardProps {
   photo: Photo
   onClick: () => void
   showCompanyLogo?: boolean
+  /** Optional cluster data when this photo is part of a group */
+  cluster?: PhotoClusterData
+  /** Callback when cycling through cluster photos */
+  onCyclePhoto?: (newIndex: number) => void
 }
 
 export function PhotoCard({
   photo,
   onClick,
   showCompanyLogo = true,
+  cluster,
+  onCyclePhoto,
 }: PhotoCardProps) {
+  // Local state for crossfade animation
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
+  // Determine which photo to display (cluster photo or original)
+  const displayPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
+
   // Use best available thumbnail with responsive srcset
-  const thumbSrc = getBestThumbnailSrc(photo)
-  const srcSet = buildThumbnailSrcSet(photo)
+  const thumbSrc = getBestThumbnailSrc(displayPhoto)
+  const srcSet = buildThumbnailSrcSet(displayPhoto)
   // Use smart focal point for intelligent cropping (defaults to center)
-  const focalPoint = photo.hero_focal_point ?? { x: 50, y: 50 }
+  const focalPoint = displayPhoto.hero_focal_point ?? { x: 50, y: 50 }
+
+  // Handle cycling through cluster photos
+  const handleCycleClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering onClick
+    if (!cluster || !onCyclePhoto) return
+
+    // Trigger transition animation
+    setIsTransitioning(true)
+    setTimeout(() => setIsTransitioning(false), 200)
+
+    // Cycle to next photo (wrap around)
+    const nextIndex = (cluster.currentIndex + 1) % cluster.photos.length
+    onCyclePhoto(nextIndex)
+  }
+
+  const clusterSize = cluster?.photos.length ?? 0
+  const showClusterBadge = clusterSize > 1
 
   return (
     <div
@@ -33,18 +74,33 @@ export function PhotoCard({
         src={thumbSrc}
         srcSet={srcSet}
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        alt={photo.original_filename || 'Photo'}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        alt={displayPhoto.original_filename || 'Photo'}
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${
+          isTransitioning ? 'opacity-70' : 'opacity-100'
+        }`}
         style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
         loading="lazy"
       />
 
+      {/* Cluster badge - top left corner */}
+      {showClusterBadge && (
+        <button
+          onClick={handleCycleClick}
+          className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all z-10 cursor-pointer"
+          title={`${clusterSize} similar photos – click to cycle`}
+          aria-label={`View ${clusterSize} similar photos`}
+        >
+          <LayersIcon size={14} />
+          <span className="text-xs font-medium">{clusterSize}</span>
+        </button>
+      )}
+
       {/* Company icon badge - always visible in top right if available */}
-      {showCompanyLogo && photo.company_icon_url && (
+      {showCompanyLogo && displayPhoto.company_icon_url && (
         <div className="absolute top-2 right-2 p-1.5 bg-black/60 backdrop-blur-xs rounded-lg opacity-80 group-hover:opacity-100 transition-opacity">
           <CompanyIcon
-            iconUrl={photo.company_icon_url}
-            companyName={photo.company_name || 'Company'}
+            iconUrl={displayPhoto.company_icon_url}
+            companyName={displayPhoto.company_name || 'Company'}
             size="sm"
             showFallback={false}
           />
@@ -54,25 +110,25 @@ export function PhotoCard({
       {/* Hover overlay with info */}
       <div className="absolute inset-0 bg-linear-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <div className="absolute bottom-0 left-0 right-0 p-3">
-          {photo.band_name && (
+          {displayPhoto.band_name && (
             <div className="flex items-center gap-2">
               {/* Show company icon next to band name if no top-right icon */}
-              {!photo.company_icon_url && photo.company_name && (
+              {!displayPhoto.company_icon_url && displayPhoto.company_name && (
                 <CompanyIcon
-                  iconUrl={photo.company_icon_url}
-                  companyName={photo.company_name}
+                  iconUrl={displayPhoto.company_icon_url}
+                  companyName={displayPhoto.company_name}
                   size="xs"
                   showFallback={false}
                 />
               )}
               <p className="text-sm font-medium text-white truncate">
-                {photo.band_name}
+                {displayPhoto.band_name}
               </p>
             </div>
           )}
-          {photo.event_name && (
+          {displayPhoto.event_name && (
             <p className="text-xs text-text-muted truncate">
-              {photo.event_name}
+              {displayPhoto.event_name}
             </p>
           )}
         </div>

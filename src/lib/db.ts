@@ -1,4 +1,4 @@
-import { sql } from './sql'
+import { sql, sqlQuery } from './sql'
 
 // Re-export types from db-types.ts for backward compatibility
 export type {
@@ -385,6 +385,14 @@ export interface GetPhotosOptions {
   seed?: number
   /** Filter to show only photos with missing event_id or band_id */
   unmatched?: boolean
+  /** Cluster types to group by - when set, returns only representatives with cluster data */
+  groupTypes?: ('near_duplicate' | 'scene')[]
+}
+
+// Photo with embedded cluster data for grouped queries
+export interface PhotoWithCluster extends Photo {
+  /** Array of photos in this cluster (null if not clustered) */
+  cluster_photos: Photo[] | null
 }
 
 /**
@@ -409,6 +417,12 @@ function sortByDate(photos: Photo[]): Photo[] {
 // Result type for combined photos + count query
 interface PhotosWithCountResult {
   photos: Photo[]
+  total: number
+}
+
+// Result type when groupTypes is specified
+export interface GroupedPhotosResult {
+  photos: PhotoWithCluster[]
   total: number
 }
 
@@ -568,6 +582,195 @@ async function getPhotosRandomWithCount(options: {
     return { photos, total }
   } catch (error) {
     console.error('Error fetching random photos with count:', error)
+    throw error
+  }
+}
+
+// Extended type for grouped query results (includes cluster_photos JSON)
+interface PhotoWithClusterRow extends Photo {
+  total_count: string
+  cluster_photos: Photo[] | null // JSON from postgres, parsed by driver
+}
+
+/**
+ * Get photos with grouping - returns only representatives + non-clustered photos
+ * Each row includes cluster_photos array for cycling through grouped photos
+ */
+export async function getGroupedPhotosWithCount(options: {
+  eventId?: string
+  bandId?: string
+  photographer?: string
+  companySlug?: string
+  limit: number
+  offset?: number
+  orderBy?: PhotoOrderBy
+  seed?: number
+  unmatched?: boolean
+  groupTypes: ('near_duplicate' | 'scene')[]
+}): Promise<GroupedPhotosResult> {
+  const {
+    eventId,
+    bandId,
+    photographer,
+    companySlug,
+    limit,
+    offset = 0,
+    orderBy = 'uploaded',
+    seed,
+    unmatched,
+    groupTypes,
+  } = options
+
+  try {
+    // Build ORDER BY clause based on orderBy option
+    // Note: seed is sanitized as an integer, safe to interpolate
+    const orderClause =
+      orderBy === 'random' && seed !== undefined
+        ? `hashtext(vp.id::text || '${seed}'::text), vp.id`
+        : orderBy === 'random'
+          ? `floor(random() * 2147483647)::int, vp.id`
+          : orderBy === 'date'
+            ? `vp.captured_at ASC NULLS LAST, vp.original_filename ASC`
+            : `vp.uploaded_at DESC`
+
+    // Build the full query with parameterized values
+    // Using sqlQuery for dynamic ORDER BY clause
+    const queryText = `
+      WITH visible_photos AS (
+        -- Photos that should be displayed: non-clustered OR cluster representatives
+        -- Using EXISTS to avoid duplicate rows from multiple cluster memberships
+        SELECT DISTINCT p.*
+        FROM photos p
+        LEFT JOIN bands b ON p.band_id = b.id
+        WHERE 
+          (
+            -- Not in any cluster of the requested types
+            NOT EXISTS (
+              SELECT 1 FROM photo_clusters pc 
+              WHERE p.id = ANY(pc.photo_ids) 
+                AND pc.cluster_type = ANY($1::text[])
+            )
+            OR
+            -- Is the representative of at least one cluster
+            EXISTS (
+              SELECT 1 FROM photo_clusters pc 
+              WHERE COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = p.id 
+                AND pc.cluster_type = ANY($1::text[])
+            )
+          )
+          AND ($2::text IS NULL OR p.event_id = $2)
+          AND ($3::text IS NULL OR p.band_id = $3)
+          AND ($4::text IS NULL OR p.photographer = $4)
+          AND (
+            $5::text IS NULL 
+            OR ($5 = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
+            OR ($5 != 'none' AND b.company_slug = $5)
+          )
+          AND (
+            $6::boolean = false
+            OR (p.event_id IS NULL OR p.band_id IS NULL)
+          )
+      )
+      SELECT 
+        vp.*,
+        e.name as event_name,
+        b.name as band_name,
+        c.name as company_name,
+        b.company_slug as company_slug,
+        c.icon_url as company_icon_url,
+        COALESCE(vp.xmp_metadata->>'thumbnail_url', REPLACE(vp.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+        vp.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+        vp.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        vp.xmp_metadata->>'medium_url' as medium_url,
+        vp.xmp_metadata->>'large_4k_url' as large_4k_url,
+        COUNT(*) OVER() as total_count,
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', cp.id,
+              'event_id', cp.event_id,
+              'band_id', cp.band_id,
+              'photographer', cp.photographer,
+              'blob_url', cp.blob_url,
+              'blob_pathname', cp.blob_pathname,
+              'original_filename', cp.original_filename,
+              'width', cp.width,
+              'height', cp.height,
+              'file_size', cp.file_size,
+              'content_type', cp.content_type,
+              'xmp_metadata', cp.xmp_metadata,
+              'uploaded_at', cp.uploaded_at,
+              'created_at', cp.created_at,
+              'captured_at', cp.captured_at,
+              'labels', cp.labels,
+              'hero_focal_point', cp.hero_focal_point,
+              'thumbnail_url', COALESCE(cp.xmp_metadata->>'thumbnail_url', REPLACE(cp.blob_url, '/large.webp', '/thumbnail.webp')),
+              'thumbnail_2x_url', cp.xmp_metadata->>'thumbnail_2x_url',
+              'thumbnail_3x_url', cp.xmp_metadata->>'thumbnail_3x_url',
+              'medium_url', cp.xmp_metadata->>'medium_url',
+              'large_4k_url', cp.xmp_metadata->>'large_4k_url',
+              'event_name', cp.event_name,
+              'band_name', cp.band_name,
+              'company_name', cp.company_name,
+              'company_slug', cp.company_slug,
+              'company_icon_url', cp.company_icon_url
+            )
+            ORDER BY cp.id
+          )
+          FROM (
+            -- Deduplicate photos that appear in multiple clusters, with joined metadata
+            SELECT DISTINCT ON (p.id) 
+              p.*,
+              ev.name as event_name,
+              bd.name as band_name,
+              co.name as company_name,
+              bd.company_slug as company_slug,
+              co.icon_url as company_icon_url
+            FROM photo_clusters pc
+            JOIN photos p ON p.id = ANY(pc.photo_ids)
+            LEFT JOIN events ev ON p.event_id = ev.id
+            LEFT JOIN bands bd ON p.band_id = bd.id
+            LEFT JOIN companies co ON bd.company_slug = co.slug
+            WHERE pc.cluster_type = ANY($1::text[])
+              AND COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = vp.id
+            ORDER BY p.id
+          ) cp
+        ) as cluster_photos
+      FROM visible_photos vp
+      LEFT JOIN events e ON vp.event_id = e.id
+      LEFT JOIN bands b ON vp.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      ORDER BY ${orderClause}
+      LIMIT $7
+      OFFSET $8
+    `
+
+    const values = [
+      groupTypes, // $1 - array of group types
+      eventId || null, // $2
+      bandId || null, // $3
+      photographer || null, // $4
+      companySlug || null, // $5
+      unmatched ?? false, // $6
+      limit, // $7
+      offset, // $8
+    ]
+
+    const { rows } = await sqlQuery<PhotoWithClusterRow>(queryText, values)
+
+    const total = parseInt(rows[0]?.total_count || '0', 10)
+
+    // Parse cluster_photos and remove total_count
+    const photos: PhotoWithCluster[] = rows.map(
+      ({ total_count: _total_count, cluster_photos, ...photo }) => ({
+        ...photo,
+        cluster_photos: cluster_photos as Photo[] | null,
+      })
+    )
+
+    return { photos, total }
+  } catch (error) {
+    console.error('Error fetching grouped photos with count:', error)
     throw error
   }
 }

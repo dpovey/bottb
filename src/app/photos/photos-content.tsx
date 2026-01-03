@@ -2,14 +2,19 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Photo, Event } from '@/lib/db'
-import { PhotoGrid, type GridSize } from '@/components/photos/photo-grid'
+import { Photo, Event, PhotoWithCluster } from '@/lib/db'
+import {
+  PhotoGrid,
+  type GridSize,
+  type ClusterMap,
+} from '@/components/photos/photo-grid'
 import { PhotoFilters } from '@/components/photos/photo-filters'
 import { PublicLayout } from '@/components/layouts'
 import { trackPhotoClick, trackPhotoFilterChange } from '@/lib/analytics'
-import { PlayCircleIcon, BuildingIcon } from '@/components/icons'
+import { PlayCircleIcon, BuildingIcon, ScenesIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
+import { GroupingButton } from '@/components/photos/grouping-button'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -25,7 +30,7 @@ interface AvailableFilters {
 }
 
 interface PhotosResponse {
-  photos: Photo[]
+  photos: PhotoWithCluster[]
   pagination: {
     page: number
     limit: number
@@ -56,6 +61,8 @@ interface StoredFilters {
   photographer?: string | null
   company?: string | null
   shuffle?: string | null
+  groupDuplicates?: boolean
+  groupScenes?: boolean
 }
 
 export function PhotosContent({
@@ -67,7 +74,7 @@ export function PhotosContent({
 }: PhotosContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [photos, setPhotos] = useState<Photo[]>([])
+  const [photos, setPhotos] = useState<PhotoWithCluster[]>([])
   // Initialize with SSR data if available to prevent layout shift
   const [events, setEvents] = useState<Event[]>(
     initialFilterOptions?.events.map((e) => ({
@@ -98,6 +105,16 @@ export function PhotosContent({
   )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
+  // Grouping states: collapse near-duplicate and/or scene photos
+  // Both default to true (grouping enabled)
+  const [groupDuplicates, setGroupDuplicates] = useState<boolean>(
+    searchParams.get('groupDuplicates') !== 'false'
+  )
+  const [groupScenes, setGroupScenes] = useState<boolean>(
+    searchParams.get('groupScenes') !== 'false'
+  )
+  // Map of representative photo ID to cluster data (photos + current display index)
+  const [clusterMap, setClusterMap] = useState<ClusterMap>(new Map())
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Page sizes
@@ -127,7 +144,9 @@ export function PhotosContent({
       searchParams.has('eventId') ||
       searchParams.has('photographer') ||
       searchParams.has('company') ||
-      searchParams.has('shuffle')
+      searchParams.has('shuffle') ||
+      searchParams.has('groupDuplicates') ||
+      searchParams.has('groupScenes')
   )
 
   // Track if filters have been initialized (localStorage checked or URL params applied)
@@ -153,6 +172,12 @@ export function PhotosContent({
         if (filters.shuffle !== undefined) {
           setShuffle(filters.shuffle)
         }
+        if (filters.groupDuplicates !== undefined) {
+          setGroupDuplicates(filters.groupDuplicates)
+        }
+        if (filters.groupScenes !== undefined) {
+          setGroupScenes(filters.groupScenes)
+        }
       }
     } catch {
       // Ignore localStorage errors
@@ -172,6 +197,8 @@ export function PhotosContent({
       photographer: selectedPhotographer,
       company: selectedCompanySlug,
       shuffle,
+      groupDuplicates,
+      groupScenes,
     }
     try {
       localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
@@ -183,6 +210,8 @@ export function PhotosContent({
     selectedPhotographer,
     selectedCompanySlug,
     shuffle,
+    groupDuplicates,
+    groupScenes,
     filtersInitialized,
   ])
 
@@ -226,6 +255,16 @@ export function PhotosContent({
         return prev !== urlValue ? urlValue : prev
       })
     }
+
+    // Only update grouping if URL explicitly has the params
+    if (searchParams.has('groupDuplicates')) {
+      const param = searchParams.get('groupDuplicates')
+      setGroupDuplicates(param !== 'false')
+    }
+    if (searchParams.has('groupScenes')) {
+      const param = searchParams.get('groupScenes')
+      setGroupScenes(param !== 'false')
+    }
   }, [searchParams])
 
   // Update URL when filters change
@@ -235,6 +274,8 @@ export function PhotosContent({
       photographer?: string | null
       company?: string | null
       shuffle?: string | null
+      groupDuplicates?: boolean
+      groupScenes?: boolean
     }) => {
       const url = new URL(window.location.href)
 
@@ -267,6 +308,21 @@ export function PhotosContent({
           url.searchParams.set('shuffle', params.shuffle)
         } else {
           url.searchParams.delete('shuffle')
+        }
+      }
+      // Grouping: only add to URL when disabled (default is ON)
+      if (params.groupDuplicates !== undefined) {
+        if (!params.groupDuplicates) {
+          url.searchParams.set('groupDuplicates', 'false')
+        } else {
+          url.searchParams.delete('groupDuplicates')
+        }
+      }
+      if (params.groupScenes !== undefined) {
+        if (!params.groupScenes) {
+          url.searchParams.set('groupScenes', 'false')
+        } else {
+          url.searchParams.delete('groupScenes')
         }
       }
 
@@ -356,13 +412,42 @@ export function PhotosContent({
     fetchFilters()
   }, [initialFilterOptions])
 
-  // Reset photos when filters or shuffle change
+  // Reset photos when filters, shuffle, or grouping changes
   useEffect(() => {
     setPhotos([])
     loadedPhotoIds.current = new Set()
     currentPage.current = 1
     setLoading(true)
-  }, [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle])
+  }, [
+    selectedEventId,
+    selectedPhotographer,
+    selectedCompanySlug,
+    shuffle,
+    groupDuplicates,
+    groupScenes,
+  ])
+
+  // Build cluster map from embedded cluster_photos data
+  useEffect(() => {
+    const anyGroupingEnabled = groupDuplicates || groupScenes
+    if (!anyGroupingEnabled || !photos?.length) {
+      setClusterMap(new Map())
+      return
+    }
+
+    // Build cluster map from embedded cluster_photos
+    const newClusterMap: ClusterMap = new Map()
+    for (const photo of photos) {
+      if (photo.cluster_photos && photo.cluster_photos.length > 1) {
+        newClusterMap.set(photo.id, {
+          photos: photo.cluster_photos,
+          currentIndex: 0,
+        })
+      }
+    }
+
+    setClusterMap(newClusterMap)
+  }, [photos, groupDuplicates, groupScenes])
 
   // Fetch photos - initial load or load more
   const fetchPhotos = useCallback(
@@ -387,6 +472,14 @@ export function PhotosContent({
           params.set('shuffle', shuffle)
         } else {
           params.set('order', 'date')
+        }
+
+        // Build groupTypes parameter based on enabled toggles
+        const groupTypes: string[] = []
+        if (groupDuplicates) groupTypes.push('near_duplicate')
+        if (groupScenes) groupTypes.push('scene')
+        if (groupTypes.length > 0) {
+          params.set('groupTypes', groupTypes.join(','))
         }
 
         // Always use pagination - shuffle mode is deterministic (same seed = same order)
@@ -442,7 +535,14 @@ export function PhotosContent({
         setLoadingMore(false)
       }
     },
-    [selectedEventId, selectedPhotographer, selectedCompanySlug, shuffle]
+    [
+      selectedEventId,
+      selectedPhotographer,
+      selectedCompanySlug,
+      shuffle,
+      groupDuplicates,
+      groupScenes,
+    ]
   )
 
   // Initial fetch when filters change (wait until localStorage check completes)
@@ -481,13 +581,17 @@ export function PhotosContent({
       const photo = photos[index]
       if (!photo) return
 
+      // If this is a clustered photo, get the currently displayed photo from the cluster
+      const cluster = clusterMap.get(photo.id)
+      const actualPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
+
       // Track photo click
       trackPhotoClick({
-        photo_id: photo.id,
-        event_id: photo.event_id || null,
-        band_id: photo.band_id || null,
-        event_name: photo.event_name || null,
-        band_name: photo.band_name || null,
+        photo_id: actualPhoto.id,
+        event_id: actualPhoto.event_id || null,
+        band_id: actualPhoto.band_id || null,
+        event_name: actualPhoto.event_name || null,
+        band_name: actualPhoto.band_name || null,
       })
 
       // Build slideshow URL with current filters and shuffle state
@@ -498,11 +602,12 @@ export function PhotosContent({
       if (shuffle) params.set('shuffle', shuffle)
 
       const queryString = params.toString()
-      const slideshowUrl = `/slideshow/${photo.id}${queryString ? `?${queryString}` : ''}`
+      const slideshowUrl = `/slideshow/${actualPhoto.id}${queryString ? `?${queryString}` : ''}`
       router.push(slideshowUrl)
     },
     [
       photos,
+      clusterMap,
       router,
       selectedEventId,
       selectedPhotographer,
@@ -532,6 +637,34 @@ export function PhotosContent({
     }
   }, [shuffle, updateUrlParams, generateRandomSeed])
 
+  // Handle grouping toggles
+  const handleGroupDuplicatesToggle = useCallback(() => {
+    const newValue = !groupDuplicates
+    setGroupDuplicates(newValue)
+    updateUrlParams({ groupDuplicates: newValue })
+  }, [groupDuplicates, updateUrlParams])
+
+  const handleGroupScenesToggle = useCallback(() => {
+    const newValue = !groupScenes
+    setGroupScenes(newValue)
+    updateUrlParams({ groupScenes: newValue })
+  }, [groupScenes, updateUrlParams])
+
+  // Handle cycling through cluster photos
+  const handleCycleClusterPhoto = useCallback(
+    (photoId: string, newIndex: number) => {
+      setClusterMap((prev) => {
+        const newMap = new Map(prev)
+        const cluster = newMap.get(photoId)
+        if (cluster) {
+          newMap.set(photoId, { ...cluster, currentIndex: newIndex })
+        }
+        return newMap
+      })
+    },
+    []
+  )
+
   return (
     <PublicLayout
       breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Photos' }]}
@@ -547,6 +680,12 @@ export function PhotosContent({
                 {photos.length} of {totalCount} photo
                 {totalCount !== 1 ? 's' : ''} from {events.length} event
                 {events.length !== 1 ? 's' : ''}
+                {(groupDuplicates || groupScenes) && clusterMap.size > 0 && (
+                  <span className="text-text-dim">
+                    {' '}
+                    ({clusterMap.size} groups)
+                  </span>
+                )}
               </p>
             </div>
             {/* Show slideshow button if we have photos loaded OR SSR says there are photos */}
@@ -569,6 +708,29 @@ export function PhotosContent({
               isActive={!!shuffle}
               onClick={handleShuffleToggle}
               size="md"
+            />
+
+            {/* Group duplicates button */}
+            <GroupingButton
+              isActive={groupDuplicates}
+              onClick={handleGroupDuplicatesToggle}
+              size="md"
+              activeTitle="Duplicate grouping on"
+              inactiveTitle="Group duplicate photos"
+              activeLabel="Show all duplicate photos"
+              inactiveLabel="Group duplicate photos"
+            />
+
+            {/* Group scenes button */}
+            <GroupingButton
+              isActive={groupScenes}
+              onClick={handleGroupScenesToggle}
+              size="md"
+              activeTitle="Scene grouping on"
+              inactiveTitle="Group similar scenes"
+              activeLabel="Show all scenes"
+              inactiveLabel="Group similar scenes"
+              icon={<ScenesIcon size={18} />}
             />
 
             {/* Size selector */}
@@ -720,6 +882,8 @@ export function PhotosContent({
             loading={loading}
             size={gridSize}
             showCompanyLogos={showCompanyLogos}
+            clusterMap={groupDuplicates || groupScenes ? clusterMap : undefined}
+            onCycleClusterPhoto={handleCycleClusterPhoto}
           />
         </div>
 
