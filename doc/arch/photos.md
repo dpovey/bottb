@@ -65,17 +65,6 @@ Settings:
 - **Visual indicator**: Icon with count badge on grouped photos
 - **Cycling**: Click the badge to cycle through similar photos in-place
 
-#### Auto-Cycling
-
-Grouped photos automatically cycle through similar images in the gallery:
-
-- **Interval**: 1 second between transitions
-- **Color-aware**: Only cycles through photos of the same color type
-  - If viewing a color photo, only cycles through other color photos
-  - If viewing a B&W photo, only cycles through other B&W photos
-- **Pause on hover**: Stops cycling when user hovers over the card
-- **Manual skip**: Click the badge to manually advance to next photo
-
 #### B&W Detection (is_monochrome)
 
 Photos can be classified as B&W/monochrome or color:
@@ -83,7 +72,7 @@ Photos can be classified as B&W/monochrome or color:
 - **Detection**: Saturation-based analysis in the ML pipeline
 - **Threshold**: Average saturation < 0.1 is considered monochrome
 - **Storage**: `photos.is_monochrome` column (boolean, nullable)
-- **Usage**: Used by auto-cycling to group same-color photos together
+- **Future use**: Could be used to filter cycling behavior in slideshow
 
 #### Query-Level Grouping
 
