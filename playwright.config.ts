@@ -46,12 +46,13 @@ export default defineConfig({
   },
 
   // Configure projects for major browsers
+  // CI only runs chromium; uncomment firefox/webkit for local cross-browser testing
+  // Run locally with: pnpm exec playwright test --project=firefox
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    // Uncomment to test on more browsers
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },

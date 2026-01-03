@@ -142,12 +142,18 @@ const Slide = memo(function Slide({
   photo,
   index,
   isPlaying,
+  isMobile,
 }: {
   photo: Photo
   index: number
   isPlaying: boolean
+  isMobile: boolean
 }) {
   const srcSet = buildHeroSrcSet(photo)
+
+  // On mobile (portrait or landscape) or during play mode: full bleed, no decorations
+  // On tablet/desktop: constrained size with rounded corners and shadow
+  const isMobileOrPlaying = isMobile || isPlaying
 
   return (
     <div className="flex items-center justify-center w-full h-full">
@@ -157,8 +163,10 @@ const Slide = memo(function Slide({
         srcSet={srcSet}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 80vw"
         alt={photo.original_filename || `Photo ${index + 1}`}
-        className={`object-contain max-w-[90%] max-h-full ${
-          isPlaying ? '' : 'rounded-lg shadow-2xl'
+        className={`block object-contain ${
+          isMobileOrPlaying
+            ? 'w-full h-full'
+            : 'max-w-[90%] max-h-full rounded-lg shadow-2xl'
         }`}
         draggable={false}
       />
@@ -999,22 +1007,23 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const displayPosition = (minLoadedPage - 1) * PAGE_SIZE + currentIndex + 1
 
   // Container classes based on mode
+  // overflow-hidden is critical to prevent horizontal scroll on mobile
   const containerClasses =
     mode === 'modal'
-      ? 'fixed inset-0 z-50 bg-bg flex flex-col'
-      : 'min-h-screen bg-bg flex flex-col'
+      ? 'fixed inset-0 z-50 bg-bg flex flex-col overflow-hidden'
+      : 'min-h-screen bg-bg flex flex-col overflow-hidden'
 
   return (
     <div className={containerClasses}>
       {/* Top Bar - hidden during play mode */}
       <div
-        className={`slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 ${
+        className={`slideshow-topbar absolute top-0 left-0 right-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 transition-all duration-300 overflow-hidden ${
           isPlaying
             ? 'opacity-0 pointer-events-none -translate-y-full'
             : 'opacity-100'
         }`}
       >
-        <div className="slideshow-topbar-inner flex items-center justify-between px-6 py-4">
+        <div className="slideshow-topbar-inner flex items-center justify-between px-2 sm:px-6 py-3 sm:py-4">
           {/* Photo Info */}
           <div className="shrink-0 min-w-0">
             {currentPhoto.band_name && currentPhoto.band_id ? (
@@ -1168,8 +1177,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             </div>
           )}
 
-          {/* Counter & Controls */}
-          <div className="flex items-center gap-4">
+          {/* Counter & Controls - gap-2 on mobile, gap-4 on sm+ */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {/* Play/Pause Button */}
             <button
               onClick={togglePlay}
@@ -1196,10 +1205,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             </span>
 
             {/* Public Controls - available to everyone */}
-            <div className="slideshow-controls flex items-center gap-2 pl-4 border-l border-white/10">
+            <div className="slideshow-controls flex items-center gap-1 sm:gap-2 pl-2 sm:pl-4 border-l border-white/10">
               <button
                 onClick={handleCopyLink}
-                className="p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors relative"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors relative"
                 aria-label="Copy link to photo"
                 title="Copy link"
               >
@@ -1211,7 +1220,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               </button>
               <button
                 onClick={handleDownload}
-                className="p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
                 aria-label="Download high-resolution image"
                 title="Download"
               >
@@ -1219,9 +1228,9 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               </button>
             </div>
 
-            {/* Admin Controls - accent colored to indicate admin-only */}
+            {/* Admin Controls - accent colored to indicate admin-only, hidden on mobile */}
             {isAdmin && (
-              <div className="slideshow-controls flex items-center gap-2 pl-4 border-l border-accent/30">
+              <div className="slideshow-controls hidden sm:flex items-center gap-2 pl-4 border-l border-accent/30">
                 {/* Edit Metadata Button */}
                 <button
                   onClick={handleOpenMetadataModal}
@@ -1274,11 +1283,11 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             {/* Close / Back */}
             <button
               onClick={onClose}
-              className="slideshow-close p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors ml-2"
+              className="slideshow-close p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors ml-1 sm:ml-2"
               aria-label={mode === 'page' ? 'Go back' : 'Close slideshow'}
               title={mode === 'page' ? 'Back' : 'Close'}
             >
-              <CloseIcon size={24} />
+              <CloseIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
@@ -1363,7 +1372,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
           >
             {allPhotos.map((photo, index) => (
               <SwiperSlide key={photo.id} className="!h-full">
-                <Slide photo={photo} index={index} isPlaying={isPlaying} />
+                <Slide
+                  photo={photo}
+                  index={index}
+                  isPlaying={isPlaying}
+                  isMobile={thumbnailsHidden}
+                />
               </SwiperSlide>
             ))}
           </Swiper>
@@ -1384,7 +1398,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
       {/* Thumbnail Strip - hidden on mobile, landscape, and during play mode */}
       <div
-        className={`slideshow-thumbnails absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-6 transition-all duration-300 ${
+        className={`slideshow-thumbnails absolute bottom-0 left-0 right-0 bg-bg/90 backdrop-blur-lg border-t border-white/5 px-2 sm:px-6 transition-all duration-300 ${
           isPlaying || thumbnailsHidden
             ? 'opacity-0 pointer-events-none translate-y-full'
             : 'opacity-100'
