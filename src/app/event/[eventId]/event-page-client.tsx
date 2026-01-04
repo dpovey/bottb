@@ -144,6 +144,11 @@ export function EventPageClient({
               <div className="text-text-muted text-lg">
                 {formatEventDate(event.date, event.timezone)} • {event.location}
               </div>
+              {event.description && (
+                <p className="text-text-muted mt-3 max-w-2xl">
+                  {event.description}
+                </p>
+              )}
             </div>
           </div>
         </div>

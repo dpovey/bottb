@@ -25,6 +25,7 @@ interface Event {
   location: string
   timezone: string
   status: string
+  description?: string | null
 }
 
 interface Band {
@@ -57,6 +58,11 @@ export default function EventAdminDashboard({
   const [companies, setCompanies] = useState<Company[]>([])
   const [isLoadingBands, setIsLoadingBands] = useState(true)
   const [operationError, setOperationError] = useState<string | null>(null)
+
+  // Event description editing state
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
+  const [editDescription, setEditDescription] = useState('')
+  const [isSavingDescription, setIsSavingDescription] = useState(false)
 
   // Delete band confirmation modal state
   const [deleteBandTarget, setDeleteBandTarget] = useState<Band | null>(null)
@@ -134,6 +140,42 @@ export default function EventAdminDashboard({
     }
   }
 
+  const handleSaveDescription = async () => {
+    setIsSavingDescription(true)
+    setOperationError(null)
+    try {
+      const response = await fetch(`/api/events/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: editDescription || null }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setEvent({ ...event!, description: data.event.description })
+        setIsEditingDescription(false)
+      } else {
+        const error = await response.json()
+        setOperationError(error.error || 'Failed to save description')
+      }
+    } catch (error) {
+      console.error('Error saving description:', error)
+      setOperationError('Failed to save description')
+    } finally {
+      setIsSavingDescription(false)
+    }
+  }
+
+  const startEditingDescription = () => {
+    setEditDescription(event?.description || '')
+    setIsEditingDescription(true)
+  }
+
+  const cancelEditingDescription = () => {
+    setIsEditingDescription(false)
+    setEditDescription('')
+  }
+
   // Band management handlers
   const handleAddBand = async (name: string, companySlug: string | null) => {
     setOperationError(null)
@@ -170,7 +212,11 @@ export default function EventAdminDashboard({
 
   const handleUpdateBand = async (
     bandId: string,
-    updates: { name?: string; company_slug?: string | null }
+    updates: {
+      name?: string
+      company_slug?: string | null
+      description?: string | null
+    }
   ) => {
     setOperationError(null)
     try {
@@ -295,6 +341,66 @@ export default function EventAdminDashboard({
           {formatEventDate(event.date, event.timezone)}
         </span>
       </div>
+
+      {/* Event Description */}
+      <Card>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Description
+            </h3>
+            {isEditingDescription ? (
+              <div className="space-y-3">
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Enter a description for this event..."
+                  rows={3}
+                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveDescription}
+                    disabled={isSavingDescription}
+                    className="px-4 py-2 bg-success/20 hover:bg-success/30 text-success rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSavingDescription ? (
+                      <VinylSpinner size="xxs" />
+                    ) : (
+                      <CheckIcon size={16} />
+                    )}
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditingDescription}
+                    disabled={isSavingDescription}
+                    className="px-4 py-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-300">
+                {event.description || (
+                  <span className="text-gray-500 italic">
+                    No description set
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+          {!isEditingDescription && (
+            <button
+              onClick={startEditingDescription}
+              className="p-2 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+              title="Edit description"
+            >
+              <EditIcon size={18} />
+            </button>
+          )}
+        </div>
+      </Card>
 
       {/* Action Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -589,7 +695,11 @@ function BandRow({
   companies: Company[]
   onUpdate: (
     bandId: string,
-    updates: { name?: string; company_slug?: string | null }
+    updates: {
+      name?: string
+      company_slug?: string | null
+      description?: string | null
+    }
   ) => Promise<boolean>
   onRequestDelete: (band: Band) => void
 }) {
@@ -598,6 +708,7 @@ function BandRow({
   const [editCompanySlug, setEditCompanySlug] = useState(
     band.company_slug || ''
   )
+  const [editDescription, setEditDescription] = useState(band.description || '')
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async () => {
@@ -605,6 +716,7 @@ function BandRow({
     const success = await onUpdate(band.id, {
       name: editName,
       company_slug: editCompanySlug || null,
+      description: editDescription || null,
     })
     if (success) {
       setIsEditing(false)
@@ -616,44 +728,59 @@ function BandRow({
     setIsEditing(false)
     setEditName(band.name)
     setEditCompanySlug(band.company_slug || '')
+    setEditDescription(band.description || '')
   }
 
   return (
     <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
       {/* Order number */}
-      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold">
+      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold shrink-0 self-start mt-1">
         {index + 1}
       </div>
 
       {/* Band info */}
       <div className="flex-1 min-w-0">
         {isEditing ? (
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
-              autoFocus
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
+                autoFocus
+              />
+              <select
+                value={editCompanySlug}
+                onChange={(e) => setEditCompanySlug(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
+              >
+                <option value="">No Company</option>
+                {companies.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Band description (optional)"
+              rows={2}
+              className="w-full px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm resize-none placeholder-gray-500"
             />
-            <select
-              value={editCompanySlug}
-              onChange={(e) => setEditCompanySlug(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
-            >
-              <option value="">No Company</option>
-              {companies.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
           </div>
         ) : (
           <>
             <h4 className="font-medium text-white">{band.name}</h4>
             {band.company_name && (
               <p className="text-sm text-gray-400">{band.company_name}</p>
+            )}
+            {band.description && (
+              <p className="text-sm text-gray-300 mt-1 line-clamp-2">
+                {band.description}
+              </p>
             )}
           </>
         )}

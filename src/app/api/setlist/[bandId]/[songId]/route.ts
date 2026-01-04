@@ -53,6 +53,7 @@ const putHandler: ProtectedApiHandler = async (request, context) => {
       transition_to_title,
       transition_to_artist,
       youtube_video_id,
+      artist_description,
       status,
     } = body
 
@@ -91,6 +92,7 @@ const putHandler: ProtectedApiHandler = async (request, context) => {
       transition_to_title,
       transition_to_artist,
       youtube_video_id,
+      artist_description,
       status,
     })
 

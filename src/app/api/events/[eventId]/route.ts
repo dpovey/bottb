@@ -38,6 +38,7 @@ interface EventUpdateBody {
   location?: string
   timezone?: string
   status?: 'upcoming' | 'voting' | 'finalized'
+  description?: string | null
   info?: Record<string, unknown>
 }
 
@@ -64,7 +65,7 @@ const handleUpdateEvent: ProtectedApiHandler = async (
     }
 
     const body: EventUpdateBody = await request.json()
-    const { name, date, location, timezone, status, info } = body
+    const { name, date, location, timezone, status, description, info } = body
 
     const { rows } = await sql`
       UPDATE events SET
@@ -73,6 +74,7 @@ const handleUpdateEvent: ProtectedApiHandler = async (
         location = COALESCE(${location || null}, location),
         timezone = COALESCE(${timezone || null}, timezone),
         status = COALESCE(${status || null}, status),
+        description = ${description === undefined ? existing.description : description},
         info = ${info ? JSON.stringify(info) : existing.info}
       WHERE id = ${eventId}
       RETURNING *

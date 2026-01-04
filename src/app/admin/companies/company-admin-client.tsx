@@ -97,6 +97,7 @@ export function CompanyAdminClient({
       name?: string
       website?: string | null
       icon_url?: string | null
+      description?: string | null
     }
   ) => {
     setOperationError(null)
@@ -322,6 +323,7 @@ interface CompanyRowProps {
       name?: string
       website?: string | null
       icon_url?: string | null
+      description?: string | null
     }
   ) => Promise<boolean>
   onRequestDelete: (company: CompanyWithStats) => void
@@ -332,6 +334,9 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
   const [editName, setEditName] = useState(company.name)
   const [editWebsite, setEditWebsite] = useState(company.website || '')
   const [editIconUrl, setEditIconUrl] = useState(company.icon_url || '')
+  const [editDescription, setEditDescription] = useState(
+    company.description || ''
+  )
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async () => {
@@ -340,6 +345,7 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
       name: editName,
       website: editWebsite || null,
       icon_url: editIconUrl || null,
+      description: editDescription || null,
     })
     if (success) {
       setIsEditing(false)
@@ -352,6 +358,7 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
     setEditName(company.name)
     setEditWebsite(company.website || '')
     setEditIconUrl(company.icon_url || '')
+    setEditDescription(company.description || '')
   }
 
   return (
@@ -406,6 +413,13 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
                 className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               />
             </div>
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Company description (optional)"
+              rows={2}
+              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm resize-none"
+            />
           </div>
         ) : (
           <>
@@ -426,6 +440,11 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
                 </>
               )}
             </p>
+            {company.description && (
+              <p className="text-sm text-gray-300 mt-1 line-clamp-2">
+                {company.description}
+              </p>
+            )}
           </>
         )}
       </div>

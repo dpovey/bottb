@@ -489,6 +489,9 @@ function SongForm({
   const [youtubeVideoId, setYoutubeVideoId] = useState(
     editSong?.youtube_video_id || ''
   )
+  const [artistDescription, setArtistDescription] = useState(
+    editSong?.artist_description || ''
+  )
   const [additionalSongs, setAdditionalSongs] = useState<
     { title: string; artist: string }[]
   >(editSong?.additional_songs || [])
@@ -510,6 +513,7 @@ function SongForm({
       transition_to_artist:
         songType === 'transition' ? transitionToArtist : null,
       youtube_video_id: youtubeVideoId || null,
+      artist_description: artistDescription || null,
     }
 
     try {
@@ -648,6 +652,20 @@ function SongForm({
             required
           />
         </div>
+      </div>
+
+      {/* Artist Description */}
+      <div>
+        <label className="block text-sm font-medium text-text-muted mb-2">
+          Artist Description (optional)
+        </label>
+        <textarea
+          value={artistDescription}
+          onChange={(e) => setArtistDescription(e.target.value)}
+          placeholder="Brief description of the artist (auto-generated if left blank)"
+          rows={2}
+          className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden resize-none"
+        />
       </div>
 
       {/* Transition To Song */}

@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS events (
     status character varying(20) DEFAULT 'upcoming'::character varying,
     info jsonb DEFAULT '{}'::jsonb,
     timezone character varying(64) DEFAULT 'Australia/Brisbane'::character varying NOT NULL,
+    description text,
     CONSTRAINT events_status_check CHECK (((status)::text = ANY ((ARRAY['upcoming'::character varying, 'voting'::character varying, 'finalized'::character varying])::text[])))
 );
 
@@ -33,7 +34,8 @@ CREATE TABLE IF NOT EXISTS companies (
     logo_url text,
     website text,
     created_at timestamp with time zone DEFAULT now(),
-    icon_url text
+    icon_url text,
+    description text
 );
 
 -- Photographers table
@@ -239,8 +241,26 @@ CREATE TABLE IF NOT EXISTS setlist_songs (
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
+    artist_description text,
+    spotify_track_id character varying(50),
     CONSTRAINT setlist_songs_song_type_check CHECK (((song_type)::text = ANY ((ARRAY['cover'::character varying, 'mashup'::character varying, 'medley'::character varying, 'transition'::character varying])::text[]))),
     CONSTRAINT setlist_songs_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'locked'::character varying, 'conflict'::character varying])::text[])))
+);
+
+-- Artist metadata table (caches MusicBrainz data for setlist artists)
+CREATE TABLE IF NOT EXISTS artist_metadata (
+    artist_name_normalized character varying(255) NOT NULL PRIMARY KEY,
+    display_name character varying(255) NOT NULL,
+    musicbrainz_id character varying(36),
+    formed_year integer,
+    country character varying(100),
+    genres text[],
+    description text,
+    spotify_artist_id character varying(50),
+    first_performed_at character varying(255),
+    total_performances integer DEFAULT 0,
+    fetched_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
 );
 
 -- Social accounts table
@@ -386,6 +406,10 @@ CREATE INDEX IF NOT EXISTS idx_setlist_songs_artist ON setlist_songs(artist);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_song_type ON setlist_songs(song_type);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_status ON setlist_songs(status);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_position ON setlist_songs("position");
+CREATE INDEX IF NOT EXISTS idx_setlist_songs_spotify_track_id ON setlist_songs(spotify_track_id) WHERE (spotify_track_id IS NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_artist_metadata_display_name ON artist_metadata(display_name);
+CREATE INDEX IF NOT EXISTS idx_artist_metadata_musicbrainz_id ON artist_metadata(musicbrainz_id) WHERE (musicbrainz_id IS NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_artist_metadata_spotify_artist_id ON artist_metadata(spotify_artist_id) WHERE (spotify_artist_id IS NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_social_accounts_provider ON social_accounts(provider);
 CREATE INDEX IF NOT EXISTS idx_social_accounts_status ON social_accounts(status);
 CREATE INDEX IF NOT EXISTS idx_social_post_templates_sort ON social_post_templates(sort_order);

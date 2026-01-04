@@ -15,6 +15,7 @@ export interface Event {
   timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
   is_active: boolean
   status: 'upcoming' | 'voting' | 'finalized'
+  description?: string // Top-level description field
   image_url?: string
   info?: {
     image_url?: string
@@ -38,6 +39,7 @@ export interface Company {
   logo_url?: string
   icon_url?: string
   website?: string
+  description?: string
   created_at: string
 }
 
@@ -262,5 +264,21 @@ export interface PhotoCluster {
   photo_ids: string[]
   representative_photo_id: string | null
   metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+// Artist metadata (cached from MusicBrainz)
+export interface ArtistMetadata {
+  artist_name_normalized: string // Primary key
+  display_name: string
+  musicbrainz_id: string | null
+  formed_year: number | null
+  country: string | null
+  genres: string[]
+  description: string | null // AI-generated description
+  spotify_artist_id: string | null
+  first_performed_at: string | null // Event ID where first performed at BOTTB
+  total_performances: number
+  fetched_at: string | null
   created_at: string
 }

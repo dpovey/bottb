@@ -1664,6 +1664,8 @@ export interface SetlistSong {
   transition_to_artist: string | null
   youtube_video_id: string | null
   status: SetlistStatus
+  artist_description: string | null
+  spotify_track_id: string | null
   created_at: string
   updated_at: string
   // Joined fields (from band -> event)
@@ -1688,6 +1690,8 @@ export interface SetlistSongInput {
   transition_to_artist?: string
   youtube_video_id?: string
   status?: SetlistStatus
+  artist_description?: string
+  spotify_track_id?: string
 }
 
 /**
@@ -1851,13 +1855,14 @@ export async function createSetlistSong(
       INSERT INTO setlist_songs (
         id, band_id, position, song_type, title, artist,
         additional_songs, transition_to_title, transition_to_artist,
-        youtube_video_id, status
+        youtube_video_id, artist_description, spotify_track_id, status
       )
       VALUES (
         ${song.id}, ${song.band_id}, ${song.position}, ${song.song_type},
         ${song.title}, ${song.artist}, ${additionalSongsJson}::jsonb,
         ${song.transition_to_title || null}, ${song.transition_to_artist || null},
-        ${song.youtube_video_id || null}, ${song.status || 'pending'}
+        ${song.youtube_video_id || null}, ${song.artist_description || null},
+        ${song.spotify_track_id || null}, ${song.status || 'pending'}
       )
       RETURNING *
     `
@@ -1890,6 +1895,8 @@ export async function updateSetlistSong(
         transition_to_title = ${updates.transition_to_title === undefined ? null : updates.transition_to_title},
         transition_to_artist = ${updates.transition_to_artist === undefined ? null : updates.transition_to_artist},
         youtube_video_id = ${updates.youtube_video_id === undefined ? null : updates.youtube_video_id},
+        artist_description = ${updates.artist_description === undefined ? null : updates.artist_description},
+        spotify_track_id = ${updates.spotify_track_id === undefined ? null : updates.spotify_track_id},
         status = COALESCE(${updates.status || null}, status),
         updated_at = NOW()
       WHERE id = ${songId}
@@ -2158,5 +2165,44 @@ export async function getPhotosByPerson(clusterId: string): Promise<Photo[]> {
   } catch (error) {
     console.error('Error fetching photos by person:', error)
     throw error
+  }
+}
+
+/**
+ * Get artist descriptions from the artist_metadata table
+ * @param artistNames Array of artist names to look up
+ * @returns Map of normalized artist names to their descriptions
+ */
+export async function getArtistDescriptions(
+  artistNames: string[]
+): Promise<Map<string, string>> {
+  if (artistNames.length === 0) return new Map()
+
+  // Normalize artist names for lookup
+  const normalizedNames = artistNames.map((name) =>
+    name.toLowerCase().trim().replace(/\s+/g, ' ')
+  )
+
+  try {
+    const { rows } = await sql<{
+      artist_name_normalized: string
+      description: string | null
+    }>`
+      SELECT artist_name_normalized, description
+      FROM artist_metadata
+      WHERE artist_name_normalized = ANY(${normalizedNames})
+        AND description IS NOT NULL
+    `
+
+    const map = new Map<string, string>()
+    for (const row of rows) {
+      if (row.description) {
+        map.set(row.artist_name_normalized, row.description)
+      }
+    }
+    return map
+  } catch (error) {
+    console.error('Error fetching artist descriptions:', error)
+    return new Map()
   }
 }

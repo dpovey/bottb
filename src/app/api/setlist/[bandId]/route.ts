@@ -60,6 +60,7 @@ const postHandler: ProtectedApiHandler = async (request, context) => {
       transition_to_title,
       transition_to_artist,
       youtube_video_id,
+      artist_description,
       status = 'pending',
     } = body
 
@@ -115,6 +116,7 @@ const postHandler: ProtectedApiHandler = async (request, context) => {
       transition_to_title,
       transition_to_artist,
       youtube_video_id,
+      artist_description,
       status,
     }
 
