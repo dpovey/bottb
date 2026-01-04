@@ -19,6 +19,7 @@ import {
 import { CompanyIcon, VinylSpinner, Modal } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
 import { FocalPointEditor } from './focal-point-editor'
+import { EditMetadataModal } from './edit-metadata-modal'
 import {
   trackPhotoDownload,
   trackPhotoShare,
@@ -411,23 +412,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const [isSavingLabels, setIsSavingLabels] = useState(false)
   const [labelsError, setLabelsError] = useState<string | null>(null)
 
-  // Metadata editing state (admin only)
+  // Metadata editing modal state (admin only)
   const [showMetadataModal, setShowMetadataModal] = useState(false)
-  const [metadataEvents, setMetadataEvents] = useState<
-    { id: string; name: string }[]
-  >([])
-  const [metadataBandsMap, setMetadataBandsMap] = useState<
-    Record<string, { id: string; name: string }[]>
-  >({})
-  const [metadataPhotographers, setMetadataPhotographers] = useState<string[]>(
-    []
-  )
-  const [editEventId, setEditEventId] = useState<string | null>(null)
-  const [editBandId, setEditBandId] = useState<string | null>(null)
-  const [editPhotographer, setEditPhotographer] = useState<string | null>(null)
-  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
-  const [isSavingMetadata, setIsSavingMetadata] = useState(false)
-  const [metadataError, setMetadataError] = useState<string | null>(null)
 
   // Play mode state (Swiper Autoplay handles the interval)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -996,98 +982,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }
 
-  // Fetch events, bands, and photographers for metadata editing
-  const fetchMetadataOptions = useCallback(async () => {
-    setIsLoadingMetadata(true)
-    setMetadataError(null)
-    try {
-      // Fetch events
-      const eventsRes = await fetch('/api/events')
-      if (!eventsRes.ok) throw new Error('Failed to fetch events')
-      const events = await eventsRes.json()
-      setMetadataEvents(
-        Array.isArray(events)
-          ? events.map((e: { id: string; name: string }) => ({
-              id: e.id,
-              name: e.name,
-            }))
-          : []
-      )
-
-      // Fetch bands for each event
-      const bandsMap: Record<string, { id: string; name: string }[]> = {}
-      for (const event of events) {
-        const bandsRes = await fetch(`/api/events/${event.id}/bands`)
-        if (bandsRes.ok) {
-          const bands = await bandsRes.json()
-          bandsMap[event.id] = Array.isArray(bands)
-            ? bands.map((b: { id: string; name: string }) => ({
-                id: b.id,
-                name: b.name,
-              }))
-            : []
-        }
-      }
-      setMetadataBandsMap(bandsMap)
-
-      // Fetch distinct photographers
-      const photographersRes = await fetch('/api/photographers/names')
-      if (photographersRes.ok) {
-        const data = await photographersRes.json()
-        setMetadataPhotographers(data.photographers || [])
-      }
-    } catch (error) {
-      setMetadataError(
-        error instanceof Error ? error.message : 'Failed to load options'
-      )
-    } finally {
-      setIsLoadingMetadata(false)
-    }
-  }, [])
-
-  // Open metadata modal and fetch options
-  const handleOpenMetadataModal = useCallback(() => {
-    const photo = allPhotos[currentIndex]
-    if (photo) {
-      setEditEventId(photo.event_id)
-      setEditBandId(photo.band_id)
-      setEditPhotographer(photo.photographer)
-      setShowMetadataModal(true)
-      fetchMetadataOptions()
-    }
-  }, [allPhotos, currentIndex, fetchMetadataOptions])
-
-  // Save photo metadata
-  const handleSaveMetadata = async () => {
-    const photo = allPhotos[currentIndex]
-    if (!photo) return
-
-    setIsSavingMetadata(true)
-    setMetadataError(null)
-
-    try {
-      const response = await fetch(`/api/photos/${photo.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_id: editEventId,
-          band_id: editBandId,
-          photographer: editPhotographer,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to update photo')
-      }
-
-      const result = await response.json()
-      const updatedPhoto = result.photo
-
+  // Handle metadata update from EditMetadataModal
+  const handleMetadataUpdated = useCallback(
+    (updatedPhoto: Photo) => {
       // Update the photo in local state
       setAllPhotos((prev) =>
         prev.map((p) =>
-          p.id === photo.id
+          p.id === updatedPhoto.id
             ? {
                 ...p,
                 event_id: updatedPhoto.event_id,
@@ -1103,16 +1004,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
             : p
         )
       )
-
       setShowMetadataModal(false)
-    } catch (error) {
-      setMetadataError(
-        error instanceof Error ? error.message : 'Failed to save'
-      )
-    } finally {
-      setIsSavingMetadata(false)
-    }
-  }
+    },
+    [setAllPhotos]
+  )
 
   // Get the representative photo at current slide index
   const currentRepPhoto = allPhotos[currentIndex]
@@ -1422,7 +1317,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
               <div className="slideshow-controls hidden sm:flex items-center gap-2 pl-4 border-l border-accent/30">
                 {/* Edit Metadata Button */}
                 <button
-                  onClick={handleOpenMetadataModal}
+                  onClick={() => setShowMetadataModal(true)}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors"
                   aria-label="Edit photo metadata (Admin)"
                   title="Edit (Admin)"
@@ -1826,174 +1721,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
       {/* Edit Metadata Modal (Admin only) */}
       {showMetadataModal && currentPhoto && (
-        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6">
-          <div className="bg-bg-elevated rounded-xl p-6 max-w-lg w-full border border-white/10">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h3 className="font-semibold text-xl mb-1">
-                  Edit Photo Metadata
-                </h3>
-                <p className="text-text-muted text-sm">
-                  Update event, band, or photographer associations
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowMetadataModal(false)
-                  setMetadataError(null)
-                }}
-                className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
-                aria-label="Close"
-              >
-                <CloseIcon size={20} />
-              </button>
-            </div>
-
-            {isLoadingMetadata ? (
-              <div className="flex items-center justify-center py-8">
-                <VinylSpinner size="xs" className="text-accent" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Event Selector */}
-                <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">
-                    Event
-                  </label>
-                  <select
-                    value={editEventId || ''}
-                    onChange={(e) => {
-                      const newEventId = e.target.value || null
-                      setEditEventId(newEventId)
-                      // Clear band when event changes
-                      setEditBandId(null)
-                    }}
-                    className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
-                  >
-                    <option value="">No Event</option>
-                    {metadataEvents.map((event) => (
-                      <option key={event.id} value={event.id}>
-                        {event.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Band Selector (depends on event) */}
-                <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">
-                    Band
-                  </label>
-                  <select
-                    value={editBandId || ''}
-                    onChange={(e) => setEditBandId(e.target.value || null)}
-                    disabled={!editEventId}
-                    className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden disabled:opacity-50"
-                  >
-                    <option value="">No Band</option>
-                    {editEventId &&
-                      metadataBandsMap[editEventId]?.map((band) => (
-                        <option key={band.id} value={band.id}>
-                          {band.name}
-                        </option>
-                      ))}
-                  </select>
-                  {!editEventId && (
-                    <p className="text-xs text-text-dim mt-1">
-                      Select an event first to choose a band
-                    </p>
-                  )}
-                </div>
-
-                {/* Photographer Selector/Input */}
-                <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">
-                    Photographer
-                  </label>
-                  <input
-                    type="text"
-                    list="photographer-list"
-                    value={editPhotographer || ''}
-                    onChange={(e) =>
-                      setEditPhotographer(e.target.value || null)
-                    }
-                    placeholder="Enter photographer name"
-                    className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
-                  />
-                  <datalist id="photographer-list">
-                    {metadataPhotographers.map((name) => (
-                      <option key={name} value={name} />
-                    ))}
-                  </datalist>
-                </div>
-
-                {/* Current values info */}
-                <div className="pt-4 border-t border-white/10">
-                  <p className="text-xs text-text-dim mb-2">Current values:</p>
-                  <div className="text-xs text-text-muted space-y-1">
-                    <p>
-                      Event:{' '}
-                      <span className="text-white">
-                        {currentPhoto.event_name || 'None'}
-                      </span>
-                    </p>
-                    <p>
-                      Band:{' '}
-                      <span className="text-white">
-                        {currentPhoto.band_name || 'None'}
-                      </span>
-                    </p>
-                    <p>
-                      Photographer:{' '}
-                      <span className="text-white">
-                        {currentPhoto.photographer || 'None'}
-                      </span>
-                    </p>
-                    <p>
-                      Match confidence:{' '}
-                      <span className="text-white">
-                        {currentPhoto.match_confidence || 'unmatched'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {metadataError && (
-                  <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
-                    {metadataError}
-                  </div>
-                )}
-
-                <div className="flex gap-3 justify-end pt-2">
-                  <button
-                    onClick={() => {
-                      setShowMetadataModal(false)
-                      setMetadataError(null)
-                    }}
-                    disabled={isSavingMetadata}
-                    className="border border-white/30 hover:border-white/60 hover:bg-white/5 px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveMetadata}
-                    disabled={isSavingMetadata}
-                    className="bg-accent hover:bg-accent-light px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {isSavingMetadata ? (
-                      <>
-                        <VinylSpinner size="xxs" />
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <EditMetadataModal
+          isOpen={showMetadataModal}
+          photo={currentPhoto}
+          onClose={() => setShowMetadataModal(false)}
+          onPhotoUpdated={handleMetadataUpdated}
+        />
       )}
     </div>
   )

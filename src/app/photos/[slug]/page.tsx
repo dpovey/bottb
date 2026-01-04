@@ -1,18 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
 import { getPhotoBySlugOrId, isUuid, ensurePhotoSlug } from '@/lib/photo-slugs'
 import { getBaseUrl } from '@/lib/seo'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
-import {
-  ChevronLeftIcon,
-  CameraIcon,
-  CalendarIcon,
-  MusicNoteIcon,
-  PlayCircleIcon,
-} from '@/components/icons'
+import { PhotoPageClient } from './photo-page-client'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -186,118 +178,13 @@ export default async function PhotoPage({ params, searchParams }: Props) {
         {/* Page title - visible for SEO and accessibility */}
         <h1 className="text-2xl md:text-3xl font-semibold mb-6">{h1Text}</h1>
 
-        {/* Photo container */}
-        <div className="relative bg-bg-elevated rounded-lg overflow-hidden">
-          {/* Server-rendered image for SEO - clickable to open slideshow */}
-          <Link
-            href={slideshowUrl}
-            className="block relative aspect-[4/3] cursor-pointer"
-          >
-            <Image
-              src={photo.large_4k_url || photo.medium_url || photo.blob_url}
-              alt={h1Text}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1152px"
-              priority
-            />
-          </Link>
-        </div>
-
-        {/* Slideshow button */}
-        <div className="mt-4 flex justify-center">
-          <Link
-            href={slideshowUrl}
-            className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 transition-colors"
-          >
-            <PlayCircleIcon size={16} />
-            Slideshow
-          </Link>
-        </div>
-
-        {/* Photo metadata */}
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {/* Event */}
-          {photo.event_name && (
-            <Link
-              href={`/event/${photo.event_id}`}
-              className="flex items-center gap-3 p-4 bg-bg-elevated rounded-lg hover:bg-bg-surface transition-colors"
-            >
-              <CalendarIcon size={20} className="text-accent flex-shrink-0" />
-              <div>
-                <div className="text-sm text-text-muted">Event</div>
-                <div className="font-medium">{photo.event_name}</div>
-              </div>
-            </Link>
-          )}
-
-          {/* Band */}
-          {photo.band_name && (
-            <Link
-              href={`/band/${photo.band_id}`}
-              className="flex items-center gap-3 p-4 bg-bg-elevated rounded-lg hover:bg-bg-surface transition-colors"
-            >
-              <MusicNoteIcon size={20} className="text-accent flex-shrink-0" />
-              <div>
-                <div className="text-sm text-text-muted">Band</div>
-                <div className="font-medium">{photo.band_name}</div>
-              </div>
-            </Link>
-          )}
-
-          {/* Photographer */}
-          {photo.photographer && (
-            <Link
-              href={`/photographer/${encodeURIComponent(photo.photographer.toLowerCase().replace(/\s+/g, '-'))}`}
-              className="flex items-center gap-3 p-4 bg-bg-elevated rounded-lg hover:bg-bg-surface transition-colors"
-            >
-              <CameraIcon size={20} className="text-accent flex-shrink-0" />
-              <div>
-                <div className="text-sm text-text-muted">Photographer</div>
-                <div className="font-medium">{photo.photographer}</div>
-              </div>
-            </Link>
-          )}
-
-          {/* Company */}
-          {photo.company_name && (
-            <Link
-              href={`/companies/${photo.company_slug}`}
-              className="flex items-center gap-3 p-4 bg-bg-elevated rounded-lg hover:bg-bg-surface transition-colors"
-            >
-              <div className="w-5 h-5 rounded bg-bg-surface flex items-center justify-center flex-shrink-0">
-                {photo.company_icon_url ? (
-                  <Image
-                    src={photo.company_icon_url}
-                    alt={photo.company_name}
-                    width={16}
-                    height={16}
-                    className="rounded-sm"
-                  />
-                ) : (
-                  <span className="text-xs font-medium text-text-muted">
-                    {photo.company_name.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <div>
-                <div className="text-sm text-text-muted">Company</div>
-                <div className="font-medium">{photo.company_name}</div>
-              </div>
-            </Link>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="mt-8 text-sm text-text-muted">
-          <Link
-            href={galleryUrl}
-            className="flex items-center gap-1 hover:text-text transition-colors"
-          >
-            <ChevronLeftIcon size={16} />
-            Back to Gallery
-          </Link>
-        </div>
+        {/* Client-side interactive content */}
+        <PhotoPageClient
+          photo={photo}
+          h1Text={h1Text}
+          slideshowUrl={slideshowUrl}
+          galleryUrl={galleryUrl}
+        />
       </main>
     </PublicLayout>
   )
