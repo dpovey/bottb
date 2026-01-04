@@ -406,17 +406,7 @@ async function uploadPhoto(
       )
     }
 
-    // Upload 3x thumbnail if available
-    let thumbnail3xBlob = null
-    if (processed.thumbnail3x) {
-      thumbnail3xBlob = await put(
-        `photos/${photoId}/thumbnail-3x.webp`,
-        processed.thumbnail3x,
-        { access: 'public', contentType: 'image/webp' }
-      )
-    }
-
-    // Upload medium variant if available (for mobile slideshow)
+    // Upload medium variant if available (used for 3x thumbnails + mobile slideshow)
     let mediumBlob = null
     if (processed.medium) {
       mediumBlob = await put(
@@ -447,7 +437,6 @@ async function uploadPhoto(
       ...metadata.rawMetadata,
       thumbnail_url: thumbnailBlob.url,
       thumbnail_2x_url: thumbnail2xBlob?.url || null,
-      thumbnail_3x_url: thumbnail3xBlob?.url || null,
       medium_url: mediumBlob?.url || null,
       large_4k_url: large4kBlob?.url || null,
     }

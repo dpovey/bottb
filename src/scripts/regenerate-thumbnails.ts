@@ -1,11 +1,12 @@
 #!/usr/bin/env npx tsx
 /**
- * Regenerate Thumbnails Script
+ * Regenerate Thumbnails Script (with checkpointing)
  *
  * Regenerates all photo thumbnails to preserve aspect ratio.
- * This is needed after the focal point fix - old thumbnails were
- * pre-cropped to squares, but new ones preserve aspect ratio so
- * CSS can crop them using the focal point.
+ * Features:
+ * - Checkpointing: saves progress to resume if interrupted
+ * - Local caching: processes images to /tmp before uploading
+ * - Batch uploads: uploads in batches for efficiency
  *
  * Usage:
  *   pnpm exec tsx src/scripts/regenerate-thumbnails.ts [options]
@@ -14,13 +15,14 @@
  *   --dry-run         Preview what would be regenerated without making changes
  *   --limit <n>       Only process n photos
  *   --event <name>    Only process photos from this event
- *   --verbose         Show detailed progress
- *   --photos-path     Path to original photos directory (optional, uses blob storage if not found)
+ *   --batch-size <n>  Number of photos to process before uploading (default: 20)
+ *   --reset           Clear checkpoint and start fresh
+ *   --photos-path     Path to original photos directory
  */
 
 import { config } from 'dotenv'
 import { parseArgs } from 'util'
-import { readFile } from 'fs/promises'
+import { readFile, writeFile, mkdir, readdir, unlink, stat } from 'fs/promises'
 import { existsSync, readdirSync, statSync } from 'fs'
 import { join, basename, extname } from 'path'
 import sharp from 'sharp'
@@ -30,7 +32,9 @@ import { sql } from '@vercel/postgres'
 // Load environment variables
 config({ path: '.env.local' })
 
-// Base path to original photos (for best quality source)
+// Paths
+const CHECKPOINT_FILE = '/tmp/regenerate-thumbnails-checkpoint.json'
+const CACHE_DIR = '/tmp/regenerate-thumbnails-cache'
 let PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Google Photos'
 
 interface PhotoRecord {
@@ -40,6 +44,67 @@ interface PhotoRecord {
   original_blob_url: string | null
   event_name: string | null
   band_name: string | null
+}
+
+interface Checkpoint {
+  completedIds: string[]
+  startedAt: string
+  lastUpdated: string
+}
+
+interface ProcessedPhoto {
+  photoId: string
+  thumbnailPath: string
+  thumbnail2xPath?: string
+  mediumPath?: string
+}
+
+/**
+ * Load checkpoint from disk
+ */
+async function loadCheckpoint(): Promise<Checkpoint> {
+  try {
+    if (existsSync(CHECKPOINT_FILE)) {
+      const data = await readFile(CHECKPOINT_FILE, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch {
+    // Ignore errors, return fresh checkpoint
+  }
+  return {
+    completedIds: [],
+    startedAt: new Date().toISOString(),
+    lastUpdated: new Date().toISOString(),
+  }
+}
+
+/**
+ * Save checkpoint to disk
+ */
+async function saveCheckpoint(checkpoint: Checkpoint): Promise<void> {
+  checkpoint.lastUpdated = new Date().toISOString()
+  await writeFile(CHECKPOINT_FILE, JSON.stringify(checkpoint, null, 2))
+}
+
+/**
+ * Ensure cache directory exists
+ */
+async function ensureCacheDir(): Promise<void> {
+  if (!existsSync(CACHE_DIR)) {
+    await mkdir(CACHE_DIR, { recursive: true })
+  }
+}
+
+/**
+ * Clean up cache directory
+ */
+async function cleanCache(): Promise<void> {
+  if (existsSync(CACHE_DIR)) {
+    const files = await readdir(CACHE_DIR)
+    for (const file of files) {
+      await unlink(join(CACHE_DIR, file))
+    }
+  }
 }
 
 /**
@@ -127,11 +192,8 @@ async function findOriginalFileOnDisk(
     return null
   }
 
-  // Try common photo extensions
-  const extensions = ['', '.jpg', '.jpeg', '.JPG', '.JPEG', '.png', '.PNG']
   const baseName = filename.replace(/\.[^.]+$/, '')
 
-  // Search recursively (up to 3 levels deep for performance)
   function searchDir(dir: string, depth: number): string | null {
     if (depth > 3) return null
 
@@ -140,13 +202,12 @@ async function findOriginalFileOnDisk(
 
       for (const entry of entries) {
         const fullPath = join(dir, entry)
-        const stat = statSync(fullPath)
+        const entryStat = statSync(fullPath)
 
-        if (stat.isDirectory()) {
+        if (entryStat.isDirectory()) {
           const found = searchDir(fullPath, depth + 1)
           if (found) return found
         } else {
-          // Check if this is our file
           const entryBase = basename(entry, extname(entry))
           if (entryBase === baseName || entry === filename) {
             return fullPath
@@ -164,13 +225,11 @@ async function findOriginalFileOnDisk(
 }
 
 /**
- * Regenerate thumbnails for a photo
+ * Process a photo and save to cache (no upload yet)
  */
-async function regenerateThumbnails(
-  photo: PhotoRecord,
-  dryRun: boolean,
-  verbose: boolean
-): Promise<{ success: boolean; error?: string }> {
+async function processPhotoToCache(
+  photo: PhotoRecord
+): Promise<ProcessedPhoto | null> {
   try {
     let imageBuffer: Buffer
 
@@ -181,39 +240,24 @@ async function regenerateThumbnails(
       )
 
       if (localFilePath) {
-        if (verbose) console.log(`   Using local file: ${localFilePath}`)
         imageBuffer = await readFile(localFilePath)
       } else if (photo.original_blob_url) {
-        if (verbose)
-          console.log(`   Using original blob: ${photo.original_blob_url}`)
         const response = await fetch(photo.original_blob_url)
-        if (!response.ok)
-          throw new Error(`Failed to fetch original: ${response.statusText}`)
+        if (!response.ok) throw new Error(`Failed to fetch original`)
         imageBuffer = Buffer.from(await response.arrayBuffer())
       } else {
-        if (verbose) console.log(`   Using large.webp: ${photo.blob_url}`)
         const response = await fetch(photo.blob_url)
-        if (!response.ok)
-          throw new Error(`Failed to fetch: ${response.statusText}`)
+        if (!response.ok) throw new Error(`Failed to fetch`)
         imageBuffer = Buffer.from(await response.arrayBuffer())
       }
     } else if (photo.original_blob_url) {
-      if (verbose)
-        console.log(`   Using original blob: ${photo.original_blob_url}`)
       const response = await fetch(photo.original_blob_url)
-      if (!response.ok)
-        throw new Error(`Failed to fetch original: ${response.statusText}`)
+      if (!response.ok) throw new Error(`Failed to fetch original`)
       imageBuffer = Buffer.from(await response.arrayBuffer())
     } else {
-      if (verbose) console.log(`   Using large.webp: ${photo.blob_url}`)
       const response = await fetch(photo.blob_url)
-      if (!response.ok)
-        throw new Error(`Failed to fetch: ${response.statusText}`)
+      if (!response.ok) throw new Error(`Failed to fetch`)
       imageBuffer = Buffer.from(await response.arrayBuffer())
-    }
-
-    if (dryRun) {
-      return { success: true }
     }
 
     const image = sharp(imageBuffer)
@@ -221,9 +265,10 @@ async function regenerateThumbnails(
     const width = metadata.width || 0
     const height = metadata.height || 0
 
-    // Generate thumbnails that PRESERVE ASPECT RATIO
-    // Using 'inside' fit means the image is scaled to fit within the bounds
-    // without cropping, allowing CSS object-fit: cover to crop at the focal point
+    const result: ProcessedPhoto = {
+      photoId: photo.id,
+      thumbnailPath: join(CACHE_DIR, `${photo.id}-thumbnail.webp`),
+    }
 
     // 1x: max 400px on longest side
     const thumbnail = await image
@@ -231,17 +276,7 @@ async function regenerateThumbnails(
       .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85 })
       .toBuffer()
-
-    // Upload thumbnail
-    const thumbnailBlob = await put(
-      `photos/${photo.id}/thumbnail.webp`,
-      thumbnail,
-      { access: 'public', contentType: 'image/webp', addRandomSuffix: false }
-    )
-
-    const updates: Array<{ key: string; url: string }> = [
-      { key: 'thumbnail_url', url: thumbnailBlob.url },
-    ]
+    await writeFile(result.thumbnailPath, thumbnail)
 
     // 2x: max 800px (only if original is large enough)
     if (width >= 600 || height >= 600) {
@@ -250,52 +285,114 @@ async function regenerateThumbnails(
         .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 85 })
         .toBuffer()
-
-      const thumbnail2xBlob = await put(
-        `photos/${photo.id}/thumbnail-2x.webp`,
-        thumbnail2x,
-        { access: 'public', contentType: 'image/webp', addRandomSuffix: false }
-      )
-      updates.push({ key: 'thumbnail_2x_url', url: thumbnail2xBlob.url })
+      result.thumbnail2xPath = join(CACHE_DIR, `${photo.id}-thumbnail-2x.webp`)
+      await writeFile(result.thumbnail2xPath, thumbnail2x)
     }
 
-    // 3x: max 1200px (only if original is large enough)
+    // Medium: max 1200px
     if (width >= 900 || height >= 900) {
-      const thumbnail3x = await image
+      const medium = await image
         .clone()
         .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 85 })
+        .webp({ quality: 90 })
         .toBuffer()
-
-      const thumbnail3xBlob = await put(
-        `photos/${photo.id}/thumbnail-3x.webp`,
-        thumbnail3x,
-        { access: 'public', contentType: 'image/webp', addRandomSuffix: false }
-      )
-      updates.push({ key: 'thumbnail_3x_url', url: thumbnail3xBlob.url })
+      result.mediumPath = join(CACHE_DIR, `${photo.id}-medium.webp`)
+      await writeFile(result.mediumPath, medium)
     }
 
-    // Update database with new thumbnail URLs
-    for (const { key, url } of updates) {
-      const keyPath = `{${key}}`
-      await sql`
-        UPDATE photos
-        SET xmp_metadata = jsonb_set(
-          COALESCE(xmp_metadata, '{}'::jsonb),
-          ${keyPath}::text[],
-          ${JSON.stringify(url)}::jsonb
-        )
-        WHERE id = ${photo.id}
-      `
-    }
-
-    return { success: true }
+    return result
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
+    console.error(
+      `   Error processing ${photo.original_filename || photo.id}: ${error}`
+    )
+    return null
+  }
+}
+
+/**
+ * Upload a batch of processed photos
+ */
+async function uploadBatch(
+  batch: ProcessedPhoto[]
+): Promise<{ succeeded: number; failed: number }> {
+  let succeeded = 0
+  let failed = 0
+
+  for (const processed of batch) {
+    try {
+      const updates: Array<{ key: string; url: string }> = []
+
+      // Upload thumbnail
+      const thumbnailData = await readFile(processed.thumbnailPath)
+      const thumbnailBlob = await put(
+        `photos/${processed.photoId}/thumbnail.webp`,
+        thumbnailData,
+        {
+          access: 'public',
+          contentType: 'image/webp',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+        }
+      )
+      updates.push({ key: 'thumbnail_url', url: thumbnailBlob.url })
+      await unlink(processed.thumbnailPath)
+
+      // Upload 2x if exists
+      if (processed.thumbnail2xPath) {
+        const data = await readFile(processed.thumbnail2xPath)
+        const blob = await put(
+          `photos/${processed.photoId}/thumbnail-2x.webp`,
+          data,
+          {
+            access: 'public',
+            contentType: 'image/webp',
+            addRandomSuffix: false,
+            allowOverwrite: true,
+          }
+        )
+        updates.push({ key: 'thumbnail_2x_url', url: blob.url })
+        await unlink(processed.thumbnail2xPath)
+      }
+
+      // Upload medium if exists
+      if (processed.mediumPath) {
+        const data = await readFile(processed.mediumPath)
+        const blob = await put(
+          `photos/${processed.photoId}/medium.webp`,
+          data,
+          {
+            access: 'public',
+            contentType: 'image/webp',
+            addRandomSuffix: false,
+            allowOverwrite: true,
+          }
+        )
+        updates.push({ key: 'medium_url', url: blob.url })
+        await unlink(processed.mediumPath)
+      }
+
+      // Update database
+      for (const { key, url } of updates) {
+        const keyPath = `{${key}}`
+        await sql`
+          UPDATE photos
+          SET xmp_metadata = jsonb_set(
+            COALESCE(xmp_metadata, '{}'::jsonb),
+            ${keyPath}::text[],
+            ${JSON.stringify(url)}::jsonb
+          )
+          WHERE id = ${processed.photoId}
+        `
+      }
+
+      succeeded++
+    } catch (error) {
+      console.error(`   Upload failed for ${processed.photoId}: ${error}`)
+      failed++
     }
   }
+
+  return { succeeded, failed }
 }
 
 async function main() {
@@ -303,115 +400,134 @@ async function main() {
     args: process.argv.slice(2),
     options: {
       'dry-run': { type: 'boolean' },
-      verbose: { type: 'boolean' },
       limit: { type: 'string' },
       event: { type: 'string' },
+      'batch-size': { type: 'string' },
+      reset: { type: 'boolean' },
       'photos-path': { type: 'string' },
     },
     allowPositionals: true,
   })
 
   const isDryRun = values['dry-run'] || false
-  const isVerbose = values.verbose || false
   const limit = values.limit ? parseInt(values.limit as string, 10) : undefined
   const eventFilter = values.event as string | undefined
+  const batchSize = values['batch-size']
+    ? parseInt(values['batch-size'] as string, 10)
+    : 20
+  const resetCheckpoint = values.reset || false
   const photosPath = values['photos-path'] as string | undefined
 
-  // Override default photos path if provided
   if (photosPath) {
     PHOTOS_BASE_PATH = photosPath
   }
 
-  console.log('🔄 Regenerate Thumbnails Script (Focal Point Fix)\n')
-  console.log('This script regenerates thumbnails to preserve aspect ratio')
-  console.log("so CSS can crop them using the photo's focal point.\n")
+  console.log('🔄 Regenerate Thumbnails Script (with checkpointing)\n')
 
   if (isDryRun) {
     console.log('🧪 DRY RUN MODE - No changes will be made\n')
   }
-  if (photosPath) {
-    if (existsSync(photosPath)) {
-      console.log(`📂 Photos path: ${photosPath} (found)\n`)
-    } else {
+
+  // Load or reset checkpoint
+  let checkpoint: Checkpoint
+  if (resetCheckpoint) {
+    checkpoint = {
+      completedIds: [],
+      startedAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+    }
+    console.log('🔄 Checkpoint reset\n')
+  } else {
+    checkpoint = await loadCheckpoint()
+    if (checkpoint.completedIds.length > 0) {
       console.log(
-        `📂 Photos path: ${photosPath} (NOT FOUND - will use blob storage)\n`
+        `📋 Resuming from checkpoint: ${checkpoint.completedIds.length} already completed\n`
       )
     }
   }
-  if (eventFilter) {
-    console.log(`📁 Filtering by event: ${eventFilter}\n`)
-  }
-  if (limit) {
-    console.log(`🔢 Processing limit: ${limit} photos\n`)
-  }
+
+  await ensureCacheDir()
 
   // Get photos
   console.log('💾 Fetching photos...')
-  const photos = await getPhotos(eventFilter, limit)
-  console.log(`   Found ${photos.length} photos\n`)
+  const allPhotos = await getPhotos(eventFilter, limit)
+
+  // Filter out already completed
+  const photos = allPhotos.filter(
+    (p) => !checkpoint.completedIds.includes(p.id)
+  )
+  console.log(
+    `   Found ${allPhotos.length} total, ${photos.length} remaining\n`
+  )
 
   if (photos.length === 0) {
-    console.log('✅ No photos to process!')
+    console.log('✅ All photos already processed!')
     process.exit(0)
   }
 
-  console.log(`🔄 Processing ${photos.length} photo(s)...\n`)
+  console.log(`🔄 Processing in batches of ${batchSize}...\n`)
 
-  let processed = 0
-  let succeeded = 0
-  let failed = 0
-  const errors: Array<{ filename: string; error: string }> = []
+  let totalProcessed = 0
+  let totalSucceeded = 0
+  let totalFailed = 0
 
-  for (const photo of photos) {
-    processed++
-    const displayName = photo.original_filename || photo.id
-    const progress = `[${processed}/${photos.length}]`
+  // Process in batches
+  for (let i = 0; i < photos.length; i += batchSize) {
+    const batchPhotos = photos.slice(i, i + batchSize)
+    const batchNum = Math.floor(i / batchSize) + 1
+    const totalBatches = Math.ceil(photos.length / batchSize)
 
-    if (isVerbose) {
-      console.log(`${progress} Processing: ${displayName}`)
-      if (photo.event_name) console.log(`   Event: ${photo.event_name}`)
-      if (photo.band_name) console.log(`   Band: ${photo.band_name}`)
-    } else {
-      process.stdout.write(
-        `\r${progress} ${displayName.slice(0, 40).padEnd(40)}`
-      )
+    console.log(
+      `📦 Batch ${batchNum}/${totalBatches} (${batchPhotos.length} photos)`
+    )
+
+    // Process photos to cache
+    console.log('   Processing images...')
+    const processed: ProcessedPhoto[] = []
+    for (const photo of batchPhotos) {
+      const result = await processPhotoToCache(photo)
+      if (result) {
+        processed.push(result)
+      }
+      totalProcessed++
     }
 
-    const result = await regenerateThumbnails(photo, isDryRun, isVerbose)
-
-    if (result.success) {
-      succeeded++
-      if (isVerbose) console.log(`   ✅ Success\n`)
-    } else {
-      failed++
-      errors.push({
-        filename: displayName,
-        error: result.error || 'Unknown error',
-      })
-      if (isVerbose) console.log(`   ❌ Failed: ${result.error}\n`)
+    if (isDryRun) {
+      console.log(`   Would upload ${processed.length} photos`)
+      // Mark as completed in checkpoint for dry run
+      for (const photo of batchPhotos) {
+        checkpoint.completedIds.push(photo.id)
+      }
+      await saveCheckpoint(checkpoint)
+      continue
     }
+
+    // Upload batch
+    console.log(`   Uploading ${processed.length} photos...`)
+    const { succeeded, failed } = await uploadBatch(processed)
+    totalSucceeded += succeeded
+    totalFailed += failed
+
+    // Update checkpoint
+    for (const photo of batchPhotos) {
+      checkpoint.completedIds.push(photo.id)
+    }
+    await saveCheckpoint(checkpoint)
+
+    console.log(`   ✅ ${succeeded} succeeded, ❌ ${failed} failed\n`)
   }
 
-  // Clear the progress line
-  if (!isVerbose) {
-    process.stdout.write('\r' + ' '.repeat(80) + '\r')
-  }
+  // Clean up cache
+  await cleanCache()
 
   // Summary
   console.log('\n📊 Summary:')
-  console.log(`   Processed: ${processed}`)
-  console.log(`   Succeeded: ${succeeded}`)
-  console.log(`   Failed: ${failed}`)
-
-  if (errors.length > 0) {
-    console.log('\n❌ Errors:')
-    for (const { filename, error } of errors.slice(0, 10)) {
-      console.log(`   ${filename}: ${error}`)
-    }
-    if (errors.length > 10) {
-      console.log(`   ... and ${errors.length - 10} more errors`)
-    }
-  }
+  console.log(`   Total processed: ${totalProcessed}`)
+  console.log(`   Succeeded: ${totalSucceeded}`)
+  console.log(`   Failed: ${totalFailed}`)
+  console.log(
+    `   Previously completed: ${checkpoint.completedIds.length - photos.length}`
+  )
 
   if (isDryRun) {
     console.log('\n🧪 DRY RUN - No actual changes were made')
@@ -419,7 +535,13 @@ async function main() {
     console.log('\n✅ Done!')
   }
 
-  process.exit(failed > 0 ? 1 : 0)
+  // Clear checkpoint on full success
+  if (totalFailed === 0 && !isDryRun) {
+    await unlink(CHECKPOINT_FILE).catch(() => {})
+    console.log('🧹 Checkpoint cleared (all done!)')
+  }
+
+  process.exit(totalFailed > 0 ? 1 : 0)
 }
 
 main().catch((error) => {

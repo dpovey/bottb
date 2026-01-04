@@ -190,7 +190,6 @@ async function getPhotosNeedingAllVariants(
       LEFT JOIN bands b ON p.band_id = b.id
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
-        p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
         p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
@@ -215,7 +214,6 @@ async function getPhotosNeedingAllVariants(
       LEFT JOIN bands b ON p.band_id = b.id
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
-        p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
         p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
@@ -239,7 +237,6 @@ async function getPhotosNeedingAllVariants(
       LEFT JOIN bands b ON p.band_id = b.id
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
-        p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
         p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
@@ -263,7 +260,6 @@ async function getPhotosNeedingAllVariants(
       LEFT JOIN bands b ON p.band_id = b.id
       WHERE (
         p.xmp_metadata->>'thumbnail_2x_url' IS NULL OR
-        p.xmp_metadata->>'thumbnail_3x_url' IS NULL OR
         p.xmp_metadata->>'medium_url' IS NULL OR
         p.xmp_metadata->>'large_4k_url' IS NULL
       )
@@ -398,12 +394,7 @@ async function backfillVariants(
         photoId: photo.id,
         filename: photo.original_filename || photo.id,
         success: true,
-        variantsGenerated: [
-          'thumbnail-2x',
-          'thumbnail-3x',
-          'medium',
-          'large-4k',
-        ],
+        variantsGenerated: ['thumbnail-2x', 'medium', 'large-4k'],
       }
     }
 
@@ -429,23 +420,7 @@ async function backfillVariants(
       variantsGenerated.push('thumbnail-2x')
     }
 
-    // Upload thumbnail-3x if missing and generated
-    if (!photo.thumbnail_3x_url && processed.thumbnail3x) {
-      const thumbnail3xBlob = await put(
-        `photos/${photo.id}/thumbnail-3x.webp`,
-        processed.thumbnail3x,
-        {
-          access: 'public',
-          contentType: 'image/webp',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-        }
-      )
-      updates.push({ key: 'thumbnail_3x_url', url: thumbnail3xBlob.url })
-      variantsGenerated.push('thumbnail-3x')
-    }
-
-    // Upload medium if missing and generated (for mobile slideshow)
+    // Upload medium if missing and generated (used for 3x thumbnails + mobile slideshow)
     if (!photo.medium_url && processed.medium) {
       const mediumBlob = await put(
         `photos/${photo.id}/medium.webp`,
@@ -584,13 +559,11 @@ async function main() {
 
   // Count what's missing
   const missing2x = photos.filter((p) => !p.thumbnail_2x_url).length
-  const missing3x = photos.filter((p) => !p.thumbnail_3x_url).length
   const missingMedium = photos.filter((p) => !p.medium_url).length
   const missing4k = photos.filter((p) => !p.large_4k_url).length
 
   console.log('📊 Missing variants:')
   console.log(`   thumbnail-2x: ${missing2x}`)
-  console.log(`   thumbnail-3x: ${missing3x}`)
   console.log(`   medium (1200px): ${missingMedium}`)
   console.log(`   large-4k: ${missing4k}\n`)
 
@@ -620,7 +593,6 @@ async function main() {
       }
       const missing = []
       if (!photo.thumbnail_2x_url) missing.push('2x')
-      if (!photo.thumbnail_3x_url) missing.push('3x')
       if (!photo.medium_url) missing.push('medium')
       if (!photo.large_4k_url) missing.push('4k')
       console.log(`   Missing: ${missing.join(', ') || 'none'}`)

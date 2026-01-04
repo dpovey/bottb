@@ -4,7 +4,7 @@
  * Verify Responsive Image Variants Script
  *
  * Verifies that all photos have responsive variants stored correctly:
- * - Checks database for variant URLs (thumbnail_2x_url, thumbnail_3x_url, large_4k_url)
+ * - Checks database for variant URLs (thumbnail_2x_url, medium_url, large_4k_url)
  * - Optionally verifies blob URLs are accessible
  *
  * Usage:
@@ -26,7 +26,7 @@ interface PhotoRecord {
   id: string
   original_filename: string | null
   thumbnail_2x_url: string | null
-  thumbnail_3x_url: string | null
+  medium_url: string | null
   large_4k_url: string | null
   event_name?: string
   band_name?: string
@@ -36,10 +36,10 @@ interface VerificationResult {
   photoId: string
   filename: string
   has2x: boolean
-  has3x: boolean
+  hasMedium: boolean
   has4k: boolean
   blob2xAccessible?: boolean
-  blob3xAccessible?: boolean
+  blobMediumAccessible?: boolean
   blob4kAccessible?: boolean
 }
 
@@ -53,7 +53,7 @@ async function getAllPhotos(eventName?: string): Promise<PhotoRecord[]> {
         p.id,
         p.original_filename,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
-        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -70,7 +70,7 @@ async function getAllPhotos(eventName?: string): Promise<PhotoRecord[]> {
         p.id,
         p.original_filename,
         p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
-        p.xmp_metadata->>'thumbnail_3x_url' as thumbnail_3x_url,
+        p.xmp_metadata->>'medium_url' as medium_url,
         p.xmp_metadata->>'large_4k_url' as large_4k_url,
         e.name as event_name,
         b.name as band_name
@@ -115,7 +115,7 @@ async function verifyPhoto(
     photoId: photo.id,
     filename: photo.original_filename || photo.id,
     has2x: !!photo.thumbnail_2x_url,
-    has3x: !!photo.thumbnail_3x_url,
+    hasMedium: !!photo.medium_url,
     has4k: !!photo.large_4k_url,
   }
 
@@ -125,10 +125,8 @@ async function verifyPhoto(
         photo.thumbnail_2x_url
       )
     }
-    if (photo.thumbnail_3x_url) {
-      result.blob3xAccessible = await verifyBlobAccessible(
-        photo.thumbnail_3x_url
-      )
+    if (photo.medium_url) {
+      result.blobMediumAccessible = await verifyBlobAccessible(photo.medium_url)
     }
     if (photo.large_4k_url) {
       result.blob4kAccessible = await verifyBlobAccessible(photo.large_4k_url)
@@ -189,23 +187,23 @@ async function main() {
   // Analyze results
   const total = results.length
   const hasAllVariants = results.filter(
-    (r) => r.has2x && r.has3x && r.has4k
+    (r) => r.has2x && r.hasMedium && r.has4k
   ).length
   const missing2x = results.filter((r) => !r.has2x).length
-  const missing3x = results.filter((r) => !r.has3x).length
+  const missingMedium = results.filter((r) => !r.hasMedium).length
   const missing4k = results.filter((r) => !r.has4k).length
 
   // Blob accessibility (if checked)
   let inaccessible2x = 0
-  let inaccessible3x = 0
+  let inaccessibleMedium = 0
   let inaccessible4k = 0
 
   if (checkBlobs) {
     inaccessible2x = results.filter(
       (r) => r.has2x && r.blob2xAccessible === false
     ).length
-    inaccessible3x = results.filter(
-      (r) => r.has3x && r.blob3xAccessible === false
+    inaccessibleMedium = results.filter(
+      (r) => r.hasMedium && r.blobMediumAccessible === false
     ).length
     inaccessible4k = results.filter(
       (r) => r.has4k && r.blob4kAccessible === false
@@ -219,7 +217,7 @@ async function main() {
     `   Photos with all variants: ${hasAllVariants} (${((hasAllVariants / total) * 100).toFixed(1)}%)`
   )
   console.log(`   Missing thumbnail-2x: ${missing2x}`)
-  console.log(`   Missing thumbnail-3x: ${missing3x}`)
+  console.log(`   Missing medium (1200px): ${missingMedium}`)
   console.log(`   Missing large-4k: ${missing4k}`)
 
   if (checkBlobs) {
@@ -227,20 +225,24 @@ async function main() {
     if (inaccessible2x > 0) {
       console.log(`   ⚠️  Inaccessible thumbnail-2x URLs: ${inaccessible2x}`)
     }
-    if (inaccessible3x > 0) {
-      console.log(`   ⚠️  Inaccessible thumbnail-3x URLs: ${inaccessible3x}`)
+    if (inaccessibleMedium > 0) {
+      console.log(`   ⚠️  Inaccessible medium URLs: ${inaccessibleMedium}`)
     }
     if (inaccessible4k > 0) {
       console.log(`   ⚠️  Inaccessible large-4k URLs: ${inaccessible4k}`)
     }
-    if (inaccessible2x === 0 && inaccessible3x === 0 && inaccessible4k === 0) {
+    if (
+      inaccessible2x === 0 &&
+      inaccessibleMedium === 0 &&
+      inaccessible4k === 0
+    ) {
       console.log('   ✅ All blob URLs are accessible')
     }
   }
 
   // Show photos missing variants
   const missingVariants = results.filter(
-    (r) => !r.has2x || !r.has3x || !r.has4k
+    (r) => !r.has2x || !r.hasMedium || !r.has4k
   )
 
   if (missingVariants.length > 0) {
@@ -248,7 +250,7 @@ async function main() {
     for (const result of missingVariants.slice(0, 20)) {
       const missing = []
       if (!result.has2x) missing.push('2x')
-      if (!result.has3x) missing.push('3x')
+      if (!result.hasMedium) missing.push('medium')
       if (!result.has4k) missing.push('4k')
       console.log(`   ${result.filename}: missing ${missing.join(', ')}`)
     }
@@ -262,7 +264,7 @@ async function main() {
     const inaccessible = results.filter(
       (r) =>
         (r.has2x && r.blob2xAccessible === false) ||
-        (r.has3x && r.blob3xAccessible === false) ||
+        (r.hasMedium && r.blobMediumAccessible === false) ||
         (r.has4k && r.blob4kAccessible === false)
     )
 
@@ -273,7 +275,8 @@ async function main() {
       for (const result of inaccessible.slice(0, 20)) {
         const issues = []
         if (result.has2x && result.blob2xAccessible === false) issues.push('2x')
-        if (result.has3x && result.blob3xAccessible === false) issues.push('3x')
+        if (result.hasMedium && result.blobMediumAccessible === false)
+          issues.push('medium')
         if (result.has4k && result.blob4kAccessible === false) issues.push('4k')
         console.log(`   ${result.filename}: inaccessible ${issues.join(', ')}`)
       }
@@ -286,10 +289,12 @@ async function main() {
   // Final status
   const allGood =
     missing2x === 0 &&
-    missing3x === 0 &&
+    missingMedium === 0 &&
     missing4k === 0 &&
     (!checkBlobs ||
-      (inaccessible2x === 0 && inaccessible3x === 0 && inaccessible4k === 0))
+      (inaccessible2x === 0 &&
+        inaccessibleMedium === 0 &&
+        inaccessible4k === 0))
 
   if (allGood) {
     console.log('\n✅ All photos have responsive variants!')

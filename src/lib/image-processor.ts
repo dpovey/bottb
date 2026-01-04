@@ -2,9 +2,8 @@ import sharp from 'sharp'
 
 export interface ProcessedImage {
   thumbnail: Buffer
-  thumbnail2x?: Buffer // 600px for 2x displays
-  thumbnail3x?: Buffer // 900px for 3x displays
-  medium?: Buffer // 1200px for mobile slideshow (3x displays)
+  thumbnail2x?: Buffer // 800px for 2x displays
+  medium?: Buffer // 1200px for 3x thumbnails + mobile slideshows
   large: Buffer
   large4k?: Buffer // 4000px for 4K displays
   width: number
@@ -28,10 +27,9 @@ export interface ImageVariant {
  * point set by admins is respected when displaying photos in grids, cards, etc.
  *
  * Variants:
- * - thumbnail: max 400px on longest side (1x displays, ~400px grid cells)
+ * - thumbnail: max 400px on longest side (1x displays, ~200px grid cells)
  * - thumbnail2x: max 800px on longest side (2x/Retina displays)
- * - thumbnail3x: max 1200px on longest side (3x displays)
- * - medium: max 1600px (mobile slideshow at 3x density)
+ * - medium: max 1200px (3x thumbnails + mobile slideshows, quality 90)
  * - large: max 2000px (tablet/desktop displays)
  * - large4k: max 4000px (4K displays)
  *
@@ -71,20 +69,10 @@ export async function processImage(
       .toBuffer()
   }
 
-  // 3x: max 1200px (only if original is large enough)
-  let thumbnail3x: Buffer | undefined
-  if (originalWidth >= 900 || originalHeight >= 900) {
-    thumbnail3x = await image
-      .clone()
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toBuffer()
-  }
-
-  // Create slideshow versions at different sizes for responsive loading
-  // Medium: max 1200px (mobile slideshow at 3x density - 400px viewport × 3)
+  // Medium: max 1200px (used for 3x thumbnails + mobile slideshows)
+  // Higher quality (90) since this is used for slideshow viewing
   let medium: Buffer | undefined
-  if (originalWidth >= 1200 || originalHeight >= 1200) {
+  if (originalWidth >= 900 || originalHeight >= 900) {
     medium = await image
       .clone()
       .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
@@ -112,7 +100,6 @@ export async function processImage(
   return {
     thumbnail,
     thumbnail2x,
-    thumbnail3x,
     medium,
     large,
     large4k,

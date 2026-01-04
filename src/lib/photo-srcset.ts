@@ -2,12 +2,14 @@
  * Shared utilities for building responsive image srcsets for photos.
  *
  * Photo variants available:
- * - thumbnail_url: 300×300 WebP (1x)
- * - thumbnail_2x_url: 600×600 WebP (2x)
- * - thumbnail_3x_url: 900×900 WebP (3x)
- * - medium_url: 1200px WebP (mobile/tablet)
- * - blob_url: 2000px WebP (desktop)
+ * - thumbnail_url: 400px WebP (1x displays)
+ * - thumbnail_2x_url: 800px WebP (2x/Retina displays)
+ * - medium_url: 1200px WebP (3x thumbnails + mobile slideshows)
+ * - blob_url: 2000px WebP (desktop slideshows)
  * - large_4k_url: 4000px WebP (4K displays)
+ *
+ * Note: thumbnail_3x_url is deprecated but kept for backward compatibility
+ * with existing photos. New uploads use medium_url for 3x.
  */
 
 import type { Photo } from './db-types'
@@ -26,22 +28,28 @@ export interface PhotoImageUrls {
 }
 
 /**
- * Build srcSet for responsive thumbnails (1x: 300px, 2x: 600px, 3x: 900px).
+ * Build srcSet for responsive thumbnails (1x: 400px, 2x: 800px, 3x: 1200px).
+ * Uses medium_url for 3x (falls back to deprecated thumbnail_3x_url for old photos).
  * Returns undefined if only one source is available (no benefit from srcset).
  */
 export function buildThumbnailSrcSet(
-  photo: Pick<Photo, 'thumbnail_url' | 'thumbnail_2x_url' | 'thumbnail_3x_url'>
+  photo: Pick<
+    Photo,
+    'thumbnail_url' | 'thumbnail_2x_url' | 'thumbnail_3x_url' | 'medium_url'
+  >
 ): string | undefined {
   const sources: string[] = []
 
   if (photo.thumbnail_url) {
-    sources.push(`${photo.thumbnail_url} 300w`)
+    sources.push(`${photo.thumbnail_url} 400w`)
   }
   if (photo.thumbnail_2x_url) {
-    sources.push(`${photo.thumbnail_2x_url} 600w`)
+    sources.push(`${photo.thumbnail_2x_url} 800w`)
   }
-  if (photo.thumbnail_3x_url) {
-    sources.push(`${photo.thumbnail_3x_url} 900w`)
+  // Use medium_url for 3x, fall back to deprecated thumbnail_3x_url
+  const url3x = photo.medium_url || photo.thumbnail_3x_url
+  if (url3x) {
+    sources.push(`${url3x} 1200w`)
   }
 
   return sources.length > 1 ? sources.join(', ') : undefined
@@ -49,16 +57,22 @@ export function buildThumbnailSrcSet(
 
 /**
  * Get best available thumbnail source (prefer highest resolution).
- * Falls back through 3x → 2x → 1x → blob_url.
+ * Falls back through medium → 2x → 1x → blob_url.
+ * Includes deprecated thumbnail_3x_url for backward compatibility.
  */
 export function getBestThumbnailSrc(
   photo: Pick<
     Photo,
-    'thumbnail_url' | 'thumbnail_2x_url' | 'thumbnail_3x_url' | 'blob_url'
+    | 'thumbnail_url'
+    | 'thumbnail_2x_url'
+    | 'thumbnail_3x_url'
+    | 'medium_url'
+    | 'blob_url'
   >
 ): string {
   return (
-    photo.thumbnail_3x_url ||
+    photo.medium_url ||
+    photo.thumbnail_3x_url || // backward compatibility
     photo.thumbnail_2x_url ||
     photo.thumbnail_url ||
     photo.blob_url
