@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
@@ -19,6 +19,7 @@ import {
   GridIcon,
   UsersIcon,
   ChevronDownIcon,
+  CloseIcon,
 } from '@/components/icons'
 
 // ============================================================================
@@ -42,6 +43,15 @@ interface NavSection {
   collapsible?: boolean
   /** ID for collapsible state management */
   id?: string
+}
+
+interface AdminSidebarProps {
+  /** Whether this is rendered as a mobile drawer */
+  isMobileDrawer?: boolean
+  /** Whether the mobile drawer is open */
+  isOpen?: boolean
+  /** Callback to close the mobile drawer */
+  onClose?: () => void
 }
 
 // ============================================================================
@@ -201,16 +211,19 @@ function NavLink({
   item,
   currentPath,
   nested = false,
+  onClick,
 }: {
   item: NavItem
   currentPath: string
   nested?: boolean
+  onClick?: () => void
 }) {
   const isActive = isItemActive(item, currentPath)
 
   return (
     <Link
       href={item.href}
+      onClick={onClick}
       className={cn(
         'flex items-center gap-3 rounded-lg transition-colors',
         nested ? 'px-4 py-2 pl-11' : 'px-4 py-3',
@@ -230,9 +243,11 @@ function NavLink({
 function CollapsibleSection({
   section,
   currentPath,
+  onLinkClick,
 }: {
   section: NavSection
   currentPath: string
+  onLinkClick?: () => void
 }) {
   const sectionActive = isSectionActive(section, currentPath)
   // Auto-expand when any child is active, otherwise remember user preference
@@ -246,7 +261,7 @@ function CollapsibleSection({
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
-          'w-full flex items-center justify-between px-4 py-2 text-[10px] tracking-widest uppercase transition-colors',
+          'w-full flex items-center justify-between px-4 py-2 text-[10px] tracking-widest uppercase transition-colors cursor-pointer',
           sectionActive ? 'text-accent' : 'text-dim hover:text-muted'
         )}
       >
@@ -267,7 +282,12 @@ function CollapsibleSection({
         <ul className="space-y-1 pb-2">
           {section.items.map((item) => (
             <li key={item.href}>
-              <NavLink item={item} currentPath={currentPath} nested />
+              <NavLink
+                item={item}
+                currentPath={currentPath}
+                nested
+                onClick={onLinkClick}
+              />
             </li>
           ))}
         </ul>
@@ -280,16 +300,22 @@ function NavSectionComponent({
   section,
   currentPath,
   isFirst,
+  onLinkClick,
 }: {
   section: NavSection
   currentPath: string
   isFirst: boolean
+  onLinkClick?: () => void
 }) {
   // Collapsible sections get special treatment
   if (section.collapsible && section.label) {
     return (
       <div className={cn(!isFirst && 'mt-6 pt-6 border-t border-white/5')}>
-        <CollapsibleSection section={section} currentPath={currentPath} />
+        <CollapsibleSection
+          section={section}
+          currentPath={currentPath}
+          onLinkClick={onLinkClick}
+        />
       </div>
     )
   }
@@ -305,7 +331,11 @@ function NavSectionComponent({
       <ul className="space-y-1">
         {section.items.map((item) => (
           <li key={item.href}>
-            <NavLink item={item} currentPath={currentPath} />
+            <NavLink
+              item={item}
+              currentPath={currentPath}
+              onClick={onLinkClick}
+            />
           </li>
         ))}
       </ul>
@@ -314,10 +344,10 @@ function NavSectionComponent({
 }
 
 // ============================================================================
-// Main Component
+// Sidebar Content (shared between desktop and mobile)
 // ============================================================================
 
-export function AdminSidebar() {
+function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -331,25 +361,7 @@ export function AdminSidebar() {
     : session?.user?.email?.slice(0, 2).toUpperCase() || 'AD'
 
   return (
-    <aside className="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
-        <Link href="/" className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/logos/bottb-dark-square.svg"
-            alt="BOTTB"
-            className="h-8"
-          />
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">BOTTB</span>
-            <span className="bg-accent/20 text-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase font-medium">
-              Admin
-            </span>
-          </div>
-        </Link>
-      </div>
-
+    <>
       {/* Navigation */}
       <nav className="flex-1 p-4 overflow-y-auto">
         {navSections.map((section, index) => (
@@ -358,6 +370,7 @@ export function AdminSidebar() {
             section={section}
             currentPath={pathname}
             isFirst={index === 0}
+            onLinkClick={onLinkClick}
           />
         ))}
       </nav>
@@ -381,13 +394,129 @@ export function AdminSidebar() {
               resetIdentity()
               signOut()
             }}
-            className="text-dim hover:text-white transition-colors"
+            className="text-dim hover:text-white transition-colors cursor-pointer"
             title="Sign out"
           >
             <LogoutIcon className="w-5 h-5" />
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  )
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export function AdminSidebar({
+  isMobileDrawer = false,
+  isOpen = false,
+  onClose,
+}: AdminSidebarProps) {
+  // Close drawer on escape key
+  useEffect(() => {
+    if (!isMobileDrawer || !isOpen) return
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose?.()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isMobileDrawer, isOpen, onClose])
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (!isMobileDrawer) return
+
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileDrawer, isOpen])
+
+  // Desktop sidebar
+  if (!isMobileDrawer) {
+    return (
+      <aside className="w-64 bg-elevated border-r border-white/5 flex flex-col shrink-0">
+        {/* Logo */}
+        <div className="p-6 border-b border-white/5">
+          <Link href="/" className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logos/bottb-dark-square.svg"
+              alt="BOTTB"
+              className="h-8"
+            />
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm">BOTTB</span>
+              <span className="bg-accent/20 text-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase font-medium">
+                Admin
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        <SidebarContent />
+      </aside>
+    )
+  }
+
+  // Mobile drawer
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={cn(
+          'lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300',
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Drawer */}
+      <aside
+        className={cn(
+          'lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-elevated border-r border-white/5 flex flex-col transform transition-transform duration-300 ease-in-out',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {/* Logo with close button */}
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3" onClick={onClose}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logos/bottb-dark-square.svg"
+              alt="BOTTB"
+              className="h-8"
+            />
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-sm">BOTTB</span>
+              <span className="bg-accent/20 text-accent px-1.5 py-0.5 rounded-sm text-[9px] tracking-wider uppercase font-medium">
+                Admin
+              </span>
+            </div>
+          </Link>
+          <button
+            onClick={onClose}
+            className="p-2 text-muted hover:text-white transition-colors cursor-pointer"
+            aria-label="Close menu"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <SidebarContent onLinkClick={onClose} />
+      </aside>
+    </>
   )
 }

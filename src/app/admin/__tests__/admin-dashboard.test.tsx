@@ -104,7 +104,7 @@ describe('AdminDashboard', () => {
     await waitFor(
       () => {
         const manageButtons = screen.getAllByRole('link', {
-          name: 'Manage Event',
+          name: 'Manage',
         })
         expect(manageButtons).toHaveLength(3)
       },
@@ -117,7 +117,7 @@ describe('AdminDashboard', () => {
 
     await waitFor(() => {
       const manageButtons = screen.getAllByRole('link', {
-        name: 'Manage Event',
+        name: 'Manage',
       })
 
       // Check that each button links to the correct event admin page

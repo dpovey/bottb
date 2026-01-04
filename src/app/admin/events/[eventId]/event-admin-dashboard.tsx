@@ -403,64 +403,72 @@ export default function EventAdminDashboard({
       </Card>
 
       {/* Action Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {/* Crowd Voting */}
         <Link
           href={`/live/events/${eventId}/voting-qr`}
-          className="bg-elevated rounded-2xl p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="text-6xl mb-4">📱</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Crowd Voting</h2>
-          <p className="text-gray-300 text-lg mb-6">
+          <div className="text-3xl sm:text-6xl mb-2 sm:mb-4">📱</div>
+          <h2 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-4">
+            Crowd Voting
+          </h2>
+          <p className="text-gray-300 text-xs sm:text-lg mb-3 sm:mb-6 hidden sm:block">
             Display QR code for audience voting
           </p>
-          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
-            Show Voting QR Code
+          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-6 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-base">
+            Voting QR
           </div>
         </Link>
 
         {/* Judge Scoring */}
         <Link
           href={`/live/events/${eventId}/judge-qr`}
-          className="bg-elevated rounded-2xl p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="text-6xl mb-4">⚖️</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Judge Scoring</h2>
-          <p className="text-gray-300 text-lg mb-6">
+          <div className="text-3xl sm:text-6xl mb-2 sm:mb-4">⚖️</div>
+          <h2 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-4">
+            Judge Scoring
+          </h2>
+          <p className="text-gray-300 text-xs sm:text-lg mb-3 sm:mb-6 hidden sm:block">
             Display QR code for judge scoring
           </p>
-          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
-            Show Judge QR Code
+          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-6 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-base">
+            Judge QR
           </div>
         </Link>
 
         {/* Crowd Noise Measurement */}
         <Link
           href={`/admin/events/${eventId}/crowd-noise`}
-          className="bg-elevated rounded-2xl p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="text-6xl mb-4">🎤</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Crowd Noise</h2>
-          <p className="text-gray-300 text-lg mb-6">
+          <div className="text-3xl sm:text-6xl mb-2 sm:mb-4">🎤</div>
+          <h2 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-4">
+            Crowd Noise
+          </h2>
+          <p className="text-gray-300 text-xs sm:text-lg mb-3 sm:mb-6 hidden sm:block">
             Measure crowd energy and noise levels
           </p>
-          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
-            Start Measurement
+          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-6 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-base">
+            Measure
           </div>
         </Link>
 
         {/* Setlist Management */}
         <Link
           href={`/admin/events/${eventId}/setlists`}
-          className="bg-elevated rounded-2xl p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="text-6xl mb-4">🎵</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Setlists</h2>
-          <p className="text-gray-300 text-lg mb-6">
+          <div className="text-3xl sm:text-6xl mb-2 sm:mb-4">🎵</div>
+          <h2 className="text-lg sm:text-3xl font-bold text-white mb-1 sm:mb-4">
+            Setlists
+          </h2>
+          <p className="text-gray-300 text-xs sm:text-lg mb-3 sm:mb-6 hidden sm:block">
             Manage band setlists and detect conflicts
           </p>
-          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
-            Manage Setlists
+          <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-6 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-base">
+            Manage
           </div>
         </Link>
       </div>
@@ -502,35 +510,35 @@ export default function EventAdminDashboard({
 
       {/* Additional Actions */}
       <Card padding="lg">
-        <h3 className="text-2xl font-bold text-white mb-6 text-center">
+        <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 text-center">
           Quick Actions
         </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Link
             href={`/results/${eventId}`}
-            className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+            className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-colors text-sm sm:text-base"
           >
-            📊 View Results
+            📊 Results
           </Link>
           <Link
             href={`/vote/crowd/${eventId}`}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-colors text-sm sm:text-base"
           >
-            🎵 Test Crowd Voting
+            🎵 Test Crowd
           </Link>
           <Link
             href={`/vote/judge/${eventId}`}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-center transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-colors text-sm sm:text-base"
           >
-            ⚖️ Test Judge Scoring
+            ⚖️ Test Judge
           </Link>
           <Button
             variant="danger"
             onClick={() => setShowClearConfirm(true)}
             disabled={isClearing}
-            className="py-4"
+            className="py-3 sm:py-4 text-sm sm:text-base"
           >
-            {isClearing ? '⏳ Clearing...' : '🗑️ Clear Scores'}
+            {isClearing ? '⏳ Clearing...' : '🗑️ Clear'}
           </Button>
         </div>
       </Card>

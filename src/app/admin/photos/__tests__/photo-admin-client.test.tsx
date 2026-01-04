@@ -294,9 +294,7 @@ describe('PhotoAdminClient', () => {
       // Should see bulk edit controls
       expect(screen.getByText('Set Event...')).toBeInTheDocument()
       expect(screen.getByText('Set Band...')).toBeInTheDocument()
-      expect(
-        screen.getByPlaceholderText('Set Photographer...')
-      ).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Photographer...')).toBeInTheDocument()
     })
 
     it('performs bulk update', async () => {
@@ -581,7 +579,7 @@ describe('PhotoAdminClient', () => {
         />
       )
 
-      expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+      expect(screen.getByText('1/2')).toBeInTheDocument()
     })
 
     it('disables Prev on first page', () => {

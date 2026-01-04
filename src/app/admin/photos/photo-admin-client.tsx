@@ -247,17 +247,18 @@ export function PhotoAdminClient({
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="bg-accent/20 border border-accent/30 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-accent font-medium">
+        <div className="bg-accent/20 border border-accent/30 rounded-xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+            <span className="text-accent font-medium text-sm sm:text-base">
               {selectedIds.size} photo{selectedIds.size !== 1 ? 's' : ''}{' '}
               selected
             </span>
             <Button variant="ghost" size="sm" onClick={clearSelection}>
-              Clear selection
+              <span className="sm:hidden">Clear</span>
+              <span className="hidden sm:inline">Clear selection</span>
             </Button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {!bulkEditMode ? (
               <Button
                 variant="accent"
@@ -268,14 +269,14 @@ export function PhotoAdminClient({
                 Bulk Edit
               </Button>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <select
                   value={bulkEventId}
                   onChange={(e) => {
                     setBulkEventId(e.target.value)
                     setBulkBandId('')
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm"
+                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm min-w-0 w-full sm:w-auto"
                 >
                   <option value="">Set Event...</option>
                   {events.map((event) => (
@@ -288,7 +289,7 @@ export function PhotoAdminClient({
                   value={bulkBandId}
                   onChange={(e) => setBulkBandId(e.target.value)}
                   disabled={!bulkEventId}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm disabled:opacity-50"
+                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm disabled:opacity-50 min-w-0 w-full sm:w-auto"
                 >
                   <option value="">Set Band...</option>
                   {bulkEventId &&
@@ -300,44 +301,46 @@ export function PhotoAdminClient({
                 </select>
                 <input
                   type="text"
-                  placeholder="Set Photographer..."
+                  placeholder="Photographer..."
                   value={bulkPhotographer}
                   onChange={(e) => setBulkPhotographer(e.target.value)}
                   list="bulk-photographer-list"
-                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-500 w-40"
+                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-500 min-w-0 w-full sm:w-32 lg:w-40"
                 />
                 <datalist id="bulk-photographer-list">
                   {photographers.map((name) => (
                     <option key={name} value={name} />
                   ))}
                 </datalist>
-                <button
-                  onClick={handleBulkUpdate}
-                  disabled={
-                    isBulkSaving ||
-                    (!bulkEventId && !bulkBandId && !bulkPhotographer)
-                  }
-                  className="px-4 py-1.5 bg-success hover:bg-success-light text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                >
-                  {isBulkSaving ? (
-                    <VinylSpinner size="xxs" />
-                  ) : (
-                    <CheckIcon size={16} />
-                  )}
-                  Apply
-                </button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setBulkEditMode(false)
-                    setBulkEventId('')
-                    setBulkBandId('')
-                    setBulkPhotographer('')
-                  }}
-                >
-                  Cancel
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={handleBulkUpdate}
+                    disabled={
+                      isBulkSaving ||
+                      (!bulkEventId && !bulkBandId && !bulkPhotographer)
+                    }
+                    className="px-3 sm:px-4 py-1.5 bg-success hover:bg-success-light text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer flex-1 sm:flex-none justify-center"
+                  >
+                    {isBulkSaving ? (
+                      <VinylSpinner size="xxs" />
+                    ) : (
+                      <CheckIcon size={16} />
+                    )}
+                    Apply
+                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setBulkEditMode(false)
+                      setBulkEventId('')
+                      setBulkBandId('')
+                      setBulkPhotographer('')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -346,18 +349,18 @@ export function PhotoAdminClient({
 
       {/* Photos Table */}
       <Card padding="none" className="overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-white">
+        <div className="px-3 sm:px-4 py-3 border-b border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+            <h2 className="text-base sm:text-lg font-semibold text-white">
               Photos ({total})
             </h2>
             <Button variant="ghost" size="sm" onClick={selectAll}>
-              Select all on page
+              Select all
             </Button>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
             <span>
-              Page {page} of {Math.ceil(total / pageSize)}
+              {page}/{Math.ceil(total / pageSize)}
             </span>
             <Button
               variant="ghost"

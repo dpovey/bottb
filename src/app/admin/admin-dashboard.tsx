@@ -131,114 +131,96 @@ export default function AdminDashboard({
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         <Link
           href="/admin/videos"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <VideoIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <VideoIcon className="w-5 h-5 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Videos
-              </h3>
-              <p className="text-sm text-muted">YouTube videos</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Videos
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/photos"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <PhotoIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <PhotoIcon className="w-5 h-5 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Photos
-              </h3>
-              <p className="text-sm text-muted">Edit metadata</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Photos
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/heroes"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
-              <StarIcon className="w-6 h-6 text-warning" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-warning/20 rounded-lg flex items-center justify-center">
+              <StarIcon className="w-5 h-5 text-warning" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Heroes
-              </h3>
-              <p className="text-sm text-muted">Focal points</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Heroes
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/companies"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <BuildingIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <BuildingIcon className="w-5 h-5 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Companies
-              </h3>
-              <p className="text-sm text-muted">Manage orgs</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Companies
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/photographers"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <CameraIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <CameraIcon className="w-5 h-5 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Photographers
-              </h3>
-              <p className="text-sm text-muted">Manage credits</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Photographers
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/social"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <ShareIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <ShareIcon className="w-5 h-5 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
-                Social
-              </h3>
-              <p className="text-sm text-muted">Connections</p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Social
+            </h3>
           </div>
         </Link>
       </div>
 
       {/* Events List */}
-      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Events</h2>
+      <div className="bg-elevated rounded-2xl p-4 sm:p-6 border border-white/5">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Events</h2>
         </div>
 
         {loading ? (
@@ -250,20 +232,22 @@ export default function AdminDashboard({
             <p className="text-muted text-lg">No events found</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-surface rounded-xl p-4 flex justify-between items-center"
+                className="bg-surface rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4"
               >
-                <div>
-                  <h3 className="text-lg font-semibold text-white">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                     {event.name}
                   </h3>
-                  <p className="text-muted">{event.location}</p>
-                  <p className="text-sm text-dim">{event.date}</p>
+                  <p className="text-sm text-muted truncate">
+                    {event.location}
+                  </p>
+                  <p className="text-xs sm:text-sm text-dim">{event.date}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-2">
                     <select
                       value={event.status}
@@ -272,7 +256,7 @@ export default function AdminDashboard({
                       }
                       disabled={updatingStatus === event.id}
                       className={`
-                        px-4 py-2 rounded-lg text-sm font-medium
+                        px-3 sm:px-4 py-2 rounded-lg text-sm font-medium
                         bg-bg border border-white/10 
                         focus:outline-hidden focus:border-accent 
                         hover:border-white/20 transition-colors
@@ -298,7 +282,7 @@ export default function AdminDashboard({
                   </div>
                   <Link href={`/admin/events/${event.id}`}>
                     <Button variant="accent" size="sm">
-                      Manage Event
+                      Manage
                     </Button>
                   </Link>
                 </div>
