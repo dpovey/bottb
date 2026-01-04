@@ -131,118 +131,88 @@ export default function AdminDashboard({
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         <Link
           href="/admin/videos"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
-              <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <VideoIcon className="w-5 h-5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Videos
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                YouTube videos
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Videos
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/photos"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
-              <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <PhotoIcon className="w-5 h-5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Photos
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                Edit metadata
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Photos
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/heroes"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-warning/20 rounded-lg flex items-center justify-center shrink-0">
-              <StarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-warning/20 rounded-lg flex items-center justify-center">
+              <StarIcon className="w-5 h-5 text-warning" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Heroes
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                Focal points
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Heroes
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/companies"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
-              <BuildingIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <BuildingIcon className="w-5 h-5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Companies
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                Manage orgs
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Companies
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/photographers"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
-              <CameraIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <CameraIcon className="w-5 h-5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Photographers
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                Manage credits
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Photographers
+            </h3>
           </div>
         </Link>
 
         <Link
           href="/admin/social"
-          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
-              <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <ShareIcon className="w-5 h-5 text-accent" />
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
-                Social
-              </h3>
-              <p className="text-xs sm:text-sm text-muted hidden sm:block">
-                Connections
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Social
+            </h3>
           </div>
         </Link>
       </div>
