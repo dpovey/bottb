@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { sql } from '@/lib/sql'
 import { del, list } from '@vercel/blob'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
@@ -95,6 +96,9 @@ const handleDeletePhoto: ProtectedApiHandler = async (
 
     // Delete database record
     await sql`DELETE FROM photos WHERE id = ${photoId}`
+
+    // Revalidate photo pages
+    revalidatePath('/photos')
 
     return NextResponse.json({
       success: true,
@@ -201,6 +205,9 @@ const handleUpdatePhoto: ProtectedApiHandler = async (
 
     // Fetch the updated photo with joined fields
     const updatedPhoto = await getPhotoById(photoId)
+
+    // Revalidate photo pages so gallery shows updated metadata
+    revalidatePath('/photos')
 
     return NextResponse.json({
       success: true,

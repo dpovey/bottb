@@ -24,6 +24,10 @@ vi.mock('@/lib/auth', () => ({
   auth: vi.fn(),
 }))
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}))
+
 const mockGetPhotoById = getPhotoById as ReturnType<typeof vi.fn>
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>
 const mockDel = del as ReturnType<typeof vi.fn>
