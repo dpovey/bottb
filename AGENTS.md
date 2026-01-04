@@ -182,9 +182,26 @@ git push -u origin feature/feature-name
 # Switch to personal GitHub account (this repo uses personal, not enterprise)
 gh auth switch --user dpovey
 gh pr create --fill
+
+# Wait for CI checks to complete
+gh pr checks --watch
 ```
 
 > **Note**: This repo is under a personal GitHub account, not enterprise. Run `gh auth switch --user dpovey` if you're logged into an enterprise account.
+
+**If CI fails**: Fix the issues, then push and wait again:
+
+```bash
+# Fix the failing code, then:
+git add .
+git commit -m "fix: address CI failures"
+git push
+
+# Wait for CI again
+gh pr checks --watch
+```
+
+Repeat this cycle until all checks pass. Do not ask for merge until CI is green.
 
 ### Merging a PR
 
