@@ -28,4 +28,3 @@ See `doc/practices/react.md` for full guidelines.
 - Use `@/` alias for src imports
 - Group: external deps, then internal, then relative
 - Sort alphabetically within groups
-

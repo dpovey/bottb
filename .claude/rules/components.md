@@ -35,4 +35,3 @@ See `doc/practices/styling.md` for full guidelines.
 - Use React Testing Library
 - Test behavior, not implementation
 - Use `userEvent` for interactions
-

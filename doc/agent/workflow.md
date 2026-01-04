@@ -124,4 +124,3 @@ git worktree list                      # Show all worktrees
 git worktree add .worktrees/dir branch # Checkout existing branch
 git worktree lock .worktrees/dir       # Prevent pruning (for removable media)
 ```
-

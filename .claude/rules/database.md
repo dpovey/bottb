@@ -29,4 +29,3 @@ When modifying the database schema, **both files must be updated**:
 - `src/lib/db-types.ts` - TypeScript types for DB entities
 - `src/lib/schema.sql` - Full schema for fresh test DBs
 - `migrations/` - Production migration files
-

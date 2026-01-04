@@ -30,4 +30,3 @@ Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
 - `doc/arch/` - Architecture decisions
 - `doc/practices/` - Coding standards
 - `doc/requirements/` - Feature specs
-

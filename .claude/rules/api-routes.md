@@ -18,10 +18,7 @@ See `doc/arch/api.md` for full guidelines.
 - Use consistent error response format:
 
 ```typescript
-return NextResponse.json(
-  { error: 'Description of error' },
-  { status: 400 }
-);
+return NextResponse.json({ error: 'Description of error' }, { status: 400 })
 ```
 
 ## Authentication
@@ -35,4 +32,3 @@ return NextResponse.json(
 - Use functions from `src/lib/db.ts`
 - Handle errors gracefully
 - Use transactions for multi-step operations
-

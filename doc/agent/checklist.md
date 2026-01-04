@@ -65,4 +65,3 @@ For faster validation during development:
 - `pnpm exec prettier --write path/to/file.ts` - Format single file
 - `pnpm exec eslint path/to/file.ts` - Lint single file
 - `pnpm exec vitest run path/to/file.test.ts` - Run single test file
-
