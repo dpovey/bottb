@@ -7,11 +7,11 @@ import {
   getSetlistForBand,
   hasFinalizedResults,
   getFinalizedResults,
-  getArtistDescriptions,
   PHOTO_LABELS,
   SetlistSong,
   type Band,
 } from '@/lib/db'
+import { slugify } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
 import { auth } from '@/lib/auth'
@@ -160,13 +160,7 @@ function CircularProgress({ percent }: { percent: number }) {
 }
 
 // Setlist Section Component
-function SetlistSection({
-  songs,
-  artistDescriptions,
-}: {
-  songs: SetlistSong[]
-  artistDescriptions: Map<string, string>
-}) {
+function SetlistSection({ songs }: { songs: SetlistSong[] }) {
   if (songs.length === 0) return null
 
   const getSongTypeLabel = (type: string) => {
@@ -180,16 +174,6 @@ function SetlistSection({
       },
     }
     return labels[type] || labels.cover
-  }
-
-  // Get artist description - prefer song-level override, fall back to metadata
-  const getArtistDescription = (song: SetlistSong): string | null => {
-    if (song.artist_description) return song.artist_description
-    const normalizedArtist = song.artist
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ')
-    return artistDescriptions.get(normalizedArtist) || null
   }
 
   return (
@@ -218,14 +202,22 @@ function SetlistSection({
                 {/* Song info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-white">{song.title}</span>
+                    <Link
+                      href={`/songs/${slugify(song.artist)}/${slugify(song.title)}`}
+                      className="font-medium text-white hover:text-accent transition-colors"
+                    >
+                      {song.title}
+                    </Link>
                     {song.song_type === 'transition' &&
                       song.transition_to_title && (
                         <>
                           <span className="text-text-dim">→</span>
-                          <span className="font-medium text-white">
+                          <Link
+                            href={`/songs/${slugify(song.transition_to_artist || '')}/${slugify(song.transition_to_title)}`}
+                            className="font-medium text-white hover:text-accent transition-colors"
+                          >
                             {song.transition_to_title}
-                          </span>
+                          </Link>
                         </>
                       )}
                     {song.song_type !== 'cover' && (
@@ -237,30 +229,51 @@ function SetlistSection({
                     )}
                   </div>
                   <div className="text-sm text-text-muted mt-0.5">
-                    {song.artist}
+                    <Link
+                      href={`/songs/${slugify(song.artist)}`}
+                      className="hover:text-accent transition-colors"
+                    >
+                      {song.artist}
+                    </Link>
                     {song.song_type === 'transition' &&
                       song.transition_to_artist && (
-                        <> / {song.transition_to_artist}</>
+                        <>
+                          {' / '}
+                          <Link
+                            href={`/songs/${slugify(song.transition_to_artist)}`}
+                            className="hover:text-accent transition-colors"
+                          >
+                            {song.transition_to_artist}
+                          </Link>
+                        </>
                       )}
                     {song.additional_songs &&
                       song.additional_songs.length > 0 && (
                         <>
                           {' '}
                           +{' '}
-                          {song.additional_songs
-                            .map((s) => `${s.title} (${s.artist})`)
-                            .join(', ')}
+                          {song.additional_songs.map((s, i) => (
+                            <span key={i}>
+                              {i > 0 && ', '}
+                              <Link
+                                href={`/songs/${slugify(s.artist)}/${slugify(s.title)}`}
+                                className="hover:text-accent transition-colors"
+                              >
+                                {s.title}
+                              </Link>
+                              {' ('}
+                              <Link
+                                href={`/songs/${slugify(s.artist)}`}
+                                className="hover:text-accent transition-colors"
+                              >
+                                {s.artist}
+                              </Link>
+                              {')'}
+                            </span>
+                          ))}
                         </>
                       )}
                   </div>
-                  {(() => {
-                    const description = getArtistDescription(song)
-                    return description ? (
-                      <p className="text-xs text-text-dim mt-1 line-clamp-2">
-                        {description}
-                      </p>
-                    ) : null
-                  })()}
                 </div>
 
                 {/* Media links */}
@@ -451,16 +464,8 @@ export default async function BandPage({
 
   // Fetch setlist for this band (only shown when event is finalized)
   let setlist: SetlistSong[] = []
-  let artistDescriptions = new Map<string, string>()
   if (eventStatus === 'finalized' || isAdmin) {
     setlist = await getSetlistForBand(bandId)
-    // Fetch artist descriptions from metadata for songs that don't have their own
-    const artistNames = setlist
-      .filter((s) => !s.artist_description)
-      .map((s) => s.artist)
-    if (artistNames.length > 0) {
-      artistDescriptions = await getArtistDescriptions(artistNames)
-    }
   }
 
   // Only fetch scores if event is finalized or user is admin
@@ -781,12 +786,7 @@ export default async function BandPage({
       )}
 
       {/* Setlist Section - Only shown after event is finalized */}
-      {canShowScores && (
-        <SetlistSection
-          songs={setlist}
-          artistDescriptions={artistDescriptions}
-        />
-      )}
+      {canShowScores && <SetlistSection songs={setlist} />}
 
       {/* Score Breakdown - For detailed scoring versions (2025.1, 2026.1) */}
       {showDetailedBreakdown && canShowScores && bandScore && (
