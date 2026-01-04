@@ -14,6 +14,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
   const sitemapEntries: MetadataRoute.Sitemap = []
 
+  // Fixed date for static/derived pages to avoid changing on every build
+  // Update this date when static page content actually changes
+  const STATIC_PAGE_DATE = new Date('2025-01-01')
+
   // Static pages
   const staticPages = [
     { path: '', priority: 1.0, changeFrequency: 'daily' as const },
@@ -36,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const page of staticPages) {
     sitemapEntries.push({
       url: `${baseUrl}${page.path}`,
-      lastModified: new Date(),
+      lastModified: STATIC_PAGE_DATE,
       changeFrequency: page.changeFrequency,
       priority: page.priority,
     })
@@ -102,7 +106,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       for (const company of companies) {
         sitemapEntries.push({
           url: `${baseUrl}/companies/${company.slug}`,
-          lastModified: new Date(),
+          lastModified: STATIC_PAGE_DATE,
           changeFrequency: 'monthly',
           priority: 0.6,
         })
@@ -161,7 +165,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       for (const artistSlug of uniqueArtists) {
         sitemapEntries.push({
           url: `${baseUrl}/songs/${artistSlug}`,
-          lastModified: new Date(),
+          lastModified: STATIC_PAGE_DATE,
           changeFrequency: 'monthly',
           priority: 0.5,
         })
@@ -171,7 +175,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       for (const [, song] of uniqueSongs) {
         sitemapEntries.push({
           url: `${baseUrl}/songs/${song.artist}/${song.title}`,
-          lastModified: new Date(),
+          lastModified: STATIC_PAGE_DATE,
           changeFrequency: 'monthly',
           priority: 0.5,
         })

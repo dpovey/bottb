@@ -107,14 +107,17 @@ function CompanyPageView({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
           {company.logo_url ? (
-            <Image
-              src={company.logo_url}
-              alt={company.name}
-              width={320}
-              height={64}
-              className="h-16 w-auto max-w-xs object-contain"
-              sizes="(max-width: 640px) 200px, 320px"
-            />
+            <>
+              <h1 className="sr-only">{company.name} Bands</h1>
+              <Image
+                src={company.logo_url}
+                alt={company.name}
+                width={320}
+                height={64}
+                className="h-16 w-auto max-w-xs object-contain"
+                sizes="(max-width: 640px) 200px, 320px"
+              />
+            </>
           ) : (
             <h1 className="font-semibold text-4xl">{company.name}</h1>
           )}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getBaseUrl } from '@/lib/seo'
 import { VideosContent } from './videos-content'
 import { getCachedVideosData, getNavEvents } from '@/lib/nav-data'
+import { VideoObjectJsonLd } from '@/components/seo'
 
 export const metadata: Metadata = {
   title: 'Videos | Battle of the Tech Bands',
@@ -46,12 +47,15 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
   ])
 
   return (
-    <VideosContent
-      initialEventId={initialEventId}
-      initialCompanySlug={initialCompanySlug}
-      initialVideos={videosData.videos}
-      initialFilterOptions={videosData.filterOptions}
-      navEvents={navEvents}
-    />
+    <>
+      <VideoObjectJsonLd videos={videosData.videos} />
+      <VideosContent
+        initialEventId={initialEventId}
+        initialCompanySlug={initialCompanySlug}
+        initialVideos={videosData.videos}
+        initialFilterOptions={videosData.filterOptions}
+        navEvents={navEvents}
+      />
+    </>
   )
 }

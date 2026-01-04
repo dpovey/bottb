@@ -53,12 +53,21 @@ export const metadata: Metadata = {
       "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
     siteName: 'Battle of the Tech Bands',
     type: 'website',
+    images: [
+      {
+        url: '/images/logos/bottb-horizontal.png',
+        width: 1200,
+        height: 630,
+        alt: 'Battle of the Tech Bands',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Battle of the Tech Bands',
     description:
       "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+    images: ['/images/logos/bottb-horizontal.png'],
   },
 }
 
