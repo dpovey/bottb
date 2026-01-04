@@ -205,6 +205,10 @@ CREATE TABLE IF NOT EXISTS photo_clusters (
     CONSTRAINT photo_clusters_type_check CHECK ((cluster_type)::text = ANY ((ARRAY['near_duplicate'::character varying, 'scene'::character varying, 'person'::character varying])::text[]))
 );
 CREATE INDEX IF NOT EXISTS idx_photo_clusters_type ON photo_clusters(cluster_type);
+-- GIN index for array containment queries (p.id = ANY(pc.photo_ids))
+CREATE INDEX IF NOT EXISTS idx_photo_clusters_photo_ids_gin ON photo_clusters USING gin(photo_ids);
+-- Index for representative photo lookups
+CREATE INDEX IF NOT EXISTS idx_photo_clusters_representative ON photo_clusters(representative_photo_id) WHERE (representative_photo_id IS NOT NULL);
 
 -- Videos table
 CREATE TABLE IF NOT EXISTS videos (

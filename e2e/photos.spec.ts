@@ -214,6 +214,59 @@ test.describe('Photo Grouping API', () => {
   })
 })
 
+test.describe('Gallery to Photo to Slideshow Flow', () => {
+  test('can navigate from gallery to photo detail to slideshow', async ({
+    page,
+  }) => {
+    // Step 1: Start at the gallery page
+    await page.goto('/photos')
+    await expect(
+      page.getByRole('heading', { name: 'Photo Gallery' })
+    ).toBeVisible()
+
+    // Wait for photos to load
+    await page.waitForLoadState('networkidle')
+
+    // Step 2: Click the Slideshow button on the gallery page
+    // This navigates to the first photo's detail page
+    const gallerySlideshowButton = page.getByRole('button', {
+      name: /slideshow/i,
+    })
+    await expect(gallerySlideshowButton).toBeVisible({ timeout: 10000 })
+    await gallerySlideshowButton.click()
+
+    // Should navigate to photo detail page first
+    await expect(page).toHaveURL(/\/photos\//, { timeout: 10000 })
+
+    // Step 3: From photo detail page, click the Slideshow link
+    const slideshowLink = page.getByRole('link', { name: /slideshow/i })
+    await expect(slideshowLink).toBeVisible({ timeout: 10000 })
+    await slideshowLink.click()
+
+    // Should navigate to slideshow page
+    await expect(page).toHaveURL(/\/slideshow\//, { timeout: 10000 })
+
+    // Wait for slideshow to load
+    await page.waitForSelector('.slideshow-main', { timeout: 15000 })
+
+    // Verify slideshow is functional - should show image
+    const slideImage = page.locator('.swiper-slide-active img').first()
+    await expect(slideImage).toBeVisible({ timeout: 5000 })
+  })
+
+  test('slideshow button is accessible from gallery', async ({ page }) => {
+    // Navigate to gallery
+    await page.goto('/photos')
+    await page.waitForLoadState('networkidle')
+
+    // Look for slideshow button on gallery page
+    const slideshowButton = page.getByRole('button', { name: /slideshow/i })
+
+    // Slideshow should be accessible from gallery
+    await expect(slideshowButton).toBeVisible({ timeout: 10000 })
+  })
+})
+
 test.describe('Slideshow Keyboard Navigation', () => {
   test('arrow keys navigate between photos', async ({ page }) => {
     // Navigate directly to slideshow with a test photo ID
