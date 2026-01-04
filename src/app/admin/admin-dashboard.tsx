@@ -131,7 +131,7 @@ export default function AdminDashboard({
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
         <Link
           href="/admin/videos"
           className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
