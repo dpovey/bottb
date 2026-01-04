@@ -25,7 +25,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 vi.mock('next/cache', () => ({
-  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
 }))
 
 const mockGetPhotoById = getPhotoById as ReturnType<typeof vi.fn>

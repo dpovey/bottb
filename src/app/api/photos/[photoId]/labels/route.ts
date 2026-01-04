@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import {
   updatePhotoLabels,
@@ -127,8 +127,8 @@ const handleUpdateLabels: ProtectedApiHandler = async (
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
     }
 
-    // Revalidate photo pages so gallery shows updated focal point/labels
-    revalidatePath('/photos')
+    // Revalidate photo caches so gallery shows updated focal point/labels
+    revalidateTag('photos', 'fifteenMinutes')
 
     return NextResponse.json({
       success: true,
