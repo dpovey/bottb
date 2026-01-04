@@ -204,9 +204,22 @@ export interface PhotoUrlOptions {
 }
 
 /**
- * @deprecated Use buildPhotoUrl instead
+ * Options for building slideshow URL
  */
-export type SlideshowUrlOptions = PhotoUrlOptions
+export interface SlideshowUrlOptions {
+  /** Photo ID (slideshow uses ID, not slug) */
+  photoId: string
+  /** Filter by event ID */
+  eventId?: string
+  /** Filter by band ID */
+  bandId?: string
+  /** Filter by photographer name */
+  photographer?: string
+  /** Filter by company slug */
+  companySlug?: string
+  /** Shuffle seed to preserve order */
+  shuffle?: ShuffleParam
+}
 
 /**
  * Build photo page URL with correct shuffle param
@@ -247,17 +260,40 @@ export function buildPhotoUrl(options: PhotoUrlOptions): string {
 }
 
 /**
- * @deprecated Use buildPhotoUrl instead
+ * Build slideshow URL with filters preserved
+ *
+ * Use this to navigate to the slideshow from gallery or photo pages.
+ * Preserves all filter parameters so navigation within slideshow maintains context.
+ *
+ * @example
+ * ```ts
+ * const url = buildSlideshowUrl({
+ *   photoId: 'photo-uuid',
+ *   eventId: 'event-456',
+ *   shuffle: 'abc123',
+ * })
+ * // Returns: /slideshow/photo-uuid?event=event-456&shuffle=abc123
+ * ```
  */
 export function buildSlideshowUrl(options: SlideshowUrlOptions): string {
-  // Map old photoId to new photoSlug
-  const { photoId, ...rest } = options as SlideshowUrlOptions & {
-    photoId?: string
+  const { photoId, eventId, bandId, photographer, companySlug, shuffle } =
+    options
+
+  const params = new URLSearchParams()
+
+  // Filters
+  if (eventId) params.set('event', eventId)
+  if (bandId) params.set('band', bandId)
+  if (photographer) params.set('photographer', photographer)
+  if (companySlug) params.set('company', companySlug)
+
+  // Shuffle - use the actual seed, not 'true'
+  if (isShuffleEnabled(shuffle)) {
+    params.set('shuffle', shuffle!)
   }
-  return buildPhotoUrl({
-    ...rest,
-    photoSlug: photoId || (options as PhotoUrlOptions).photoSlug,
-  })
+
+  const queryString = params.toString()
+  return `/slideshow/${photoId}${queryString ? `?${queryString}` : ''}`
 }
 
 /**

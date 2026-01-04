@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { getPhotoBySlugOrId, isUuid, ensurePhotoSlug } from '@/lib/photo-slugs'
 import { getBaseUrl } from '@/lib/seo'
+import { buildSlideshowUrl } from '@/lib/shuffle-types'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoPageClient } from './photo-page-client'
@@ -161,13 +162,13 @@ export default async function PhotoPage({ params, searchParams }: Props) {
   }
 
   // Build slideshow URL for interactive viewing
-  const slideshowParams = new URLSearchParams()
-  if (filters.event) slideshowParams.set('event', filters.event)
-  if (filters.photographer)
-    slideshowParams.set('photographer', filters.photographer)
-  if (filters.company) slideshowParams.set('company', filters.company)
-  if (filters.shuffle) slideshowParams.set('shuffle', filters.shuffle)
-  const slideshowUrl = `/slideshow/${photo.id}${slideshowParams.toString() ? `?${slideshowParams.toString()}` : ''}`
+  const slideshowUrl = buildSlideshowUrl({
+    photoId: photo.id,
+    eventId: filters.event,
+    photographer: filters.photographer,
+    companySlug: filters.company,
+    shuffle: filters.shuffle,
+  })
 
   return (
     <PublicLayout breadcrumbs={breadcrumbs} footerVariant="simple">

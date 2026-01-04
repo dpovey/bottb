@@ -15,7 +15,7 @@ import { PlayCircleIcon, BuildingIcon, ScenesIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
 import { GroupingButton } from '@/components/photos/grouping-button'
-import { buildPhotoApiParams } from '@/lib/shuffle-types'
+import { buildPhotoApiParams, buildSlideshowUrl } from '@/lib/shuffle-types'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -685,7 +685,19 @@ export function PhotosContent({
             {/* Show slideshow button if we have photos loaded OR SSR says there are photos */}
             {(photos.length > 0 || initialTotalPhotos > 0) && (
               <button
-                onClick={() => handlePhotoClick(0)}
+                onClick={() => {
+                  const firstPhoto = photos[0]
+                  if (!firstPhoto) return
+
+                  const url = buildSlideshowUrl({
+                    photoId: firstPhoto.id,
+                    eventId: selectedEventId || undefined,
+                    photographer: selectedPhotographer || undefined,
+                    companySlug: selectedCompanySlug || undefined,
+                    shuffle,
+                  })
+                  router.push(url)
+                }}
                 disabled={photos.length === 0}
                 className="border border-accent/40 text-accent hover:bg-accent/10 px-6 py-3 rounded-full text-xs tracking-widest uppercase font-medium flex items-center gap-2 self-start sm:self-auto transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >

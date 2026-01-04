@@ -5,6 +5,7 @@ import {
   generateShuffleSeed,
   buildPhotoApiParams,
   buildPhotoUrl,
+  buildSlideshowUrl,
   createShuffleStateFromParam,
   resolveShuffleSeed,
   type ShuffleParam,
@@ -236,6 +237,63 @@ describe('buildPhotoUrl', () => {
       shuffle: 'false',
     })
     expect(url).toBe('/photos/band-event-1')
+  })
+})
+
+describe('buildSlideshowUrl', () => {
+  it('builds basic slideshow URL', () => {
+    const url = buildSlideshowUrl({ photoId: 'photo-uuid' })
+    expect(url).toBe('/slideshow/photo-uuid')
+  })
+
+  it('includes shuffle param when provided', () => {
+    const url = buildSlideshowUrl({
+      photoId: 'photo-uuid',
+      shuffle: 'abc123',
+    })
+    expect(url).toBe('/slideshow/photo-uuid?shuffle=abc123')
+  })
+
+  it('includes event filter', () => {
+    const url = buildSlideshowUrl({
+      photoId: 'photo-uuid',
+      eventId: 'event-1',
+    })
+    expect(url).toBe('/slideshow/photo-uuid?event=event-1')
+  })
+
+  it('includes all filters and shuffle', () => {
+    const url = buildSlideshowUrl({
+      photoId: 'photo-uuid',
+      eventId: 'event-1',
+      photographer: 'John Doe',
+      companySlug: 'acme',
+      shuffle: 'seed123',
+    })
+
+    // Parse the URL to check params
+    const urlObj = new URL(url, 'http://localhost')
+    expect(urlObj.pathname).toBe('/slideshow/photo-uuid')
+    expect(urlObj.searchParams.get('event')).toBe('event-1')
+    expect(urlObj.searchParams.get('photographer')).toBe('John Doe')
+    expect(urlObj.searchParams.get('company')).toBe('acme')
+    expect(urlObj.searchParams.get('shuffle')).toBe('seed123')
+  })
+
+  it('does not include shuffle when null', () => {
+    const url = buildSlideshowUrl({
+      photoId: 'photo-uuid',
+      shuffle: null,
+    })
+    expect(url).toBe('/slideshow/photo-uuid')
+  })
+
+  it('does not include shuffle when "false"', () => {
+    const url = buildSlideshowUrl({
+      photoId: 'photo-uuid',
+      shuffle: 'false',
+    })
+    expect(url).toBe('/slideshow/photo-uuid')
   })
 })
 
