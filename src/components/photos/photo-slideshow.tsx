@@ -11,11 +11,8 @@ import 'swiper/css/navigation'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
 import { PhotoWithCluster } from '@/lib/db'
 import { slugify } from '@/lib/utils'
-import {
-  buildThumbnailSrcSet,
-  getBestThumbnailSrc,
-  buildHeroSrcSet,
-} from '@/lib/photo-srcset'
+import { buildHeroSrcSet } from '@/lib/photo-srcset'
+import { PhotoImage } from './photo-image'
 import { CompanyIcon, VinylSpinner, Modal } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
 import { FocalPointEditor } from './focal-point-editor'
@@ -119,9 +116,6 @@ const Thumbnail = memo(function Thumbnail({
   isSelected: boolean
   onClick: () => void
 }) {
-  // Use smart focal point for intelligent cropping
-  const focalPoint = photo.hero_focal_point ?? { x: 50, y: 50 }
-
   return (
     <button
       onClick={onClick}
@@ -132,16 +126,13 @@ const Thumbnail = memo(function Thumbnail({
       }`}
       aria-label={`Go to photo ${index + 1}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={getBestThumbnailSrc(photo)}
-        srcSet={buildThumbnailSrcSet(photo)}
+      <PhotoImage
+        photo={photo}
+        variant="thumbnail"
         sizes="64px"
         alt={photo.original_filename || `Photo ${index + 1}`}
-        className="w-full h-full object-cover transition-transform duration-200 motion-safe:group-hover:scale-110"
-        style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
-        // No lazy loading - thumbnails are small (64x64) and horizontal
-        // scroll containers don't trigger browser lazy loading reliably
+        className="w-full h-full transition-transform duration-200 motion-safe:group-hover:scale-110"
+        loading="eager"
       />
     </button>
   )

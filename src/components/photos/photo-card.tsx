@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Photo } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
 import { LayersIcon } from '@/components/icons'
-import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
+import { PhotoImage } from './photo-image'
 
 /**
  * Cluster data for grouped photos
@@ -39,12 +39,6 @@ export function PhotoCard({
   // Determine which photo to display (cluster photo or original)
   const displayPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
 
-  // Use best available thumbnail with responsive srcset
-  const thumbSrc = getBestThumbnailSrc(displayPhoto)
-  const srcSet = buildThumbnailSrcSet(displayPhoto)
-  // Use smart focal point for intelligent cropping (defaults to center)
-  const focalPoint = displayPhoto.hero_focal_point ?? { x: 50, y: 50 }
-
   // Handle manual cycling through cluster photos (on click)
   const handleCycleClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent triggering onClick
@@ -68,19 +62,14 @@ export function PhotoCard({
       className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
       onClick={onClick}
     >
-      {/* Thumbnail with responsive srcSet for crisp display on all devices */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        key={thumbSrc}
-        src={thumbSrc}
-        srcSet={srcSet}
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        alt={displayPhoto.original_filename || 'Photo'}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 motion-safe:group-hover:scale-110 ${
+      {/* Thumbnail with focal point positioning via PhotoImage */}
+      <PhotoImage
+        photo={displayPhoto}
+        variant="thumbnail"
+        className={`absolute inset-0 w-full h-full transition-all duration-500 motion-safe:group-hover:scale-110 ${
           isTransitioning ? 'opacity-70' : 'opacity-100'
         }`}
-        style={{ objectPosition: `${focalPoint.x}% ${focalPoint.y}%` }}
-        loading="lazy"
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
       />
 
       {/* Cluster badge - top left corner */}

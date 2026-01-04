@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Photo } from '@/lib/db-types'
-import { buildThumbnailSrcSet, getBestThumbnailSrc } from '@/lib/photo-srcset'
 import { trackPhotoClick } from '@/lib/analytics'
+import { PhotoImage } from './photo-image'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
 import { Skeleton, VinylSpinner } from '@/components/ui'
 import { useShuffledPhotos } from '@/lib/hooks/use-shuffled-photos'
@@ -277,16 +277,12 @@ export function PhotoStrip({
                     aria-selected={index === selectedIndex}
                     role="option"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getBestThumbnailSrc(photo)}
-                      srcSet={buildThumbnailSrcSet(photo)}
-                      sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
+                    <PhotoImage
+                      photo={photo}
+                      variant="thumbnail"
                       alt={photo.original_filename || `Photo ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-110"
-                      style={{
-                        objectPosition: `${photo.hero_focal_point?.x ?? 50}% ${photo.hero_focal_point?.y ?? 50}%`,
-                      }}
+                      className="absolute inset-0 w-full h-full transition-transform duration-300 motion-safe:group-hover:scale-110"
+                      sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
                       loading={index < 4 ? 'eager' : 'lazy'}
                     />
                   </button>

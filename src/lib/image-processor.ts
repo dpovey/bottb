@@ -22,13 +22,21 @@ export interface ImageVariant {
 
 /**
  * Process an image buffer to create optimized variants
- * Creates responsive variants for different display densities:
- * - thumbnail: 300x300 cover crop (1x displays)
- * - thumbnail2x: 600x600 cover crop (2x/Retina displays)
- * - thumbnail3x: 900x900 cover crop (3x displays)
- * - medium: max 1200px (mobile slideshow at 3x density)
+ *
+ * IMPORTANT: Thumbnails preserve aspect ratio (no cropping) so that CSS can
+ * apply focal point positioning via object-position. This ensures the focal
+ * point set by admins is respected when displaying photos in grids, cards, etc.
+ *
+ * Variants:
+ * - thumbnail: max 400px on longest side (1x displays, ~400px grid cells)
+ * - thumbnail2x: max 800px on longest side (2x/Retina displays)
+ * - thumbnail3x: max 1200px on longest side (3x displays)
+ * - medium: max 1600px (mobile slideshow at 3x density)
  * - large: max 2000px (tablet/desktop displays)
  * - large4k: max 4000px (4K displays)
+ *
+ * CSS handles cropping to container shape using object-fit: cover with
+ * object-position set to the photo's hero_focal_point.
  */
 export async function processImage(
   imageBuffer: Buffer
@@ -41,30 +49,34 @@ export async function processImage(
   const originalSize = imageBuffer.byteLength
   const format = metadata.format || 'jpeg'
 
-  // Create thumbnails for different display densities
-  // 1x: 300x300
+  // Create thumbnails that PRESERVE ASPECT RATIO
+  // CSS will handle cropping with focal point via object-position
+  // Using 'inside' fit means the image is scaled to fit within the bounds
+  // without cropping, allowing CSS object-fit: cover to crop at the focal point
+
+  // 1x: max 400px on longest side (supports ~200px grid cells at 2x)
   const thumbnail = await image
     .clone()
-    .resize(300, 300, { fit: 'cover', position: 'attention' })
+    .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
     .webp({ quality: 85 })
     .toBuffer()
 
-  // 2x: 600x600 (only if original is large enough)
+  // 2x: max 800px (only if original is large enough)
   let thumbnail2x: Buffer | undefined
   if (originalWidth >= 600 || originalHeight >= 600) {
     thumbnail2x = await image
       .clone()
-      .resize(600, 600, { fit: 'cover', position: 'attention' })
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85 })
       .toBuffer()
   }
 
-  // 3x: 900x900 (only if original is large enough)
+  // 3x: max 1200px (only if original is large enough)
   let thumbnail3x: Buffer | undefined
   if (originalWidth >= 900 || originalHeight >= 900) {
     thumbnail3x = await image
       .clone()
-      .resize(900, 900, { fit: 'cover', position: 'attention' })
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85 })
       .toBuffer()
   }
