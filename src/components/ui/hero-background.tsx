@@ -4,13 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useMounted } from '@/lib/hooks'
 import { FocalPointImage } from './focal-point-image'
-import type { Photo } from '@/lib/db'
-
-interface HeroImage {
-  blob_url: string
-  large_4k_url?: string | null
-  hero_focal_point?: { x: number; y: number }
-}
+import type { HeroImage } from './hero-utils'
 
 interface HeroBackgroundProps {
   /** Array of photos to cycle through. If single photo, no animation. */
@@ -129,15 +123,4 @@ export function HeroBackground({
       })}
     </div>
   )
-}
-
-/**
- * Helper to convert Photo[] to HeroImage[]
- */
-export function photosToHeroImages(photos: Photo[]): HeroImage[] {
-  return photos.map((photo) => ({
-    blob_url: photo.blob_url,
-    large_4k_url: photo.large_4k_url,
-    hero_focal_point: photo.hero_focal_point,
-  }))
 }

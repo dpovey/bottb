@@ -90,7 +90,8 @@ export function HeroCarousel({
     full: 'min-h-screen',
   }[size]
 
-  const alignClass = align === 'center' ? 'items-center justify-center' : 'items-end'
+  const alignClass =
+    align === 'center' ? 'items-center justify-center' : 'items-end'
 
   return (
     <section className={`relative ${heightClass} flex ${alignClass}`}>

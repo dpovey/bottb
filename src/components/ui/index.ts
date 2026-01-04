@@ -45,7 +45,8 @@ export {
   type FocalPoint,
   type FocalPointImageProps,
 } from './focal-point-image'
-export { HeroBackground, photosToHeroImages } from './hero-background'
+export { HeroBackground } from './hero-background'
+export { photosToHeroImages, type HeroImage } from './hero-utils'
 export {
   Modal,
   ConfirmModal,
