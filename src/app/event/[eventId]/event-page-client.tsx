@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { formatEventDate } from '@/lib/date-utils'
 import { WebLayout } from '@/components/layouts'
 import {
@@ -13,7 +12,8 @@ import {
   CompanyBadge,
   NumberedIndicator,
   TicketCTA,
-  FocalPointImage,
+  HeroBackground,
+  photosToHeroImages,
 } from '@/components/ui'
 import { ChevronRightIcon } from '@/components/icons'
 import { PhotoStrip } from '@/components/photos/photo-strip'
@@ -25,7 +25,7 @@ import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 interface EventPageClientProps {
   event: DbEvent
   bands: DbBand[]
-  heroPhoto: Photo | null
+  heroPhotos: Photo[]
   videos: Video[]
   navEvents?: {
     upcoming: NavEvent[]
@@ -69,12 +69,13 @@ interface EventInfo {
 export function EventPageClient({
   event,
   bands,
-  heroPhoto,
+  heroPhotos,
   videos,
   navEvents,
 }: EventPageClientProps) {
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
+  const heroImages = photosToHeroImages(heroPhotos)
 
   const breadcrumbs = [
     { label: 'Events', href: '/events' },
@@ -92,32 +93,14 @@ export function EventPageClient({
 
   return (
     <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
-      {/* Hero Section with Event Image */}
+      {/* Hero Section with Event Image(s) - supports multiple hero photos */}
       <section className="relative min-h-[40vh] flex items-end">
-        {/* Background Image - prefer hero photo, fall back to event image_url */}
-        {heroPhoto ? (
-          <FocalPointImage
-            src={heroPhoto.blob_url}
-            srcHigh={heroPhoto.large_4k_url ?? undefined}
-            alt={`${event.name} event`}
-            focalPoint={heroPhoto.hero_focal_point}
-            sizes="100vw"
-            priority
-          />
-        ) : eventInfo?.image_url ? (
-          <div className="absolute inset-0">
-            <Image
-              src={eventInfo.image_url}
-              alt={`${event.name} event`}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-bg-surface to-bg" />
-        )}
+        {/* Background Image - supports multiple photos with crossfade */}
+        <HeroBackground
+          photos={heroImages}
+          fallbackImageUrl={eventInfo?.image_url}
+          alt={`${event.name} event`}
+        />
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />

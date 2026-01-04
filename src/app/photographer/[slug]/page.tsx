@@ -3,7 +3,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoStrip } from '@/components/photos/photo-strip'
-import { SocialIconLink, FocalPointImage } from '@/components/ui'
+import {
+  SocialIconLink,
+  HeroBackground,
+  photosToHeroImages,
+} from '@/components/ui'
 import Image from 'next/image'
 import {
   InstagramIcon,
@@ -16,8 +20,9 @@ import {
 } from '@/components/icons'
 import {
   getPhotographerBySlug,
-  getPhotographerHeroPhoto,
   getPhotographerRandomPhoto,
+  getPhotosByLabel,
+  PHOTO_LABELS,
 } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -63,14 +68,19 @@ export default async function PhotographerPage({ params }: Props) {
     notFound()
   }
 
-  // Get hero photo - first try labeled hero, then fall back to random
-  let heroPhoto = await getPhotographerHeroPhoto(photographer.name)
-  if (!heroPhoto) {
-    heroPhoto = await getPhotographerRandomPhoto(photographer.name)
-  }
+  // Get hero photos - try labeled heroes first, fall back to random photo
+  const heroPhotos = await getPhotosByLabel(PHOTO_LABELS.PHOTOGRAPHER_HERO, {
+    photographerName: photographer.name,
+  })
 
-  const heroPhotoUrl = heroPhoto?.blob_url ?? null
-  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
+  // If no labeled heroes, fall back to a single random photo
+  let heroImages = heroPhotos.length > 0 ? photosToHeroImages(heroPhotos) : null
+  if (!heroImages) {
+    const randomPhoto = await getPhotographerRandomPhoto(photographer.name)
+    if (randomPhoto) {
+      heroImages = photosToHeroImages([randomPhoto])
+    }
+  }
 
   return (
     <PublicLayout
@@ -82,20 +92,13 @@ export default async function PhotographerPage({ params }: Props) {
         { label: photographer.name },
       ]}
     >
-      {/* Hero Section */}
+      {/* Hero Section - supports multiple photographer hero photos */}
       <section className="relative min-h-[70vh] flex items-end">
-        {/* Background Image */}
-        {heroPhotoUrl ? (
-          <FocalPointImage
-            src={heroPhotoUrl}
-            alt={`Photo by ${photographer.name}`}
-            focalPoint={heroFocalPoint}
-            sizes="100vw"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
-        )}
+        {/* Background Image(s) - crossfades if multiple */}
+        <HeroBackground
+          photos={heroImages || []}
+          alt={`Photo by ${photographer.name}`}
+        />
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />

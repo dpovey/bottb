@@ -54,12 +54,12 @@ describe('EventPage', () => {
   ]
 
   const mockVideos: Video[] = []
-  const mockHeroPhoto: Photo | null = null
+  const mockHeroPhotos: Photo[] = []
 
   const defaultProps = {
     event: mockEvent,
     bands: mockBands,
-    heroPhoto: mockHeroPhoto,
+    heroPhotos: mockHeroPhotos,
     videos: mockVideos,
   }
 
