@@ -255,12 +255,10 @@ test.describe('Gallery to Photo to Slideshow Flow', () => {
     await page.waitForLoadState('networkidle')
 
     // Step 2: Click on a photo thumbnail to go to photo detail page
-    // Photos are rendered as buttons in a grid layout
-    const firstPhotoButton = page
-      .locator('button[aria-label*="View photo"]')
-      .first()
-    await expect(firstPhotoButton).toBeVisible({ timeout: 10000 })
-    await firstPhotoButton.click()
+    // Photos are rendered as clickable divs with images inside
+    const firstPhoto = page.locator('.aspect-square.cursor-pointer').first()
+    await expect(firstPhoto).toBeVisible({ timeout: 10000 })
+    await firstPhoto.click()
 
     // Should navigate to photo detail page
     await expect(page).toHaveURL(/\/photos\//, { timeout: 10000 })
