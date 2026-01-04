@@ -524,6 +524,7 @@ async function main() {
       event: { type: 'string' },
       'medium-only': { type: 'boolean' },
       'photos-path': { type: 'string' },
+      force: { type: 'boolean' },
     },
     allowPositionals: true,
   })
@@ -531,6 +532,7 @@ async function main() {
   const isDryRun = values['dry-run'] || false
   const isVerbose = values.verbose || false
   const mediumOnly = values['medium-only'] || false
+  const forceRegenerate = values.force || false
   const limit = values.limit ? parseInt(values.limit as string, 10) : undefined
   const eventFilter = values.event as string | undefined
   const photosPath = values['photos-path'] as string | undefined
@@ -543,6 +545,11 @@ async function main() {
   console.log('🔄 Backfill Responsive Image Variants Script\n')
   if (isDryRun) {
     console.log('🧪 DRY RUN MODE - No variants will be generated or uploaded\n')
+  }
+  if (forceRegenerate) {
+    console.log(
+      '⚠️  FORCE MODE - Regenerating ALL thumbnails (for focal point fix)\n'
+    )
   }
   if (mediumOnly) {
     console.log(
