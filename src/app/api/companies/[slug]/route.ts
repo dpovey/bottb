@@ -36,6 +36,7 @@ interface CompanyUpdateBody {
   logo_url?: string | null
   website?: string | null
   icon_url?: string | null
+  description?: string | null
 }
 
 // PATCH - Update a company (admin only)
@@ -58,14 +59,15 @@ const handleUpdateCompany: ProtectedApiHandler = async (
     }
 
     const body: CompanyUpdateBody = await request.json()
-    const { name, logo_url, website, icon_url } = body
+    const { name, logo_url, website, icon_url, description } = body
 
     const { rows } = await sql`
       UPDATE companies SET
         name = COALESCE(${name || null}, name),
         logo_url = ${logo_url === undefined ? existing.logo_url : logo_url},
         website = ${website === undefined ? existing.website : website},
-        icon_url = ${icon_url === undefined ? existing.icon_url : icon_url}
+        icon_url = ${icon_url === undefined ? existing.icon_url : icon_url},
+        description = ${description === undefined ? existing.description : description}
       WHERE slug = ${slug}
       RETURNING *
     `

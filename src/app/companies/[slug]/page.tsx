@@ -133,6 +133,13 @@ function CompanyPageView({
         </div>
       </div>
 
+      {/* Company Description */}
+      {company.description && (
+        <p className="text-text-muted text-lg mb-8 max-w-3xl">
+          {company.description}
+        </p>
+      )}
+
       {/* Bands by Event */}
       {sortedEvents.length === 0 ? (
         <Card variant="elevated" className="text-center py-12">

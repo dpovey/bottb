@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getAllSongs } from '@/lib/db'
+import { getAllSongs, getArtistDescriptions } from '@/lib/db'
 import { slugify } from '@/lib/utils'
 import { getBaseUrl } from '@/lib/seo'
 import { PublicLayout } from '@/components/layouts/public-layout'
@@ -95,7 +95,14 @@ export default async function ArtistSongsPage({ params }: Props) {
     notFound()
   }
 
-  const songs = await getSongsByArtist(artistName)
+  const [songs, artistDescriptions] = await Promise.all([
+    getSongsByArtist(artistName),
+    getArtistDescriptions([artistName]),
+  ])
+
+  // Get artist description from metadata
+  const normalizedName = artistName.toLowerCase().trim().replace(/\s+/g, ' ')
+  const artistDescription = artistDescriptions.get(normalizedName)
 
   const breadcrumbs = [
     { label: 'Home', href: '/' },
@@ -114,6 +121,11 @@ export default async function ArtistSongsPage({ params }: Props) {
           <p className="text-lg text-text-muted mt-1">
             {songs.length} song{songs.length !== 1 ? 's' : ''} performed
           </p>
+          {artistDescription && (
+            <p className="text-text-muted mt-4 max-w-3xl">
+              {artistDescription}
+            </p>
+          )}
         </div>
 
         {/* Songs list */}
