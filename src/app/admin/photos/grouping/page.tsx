@@ -13,7 +13,7 @@ export default async function PhotoGroupingPage() {
   return (
     <AdminLayout
       title="Photo Grouping"
-      subtitle="View and manage photo clusters (near-duplicates and scenes)"
+      subtitle="Manage photo clusters: merge similar photos, add nearby shots"
       breadcrumbs={[
         { label: 'Photos', href: '/admin/photos' },
         { label: 'Grouping' },

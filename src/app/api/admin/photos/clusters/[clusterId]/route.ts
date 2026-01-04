@@ -27,8 +27,12 @@ const handleGetCluster: ProtectedApiHandler = async (
             'thumbnail_url', COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')),
             'original_filename', p.original_filename,
             'hero_focal_point', p.hero_focal_point,
-            'is_monochrome', (CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'photos' AND column_name = 'is_monochrome') THEN p.is_monochrome ELSE NULL END)::boolean
+            'is_monochrome', p.is_monochrome,
+            'captured_at', p.captured_at,
+            'event_id', p.event_id,
+            'band_id', p.band_id
           )
+          ORDER BY p.captured_at ASC NULLS LAST
         ) FILTER (WHERE p.id IS NOT NULL) as photos
       FROM photo_clusters pc
       LEFT JOIN photos p ON p.id = ANY(pc.photo_ids)
