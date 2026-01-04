@@ -33,6 +33,8 @@ interface HeroCarouselProps {
   interval?: number // in milliseconds
   fallbackImage?: string
   children?: React.ReactNode
+  /** Overlay style: 'heavy' for solid dark overlay (default), 'accent' for purple/indigo accents */
+  overlay?: 'heavy' | 'accent'
 }
 
 export function HeroCarousel({
@@ -40,6 +42,7 @@ export function HeroCarousel({
   interval = 10000,
   fallbackImage = DEFAULT_HERO_IMAGE.url,
   children,
+  overlay = 'heavy',
 }: HeroCarouselProps) {
   const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }]
   const mounted = useMounted()
@@ -137,8 +140,19 @@ export function HeroCarousel({
         })}
 
         {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-bg/40" />
-        <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
+        {overlay === 'heavy' ? (
+          <>
+            {/* Heavy overlay - matches Hero component style */}
+            <div className="absolute inset-0 bg-bg/55" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-bg to-transparent" />
+          </>
+        ) : (
+          <>
+            {/* Accent overlay - purple/indigo color accent */}
+            <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/70 to-bg/40" />
+            <div className="absolute inset-0 bg-linear-to-r from-purple-900/30 via-transparent to-indigo-900/20" />
+          </>
+        )}
       </div>
 
       {/* Content */}

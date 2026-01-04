@@ -983,7 +983,7 @@ export async function updatePhotoLabels(
 
 export async function getPhotosByLabel(
   label: string,
-  options?: { eventId?: string; bandId?: string }
+  options?: { eventId?: string; bandId?: string; photographerName?: string }
 ): Promise<Photo[]> {
   try {
     if (options?.bandId) {
@@ -1013,6 +1013,21 @@ export async function getPhotosByLabel(
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
           AND p.event_id = ${options.eventId}
+        ORDER BY p.uploaded_at DESC
+      `
+      return rows
+    } else if (options?.photographerName) {
+      // Get photos with this label for a specific photographer
+      const { rows } = await sql<Photo>`
+        SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
+               COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'large_4k_url' as large_4k_url
+        FROM photos p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN bands b ON p.band_id = b.id
+        LEFT JOIN companies c ON b.company_slug = c.slug
+        WHERE ${label} = ANY(p.labels)
+          AND p.photographer = ${options.photographerName}
         ORDER BY p.uploaded_at DESC
       `
       return rows

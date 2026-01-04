@@ -19,7 +19,7 @@ import {
 import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
-import { Hero } from '@/components/hero'
+import { HeroCarousel } from '@/components/hero-carousel'
 import { Button, ErrorBoundary, CompactErrorFallback } from '@/components/ui'
 import {
   parseScoringVersion,
@@ -206,11 +206,15 @@ export default async function HomePage() {
     getNavEvents(),
   ])
 
-  // Extract hero photo data
-  const heroPhoto = globalHeroPhotos.length > 0 ? globalHeroPhotos[0] : null
-  const heroImageUrl = heroPhoto?.blob_url ?? DEFAULT_HERO_IMAGE.url
-  const heroImageUrlHigh = heroPhoto?.large_4k_url ?? undefined
-  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
+  // Transform hero photos for carousel (supports multiple global heroes)
+  const heroImages = globalHeroPhotos.map((photo) => ({
+    url: photo.blob_url,
+    urlHigh: photo.large_4k_url ?? undefined,
+    focalPoint: photo.hero_focal_point,
+    // Include photo URL fields for responsive srcset
+    blob_url: photo.blob_url,
+    large_4k_url: photo.large_4k_url ?? undefined,
+  }))
 
   const initialPhotos = initialPhotosData
   const initialVideos = initialVideosData
@@ -319,42 +323,44 @@ export default async function HomePage() {
       footerVariant="full"
       navEvents={navEvents}
     >
-      {/* Hero Section */}
-      <Hero
-        title="Battle of the Tech Bands"
-        subtitle="Where technology meets rock 'n' roll. A community charity event supporting Youngcare."
-        backgroundImage={heroImageUrl}
-        backgroundImageHigh={heroImageUrlHigh}
-        focalPoint={heroFocalPoint}
-        size="lg"
-        overlay="heavy"
-        actions={[
-          ...(activeEvent
-            ? [
-                {
-                  label: 'Vote Now',
-                  href: `/vote/crowd/${activeEvent.id}`,
-                  variant: 'accent' as const,
-                },
-                {
-                  label: 'Event',
-                  href: `/event/${activeEvent.id}`,
-                  variant: 'outline-solid' as const,
-                },
-              ]
-            : []),
-          {
-            label: 'Photos',
-            href: '/photos',
-            variant: 'outline-solid' as const,
-          },
-          {
-            label: 'Videos',
-            href: '/videos',
-            variant: 'outline-solid' as const,
-          },
-        ]}
-      />
+      {/* Hero Section - supports multiple global hero images */}
+      <HeroCarousel images={heroImages} interval={8000}>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 text-center">
+          <h1 className="font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 leading-tight">
+            Battle of the Tech Bands
+          </h1>
+          <p className="text-text-muted text-lg sm:text-xl max-w-xl mx-auto mb-8">
+            Where technology meets rock &apos;n&apos; roll. A community charity
+            event supporting Youngcare.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {activeEvent && (
+              <>
+                <Link href={`/vote/crowd/${activeEvent.id}`}>
+                  <Button variant="accent" size="lg">
+                    Vote Now
+                  </Button>
+                </Link>
+                <Link href={`/event/${activeEvent.id}`}>
+                  <Button variant="outline-solid" size="lg">
+                    Event
+                  </Button>
+                </Link>
+              </>
+            )}
+            <Link href="/photos">
+              <Button variant="outline-solid" size="lg">
+                Photos
+              </Button>
+            </Link>
+            <Link href="/videos">
+              <Button variant="outline-solid" size="lg">
+                Videos
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </HeroCarousel>
 
       {/* Active Event Section */}
       {activeEvent && (

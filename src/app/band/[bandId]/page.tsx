@@ -20,7 +20,8 @@ import {
   CompanyBadge,
   BandThumbnail,
   SocialIconLink,
-  FocalPointImage,
+  HeroBackground,
+  photosToHeroImages,
 } from '@/components/ui'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
@@ -437,14 +438,11 @@ export default async function BandPage({
   const scoringVersion = parseScoringVersion(eventInfo)
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
 
-  // Fetch band hero photos
+  // Fetch band hero photos (supports multiple heroes)
   const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {
     bandId,
   })
-  const heroPhoto = bandHeroPhotos.length > 0 ? bandHeroPhotos[0] : null
-  const heroPhotoUrl = heroPhoto?.blob_url ?? null
-  const heroPhotoUrlHigh = heroPhoto?.large_4k_url ?? undefined
-  const heroFocalPoint = heroPhoto?.hero_focal_point ?? { x: 50, y: 50 }
+  const heroImages = photosToHeroImages(bandHeroPhotos)
 
   // Fetch all bands for the event to enable navigation
   const allBands = await getBandsForEvent(eventId)
@@ -663,21 +661,10 @@ export default async function BandPage({
         eventDate={band.date}
         eventLocation={band.location}
       />
-      {/* Hero Section */}
+      {/* Hero Section - supports multiple band hero photos */}
       <section className="relative min-h-[70vh] flex items-end">
-        {/* Background Image */}
-        {heroPhotoUrl ? (
-          <FocalPointImage
-            src={heroPhotoUrl}
-            srcHigh={heroPhotoUrlHigh}
-            alt={`${band.name}`}
-            focalPoint={heroFocalPoint}
-            sizes="100vw"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 bg-linear-to-br from-purple-900/30 via-bg-muted to-amber-900/20" />
-        )}
+        {/* Background Image(s) - crossfades if multiple */}
+        <HeroBackground photos={heroImages} alt={`${band.name}`} />
 
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />

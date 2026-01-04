@@ -118,7 +118,9 @@ export default async function EventPage({
     notFound()
   }
 
-  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
+  // Use first hero photo for OG image, pass all for carousel
+  const primaryHeroPhoto =
+    eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   return (
     <>
@@ -126,13 +128,14 @@ export default async function EventPage({
         event={event}
         bands={bands}
         heroImageUrl={
-          heroPhoto?.blob_url || (event.info?.image_url as string | undefined)
+          primaryHeroPhoto?.blob_url ||
+          (event.info?.image_url as string | undefined)
         }
       />
       <EventPageClient
         event={event}
         bands={bands}
-        heroPhoto={heroPhoto}
+        heroPhotos={eventHeroPhotos}
         videos={videosData}
         navEvents={navEvents}
       />
