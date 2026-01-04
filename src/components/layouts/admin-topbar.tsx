@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import type { BreadcrumbItem } from '@/components/nav'
-import { ChevronRightIcon } from '@/components/icons'
+import { ChevronRightIcon, MenuIcon } from '@/components/icons'
 
 interface AdminTopBarProps {
   /** Page title */
@@ -13,6 +13,8 @@ interface AdminTopBarProps {
   breadcrumbs?: BreadcrumbItem[]
   /** Optional actions to show on the right side */
   actions?: React.ReactNode
+  /** Callback to toggle mobile menu */
+  onMenuToggle?: () => void
 }
 
 export function AdminTopBar({
@@ -20,37 +22,62 @@ export function AdminTopBar({
   subtitle,
   breadcrumbs,
   actions,
+  onMenuToggle,
 }: AdminTopBarProps) {
   return (
-    <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 px-8 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          {/* Breadcrumbs */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-2 text-sm text-muted mb-1">
-              {breadcrumbs.map((crumb, index) => (
-                <span key={index} className="flex items-center gap-2">
-                  {index > 0 && <ChevronRightIcon size={12} strokeWidth={2} />}
-                  {crumb.href ? (
-                    <Link
-                      href={crumb.href}
-                      className="hover:text-white transition-colors"
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className="text-white">{crumb.label}</span>
-                  )}
-                </span>
-              ))}
-            </nav>
-          )}
-          {/* Title */}
-          <h1 className="font-semibold text-2xl">{title}</h1>
-          {subtitle && <p className="text-sm text-muted mt-0.5">{subtitle}</p>}
+    <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-lg border-b border-white/5 px-4 lg:px-8 py-3 lg:py-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile menu button */}
+          <button
+            onClick={onMenuToggle}
+            className="lg:hidden p-2 -ml-2 text-muted hover:text-white transition-colors cursor-pointer"
+            aria-label="Open menu"
+          >
+            <MenuIcon className="w-6 h-6" />
+          </button>
+
+          <div className="min-w-0">
+            {/* Breadcrumbs */}
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <nav className="hidden sm:flex items-center gap-2 text-sm text-muted mb-1">
+                {breadcrumbs.map((crumb, index) => (
+                  <span key={index} className="flex items-center gap-2">
+                    {index > 0 && (
+                      <ChevronRightIcon size={12} strokeWidth={2} />
+                    )}
+                    {crumb.href ? (
+                      <Link
+                        href={crumb.href}
+                        className="hover:text-white transition-colors"
+                      >
+                        {crumb.label}
+                      </Link>
+                    ) : (
+                      <span className="text-white">{crumb.label}</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+            {/* Title */}
+            <h1 className="font-semibold text-lg sm:text-xl lg:text-2xl truncate">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-xs sm:text-sm text-muted mt-0.5 truncate">
+                {subtitle}
+              </p>
+            )}
+          </div>
         </div>
+
         {/* Actions */}
-        {actions && <div className="flex items-center gap-3">{actions}</div>}
+        {actions && (
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {actions}
+          </div>
+        )}
       </div>
     </header>
   )

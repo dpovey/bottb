@@ -131,114 +131,126 @@ export default function AdminDashboard({
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         <Link
           href="/admin/videos"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <VideoIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
+              <VideoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Videos
               </h3>
-              <p className="text-sm text-muted">YouTube videos</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                YouTube videos
+              </p>
             </div>
           </div>
         </Link>
 
         <Link
           href="/admin/photos"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <PhotoIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
+              <PhotoIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Photos
               </h3>
-              <p className="text-sm text-muted">Edit metadata</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                Edit metadata
+              </p>
             </div>
           </div>
         </Link>
 
         <Link
           href="/admin/heroes"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-warning/20 rounded-lg flex items-center justify-center">
-              <StarIcon className="w-6 h-6 text-warning" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-warning/20 rounded-lg flex items-center justify-center shrink-0">
+              <StarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Heroes
               </h3>
-              <p className="text-sm text-muted">Focal points</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                Focal points
+              </p>
             </div>
           </div>
         </Link>
 
         <Link
           href="/admin/companies"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <BuildingIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
+              <BuildingIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Companies
               </h3>
-              <p className="text-sm text-muted">Manage orgs</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                Manage orgs
+              </p>
             </div>
           </div>
         </Link>
 
         <Link
           href="/admin/photographers"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <CameraIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
+              <CameraIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Photographers
               </h3>
-              <p className="text-sm text-muted">Manage credits</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                Manage credits
+              </p>
             </div>
           </div>
         </Link>
 
         <Link
           href="/admin/social"
-          className="bg-elevated rounded-xl p-6 hover:bg-white/10 transition-colors group border border-white/5"
+          className="bg-elevated rounded-xl p-4 sm:p-6 hover:bg-white/10 transition-colors group border border-white/5"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center">
-              <ShareIcon className="w-6 h-6 text-accent" />
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4 text-center sm:text-left">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent/20 rounded-lg flex items-center justify-center shrink-0">
+              <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6 text-accent" />
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-accent transition-colors">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-lg font-semibold text-white group-hover:text-accent transition-colors truncate">
                 Social
               </h3>
-              <p className="text-sm text-muted">Connections</p>
+              <p className="text-xs sm:text-sm text-muted hidden sm:block">
+                Connections
+              </p>
             </div>
           </div>
         </Link>
       </div>
 
       {/* Events List */}
-      <div className="bg-elevated rounded-2xl p-6 border border-white/5">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Events</h2>
+      <div className="bg-elevated rounded-2xl p-4 sm:p-6 border border-white/5">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">Events</h2>
         </div>
 
         {loading ? (
@@ -250,20 +262,22 @@ export default function AdminDashboard({
             <p className="text-muted text-lg">No events found</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {events.map((event) => (
               <div
                 key={event.id}
-                className="bg-surface rounded-xl p-4 flex justify-between items-center"
+                className="bg-surface rounded-xl p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4"
               >
-                <div>
-                  <h3 className="text-lg font-semibold text-white">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                     {event.name}
                   </h3>
-                  <p className="text-muted">{event.location}</p>
-                  <p className="text-sm text-dim">{event.date}</p>
+                  <p className="text-sm text-muted truncate">
+                    {event.location}
+                  </p>
+                  <p className="text-xs sm:text-sm text-dim">{event.date}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-2">
                     <select
                       value={event.status}
@@ -272,7 +286,7 @@ export default function AdminDashboard({
                       }
                       disabled={updatingStatus === event.id}
                       className={`
-                        px-4 py-2 rounded-lg text-sm font-medium
+                        px-3 sm:px-4 py-2 rounded-lg text-sm font-medium
                         bg-bg border border-white/10 
                         focus:outline-hidden focus:border-accent 
                         hover:border-white/20 transition-colors
@@ -298,7 +312,7 @@ export default function AdminDashboard({
                   </div>
                   <Link href={`/admin/events/${event.id}`}>
                     <Button variant="accent" size="sm">
-                      Manage Event
+                      Manage
                     </Button>
                   </Link>
                 </div>
