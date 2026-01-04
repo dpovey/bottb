@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { AdminSidebar } from './admin-sidebar'
 import { AdminTopBar } from './admin-topbar'
 import type { BreadcrumbItem } from '@/components/nav'
@@ -41,20 +44,34 @@ export function AdminLayout({
   padContent = true,
   maxWidth,
 }: AdminLayoutProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <div className="flex min-h-screen bg-bg">
-      <AdminSidebar />
-      <main className="flex-1 overflow-auto flex flex-col">
+      {/* Desktop sidebar - hidden on mobile */}
+      <div className="hidden lg:block">
+        <AdminSidebar />
+      </div>
+
+      {/* Mobile sidebar drawer */}
+      <AdminSidebar
+        isMobileDrawer
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+      />
+
+      <main className="flex-1 overflow-auto flex flex-col min-w-0">
         {showTopBar && title && (
           <AdminTopBar
             title={title}
             subtitle={subtitle}
             breadcrumbs={breadcrumbs}
             actions={actions}
+            onMenuToggle={() => setMobileMenuOpen(true)}
           />
         )}
         <div
-          className={`flex-1 ${padContent ? 'p-8' : ''} ${
+          className={`flex-1 ${padContent ? 'p-4 lg:p-8' : ''} ${
             maxWidth ? maxWidthClasses[maxWidth] : ''
           }`}
         >
