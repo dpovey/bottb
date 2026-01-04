@@ -1,0 +1,31 @@
+---
+paths: src/**/*.ts, src/**/*.tsx
+---
+
+# TypeScript Conventions
+
+See `doc/practices/typescript.md` for full guidelines.
+
+## Key Rules
+
+- Strict typing - never use `any` to fix type errors
+- Prefix unused variables with underscore (`_error`)
+- Use type inference where obvious, explicit types for function signatures
+- Prefer `interface` over `type` for object shapes
+
+## React Patterns
+
+See `doc/practices/react.md` for full guidelines.
+
+- Use function components with hooks
+- Prefer named exports
+- Co-locate tests with components (`Component.test.tsx`)
+- Use `userEvent` for interactions in tests
+- Prefer ARIA queries (`getByRole`, `getByLabelText`) over `data-testid`
+
+## Imports
+
+- Use `@/` alias for src imports
+- Group: external deps, then internal, then relative
+- Sort alphabetically within groups
+

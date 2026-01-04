@@ -1,0 +1,37 @@
+---
+description: Global project rules - always active
+alwaysApply: true
+---
+
+# Project Rules
+
+See `AGENTS.md` for full guidelines. Key points:
+
+## Before Any Edits
+
+1. Check branch: `git branch --show-current`
+2. If on main, create a worktree first (see `doc/agent/workflow.md`)
+3. Exception: Trivial one-line fixes may go to main with user approval
+
+## Pre-commit
+
+Run all checks before committing:
+
+```bash
+pnpm format && pnpm typecheck && pnpm lint && pnpm test
+```
+
+See `doc/agent/checklist.md` for the full ASSESS process.
+
+## Commit Messages
+
+Use conventional commits: `<type>: <description>`
+
+Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
+
+## Key Documentation
+
+- `DESIGN.md` - Design system and tokens
+- `doc/arch/` - Architecture decisions
+- `doc/practices/` - Coding standards
+- `doc/requirements/` - Feature specs
