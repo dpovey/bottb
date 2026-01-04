@@ -47,7 +47,7 @@ export default async function AboutPage() {
       navEvents={navEvents}
     >
       {/* Hero Section with rotating event images */}
-      <HeroCarousel images={heroImages} interval={6000}>
+      <HeroCarousel images={heroImages} interval={6000} size="md" align="end">
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-text-muted mb-4">
             Est. 2022 • Community Charity Event

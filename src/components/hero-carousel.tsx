@@ -35,6 +35,10 @@ interface HeroCarouselProps {
   children?: React.ReactNode
   /** Overlay style: 'heavy' for solid dark overlay (default), 'accent' for purple/indigo accents */
   overlay?: 'heavy' | 'accent'
+  /** Height variant - matches Hero component sizes */
+  size?: 'sm' | 'md' | 'lg' | 'full'
+  /** Content alignment: 'center' (default, like Hero), 'end' (content at bottom) */
+  align?: 'center' | 'end'
 }
 
 export function HeroCarousel({
@@ -43,6 +47,8 @@ export function HeroCarousel({
   fallbackImage = DEFAULT_HERO_IMAGE.url,
   children,
   overlay = 'heavy',
+  size = 'lg',
+  align = 'center',
 }: HeroCarouselProps) {
   const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }]
   const mounted = useMounted()
@@ -77,8 +83,17 @@ export function HeroCarousel({
     return () => clearInterval(timer)
   }, [mounted, effectiveImages.length, interval, nextImage])
 
+  const heightClass = {
+    sm: 'min-h-[40vh]',
+    md: 'min-h-[60vh]',
+    lg: 'min-h-[80vh]',
+    full: 'min-h-screen',
+  }[size]
+
+  const alignClass = align === 'center' ? 'items-center justify-center' : 'items-end'
+
   return (
-    <section className="relative min-h-[70vh] flex items-end">
+    <section className={`relative ${heightClass} flex ${alignClass}`}>
       {/* Background Images with crossfade */}
       <div className="absolute inset-0">
         {effectiveImages.map((image, index) => {
