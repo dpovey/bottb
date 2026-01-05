@@ -1080,6 +1080,138 @@ export async function getAllHeroPhotos(): Promise<Photo[]> {
   }
 }
 
+/**
+ * Get all photos that should be indexed for SEO (sitemap)
+ * Returns:
+ * - Photos not in any cluster (unique photos)
+ * - Representative photos from clusters (best photo from each group)
+ * Excludes non-representative cluster members (near-duplicates)
+ */
+export async function getIndexablePhotos(): Promise<Photo[]> {
+  try {
+    const { rows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name,
+             b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+             p.xmp_metadata->>'large_4k_url' as large_4k_url
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        -- Photo must have a slug to be indexable
+        p.slug IS NOT NULL
+        AND (
+          -- Not in any cluster (unique photo)
+          NOT EXISTS (
+            SELECT 1 FROM photo_clusters pc 
+            WHERE p.id = ANY(pc.photo_ids)
+          )
+          OR
+          -- Is the representative of at least one cluster
+          EXISTS (
+            SELECT 1 FROM photo_clusters pc 
+            WHERE COALESCE(pc.representative_photo_id, pc.photo_ids[1]) = p.id
+          )
+        )
+      ORDER BY p.uploaded_at DESC
+    `
+    return rows
+  } catch (error) {
+    console.error('Error fetching indexable photos:', error)
+    throw error
+  }
+}
+
+/**
+ * Get adjacent photos (previous and next) for a given photo
+ * Uses slug_prefix to find photos in the same sequence (same band/event)
+ * Falls back to event_id if no slug_prefix
+ */
+export async function getAdjacentPhotos(
+  photoId: string,
+  slugPrefix: string | null,
+  eventId: string | null
+): Promise<{ previous: Photo | null; next: Photo | null }> {
+  try {
+    // Get previous photo (highest slug that's less than current)
+    const { rows: prevRows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE 
+        p.slug IS NOT NULL
+        AND p.slug < (SELECT slug FROM photos WHERE id = ${photoId})
+        AND (
+          (${slugPrefix}::text IS NOT NULL AND p.slug_prefix = ${slugPrefix})
+          OR
+          (${slugPrefix}::text IS NULL AND ${eventId}::text IS NOT NULL AND p.event_id = ${eventId})
+        )
+      ORDER BY p.slug DESC
+      LIMIT 1
+    `
+
+    // Get next photo (lowest slug that's greater than current)
+    const { rows: nextRows } = await sql<Photo>`
+      SELECT p.*, e.name as event_name, b.name as band_name
+      FROM photos p
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      WHERE 
+        p.slug IS NOT NULL
+        AND p.slug > (SELECT slug FROM photos WHERE id = ${photoId})
+        AND (
+          (${slugPrefix}::text IS NOT NULL AND p.slug_prefix = ${slugPrefix})
+          OR
+          (${slugPrefix}::text IS NULL AND ${eventId}::text IS NOT NULL AND p.event_id = ${eventId})
+        )
+      ORDER BY p.slug ASC
+      LIMIT 1
+    `
+
+    return {
+      previous: prevRows[0] || null,
+      next: nextRows[0] || null,
+    }
+  } catch (error) {
+    console.error('Error fetching adjacent photos:', error)
+    return { previous: null, next: null }
+  }
+}
+
+/**
+ * Get similar photos from the same cluster as a given photo
+ * Used for "similar photos" section on photo pages
+ */
+export async function getSimilarPhotos(
+  photoId: string,
+  limit = 6
+): Promise<Photo[]> {
+  try {
+    const { rows } = await sql<Photo>`
+      SELECT DISTINCT p.*, e.name as event_name, b.name as band_name, c.name as company_name,
+             b.company_slug as company_slug, c.icon_url as company_icon_url,
+             COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
+      FROM photo_clusters pc
+      JOIN photos p ON p.id = ANY(pc.photo_ids)
+      LEFT JOIN events e ON p.event_id = e.id
+      LEFT JOIN bands b ON p.band_id = b.id
+      LEFT JOIN companies c ON b.company_slug = c.slug
+      WHERE 
+        ${photoId} = ANY(pc.photo_ids)
+        AND p.id != ${photoId}
+        AND p.slug IS NOT NULL
+      ORDER BY p.uploaded_at DESC
+      LIMIT ${limit}
+    `
+    return rows
+  } catch (error) {
+    console.error('Error fetching similar photos:', error)
+    return []
+  }
+}
+
 export async function updateHeroFocalPoint(
   photoId: string,
   focalPoint: HeroFocalPoint
