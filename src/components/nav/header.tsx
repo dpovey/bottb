@@ -153,7 +153,7 @@ export function Header({
                   onClick={() =>
                     trackNavClick({ nav_item: 'about', location: 'header' })
                   }
-                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors py-3 -my-3"
                 >
                   About
                 </Link>
@@ -161,7 +161,7 @@ export function Header({
                 {/* Search button */}
                 <button
                   onClick={search.open}
-                  className="text-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-all p-2"
+                  className="text-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
                   aria-label="Search"
                   title={`Search (${searchShortcut})`}
                 >
@@ -178,17 +178,17 @@ export function Header({
             )}
 
             {/* Mobile Search + Menu Buttons */}
-            <div className="md:hidden ml-auto flex items-center gap-1">
+            <div className="md:hidden ml-auto flex items-center">
               <button
                 onClick={search.open}
-                className="text-text-muted hover:text-white transition-colors p-2"
+                className="text-text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Search"
               >
                 <SearchIcon className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-text-muted hover:text-white transition-colors p-2"
+                className="text-text-muted hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? (
@@ -214,7 +214,7 @@ export function Header({
                   <div className="text-[10px] tracking-widest uppercase text-text-dim mb-2">
                     {section.title}
                   </div>
-                  <div className="space-y-1">
+                  <div className="-my-1">
                     {section.links.map((link) => (
                       <Link
                         key={link.href}
@@ -227,7 +227,7 @@ export function Header({
                           })
                           setMobileMenuOpen(false)
                         }}
-                        className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                        className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -237,7 +237,7 @@ export function Header({
               ))}
 
               {/* About link */}
-              <div className="border-t border-white/5 pt-4">
+              <div className="border-t border-white/5 pt-4 -mb-1">
                 <Link
                   href="/about"
                   onClick={() => {
@@ -247,7 +247,7 @@ export function Header({
                     })
                     setMobileMenuOpen(false)
                   }}
-                  className="block py-2 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                  className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
                   About
                 </Link>
