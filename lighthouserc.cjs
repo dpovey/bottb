@@ -21,6 +21,9 @@ module.exports = {
         'categories:accessibility': ['warn', { minScore: 0.9 }],
         'categories:best-practices': ['warn', { minScore: 0.9 }],
         'categories:seo': ['warn', { minScore: 0.9 }],
+        // Vercel preview deployments always set x-robots-tag: noindex
+        // This is correct behavior but causes is-crawlable to fail
+        'is-crawlable': 'off',
       },
     },
   },

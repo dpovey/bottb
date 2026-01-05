@@ -579,7 +579,7 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/about">
               <Button variant="outline-solid" size="lg">
-                Learn More
+                About Battle of the Tech Bands
               </Button>
             </Link>
             <Link href="/photos">
