@@ -1252,6 +1252,34 @@ Keep effects minimal and sophisticated. This isn't EDM festival — it's elegant
 }
 ```
 
+### Hero Text
+
+Text shadow utilities for improved readability over hero images.
+
+```css
+/* Base shadow for all hero text */
+.hero-text {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Shadow + lighter color for descriptions over hero images */
+.hero-text-muted {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  color: #c0c0c0; /* Lighter than text-muted (#a0a0a0) for hero contrast */
+}
+```
+
+| Utility            | Use Case                                         |
+| ------------------ | ------------------------------------------------ |
+| `.hero-text`       | Headlines and titles over hero images            |
+| `.hero-text-muted` | Descriptions and secondary text over hero images |
+
+**Usage**:
+
+- Apply `.hero-text` to headings that sit directly over hero/banner images
+- Use `.hero-text-muted` instead of `text-text-muted` for descriptions in hero sections
+- Both classes provide subtle drop shadows for readability on varied backgrounds
+
 ### Image Overlays
 
 ```css

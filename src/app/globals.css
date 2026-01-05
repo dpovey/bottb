@@ -103,6 +103,22 @@
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* ===========================================
+ * Hero Text Utilities
+ * Text shadow for readability over hero images
+ * 
+ * .hero-text: Subtle shadow for all text over hero images
+ * .hero-text-muted: Shadow + lighter muted color for descriptions
+ * =========================================== */
+@utility hero-text {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+@utility hero-text-muted {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  color: #c0c0c0; /* Lighter than text-muted (#a0a0a0) for hero contrast */
+}
+
 @utility filter-select {
   @apply bg-bg text-white;
 
