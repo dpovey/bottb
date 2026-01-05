@@ -50,7 +50,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
             ) : (
               <Link
                 href={item.href}
-                className="text-text-dim hover:text-text-muted transition-colors truncate max-w-[120px] lg:max-w-[180px]"
+                className="text-text-dim hover:text-text-muted transition-colors truncate max-w-[120px] lg:max-w-[180px] py-3 -my-3"
               >
                 {item.label}
               </Link>

@@ -132,7 +132,7 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
         aria-expanded={isOpen}
         aria-controls="lineup-dropdown-panel"
         className={cn(
-          'flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative cursor-pointer',
+          'flex items-center gap-1.5 text-sm tracking-widest uppercase transition-colors relative cursor-pointer py-3 -my-3',
           isOpen ? 'text-white' : 'text-text-muted hover:text-white',
           className
         )}

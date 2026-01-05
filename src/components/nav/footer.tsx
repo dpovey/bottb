@@ -53,7 +53,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             </p>
 
             {/* Social Links */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               {socialLinks.map((social) => (
                 <SocialIconLink
                   key={social.label}
@@ -61,7 +61,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
                   platform={social.platform}
                   label={social.label}
                   location="footer_simple"
-                  className="text-text-dim hover:text-white transition-colors"
+                  className="text-text-dim hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   {social.icon()}
                 </SocialIconLink>
@@ -96,10 +96,10 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             </p>
 
             {/* Contact */}
-            <div className="mt-6 space-y-2">
+            <div className="mt-6">
               <a
                 href="mailto:info@bottb.com"
-                className="flex items-center gap-2 text-text-dim hover:text-white transition-colors"
+                className="inline-flex items-center gap-2 text-text-dim hover:text-white transition-colors py-3"
               >
                 <EmailIcon size={16} />
                 info@bottb.com
@@ -112,12 +112,12 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
               Lineup
             </h3>
-            <ul className="space-y-2">
+            <ul className="-my-1">
               {sitemapLinks.main.map((link) => (
                 <li key={link.href + link.label}>
                   <Link
                     href={link.href}
-                    className="text-text-dim hover:text-white transition-colors text-sm"
+                    className="text-text-dim hover:text-white transition-colors text-sm py-3 inline-block"
                   >
                     {link.label}
                   </Link>
@@ -131,12 +131,12 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
               Media
             </h3>
-            <ul className="space-y-2">
+            <ul className="-my-1">
               {sitemapLinks.media.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-text-dim hover:text-white transition-colors text-sm"
+                    className="text-text-dim hover:text-white transition-colors text-sm py-3 inline-block"
                   >
                     {link.label}
                   </Link>
@@ -145,7 +145,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             </ul>
 
             {/* Social icons */}
-            <div className="flex items-center gap-4 mt-6">
+            <div className="flex items-center gap-1 mt-6 -ml-2">
               {socialLinks.map((social) => (
                 <SocialIconLink
                   key={social.label}
@@ -153,7 +153,7 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
                   platform={social.platform}
                   label={social.label}
                   location="footer_full"
-                  className="text-text-dim hover:text-white transition-colors"
+                  className="text-text-dim hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   {social.icon()}
                 </SocialIconLink>
@@ -166,12 +166,12 @@ export function Footer({ variant = 'simple', className }: FooterProps) {
             <h3 className="text-white font-medium mb-4 text-sm tracking-widest uppercase">
               Info
             </h3>
-            <ul className="space-y-2">
+            <ul className="-my-1">
               {sitemapLinks.info.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-text-dim hover:text-white transition-colors text-sm"
+                    className="text-text-dim hover:text-white transition-colors text-sm py-3 inline-block"
                   >
                     {link.label}
                   </Link>
