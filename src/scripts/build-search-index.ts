@@ -6,10 +6,12 @@
  *
  * Indexes:
  * - Events (name, location, description)
- * - Bands (name, company, description)
+ * - Bands (name, company, description, genre)
  * - Songs (title, artist, band)
- * - Companies (name)
- * - Static pages (about, FAQ, etc.)
+ * - Companies (name, description)
+ * - Photographers (name, bio, location)
+ * - Videos (title, band, event)
+ * - Static pages (about, FAQ, privacy, terms, etc.)
  */
 
 import { create, insertMultiple, save } from '@orama/orama'
@@ -24,6 +26,7 @@ import {
   getCompanies,
   getAllSongs,
   getPhotographers,
+  getVideos,
 } from '../lib/db'
 
 // Search document type
@@ -31,7 +34,14 @@ interface SearchDocument {
   id: string
   title: string
   content: string
-  type: 'event' | 'band' | 'song' | 'company' | 'photographer' | 'page'
+  type:
+    | 'event'
+    | 'band'
+    | 'song'
+    | 'company'
+    | 'photographer'
+    | 'page'
+    | 'video'
   url: string
   subtitle?: string
   image?: string
@@ -111,6 +121,24 @@ const staticPages: SearchDocument[] = [
     url: '/events',
     subtitle: 'Past and upcoming events',
   },
+  {
+    id: 'page-privacy',
+    title: 'Privacy Policy',
+    content:
+      'Privacy policy for Battle of the Tech Bands website. Data collection, cookies, user rights, GDPR compliance.',
+    type: 'page',
+    url: '/privacy',
+    subtitle: 'How we handle your data',
+  },
+  {
+    id: 'page-terms',
+    title: 'Terms of Service',
+    content:
+      'Terms of service and conditions for using Battle of the Tech Bands website. Usage terms, user conduct, legal notices.',
+    type: 'page',
+    url: '/terms',
+    subtitle: 'Usage terms and conditions',
+  },
 ]
 
 async function buildSearchIndex() {
@@ -122,23 +150,27 @@ async function buildSearchIndex() {
     // Fetch all data from database
     console.log('📊 Fetching data from database...')
 
-    const [events, bands, companies, songs, photographers] = await Promise.all([
-      getEvents(),
-      getBands(),
-      getCompanies(),
-      getAllSongs({ limit: 1000 }), // Get all songs
-      getPhotographers(),
-    ])
+    const [events, bands, companies, songs, photographers, videos] =
+      await Promise.all([
+        getEvents(),
+        getBands(),
+        getCompanies(),
+        getAllSongs({ limit: 1000 }), // Get all songs
+        getPhotographers(),
+        getVideos({ limit: 500 }), // Get all videos
+      ])
 
     console.log(`  ✓ ${events.length} events`)
     console.log(`  ✓ ${bands.length} bands`)
     console.log(`  ✓ ${companies.length} companies`)
     console.log(`  ✓ ${songs.length} songs`)
     console.log(`  ✓ ${photographers.length} photographers`)
+    console.log(`  ✓ ${videos.length} videos`)
 
     // Index events
     for (const event of events) {
-      const description = event.info?.description || ''
+      // Use top-level description field, fallback to info.description
+      const description = event.description || event.info?.description || ''
       documents.push({
         id: `event-${event.id}`,
         title: event.name,
@@ -184,13 +216,14 @@ async function buildSearchIndex() {
 
     // Index companies
     for (const company of companies) {
+      const description = company.description || ''
       documents.push({
         id: `company-${company.slug}`,
         title: company.name,
-        content: `${company.name} tech company bands`,
+        content: `${company.name} ${description} tech company bands`.trim(),
         type: 'company',
         url: `/companies/${company.slug}`,
-        subtitle: 'Tech company',
+        subtitle: description || 'Tech company',
         image: company.icon_url || company.logo_url,
       })
     }
@@ -233,6 +266,22 @@ async function buildSearchIndex() {
         url: `/photographer/${photographer.slug}`,
         subtitle: location || 'Event photographer',
         image: photographer.avatar_url || undefined,
+      })
+    }
+
+    // Index videos
+    for (const video of videos) {
+      documents.push({
+        id: `video-${video.id}`,
+        title: video.title,
+        content:
+          `${video.title} ${video.band_name || ''} ${video.event_name || ''} video performance live`.trim(),
+        type: 'video',
+        url: `/videos?v=${video.youtube_video_id}`,
+        subtitle: video.band_name
+          ? `${video.band_name}${video.event_name ? ` • ${video.event_name}` : ''}`
+          : video.event_name || 'Performance video',
+        image: video.thumbnail_url || undefined,
       })
     }
 
