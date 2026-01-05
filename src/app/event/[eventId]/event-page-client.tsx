@@ -121,14 +121,14 @@ export function EventPageClient({
               <div className="flex items-center gap-3 mb-2">
                 {getStatusBadge(event.status, !!show2022Winner)}
               </div>
-              <h1 className="text-4xl lg:text-5xl font-semibold text-white mb-2">
+              <h1 className="hero-text text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}
               </h1>
-              <div className="text-text-muted text-lg">
+              <div className="hero-text-muted text-lg">
                 {formatEventDate(event.date, event.timezone)} • {event.location}
               </div>
               {event.description && (
-                <p className="text-text-muted mt-3 max-w-2xl">
+                <p className="hero-text-muted mt-3 max-w-2xl">
                   {event.description}
                 </p>
               )}

@@ -326,10 +326,10 @@ export default async function HomePage() {
       {/* Hero Section - supports multiple global hero images */}
       <HeroCarousel images={heroImages} interval={8000}>
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 text-center">
-          <h1 className="font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 leading-tight">
+          <h1 className="hero-text font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 leading-tight">
             Battle of the Tech Bands
           </h1>
-          <p className="text-text-muted text-lg sm:text-xl max-w-xl mx-auto mb-8">
+          <p className="hero-text-muted text-lg sm:text-xl max-w-xl mx-auto mb-8">
             Where technology meets rock &apos;n&apos; roll. A community charity
             event supporting Youngcare.
           </p>
