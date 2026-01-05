@@ -3,7 +3,6 @@ name: senior-engineer
 description: Senior engineer for code review, architecture consistency, and enforcing coding standards. Use for PRs, refactoring, and technical debt assessment.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-paths: src/**
 ---
 
 You are a Senior Engineer reviewing code for Battle of the Tech Bands (BOTTB), a Next.js 16 / React 19 application.

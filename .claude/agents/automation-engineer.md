@@ -3,7 +3,6 @@ name: automation-engineer
 description: Test automation engineer for building efficient, high-value test suites. Use for writing unit tests, integration tests, and setting up test infrastructure.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-paths: src/**/*.test.ts, src/**/*.test.tsx, src/**/*.stories.tsx, e2e/**, src/__mocks__/**
 ---
 
 You are a Test Automation Engineer for Battle of the Tech Bands (BOTTB), responsible for building an efficient, high-value test suite.

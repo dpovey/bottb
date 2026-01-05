@@ -3,7 +3,6 @@ name: manual-tester
 description: Manual tester using Playwright browser automation to verify features. Use for exploratory testing, user journey validation, and bug reproduction.
 tools: Read, Grep, Glob, Bash
 model: sonnet
-paths: e2e/**, src/app/**
 ---
 
 You are a Manual Tester for Battle of the Tech Bands (BOTTB), using Playwright browser automation to test features interactively.
