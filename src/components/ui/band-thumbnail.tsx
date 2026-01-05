@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
 
 export interface BandThumbnailProps {
   logoUrl?: string
@@ -11,46 +12,48 @@ export interface BandThumbnailProps {
   className?: string
 }
 
-const sizeConfig = {
+type SizeKey = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'hero'
+
+const sizeConfig: Record<
+  SizeKey,
+  {
+    container: string
+    placeholder: string
+    initials: string
+  }
+> = {
   xs: {
     container: 'w-8 h-8',
-    image: 32,
     placeholder: 'text-[10px]',
     initials: 'text-xs font-bold',
   },
   sm: {
     container: 'w-12 h-12',
-    image: 48,
     placeholder: 'text-xs',
     initials: 'text-sm font-bold',
   },
   md: {
     container: 'w-14 h-14 md:w-16 md:h-16',
-    image: 64,
     placeholder: 'text-xs',
     initials: 'text-lg font-bold',
   },
   lg: {
     container: 'w-16 h-16',
-    image: 64,
     placeholder: 'text-xs',
     initials: 'text-xl font-bold',
   },
   xl: {
     container: 'w-24 h-24 md:w-32 md:h-32',
-    image: 128,
     placeholder: 'text-sm',
     initials: 'text-2xl md:text-3xl font-bold',
   },
   xxl: {
     container: 'w-40 h-40 sm:w-48 sm:h-48',
-    image: 200,
     placeholder: 'text-lg',
     initials: 'text-4xl font-bold',
   },
   hero: {
     container: 'w-32 h-32 md:w-40 md:h-40',
-    image: 160,
     placeholder: 'text-lg',
     initials: 'text-5xl md:text-6xl font-bold',
   },
@@ -80,6 +83,10 @@ export function BandThumbnail({
   const imageUrl = logoUrl || heroThumbnailUrl
   const isHeroImage = !logoUrl && !!heroThumbnailUrl
 
+  // Get intrinsic dimensions and sizes attribute for responsive loading
+  const intrinsic = logoIntrinsicWidths.bandThumbnail[size]
+  const sizes = logoSizes.bandThumbnail[size]
+
   if (imageUrl) {
     return (
       <div
@@ -95,13 +102,13 @@ export function BandThumbnail({
         <Image
           src={imageUrl}
           alt={`${bandName} ${logoUrl ? 'logo' : 'photo'}`}
-          width={config.image}
-          height={config.image}
+          width={intrinsic.width}
+          height={intrinsic.height}
           className={cn(
             'w-full h-full',
             isHeroImage ? 'object-cover' : 'object-contain'
           )}
-          sizes={`${config.image}px`}
+          sizes={sizes}
         />
       </div>
     )

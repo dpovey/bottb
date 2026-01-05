@@ -3,6 +3,9 @@
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { BuildingIcon } from '@/components/icons'
+import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
+
+type IconSize = 'xs' | 'sm' | 'md' | 'lg'
 
 interface CompanyIconProps {
   /** Company icon URL */
@@ -12,25 +15,18 @@ interface CompanyIconProps {
   /** Company name for alt text */
   companyName: string
   /** Size of the icon */
-  size?: 'xs' | 'sm' | 'md' | 'lg'
+  size?: IconSize
   /** Additional classes */
   className?: string
   /** Whether to show a fallback icon when no image is available */
   showFallback?: boolean
 }
 
-const sizeClasses = {
+const sizeClasses: Record<IconSize, string> = {
   xs: 'w-4 h-4',
   sm: 'w-5 h-5',
   md: 'w-6 h-6',
   lg: 'w-8 h-8',
-}
-
-const sizePixels = {
-  xs: 16,
-  sm: 20,
-  md: 24,
-  lg: 32,
 }
 
 /**
@@ -47,7 +43,8 @@ export function CompanyIcon({
   showFallback = true,
 }: CompanyIconProps) {
   const imageUrl = iconUrl || logoUrl
-  const pixelSize = sizePixels[size]
+  const intrinsic = logoIntrinsicWidths.icon[size]
+  const sizes = logoSizes.icon[size]
 
   if (!imageUrl) {
     if (!showFallback) {
@@ -73,11 +70,11 @@ export function CompanyIcon({
       src={imageUrl}
       alt={`${companyName} logo`}
       title={companyName}
-      width={pixelSize}
-      height={pixelSize}
+      width={intrinsic.width}
+      height={intrinsic.height}
       className={cn('object-contain rounded-sm', sizeClasses[size], className)}
       loading="lazy"
-      sizes={`${pixelSize}px`}
+      sizes={sizes}
     />
   )
 }

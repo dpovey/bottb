@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Card, Badge } from '@/components/ui'
 import { BuildingIcon, ChevronRightIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
 
 interface CompanyCardProps {
   company: {
@@ -44,11 +45,11 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
               <Image
                 src={company.logo_url!}
                 alt={`${company.name} logo`}
-                width={320}
-                height={64}
+                width={logoIntrinsicWidths.cardLogo.width}
+                height={logoIntrinsicWidths.cardLogo.height}
                 className="max-h-full max-w-full object-contain"
                 loading="lazy"
-                sizes="(max-width: 640px) 200px, 320px"
+                sizes={logoSizes.cardLogo}
               />
             </div>
           ) : (
@@ -92,11 +93,11 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
                   <Image
                     src={iconUrl}
                     alt={`${company.name} icon`}
-                    width={32}
-                    height={32}
+                    width={logoIntrinsicWidths.cardIcon.width}
+                    height={logoIntrinsicWidths.cardIcon.height}
                     className="max-w-full max-h-full object-contain"
                     loading="lazy"
-                    sizes="32px"
+                    sizes={logoSizes.cardIcon}
                   />
                 </div>
               )}
