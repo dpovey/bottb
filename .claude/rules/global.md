@@ -16,7 +16,7 @@ Run all checks before committing:
 pnpm format && pnpm typecheck && pnpm lint && pnpm test
 ```
 
-See `doc/agent/checklist.md` for the full ASSESS process.
+See `doc/agent/checklist.md` for the full Assess process.
 
 ## Commit Messages
 
