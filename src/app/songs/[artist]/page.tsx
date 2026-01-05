@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getAllSongs, getArtistDescriptions } from '@/lib/db'
+import type { SetlistSong } from '@/lib/db'
 import { slugify } from '@/lib/utils'
 import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { PublicLayout } from '@/components/layouts/public-layout'
@@ -12,29 +13,106 @@ interface Props {
 }
 
 /**
- * Find artist name from slug by checking all songs
+ * Find artist name from slug by checking all songs.
+ * Checks primary artist, transition_to_artist, and additional_songs.
  */
 async function findArtistBySlug(artistSlug: string): Promise<string | null> {
   const songs = await getAllSongs({ limit: 10000 })
 
   for (const song of songs) {
+    // Check primary artist
     if (song.artist && slugify(song.artist) === artistSlug) {
       return song.artist
+    }
+    // Check transition_to_artist
+    if (
+      song.transition_to_artist &&
+      slugify(song.transition_to_artist) === artistSlug
+    ) {
+      return song.transition_to_artist
+    }
+    // Check additional_songs
+    if (song.additional_songs) {
+      for (const additional of song.additional_songs) {
+        if (additional.artist && slugify(additional.artist) === artistSlug) {
+          return additional.artist
+        }
+      }
     }
   }
   return null
 }
 
 /**
- * Get all songs by an artist with their performances
+ * Represents a song appearance in the setlist (could be primary, transition, or additional)
+ */
+interface SongAppearance {
+  title: string
+  artist: string
+  sourceType: 'primary' | 'transition' | 'additional'
+  performance: SetlistSong
+}
+
+/**
+ * Extract all song appearances for a given artist from all songs.
+ * This finds songs where the artist appears as primary, transition_to, or in additional_songs.
+ */
+function extractArtistAppearances(
+  allSongs: SetlistSong[],
+  artistName: string
+): SongAppearance[] {
+  const appearances: SongAppearance[] = []
+  const normalizedArtist = artistName.toLowerCase()
+
+  for (const song of allSongs) {
+    // Check primary artist/title
+    if (song.artist?.toLowerCase() === normalizedArtist) {
+      appearances.push({
+        title: song.title,
+        artist: song.artist,
+        sourceType: 'primary',
+        performance: song,
+      })
+    }
+
+    // Check transition_to_artist/title
+    if (
+      song.transition_to_artist?.toLowerCase() === normalizedArtist &&
+      song.transition_to_title
+    ) {
+      appearances.push({
+        title: song.transition_to_title,
+        artist: song.transition_to_artist,
+        sourceType: 'transition',
+        performance: song,
+      })
+    }
+
+    // Check additional_songs
+    if (song.additional_songs) {
+      for (const additional of song.additional_songs) {
+        if (additional.artist?.toLowerCase() === normalizedArtist) {
+          appearances.push({
+            title: additional.title,
+            artist: additional.artist,
+            sourceType: 'additional',
+            performance: song,
+          })
+        }
+      }
+    }
+  }
+
+  return appearances
+}
+
+/**
+ * Get all songs by an artist with their performances.
+ * Includes songs where artist appears as primary, transition_to, or in additional_songs.
  */
 async function getSongsByArtist(artistName: string) {
   const allSongs = await getAllSongs({ limit: 10000 })
-
-  // Filter songs by this artist
-  const artistSongs = allSongs.filter(
-    (s) => s.artist?.toLowerCase() === artistName.toLowerCase()
-  )
+  const appearances = extractArtistAppearances(allSongs, artistName)
 
   // Group by song title
   const songMap = new Map<
@@ -42,20 +120,24 @@ async function getSongsByArtist(artistName: string) {
     {
       title: string
       slug: string
-      performances: typeof artistSongs
+      performances: SetlistSong[]
+      sourceTypes: Set<'primary' | 'transition' | 'additional'>
     }
   >()
 
-  for (const song of artistSongs) {
-    const key = song.title.toLowerCase()
+  for (const appearance of appearances) {
+    const key = appearance.title.toLowerCase()
     if (!songMap.has(key)) {
       songMap.set(key, {
-        title: song.title,
-        slug: slugify(song.title),
+        title: appearance.title,
+        slug: slugify(appearance.title),
         performances: [],
+        sourceTypes: new Set(),
       })
     }
-    songMap.get(key)!.performances.push(song)
+    const entry = songMap.get(key)!
+    entry.performances.push(appearance.performance)
+    entry.sourceTypes.add(appearance.sourceType)
   }
 
   return Array.from(songMap.values()).sort((a, b) =>
@@ -187,6 +269,7 @@ export default async function ArtistSongsPage({ params }: Props) {
 
 /**
  * Generate static params for all unique artists.
+ * Includes primary artists, transition_to_artists, and artists from additional_songs.
  */
 export async function generateStaticParams() {
   try {
@@ -194,8 +277,21 @@ export async function generateStaticParams() {
 
     const uniqueArtists = new Set<string>()
     for (const song of songs) {
+      // Primary artist
       if (song.artist) {
         uniqueArtists.add(slugify(song.artist))
+      }
+      // Transition-to artist
+      if (song.transition_to_artist) {
+        uniqueArtists.add(slugify(song.transition_to_artist))
+      }
+      // Additional songs artists
+      if (song.additional_songs) {
+        for (const additional of song.additional_songs) {
+          if (additional.artist) {
+            uniqueArtists.add(slugify(additional.artist))
+          }
+        }
       }
     }
 

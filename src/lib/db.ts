@@ -2226,12 +2226,17 @@ export async function unlockBandSetlist(bandId: string): Promise<void> {
 /**
  * Get all performances of a specific song (by title and artist).
  * Returns all instances where this song was performed across events/bands.
+ * Searches primary title/artist, transition_to_title/artist, and additional_songs.
  */
 export async function getSongPerformances(
   title: string,
   artist: string
 ): Promise<SetlistSong[]> {
   try {
+    const lowerTitle = title.toLowerCase()
+    const lowerArtist = artist.toLowerCase()
+
+    // Search across primary, transition_to, and additional_songs
     const { rows } = await sql<SetlistSong>`
       SELECT s.*, 
              b.name as band_name,
@@ -2245,8 +2250,17 @@ export async function getSongPerformances(
       JOIN bands b ON s.band_id = b.id
       JOIN events e ON b.event_id = e.id
       LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE LOWER(s.title) = LOWER(${title})
-        AND LOWER(s.artist) = LOWER(${artist})
+      WHERE 
+        -- Match primary title/artist
+        (LOWER(s.title) = ${lowerTitle} AND LOWER(s.artist) = ${lowerArtist})
+        -- Match transition_to title/artist
+        OR (LOWER(s.transition_to_title) = ${lowerTitle} AND LOWER(s.transition_to_artist) = ${lowerArtist})
+        -- Match in additional_songs array (JSONB search)
+        OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(s.additional_songs) AS elem
+          WHERE LOWER(elem->>'title') = ${lowerTitle}
+            AND LOWER(elem->>'artist') = ${lowerArtist}
+        )
       ORDER BY e.date DESC, b.name ASC
     `
     return rows
