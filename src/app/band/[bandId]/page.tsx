@@ -160,6 +160,74 @@ function CircularProgress({ percent }: { percent: number }) {
   )
 }
 
+/**
+ * A display row represents either:
+ * - A regular song (cover, mashup, medley)
+ * - The "transition" part of a transition song (original song)
+ * - The "cover" part of a transition song (transition_to song)
+ */
+interface SetlistDisplayRow {
+  id: string // Unique key for React
+  song: SetlistSong // Original song record
+  title: string // Display title
+  artist: string // Display artist
+  displayType: 'cover' | 'mashup' | 'medley' | 'transition' // Display label
+  position: number // Position number to display
+  showPosition: boolean // Whether to show position (false for second row of transition)
+}
+
+/**
+ * Transform songs into display rows, splitting transitions into two separate rows.
+ */
+function transformToSetlistDisplayRows(
+  songs: SetlistSong[]
+): SetlistDisplayRow[] {
+  const rows: SetlistDisplayRow[] = []
+
+  for (const song of songs) {
+    if (
+      song.song_type === 'transition' &&
+      song.transition_to_title &&
+      song.transition_to_artist
+    ) {
+      // Split transition into two rows
+      // Row 1: Original song (transition)
+      rows.push({
+        id: `${song.id}-transition`,
+        song,
+        title: song.title,
+        artist: song.artist,
+        displayType: 'transition',
+        position: song.position,
+        showPosition: true,
+      })
+      // Row 2: Transition-to song (cover)
+      rows.push({
+        id: `${song.id}-cover`,
+        song,
+        title: song.transition_to_title,
+        artist: song.transition_to_artist,
+        displayType: 'cover',
+        position: song.position,
+        showPosition: false, // Don't show position for second row
+      })
+    } else {
+      // Regular song (cover, mashup, medley)
+      rows.push({
+        id: song.id,
+        song,
+        title: song.title,
+        artist: song.artist,
+        displayType: song.song_type,
+        position: song.position,
+        showPosition: true,
+      })
+    }
+  }
+
+  return rows
+}
+
 // Setlist Section Component
 function SetlistSection({ songs }: { songs: SetlistSong[] }) {
   if (songs.length === 0) return null
@@ -177,6 +245,9 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
     return labels[type] || labels.cover
   }
 
+  // Transform songs to display rows (splits transitions into 2 rows)
+  const displayRows = transformToSetlistDisplayRows(songs)
+
   return (
     <section className="py-12 border-t border-white/5">
       <div className="max-w-4xl mx-auto px-6 lg:px-8">
@@ -184,44 +255,33 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
           Setlist
         </h2>
         <div className="bg-bg-elevated rounded-xl border border-white/5 overflow-hidden">
-          {songs.map((song, index) => {
-            const typeLabel = getSongTypeLabel(song.song_type)
-            const isLast = index === songs.length - 1
+          {displayRows.map((row, index) => {
+            const typeLabel = getSongTypeLabel(row.displayType)
+            const isLast = index === displayRows.length - 1
+            const { song } = row
 
             return (
               <div
-                key={song.id}
+                key={row.id}
                 className={`flex items-center gap-4 p-4 ${
                   !isLast ? 'border-b border-white/5' : ''
                 }`}
               >
                 {/* Position number */}
                 <div className="w-8 h-8 rounded-full bg-bg-surface flex items-center justify-center text-text-muted font-semibold text-sm shrink-0">
-                  {song.position}
+                  {row.showPosition ? row.position : ''}
                 </div>
 
                 {/* Song info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
-                      href={`/songs/${slugify(song.artist)}/${slugify(song.title)}`}
+                      href={`/songs/${slugify(row.artist)}/${slugify(row.title)}`}
                       className="font-medium text-white hover:text-accent transition-colors"
                     >
-                      {song.title}
+                      {row.title}
                     </Link>
-                    {song.song_type === 'transition' &&
-                      song.transition_to_title && (
-                        <>
-                          <span className="text-text-dim">→</span>
-                          <Link
-                            href={`/songs/${slugify(song.transition_to_artist || '')}/${slugify(song.transition_to_title)}`}
-                            className="font-medium text-white hover:text-accent transition-colors"
-                          >
-                            {song.transition_to_title}
-                          </Link>
-                        </>
-                      )}
-                    {song.song_type !== 'cover' && (
+                    {row.displayType !== 'cover' && (
                       <span
                         className={`px-2 py-0.5 rounded-sm text-[10px] font-medium uppercase tracking-wider ${typeLabel.className}`}
                       >
@@ -231,45 +291,33 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                   </div>
                   <div className="text-sm text-text-muted mt-0.5">
                     <Link
-                      href={`/songs/${slugify(song.artist)}`}
+                      href={`/songs/${slugify(row.artist)}`}
                       className="hover:text-accent transition-colors"
                     >
-                      {song.artist}
+                      {row.artist}
                     </Link>
-                    {song.song_type === 'transition' &&
-                      song.transition_to_artist && (
-                        <>
-                          {' / '}
-                          <Link
-                            href={`/songs/${slugify(song.transition_to_artist)}`}
-                            className="hover:text-accent transition-colors"
-                          >
-                            {song.transition_to_artist}
-                          </Link>
-                        </>
-                      )}
-                    {song.additional_songs &&
+                    {/* Show additional songs for mashups/medleys */}
+                    {(row.displayType === 'mashup' ||
+                      row.displayType === 'medley') &&
+                      song.additional_songs &&
                       song.additional_songs.length > 0 && (
                         <>
-                          {' '}
-                          +{' '}
-                          {song.additional_songs.map((s, i) => (
-                            <span key={i}>
-                              {i > 0 && ', '}
+                          {song.additional_songs.map((additional, idx) => (
+                            <span key={idx}>
+                              {' / '}
                               <Link
-                                href={`/songs/${slugify(s.artist)}/${slugify(s.title)}`}
+                                href={`/songs/${slugify(additional.artist)}`}
                                 className="hover:text-accent transition-colors"
                               >
-                                {s.title}
+                                {additional.artist}
                               </Link>
-                              {' ('}
+                              {' - '}
                               <Link
-                                href={`/songs/${slugify(s.artist)}`}
+                                href={`/songs/${slugify(additional.artist)}/${slugify(additional.title)}`}
                                 className="hover:text-accent transition-colors"
                               >
-                                {s.artist}
+                                {additional.title}
                               </Link>
-                              {')'}
                             </span>
                           ))}
                         </>
@@ -277,9 +325,9 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                   </div>
                 </div>
 
-                {/* Media links */}
+                {/* Media links - only show on primary row for transitions */}
                 <div className="flex items-center gap-1 shrink-0">
-                  {song.spotify_track_id && (
+                  {row.showPosition && song.spotify_track_id && (
                     <a
                       href={`https://open.spotify.com/track/${song.spotify_track_id}`}
                       target="_blank"
@@ -297,7 +345,7 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                       </svg>
                     </a>
                   )}
-                  {song.youtube_video_id && (
+                  {row.showPosition && song.youtube_video_id && (
                     <a
                       href={`https://www.youtube.com/watch?v=${song.youtube_video_id}`}
                       target="_blank"

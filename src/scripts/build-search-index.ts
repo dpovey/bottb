@@ -228,28 +228,72 @@ async function buildSearchIndex() {
       })
     }
 
-    // Index songs (group by unique title+artist to avoid duplicates)
-    const uniqueSongs = new Map<string, (typeof songs)[0]>()
-    for (const song of songs) {
-      const key = `${song.title}-${song.artist}`.toLowerCase()
-      if (!uniqueSongs.has(key)) {
-        uniqueSongs.set(key, song)
-      }
-    }
-
     // Import slugify utility
     const { slugify } = await import('../lib/utils')
 
-    for (const song of uniqueSongs.values()) {
-      const artistSlug = slugify(song.artist)
-      const songSlug = slugify(song.title)
+    // Index songs (group by unique title+artist to avoid duplicates)
+    // Also extract songs from transitions and additional_songs (mashups/medleys)
+    const uniqueSongs = new Map<
+      string,
+      { title: string; artist: string; bandName?: string; songId: string }
+    >()
+
+    const addSongToIndex = (
+      title: string,
+      artist: string,
+      bandName: string | undefined,
+      songId: string
+    ) => {
+      const key = `${title}-${artist}`.toLowerCase()
+      if (!uniqueSongs.has(key)) {
+        uniqueSongs.set(key, { title, artist, bandName, songId })
+      }
+    }
+
+    for (const song of songs) {
+      // Primary artist/title
+      addSongToIndex(song.title, song.artist, song.band_name, song.id)
+
+      // Transition target (transition_to_artist/transition_to_title)
+      if (
+        song.song_type === 'transition' &&
+        song.transition_to_artist &&
+        song.transition_to_title
+      ) {
+        addSongToIndex(
+          song.transition_to_title,
+          song.transition_to_artist,
+          song.band_name,
+          `${song.id}-transition`
+        )
+      }
+
+      // Additional songs (mashups/medleys)
+      if (song.additional_songs && song.additional_songs.length > 0) {
+        for (const additional of song.additional_songs) {
+          if (additional.artist && additional.title) {
+            addSongToIndex(
+              additional.title,
+              additional.artist,
+              song.band_name,
+              `${song.id}-additional-${additional.title}`
+            )
+          }
+        }
+      }
+    }
+
+    for (const [, songData] of uniqueSongs) {
+      const artistSlug = slugify(songData.artist)
+      const songSlug = slugify(songData.title)
       documents.push({
-        id: `song-${song.id}`,
-        title: song.title,
-        content: `${song.title} ${song.artist} ${song.band_name || ''}`.trim(),
+        id: `song-${songData.songId}`,
+        title: songData.title,
+        content:
+          `${songData.title} ${songData.artist} ${songData.bandName || ''}`.trim(),
         type: 'song',
         url: `/songs/${artistSlug}/${songSlug}`,
-        subtitle: song.artist,
+        subtitle: songData.artist,
       })
     }
 
