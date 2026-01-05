@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { getCompanies, CompanyWithStats } from '@/lib/db'
 import { Button } from '@/components/ui'
 import { ChevronRightIcon } from '@/components/icons'
+import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
 
 interface CompanyWithLogo extends CompanyWithStats {
   logo_url: string
@@ -112,11 +113,11 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
         <Image
           src={company.logo_url}
           alt={`${company.name} logo`}
-          width={180}
-          height={48}
+          width={logoIntrinsicWidths.marquee.width}
+          height={logoIntrinsicWidths.marquee.height}
           className="h-full w-auto object-contain max-w-[180px]"
           loading="lazy"
-          sizes="(max-width: 768px) 120px, 180px"
+          sizes={logoSizes.marquee}
         />
       </div>
 

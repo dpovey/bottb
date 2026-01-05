@@ -13,6 +13,7 @@ import {
 import type { Company } from '@/lib/db'
 import type { BreadcrumbItem } from '@/components/nav'
 import { getBaseUrl } from '@/lib/seo'
+import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
 
 interface CompanyPageProps {
   params: Promise<{ slug: string }>
@@ -112,10 +113,10 @@ function CompanyPageView({
               <Image
                 src={company.logo_url}
                 alt={company.name}
-                width={320}
-                height={64}
+                width={logoIntrinsicWidths.pageHeader.width}
+                height={logoIntrinsicWidths.pageHeader.height}
                 className="h-16 w-auto max-w-xs object-contain"
-                sizes="(max-width: 640px) 200px, 320px"
+                sizes={logoSizes.pageHeader}
               />
             </>
           ) : (
