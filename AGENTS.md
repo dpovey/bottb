@@ -96,13 +96,48 @@ See [doc/agent/workflow.md](doc/agent/workflow.md) for detailed instructions on:
 
 ## Pre-commit Checklist
 
-Before committing, you MUST complete the ASSESS checklist and run all checks.
+> **Stop and assess before running any commands.**
 
-See [doc/agent/checklist.md](doc/agent/checklist.md) for the full checklist including:
+### Assess (Mandatory)
 
-- ASSESS output format (mandatory before any commands)
-- Required commands (`pnpm format`, `pnpm typecheck`, `pnpm lint`, `pnpm test`)
-- File-scoped commands for faster validation
+Read relevant docs and confirm compliance. **Output your findings before proceeding:**
+
+1. **Practices** (`doc/practices/`) - Do we follow them? List any exceptions and justify.
+2. **Architecture** (`doc/arch/`) - Consistent with patterns? If adding new patterns, update the docs.
+3. **Requirements** (`doc/requirements/`) - Any deviations from specs?
+4. **Scope** - Did you make any changes unrelated to this task?
+5. **Impact** - Are there other parts of the codebase potentially affected by this change?
+
+**Output format (copy and complete before running checks):**
+
+```
+## Assess
+
+### Practices ✅/❌
+[Files read, compliance status, any exceptions]
+
+### Architecture ✅/❌
+[Files read, consistency status, any new patterns to document]
+
+### Requirements ✅/❌
+[Specs checked, any deviations]
+
+### Scope ✅/❌
+[Unrelated changes: none / list them]
+
+### Impact ✅/❌
+[Other affected areas: none / list them]
+```
+
+If docs need updating, do it now before running checks.
+
+### Run Checks
+
+```bash
+pnpm format && pnpm typecheck && pnpm lint && pnpm test
+```
+
+All must pass with exit code 0. See [doc/agent/checklist.md](doc/agent/checklist.md) for file-scoped commands and additional details.
 
 ## Commit Message Format
 
@@ -133,3 +168,26 @@ Key principles:
 - Prefix unused variables with underscore (`_error`)
 - Follow existing codebase patterns
 - Use shared components from `src/components/ui/`
+
+## When Things Go Wrong
+
+- **Merge conflict**: Stop and ask user - don't attempt auto-resolution
+- **CI failure**: Read full error output, fix locally, push again
+- **Database schema drift**: Run `pnpm migrate:latest`, compare with `schema.sql`
+- **Port conflict**: `lsof -i :3030` to find process, then kill or use different port
+- **Tests failing on unchanged code**: Ask user before proceeding
+
+## Context Management
+
+For large tasks:
+
+- Read only files relevant to the current task
+- Prefer `grep` over reading entire files when searching
+- For files >500 lines, request specific line ranges
+- Summarize findings before proceeding with edits
+
+## Automation
+
+- **On push**: CI runs `format:check`, `typecheck`, `lint`, `test`
+- **On PR create**: Vercel preview deployment
+- **On merge to main**: Production deployment

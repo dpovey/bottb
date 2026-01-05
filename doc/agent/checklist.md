@@ -1,6 +1,6 @@
 # Pre-commit Checklist
 
-> ⛔ **STOP: You MUST complete ASSESS and output your findings BEFORE running any commands.**
+> ⛔ **STOP: You MUST complete the Assess step and output your findings BEFORE running any commands.**
 
 ## Step 0: Verify Branch
 
@@ -9,7 +9,7 @@ Confirm you are on a feature branch, not main. If on main, either:
 - Create a worktree/branch now (see [workflow.md](workflow.md)), or
 - For trivial one-liners, ask the user for explicit approval to commit directly to main
 
-## Step 1: ASSESS (MANDATORY - output before any commands)
+## Step 1: Assess (Mandatory - output before any commands)
 
 **Do NOT run format/typecheck/lint/test until you have read docs and output an assessment.**
 
@@ -18,11 +18,13 @@ Read the relevant docs and explicitly confirm compliance:
 1. **Practices** (`doc/practices/`) - Read relevant files (react.md, typescript.md, etc.). Do we follow them? List any exceptions and justify.
 2. **Architecture** (`doc/arch/`) - Read relevant files. Are we consistent with documented patterns? **If adding new patterns, update the docs.**
 3. **Requirements** (`doc/requirements/`) - Did we deviate from specs? Compare screenshots if applicable. **If adding new features, update the docs.**
+4. **Scope** - Did you make any changes to code unrelated to this task? If so, list them.
+5. **Impact** - Are there other parts of the codebase potentially affected by this change? If so, list them.
 
 **Output format (copy and complete before proceeding):**
 
 ```
-## ASSESS
+## Assess
 
 ### Practices ✅/❌
 [Which files read, compliance status, any exceptions]
@@ -32,6 +34,12 @@ Read the relevant docs and explicitly confirm compliance:
 
 ### Requirements ✅/❌
 [Relevant specs checked, any deviations]
+
+### Scope ✅/❌
+[Unrelated changes: none / list them]
+
+### Impact ✅/❌
+[Other affected areas: none / list them]
 ```
 
 If docs need updating, do it now before Step 2.
