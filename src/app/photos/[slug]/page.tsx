@@ -243,7 +243,7 @@ export default async function PhotoPage({ params, searchParams }: Props) {
   if (filters.shuffle) galleryParams.set('shuffle', filters.shuffle)
   const galleryUrl = `/photos${galleryParams.toString() ? `?${galleryParams.toString()}` : ''}`
 
-  // Build breadcrumbs
+  // Build breadcrumbs: Home > Photos > Event > Company > #42
   const breadcrumbs: { label: string; href?: string }[] = [
     { label: 'Home', href: '/' },
     { label: 'Photos', href: galleryUrl },
@@ -254,11 +254,15 @@ export default async function PhotoPage({ params, searchParams }: Props) {
       href: `/photos?event=${photo.event_id}`,
     })
   }
-  if (photo.band_name) {
-    breadcrumbs.push({ label: photo.band_name })
-  } else {
-    breadcrumbs.push({ label: 'Photo' })
+  if (photo.band_name && photo.company_slug) {
+    // Link to company photos
+    breadcrumbs.push({
+      label: photo.band_name,
+      href: `/photos?company=${photo.company_slug}`,
+    })
   }
+  // Final item: photo number (no link - current page)
+  breadcrumbs.push({ label: photoNumber ? `#${photoNumber}` : 'Photo' })
 
   // Build slideshow URL for interactive viewing
   const slideshowUrl = buildSlideshowUrl({
