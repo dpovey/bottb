@@ -1440,7 +1440,7 @@ export async function getCompanies(): Promise<CompanyWithStats[]> {
       COUNT(DISTINCT b.event_id) as event_count
     FROM companies c
     LEFT JOIN bands b ON c.slug = b.company_slug
-    GROUP BY c.slug, c.name, c.logo_url, c.website, c.created_at
+    GROUP BY c.slug, c.name, c.logo_url, c.icon_url, c.website, c.description, c.created_at
     ORDER BY c.name ASC
   `
   return rows

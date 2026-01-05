@@ -33,12 +33,13 @@ pnpm build:search-index
 
 | Type          | Source               | Fields                            |
 | ------------- | -------------------- | --------------------------------- |
-| Events        | `getEvents()`        | name, date, location              |
+| Events        | `getEvents()`        | name, location, description       |
 | Bands         | `getBands()`         | name, company, description, genre |
 | Songs         | `getAllSongs()`      | title, artist, band               |
-| Companies     | `getCompanies()`     | name                              |
+| Companies     | `getCompanies()`     | name, description                 |
 | Photographers | `getPhotographers()` | name, bio, location               |
-| Pages         | Hardcoded            | About, FAQ content                |
+| Videos        | `getVideos()`        | title, band, event                |
+| Pages         | Hardcoded            | About, FAQ, Privacy, Terms, etc.  |
 
 ### Document Schema
 
@@ -47,7 +48,7 @@ interface SearchDocument {
   id: string // Unique ID (e.g., "event-sydney-2025")
   title: string // Display title
   content: string // Searchable text
-  type: string // event, band, song, company, page
+  type: string // event, band, song, company, photographer, page, video
   url: string // Navigation target
   subtitle?: string // Secondary text (e.g., artist for songs)
   image?: string // Optional thumbnail
