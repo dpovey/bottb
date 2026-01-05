@@ -136,6 +136,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     // Get songs for artist and song pages
+    // Also extract from transitions (transition_to) and mashups/medleys (additional_songs)
     try {
       const songs = await getAllSongs({ limit: 10000 })
 
@@ -143,18 +144,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const uniqueArtists = new Set<string>()
       const uniqueSongs = new Map<string, { artist: string; title: string }>()
 
+      // Helper to add artist and song to sitemap sets
+      const addArtistAndSong = (artist: string, title: string) => {
+        if (!artist || !title) return
+        const artistSlug = slugify(artist)
+        const songSlug = slugify(title)
+        const key = `${artistSlug}/${songSlug}`
+
+        // Add artist
+        uniqueArtists.add(artistSlug)
+
+        // Add song (dedupe by slug)
+        if (!uniqueSongs.has(key)) {
+          uniqueSongs.set(key, { artist: artistSlug, title: songSlug })
+        }
+      }
+
       for (const song of songs) {
-        if (song.artist && song.title) {
-          const artistSlug = slugify(song.artist)
-          const songSlug = slugify(song.title)
-          const key = `${artistSlug}/${songSlug}`
+        // Primary artist/title
+        addArtistAndSong(song.artist, song.title)
 
-          // Add artist
-          uniqueArtists.add(artistSlug)
+        // Transition target (transition_to_artist/transition_to_title)
+        if (
+          song.song_type === 'transition' &&
+          song.transition_to_artist &&
+          song.transition_to_title
+        ) {
+          addArtistAndSong(song.transition_to_artist, song.transition_to_title)
+        }
 
-          // Add song (dedupe by slug)
-          if (!uniqueSongs.has(key)) {
-            uniqueSongs.set(key, { artist: artistSlug, title: songSlug })
+        // Additional songs (mashups/medleys)
+        if (song.additional_songs && song.additional_songs.length > 0) {
+          for (const additional of song.additional_songs) {
+            addArtistAndSong(additional.artist, additional.title)
           }
         }
       }
