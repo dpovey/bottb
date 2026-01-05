@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getAllSongs, getArtistDescriptions } from '@/lib/db'
 import { slugify } from '@/lib/utils'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { PublicLayout } from '@/components/layouts/public-layout'
 import { CompanyBadge } from '@/components/ui'
 
@@ -83,6 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${artistName} Songs | Battle of the Tech Bands`,
       description: `All ${artistName} songs performed at Battle of the Tech Bands events.`,
       type: 'website',
+      images: [DEFAULT_OG_IMAGE],
     },
   }
 }

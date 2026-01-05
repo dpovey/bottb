@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
 import { ChevronLeftIcon } from '@/components/icons'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Terms of Use | Battle of the Tech Bands',
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     description:
       'Terms of Use for Battle of the Tech Bands website. Please read these terms carefully before using our services.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 }
 

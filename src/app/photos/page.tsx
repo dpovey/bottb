@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { PhotosContent } from './photos-content'
 import { PublicLayout } from '@/components/layouts'
 import { Skeleton } from '@/components/ui'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { getCachedFilterOptions } from '@/lib/nav-data'
 import { ensurePhotoSlug, isUuid } from '@/lib/photo-slugs'
 import { getPhotoCount } from '@/lib/db'
@@ -119,6 +119,7 @@ export const metadata: Metadata = {
     description:
       'Browse photos from Battle of the Tech Bands events. Filter by event, photographer, or company.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',

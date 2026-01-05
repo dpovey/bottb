@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
 import { ChevronLeftIcon } from '@/components/icons'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Battle of the Tech Bands',
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     description:
       'Privacy Policy for Battle of the Tech Bands. Learn how we collect, use, and protect your personal information.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 }
 

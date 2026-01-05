@@ -12,7 +12,7 @@ import {
 } from '@/lib/nav-data'
 import type { Company } from '@/lib/db'
 import type { BreadcrumbItem } from '@/components/nav'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
 
 interface CompanyPageProps {
@@ -52,6 +52,7 @@ export async function generateMetadata({
       title: `${company.name} Bands | Battle of the Tech Bands`,
       description,
       type: 'website',
+      images: [DEFAULT_OG_IMAGE],
     },
   }
 }

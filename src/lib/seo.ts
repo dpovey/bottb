@@ -3,6 +3,17 @@
  */
 
 /**
+ * Default OpenGraph image configuration
+ * Used as a fallback when pages don't have a specific hero image
+ */
+export const DEFAULT_OG_IMAGE = {
+  url: '/images/logos/bottb-horizontal.png',
+  width: 1200,
+  height: 630,
+  alt: 'Battle of the Tech Bands',
+}
+
+/**
  * Get the base URL for the site
  * Prioritizes NEXT_PUBLIC_BASE_URL, falls back to Vercel URL or localhost
  */
