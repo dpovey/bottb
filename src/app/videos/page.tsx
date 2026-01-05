@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { VideosContent } from './videos-content'
 import { getCachedVideosData, getNavEvents } from '@/lib/nav-data'
 import { VideoObjectJsonLd } from '@/components/seo'
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     description:
       "Watch performance videos from Battle of the Tech Bands events. Relive the best moments from our tech community's bands.",
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',

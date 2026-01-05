@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { SongsPageClient } from './songs-page-client'
 import { getEvents, getCompanies, getAllSongs, getSongCount } from '@/lib/db'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'All Songs | Battle of the Tech Bands',
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     description:
       'Every song performed across all Battle of the Tech Bands events. Filter by event, band, company, or song type.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary',

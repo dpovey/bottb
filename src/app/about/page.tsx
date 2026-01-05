@@ -7,7 +7,7 @@ import { getSocialLinks } from '@/lib/social-links'
 import { getPhotosByLabel, PHOTO_LABELS } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
 import { HeroCarousel } from '@/components/hero-carousel'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'About | Battle of the Tech Bands',
@@ -21,6 +21,7 @@ export const metadata: Metadata = {
     description:
       'Battle of the Tech Bands is a community-run charity event where engineers who code by day rock by night, raising money for Youngcare.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 }
 

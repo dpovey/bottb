@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
 import { FAQJsonLd } from '@/components/seo'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { ChevronDownIcon } from '@/components/icons'
 
 export const metadata: Metadata = {
@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     description:
       'Frequently asked questions about Battle of the Tech Bands - how to register a band, how voting works, and more.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 }
 

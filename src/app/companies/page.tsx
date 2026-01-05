@@ -6,7 +6,7 @@ import { Card } from '@/components/ui'
 import { getCachedCompanies, getNavEvents } from '@/lib/nav-data'
 import type { CompanyWithStats } from '@/lib/db'
 import type { BreadcrumbItem } from '@/components/nav'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Bands | Battle of the Tech Bands',
@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     description:
       'Browse all companies and their bands that have participated in Battle of the Tech Bands events.',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
 }
 

@@ -20,7 +20,7 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from '@/lib/scoring'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = getBaseUrl()
@@ -43,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Events | Battle of the Tech Bands',
       description,
       type: 'website',
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: 'summary',
