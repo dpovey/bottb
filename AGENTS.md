@@ -219,3 +219,20 @@ For large tasks:
 - **On push**: CI runs `format:check`, `typecheck`, `lint`, `test`
 - **On PR create**: Vercel preview deployment
 - **On merge to main**: Production deployment
+
+## Specialized Agents
+
+Specialized agent profiles are available in `.claude/agents/` for focused tasks. These work natively with Claude Code as subagents and can be referenced in Cursor via `@file`.
+
+| Agent                | Use For                                             |
+| -------------------- | --------------------------------------------------- |
+| `seo-expert`         | SEO audits, meta tags, structured data, sitemap     |
+| `product-manager`    | Requirements coverage, TODO.md, feature gap analysis |
+| `senior-engineer`    | Code review, architecture, coding standards         |
+| `tech-writer`        | Documentation accuracy, stale references            |
+| `automation-engineer`| Unit tests, integration tests, test infrastructure  |
+| `manual-tester`      | Playwright browser testing, user journey validation |
+
+**Cursor usage:** Reference with `@.claude/agents/seo-expert.md` in chat.
+
+**Claude Code usage:** These are automatically available as subagents.
