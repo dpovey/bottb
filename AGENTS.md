@@ -24,10 +24,38 @@ Key files:
 
 1. **Check current branch**: `git branch --show-current`
 2. **If NOT on main**: Ask the user what to do (continue in existing worktree, or navigate to main repo first)
-3. **If on main**: Create a worktree from origin/main BEFORE editing files. See [doc/agent/workflow.md](doc/agent/workflow.md) for full setup instructions.
+3. **If on main**: Create a worktree in `.worktrees/` BEFORE editing files (see below)
 4. **Exception**: Trivial one-line fixes may go directly to main - ask user first
 
 Reading code to understand the task is fine. But NO edits until you're on a feature branch.
+
+### Creating a Worktree
+
+**Always create worktrees inside `.worktrees/` in the main repo:**
+
+```bash
+# From the main repo directory
+cd /Users/deapovey/src/bottb
+
+# Create worktree with feature branch
+git fetch origin main
+git worktree add .worktrees/{name} -b {type}/{name} origin/main
+
+# Example: fix/touch-targets branch in .worktrees/touch-targets
+git worktree add .worktrees/touch-targets -b fix/touch-targets origin/main
+
+# Move to worktree and set up
+cd .worktrees/{name}
+pnpm install
+cp /Users/deapovey/src/bottb/.env.local .
+echo "PORT=3031" >> .env.local  # Use unique port (3031, 3032, etc.)
+```
+
+**Branch naming**: `{type}/{description}` where type is feat, fix, chore, refactor, etc.
+
+**Directory naming**: `.worktrees/{short-description}` (e.g., `.worktrees/touch-targets`)
+
+See [doc/agent/workflow.md](doc/agent/workflow.md) for full setup instructions including port assignment.
 
 > **Why worktrees**: Changes are isolated, reviewable in PR, and easy to discard. Only ask for clarification when the task is ambiguous, not for approval to proceed.
 
