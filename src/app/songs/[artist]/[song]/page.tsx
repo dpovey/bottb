@@ -12,7 +12,8 @@ interface Props {
 }
 
 /**
- * Find song by artist and song slugs
+ * Find song by artist and song slugs.
+ * Checks primary artist/title, transition_to_artist/title, and additional_songs.
  */
 async function findSongBySlugs(
   artistSlug: string,
@@ -21,6 +22,7 @@ async function findSongBySlugs(
   const songs = await getAllSongs({ limit: 10000 })
 
   for (const song of songs) {
+    // Check primary artist/title
     if (
       song.artist &&
       song.title &&
@@ -28,6 +30,33 @@ async function findSongBySlugs(
       slugify(song.title) === songSlug
     ) {
       return { title: song.title, artist: song.artist }
+    }
+
+    // Check transition_to_artist/title
+    if (
+      song.transition_to_artist &&
+      song.transition_to_title &&
+      slugify(song.transition_to_artist) === artistSlug &&
+      slugify(song.transition_to_title) === songSlug
+    ) {
+      return {
+        title: song.transition_to_title,
+        artist: song.transition_to_artist,
+      }
+    }
+
+    // Check additional_songs
+    if (song.additional_songs) {
+      for (const additional of song.additional_songs) {
+        if (
+          additional.artist &&
+          additional.title &&
+          slugify(additional.artist) === artistSlug &&
+          slugify(additional.title) === songSlug
+        ) {
+          return { title: additional.title, artist: additional.artist }
+        }
+      }
     }
   }
   return null
@@ -185,13 +214,16 @@ export default async function SongDetailPage({ params }: Props) {
 
 /**
  * Generate static params for all unique songs.
+ * Includes primary songs, transition_to songs, and additional_songs.
  */
 export async function generateStaticParams() {
   try {
     const songs = await getAllSongs({ limit: 10000 })
 
     const uniqueSongs = new Map<string, { artist: string; song: string }>()
+
     for (const song of songs) {
+      // Primary artist/title
       if (song.title && song.artist) {
         const key = `${slugify(song.artist)}-${slugify(song.title)}`
         if (!uniqueSongs.has(key)) {
@@ -199,6 +231,32 @@ export async function generateStaticParams() {
             artist: slugify(song.artist),
             song: slugify(song.title),
           })
+        }
+      }
+
+      // Transition-to artist/title
+      if (song.transition_to_title && song.transition_to_artist) {
+        const key = `${slugify(song.transition_to_artist)}-${slugify(song.transition_to_title)}`
+        if (!uniqueSongs.has(key)) {
+          uniqueSongs.set(key, {
+            artist: slugify(song.transition_to_artist),
+            song: slugify(song.transition_to_title),
+          })
+        }
+      }
+
+      // Additional songs
+      if (song.additional_songs) {
+        for (const additional of song.additional_songs) {
+          if (additional.title && additional.artist) {
+            const key = `${slugify(additional.artist)}-${slugify(additional.title)}`
+            if (!uniqueSongs.has(key)) {
+              uniqueSongs.set(key, {
+                artist: slugify(additional.artist),
+                song: slugify(additional.title),
+              })
+            }
+          }
         }
       }
     }

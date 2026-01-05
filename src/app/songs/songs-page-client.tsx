@@ -19,6 +19,66 @@ interface SongsPageClientProps {
 type SortField = 'title' | 'artist' | 'event' | 'band'
 type SortDirection = 'asc' | 'desc'
 
+/**
+ * A display row represents either:
+ * - A regular song (cover, mashup, medley)
+ * - The "transition" part of a transition song (original song)
+ * - The "cover" part of a transition song (transition_to song)
+ */
+interface DisplayRow {
+  id: string // Unique key for React
+  song: SetlistSong // Original song record
+  title: string // Display title
+  artist: string // Display artist
+  displayType: 'cover' | 'mashup' | 'medley' | 'transition' // Display label
+  isTransitionCover?: boolean // True if this is the "cover" part of a transition
+}
+
+/**
+ * Transform songs into display rows, splitting transitions into two separate rows.
+ */
+function transformToDisplayRows(songs: SetlistSong[]): DisplayRow[] {
+  const rows: DisplayRow[] = []
+
+  for (const song of songs) {
+    if (
+      song.song_type === 'transition' &&
+      song.transition_to_title &&
+      song.transition_to_artist
+    ) {
+      // Split transition into two rows
+      // Row 1: Original song (transition)
+      rows.push({
+        id: `${song.id}-transition`,
+        song,
+        title: song.title,
+        artist: song.artist,
+        displayType: 'transition',
+      })
+      // Row 2: Transition-to song (cover)
+      rows.push({
+        id: `${song.id}-cover`,
+        song,
+        title: song.transition_to_title,
+        artist: song.transition_to_artist,
+        displayType: 'cover',
+        isTransitionCover: true,
+      })
+    } else {
+      // Regular song (cover, mashup, medley)
+      rows.push({
+        id: song.id,
+        song,
+        title: song.title,
+        artist: song.artist,
+        displayType: song.song_type,
+      })
+    }
+  }
+
+  return rows
+}
+
 export function SongsPageClient({
   events,
   companies,
@@ -109,8 +169,11 @@ export function SongsPageClient({
     ? songs.filter((s) => s.company_slug === companyFilter)
     : songs
 
-  // Sort songs
-  const sortedSongs = [...filteredSongs].sort((a, b) => {
+  // Transform songs to display rows (splits transitions into 2 rows)
+  const displayRows = transformToDisplayRows(filteredSongs)
+
+  // Sort display rows
+  const sortedRows = [...displayRows].sort((a, b) => {
     let aVal = ''
     let bVal = ''
 
@@ -124,12 +187,12 @@ export function SongsPageClient({
         bVal = b.artist.toLowerCase()
         break
       case 'event':
-        aVal = a.event_date || ''
-        bVal = b.event_date || ''
+        aVal = a.song.event_date || ''
+        bVal = b.song.event_date || ''
         break
       case 'band':
-        aVal = (a.band_name || '').toLowerCase()
-        bVal = (b.band_name || '').toLowerCase()
+        aVal = (a.song.band_name || '').toLowerCase()
+        bVal = (b.song.band_name || '').toLowerCase()
         break
     }
 
@@ -272,8 +335,8 @@ export function SongsPageClient({
               'Loading...'
             ) : (
               <>
-                Showing <span className="text-white">{sortedSongs.length}</span>{' '}
-                {total !== sortedSongs.length && <>of {total} </>}
+                Showing <span className="text-white">{sortedRows.length}</span>{' '}
+                {total !== filteredSongs.length && <>of {total} </>}
                 songs
               </>
             )}
@@ -307,7 +370,7 @@ export function SongsPageClient({
             <div className="p-12 text-center text-text-muted">
               Loading songs...
             </div>
-          ) : sortedSongs.length === 0 ? (
+          ) : sortedRows.length === 0 ? (
             <div className="p-12 text-center text-text-muted">
               <p className="text-lg mb-2">No songs found</p>
               <p className="text-sm">
@@ -340,56 +403,57 @@ export function SongsPageClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {sortedSongs.map((song) => {
-                    const typeLabel = getSongTypeLabel(song.song_type)
+                  {sortedRows.map((row) => {
+                    const typeLabel = getSongTypeLabel(row.displayType)
+                    const { song } = row
 
                     return (
                       <tr
-                        key={song.id}
+                        key={row.id}
                         className="hover:bg-white/2 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <Link
-                            href={`/songs/${slugify(song.artist)}/${slugify(song.title)}`}
+                            href={`/songs/${slugify(row.artist)}/${slugify(row.title)}`}
                             className="font-medium hover:text-accent transition-colors"
                           >
-                            {song.title}
+                            {row.title}
                           </Link>
-                          {song.song_type === 'transition' &&
-                            song.transition_to_title && (
-                              <span className="text-text-dim">
-                                {' → '}
-                                <Link
-                                  href={`/songs/${slugify(song.transition_to_artist || song.artist)}/${slugify(song.transition_to_title)}`}
-                                  className="hover:text-accent transition-colors"
-                                >
-                                  {song.transition_to_title}
-                                </Link>
-                              </span>
-                            )}
                         </td>
                         <td className="px-6 py-4 text-text-muted">
                           <Link
-                            href={`/songs/${slugify(song.artist)}`}
+                            href={`/songs/${slugify(row.artist)}`}
                             className="hover:text-accent transition-colors"
                           >
-                            {song.artist}
+                            {row.artist}
                           </Link>
-                          {song.song_type === 'transition' &&
-                            song.transition_to_artist && (
-                              <>
-                                {' / '}
-                                <Link
-                                  href={`/songs/${slugify(song.transition_to_artist)}`}
-                                  className="hover:text-accent transition-colors"
-                                >
-                                  {song.transition_to_artist}
-                                </Link>
-                              </>
-                            )}
-                          {song.additional_songs &&
+                          {/* Show additional songs for mashups/medleys */}
+                          {(row.displayType === 'mashup' ||
+                            row.displayType === 'medley') &&
+                            song.additional_songs &&
                             song.additional_songs.length > 0 && (
-                              <> + {song.additional_songs.length} more</>
+                              <>
+                                {song.additional_songs.map(
+                                  (additional, idx) => (
+                                    <span key={idx}>
+                                      {' / '}
+                                      <Link
+                                        href={`/songs/${slugify(additional.artist)}`}
+                                        className="hover:text-accent transition-colors"
+                                      >
+                                        {additional.artist}
+                                      </Link>
+                                      {' - '}
+                                      <Link
+                                        href={`/songs/${slugify(additional.artist)}/${slugify(additional.title)}`}
+                                        className="hover:text-accent transition-colors"
+                                      >
+                                        {additional.title}
+                                      </Link>
+                                    </span>
+                                  )
+                                )}
+                              </>
                             )}
                         </td>
                         <td className="px-6 py-4">
