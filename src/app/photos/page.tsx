@@ -1,12 +1,85 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { PhotosContent } from './photos-content'
 import { PublicLayout } from '@/components/layouts'
 import { Skeleton } from '@/components/ui'
 import { getBaseUrl } from '@/lib/seo'
 import { getCachedFilterOptions } from '@/lib/nav-data'
 import { ensurePhotoSlug, isUuid } from '@/lib/photo-slugs'
+import { getPhotoCount } from '@/lib/db'
+
+const PHOTOS_PER_PAGE = 50
+
+/**
+ * Server-rendered pagination links for SEO
+ * These create crawlable paths through the photo gallery
+ */
+function PaginationLinks({
+  totalPages,
+  currentPage,
+  baseUrl,
+}: {
+  totalPages: number
+  currentPage: number
+  baseUrl: string
+}) {
+  if (totalPages <= 1) return null
+
+  // Show limited page numbers: first, last, and around current page
+  const visiblePages: number[] = []
+  const addPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && !visiblePages.includes(page)) {
+      visiblePages.push(page)
+    }
+  }
+
+  // Always show first and last
+  addPage(1)
+  addPage(totalPages)
+
+  // Show pages around current
+  for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+    addPage(i)
+  }
+
+  visiblePages.sort((a, b) => a - b)
+
+  return (
+    <nav
+      aria-label="Photo gallery pages"
+      className="mt-12 pt-8 border-t border-white/10"
+    >
+      <p className="text-sm text-text-muted mb-4">Browse all photos by page:</p>
+      <div className="flex flex-wrap gap-2 text-sm">
+        {visiblePages.map((page, index) => {
+          // Check if there's a gap (ellipsis needed)
+          const prevPage = visiblePages[index - 1]
+          const showEllipsis = prevPage && page - prevPage > 1
+
+          return (
+            <span key={page} className="flex items-center gap-2">
+              {showEllipsis && (
+                <span className="text-text-muted px-1">...</span>
+              )}
+              <Link
+                href={page === 1 ? baseUrl : `${baseUrl}?page=${page}`}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  page === currentPage
+                    ? 'bg-accent text-white'
+                    : 'bg-bg-elevated hover:bg-bg-surface text-text-muted hover:text-white'
+                }`}
+              >
+                {page}
+              </Link>
+            </span>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
 
 // Loading fallback for Suspense - shows skeleton grid for better perceived performance
 // Note: No H1 here - the actual content has the H1, avoiding duplicate H1s for SEO
@@ -61,6 +134,8 @@ interface PhotosPageProps {
     eventId?: string
     photographer?: string
     company?: string
+    // Pagination param for SEO crawlability
+    page?: string
     // Legacy param - redirects to /photos/[slug]
     photo?: string
   }>
@@ -93,6 +168,25 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
   const initialEventId = params.event || params.eventId || null
   const initialPhotographer = params.photographer || null
   const initialCompanySlug = params.company || null
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
+
+  // Get total photo count for pagination
+  const totalPhotos = await getPhotoCount({
+    eventId: initialEventId || undefined,
+    photographer: initialPhotographer || undefined,
+    companySlug: initialCompanySlug || undefined,
+  })
+  const totalPages = Math.ceil(totalPhotos / PHOTOS_PER_PAGE)
+
+  // Build base URL for pagination links (preserve filters)
+  const paginationParams = new URLSearchParams()
+  if (initialEventId) paginationParams.set('event', initialEventId)
+  if (initialPhotographer)
+    paginationParams.set('photographer', initialPhotographer)
+  if (initialCompanySlug) paginationParams.set('company', initialCompanySlug)
+  const baseUrl = paginationParams.toString()
+    ? `/photos?${paginationParams.toString()}`
+    : '/photos'
 
   return (
     <Suspense fallback={<PhotosLoading />}>
@@ -103,6 +197,14 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
         initialFilterOptions={filterOptions}
         initialTotalPhotos={filterOptions.totalPhotos}
       />
+      {/* Server-rendered pagination links for SEO crawlability */}
+      <div className="max-w-7xl mx-auto px-6 pb-8">
+        <PaginationLinks
+          totalPages={totalPages}
+          currentPage={currentPage}
+          baseUrl={baseUrl}
+        />
+      </div>
     </Suspense>
   )
 }

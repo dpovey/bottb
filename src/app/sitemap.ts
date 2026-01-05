@@ -4,7 +4,7 @@ import {
   getBandsForEvent,
   getPhotographers,
   getCompanies,
-  getAllHeroPhotos,
+  getIndexablePhotos,
   getAllSongs,
 } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
@@ -115,26 +115,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Error fetching companies:', error)
     }
 
-    // Get hero photos - curated, high-quality photos worth indexing
+    // Get indexable photos - unique photos + representative photos from clusters
+    // Excludes near-duplicates (non-representative cluster members)
     // These have SEO-friendly slug URLs at /photos/[slug]
     try {
-      const heroPhotos = await getAllHeroPhotos()
-      for (const photo of heroPhotos) {
-        // Use slug URL if available, otherwise fall back to UUID
-        const photoPath = photo.slug
-          ? `/photos/${photo.slug}`
-          : `/photos/${photo.id}`
+      const indexablePhotos = await getIndexablePhotos()
+      for (const photo of indexablePhotos) {
+        // Slug is required for indexable photos
         sitemapEntries.push({
-          url: `${baseUrl}${photoPath}`,
+          url: `${baseUrl}/photos/${photo.slug}`,
           lastModified: photo.uploaded_at
             ? new Date(photo.uploaded_at)
             : new Date(),
           changeFrequency: 'monthly',
-          priority: 0.6, // Higher than regular photos since these are curated
+          priority: 0.5,
         })
       }
     } catch (error) {
-      console.error('Error fetching hero photos:', error)
+      console.error('Error fetching indexable photos:', error)
     }
 
     // Get songs for artist and song pages

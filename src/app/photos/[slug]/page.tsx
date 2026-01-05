@@ -1,11 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { getPhotoBySlugOrId, isUuid, ensurePhotoSlug } from '@/lib/photo-slugs'
+import { getAdjacentPhotos, getSimilarPhotos } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
 import { buildSlideshowUrl } from '@/lib/shuffle-types'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoPageClient } from './photo-page-client'
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
+import type { Photo } from '@/lib/db-types'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -24,6 +29,90 @@ function getPhotoNumberFromSlug(slug: string | null): string | null {
   if (!slug) return null
   const match = slug.match(/-(\d+)$/)
   return match ? match[1] : null
+}
+
+/**
+ * Server-rendered navigation links to adjacent photos
+ * These are crawlable by search engines
+ */
+function PhotoNavigation({
+  previous,
+  next,
+}: {
+  previous: Photo | null
+  next: Photo | null
+}) {
+  if (!previous && !next) return null
+
+  return (
+    <nav
+      aria-label="Photo navigation"
+      className="flex items-center justify-between mt-8 pt-6 border-t border-white/10"
+    >
+      {previous ? (
+        <Link
+          href={`/photos/${previous.slug}`}
+          className="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors group"
+        >
+          <ChevronLeftIcon
+            size={16}
+            className="group-hover:-translate-x-0.5 transition-transform"
+          />
+          <span>Previous</span>
+        </Link>
+      ) : (
+        <div />
+      )}
+      {next ? (
+        <Link
+          href={`/photos/${next.slug}`}
+          className="flex items-center gap-2 text-sm text-text-muted hover:text-white transition-colors group"
+        >
+          <span>Next</span>
+          <ChevronRightIcon
+            size={16}
+            className="group-hover:translate-x-0.5 transition-transform"
+          />
+        </Link>
+      ) : (
+        <div />
+      )}
+    </nav>
+  )
+}
+
+/**
+ * Server-rendered similar photos grid
+ * Uses rel="nofollow" to avoid passing link equity to near-duplicates
+ */
+function SimilarPhotos({ photos }: { photos: Photo[] }) {
+  if (photos.length === 0) return null
+
+  return (
+    <section className="mt-10 pt-8 border-t border-white/10">
+      <h2 className="text-lg font-medium mb-4 text-text-muted">
+        Similar photos
+      </h2>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        {photos.map((photo) => (
+          <Link
+            key={photo.id}
+            href={`/photos/${photo.slug}`}
+            rel="nofollow"
+            className="relative aspect-square rounded-md overflow-hidden bg-bg-elevated hover:ring-2 hover:ring-accent transition-all"
+          >
+            <Image
+              src={photo.thumbnail_url || photo.blob_url}
+              alt={`Similar photo${photo.band_name ? ` of ${photo.band_name}` : ''}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
+            />
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 /**
@@ -119,6 +208,16 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     notFound()
   }
 
+  // Fetch adjacent and similar photos for SEO navigation
+  const [adjacentPhotos, similarPhotos] = await Promise.all([
+    getAdjacentPhotos(
+      photo.id,
+      photo.slug_prefix || null,
+      photo.event_id || null
+    ),
+    getSimilarPhotos(photo.id, 6),
+  ])
+
   // Extract photo number from slug for uniqueness
   const photoNumber = getPhotoNumberFromSlug(photo.slug)
 
@@ -186,6 +285,15 @@ export default async function PhotoPage({ params, searchParams }: Props) {
           slideshowUrl={slideshowUrl}
           galleryUrl={galleryUrl}
         />
+
+        {/* Server-rendered navigation for SEO crawlability */}
+        <PhotoNavigation
+          previous={adjacentPhotos.previous}
+          next={adjacentPhotos.next}
+        />
+
+        {/* Similar photos with nofollow to avoid duplicate content issues */}
+        <SimilarPhotos photos={similarPhotos} />
       </main>
     </PublicLayout>
   )
