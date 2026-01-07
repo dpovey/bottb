@@ -315,6 +315,67 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        {/* Photo Licensing */}
+        <section id="photo-licensing" className="mb-20">
+          <h2 className="font-semibold text-2xl sm:text-3xl mb-6">
+            Photo Licensing
+          </h2>
+          <div className="bg-bg-elevated rounded-2xl p-8 md:p-12 border border-white/5">
+            <div className="space-y-6 text-text-muted leading-relaxed">
+              <p>
+                All photos on this site are licensed under{' '}
+                <a
+                  href="https://creativecommons.org/licenses/by-nc/4.0/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent hover:text-accent-light transition-colors"
+                >
+                  Creative Commons Attribution-NonCommercial 4.0 International
+                  (CC BY-NC 4.0)
+                </a>
+                .
+              </p>
+              <div className="bg-bg-surface rounded-xl p-6 border border-white/5">
+                <h3 className="font-semibold text-white mb-3">
+                  You&apos;re free to:
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Share photos on social media with attribution</li>
+                  <li>Use photos for personal, non-commercial purposes</li>
+                  <li>Edit or adapt photos (with attribution)</li>
+                </ul>
+              </div>
+              <div className="bg-bg-surface rounded-xl p-6 border border-white/5">
+                <h3 className="font-semibold text-white mb-3">
+                  Commercial use requires permission:
+                </h3>
+                <p className="text-sm mb-3">
+                  For advertising, merchandise, stock photography, or any
+                  commercial purpose, please contact us first.
+                </p>
+                <a
+                  href="mailto:info@bottb.com?subject=Photo%20Licensing%20Inquiry"
+                  className="inline-flex items-center gap-2 text-accent hover:text-accent-light transition-colors text-sm"
+                >
+                  info@bottb.com
+                </a>
+              </div>
+              <p className="text-sm text-text-dim pt-4 border-t border-white/5">
+                When sharing, please credit:{' '}
+                <span className="text-white">
+                  &ldquo;Photo by [Photographer Name] for Battle of the Tech
+                  Bands&rdquo;
+                </span>{' '}
+                or simply{' '}
+                <span className="text-white">
+                  &ldquo;Battle of the Tech Bands&rdquo;
+                </span>{' '}
+                if the photographer is unknown.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="text-center">
           <h2 className="font-semibold text-2xl sm:text-3xl mb-4">
