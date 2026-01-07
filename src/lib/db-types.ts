@@ -164,6 +164,8 @@ export interface FinalizedResult {
   finalized_at: string
 }
 
+export type VideoType = 'video' | 'short'
+
 export interface Video {
   id: string
   youtube_video_id: string
@@ -175,6 +177,7 @@ export interface Video {
   published_at: string | null
   sort_order: number
   created_at: string
+  video_type: VideoType
   // Joined fields
   event_name?: string
   band_name?: string

@@ -4,11 +4,18 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { PublicLayout } from '@/components/layouts'
 import { Video } from '@/lib/db'
-import { CompanyIcon, FilterSelect, Skeleton } from '@/components/ui'
+import {
+  CompanyIcon,
+  FilterSelect,
+  Skeleton,
+  Tabs,
+  type Tab,
+} from '@/components/ui'
 import { CloseIcon, PlayIcon } from '@/components/icons'
 import { trackVideoClick } from '@/lib/analytics'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { FilterOptions, NavEvent } from '@/lib/nav-data'
+import { ShortsGrid } from '@/components/shorts-grid'
 
 interface Event {
   id: string
@@ -20,11 +27,16 @@ interface Company {
   name: string
 }
 
+type VideoTab = 'videos' | 'shorts'
+
 interface VideosContentProps {
   initialEventId: string | null
   initialCompanySlug: string | null
+  initialTab?: VideoTab | null
   /** SSR-provided videos */
   initialVideos?: Video[]
+  /** SSR-provided shorts */
+  initialShorts?: Video[]
   /** SSR-provided filter options */
   initialFilterOptions?: FilterOptions
   /** SSR-provided nav events for header */
@@ -61,12 +73,16 @@ function getThumbnailUrl(video: Video): string {
 export function VideosContent({
   initialEventId,
   initialCompanySlug,
+  initialTab,
   initialVideos,
+  initialShorts,
   initialFilterOptions,
   navEvents,
 }: VideosContentProps) {
   // Initialize with SSR data if available
+  const [activeTab, setActiveTab] = useState<VideoTab>(initialTab || 'videos')
   const [videos, setVideos] = useState<Video[]>(initialVideos || [])
+  const [shorts, setShorts] = useState<Video[]>(initialShorts || [])
   const [events, setEvents] = useState<Event[]>(
     initialFilterOptions?.events.map((e) => ({ id: e.id, name: e.name })) || []
   )
@@ -74,6 +90,7 @@ export function VideosContent({
     initialFilterOptions?.companies || []
   )
   const [loading, setLoading] = useState(!initialVideos)
+  const [shortsLoading, setShortsLoading] = useState(!initialShorts)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     initialEventId
   )
@@ -82,6 +99,7 @@ export function VideosContent({
   )
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [totalCount, setTotalCount] = useState(initialVideos?.length || 0)
+  const [shortsCount, setShortsCount] = useState(initialShorts?.length || 0)
 
   // Fetch events and companies for filters (only if not provided via SSR)
   useEffect(() => {
@@ -135,6 +153,7 @@ export function VideosContent({
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+      params.set('type', 'video')
       params.set('limit', '100')
 
       const res = await fetch(`/api/videos?${params.toString()}`)
@@ -150,6 +169,29 @@ export function VideosContent({
     }
   }, [selectedEventId, selectedCompanySlug])
 
+  // Fetch shorts (only when filters change, not on initial SSR load)
+  const fetchShorts = useCallback(async () => {
+    setShortsLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (selectedEventId) params.set('event', selectedEventId)
+      if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+      params.set('type', 'short')
+      params.set('limit', '100')
+
+      const res = await fetch(`/api/videos?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setShorts(data.videos || [])
+        setShortsCount(data.pagination?.total || data.videos?.length || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch shorts:', error)
+    } finally {
+      setShortsLoading(false)
+    }
+  }, [selectedEventId, selectedCompanySlug])
+
   // Only fetch videos if filters changed or no SSR data
   useEffect(() => {
     if (!initialVideos || filtersChanged) {
@@ -157,14 +199,28 @@ export function VideosContent({
     }
   }, [fetchVideos, initialVideos, filtersChanged])
 
-  // Update URL when filters change
+  // Only fetch shorts if filters changed or no SSR data
+  useEffect(() => {
+    if (!initialShorts || filtersChanged) {
+      fetchShorts()
+    }
+  }, [fetchShorts, initialShorts, filtersChanged])
+
+  // Update URL when filters or tab change
   useEffect(() => {
     const params = new URLSearchParams()
     if (selectedEventId) params.set('event', selectedEventId)
     if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+    if (activeTab === 'shorts') params.set('tab', 'shorts')
     const newUrl = params.toString() ? `?${params.toString()}` : '/videos'
     window.history.replaceState(null, '', newUrl)
-  }, [selectedEventId, selectedCompanySlug])
+  }, [selectedEventId, selectedCompanySlug, activeTab])
+
+  // Tab configuration
+  const tabs: Tab[] = [
+    { id: 'videos', label: 'Videos', count: totalCount },
+    { id: 'shorts', label: 'Shorts', count: shortsCount },
+  ]
 
   const handleVideoClick = (video: Video) => {
     trackVideoClick({
@@ -200,10 +256,20 @@ export function VideosContent({
         <div className="mb-8">
           <h1 className="font-semibold text-4xl mb-2">Videos</h1>
           <p className="text-text-muted">
-            {loading
+            {loading && shortsLoading
               ? 'Loading...'
-              : `${totalCount} video${totalCount !== 1 ? 's' : ''} from Battle of the Tech Bands events`}
+              : `${totalCount + shortsCount} video${totalCount + shortsCount !== 1 ? 's' : ''} from Battle of the Tech Bands events`}
           </p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6">
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={(tabId) => setActiveTab(tabId as VideoTab)}
+            aria-label="Video type selection"
+          />
         </div>
 
         {/* Filters */}
@@ -256,90 +322,124 @@ export function VideosContent({
           )}
         </div>
 
-        {/* Videos Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="aspect-video" />
-            ))}
-          </div>
-        ) : videos.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-text-muted text-lg">No videos found</p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-4 text-accent hover:text-accent-light transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((video) => (
-              <button
-                key={video.id}
-                onClick={() => handleVideoClick(video)}
-                className="group relative aspect-video rounded-lg overflow-hidden bg-bg-elevated text-left"
-              >
-                {/* Thumbnail */}
-                <Image
-                  src={getThumbnailUrl(video)}
-                  alt={video.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-
-                {/* Play button */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center">
-                    <PlayIcon className="w-8 h-8 text-white ml-1" />
-                  </div>
+        {/* Content Grid - Fixed min-height to prevent layout shift */}
+        <div className="min-h-[500px]">
+          {/* Videos Tab */}
+          {activeTab === 'videos' && (
+            <>
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <Skeleton key={i} className="aspect-video" />
+                  ))}
                 </div>
-
-                {/* Duration badge */}
-                {video.duration_seconds && (
-                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-sm">
-                    {formatDuration(video.duration_seconds)}
-                  </div>
-                )}
-
-                {/* Video info */}
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-medium line-clamp-2 mb-1">
-                    {video.title}
-                  </h3>
-                  {video.band_name && (
-                    <div className="flex items-center gap-2 text-text-muted text-sm">
-                      {video.company_icon_url && (
-                        <CompanyIcon
-                          iconUrl={video.company_icon_url}
-                          companyName={video.company_name || ''}
-                          size="sm"
-                        />
-                      )}
-                      <span>{video.band_name}</span>
-                      {video.event_name && (
-                        <>
-                          <span className="text-text-dim">•</span>
-                          <span className="text-text-dim">
-                            {video.event_name}
-                          </span>
-                        </>
-                      )}
-                    </div>
+              ) : videos.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-text-muted text-lg">No videos found</p>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="mt-4 text-accent hover:text-accent-light transition-colors"
+                    >
+                      Clear filters
+                    </button>
                   )}
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {videos.map((video) => (
+                    <button
+                      key={video.id}
+                      onClick={() => handleVideoClick(video)}
+                      className="group relative aspect-video rounded-lg overflow-hidden bg-bg-elevated text-left"
+                    >
+                      {/* Thumbnail */}
+                      <Image
+                        src={getThumbnailUrl(video)}
+                        alt={video.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+
+                      {/* Play button */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center">
+                          <PlayIcon className="w-8 h-8 text-white ml-1" />
+                        </div>
+                      </div>
+
+                      {/* Duration badge */}
+                      {video.duration_seconds && (
+                        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-sm">
+                          {formatDuration(video.duration_seconds)}
+                        </div>
+                      )}
+
+                      {/* Video info */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h3 className="text-white font-medium line-clamp-2 mb-1">
+                          {video.title}
+                        </h3>
+                        {video.band_name && (
+                          <div className="flex items-center gap-2 text-text-muted text-sm">
+                            {video.company_icon_url && (
+                              <CompanyIcon
+                                iconUrl={video.company_icon_url}
+                                companyName={video.company_name || ''}
+                                size="sm"
+                              />
+                            )}
+                            <span>{video.band_name}</span>
+                            {video.event_name && (
+                              <>
+                                <span className="text-text-dim">•</span>
+                                <span className="text-text-dim">
+                                  {video.event_name}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Shorts Tab */}
+          {activeTab === 'shorts' && (
+            <>
+              {shortsLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {[...Array(12)].map((_, i) => (
+                    <Skeleton key={i} className="aspect-[9/16]" />
+                  ))}
+                </div>
+              ) : shorts.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-text-muted text-lg">No shorts found</p>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="mt-4 text-accent hover:text-accent-light transition-colors"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <ShortsGrid videos={shorts} location="videos_page" />
+              )}
+            </>
+          )}
+        </div>
       </main>
 
       {/* Video Modal */}

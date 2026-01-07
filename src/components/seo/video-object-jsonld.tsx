@@ -5,8 +5,19 @@ interface VideoObjectJsonLdProps {
 }
 
 /**
+ * Get the appropriate YouTube content URL based on video type.
+ * Shorts use /shorts/{id} format, regular videos use /watch?v={id}
+ */
+function getYouTubeContentUrl(video: Video): string {
+  if (video.video_type === 'short') {
+    return `https://www.youtube.com/shorts/${video.youtube_video_id}`
+  }
+  return `https://www.youtube.com/watch?v=${video.youtube_video_id}`
+}
+
+/**
  * JSON-LD structured data for video content.
- * Generates VideoObject schema for YouTube videos to enable rich snippets.
+ * Generates VideoObject schema for YouTube videos and shorts to enable rich snippets.
  *
  * @see https://schema.org/VideoObject
  * @see https://developers.google.com/search/docs/appearance/structured-data/video
@@ -30,7 +41,7 @@ export function VideoObjectJsonLd({ videos }: VideoObjectJsonLdProps) {
       video.thumbnail_url ||
       `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`,
     uploadDate: video.published_at || video.created_at,
-    contentUrl: `https://www.youtube.com/watch?v=${video.youtube_video_id}`,
+    contentUrl: getYouTubeContentUrl(video),
     embedUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,
     ...(video.duration_seconds && {
       duration: formatIsoDuration(video.duration_seconds),

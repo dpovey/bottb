@@ -37,7 +37,7 @@ const patchHandler: ProtectedApiHandler = async (request, context) => {
   try {
     const { videoId } = await (context as RouteContext).params
     const body = await request.json()
-    const { title, eventId, bandId, sortOrder } = body
+    const { title, eventId, bandId, sortOrder, videoType } = body
 
     const existing = await getVideoById(videoId)
     if (!existing) {
@@ -49,6 +49,8 @@ const patchHandler: ProtectedApiHandler = async (request, context) => {
       event_id: eventId,
       band_id: bandId,
       sort_order: sortOrder,
+      video_type:
+        videoType === 'video' || videoType === 'short' ? videoType : undefined,
     })
 
     // Fetch the video with joined fields (event_name, band_name, etc.)

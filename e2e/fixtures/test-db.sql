@@ -390,7 +390,9 @@ CREATE TABLE public.videos (
     thumbnail_url text,
     published_at timestamp with time zone,
     sort_order integer DEFAULT 0,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    video_type character varying(20) DEFAULT 'video'::character varying NOT NULL,
+    CONSTRAINT videos_video_type_check CHECK (((video_type)::text = ANY ((ARRAY['video'::character varying, 'short'::character varying])::text[])))
 );
 
 
@@ -596,7 +598,7 @@ a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d	admin@test.com	$2b$12$GpILut1ZnXifnEqJKEUHm
 -- Data for Name: videos; Type: TABLE DATA; Schema: public; Owner: test
 --
 
-COPY public.videos (id, youtube_video_id, title, event_id, band_id, duration_seconds, thumbnail_url, published_at, sort_order, created_at) FROM stdin;
+COPY public.videos (id, youtube_video_id, title, event_id, band_id, duration_seconds, thumbnail_url, published_at, sort_order, created_at, video_type) FROM stdin;
 \.
 
 
@@ -1128,6 +1130,13 @@ CREATE INDEX idx_videos_sort_order ON public.videos USING btree (sort_order);
 --
 
 CREATE INDEX idx_videos_youtube_id ON public.videos USING btree (youtube_video_id);
+
+
+--
+-- Name: idx_videos_video_type; Type: INDEX; Schema: public; Owner: test
+--
+
+CREATE INDEX idx_videos_video_type ON public.videos USING btree (video_type);
 
 
 --
