@@ -1622,7 +1622,7 @@ export async function getVideos(
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
         AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
         AND (${videoType || null}::text IS NULL OR v.video_type = ${videoType || null})
-      ORDER BY v.sort_order ASC, v.published_at DESC NULLS LAST, v.created_at DESC
+      ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC, v.sort_order ASC
       LIMIT ${limit} OFFSET ${offset}
     `
     return rows

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Video } from '@/lib/db-types'
+import { Video, VideoType } from '@/lib/db-types'
 import { VideoCarousel } from '@/components/video-carousel'
 import { Skeleton } from '@/components/ui'
 
@@ -10,6 +10,8 @@ interface VideoStripProps {
   eventId?: string
   /** Filter by band ID */
   bandId?: string
+  /** Filter by video type */
+  videoType?: VideoType
   /** Custom title for the section */
   title?: string
   /** Custom class for the container */
@@ -30,6 +32,7 @@ interface VideosResponse {
 export function VideoStrip({
   eventId,
   bandId,
+  videoType,
   title = 'Videos',
   className = '',
   limit = 20,
@@ -51,6 +54,7 @@ export function VideoStrip({
         const params = new URLSearchParams()
         if (eventId) params.set('event', eventId)
         if (bandId) params.set('band', bandId)
+        if (videoType) params.set('type', videoType)
         params.set('limit', limit.toString())
 
         const res = await fetch(`/api/videos?${params.toString()}`)
@@ -70,7 +74,7 @@ export function VideoStrip({
     }
 
     fetchVideos()
-  }, [eventId, bandId, limit, initialVideos])
+  }, [eventId, bandId, videoType, limit, initialVideos])
 
   // Don't render anything if there are no videos
   if (!loading && videos.length === 0) {

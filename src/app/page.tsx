@@ -75,6 +75,26 @@ const VideoStrip = dynamic(
   }
 )
 
+const ShortsCarousel = dynamic(
+  () =>
+    import('@/components/shorts-carousel').then((mod) => ({
+      default: mod.ShortsCarousel,
+    })),
+  {
+    loading: () => (
+      <div className="flex gap-4 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-[140px] sm:w-[160px] shrink-0 aspect-[9/16] bg-bg-elevated rounded-xl animate-pulse"
+          />
+        ))}
+      </div>
+    ),
+    ssr: true,
+  }
+)
+
 interface BandScore {
   id: string
   name: string
@@ -189,6 +209,7 @@ export default async function HomePage() {
     globalHeroPhotos,
     initialPhotosData,
     initialVideosData,
+    initialShortsData,
     initialPhotoCount,
     navEvents,
   ] = await Promise.all([
@@ -198,8 +219,10 @@ export default async function HomePage() {
     getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO),
     // Fetch initial photos for PhotoStrip (random order, 50 photos)
     getPhotos({ limit: 50, orderBy: 'random' }),
-    // Fetch initial videos for VideoStrip (20 videos)
-    getVideos({ limit: 20 }),
+    // Fetch initial videos for VideoStrip (20 full-length videos only, not shorts)
+    getVideos({ limit: 20, videoType: 'video' }),
+    // Fetch shorts for Quick Clips section
+    getVideos({ limit: 12, videoType: 'short' }),
     // Get photo count for pagination
     getPhotoCount({}),
     // Nav events for header dropdown (cached)
@@ -218,6 +241,7 @@ export default async function HomePage() {
 
   const initialPhotos = initialPhotosData
   const initialVideos = initialVideosData
+  const initialShorts = initialShortsData
 
   // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
@@ -536,6 +560,51 @@ export default async function HomePage() {
           />
         </Suspense>
       </ErrorBoundary>
+
+      {/* Quick Clips (Shorts) - Wrapped in Suspense + ErrorBoundary */}
+      {initialShorts.length > 0 && (
+        <ErrorBoundary
+          sectionName="Quick Clips"
+          fallback={
+            <section className="py-16 bg-bg-muted">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <CompactErrorFallback message="Failed to load quick clips" />
+              </div>
+            </section>
+          }
+        >
+          <Suspense
+            fallback={
+              <section className="py-16 bg-bg-muted">
+                <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="h-8 w-32 bg-bg-elevated rounded animate-pulse" />
+                  </div>
+                  <div className="flex gap-4 overflow-hidden">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-[140px] sm:w-[160px] shrink-0 aspect-[9/16] bg-bg-elevated rounded-xl animate-pulse"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            }
+          >
+            <section className="py-16 bg-bg-muted">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <ShortsCarousel
+                  videos={initialShorts}
+                  title="Quick Clips"
+                  showBandInfo={true}
+                  location="home_page"
+                />
+              </div>
+            </section>
+          </Suspense>
+        </ErrorBoundary>
+      )}
 
       {/* Company Logo Marquee - Wrapped in Suspense + ErrorBoundary */}
       <ErrorBoundary
