@@ -6,19 +6,25 @@
  * This enables client-side uploads directly to Vercel Blob,
  * bypassing the 4.5MB serverless function limit.
  *
- * Admin-only endpoint.
+ * Note: This endpoint cannot use withAdminProtection because
+ * handleUpload needs to consume the request body directly.
+ * Admin check is done manually below.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
+import { auth } from '@/lib/auth'
 
-const handleUploadRequest: ProtectedApiHandler = async (
-  request: NextRequest
-) => {
-  const body = (await request.json()) as HandleUploadBody
+export async function POST(request: NextRequest) {
+  // Manual admin check (can't use wrapper because handleUpload needs the raw request)
+  const session = await auth()
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   try {
+    const body = (await request.json()) as HandleUploadBody
+
     const jsonResponse = await handleUpload({
       body,
       request,
@@ -57,5 +63,3 @@ const handleUploadRequest: ProtectedApiHandler = async (
     )
   }
 }
-
-export const POST = withAdminProtection(handleUploadRequest)

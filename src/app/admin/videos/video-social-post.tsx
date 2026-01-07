@@ -10,6 +10,7 @@ import {
   FacebookIcon,
   InstagramIcon,
   LinkedInIcon,
+  SpinnerIcon,
 } from '@/components/icons'
 
 type Platform = 'facebook' | 'instagram' | 'linkedin'
@@ -107,6 +108,13 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
           scheduledTime: scheduleEnabled ? scheduledTime : null,
         }),
       })
+
+      // Handle non-JSON responses
+      const contentType = response.headers.get('content-type')
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text()
+        throw new Error(text || `Server error: ${response.status}`)
+      }
 
       const data = await response.json()
 
@@ -314,13 +322,18 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
             onClick={handlePost}
             disabled={isPosting || !isReadyToPost}
           >
-            {isPosting
-              ? 'Posting...'
-              : isUploading
-                ? `Uploading... ${uploadProgress}%`
-                : scheduleEnabled
-                  ? 'Schedule Post'
-                  : 'Post Video'}
+            {isPosting ? (
+              <>
+                <SpinnerIcon className="w-4 h-4 animate-spin" />
+                Posting...
+              </>
+            ) : isUploading ? (
+              `Uploading... ${uploadProgress}%`
+            ) : scheduleEnabled ? (
+              'Schedule Post'
+            ) : (
+              'Post Video'
+            )}
           </Button>
         </div>
       </Card>
