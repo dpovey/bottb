@@ -39,7 +39,7 @@ export function VideoObjectJsonLd({ videos }: VideoObjectJsonLdProps) {
     description: video.title, // Videos may not have separate description
     thumbnailUrl:
       video.thumbnail_url ||
-      `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`,
+      `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`,
     uploadDate: video.published_at || video.created_at,
     contentUrl: getYouTubeContentUrl(video),
     embedUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,

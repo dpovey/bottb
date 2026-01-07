@@ -455,7 +455,7 @@ function VideoRow({
         <img
           src={
             video.thumbnail_url ||
-            `https://img.youtube.com/vi/${video.youtube_video_id}/mqdefault.jpg`
+            `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`
           }
           alt={video.title}
           className={`object-cover rounded-lg hover:opacity-80 transition-opacity ${

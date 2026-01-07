@@ -62,12 +62,13 @@ function formatDuration(seconds: number | null): string {
 
 /**
  * Get YouTube thumbnail URL with fallback
+ * Uses hq720.jpg which is more reliably available and provides good quality (1280x720)
  */
 function getThumbnailUrl(video: Video): string {
   if (video.thumbnail_url) {
     return video.thumbnail_url
   }
-  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`
+  return `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`
 }
 
 export function VideosContent({

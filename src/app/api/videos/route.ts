@@ -144,8 +144,8 @@ const postHandler: ProtectedApiHandler = async (request) => {
           : 'video'
 
     // Use provided title or generate thumbnail URL
-    // YouTube thumbnails: https://img.youtube.com/vi/{VIDEO_ID}/maxresdefault.jpg
-    const thumbnailUrl = `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`
+    // YouTube thumbnails: hq720.jpg is more reliable and provides good quality (1280x720)
+    const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeVideoId}/hq720.jpg`
 
     // Create the video
     const createdVideo = await createVideo({

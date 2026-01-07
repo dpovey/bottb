@@ -219,8 +219,8 @@ async function seedVideos() {
       }
     }
 
-    // Generate thumbnail URL
-    const thumbnailUrl = `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`
+    // Generate thumbnail URL (hq720.jpg is more reliable and provides good quality)
+    const thumbnailUrl = `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`
 
     // Insert the video
     await sql`
