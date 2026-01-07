@@ -1,14 +1,16 @@
 /**
  * Video Social Post API
  *
- * POST /api/admin/social/video - Upload and post a video to social platforms
+ * POST /api/admin/social/video - Post a video to social platforms
  *
- * Accepts multipart form data with:
- * - video: The video file
+ * Accepts JSON with:
+ * - videoUrl: URL of the video in Vercel Blob (uploaded client-side)
  * - caption: Post caption
- * - platforms: JSON array of platforms to post to
- * - videoId: Database video ID (optional)
- * - youtubeVideoId: YouTube video ID (for reference)
+ * - platforms: Array of platforms to post to
+ * - filename: Original filename
+ *
+ * The video is uploaded client-side directly to Vercel Blob to bypass
+ * the 4.5MB serverless function payload limit.
  *
  * Admin-only endpoint.
  */
@@ -22,7 +24,7 @@ import {
   uploadVideoToInstagram,
   VideoUploadResult,
 } from '@/lib/social/video'
-import { put, del } from '@vercel/blob'
+import { del } from '@vercel/blob'
 
 type Platform = 'facebook' | 'instagram' | 'linkedin'
 
@@ -32,17 +34,26 @@ interface PostResult {
   linkedin?: VideoUploadResult
 }
 
-const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
-  try {
-    // Parse multipart form data
-    const formData = await request.formData()
-    const videoFile = formData.get('video') as File | null
-    const caption = formData.get('caption') as string
-    const platformsJson = formData.get('platforms') as string
+interface VideoPostBody {
+  videoUrl: string
+  caption: string
+  platforms: Platform[]
+  filename: string
+  videoId?: string
+  youtubeVideoId?: string
+}
 
-    if (!videoFile) {
+const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
+  let videoUrl: string | null = null
+
+  try {
+    const body: VideoPostBody = await request.json()
+    const { caption, platforms, filename } = body
+    videoUrl = body.videoUrl
+
+    if (!videoUrl) {
       return NextResponse.json(
-        { error: 'Video file is required' },
+        { error: 'Video URL is required' },
         { status: 400 }
       )
     }
@@ -54,16 +65,6 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
       )
     }
 
-    let platforms: Platform[]
-    try {
-      platforms = JSON.parse(platformsJson)
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid platforms format' },
-        { status: 400 }
-      )
-    }
-
     if (!platforms || platforms.length === 0) {
       return NextResponse.json(
         { error: 'At least one platform is required' },
@@ -71,40 +72,38 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
       )
     }
 
-    // Convert File to Blob for our upload functions
-    const videoBlob = videoFile as Blob
-    const filename = videoFile.name
-
     const results: PostResult = {}
 
-    // For Instagram, we need to upload to a public URL first
-    // We'll delete this temp file after Instagram processes it
-    let tempBlobUrl: string | null = null
-    if (platforms.includes('instagram')) {
+    // For Facebook and LinkedIn, we need to download the video and re-upload
+    // Instagram can use the public URL directly
+    let videoBlob: Blob | null = null
+
+    if (platforms.includes('facebook') || platforms.includes('linkedin')) {
       try {
-        // Upload to Vercel Blob for temporary public hosting
-        const blob = await put(
-          `videos/temp-${Date.now()}-${filename}`,
-          videoFile,
-          {
-            access: 'public',
-            addRandomSuffix: true,
-          }
-        )
-        tempBlobUrl = blob.url
-        console.log(`[Video] Uploaded temp video to blob: ${tempBlobUrl}`)
+        console.log(`[Video] Downloading video from blob: ${videoUrl}`)
+        const response = await fetch(videoUrl)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch video: ${response.statusText}`)
+        }
+        videoBlob = await response.blob()
+        console.log(`[Video] Downloaded video: ${videoBlob.size} bytes`)
       } catch (error) {
-        console.error('Failed to upload video to blob storage:', error)
-        results.instagram = {
-          success: false,
-          error:
-            'Failed to upload video for Instagram. Blob storage may not be configured.',
+        console.error('Failed to download video from blob:', error)
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : 'Failed to download video for posting'
+        if (platforms.includes('facebook')) {
+          results.facebook = { success: false, error: errorMsg }
+        }
+        if (platforms.includes('linkedin')) {
+          results.linkedin = { success: false, error: errorMsg }
         }
       }
     }
 
     // Post to Facebook
-    if (platforms.includes('facebook')) {
+    if (platforms.includes('facebook') && videoBlob) {
       try {
         const account = await getSocialAccountWithTokens('facebook')
         if (!account || account.status !== 'active') {
@@ -129,8 +128,8 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
       }
     }
 
-    // Post to Instagram
-    if (platforms.includes('instagram') && tempBlobUrl) {
+    // Post to Instagram (uses the public URL directly)
+    if (platforms.includes('instagram')) {
       try {
         const account = await getSocialAccountWithTokens('instagram')
         if (!account || account.status !== 'active') {
@@ -140,7 +139,7 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
         results.instagram = await uploadVideoToInstagram(
           account.provider_account_id,
           account.access_token,
-          tempBlobUrl,
+          videoUrl,
           { caption }
         )
       } catch (error) {
@@ -150,20 +149,10 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
             error instanceof Error ? error.message : 'Instagram post failed',
         }
       }
-
-      // Clean up: Delete the temp video from blob storage
-      // Instagram has already fetched it by now (uploadVideoToInstagram waits for processing)
-      try {
-        await del(tempBlobUrl)
-        console.log(`[Video] Deleted temp video from blob: ${tempBlobUrl}`)
-      } catch (cleanupError) {
-        // Log but don't fail the request - the post already succeeded
-        console.error('Failed to delete temp video from blob:', cleanupError)
-      }
     }
 
     // Post to LinkedIn
-    if (platforms.includes('linkedin')) {
+    if (platforms.includes('linkedin') && videoBlob) {
       try {
         const account = await getSocialAccountWithTokens('linkedin')
         if (!account || account.status !== 'active') {
@@ -205,12 +194,33 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
       status = 'failed'
     }
 
+    // Clean up: Delete the video from blob storage after all platforms have processed
+    if (videoUrl) {
+      try {
+        await del(videoUrl)
+        console.log(`[Video] Deleted video from blob: ${videoUrl}`)
+      } catch (cleanupError) {
+        // Log but don't fail the request
+        console.error('Failed to delete video from blob:', cleanupError)
+      }
+    }
+
     return NextResponse.json({
       status,
       results,
     })
   } catch (error) {
     console.error('Video post error:', error)
+
+    // Try to clean up even on error
+    if (videoUrl) {
+      try {
+        await del(videoUrl)
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Video post failed' },
       { status: 500 }

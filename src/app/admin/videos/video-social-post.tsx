@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { upload } from '@vercel/blob/client'
 import { Video } from '@/lib/db'
 import { Button, Card } from '@/components/ui'
 import { CloseIcon } from '@/components/icons'
@@ -80,6 +81,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
   const [caption, setCaption] = useState(video.title)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [isPosting, setIsPosting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -125,19 +127,37 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
     setIsPosting(true)
     setError(null)
     setSuccessMessage(null)
+    setUploadProgress(0)
 
     try {
-      // Create FormData to upload the video
-      const formData = new FormData()
-      formData.append('video', videoFile)
-      formData.append('caption', caption)
-      formData.append('platforms', JSON.stringify([...selectedPlatforms]))
-      formData.append('videoId', video.id)
-      formData.append('youtubeVideoId', video.youtube_video_id)
+      // Step 1: Upload video directly to Vercel Blob (client-side)
+      // This bypasses the 4.5MB serverless function limit
+      const blob = await upload(
+        `videos/social-${Date.now()}-${videoFile.name}`,
+        videoFile,
+        {
+          access: 'public',
+          handleUploadUrl: '/api/admin/social/video/upload',
+          onUploadProgress: (progress) => {
+            setUploadProgress(Math.round(progress.percentage))
+          },
+        }
+      )
 
+      setUploadProgress(null)
+
+      // Step 2: Call the API with the blob URL to post to social platforms
       const response = await fetch('/api/admin/social/video', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoUrl: blob.url,
+          caption,
+          platforms: [...selectedPlatforms],
+          videoId: video.id,
+          youtubeVideoId: video.youtube_video_id,
+          filename: videoFile.name,
+        }),
       })
 
       const data = await response.json()
@@ -170,6 +190,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
       setError(err instanceof Error ? err.message : 'Failed to post video')
     } finally {
       setIsPosting(false)
+      setUploadProgress(null)
     }
   }
 
@@ -365,7 +386,11 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
             onClick={handlePost}
             disabled={isPosting || selectedPlatforms.size === 0 || !videoFile}
           >
-            {isPosting ? 'Posting...' : 'Post Video'}
+            {isPosting
+              ? uploadProgress !== null
+                ? `Uploading... ${uploadProgress}%`
+                : 'Posting...'
+              : 'Post Video'}
           </Button>
         </div>
       </Card>
