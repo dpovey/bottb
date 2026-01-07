@@ -22,7 +22,7 @@ import {
   uploadVideoToInstagram,
   VideoUploadResult,
 } from '@/lib/social/video'
-import { put } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 
 type Platform = 'facebook' | 'instagram' | 'linkedin'
 
@@ -78,7 +78,8 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
     const results: PostResult = {}
 
     // For Instagram, we need to upload to a public URL first
-    let publicVideoUrl: string | null = null
+    // We'll delete this temp file after Instagram processes it
+    let tempBlobUrl: string | null = null
     if (platforms.includes('instagram')) {
       try {
         // Upload to Vercel Blob for temporary public hosting
@@ -90,7 +91,8 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
             addRandomSuffix: true,
           }
         )
-        publicVideoUrl = blob.url
+        tempBlobUrl = blob.url
+        console.log(`[Video] Uploaded temp video to blob: ${tempBlobUrl}`)
       } catch (error) {
         console.error('Failed to upload video to blob storage:', error)
         results.instagram = {
@@ -128,7 +130,7 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
     }
 
     // Post to Instagram
-    if (platforms.includes('instagram') && publicVideoUrl) {
+    if (platforms.includes('instagram') && tempBlobUrl) {
       try {
         const account = await getSocialAccountWithTokens('instagram')
         if (!account || account.status !== 'active') {
@@ -138,7 +140,7 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
         results.instagram = await uploadVideoToInstagram(
           account.provider_account_id,
           account.access_token,
-          publicVideoUrl,
+          tempBlobUrl,
           { caption }
         )
       } catch (error) {
@@ -147,6 +149,16 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
           error:
             error instanceof Error ? error.message : 'Instagram post failed',
         }
+      }
+
+      // Clean up: Delete the temp video from blob storage
+      // Instagram has already fetched it by now (uploadVideoToInstagram waits for processing)
+      try {
+        await del(tempBlobUrl)
+        console.log(`[Video] Deleted temp video from blob: ${tempBlobUrl}`)
+      } catch (cleanupError) {
+        // Log but don't fail the request - the post already succeeded
+        console.error('Failed to delete temp video from blob:', cleanupError)
       }
     }
 
