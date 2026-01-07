@@ -13,12 +13,11 @@
  * The video is uploaded client-side directly to Vercel Blob to bypass
  * the 4.5MB serverless function payload limit.
  *
- * Note: Scheduled posting requires platform-specific API features:
- * - Facebook: Supports scheduled publishing via publish_time parameter
- * - Instagram: No native scheduling API (would need our own job queue)
- * - LinkedIn: No native scheduling API (would need our own job queue)
- *
- * For now, scheduled posts to IG/LinkedIn will fail with explanation.
+ * Scheduled posting support:
+ * - Facebook: ✅ Supports via scheduled_publish_time parameter
+ * - Instagram: ✅ Supports via Content Publishing API (Business accounts only)
+ *              Rate limit: 25 posts/24hr. See: https://developers.facebook.com/blog/post/2021/01/26/introducing-instagram-content-publishing-api/
+ * - LinkedIn: ❌ No native scheduling API (would need our own job queue)
  *
  * Admin-only endpoint.
  */
@@ -160,33 +159,29 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
     }
 
     // Post to Instagram (uses the public URL directly)
-    // Note: Instagram API does not support scheduled publishing
+    // Instagram Business accounts support scheduling via Content Publishing API
+    // Rate limit: 25 API-published posts per 24-hour period
     if (platforms.includes('instagram')) {
-      if (scheduledTimestamp) {
+      try {
+        const account = await getSocialAccountWithTokens('instagram')
+        if (!account || account.status !== 'active') {
+          throw new Error('Instagram account not connected or inactive')
+        }
+
+        results.instagram = await uploadVideoToInstagram(
+          account.provider_account_id,
+          account.access_token,
+          videoUrl,
+          {
+            caption,
+            scheduledPublishTime: scheduledTimestamp || undefined,
+          }
+        )
+      } catch (error) {
         results.instagram = {
           success: false,
           error:
-            'Instagram does not support scheduled posting via API. Post immediately or use Creator Studio.',
-        }
-      } else {
-        try {
-          const account = await getSocialAccountWithTokens('instagram')
-          if (!account || account.status !== 'active') {
-            throw new Error('Instagram account not connected or inactive')
-          }
-
-          results.instagram = await uploadVideoToInstagram(
-            account.provider_account_id,
-            account.access_token,
-            videoUrl,
-            { caption }
-          )
-        } catch (error) {
-          results.instagram = {
-            success: false,
-            error:
-              error instanceof Error ? error.message : 'Instagram post failed',
-          }
+            error instanceof Error ? error.message : 'Instagram post failed',
         }
       }
     }

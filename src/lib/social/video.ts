@@ -172,10 +172,13 @@ export async function uploadVideoToFacebook(
  * - Duration: 3 seconds to 60 minutes
  * - Aspect ratio: 1.91:1 to 9:16
  *
+ * Scheduling: Instagram Business accounts can schedule posts via API.
+ * Rate limit: 25 API-published posts per 24-hour period.
+ *
  * Note: Video must be hosted at a publicly accessible URL.
- * We use a temporary upload endpoint.
  *
  * @see https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media
+ * @see https://developers.facebook.com/blog/post/2021/01/26/introducing-instagram-content-publishing-api/
  */
 export async function uploadVideoToInstagram(
   igAccountId: string,
@@ -183,7 +186,7 @@ export async function uploadVideoToInstagram(
   videoUrl: string, // Must be a publicly accessible URL
   options: Omit<VideoPostOptions, 'videoFile' | 'filename'>
 ): Promise<VideoUploadResult> {
-  const { caption, aspectRatio = 'landscape' } = options
+  const { caption, aspectRatio = 'landscape', scheduledPublishTime } = options
 
   try {
     // Determine media type based on aspect ratio
@@ -203,6 +206,14 @@ export async function uploadVideoToInstagram(
     // Add cover thumbnail for Reels
     if (mediaType === 'REELS') {
       createParams.append('share_to_feed', 'true')
+    }
+
+    // Add scheduling if provided (Instagram Business accounts only)
+    if (scheduledPublishTime) {
+      createParams.append(
+        'scheduled_publish_time',
+        String(scheduledPublishTime)
+      )
     }
 
     const createResponse = await fetch(`${createUrl}?${createParams}`, {
@@ -247,7 +258,17 @@ export async function uploadVideoToInstagram(
       }
     }
 
-    // Step 3: Publish the media
+    // Step 3: Publish the media (skip if scheduled - it will auto-publish at scheduled time)
+    if (scheduledPublishTime) {
+      // For scheduled posts, the container ID becomes the scheduled post ID
+      // Instagram will automatically publish it at the scheduled time
+      return {
+        success: true,
+        postId: containerId,
+        scheduled: true,
+      }
+    }
+
     const publishUrl = `${GRAPH_API_BASE}/${igAccountId}/media_publish`
     const publishParams = new URLSearchParams({
       access_token: accessToken,
