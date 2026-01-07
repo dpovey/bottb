@@ -301,6 +301,27 @@ export default async function AboutPage() {
           </div>
         </section>
 
+        {/* Photo Licensing */}
+        <section className="mb-20">
+          <h2 className="font-semibold text-2xl sm:text-3xl mb-6">
+            Photo Licensing
+          </h2>
+          <div className="bg-bg-elevated rounded-xl p-6 border border-white/5">
+            <p className="text-text-muted leading-relaxed mb-4">
+              All photos on this site are licensed under{' '}
+              <strong className="text-white">CC BY-NC 4.0</strong> — free for
+              non-commercial use with attribution. Commercial use requires
+              permission.
+            </p>
+            <Link
+              href="/licensing"
+              className="text-accent hover:text-accent-light transition-colors inline-flex items-center gap-1"
+            >
+              View full licensing terms →
+            </Link>
+          </div>
+        </section>
+
         {/* Sponsor Acknowledgment */}
         <section className="mb-20">
           <div className="text-center">

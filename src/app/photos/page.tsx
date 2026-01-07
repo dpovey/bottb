@@ -205,6 +205,16 @@ export default async function PhotosPage({ searchParams }: PhotosPageProps) {
           currentPage={currentPage}
           baseUrl={baseUrl}
         />
+        {/* Licensing notice */}
+        <p className="mt-8 text-xs text-text-dim">
+          Photos licensed under{' '}
+          <Link
+            href="/licensing"
+            className="text-text-muted hover:text-white transition-colors underline underline-offset-2"
+          >
+            CC BY-NC 4.0
+          </Link>
+        </p>
       </div>
     </Suspense>
   )

@@ -48,7 +48,13 @@ export function ImageObjectJsonLd({ photo }: ImageObjectJsonLdProps) {
         name: photo.event_name,
       },
     }),
-    license: 'https://creativecommons.org/licenses/by/4.0/',
+    // Licensing fields required by Google Search Console
+    license: 'https://creativecommons.org/licenses/by-nc/4.0/',
+    acquireLicensePage: `${baseUrl}/licensing`,
+    copyrightNotice: `© ${new Date().getFullYear()} Battle of the Tech Bands. Licensed under CC BY-NC 4.0.`,
+    creditText: photo.photographer
+      ? `Photo by ${photo.photographer} for Battle of the Tech Bands`
+      : 'Battle of the Tech Bands',
     copyrightHolder: {
       '@type': 'Organization',
       name: 'Battle of the Tech Bands',
