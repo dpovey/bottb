@@ -244,10 +244,10 @@ export function ShortsCarousel({
             >
               {/* Video Player - Portrait aspect ratio for Shorts */}
               <div className="relative aspect-[9/16] bg-black rounded-xl overflow-hidden">
-                {/* Close Button - inside video on mobile, above on larger screens */}
+                {/* Close Button - inside video on mobile (lower to clear Safari header), above on larger screens */}
                 <button
                   onClick={() => setSelectedVideo(null)}
-                  className="absolute top-2 right-2 md:-top-12 md:right-0 z-10 p-2 rounded-lg bg-black/50 md:bg-transparent hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  className="absolute top-14 right-2 md:-top-12 md:right-0 z-10 p-2 rounded-lg bg-black/50 md:bg-transparent hover:bg-white/10 text-white/70 hover:text-white transition-colors"
                   aria-label="Close video"
                 >
                   <CloseIcon size={24} />
