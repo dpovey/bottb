@@ -214,8 +214,14 @@ export default async function ResultsPage({
 
   const eventInfo = event.info as EventInfo | null
   const scoringVersion = parseScoringVersion(eventInfo)
-  const bands = await getBandsForEvent(eventId)
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
+
+  // Fetch bands and hero photos - needed for both legacy and modern results
+  const [bands, eventHeroPhotos] = await Promise.all([
+    getBandsForEvent(eventId),
+    getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
+  ])
+  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   const breadcrumbs = [
     { label: 'Events', href: '/' },
@@ -243,88 +249,97 @@ export default async function ResultsPage({
       winnerBand?.name || legacyWinnerName || 'Winner to be announced'
 
     return (
-      <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
-        {/* Page Header */}
-        <section className="py-12 border-b border-white/5">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-            <h1 className="text-sm tracking-widest uppercase text-text-muted mb-3">
-              Battle Results
-            </h1>
-            <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-2">
-              {event.name}
-            </h2>
-            <p className="text-text-muted">
-              {formatEventDate(event.date, event.timezone)} • {event.location}
-            </p>
-          </div>
-        </section>
-
-        {/* Overall Winner */}
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <WinnerDisplay
-              winnerName={winnerName}
-              companySlug={winnerBand?.company_slug}
-              companyName={winnerBand?.company_name}
-              companyIconUrl={winnerBand?.company_icon_url}
-              logoUrl={winnerBand?.info?.logo_url}
-              heroThumbnailUrl={winnerBand?.hero_thumbnail_url}
-              heroFocalPoint={winnerBand?.hero_focal_point}
-              scoringVersion={scoringVersion}
-              eventName={event.name}
-              eventDate={formatEventDate(event.date, event.timezone)}
-              eventLocation={event.location}
-            />
-            {/* Share buttons */}
-            <div className="mt-8">
-              <ShareResults
-                eventName={event.name}
-                winnerName={winnerName}
-                eventUrl={`${baseUrl}/results/${eventId}`}
-              />
+      <>
+        <EventJsonLd
+          event={event}
+          bands={bands}
+          heroImageUrl={
+            heroPhoto?.blob_url || (event.info?.image_url as string | undefined)
+          }
+        />
+        <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
+          {/* Page Header */}
+          <section className="py-12 border-b border-white/5">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+              <h1 className="text-sm tracking-widest uppercase text-text-muted mb-3">
+                Battle Results
+              </h1>
+              <h2 className="text-3xl lg:text-4xl font-semibold text-white mb-2">
+                {event.name}
+              </h2>
+              <p className="text-text-muted">
+                {formatEventDate(event.date, event.timezone)} • {event.location}
+              </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Participating Bands */}
-        {bands.length > 0 && (
+          {/* Overall Winner */}
           <section className="py-12">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
-                Participating Bands
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {bands.map((band) => (
-                  <Link key={band.id} href={`/band/${band.id}`}>
-                    <span
-                      className={`bg-white/5 border text-sm px-4 py-2 rounded-full transition-colors hover:bg-white/10 ${
-                        band.name === winnerName
-                          ? 'border-warning/30 text-warning'
-                          : 'border-white/10 text-white'
-                      }`}
-                    >
-                      {band.name === winnerName && '🏆 '}
-                      {band.name}
-                    </span>
-                  </Link>
-                ))}
+              <WinnerDisplay
+                winnerName={winnerName}
+                companySlug={winnerBand?.company_slug}
+                companyName={winnerBand?.company_name}
+                companyIconUrl={winnerBand?.company_icon_url}
+                logoUrl={winnerBand?.info?.logo_url}
+                heroThumbnailUrl={winnerBand?.hero_thumbnail_url}
+                heroFocalPoint={winnerBand?.hero_focal_point}
+                scoringVersion={scoringVersion}
+                eventName={event.name}
+                eventDate={formatEventDate(event.date, event.timezone)}
+                eventLocation={event.location}
+              />
+              {/* Share buttons */}
+              <div className="mt-8">
+                <ShareResults
+                  eventName={event.name}
+                  winnerName={winnerName}
+                  eventUrl={`${baseUrl}/results/${eventId}`}
+                />
               </div>
             </div>
           </section>
-        )}
 
-        {/* Photos Section */}
-        <PhotoStrip eventId={eventId} />
+          {/* Participating Bands */}
+          {bands.length > 0 && (
+            <section className="py-12">
+              <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                <h3 className="text-sm tracking-widest uppercase text-text-muted mb-6 text-center">
+                  Participating Bands
+                </h3>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {bands.map((band) => (
+                    <Link key={band.id} href={`/band/${band.id}`}>
+                      <span
+                        className={`bg-white/5 border text-sm px-4 py-2 rounded-full transition-colors hover:bg-white/10 ${
+                          band.name === winnerName
+                            ? 'border-warning/30 text-warning'
+                            : 'border-white/10 text-white'
+                        }`}
+                      >
+                        {band.name === winnerName && '🏆 '}
+                        {band.name}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
 
-        {/* Back to Event */}
-        <section className="py-8 border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-center gap-4">
-            <Link href={`/event/${eventId}`}>
-              <Button variant="outline-solid">Back to Event</Button>
-            </Link>
-          </div>
-        </section>
-      </WebLayout>
+          {/* Photos Section */}
+          <PhotoStrip eventId={eventId} />
+
+          {/* Back to Event */}
+          <section className="py-8 border-t border-white/5">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-center gap-4">
+              <Link href={`/event/${eventId}`}>
+                <Button variant="outline-solid">Back to Event</Button>
+              </Link>
+            </div>
+          </section>
+        </WebLayout>
+      </>
     )
   }
 
@@ -560,12 +575,6 @@ export default async function ResultsPage({
     visuals: band.visuals,
     totalScore: band.totalScore,
   }))
-
-  // Get event hero image for structured data
-  const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
-    eventId,
-  })
-  const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   return (
     <>
