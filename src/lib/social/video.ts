@@ -23,6 +23,8 @@ export interface VideoUploadResult {
   postId?: string
   postUrl?: string
   error?: string
+  /** True if the post was scheduled for later (Facebook only) */
+  scheduled?: boolean
 }
 
 export interface VideoPostOptions {
@@ -36,6 +38,8 @@ export interface VideoPostOptions {
   durationSeconds?: number
   /** Aspect ratio: 'landscape' (16:9), 'portrait' (9:16), or 'square' (1:1) */
   aspectRatio?: 'landscape' | 'portrait' | 'square'
+  /** Unix timestamp for scheduled publishing (Facebook only) */
+  scheduledPublishTime?: number
 }
 
 // ============================================================================
@@ -55,7 +59,7 @@ export async function uploadVideoToFacebook(
   pageAccessToken: string,
   options: VideoPostOptions
 ): Promise<VideoUploadResult> {
-  const { caption, title, videoFile } = options
+  const { caption, title, videoFile, scheduledPublishTime } = options
 
   try {
     // Step 1: Initialize the upload session
@@ -112,6 +116,17 @@ export async function uploadVideoToFacebook(
       description: caption,
     })
 
+    // Add scheduled publish time if provided
+    // Facebook requires the timestamp to be at least 10 minutes in the future
+    // and no more than 6 months away
+    if (scheduledPublishTime) {
+      finishParams.append(
+        'scheduled_publish_time',
+        String(scheduledPublishTime)
+      )
+      finishParams.append('published', 'false') // Keep unpublished until scheduled time
+    }
+
     const finishResponse = await fetch(`${uploadUrl}?${finishParams}`, {
       method: 'POST',
     })
@@ -131,6 +146,7 @@ export async function uploadVideoToFacebook(
       success: true,
       postId: video_id,
       postUrl,
+      scheduled: !!scheduledPublishTime,
     }
   } catch (error) {
     return {

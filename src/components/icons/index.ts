@@ -28,6 +28,7 @@ export { FilterIcon } from './ui/filter'
 export { GridIcon } from './ui/grid'
 export { ZoomInIcon } from './ui/zoom-in'
 export { ZoomOutIcon } from './ui/zoom-out'
+export { UploadIcon } from './ui/upload'
 
 // Admin/Dashboard Icons
 export { CalendarIcon } from './admin/calendar'

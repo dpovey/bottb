@@ -72,3 +72,10 @@ export {
   type TabsProps,
   type TabPanelProps,
 } from './tabs'
+export { FileDropzone, type FileDropzoneProps } from './file-dropzone'
+export {
+  DateTimePicker,
+  SchedulePicker,
+  type DateTimePickerProps,
+  type SchedulePickerProps,
+} from './date-time-picker'

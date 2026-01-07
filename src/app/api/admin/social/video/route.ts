@@ -8,9 +8,17 @@
  * - caption: Post caption
  * - platforms: Array of platforms to post to
  * - filename: Original filename
+ * - scheduledTime: (optional) ISO string for scheduled posting
  *
  * The video is uploaded client-side directly to Vercel Blob to bypass
  * the 4.5MB serverless function payload limit.
+ *
+ * Note: Scheduled posting requires platform-specific API features:
+ * - Facebook: Supports scheduled publishing via publish_time parameter
+ * - Instagram: No native scheduling API (would need our own job queue)
+ * - LinkedIn: No native scheduling API (would need our own job queue)
+ *
+ * For now, scheduled posts to IG/LinkedIn will fail with explanation.
  *
  * Admin-only endpoint.
  */
@@ -41,6 +49,7 @@ interface VideoPostBody {
   filename: string
   videoId?: string
   youtubeVideoId?: string
+  scheduledTime?: string | null
 }
 
 const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
@@ -48,8 +57,29 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
 
   try {
     const body: VideoPostBody = await request.json()
-    const { caption, platforms, filename } = body
+    const { caption, platforms, filename, scheduledTime } = body
     videoUrl = body.videoUrl
+
+    // Validate scheduled time if provided
+    let scheduledTimestamp: number | null = null
+    if (scheduledTime) {
+      const scheduledDate = new Date(scheduledTime)
+      if (isNaN(scheduledDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Invalid scheduled time format' },
+          { status: 400 }
+        )
+      }
+      // Must be at least 10 minutes in the future
+      const minScheduleTime = Date.now() + 10 * 60 * 1000
+      if (scheduledDate.getTime() < minScheduleTime) {
+        return NextResponse.json(
+          { error: 'Scheduled time must be at least 10 minutes in the future' },
+          { status: 400 }
+        )
+      }
+      scheduledTimestamp = Math.floor(scheduledDate.getTime() / 1000)
+    }
 
     if (!videoUrl) {
       return NextResponse.json(
@@ -102,7 +132,7 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
       }
     }
 
-    // Post to Facebook
+    // Post to Facebook (supports scheduling)
     if (platforms.includes('facebook') && videoBlob) {
       try {
         const account = await getSocialAccountWithTokens('facebook')
@@ -117,6 +147,7 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
             caption,
             videoFile: videoBlob,
             filename,
+            scheduledPublishTime: scheduledTimestamp || undefined,
           }
         )
       } catch (error) {
@@ -129,54 +160,72 @@ const handleVideoPost: ProtectedApiHandler = async (request: NextRequest) => {
     }
 
     // Post to Instagram (uses the public URL directly)
+    // Note: Instagram API does not support scheduled publishing
     if (platforms.includes('instagram')) {
-      try {
-        const account = await getSocialAccountWithTokens('instagram')
-        if (!account || account.status !== 'active') {
-          throw new Error('Instagram account not connected or inactive')
-        }
-
-        results.instagram = await uploadVideoToInstagram(
-          account.provider_account_id,
-          account.access_token,
-          videoUrl,
-          { caption }
-        )
-      } catch (error) {
+      if (scheduledTimestamp) {
         results.instagram = {
           success: false,
           error:
-            error instanceof Error ? error.message : 'Instagram post failed',
+            'Instagram does not support scheduled posting via API. Post immediately or use Creator Studio.',
+        }
+      } else {
+        try {
+          const account = await getSocialAccountWithTokens('instagram')
+          if (!account || account.status !== 'active') {
+            throw new Error('Instagram account not connected or inactive')
+          }
+
+          results.instagram = await uploadVideoToInstagram(
+            account.provider_account_id,
+            account.access_token,
+            videoUrl,
+            { caption }
+          )
+        } catch (error) {
+          results.instagram = {
+            success: false,
+            error:
+              error instanceof Error ? error.message : 'Instagram post failed',
+          }
         }
       }
     }
 
     // Post to LinkedIn
+    // Note: LinkedIn API does not support scheduled publishing for organization posts
     if (platforms.includes('linkedin') && videoBlob) {
-      try {
-        const account = await getSocialAccountWithTokens('linkedin')
-        if (!account || account.status !== 'active') {
-          throw new Error('LinkedIn account not connected or inactive')
-        }
-
-        if (!account.organization_urn) {
-          throw new Error('LinkedIn organization not configured')
-        }
-
-        results.linkedin = await uploadVideoToLinkedIn(
-          account.access_token,
-          account.organization_urn,
-          {
-            caption,
-            videoFile: videoBlob,
-            filename,
-          }
-        )
-      } catch (error) {
+      if (scheduledTimestamp) {
         results.linkedin = {
           success: false,
           error:
-            error instanceof Error ? error.message : 'LinkedIn post failed',
+            'LinkedIn does not support scheduled posting via API. Post immediately or schedule manually.',
+        }
+      } else {
+        try {
+          const account = await getSocialAccountWithTokens('linkedin')
+          if (!account || account.status !== 'active') {
+            throw new Error('LinkedIn account not connected or inactive')
+          }
+
+          if (!account.organization_urn) {
+            throw new Error('LinkedIn organization not configured')
+          }
+
+          results.linkedin = await uploadVideoToLinkedIn(
+            account.access_token,
+            account.organization_urn,
+            {
+              caption,
+              videoFile: videoBlob,
+              filename,
+            }
+          )
+        } catch (error) {
+          results.linkedin = {
+            success: false,
+            error:
+              error instanceof Error ? error.message : 'LinkedIn post failed',
+          }
         }
       }
     }
