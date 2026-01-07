@@ -97,6 +97,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
     try {
       const response = await fetch('/api/admin/social/video/post', {
         method: 'POST',
+        credentials: 'include', // Include cookies for Vercel auth
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           videoUrl: uploadedUrl,
