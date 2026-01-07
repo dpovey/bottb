@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Video, VideoType } from '@/lib/db'
 import { EditIcon, DeleteIcon, CloseIcon, PlusIcon } from '@/components/icons'
 import { ConfirmModal, Button, Card, Tabs, type Tab } from '@/components/ui'
+import { YouTubeScanner } from './youtube-scanner'
+import { VideoShareButton } from './video-social-post'
 
 type TypeFilter = 'all' | 'video' | 'short'
 
@@ -176,6 +178,19 @@ export function VideoAdminClient({
     }
   }
 
+  // Refresh videos list after YouTube import
+  const refreshVideos = useCallback(async () => {
+    try {
+      const response = await fetch('/api/videos?limit=100')
+      if (response.ok) {
+        const data = await response.json()
+        setVideos(data.videos || [])
+      }
+    } catch (err) {
+      console.error('Failed to refresh videos:', err)
+    }
+  }, [])
+
   return (
     <div className="space-y-8">
       {/* Operation Error Banner */}
@@ -191,8 +206,13 @@ export function VideoAdminClient({
         </div>
       )}
 
-      {/* Add Video Button */}
-      <div className="flex justify-end">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <YouTubeScanner
+          events={events}
+          bandsMap={bandsMap}
+          onVideosImported={refreshVideos}
+        />
         <Button variant="accent" onClick={() => setIsAddingVideo(true)}>
           <PlusIcon size={20} />
           Add Video
@@ -577,6 +597,7 @@ function VideoRow({
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-2">
+        <VideoShareButton video={video} />
         <button
           onClick={() => setIsEditing(!isEditing)}
           className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white cursor-pointer"
