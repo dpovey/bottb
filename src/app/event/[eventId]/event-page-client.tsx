@@ -18,6 +18,7 @@ import {
 import { ChevronRightIcon } from '@/components/icons'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
+import { ShortsCarousel } from '@/components/shorts-carousel'
 import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
@@ -27,6 +28,7 @@ interface EventPageClientProps {
   bands: DbBand[]
   heroPhotos: Photo[]
   videos: Video[]
+  shorts?: Video[]
   navEvents?: {
     upcoming: NavEvent[]
     past: NavEvent[]
@@ -71,6 +73,7 @@ export function EventPageClient({
   bands,
   heroPhotos,
   videos,
+  shorts = [],
   navEvents,
 }: EventPageClientProps) {
   const eventId = event.id
@@ -337,6 +340,20 @@ export function EventPageClient({
             <VideoCarousel
               videos={videos}
               title="Videos"
+              showBandInfo={true}
+              location="event_page"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Shorts Section */}
+      {shorts.length > 0 && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <ShortsCarousel
+              videos={shorts}
+              title="Shorts"
               showBandInfo={true}
               location="event_page"
             />

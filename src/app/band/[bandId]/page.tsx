@@ -25,6 +25,7 @@ import {
 } from '@/components/ui'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
+import { ShortsCarousel } from '@/components/shorts-carousel'
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -501,8 +502,11 @@ export default async function BandPage({
       ? allBands[currentBandIndex + 1]
       : null
 
-  // Fetch videos for this band
-  const videos = await getVideos({ bandId })
+  // Fetch videos and shorts for this band
+  const [videos, shorts] = await Promise.all([
+    getVideos({ bandId, videoType: 'video' }),
+    getVideos({ bandId, videoType: 'short' }),
+  ])
 
   // Fetch setlist for this band (only shown when event is finalized)
   let setlist: SetlistSong[] = []
@@ -976,6 +980,20 @@ export default async function BandPage({
             <VideoCarousel
               videos={videos}
               title="Videos"
+              showBandInfo={false}
+              location="band_page"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Shorts Section */}
+      {shorts.length > 0 && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <ShortsCarousel
+              videos={shorts}
+              title="Shorts"
               showBandInfo={false}
               location="band_page"
             />

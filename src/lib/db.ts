@@ -12,6 +12,7 @@ export type {
   CrowdNoiseMeasurement,
   FinalizedResult,
   Video,
+  VideoType,
   HeroFocalPoint,
   Photo,
   PhotoLabel,
@@ -1584,6 +1585,7 @@ export interface GetVideosOptions {
   eventId?: string
   bandId?: string // For internal use (band detail page)
   companySlug?: string
+  videoType?: 'video' | 'short' // Filter by video type
   limit?: number
   offset?: number
 }
@@ -1594,7 +1596,14 @@ export interface GetVideosOptions {
 export async function getVideos(
   options: GetVideosOptions = {}
 ): Promise<Video[]> {
-  const { eventId, bandId, companySlug, limit = 50, offset = 0 } = options
+  const {
+    eventId,
+    bandId,
+    companySlug,
+    videoType,
+    limit = 50,
+    offset = 0,
+  } = options
 
   try {
     const { rows } = await sql<Video>`
@@ -1612,7 +1621,8 @@ export async function getVideos(
         (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
         AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
-      ORDER BY v.sort_order ASC, v.published_at DESC NULLS LAST, v.created_at DESC
+        AND (${videoType || null}::text IS NULL OR v.video_type = ${videoType || null})
+      ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC, v.sort_order ASC
       LIMIT ${limit} OFFSET ${offset}
     `
     return rows
@@ -1680,7 +1690,7 @@ export async function getVideoByYoutubeId(
 export async function getVideoCount(
   options: Omit<GetVideosOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
-  const { eventId, bandId, companySlug } = options
+  const { eventId, bandId, companySlug, videoType } = options
 
   try {
     const { rows } = await sql<{ count: string }>`
@@ -1691,6 +1701,7 @@ export async function getVideoCount(
         (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
         AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
+        AND (${videoType || null}::text IS NULL OR v.video_type = ${videoType || null})
     `
     return parseInt(rows[0]?.count || '0', 10)
   } catch (error) {
@@ -1718,11 +1729,12 @@ export async function createVideo(
     const { rows } = await sql<Video>`
       INSERT INTO videos (
         youtube_video_id, title, event_id, band_id, 
-        duration_seconds, thumbnail_url, published_at, sort_order
+        duration_seconds, thumbnail_url, published_at, sort_order, video_type
       )
       VALUES (
         ${video.youtube_video_id}, ${video.title}, ${video.event_id}, ${video.band_id},
-        ${video.duration_seconds}, ${video.thumbnail_url}, ${video.published_at}, ${video.sort_order}
+        ${video.duration_seconds}, ${video.thumbnail_url}, ${video.published_at}, ${video.sort_order},
+        ${video.video_type || 'video'}
       )
       RETURNING *
     `
@@ -1760,7 +1772,8 @@ export async function updateVideo(
         duration_seconds = COALESCE(${video.duration_seconds || null}, duration_seconds),
         thumbnail_url = COALESCE(${video.thumbnail_url || null}, thumbnail_url),
         published_at = COALESCE(${video.published_at || null}, published_at),
-        sort_order = COALESCE(${video.sort_order ?? null}, sort_order)
+        sort_order = COALESCE(${video.sort_order ?? null}, sort_order),
+        video_type = COALESCE(${video.video_type || null}, video_type)
       WHERE id = ${videoId}
       RETURNING *
     `

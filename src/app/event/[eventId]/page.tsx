@@ -105,12 +105,13 @@ export default async function EventPage({
   const { eventId } = await params
 
   // Fetch all data in parallel
-  const [event, bands, eventHeroPhotos, videosData, navEvents] =
+  const [event, bands, eventHeroPhotos, videos, shorts, navEvents] =
     await Promise.all([
       getEventById(eventId),
       getBandsForEvent(eventId),
       getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
-      getVideos({ eventId }),
+      getVideos({ eventId, videoType: 'video' }),
+      getVideos({ eventId, videoType: 'short' }),
       getNavEvents(),
     ])
 
@@ -136,7 +137,8 @@ export default async function EventPage({
         event={event}
         bands={bands}
         heroPhotos={eventHeroPhotos}
-        videos={videosData}
+        videos={videos}
+        shorts={shorts}
         navEvents={navEvents}
       />
     </>

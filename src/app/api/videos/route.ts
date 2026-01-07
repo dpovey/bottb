@@ -21,13 +21,18 @@ export const GET = withPublicRateLimit(async function GET(
     const searchParams = request.nextUrl.searchParams
     const eventId = searchParams.get('event') || undefined
     const companySlug = searchParams.get('company') || undefined
+    const videoTypeParam = searchParams.get('type')
+    const videoType =
+      videoTypeParam === 'video' || videoTypeParam === 'short'
+        ? videoTypeParam
+        : undefined
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = (page - 1) * limit
 
     const [videos, total] = await Promise.all([
-      getVideos({ eventId, companySlug, limit, offset }),
-      getVideoCount({ eventId, companySlug }),
+      getVideos({ eventId, companySlug, videoType, limit, offset }),
+      getVideoCount({ eventId, companySlug, videoType }),
     ])
 
     return NextResponse.json({
@@ -90,13 +95,20 @@ function _parseDuration(duration: string): number | null {
 }
 
 /**
+ * Detect if URL is a YouTube Short
+ */
+function isYoutubeShort(url: string): boolean {
+  return url.includes('/shorts/')
+}
+
+/**
  * POST /api/videos
  * Admin endpoint to create a new video
  */
 const postHandler: ProtectedApiHandler = async (request) => {
   try {
     const body = await request.json()
-    const { youtubeUrl, title, eventId, bandId, sortOrder } = body
+    const { youtubeUrl, title, eventId, bandId, sortOrder, videoType } = body
 
     if (!youtubeUrl) {
       return NextResponse.json(
@@ -123,9 +135,17 @@ const postHandler: ProtectedApiHandler = async (request) => {
       )
     }
 
+    // Auto-detect video type from URL if not explicitly provided
+    const detectedType =
+      videoType === 'video' || videoType === 'short'
+        ? videoType
+        : isYoutubeShort(youtubeUrl)
+          ? 'short'
+          : 'video'
+
     // Use provided title or generate thumbnail URL
-    // YouTube thumbnails: https://img.youtube.com/vi/{VIDEO_ID}/maxresdefault.jpg
-    const thumbnailUrl = `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`
+    // YouTube thumbnails: hq720.jpg is more reliable and provides good quality (1280x720)
+    const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeVideoId}/hq720.jpg`
 
     // Create the video
     const createdVideo = await createVideo({
@@ -137,6 +157,7 @@ const postHandler: ProtectedApiHandler = async (request) => {
       thumbnail_url: thumbnailUrl,
       published_at: null,
       sort_order: sortOrder ?? 0,
+      video_type: detectedType,
     })
 
     // Fetch the video with joined fields (event_name, band_name, etc.)

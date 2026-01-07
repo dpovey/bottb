@@ -13,7 +13,7 @@ import {
   CloseIcon,
 } from '@/components/icons'
 
-interface VideoCarouselProps {
+interface ShortsCarouselProps {
   videos: Video[]
   title?: string
   showBandInfo?: boolean
@@ -22,44 +22,33 @@ interface VideoCarouselProps {
 }
 
 /**
- * Format duration in seconds to MM:SS or H:MM:SS
- */
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return ''
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
-}
-
-/**
- * Get YouTube thumbnail URL with fallback
- * Uses hq720.jpg which is more reliably available than maxresdefault.jpg
- * and provides good quality (1280x720)
+ * Get YouTube Short thumbnail URL
+ * For Shorts (vertical video), we use hq720.jpg which preserves portrait aspect ratio
+ * and provides 720p quality. Falls back to maxresdefault.jpg if needed.
  */
 function getThumbnailUrl(video: Video): string {
   if (video.thumbnail_url) {
     return video.thumbnail_url
   }
+  // Use hq720.jpg for Shorts - it preserves the original aspect ratio (portrait for Shorts)
+  // and provides 720p quality (1280x720 for landscape, or portrait equivalent)
   return `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`
 }
 
 /**
- * Video Carousel Component
+ * Shorts Carousel Component
  *
- * Displays a horizontal scrolling carousel of YouTube video thumbnails.
- * Clicking a thumbnail opens a modal with the embedded YouTube player.
+ * Displays a horizontal scrolling carousel of YouTube Shorts thumbnails.
+ * Shorts are displayed in portrait aspect ratio (9:16).
+ * Clicking a thumbnail opens a modal with the embedded YouTube Short player.
  */
-export function VideoCarousel({
+export function ShortsCarousel({
   videos,
-  title = 'Videos',
+  title = 'Shorts',
   showBandInfo = true,
   className = '',
-  location = 'video_carousel',
-}: VideoCarouselProps) {
+  location = 'shorts_carousel',
+}: ShortsCarouselProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -125,7 +114,7 @@ export function VideoCarousel({
           <div className="flex items-center gap-3">
             {/* Subscribe link */}
             <a
-              href="https://youtube.com/@battleofthetechbands?sub_confirmation=1&utm_source=bottb&utm_medium=website&utm_campaign=video-carousel"
+              href="https://youtube.com/@battleofthetechbands?sub_confirmation=1&utm_source=bottb&utm_medium=website&utm_campaign=shorts-carousel"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {
@@ -141,7 +130,7 @@ export function VideoCarousel({
             </a>
 
             {/* Navigation Arrows */}
-            {videos.length > 2 && (
+            {videos.length > 4 && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => scroll('left')}
@@ -164,7 +153,7 @@ export function VideoCarousel({
           </div>
         </div>
 
-        {/* Video Cards Carousel */}
+        {/* Shorts Cards Carousel - Portrait aspect ratio */}
         <div
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent snap-x snap-mandatory"
@@ -187,39 +176,37 @@ export function VideoCarousel({
                   location,
                 })
               }}
-              className="group shrink-0 w-[280px] sm:w-[320px] snap-start"
+              className="group shrink-0 w-[140px] sm:w-[160px] snap-start"
             >
-              {/* Thumbnail */}
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-bg-elevated border border-white/5 group-hover:border-white/20 transition-colors">
+              {/* Thumbnail - Portrait 9:16 aspect ratio */}
+              <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-bg-elevated border border-white/5 group-hover:border-white/20 transition-colors">
                 <Image
                   src={getThumbnailUrl(video)}
                   alt={video.title}
                   fill
-                  sizes="(max-width: 640px) 280px, 320px"
+                  sizes="(max-width: 640px) 140px, 160px"
                   className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
                   loading="lazy"
                 />
 
-                {/* Duration Badge */}
-                {video.duration_seconds && (
-                  <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-sm bg-black/80 text-xs font-medium">
-                    {formatDuration(video.duration_seconds)}
-                  </div>
-                )}
+                {/* YouTube Shorts Icon */}
+                <div className="absolute top-2 left-2 bg-black/60 rounded-full p-1.5">
+                  <YouTubeIcon size={16} className="text-white" />
+                </div>
 
-                {/* YouTube Icon */}
-                <div className="absolute top-2 left-2">
-                  <YouTubeIcon size={24} className="text-white/70" />
+                {/* Shorts badge */}
+                <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  SHORTS
                 </div>
               </div>
 
               {/* Video Info */}
-              <div className="mt-3 text-left">
-                <h3 className="font-medium text-sm line-clamp-2 group-hover:text-accent transition-colors">
+              <div className="mt-2 text-left">
+                <h3 className="font-medium text-xs line-clamp-2 group-hover:text-accent transition-colors">
                   {video.title}
                 </h3>
                 {showBandInfo && video.band_name && (
-                  <div className="mt-1 flex items-center gap-2 text-text-muted text-xs">
+                  <div className="mt-1 flex items-center gap-1 text-text-muted text-[10px]">
                     {video.company_icon_url && (
                       <CompanyIcon
                         iconUrl={video.company_icon_url}
@@ -229,14 +216,6 @@ export function VideoCarousel({
                       />
                     )}
                     <span className="truncate">{video.band_name}</span>
-                    {video.event_name && (
-                      <>
-                        <span className="text-text-dim">•</span>
-                        <span className="truncate text-text-dim">
-                          {video.event_name}
-                        </span>
-                      </>
-                    )}
                   </div>
                 )}
               </div>
@@ -245,7 +224,7 @@ export function VideoCarousel({
         </div>
       </div>
 
-      {/* Video Modal */}
+      {/* Video Modal - Portrait orientation for Shorts */}
       <AnimatePresence>
         {selectedVideo && (
           <motion.div
@@ -260,7 +239,7 @@ export function VideoCarousel({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className="relative w-full max-w-5xl"
+              className="relative w-full max-w-sm"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -272,8 +251,8 @@ export function VideoCarousel({
                 <CloseIcon size={24} />
               </button>
 
-              {/* Video Player */}
-              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+              {/* Video Player - Portrait aspect ratio for Shorts */}
+              <div className="relative aspect-[9/16] bg-black rounded-xl overflow-hidden">
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${selectedVideo.youtube_video_id}?autoplay=1&rel=0`}
                   title={selectedVideo.title}
@@ -285,7 +264,7 @@ export function VideoCarousel({
 
               {/* Video Info */}
               <div className="mt-4">
-                <h3 className="font-semibold text-xl">{selectedVideo.title}</h3>
+                <h3 className="font-semibold text-lg">{selectedVideo.title}</h3>
                 {selectedVideo.band_name && (
                   <div className="mt-2 flex items-center gap-2 text-text-muted text-sm">
                     {selectedVideo.company_icon_url && (

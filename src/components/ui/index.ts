@@ -64,3 +64,11 @@ export {
   type AdminSelectProps,
   type AdminTextareaProps,
 } from './admin-form-field'
+export {
+  Tabs,
+  TabPanel,
+  useTabs,
+  type Tab,
+  type TabsProps,
+  type TabPanelProps,
+} from './tabs'

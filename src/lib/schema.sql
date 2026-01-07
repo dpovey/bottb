@@ -223,7 +223,9 @@ CREATE TABLE IF NOT EXISTS videos (
     thumbnail_url text,
     published_at timestamp with time zone,
     sort_order integer DEFAULT 0,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    video_type character varying(20) DEFAULT 'video'::character varying NOT NULL,
+    CONSTRAINT videos_video_type_check CHECK (((video_type)::text = ANY ((ARRAY['video'::character varying, 'short'::character varying])::text[])))
 );
 
 -- Setlist songs table
@@ -400,6 +402,7 @@ CREATE INDEX IF NOT EXISTS idx_videos_event_id ON videos(event_id);
 CREATE INDEX IF NOT EXISTS idx_videos_band_id ON videos(band_id);
 CREATE INDEX IF NOT EXISTS idx_videos_youtube_id ON videos(youtube_video_id);
 CREATE INDEX IF NOT EXISTS idx_videos_sort_order ON videos(sort_order);
+CREATE INDEX IF NOT EXISTS idx_videos_video_type ON videos(video_type);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_band_id ON setlist_songs(band_id);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_title ON setlist_songs(title);
 CREATE INDEX IF NOT EXISTS idx_setlist_songs_artist ON setlist_songs(artist);
