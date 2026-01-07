@@ -16,12 +16,15 @@ interface ShortsGridProps {
 
 /**
  * Get YouTube Short thumbnail URL
+ * For Shorts (vertical video), we use hq720.jpg which preserves portrait aspect ratio
+ * and provides 720p quality.
  */
 function getThumbnailUrl(video: Video): string {
   if (video.thumbnail_url) {
     return video.thumbnail_url
   }
-  return `https://img.youtube.com/vi/${video.youtube_video_id}/maxresdefault.jpg`
+  // Use hq720.jpg for Shorts - it preserves the original aspect ratio (portrait for Shorts)
+  return `https://i.ytimg.com/vi/${video.youtube_video_id}/hq720.jpg`
 }
 
 /**
