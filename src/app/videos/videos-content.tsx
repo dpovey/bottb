@@ -460,12 +460,12 @@ export function VideosContent({
               className="relative w-full max-w-5xl aspect-video"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close button */}
+              {/* Close button - inside video on mobile, above on larger screens */}
               <button
                 onClick={() => setSelectedVideo(null)}
-                className="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors"
+                className="absolute top-2 right-2 md:-top-12 md:right-0 z-10 p-2 rounded-lg bg-black/50 md:bg-transparent hover:bg-white/10 text-white/70 hover:text-white transition-colors"
               >
-                <CloseIcon className="w-8 h-8" />
+                <CloseIcon className="w-6 h-6 md:w-8 md:h-8" />
               </button>
 
               {/* YouTube embed */}
