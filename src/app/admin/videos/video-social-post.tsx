@@ -95,7 +95,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
     setSuccessMessage(null)
 
     try {
-      const response = await fetch('/api/admin/social/video', {
+      const response = await fetch('/api/admin/social/video/post', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
