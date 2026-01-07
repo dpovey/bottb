@@ -42,8 +42,8 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://0qipqwe5exqqyona.public.blob.vercel-storage.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://www.facebook.com",
       // Fonts: self, Google Fonts
       "font-src 'self' https://fonts.gstatic.com",
-      // Connect: API calls, analytics, PostHog (including assets for session recording)
-      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://vitals.vercel-insights.com https://www.facebook.com https://*.vercel-storage.com",
+      // Connect: API calls, analytics, PostHog, Vercel Blob uploads
+      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://vitals.vercel-insights.com https://www.facebook.com https://vercel.com https://*.vercel-storage.com",
       // Frames: YouTube embeds
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com",
       // Media: self, blob storage
