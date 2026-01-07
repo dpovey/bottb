@@ -7,8 +7,8 @@ import {
   getVideoByYoutubeId,
 } from '@/lib/db'
 import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
-
 import { withPublicRateLimit } from '@/lib/api-protection'
+import { fetchYouTubeVideoMetadata } from '@/lib/youtube-api'
 
 /**
  * GET /api/videos
@@ -80,21 +80,6 @@ function extractYoutubeVideoId(input: string): string | null {
 }
 
 /**
- * Parse ISO 8601 duration to seconds (e.g., PT3M33S -> 213)
- * Reserved for future use with YouTube API metadata fetching
- */
-function _parseDuration(duration: string): number | null {
-  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-  if (!match) return null
-
-  const hours = parseInt(match[1] || '0', 10)
-  const minutes = parseInt(match[2] || '0', 10)
-  const seconds = parseInt(match[3] || '0', 10)
-
-  return hours * 3600 + minutes * 60 + seconds
-}
-
-/**
  * Detect if URL is a YouTube Short
  */
 function isYoutubeShort(url: string): boolean {
@@ -143,19 +128,25 @@ const postHandler: ProtectedApiHandler = async (request) => {
           ? 'short'
           : 'video'
 
-    // Use provided title or generate thumbnail URL
+    // Fetch metadata from YouTube API (optional - will use fallbacks if unavailable)
+    const metadata = await fetchYouTubeVideoMetadata(youtubeVideoId)
+
+    // Use metadata if available, otherwise fall back to defaults
     // YouTube thumbnails: hq720.jpg is more reliable and provides good quality (1280x720)
-    const thumbnailUrl = `https://i.ytimg.com/vi/${youtubeVideoId}/hq720.jpg`
+    const thumbnailUrl =
+      metadata?.thumbnailUrl ||
+      `https://i.ytimg.com/vi/${youtubeVideoId}/hq720.jpg`
+    const videoTitle = title || metadata?.title || `Video ${youtubeVideoId}`
 
     // Create the video
     const createdVideo = await createVideo({
       youtube_video_id: youtubeVideoId,
-      title: title || `Video ${youtubeVideoId}`,
+      title: videoTitle,
       event_id: eventId || null,
       band_id: bandId || null,
-      duration_seconds: null,
+      duration_seconds: metadata?.durationSeconds ?? null,
       thumbnail_url: thumbnailUrl,
-      published_at: null,
+      published_at: metadata?.publishedAt ?? null,
       sort_order: sortOrder ?? 0,
       video_type: detectedType,
     })
