@@ -13,6 +13,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Run Lighthouse
         id: lighthouse
         uses: treosh/lighthouse-ci-action@v12
@@ -21,6 +35,41 @@ jobs:
             ${{ github.event.deployment_status.target_url }}?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           uploadArtifacts: true
           temporaryPublicStorage: true
+
+      - name: Validate Structured Data
+        id: schema
+        continue-on-error: true
+        run: |
+          # Run schema validation and capture output
+          pnpm schema:validate --url="${{ github.event.deployment_status.target_url }}?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" --json > schema-results.json 2>&1 || true
+
+          # Extract summary from JSON output
+          if [ -f schema-results.json ]; then
+            PAGES_VALIDATED=$(jq -r '.pagesValidated // 0' schema-results.json)
+            PAGES_PASSED=$(jq -r '.summary.pagesPassed // 0' schema-results.json)
+            PAGES_FAILED=$(jq -r '.summary.pagesFailed // 0' schema-results.json)
+            TESTS_PASSED=$(jq -r '.summary.totalPassed // 0' schema-results.json)
+            TESTS_FAILED=$(jq -r '.summary.totalFailed // 0' schema-results.json)
+
+            echo "pages_validated=$PAGES_VALIDATED" >> $GITHUB_OUTPUT
+            echo "pages_passed=$PAGES_PASSED" >> $GITHUB_OUTPUT
+            echo "pages_failed=$PAGES_FAILED" >> $GITHUB_OUTPUT
+            echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+            echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+
+            if [ "$TESTS_FAILED" -gt 0 ]; then
+              echo "status=failed" >> $GITHUB_OUTPUT
+            else
+              echo "status=passed" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "pages_validated=0" >> $GITHUB_OUTPUT
+            echo "pages_passed=0" >> $GITHUB_OUTPUT
+            echo "pages_failed=0" >> $GITHUB_OUTPUT
+            echo "tests_passed=0" >> $GITHUB_OUTPUT
+            echo "tests_failed=0" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post PR Comment
         if: github.event.deployment_status.environment == 'Preview'
@@ -32,6 +81,17 @@ jobs:
             const formatScore = score => Math.round(score * 100);
             const getEmoji = score => score >= 0.9 ? '🟢' : score >= 0.5 ? '🟡' : '🔴';
 
+            // Schema validation results
+            const schemaStatus = '${{ steps.schema.outputs.status }}';
+            const pagesValidated = '${{ steps.schema.outputs.pages_validated }}';
+            const pagesPassed = '${{ steps.schema.outputs.pages_passed }}';
+            const pagesFailed = '${{ steps.schema.outputs.pages_failed }}';
+            const testsPassed = '${{ steps.schema.outputs.tests_passed }}';
+            const testsFailed = '${{ steps.schema.outputs.tests_failed }}';
+
+            const schemaEmoji = schemaStatus === 'passed' ? '🟢' : schemaStatus === 'failed' ? '🔴' : '⚠️';
+            const schemaScore = schemaStatus === 'passed' ? '100' : schemaStatus === 'failed' ? '0' : 'Error';
+
             const comment = `## ⚡ Lighthouse Report
 
             | Category | Score |
@@ -41,7 +101,18 @@ jobs:
             | ${getEmoji(results.summary['best-practices'])} Best Practices | ${formatScore(results.summary['best-practices'])} |
             | ${getEmoji(results.summary.seo)} SEO | ${formatScore(results.summary.seo)} |
 
-            [📊 Full Report](${Object.values(links)[0]})`;
+            [📊 Full Report](${Object.values(links)[0]})
+
+            ## 📋 Structured Data Validation
+
+            | Metric | Result |
+            |--------|--------|
+            | ${schemaEmoji} Status | ${schemaStatus === 'passed' ? 'All tests passed' : schemaStatus === 'failed' ? 'Some tests failed' : 'Error running validation'} |
+            | Pages validated | ${pagesValidated} |
+            | Pages passed | ${pagesPassed} |
+            | Pages failed | ${pagesFailed} |
+            | Tests passed | ${testsPassed} |
+            | Tests failed | ${testsFailed} |`;
 
             // Find associated PR
             const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({

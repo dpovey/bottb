@@ -54,7 +54,8 @@
     "e2e:smart-restore": "tsx e2e/smart-restore.ts",
     "e2e:test": "playwright test",
     "e2e": "pnpm e2e:docker:up && pnpm e2e:smart-restore && pnpm e2e:test",
-    "seo:audit": "dotenv -e .env.local -- tsx src/scripts/seo-audit.ts"
+    "seo:audit": "dotenv -e .env.local -- tsx src/scripts/seo-audit.ts",
+    "schema:validate": "tsx src/scripts/validate-schema.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.2",
@@ -133,6 +134,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3.7.4",
     "storybook": "^10.1.10",
+    "structured-data-testing-tool": "^4.5.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

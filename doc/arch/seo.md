@@ -2,9 +2,11 @@
 
 Search engine optimization implementation across the application.
 
-## SEO Audit
+## SEO Validation
 
-Run the SEO audit script to validate all public pages:
+### SEO Audit
+
+Run the SEO audit script to validate meta tags and page structure:
 
 ```bash
 # Start the dev server first
@@ -31,6 +33,34 @@ The audit checks:
 - OpenGraph tags (og:title, og:description)
 - H1 tag (exactly one per page)
 - Duplicate title detection
+
+### Schema Validation
+
+Validate JSON-LD structured data against Google Rich Results requirements:
+
+```bash
+# Start the dev server first
+pnpm dev:restart
+
+# Run schema validation (default: localhost:3030)
+pnpm schema:validate
+
+# Run against production
+pnpm schema:validate --url=https://www.battleofthetechbands.com
+
+# Additional options
+pnpm schema:validate --verbose   # Show detailed output per page
+pnpm schema:validate --json      # Output as JSON (for CI)
+pnpm schema:validate --max=5     # Test up to 5 pages per schema type
+```
+
+The validation:
+
+- Fetches sitemap and samples pages with structured data
+- Validates JSON-LD against Google Rich Results presets
+- Tests MusicEvent, MusicGroup, FAQPage, ImageObject, VideoObject, Organization schemas
+- Reports missing required fields and invalid values
+- Runs in CI on every Vercel preview deployment
 
 ## SEO Checklist for New Pages
 
@@ -276,12 +306,13 @@ Twitter card: `summary_large_image`
 
 ## Key Files
 
-| File                       | Purpose               |
-| -------------------------- | --------------------- |
-| `src/lib/seo.ts`           | Base URL utility      |
-| `src/app/sitemap.ts`       | Sitemap generation    |
-| `src/app/robots.ts`        | Robots.txt generation |
-| `src/components/seo/`      | JSON-LD components    |
-| `*/opengraph-image.tsx`    | Dynamic OG images     |
-| `public/llms.txt`          | AI crawler info       |
-| `src/scripts/seo-audit.ts` | SEO validation script |
+| File                             | Purpose                   |
+| -------------------------------- | ------------------------- |
+| `src/lib/seo.ts`                 | Base URL utility          |
+| `src/app/sitemap.ts`             | Sitemap generation        |
+| `src/app/robots.ts`              | Robots.txt generation     |
+| `src/components/seo/`            | JSON-LD components        |
+| `*/opengraph-image.tsx`          | Dynamic OG images         |
+| `public/llms.txt`                | AI crawler info           |
+| `src/scripts/seo-audit.ts`       | Meta tag validation       |
+| `src/scripts/validate-schema.ts` | JSON-LD schema validation |
