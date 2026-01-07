@@ -263,17 +263,16 @@ export function VideoCarousel({
               className="relative w-full max-w-5xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="absolute -top-12 right-0 p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-                aria-label="Close video"
-              >
-                <CloseIcon size={24} />
-              </button>
-
               {/* Video Player */}
               <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                {/* Close Button - inside video on mobile, above on larger screens */}
+                <button
+                  onClick={() => setSelectedVideo(null)}
+                  className="absolute top-2 right-2 md:-top-12 md:right-0 z-10 p-2 rounded-lg bg-black/50 md:bg-transparent hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+                  aria-label="Close video"
+                >
+                  <CloseIcon size={24} />
+                </button>
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${selectedVideo.youtube_video_id}?autoplay=1&rel=0`}
                   title={selectedVideo.title}
