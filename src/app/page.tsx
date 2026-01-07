@@ -562,7 +562,7 @@ export default async function HomePage() {
       </ErrorBoundary>
 
       {/* Quick Clips (Shorts) - Wrapped in Suspense + ErrorBoundary */}
-      {initialShorts.length > 0 && (
+      {initialShorts && initialShorts.length > 0 && (
         <ErrorBoundary
           sectionName="Quick Clips"
           fallback={
