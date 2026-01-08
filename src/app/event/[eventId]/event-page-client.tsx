@@ -94,6 +94,11 @@ export function EventPageClient({
   // For 2022.1 events, we show the stored winner prominently
   const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner
 
+  // Find winner band for company info display
+  const winnerBand = show2022Winner
+    ? bands.find((b) => b.name.toLowerCase() === storedWinner?.toLowerCase())
+    : undefined
+
   return (
     <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
       {/* Hero Section with Event Image(s) - supports multiple hero photos */}
@@ -141,47 +146,41 @@ export function EventPageClient({
       </section>
 
       {/* Winner Section - For 2022.1 finalized events with company badge */}
-      {show2022Winner &&
-        (() => {
-          const winnerBand = bands.find(
-            (b) => b.name.toLowerCase() === storedWinner?.toLowerCase()
-          )
-          return (
-            <section className="py-8 bg-linear-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
-              <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-4xl">🏆</span>
-                    <div>
-                      <p className="text-sm text-warning uppercase tracking-widest">
-                        Champion
-                      </p>
-                      <p className="text-2xl font-semibold text-white">
-                        {storedWinner}
-                      </p>
-                      {winnerBand?.company_slug && winnerBand?.company_name && (
-                        <div className="mt-1">
-                          <CompanyBadge
-                            slug={winnerBand.company_slug}
-                            name={winnerBand.company_name}
-                            iconUrl={winnerBand.company_icon_url}
-                            variant="default"
-                            size="sm"
-                          />
-                        </div>
-                      )}
+      {show2022Winner && (
+        <section className="py-8 bg-linear-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="text-4xl">🏆</span>
+                <div>
+                  <p className="text-sm text-warning uppercase tracking-widest">
+                    Champion
+                  </p>
+                  <p className="text-2xl font-semibold text-white">
+                    {storedWinner}
+                  </p>
+                  {winnerBand?.company_slug && winnerBand?.company_name && (
+                    <div className="mt-1">
+                      <CompanyBadge
+                        slug={winnerBand.company_slug}
+                        name={winnerBand.company_name}
+                        iconUrl={winnerBand.company_icon_url}
+                        variant="default"
+                        size="sm"
+                      />
                     </div>
-                  </div>
-                  <Link href={`/results/${eventId}`}>
-                    <Button variant="outline-solid" size="sm">
-                      Results
-                    </Button>
-                  </Link>
+                  )}
                 </div>
               </div>
-            </section>
-          )
-        })()}
+              <Link href={`/results/${eventId}`}>
+                <Button variant="outline-solid" size="sm">
+                  Results
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Action Section */}
       {(event.status === 'voting' ||
