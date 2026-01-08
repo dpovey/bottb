@@ -152,8 +152,8 @@ importers:
         specifier: ^25.0.3
         version: 25.0.3
       '@types/pg':
-        specifier: ^8.11.0
-        version: 8.11.6
+        specifier: ^8.16.0
+        version: 8.16.0
       '@types/qrcode':
         specifier: ^1.5.5
         version: 1.5.6
@@ -219,7 +219,7 @@ importers:
         version: 1.17.2(@types/node@25.0.3)
       node-pg-migrate:
         specifier: ^8.0.4
-        version: 8.0.4(@types/pg@8.11.6)(pg@8.16.3)
+        version: 8.0.4(@types/pg@8.16.0)(pg@8.16.3)
       pg:
         specifier: ^8.13.0
         version: 8.16.3
@@ -2095,6 +2095,9 @@ packages:
 
   '@types/pg@8.11.6':
     resolution: {integrity: sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ==}
+
+  '@types/pg@8.16.0':
+    resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
 
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
@@ -8558,13 +8561,19 @@ snapshots:
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.11.6
+      '@types/pg': 8.16.0
 
   '@types/pg@8.11.6':
     dependencies:
       '@types/node': 25.0.3
       pg-protocol: 1.10.3
       pg-types: 4.1.0
+
+  '@types/pg@8.16.0':
+    dependencies:
+      '@types/node': 25.0.3
+      pg-protocol: 1.10.3
+      pg-types: 2.2.0
 
   '@types/pg@8.6.1':
     dependencies:
@@ -11987,13 +11996,13 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.0.3
 
-  node-pg-migrate@8.0.4(@types/pg@8.11.6)(pg@8.16.3):
+  node-pg-migrate@8.0.4(@types/pg@8.16.0)(pg@8.16.3):
     dependencies:
       glob: 11.1.0
       pg: 8.16.3
       yargs: 17.7.2
     optionalDependencies:
-      '@types/pg': 8.11.6
+      '@types/pg': 8.16.0
 
   node-releases@2.0.27: {}
 
