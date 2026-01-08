@@ -140,7 +140,7 @@ export function EventPageClient({
         </div>
       </section>
 
-      {/* Winner Section - For 2022.1 finalized events */}
+      {/* Winner Section - For 2022.1 finalized events with company badge */}
       {show2022Winner &&
         (() => {
           const winnerBand = bands.find(
