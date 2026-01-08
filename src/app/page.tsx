@@ -271,9 +271,19 @@ export default async function HomePage() {
       if (!showDetailedScoring) {
         const storedWinner = eventInfo?.winner
         if (storedWinner) {
+          // Find the winning band to get company info
+          const winnerBand = bands.find(
+            (b) => b.name.toLowerCase() === storedWinner.toLowerCase()
+          )
           return {
             ...event,
-            overallWinner: { name: storedWinner, totalScore: 0 },
+            overallWinner: {
+              name: storedWinner,
+              totalScore: 0,
+              companySlug: winnerBand?.company_slug,
+              companyName: winnerBand?.company_name,
+              companyIconUrl: winnerBand?.company_icon_url,
+            },
             bands,
             scoringVersion,
             heroPhoto,
@@ -293,14 +303,26 @@ export default async function HomePage() {
       if (isFinalized && (await hasFinalizedResults(event.id))) {
         // Use finalized results from table (already sorted by final_rank)
         const finalizedResults = await getFinalizedResults(event.id)
-        const overallWinner =
-          finalizedResults.length > 0
-            ? {
-                name: finalizedResults[0].band_name,
-                totalScore: Number(finalizedResults[0].total_score || 0),
-              }
-            : null
-        return { ...event, overallWinner, bands, scoringVersion, heroPhoto }
+        if (finalizedResults.length > 0) {
+          const winnerBand = bands.find(
+            (b) => b.id === finalizedResults[0].band_id
+          )
+          const overallWinner = {
+            name: finalizedResults[0].band_name,
+            totalScore: Number(finalizedResults[0].total_score || 0),
+            companySlug: winnerBand?.company_slug,
+            companyName: winnerBand?.company_name,
+            companyIconUrl: winnerBand?.company_icon_url,
+          }
+          return { ...event, overallWinner, bands, scoringVersion, heroPhoto }
+        }
+        return {
+          ...event,
+          overallWinner: null,
+          bands,
+          scoringVersion,
+          heroPhoto,
+        }
       }
 
       // Only calculate scores for non-finalized past events

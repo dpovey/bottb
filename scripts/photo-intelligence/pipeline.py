@@ -140,7 +140,8 @@ def detect_monochrome(image_path: str) -> bool:
 def process_photo(
     image_path: str,
     output_dir: str,
-    verbose: bool = False
+    verbose: bool = False,
+    skip_faces: bool = False
 ) -> Optional[Dict[str, Any]]:
     """
     Process a single photo through the intelligence pipeline.
@@ -149,6 +150,7 @@ def process_photo(
         image_path: Path to image file
         output_dir: Directory for temporary outputs
         verbose: Print progress
+        skip_faces: Skip face detection and face embeddings
     
     Returns:
         Dictionary with all processing results, or None if error
@@ -163,11 +165,13 @@ def process_photo(
         if verbose:
             print(f"Processing {filename}...")
         
-        # 1. Face detection
-        faces = detect_faces(image_path, model="hog")
+        # 1. Face detection (skip if --skip-faces)
+        faces = []
+        if not skip_faces:
+            faces = detect_faces(image_path, model="hog")
         
-        # 2. Person detection (if no faces or for group shots)
-        persons = detect_persons(image_path) if len(faces) == 0 or len(faces) > 3 else []
+        # 2. Person detection (always run - useful for smart crops even without faces)
+        persons = detect_persons(image_path)
         
         # 3. Perceptual hashing
         hashes = compute_hashes(image_path)
@@ -175,8 +179,10 @@ def process_photo(
         # 4. Image embedding (for scene clustering)
         image_embedding = get_image_embedding(image_path)
         
-        # 5. Face embeddings (for person identification)
-        face_encodings = get_face_encodings_for_photo(image_path)
+        # 5. Face embeddings (skip if --skip-faces)
+        face_encodings = []
+        if not skip_faces:
+            face_encodings = get_face_encodings_for_photo(image_path)
         
         # 6. Smart crops for different aspect ratios
         crops = {}
@@ -193,7 +199,7 @@ def process_photo(
             crops[aspect_key] = crop_result
         
         # 7. Monochrome detection (B&W vs color)
-        is_monochrome = detect_monochrome(image_path)
+        is_monochrome = bool(detect_monochrome(image_path))
         
         # Build result dictionary
         result = {
@@ -414,6 +420,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=100, help="Batch size for processing")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--skip-clustering", action="store_true", help="Skip clustering step")
+    parser.add_argument("--skip-faces", action="store_true", help="Skip face detection and face embeddings (use when face_recognition/dlib not available)")
     parser.add_argument("--skip-existing", action="store_true", help="Skip photos that already exist in database")
     parser.add_argument("--existing-filenames", type=str, help="Path to JSON file with existing filenames (for --skip-existing)")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint if available (default: auto-resume)")
@@ -433,6 +440,10 @@ def main():
                 existing_filenames = set(json.load(f))
         else:
             print("Warning: --skip-existing requires --existing-filenames with a valid file")
+    
+    # Log skip-faces mode
+    if args.skip_faces:
+        print("Face detection disabled (--skip-faces)")
     
     # Find all image files (recursively, skipping macOS files, validating images)
     image_files = find_image_files(
@@ -480,7 +491,7 @@ def main():
             continue
         
         for image_path in tqdm(batch, desc=f"Batch {batch_idx + 1}/{total_batches}", leave=False):
-            result = process_photo(image_path, str(output_dir), args.verbose)
+            result = process_photo(image_path, str(output_dir), args.verbose, args.skip_faces)
             if result:
                 batch_results.append(result)
                 processed_files.add(image_path)
@@ -559,8 +570,13 @@ def main():
         print("Clustering scenes...")
         scene_clusters = cluster_scenes(all_results)
         
-        print("Clustering people...")
-        people_clusters = cluster_people(all_results)
+        # People clustering requires face embeddings - skip if --skip-faces was used
+        people_clusters = []
+        if not args.skip_faces:
+            print("Clustering people...")
+            people_clusters = cluster_people(all_results)
+        else:
+            print("Skipping people clustering (--skip-faces enabled)")
         
         # Save clusters
         clusters_data = {

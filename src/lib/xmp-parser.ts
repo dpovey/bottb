@@ -94,12 +94,19 @@ function extractFieldsFromMetadata(metadata: Record<string, unknown>): {
   // Check for hierarchicalSubject (preferred source)
   const metadataRecord = metadata as Record<string, unknown>
   const lrRecord = metadataRecord['lr'] as Record<string, unknown> | undefined
-  const hierarchicalSubject =
+  const hierarchicalSubjectRaw =
     metadataRecord.hierarchicalSubject ||
     metadataRecord.HierarchicalSubject ||
     lrRecord?.hierarchicalSubject
 
-  if (Array.isArray(hierarchicalSubject)) {
+  // Normalize to array (exifr returns string for single value, array for multiple)
+  const hierarchicalSubject = hierarchicalSubjectRaw
+    ? Array.isArray(hierarchicalSubjectRaw)
+      ? hierarchicalSubjectRaw
+      : [hierarchicalSubjectRaw]
+    : null
+
+  if (hierarchicalSubject && hierarchicalSubject.length > 0) {
     const parsed = parseHierarchicalSubject(hierarchicalSubject as string[])
     event = parsed.event as string | undefined
     photographer = parsed.photographer as string | undefined

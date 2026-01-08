@@ -38,6 +38,7 @@ interface EventData {
   timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
   address?: string
   tickets?: string
+  description?: string // Event description (displayed on event page)
   is_active?: boolean
   status?: 'upcoming' | 'voting' | 'finalized'
   scoring_version?: string // Scoring version: "2022.1", "2025.1", "2026.1"
@@ -105,9 +106,16 @@ async function createEventFromFile(filePath: string) {
     }
     console.log(`🌏 Timezone: ${eventData.timezone}`)
 
+    // Log description if provided
+    if (eventData.description) {
+      console.log(
+        `📝 Description: ${eventData.description.substring(0, 50)}...`
+      )
+    }
+
     // Create event with slug as ID and info JSONB
     const { rows: eventRows } = await sql`
-      INSERT INTO events (id, name, date, location, timezone, is_active, status, info)
+      INSERT INTO events (id, name, date, location, timezone, is_active, status, info, description)
       VALUES (
         ${eventSlug}, 
         ${eventData.name}, 
@@ -116,7 +124,8 @@ async function createEventFromFile(filePath: string) {
         ${eventData.timezone},
         ${eventData.is_active ?? true}, 
         ${eventData.status ?? 'upcoming'},
-        ${JSON.stringify(eventInfo)}::jsonb
+        ${JSON.stringify(eventInfo)}::jsonb,
+        ${eventData.description || null}
       )
       RETURNING id, name
     `
@@ -171,6 +180,7 @@ if (!filePath) {
   console.error(
     "  - timezone: IANA timezone (e.g., 'Australia/Brisbane', 'Australia/Sydney')"
   )
+  console.error('  - description: event description (displayed on event page)')
   console.error(
     "  - scoring_version: '2022.1' | '2025.1' | '2026.1' (default: '2026.1')"
   )

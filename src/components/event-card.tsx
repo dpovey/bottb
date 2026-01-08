@@ -35,6 +35,9 @@ interface EventCardProps {
   winner?: {
     name: string
     totalScore?: number
+    companySlug?: string
+    companyName?: string
+    companyIconUrl?: string
   } | null
   bands?: {
     id: string
@@ -131,6 +134,9 @@ export function EventCard({
             ) : showWinner && winner ? (
               <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                 🏆 {winner.name}
+                {winner.companyName && (
+                  <span className="text-white/70"> ({winner.companyName})</span>
+                )}
               </span>
             ) : null}
           </div>
@@ -208,6 +214,11 @@ export function EventCard({
                   <span className="text-white font-semibold">
                     {winner.name}
                   </span>
+                  {winner.companyName && (
+                    <span className="text-text-muted ml-1">
+                      ({winner.companyName})
+                    </span>
+                  )}
                 </div>
               </div>
             )}
