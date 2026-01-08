@@ -89,13 +89,19 @@ export async function getPastEventsWithWinners(): Promise<
     SELECT 
       e.*,
       COALESCE(fr.band_name, e.info->>'winner') as winner_band_name,
-      COALESCE(b.company_slug, NULL) as winner_company_slug,
-      COALESCE(c.name, NULL) as winner_company_name,
-      COALESCE(c.icon_url, NULL) as winner_company_icon_url
+      COALESCE(b.company_slug, b_name.company_slug, NULL) as winner_company_slug,
+      COALESCE(c.name, c_name.name, NULL) as winner_company_name,
+      COALESCE(c.icon_url, c_name.icon_url, NULL) as winner_company_icon_url
     FROM events e
     LEFT JOIN finalized_results fr ON fr.event_id = e.id AND fr.final_rank = 1
     LEFT JOIN bands b ON b.id = COALESCE(fr.band_id, e.info->>'winner_band_id')
     LEFT JOIN companies c ON c.slug = b.company_slug
+    -- Also try to match winner by name for legacy events without winner_band_id
+    LEFT JOIN bands b_name ON b_name.event_id = e.id 
+      AND LOWER(b_name.name) = LOWER(e.info->>'winner')
+      AND fr.band_id IS NULL 
+      AND e.info->>'winner_band_id' IS NULL
+    LEFT JOIN companies c_name ON c_name.slug = b_name.company_slug
     WHERE e.date < NOW()
     ORDER BY e.date DESC
   `
