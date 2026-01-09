@@ -64,6 +64,7 @@ export { GlobeIcon } from './misc/globe'
 export { HeartIcon } from './misc/heart'
 export { LayersIcon } from './misc/layers'
 export { ScenesIcon } from './misc/scenes'
+export { MergeIcon } from './misc/merge'
 
 // Icon types
 export type { IconProps } from './types'

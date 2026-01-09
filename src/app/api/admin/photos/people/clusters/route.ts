@@ -8,11 +8,14 @@ const handleGetPeopleClusters: ProtectedApiHandler = async (
   _context?: unknown
 ) => {
   try {
-    // Get all person clusters
-    const { rows } = await sql<PhotoCluster & { photo_count: number }>`
+    // Get all person clusters with photo count and event IDs
+    const { rows } = await sql<
+      PhotoCluster & { photo_count: number; event_ids: string[] }
+    >`
       SELECT 
         pc.*,
-        COUNT(DISTINCT p.id) as photo_count
+        COUNT(DISTINCT p.id) as photo_count,
+        ARRAY_AGG(DISTINCT p.event_id) FILTER (WHERE p.event_id IS NOT NULL) as event_ids
       FROM photo_clusters pc
       LEFT JOIN photos p ON p.id = ANY(pc.photo_ids)
       WHERE pc.cluster_type = 'person'
@@ -33,6 +36,7 @@ const handleGetPeopleClusters: ProtectedApiHandler = async (
               id,
               original_filename,
               blob_url,
+              event_id,
               COALESCE(xmp_metadata->>'thumbnail_url', REPLACE(blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
             FROM photos
             WHERE id = ${cluster.representative_photo_id}::uuid
@@ -46,6 +50,7 @@ const handleGetPeopleClusters: ProtectedApiHandler = async (
               id,
               original_filename,
               blob_url,
+              event_id,
               COALESCE(xmp_metadata->>'thumbnail_url', REPLACE(blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url
             FROM photos
             WHERE id = ${cluster.photo_ids[0]}::uuid
@@ -65,6 +70,7 @@ const handleGetPeopleClusters: ProtectedApiHandler = async (
         return {
           ...cluster,
           photo_count: parseInt(cluster.photo_count.toString(), 10),
+          event_ids: cluster.event_ids || [],
           representative_photo: representativePhoto,
           representative_face: representativeFace,
         }
