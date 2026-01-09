@@ -57,6 +57,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/about',
     subtitle: 'Our mission and story',
+    image: '',
   },
   {
     id: 'page-faq',
@@ -66,6 +67,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/faq',
     subtitle: 'Common questions answered',
+    image: '',
   },
   {
     id: 'page-photos',
@@ -75,6 +77,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/photos',
     subtitle: 'Event photography',
+    image: '',
   },
   {
     id: 'page-videos',
@@ -84,6 +87,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/videos',
     subtitle: 'Performance videos',
+    image: '',
   },
   {
     id: 'page-songs',
@@ -93,6 +97,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/songs',
     subtitle: 'All performed songs',
+    image: '',
   },
   {
     id: 'page-companies',
@@ -102,6 +107,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/companies',
     subtitle: 'Bands by company',
+    image: '',
   },
   {
     id: 'page-photographers',
@@ -111,6 +117,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/photographers',
     subtitle: 'Event photographers',
+    image: '',
   },
   {
     id: 'page-events',
@@ -120,6 +127,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/events',
     subtitle: 'Past and upcoming events',
+    image: '',
   },
   {
     id: 'page-privacy',
@@ -129,6 +137,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/privacy',
     subtitle: 'How we handle your data',
+    image: '',
   },
   {
     id: 'page-terms',
@@ -138,6 +147,7 @@ const staticPages: SearchDocument[] = [
     type: 'page',
     url: '/terms',
     subtitle: 'Usage terms and conditions',
+    image: '',
   },
 ]
 
@@ -178,7 +188,7 @@ async function buildSearchIndex() {
         type: 'event',
         url: `/event/${event.id}`,
         subtitle: `${event.location} • ${new Date(event.date).toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' })}`,
-        image: event.image_url || event.info?.image_url,
+        image: event.image_url || event.info?.image_url || '',
       })
 
       // Also index results page for past events
@@ -190,6 +200,7 @@ async function buildSearchIndex() {
           type: 'page',
           url: `/results/${event.id}`,
           subtitle: 'Final results and scores',
+          image: '',
         })
       }
     }
@@ -210,7 +221,7 @@ async function buildSearchIndex() {
         subtitle: companyName
           ? `${companyName}${event ? ` • ${event.name}` : ''}`
           : event?.name,
-        image: band.image_url,
+        image: band.image_url || '',
       })
     }
 
@@ -224,7 +235,7 @@ async function buildSearchIndex() {
         type: 'company',
         url: `/companies/${company.slug}`,
         subtitle: description || 'Tech company',
-        image: company.icon_url || company.logo_url,
+        image: company.icon_url || company.logo_url || '',
       })
     }
 
@@ -294,6 +305,7 @@ async function buildSearchIndex() {
         type: 'song',
         url: `/songs/${artistSlug}/${songSlug}`,
         subtitle: songData.artist,
+        image: '',
       })
     }
 
@@ -309,7 +321,7 @@ async function buildSearchIndex() {
         type: 'photographer',
         url: `/photographer/${photographer.slug}`,
         subtitle: location || 'Event photographer',
-        image: photographer.avatar_url || undefined,
+        image: photographer.avatar_url || '',
       })
     }
 
@@ -325,7 +337,7 @@ async function buildSearchIndex() {
         subtitle: video.band_name
           ? `${video.band_name}${video.event_name ? ` • ${video.event_name}` : ''}`
           : video.event_name || 'Performance video',
-        image: video.thumbnail_url || undefined,
+        image: video.thumbnail_url || '',
       })
     }
 
