@@ -421,6 +421,7 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--skip-clustering", action="store_true", help="Skip clustering step")
     parser.add_argument("--skip-faces", action="store_true", help="Skip face detection and face embeddings (use when face_recognition/dlib not available)")
+    parser.add_argument("--scene-threshold", type=float, default=0.85, help="Scene similarity threshold (0-1, higher=stricter, default: 0.85)")
     parser.add_argument("--skip-existing", action="store_true", help="Skip photos that already exist in database")
     parser.add_argument("--existing-filenames", type=str, help="Path to JSON file with existing filenames (for --skip-existing)")
     parser.add_argument("--resume", action="store_true", help="Resume from checkpoint if available (default: auto-resume)")
@@ -567,8 +568,8 @@ def main():
         print("Clustering near-duplicates...")
         near_duplicate_clusters = cluster_near_duplicates(all_results)
         
-        print("Clustering scenes...")
-        scene_clusters = cluster_scenes(all_results)
+        print(f"Clustering scenes (threshold={args.scene_threshold})...")
+        scene_clusters = cluster_scenes(all_results, similarity_threshold=args.scene_threshold)
         
         # People clustering requires face embeddings - skip if --skip-faces was used
         people_clusters = []
