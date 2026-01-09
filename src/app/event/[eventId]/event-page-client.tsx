@@ -159,18 +159,16 @@ export function EventPageClient({
                   <p className="text-2xl font-semibold text-white">
                     {storedWinner}
                   </p>
-                  {winnerBand ? (
+                  {winnerBand?.company_slug && winnerBand?.company_name && (
                     <div className="mt-1">
                       <CompanyBadge
-                        slug={winnerBand.company_slug || 'unknown'}
-                        name={winnerBand.company_name || 'Unknown Company'}
+                        slug={winnerBand.company_slug}
+                        name={winnerBand.company_name}
                         iconUrl={winnerBand.company_icon_url}
                         variant="default"
                         size="sm"
                       />
                     </div>
-                  ) : (
-                    <p className="text-xs text-red-400">Band not found</p>
                   )}
                 </div>
               </div>
