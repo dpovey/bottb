@@ -11,10 +11,10 @@
   "scoring_version": "2022.1",
   "winner": "The Fuggles",
   "bands": [
-    { "name": "The ShipRex", "description": "Rex Software", "order": 1 },
-    { "name": "Jumbo Band", "description": "Jumbo Interactive", "order": 2 },
-    { "name": "The Epsilon Band", "description": "Epsilon", "order": 3 },
-    { "name": "Felix Band", "description": "Felix Software", "order": 4 },
-    { "name": "The Fuggles", "description": "FoundU", "order": 5 }
+    { "name": "The ShipRex", "company_slug": "rex-software", "order": 1 },
+    { "name": "Jumbo Band", "company_slug": "jumbo-interactive", "order": 2 },
+    { "name": "The Epsilon Band", "company_slug": "epsilon", "order": 3 },
+    { "name": "Felix Band", "company_slug": "felix-software", "order": 4 },
+    { "name": "The Fuggles", "company_slug": "foundu", "order": 5 }
   ]
 }

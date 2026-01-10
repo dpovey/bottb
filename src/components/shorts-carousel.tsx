@@ -193,11 +193,6 @@ export function ShortsCarousel({
                 <div className="absolute top-2 left-2 bg-black/60 rounded-full p-1.5">
                   <YouTubeIcon size={16} className="text-white" />
                 </div>
-
-                {/* Shorts badge */}
-                <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                  SHORTS
-                </div>
               </div>
 
               {/* Video Info */}

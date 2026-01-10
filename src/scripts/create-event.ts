@@ -45,9 +45,28 @@ interface EventData {
   winner?: string // Winner name (for 2022.1 events)
   bands: {
     name: string
-    description?: string
+    company_slug: string // REQUIRED: Foreign key to companies table (e.g., "rex-software")
+    description?: string // Band description (displayed on band page)
+    band_description?: string // DEPRECATED: Use description instead. Kept for backward compatibility.
     order: number
   }[]
+}
+
+// Helper to look up company by slug and validate it exists
+async function validateCompanySlug(
+  slug: string
+): Promise<{ valid: boolean; name?: string }> {
+  const { rows } = await sql`SELECT name FROM companies WHERE slug = ${slug}`
+  if (rows.length > 0) {
+    return { valid: true, name: rows[0].name }
+  }
+  return { valid: false }
+}
+
+// Get all companies for error messages
+async function getAllCompanySlugs(): Promise<string[]> {
+  const { rows } = await sql`SELECT slug FROM companies ORDER BY slug`
+  return rows.map((r) => r.slug)
 }
 
 async function createEventFromFile(filePath: string) {
@@ -137,22 +156,90 @@ async function createEventFromFile(filePath: string) {
     if (eventData.bands && eventData.bands.length > 0) {
       console.log(`Creating ${eventData.bands.length} bands...`)
 
+      // First, validate all company_slugs exist
+      console.log('\n🔍 Validating company links...')
+      const invalidCompanies: { band: string; slug: string }[] = []
+      const validatedCompanies: Map<string, string> = new Map() // slug -> name
+
+      for (const band of eventData.bands) {
+        if (!band.company_slug) {
+          console.error(
+            `❌ Band "${band.name}" is missing required company_slug`
+          )
+          console.error(
+            '   Each band MUST have a company_slug that links to the companies table.'
+          )
+          const availableSlugs = await getAllCompanySlugs()
+          console.error(
+            `   Available company slugs: ${availableSlugs.join(', ')}`
+          )
+          process.exit(1)
+        }
+
+        const validation = await validateCompanySlug(band.company_slug)
+        if (!validation.valid) {
+          invalidCompanies.push({ band: band.name, slug: band.company_slug })
+        } else {
+          validatedCompanies.set(band.company_slug, validation.name!)
+          console.log(
+            `  ✅ ${band.name} → ${validation.name} (${band.company_slug})`
+          )
+        }
+      }
+
+      if (invalidCompanies.length > 0) {
+        console.error('\n❌ Invalid company_slug values found:')
+        for (const { band, slug } of invalidCompanies) {
+          console.error(
+            `   - Band "${band}" has invalid company_slug: "${slug}"`
+          )
+        }
+        const availableSlugs = await getAllCompanySlugs()
+        console.error(
+          `\n   Available company slugs: ${availableSlugs.join(', ')}`
+        )
+        console.error('\n   To add a new company, run:')
+        console.error(
+          '   psql "$POSTGRES_URL" -c "INSERT INTO companies (slug, name) VALUES (\'new-slug\', \'Company Name\');"'
+        )
+        process.exit(1)
+      }
+
+      console.log('\n📦 Creating bands...')
       for (const band of eventData.bands) {
         // Generate band slug using event ID (not full name)
         const bandSlug = generateBandSlug(band.name, eventSlug)
         console.log(`  📝 Band slug: ${bandSlug}`)
 
+        // Get company name
+        const companyName = validatedCompanies.get(band.company_slug)!
+
+        // Use description field, fallback to band_description for backward compatibility
+        const bandDescription =
+          band.description || band.band_description || null
+
+        // Build band info object - store band_description for backward compatibility only
+        interface BandInfo {
+          band_description?: string
+        }
+        const bandInfo: BandInfo = {}
+        if (band.band_description) {
+          // Keep in info for backward compatibility
+          bandInfo.band_description = band.band_description
+        }
+
         const { rows: bandRows } = await sql`
-          INSERT INTO bands (id, event_id, name, description, "order")
-          VALUES (${bandSlug}, ${event.id}, ${band.name}, ${
-            band.description || null
-          }, ${band.order})
+          INSERT INTO bands (id, event_id, name, description, company_slug, "order", info)
+          VALUES (${bandSlug}, ${event.id}, ${band.name}, ${bandDescription}, ${band.company_slug}, ${band.order}, ${JSON.stringify(bandInfo)}::jsonb)
           RETURNING id, name
         `
 
         console.log(
-          `  ✅ Band created: ${bandRows[0].name} (${bandRows[0].id})`
+          `  ✅ Band created: ${bandRows[0].name} (${bandRows[0].id}) → ${companyName}`
         )
+        if (bandDescription) {
+          console.log(`     📝 With description`)
+        }
       }
     }
 
@@ -185,7 +272,11 @@ if (!filePath) {
     "  - scoring_version: '2022.1' | '2025.1' | '2026.1' (default: '2026.1')"
   )
   console.error('  - winner: (for 2022.1 events only) winner band name')
-  console.error('  - bands: array of band objects')
+  console.error('  - bands: array of band objects with:')
+  console.error('      - name: band name')
+  console.error('      - company_slug: REQUIRED foreign key to companies table')
+  console.error('      - description: optional band description')
+  console.error('      - order: display order (1, 2, 3...)')
   process.exit(1)
 }
 

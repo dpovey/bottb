@@ -401,13 +401,14 @@ export async function generateMetadata({
   // (Company remains in description, page content, and structured data)
   const title = `${band.name} at ${band.event_name} | Battle of the Tech Bands`
 
-  // Build description
+  // Build description - use description field if it contains actual content (not just company name)
   let description = `${band.name}`
   if (band.company_name) {
     description += ` from ${band.company_name}`
   }
   description += ` performing at ${band.event_name}`
-  if (band.description) {
+  // Use description if it's longer than 50 chars (real description vs company name)
+  if (band.description && band.description.length > 50) {
     description += `. ${band.description}`
   }
 
@@ -809,8 +810,8 @@ export default async function BandPage({
         </div>
       </section>
 
-      {/* Description Section */}
-      {band.description && (
+      {/* Band Description Section - show if description is longer than a company name */}
+      {band.description && band.description.length > 50 && (
         <section className="py-12 bg-bg border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <p className="text-text-muted text-lg max-w-3xl">

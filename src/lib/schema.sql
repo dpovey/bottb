@@ -425,6 +425,7 @@ CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results
 
 -- Foreign key constraints
 ALTER TABLE ONLY bands ADD CONSTRAINT bands_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY bands ADD CONSTRAINT bands_company_slug_fkey FOREIGN KEY (company_slug) REFERENCES companies(slug) ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;

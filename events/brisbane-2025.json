@@ -12,25 +12,9 @@
   "scoring_version": "2022.1",
   "winner": "Off The Record",
   "bands": [
-    {
-      "name": "The ShipRex",
-      "description": "Rex Software",
-      "order": 1
-    },
-    {
-      "name": "Jumbo Band",
-      "description": "Jumbo Interactive",
-      "order": 2
-    },
-    {
-      "name": "Epsonics",
-      "description": "Epsilon",
-      "order": 3
-    },
-    {
-      "name": "Off The Record",
-      "description": "For the Record",
-      "order": 4
-    }
+    { "name": "The ShipRex", "company_slug": "rex-software", "order": 1 },
+    { "name": "Jumbo Band", "company_slug": "jumbo-interactive", "order": 2 },
+    { "name": "Epsonics", "company_slug": "epsilon", "order": 3 },
+    { "name": "Off The Record", "company_slug": "for-the-record", "order": 4 }
   ]
 }
