@@ -102,7 +102,7 @@ export function EventPageClient({
   return (
     <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
       {/* Hero Section with Event Image(s) - supports multiple hero photos */}
-      <section className="relative min-h-[40vh] flex items-end">
+      <section className="relative min-h-[70vh] flex items-end">
         {/* Background Image - supports multiple photos with crossfade */}
         <HeroBackground
           photos={heroImages}
