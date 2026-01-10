@@ -21,7 +21,16 @@ import { VideoCarousel } from '@/components/video-carousel'
 import { ShortsCarousel } from '@/components/shorts-carousel'
 import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
-import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
+import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
+
+/** Overall winner data passed from server component */
+export interface OverallWinner {
+  name: string
+  totalScore?: number
+  companySlug?: string
+  companyName?: string
+  companyIconUrl?: string
+}
 
 interface EventPageClientProps {
   event: DbEvent
@@ -33,6 +42,8 @@ interface EventPageClientProps {
     upcoming: NavEvent[]
     past: NavEvent[]
   }
+  /** Overall winner (for finalized events) */
+  overallWinner?: OverallWinner
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
@@ -75,6 +86,7 @@ export function EventPageClient({
   videos,
   shorts = [],
   navEvents,
+  overallWinner,
 }: EventPageClientProps) {
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
@@ -88,16 +100,10 @@ export function EventPageClient({
   // Get scoring version and winner info
   const scoringVersion = parseScoringVersion(eventInfo)
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
-  const storedWinner = eventInfo?.winner
   const isFinalized = event.status === 'finalized'
 
-  // For 2022.1 events, we show the stored winner prominently
-  const show2022Winner = isFinalized && !showDetailedBreakdown && storedWinner
-
-  // Find winner band for company info display
-  const winnerBand = show2022Winner
-    ? bands.find((b) => b.name.toLowerCase() === storedWinner?.toLowerCase())
-    : undefined
+  // Show winner banner for ANY finalized event with a winner
+  const hasWinner = isFinalized && !!overallWinner
 
   return (
     <WebLayout breadcrumbs={breadcrumbs} navEvents={navEvents}>
@@ -127,7 +133,7 @@ export function EventPageClient({
             {/* Event Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                {getStatusBadge(event.status, !!show2022Winner)}
+                {getStatusBadge(event.status, hasWinner)}
               </div>
               <h1 className="hero-text text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}
@@ -145,8 +151,8 @@ export function EventPageClient({
         </div>
       </section>
 
-      {/* Winner Section - For 2022.1 finalized events with company badge */}
-      {show2022Winner && (
+      {/* Winner Section - For all finalized events with a winner */}
+      {hasWinner && overallWinner && (
         <section className="py-8 bg-linear-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -156,15 +162,23 @@ export function EventPageClient({
                   <p className="text-sm text-warning uppercase tracking-widest">
                     Champion
                   </p>
-                  <p className="text-2xl font-semibold text-white">
-                    {storedWinner}
-                  </p>
-                  {winnerBand?.company_slug && winnerBand?.company_name && (
+                  <div className="flex items-center gap-3">
+                    <p className="text-2xl font-semibold text-white">
+                      {overallWinner.name}
+                    </p>
+                    {showDetailedBreakdown &&
+                      overallWinner.totalScore != null && (
+                        <span className="text-lg text-warning font-medium">
+                          {overallWinner.totalScore.toFixed(1)} pts
+                        </span>
+                      )}
+                  </div>
+                  {overallWinner.companySlug && overallWinner.companyName && (
                     <div className="mt-1">
                       <CompanyBadge
-                        slug={winnerBand.company_slug}
-                        name={winnerBand.company_name}
-                        iconUrl={winnerBand.company_icon_url}
+                        slug={overallWinner.companySlug}
+                        name={overallWinner.companyName}
+                        iconUrl={overallWinner.companyIconUrl}
                         variant="default"
                         size="sm"
                       />
@@ -199,7 +213,7 @@ export function EventPageClient({
                   </Button>
                 </Link>
               )}
-              {event.status === 'finalized' && !show2022Winner && (
+              {event.status === 'finalized' && !hasWinner && (
                 <Link href={`/results/${eventId}`}>
                   <Button variant="accent" size="lg">
                     Results
@@ -207,11 +221,18 @@ export function EventPageClient({
                 </Link>
               )}
               {event.status !== 'upcoming' && (
-                <Link href={`/photos?event=${eventId}`}>
-                  <Button variant="outline-solid" size="lg">
-                    Photos
-                  </Button>
-                </Link>
+                <>
+                  <Link href={`/photos?event=${eventId}`}>
+                    <Button variant="outline-solid" size="lg">
+                      Photos
+                    </Button>
+                  </Link>
+                  <Link href={`/videos?event=${eventId}`}>
+                    <Button variant="outline-solid" size="lg">
+                      Videos
+                    </Button>
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -250,7 +271,7 @@ export function EventPageClient({
           ) : (
             <div className="grid gap-4">
               {bands.map((band) => {
-                const isWinner = show2022Winner && band.name === storedWinner
+                const isWinner = hasWinner && band.name === overallWinner?.name
 
                 return (
                   <Link key={band.id} href={`/band/${band.id}`}>
