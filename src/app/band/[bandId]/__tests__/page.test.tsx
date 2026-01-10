@@ -93,12 +93,15 @@ describe('BandPage', () => {
   })
 
   it('renders band details and scores for finalized event', async () => {
+    // Description must be >50 chars to be displayed (see band page condition)
+    const longDescription =
+      'A fantastic test band bringing energy and excitement to every performance'
     const bandData = [
       {
         id: 'band-1',
         event_id: 'event-1',
         name: 'Test Band',
-        description: 'A test band',
+        description: longDescription,
         order: 1,
         created_at: '2024-01-01T00:00:00Z',
         event_name: 'Test Event',
@@ -136,7 +139,8 @@ describe('BandPage', () => {
     ).toBeInTheDocument()
     // Event name is a link in the hero
     expect(screen.getByText('Test Event')).toBeInTheDocument()
-    expect(screen.getByText('A test band')).toBeInTheDocument()
+    // Description is shown when >50 chars
+    expect(screen.getByText(longDescription)).toBeInTheDocument()
   }, 10000)
 
   it('shows event in progress message for non-admin users when event is not finalized', async () => {

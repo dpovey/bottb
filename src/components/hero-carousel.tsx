@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useMounted } from '@/lib/hooks'
 import { DEFAULT_HERO_IMAGE } from '@/lib/stock-images'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
@@ -39,6 +39,8 @@ interface HeroCarouselProps {
   size?: 'sm' | 'md' | 'lg' | 'full'
   /** Content alignment: 'center' (default, like Hero), 'end' (content at bottom) */
   align?: 'center' | 'end'
+  /** Initial image index - pass from server to avoid flash on hydration */
+  initialIndex?: number
 }
 
 export function HeroCarousel({
@@ -49,13 +51,15 @@ export function HeroCarousel({
   overlay = 'heavy',
   size = 'lg',
   align = 'center',
+  initialIndex = 0,
 }: HeroCarouselProps) {
   const effectiveImages = images.length > 0 ? images : [{ url: fallbackImage }]
   const mounted = useMounted()
-  const initializedRef = useRef(false)
 
-  // Start with index 0 for consistent SSR/hydration
-  const [currentIndex, setCurrentIndex] = useState(0)
+  // Use server-provided initialIndex for consistent SSR/hydration (no flash)
+  const safeInitialIndex =
+    effectiveImages.length > 0 ? initialIndex % effectiveImages.length : 0
+  const [currentIndex, setCurrentIndex] = useState(safeInitialIndex)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   const nextImage = useCallback(() => {
@@ -68,16 +72,9 @@ export function HeroCarousel({
     }, 500) // Half of the CSS transition duration
   }, [effectiveImages.length])
 
-  // Randomize starting image on mount and start interval
+  // Start interval for cycling (no randomization needed - handled by server)
   useEffect(() => {
     if (!mounted || effectiveImages.length <= 1) return
-
-    // Randomize on first mount only - use setTimeout to defer setState
-    if (!initializedRef.current) {
-      initializedRef.current = true
-      const randomIndex = Math.floor(Math.random() * effectiveImages.length)
-      setTimeout(() => setCurrentIndex(randomIndex), 0)
-    }
 
     const timer = setInterval(nextImage, interval)
     return () => clearInterval(timer)

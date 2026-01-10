@@ -40,6 +40,13 @@ export default async function AboutPage() {
     focalPoint: photo.hero_focal_point,
   }))
 
+  // Compute random initial index server-side to avoid flash on hydration
+  // Intentionally random per-request for SSR - different hero on each page load
+  const heroInitialIndex =
+    heroImages.length > 0
+      ? Math.floor(Math.random() * heroImages.length) // eslint-disable-line react-hooks/purity
+      : 0
+
   return (
     <PublicLayout
       headerVariant="transparent"
@@ -48,7 +55,13 @@ export default async function AboutPage() {
       navEvents={navEvents}
     >
       {/* Hero Section with rotating event images */}
-      <HeroCarousel images={heroImages} interval={6000} size="md" align="end">
+      <HeroCarousel
+        images={heroImages}
+        interval={6000}
+        size="md"
+        align="end"
+        initialIndex={heroInitialIndex}
+      >
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16">
           <p className="text-xs tracking-[0.3em] uppercase text-text-muted mb-4">
             Est. 2022 • Community Charity Event
