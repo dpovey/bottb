@@ -36,6 +36,8 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
 
   // Close on click outside
   useEffect(() => {
+    if (!isOpen) return
+
     function handleClickOutside(event: MouseEvent) {
       if (
         panelRef.current &&
@@ -49,7 +51,7 @@ export function LineupDropdown({ className }: LineupDropdownProps) {
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   // Close on Escape key
   useEffect(() => {

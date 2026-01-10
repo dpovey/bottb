@@ -101,6 +101,8 @@ export function EventsDropdown({
 
   // Close on click outside
   useEffect(() => {
+    if (!isOpen) return
+
     function handleClickOutside(event: MouseEvent) {
       if (
         panelRef.current &&
@@ -114,7 +116,7 @@ export function EventsDropdown({
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   // Close on Escape key
   useEffect(() => {
@@ -209,7 +211,7 @@ export function EventsDropdown({
                 <div className="text-text-muted text-[10px] tracking-widest uppercase font-medium px-6 pb-2 pt-1">
                   Past Events
                 </div>
-                <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+                <div className="lg:columns-2 lg:gap-x-8">
                   {pastEvents.map((event, index) => (
                     <Link
                       key={event.id}

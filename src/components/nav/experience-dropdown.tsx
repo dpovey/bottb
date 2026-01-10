@@ -47,6 +47,8 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
 
   // Close on click outside
   useEffect(() => {
+    if (!isOpen) return
+
     function handleClickOutside(event: MouseEvent) {
       if (
         panelRef.current &&
@@ -60,7 +62,7 @@ export function ExperienceDropdown({ className }: ExperienceDropdownProps) {
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [isOpen])
 
   // Close on Escape key
   useEffect(() => {
