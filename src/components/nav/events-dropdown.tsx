@@ -210,55 +210,55 @@ export function EventsDropdown({
                   Past Events
                 </div>
                 <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
-                {pastEvents.map((event, index) => (
-                  <Link
-                    key={event.id}
-                    href={`/event/${event.id}`}
-                    onClick={() => setIsOpen(false)}
-                    role="menuitem"
-                    className={cn(
-                      'flex items-center gap-4 px-6 py-3 rounded-lg',
-                      'hover:bg-white/5 transition-colors',
-                      'opacity-0 -translate-y-1 animate-dropdown-item'
-                    )}
-                    style={{
-                      animationDelay: `${(upcomingEvents.length + index) * 30}ms`,
-                      animationFillMode: 'forwards',
-                    }}
-                  >
-                    <span className="text-xs text-text-dim min-w-[60px]">
-                      {formatDate(event.date)}
-                    </span>
-                    <div>
-                      <div className="text-white font-medium uppercase tracking-widest text-sm">
-                        {event.name}
-                      </div>
-                      {event.info?.winner_company_slug &&
-                      event.info?.winner_company_name ? (
-                        <div className="text-text-muted text-xs flex items-center gap-1.5">
-                          <span>Winner:</span>
-                          <CompanyBadge
-                            slug={event.info.winner_company_slug}
-                            name={event.info.winner_company_name}
-                            iconUrl={event.info.winner_company_icon_url}
-                            variant="muted"
-                            size="sm"
-                            asLink={false}
-                          />
-                        </div>
-                      ) : event.info?.winner ? (
-                        <div className="text-text-muted text-xs flex items-center gap-1.5">
-                          <span>Winner:</span>
-                          <span>{event.info.winner}</span>
-                        </div>
-                      ) : (
-                        <div className="text-text-muted text-xs">
-                          {event.location}
-                        </div>
+                  {pastEvents.map((event, index) => (
+                    <Link
+                      key={event.id}
+                      href={`/event/${event.id}`}
+                      onClick={() => setIsOpen(false)}
+                      role="menuitem"
+                      className={cn(
+                        'flex items-center gap-4 px-6 py-3 rounded-lg',
+                        'hover:bg-white/5 transition-colors',
+                        'opacity-0 -translate-y-1 animate-dropdown-item'
                       )}
-                    </div>
-                  </Link>
-                ))}
+                      style={{
+                        animationDelay: `${(upcomingEvents.length + index) * 30}ms`,
+                        animationFillMode: 'forwards',
+                      }}
+                    >
+                      <span className="text-xs text-text-dim min-w-[60px]">
+                        {formatDate(event.date)}
+                      </span>
+                      <div>
+                        <div className="text-white font-medium uppercase tracking-widest text-sm">
+                          {event.name}
+                        </div>
+                        {event.info?.winner_company_slug &&
+                        event.info?.winner_company_name ? (
+                          <div className="text-text-muted text-xs flex items-center gap-1.5">
+                            <span>Winner:</span>
+                            <CompanyBadge
+                              slug={event.info.winner_company_slug}
+                              name={event.info.winner_company_name}
+                              iconUrl={event.info.winner_company_icon_url}
+                              variant="muted"
+                              size="sm"
+                              asLink={false}
+                            />
+                          </div>
+                        ) : event.info?.winner ? (
+                          <div className="text-text-muted text-xs flex items-center gap-1.5">
+                            <span>Winner:</span>
+                            <span>{event.info.winner}</span>
+                          </div>
+                        ) : (
+                          <div className="text-text-muted text-xs">
+                            {event.location}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}
