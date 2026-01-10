@@ -221,7 +221,7 @@ export default async function HomePage() {
     getPhotos({ limit: 50, orderBy: 'random' }),
     // Fetch initial videos for VideoStrip (20 full-length videos only, not shorts)
     getVideos({ limit: 20, videoType: 'video' }),
-    // Fetch shorts for Quick Clips section
+    // Fetch shorts for Highlights section
     getVideos({ limit: 12, videoType: 'short' }),
     // Get photo count for pagination
     getPhotoCount({}),
@@ -583,10 +583,10 @@ export default async function HomePage() {
         </Suspense>
       </ErrorBoundary>
 
-      {/* Quick Clips (Shorts) - Wrapped in Suspense + ErrorBoundary */}
+      {/* Highlights (Shorts) - Wrapped in Suspense + ErrorBoundary */}
       {initialShorts && initialShorts.length > 0 && (
         <ErrorBoundary
-          sectionName="Quick Clips"
+          sectionName="Highlights"
           fallback={
             <section className="py-16 bg-bg-muted">
               <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -618,7 +618,7 @@ export default async function HomePage() {
               <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <ShortsCarousel
                   videos={initialShorts}
-                  title="Quick Clips"
+                  title="Highlights"
                   showBandInfo={true}
                   location="home_page"
                 />
