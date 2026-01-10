@@ -3,19 +3,11 @@
 import { useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { Photo } from '@/lib/db-types'
-import { Modal } from '@/components/ui'
 import { EditMetadataModal } from './edit-metadata-modal'
-import { HeroLabelsModal } from './hero-labels-modal'
+import { HeroSettingsModal } from './hero-settings-modal'
 import { DeleteConfirmModal } from './delete-confirm-modal'
-import { FocalPointEditor, FocalPoint } from './focal-point-editor'
 import { ShareComposerModal } from './share-composer-modal'
-import {
-  EditIcon,
-  ShareIcon,
-  StarIcon,
-  CropIcon,
-  DeleteIcon,
-} from '@/components/icons'
+import { EditIcon, ShareIcon, StarIcon, DeleteIcon } from '@/components/icons'
 
 interface PhotoAdminControlsProps {
   /** The photo to edit */
@@ -34,7 +26,7 @@ interface PhotoAdminControlsProps {
 
 /**
  * Admin controls for managing a single photo.
- * Includes: Edit Metadata, Share, Hero Labels, Focal Point, Delete
+ * Includes: Edit Metadata, Share, Hero Settings, Delete
  * Only renders for admin users.
  */
 export function PhotoAdminControls({
@@ -51,8 +43,7 @@ export function PhotoAdminControls({
   // Modal states
   const [showMetadataModal, setShowMetadataModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [showLabelsModal, setShowLabelsModal] = useState(false)
-  const [showFocalPointModal, setShowFocalPointModal] = useState(false)
+  const [showHeroSettingsModal, setShowHeroSettingsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Track current photo state (for labels indicator)
@@ -60,46 +51,24 @@ export function PhotoAdminControls({
     photo.labels || []
   )
 
-  // Handle focal point save
-  const handleSaveFocalPoint = useCallback(
-    async (focalPoint: FocalPoint) => {
-      const response = await fetch(`/api/photos/${photo.id}/labels`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ heroFocalPoint: focalPoint }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to save focal point')
-      }
-
-      const result = await response.json()
-
-      // Notify parent of update
-      if (onPhotoUpdated) {
-        onPhotoUpdated({
-          ...photo,
-          hero_focal_point: result.heroFocalPoint,
-        })
-      }
-
-      setShowFocalPointModal(false)
-    },
-    [photo, onPhotoUpdated]
-  )
-
-  // Handle labels update
-  const handleLabelsUpdated = useCallback(
-    (photoId: string, labels: string[]) => {
+  // Handle hero settings save (both labels and focal point)
+  const handleHeroSettingsSave = useCallback(
+    (
+      photoId: string,
+      labels: string[],
+      focalPoint: { x: number; y: number }
+    ) => {
       setCurrentLabels(labels)
+
       if (onLabelsUpdated) {
         onLabelsUpdated(photoId, labels)
       }
+
       if (onPhotoUpdated) {
         onPhotoUpdated({
           ...photo,
           labels,
+          hero_focal_point: focalPoint,
         })
       }
     },
@@ -159,28 +128,18 @@ export function PhotoAdminControls({
           <ShareIcon size={20} />
         </button>
 
-        {/* Hero Labels Button */}
+        {/* Hero Settings Button (combined labels + focal point) */}
         <button
-          onClick={() => setShowLabelsModal(true)}
+          onClick={() => setShowHeroSettingsModal(true)}
           className={`${buttonBaseClass} relative`}
-          aria-label="Set as hero image (Admin)"
-          title="Hero Labels (Admin)"
+          aria-label="Hero settings - labels and focal point (Admin)"
+          title="Hero Settings (Admin)"
         >
           <StarIcon size={20} />
           {/* Indicator dot if photo has any hero labels */}
           {currentLabels.length > 0 && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full" />
           )}
-        </button>
-
-        {/* Focal Point Button */}
-        <button
-          onClick={() => setShowFocalPointModal(true)}
-          className={buttonBaseClass}
-          aria-label="Set focal point for hero images (Admin)"
-          title="Edit focal point (Admin)"
-        >
-          <CropIcon size={20} />
         </button>
 
         {/* Delete Button */}
@@ -220,33 +179,14 @@ export function PhotoAdminControls({
         />
       )}
 
-      {/* Hero Labels Modal */}
-      {showLabelsModal && (
-        <HeroLabelsModal
-          isOpen={showLabelsModal}
+      {/* Hero Settings Modal (combined labels + focal point) */}
+      {showHeroSettingsModal && (
+        <HeroSettingsModal
+          isOpen={showHeroSettingsModal}
           photo={photo}
-          onClose={() => setShowLabelsModal(false)}
-          onLabelsUpdated={handleLabelsUpdated}
+          onClose={() => setShowHeroSettingsModal(false)}
+          onSave={handleHeroSettingsSave}
         />
-      )}
-
-      {/* Focal Point Modal */}
-      {showFocalPointModal && (
-        <Modal
-          isOpen={showFocalPointModal}
-          onClose={() => setShowFocalPointModal(false)}
-          title="Hero Image Focal Point"
-          description="Set the focal point to control how this image crops at different aspect ratios."
-          size="full"
-        >
-          <FocalPointEditor
-            imageUrl={photo.blob_url}
-            initialFocalPoint={photo.hero_focal_point ?? { x: 50, y: 50 }}
-            onSave={handleSaveFocalPoint}
-            width={photo.width ?? undefined}
-            height={photo.height ?? undefined}
-          />
-        </Modal>
       )}
 
       {/* Delete Confirmation Modal */}
