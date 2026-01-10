@@ -219,7 +219,8 @@ export function EventsDropdown({
                       className={cn(
                         'flex items-center gap-4 px-6 py-3 rounded-lg',
                         'hover:bg-white/5 transition-colors',
-                        'opacity-0 -translate-y-1 animate-dropdown-item'
+                        'opacity-0 -translate-y-1 animate-dropdown-item',
+                        'break-inside-avoid'
                       )}
                       style={{
                         animationDelay: `${(upcomingEvents.length + index) * 30}ms`,
