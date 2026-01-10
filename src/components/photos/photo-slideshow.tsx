@@ -8,14 +8,14 @@ import { Mousewheel, Autoplay, Navigation, Keyboard } from 'swiper/modules'
 import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import { Photo, PHOTO_LABELS } from '@/lib/db-types'
+import { Photo } from '@/lib/db-types'
 import { PhotoWithCluster } from '@/lib/db'
 import { slugify } from '@/lib/utils'
 import { buildHeroSrcSet } from '@/lib/photo-srcset'
 import { PhotoImage } from './photo-image'
-import { CompanyIcon, VinylSpinner, Modal } from '@/components/ui'
+import { CompanyIcon, VinylSpinner } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
-import { FocalPointEditor } from './focal-point-editor'
+import { HeroSettingsModal } from './hero-settings-modal'
 import { EditMetadataModal } from './edit-metadata-modal'
 import {
   trackPhotoDownload,
@@ -29,7 +29,6 @@ import {
   DownloadIcon,
   ShareIcon,
   StarIcon,
-  CropIcon,
   DeleteIcon,
   CloseIcon,
   ChevronLeftIcon,
@@ -42,25 +41,6 @@ import {
 } from '@/components/icons'
 import { ShuffleButton } from './shuffle-button'
 import { buildPhotoApiParams } from '@/lib/shuffle-types'
-
-// Label display info
-const LABEL_INFO = {
-  [PHOTO_LABELS.BAND_HERO]: {
-    name: 'Band Hero',
-    description: 'Featured on band page',
-    icon: '🎸',
-  },
-  [PHOTO_LABELS.EVENT_HERO]: {
-    name: 'Event Hero',
-    description: 'Featured on event page',
-    icon: '🎪',
-  },
-  [PHOTO_LABELS.GLOBAL_HERO]: {
-    name: 'Global Hero',
-    description: 'Featured on home page',
-    icon: '🏠',
-  },
-} as const
 
 interface FilterNames {
   eventName?: string | null
@@ -387,21 +367,14 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  // Focal point editor state (replaces old crop modal)
-  const [showFocalPointModal, setShowFocalPointModal] = useState(false)
+  // Hero settings modal state (combined labels + focal point)
+  const [showHeroSettingsModal, setShowHeroSettingsModal] = useState(false)
 
   // Link copy state
   const [linkCopied, setLinkCopied] = useState(false)
 
   // Share modal state
   const [showShareModal, setShowShareModal] = useState(false)
-
-  // Hero labels state (labels only, focal point now in separate modal)
-  const [showLabelsModal, setShowLabelsModal] = useState(false)
-  const [photoLabels, setPhotoLabels] = useState<string[]>([])
-  const [isLoadingLabels, setIsLoadingLabels] = useState(false)
-  const [isSavingLabels, setIsSavingLabels] = useState(false)
-  const [labelsError, setLabelsError] = useState<string | null>(null)
 
   // Metadata editing modal state (admin only)
   const [showMetadataModal, setShowMetadataModal] = useState(false)
@@ -608,8 +581,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   useEffect(() => {
     if (
       showDeleteConfirm ||
-      showFocalPointModal ||
-      showLabelsModal ||
+      showHeroSettingsModal ||
       showShareModal ||
       showMetadataModal
     ) {
@@ -617,8 +589,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }, [
     showDeleteConfirm,
-    showFocalPointModal,
-    showLabelsModal,
+    showHeroSettingsModal,
     showShareModal,
     showMetadataModal,
   ])
@@ -660,8 +631,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         showDeleteConfirm ||
-        showFocalPointModal ||
-        showLabelsModal ||
+        showHeroSettingsModal ||
         showShareModal ||
         showMetadataModal
       )
@@ -684,8 +654,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     togglePlay,
     stopPlay,
     showDeleteConfirm,
-    showFocalPointModal,
-    showLabelsModal,
+    showHeroSettingsModal,
     showShareModal,
     showMetadataModal,
   ])
@@ -873,105 +842,22 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     }
   }
 
-  // Handle saving focal point
-  const handleSaveFocalPoint = async (focalPoint: { x: number; y: number }) => {
-    const photo = allPhotos[currentIndex]
-    if (!photo) return
-
-    const response = await fetch(`/api/photos/${photo.id}/labels`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ heroFocalPoint: focalPoint }),
-    })
-
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.error || 'Failed to save focal point')
-    }
-
-    const result = await response.json()
-
-    // Update the photo in local state
-    setAllPhotos((prev) =>
-      prev.map((p) =>
-        p.id === photo.id
-          ? { ...p, hero_focal_point: result.heroFocalPoint }
-          : p
-      )
-    )
-
-    // Close modal
-    setShowFocalPointModal(false)
-  }
-
-  // Fetch photo labels when opening the labels modal
-  const fetchPhotoLabels = useCallback(async (photoId: string) => {
-    setIsLoadingLabels(true)
-    setLabelsError(null)
-    try {
-      const response = await fetch(`/api/photos/${photoId}/labels`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch labels')
-      }
-      const data = await response.json()
-      setPhotoLabels(data.labels || [])
-    } catch (error) {
-      setLabelsError(
-        error instanceof Error ? error.message : 'Failed to load labels'
-      )
-    } finally {
-      setIsLoadingLabels(false)
-    }
-  }, [])
-
-  // Open labels modal and fetch current labels
-  const handleOpenLabelsModal = useCallback(() => {
-    const photo = allPhotos[currentIndex]
-    if (photo) {
-      setShowLabelsModal(true)
-      fetchPhotoLabels(photo.id)
-    }
-  }, [allPhotos, currentIndex, fetchPhotoLabels])
-
-  // Toggle a label on/off
-  const handleToggleLabel = async (label: string) => {
-    const photo = allPhotos[currentIndex]
-    if (!photo) return
-
-    const newLabels = photoLabels.includes(label)
-      ? photoLabels.filter((l) => l !== label)
-      : [...photoLabels, label]
-
-    setIsSavingLabels(true)
-    setLabelsError(null)
-
-    try {
-      const response = await fetch(`/api/photos/${photo.id}/labels`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ labels: newLabels }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to update labels')
-      }
-
-      const result = await response.json()
-      setPhotoLabels(result.labels)
-
+  // Handle hero settings save (both labels and focal point)
+  const handleHeroSettingsSave = useCallback(
+    (
+      photoId: string,
+      labels: string[],
+      focalPoint: { x: number; y: number }
+    ) => {
       // Update the photo in local state
       setAllPhotos((prev) =>
         prev.map((p) =>
-          p.id === photo.id ? { ...p, labels: result.labels } : p
+          p.id === photoId ? { ...p, labels, hero_focal_point: focalPoint } : p
         )
       )
-    } catch (error) {
-      setLabelsError(error instanceof Error ? error.message : 'Failed to save')
-    } finally {
-      setIsSavingLabels(false)
-    }
-  }
+    },
+    []
+  )
 
   // Handle metadata update from EditMetadataModal
   const handleMetadataUpdated = useCallback(
@@ -1325,24 +1211,16 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
                   <ShareIcon size={20} />
                 </button>
                 <button
-                  onClick={handleOpenLabelsModal}
+                  onClick={() => setShowHeroSettingsModal(true)}
                   className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors relative"
-                  aria-label="Set as hero image (Admin)"
-                  title="Hero Labels (Admin)"
+                  aria-label="Hero settings - labels and focal point (Admin)"
+                  title="Hero Settings (Admin)"
                 >
                   <StarIcon size={20} />
                   {/* Indicator dot if photo has any hero labels */}
                   {currentPhoto?.labels && currentPhoto.labels.length > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent rounded-full" />
                   )}
-                </button>
-                <button
-                  onClick={() => setShowFocalPointModal(true)}
-                  className="p-2 rounded-lg hover:bg-accent/10 text-accent/70 hover:text-accent transition-colors"
-                  aria-label="Set focal point for hero images (Admin)"
-                  title="Edit focal point (Admin)"
-                >
-                  <CropIcon size={20} />
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
@@ -1579,124 +1457,14 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
         </div>
       )}
 
-      {/* Focal Point Editor Modal */}
-      {showFocalPointModal && currentPhoto && (
-        <Modal
-          isOpen={showFocalPointModal}
-          onClose={() => setShowFocalPointModal(false)}
-          title="Hero Image Focal Point"
-          description="Set the focal point to control how this image crops at different aspect ratios."
-          size="full"
-        >
-          <FocalPointEditor
-            imageUrl={currentPhoto.blob_url}
-            initialFocalPoint={
-              currentPhoto.hero_focal_point ?? { x: 50, y: 50 }
-            }
-            onSave={handleSaveFocalPoint}
-            width={currentPhoto.width ?? undefined}
-            height={currentPhoto.height ?? undefined}
-          />
-        </Modal>
-      )}
-
-      {/* Hero Labels Modal */}
-      {showLabelsModal && currentPhoto && (
-        <div className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-6 overflow-y-auto">
-          <div className="bg-bg-elevated rounded-xl p-6 max-w-md w-full border border-white/10 my-auto">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h3 className="font-semibold text-xl mb-1">Hero Labels</h3>
-                <p className="text-text-muted text-sm">
-                  Select where this photo should be featured
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowLabelsModal(false)
-                  setLabelsError(null)
-                }}
-                className="p-1 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors"
-                aria-label="Close"
-              >
-                <CloseIcon size={20} />
-              </button>
-            </div>
-
-            {isLoadingLabels ? (
-              <div className="flex items-center justify-center py-8">
-                <VinylSpinner size="xs" className="text-accent" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  {Object.entries(LABEL_INFO).map(([label, info]) => {
-                    const isActive = photoLabels.includes(label)
-                    const isDisabled = isSavingLabels
-
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => handleToggleLabel(label)}
-                        disabled={isDisabled}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                          isActive
-                            ? 'border-accent bg-accent/10 text-white'
-                            : 'border-white/10 bg-white/5 text-text-muted hover:border-white/20 hover:bg-white/10'
-                        } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <span className="text-xl">{info.icon}</span>
-                        <div className="flex-1 text-left">
-                          <div className="font-medium text-sm">{info.name}</div>
-                          <div className="text-xs text-text-dim">
-                            {info.description}
-                          </div>
-                        </div>
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            isActive
-                              ? 'border-accent bg-accent'
-                              : 'border-white/30'
-                          }`}
-                        >
-                          {isActive && (
-                            <CheckIcon
-                              size={12}
-                              className="text-white"
-                              strokeWidth={2}
-                            />
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {/* Context info */}
-                {currentPhoto.band_name && (
-                  <div className="pt-4 border-t border-white/10">
-                    <p className="text-xs text-text-dim">
-                      <span className="text-text-muted">Band:</span>{' '}
-                      {currentPhoto.band_name}
-                    </p>
-                    {currentPhoto.event_name && (
-                      <p className="text-xs text-text-dim mt-1">
-                        <span className="text-text-muted">Event:</span>{' '}
-                        {currentPhoto.event_name}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {labelsError && (
-                  <div className="p-3 bg-error/10 border border-error/30 rounded-lg text-error text-sm">
-                    {labelsError}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Hero Settings Modal (combined labels + focal point) */}
+      {showHeroSettingsModal && currentPhoto && (
+        <HeroSettingsModal
+          isOpen={showHeroSettingsModal}
+          photo={currentPhoto}
+          onClose={() => setShowHeroSettingsModal(false)}
+          onSave={handleHeroSettingsSave}
+        />
       )}
 
       {/* Share to Social Modal */}
