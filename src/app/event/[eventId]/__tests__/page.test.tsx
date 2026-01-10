@@ -134,6 +134,9 @@ describe('EventPage', () => {
           status: 'finalized',
           info: { winner: 'Champion Band', scoring_version: '2022.1' },
         }}
+        overallWinner={{
+          name: 'Champion Band',
+        }}
       />
     )
 

@@ -130,6 +130,11 @@ function CompanyPageView({
               Photos
             </Button>
           </Link>
+          <Link href={`/videos?company=${companySlug}`}>
+            <Button variant="outline-solid" size="sm">
+              Videos
+            </Button>
+          </Link>
           <Link href="/companies">
             <Button variant="outline-solid" size="sm">
               ← All Bands

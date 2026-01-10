@@ -4,13 +4,15 @@ import {
   getBandsForEvent,
   getPhotosByLabel,
   getVideos,
+  hasFinalizedResults,
+  getFinalizedResults,
   PHOTO_LABELS,
 } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
 import { formatEventDate } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl } from '@/lib/seo'
-import { EventPageClient } from './event-page-client'
+import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
 import { notFound } from 'next/navigation'
 
@@ -123,6 +125,45 @@ export default async function EventPage({
   const primaryHeroPhoto =
     eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
+  // Fetch winner data for finalized events with detailed scoring
+  let overallWinner: OverallWinner | undefined
+  const eventInfo = event.info as {
+    scoring_version?: string
+    winner?: string
+  } | null
+  const scoringVersion = parseScoringVersion(eventInfo)
+  const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
+  const isFinalized = event.status === 'finalized'
+
+  if (isFinalized) {
+    if (!showDetailedBreakdown && eventInfo?.winner) {
+      // 2022.1 events: use stored winner name
+      const winnerBand = bands.find(
+        (b) => b.name.toLowerCase() === eventInfo.winner?.toLowerCase()
+      )
+      overallWinner = {
+        name: eventInfo.winner,
+        companySlug: winnerBand?.company_slug,
+        companyName: winnerBand?.company_name,
+        companyIconUrl: winnerBand?.company_icon_url,
+      }
+    } else if (showDetailedBreakdown && (await hasFinalizedResults(eventId))) {
+      // 2025.1/2026.1 events: fetch from finalized_results table
+      const finalizedResults = await getFinalizedResults(eventId)
+      if (finalizedResults.length > 0) {
+        const winner = finalizedResults[0]
+        const winnerBand = bands.find((b) => b.id === winner.band_id)
+        overallWinner = {
+          name: winner.band_name,
+          totalScore: Number(winner.total_score || 0),
+          companySlug: winnerBand?.company_slug,
+          companyName: winnerBand?.company_name,
+          companyIconUrl: winnerBand?.company_icon_url,
+        }
+      }
+    }
+  }
+
   return (
     <>
       <EventJsonLd
@@ -140,6 +181,7 @@ export default async function EventPage({
         videos={videos}
         shorts={shorts}
         navEvents={navEvents}
+        overallWinner={overallWinner}
       />
     </>
   )
