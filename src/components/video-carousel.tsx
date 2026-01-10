@@ -167,7 +167,7 @@ export function VideoCarousel({
         {/* Video Cards Carousel */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent snap-x snap-mandatory"
+          className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-subtle scrollbar-track-transparent snap-x snap-mandatory"
           style={{ scrollbarWidth: 'thin' }}
         >
           {videos.map((video) => (

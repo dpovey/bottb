@@ -141,7 +141,7 @@ export function NearbyPhotosStrip({
       {!loading && nearbyPhotos.length > 0 && (
         <div
           ref={stripRef}
-          className="flex gap-3 overflow-x-auto py-2 px-1 scrollbar-thin scrollbar-track-bg scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40"
+          className="flex gap-3 overflow-x-auto py-2 px-1 scrollbar-thin scrollbar-track-bg scrollbar-thumb-muted"
           style={{ scrollbarWidth: 'thin' }}
         >
           {nearbyPhotos.map((photo) => (

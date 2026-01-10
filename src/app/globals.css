@@ -119,6 +119,60 @@
   color: #c0c0c0; /* Lighter than text-muted (#a0a0a0) for hero contrast */
 }
 
+/* ===========================================
+ * Scrollbar Utilities
+ * Custom scrollbar styling for horizontal scrolling elements
+ * Use scrollbar-thin for width, scrollbar-track-* for background,
+ * scrollbar-thumb-* for the scrollbar handle
+ * =========================================== */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+}
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-track-transparent {
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@utility scrollbar-track-bg {
+  &::-webkit-scrollbar-track {
+    background: var(--color-bg);
+    border-radius: 4px;
+  }
+}
+
+@utility scrollbar-thumb-subtle {
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@utility scrollbar-thumb-muted {
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+  }
+}
+
 @utility filter-select {
   @apply bg-bg text-white;
 

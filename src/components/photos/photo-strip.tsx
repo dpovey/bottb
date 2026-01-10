@@ -258,7 +258,7 @@ export function PhotoStrip({
               {/* Scrollable strip with padding for ring visibility */}
               <div
                 ref={stripRef}
-                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 focus:outline-hidden"
+                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-muted focus:outline-hidden"
                 style={{ scrollbarWidth: 'thin' }}
                 tabIndex={0}
                 role="listbox"
