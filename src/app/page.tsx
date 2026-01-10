@@ -239,6 +239,13 @@ export default async function HomePage() {
     large_4k_url: photo.large_4k_url ?? undefined,
   }))
 
+  // Compute random initial index server-side to avoid flash on hydration
+  // Intentionally random per-request for SSR - different hero on each page load
+  const heroInitialIndex =
+    heroImages.length > 0
+      ? Math.floor(Math.random() * heroImages.length) // eslint-disable-line react-hooks/purity
+      : 0
+
   const initialPhotos = initialPhotosData
   const initialVideos = initialVideosData
   const initialShorts = initialShortsData
@@ -370,7 +377,11 @@ export default async function HomePage() {
       navEvents={navEvents}
     >
       {/* Hero Section - supports multiple global hero images */}
-      <HeroCarousel images={heroImages} interval={8000}>
+      <HeroCarousel
+        images={heroImages}
+        interval={8000}
+        initialIndex={heroInitialIndex}
+      >
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 text-center">
           <h1 className="hero-text font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 leading-tight">
             Battle of the Tech Bands
