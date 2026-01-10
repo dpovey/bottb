@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
-import { Card, Badge, DateBadge, Button } from '@/components/ui'
+import { Card, Badge, DateBadge, Button, CompanyBadge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 
@@ -132,10 +132,17 @@ export function EventCard({
                 🎸 Live Now
               </span>
             ) : showWinner && winner ? (
-              <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-                🏆 {winner.name}
-                {winner.companyName && (
-                  <span className="text-white/70"> ({winner.companyName})</span>
+              <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                <span>🏆 {winner.name}</span>
+                {winner.companySlug && winner.companyName && (
+                  <CompanyBadge
+                    slug={winner.companySlug}
+                    name={winner.companyName}
+                    iconUrl={winner.companyIconUrl}
+                    variant="muted"
+                    size="sm"
+                    asLink={false}
+                  />
                 )}
               </span>
             ) : null}
@@ -209,15 +216,22 @@ export function EventCard({
             {/* Winner section for past events */}
             {showWinner && winner && (
               <div className="mb-4 p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                <div className="text-warning text-sm">
-                  <span className="font-medium">Winner:</span>{' '}
-                  <span className="text-white font-semibold">
-                    {winner.name}
-                  </span>
-                  {winner.companyName && (
-                    <span className="text-text-muted ml-1">
-                      ({winner.companyName})
+                <div className="text-warning text-sm flex items-center gap-2 flex-wrap">
+                  <span>
+                    <span className="font-medium">Winner:</span>{' '}
+                    <span className="text-white font-semibold">
+                      {winner.name}
                     </span>
+                  </span>
+                  {winner.companySlug && winner.companyName && (
+                    <CompanyBadge
+                      slug={winner.companySlug}
+                      name={winner.companyName}
+                      iconUrl={winner.companyIconUrl}
+                      variant="muted"
+                      size="sm"
+                      asLink={false}
+                    />
                   )}
                 </div>
               </div>
