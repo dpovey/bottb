@@ -197,6 +197,19 @@ Key principles:
 - Follow existing codebase patterns
 - Use shared components from `src/components/ui/`
 
+### React Compiler - No Manual Memoization
+
+**⚠️ IMPORTANT: This project uses React Compiler (`reactCompiler: true` in next.config.ts).**
+
+**Do NOT add `useCallback`, `useMemo`, or `React.memo`** - the compiler handles memoization automatically and more effectively than manual optimization.
+
+- ❌ `useCallback(() => {...}, [deps])` - Don't add these
+- ❌ `useMemo(() => {...}, [deps])` - Don't add these
+- ❌ `React.memo(Component)` - Don't add these
+- ✅ Just write plain functions and values - the compiler optimizes them
+
+See `doc/practices/react.md` for details.
+
 ## When Things Go Wrong
 
 - **Merge conflict**: Stop and ask user - don't attempt auto-resolution

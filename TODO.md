@@ -36,7 +36,7 @@
 
 ### Testing
 
-- [ ] **Lighthouse CI** - Add to CI/CD pipeline
+- [x] **Lighthouse CI** - Added to CI/CD pipeline with PR comments and schema validation
 
 ---
 
@@ -52,7 +52,7 @@
 
 ### Features
 
-- [ ] **Search functionality** - Search across photos, songs, and bands
+- [x] **Search functionality** - Search across events, bands, songs, companies, photographers (Orama search engine)
 - [ ] **Email notifications** - Event reminders, results announcements
 - [ ] **Band registration form** - Replace mailto with proper form
 - [ ] **Live leaderboard** - Real-time crowd scores during events
@@ -114,7 +114,7 @@
 - [ ] **Console error review** - Audit `suppressHydrationWarning` usage
 - [ ] **Separate PostHog projects** - Dev vs prod environments
 - [ ] **Migrate PhotosContent to useShuffledPhotos** - Refactor `src/app/photos/photos-content.tsx` to use the unified hook for consistency
-- [ ] **Remove manual useCallback/useMemo** - React Compiler handles memoization automatically (see `doc/practices/react.md`). ~83 occurrences across 16 files to clean up
+- [ ] **Remove manual useCallback/useMemo** - React Compiler handles memoization automatically (see `doc/practices/react.md`). ~127 occurrences across 29 files to clean up
 
 ### Testing (Extended)
 
