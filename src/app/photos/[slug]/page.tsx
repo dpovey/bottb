@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getPhotoBySlugOrId, isUuid, ensurePhotoSlug } from '@/lib/photo-slugs'
 import { getAdjacentPhotos, getSimilarPhotos } from '@/lib/db'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
+import { slugify } from '@/lib/utils'
 import { buildSlideshowUrl } from '@/lib/shuffle-types'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
@@ -131,27 +132,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Extract photo number from slug for uniqueness
   const photoNumber = getPhotoNumberFromSlug(photo.slug)
 
-  // Build a descriptive title with photo number
-  const parts: string[] = []
-  if (photo.band_name) parts.push(photo.band_name)
-  if (photo.event_name) parts.push(photo.event_name)
-  const baseTitle = parts.length > 0 ? parts.join(' at ') : 'Photo'
-  const title = photoNumber
-    ? `${baseTitle} #${photoNumber} | Battle of the Tech Bands`
-    : `${baseTitle} | Battle of the Tech Bands`
+  // Detect if this is a general event photo vs band-specific photo
+  // Event photos have slugs like "sydney-2025-1" (starting with slugified event name)
+  // Band photos have slugs like "the-agentics-sydney-2025-1" (starting with slugified band name)
+  const eventSlug = photo.event_name ? slugify(photo.event_name) : ''
+  const isEventPhoto = photo.slug?.startsWith(eventSlug + '-')
 
-  // Build description
-  let description = 'A photo from Battle of the Tech Bands'
-  if (photo.band_name && photo.event_name) {
-    description = `${photo.band_name} performing at ${photo.event_name}`
+  // Build a descriptive title - differentiate event vs band photos
+  let baseTitle: string
+  if (isEventPhoto && photo.event_name) {
+    // Event photo: "Sydney 2025 Photo #1" - distinct from band photos
+    baseTitle = photoNumber
+      ? `${photo.event_name} Photo #${photoNumber}`
+      : `${photo.event_name} Photo`
+  } else if (photo.band_name && photo.event_name) {
+    // Band photo: "The Agentics at Sydney 2025 #1"
+    baseTitle = photoNumber
+      ? `${photo.band_name} at ${photo.event_name} #${photoNumber}`
+      : `${photo.band_name} at ${photo.event_name}`
   } else if (photo.band_name) {
-    description = `${photo.band_name} at Battle of the Tech Bands`
+    baseTitle = photoNumber
+      ? `${photo.band_name} #${photoNumber}`
+      : photo.band_name
   } else if (photo.event_name) {
-    description = `Photo from ${photo.event_name}`
+    baseTitle = photoNumber
+      ? `${photo.event_name} #${photoNumber}`
+      : photo.event_name
+  } else {
+    baseTitle = photoNumber ? `Photo #${photoNumber}` : 'Photo'
+  }
+
+  // Use tiered suffix approach for title
+  const title = buildSeoTitle(baseTitle)
+
+  // Build description - ensure it meets minimum length requirements
+  let description: string
+  if (photo.band_name && photo.event_name) {
+    description = `${photo.band_name} performing at ${photo.event_name}, Australia's premier corporate battle of the bands competition`
+  } else if (photo.band_name) {
+    description = `${photo.band_name} performing at Battle of the Tech Bands, Australia's premier corporate battle of the bands`
+  } else if (photo.event_name) {
+    description = `Photo from ${photo.event_name} - Battle of the Tech Bands, Australia's premier corporate battle of the bands`
+  } else {
+    description =
+      "A photo from Battle of the Tech Bands, Australia's premier corporate battle of the bands competition"
   }
   if (photo.photographer) {
-    description += ` • Photo by ${photo.photographer}`
+    description += `. Photo by ${photo.photographer}`
   }
+
+  // Ensure description fits within SEO limits
+  description = buildSeoDescription(description)
 
   const baseUrl = getBaseUrl()
   // Use slug for canonical URL, fall back to id if no slug

@@ -32,7 +32,7 @@ import {
   calculateTotalScore,
   type BandScoreData,
 } from '@/lib/scoring'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { MusicGroupJsonLd } from '@/components/seo'
 import {
   TwitterIcon,
@@ -396,21 +396,22 @@ export async function generateMetadata({
 
   const band = bandData[0]
 
-  // Build title - include event name to differentiate bands across years
-  // Company name is omitted from title to keep under 60 chars
-  // (Company remains in description, page content, and structured data)
-  const title = `${band.name} at ${band.event_name} | Battle of the Tech Bands`
+  // Build title - use tiered suffix approach (full → short → none)
+  // Preserves the unique content (band name, event) which is more valuable for SEO
+  const title = buildSeoTitle(`${band.name} at ${band.event_name}`)
 
-  // Build description - use description field if it contains actual content (not just company name)
+  // Build description - include company and band description if available
   let description = `${band.name}`
   if (band.company_name) {
     description += ` from ${band.company_name}`
   }
   description += ` performing at ${band.event_name}`
-  // Use description if it's longer than 50 chars (real description vs company name)
+  // Append band description if it's a real description (>50 chars)
   if (band.description && band.description.length > 50) {
     description += `. ${band.description}`
   }
+  // Ensure description fits within SEO limits (truncates at word boundary)
+  description = buildSeoDescription(description)
 
   // Get hero image
   const bandHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.BAND_HERO, {

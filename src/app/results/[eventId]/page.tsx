@@ -31,7 +31,7 @@ import {
   getCategories,
   type BandScoreData,
 } from '@/lib/scoring'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { EventJsonLd } from '@/components/seo'
 
 interface BandScore {
@@ -142,16 +142,18 @@ export async function generateMetadata({
     }
   }
 
-  // Build title and description
-  const title = winnerName
-    ? `${winnerName} Wins ${event.name} | Battle of the Tech Bands`
-    : `${event.name} Results | Battle of the Tech Bands`
+  // Build title and description - use tiered suffix approach
+  const baseTitle = winnerName
+    ? `${winnerName} Wins ${event.name}`
+    : `${event.name} Results`
+  const title = buildSeoTitle(baseTitle)
 
   let description = `Results for ${event.name}`
   if (winnerName) {
     description += `. Winner: ${winnerName}`
   }
   description += `. ${formatEventDate(event.date, event.timezone)} • ${event.location}`
+  description = buildSeoDescription(description)
 
   // Get event hero image
   const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {

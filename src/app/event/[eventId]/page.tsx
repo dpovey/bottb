@@ -11,7 +11,7 @@ import {
 import { getNavEvents } from '@/lib/nav-data'
 import { formatEventDate } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
-import { getBaseUrl } from '@/lib/seo'
+import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
 import { notFound } from 'next/navigation'
@@ -42,12 +42,12 @@ export async function generateMetadata({
   const bands = await getBandsForEvent(eventId)
   const bandCount = bands.length
 
-  // Build title
-  let title = event.name
+  // Build title - use tiered suffix approach (full → short → none)
+  let baseTitle = event.name
   if (show2022Winner) {
-    title += ` - ${storedWinner} Wins`
+    baseTitle += ` - ${storedWinner} Wins`
   }
-  title += ' | Battle of the Tech Bands'
+  const title = buildSeoTitle(baseTitle)
 
   // Build description
   let description = `${event.name} - ${formatEventDate(event.date, event.timezone)} at ${event.location}`
@@ -60,6 +60,8 @@ export async function generateMetadata({
   if (show2022Winner) {
     description += `. Winner: ${storedWinner}`
   }
+  // Ensure description fits within SEO limits
+  description = buildSeoDescription(description)
 
   // Get event hero image
   const eventHeroPhotos = await getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, {
