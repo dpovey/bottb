@@ -5,13 +5,16 @@ export function OrganizationJsonLd() {
   const baseUrl = getBaseUrl()
   const socialLinks = getSocialLinks()
 
-  // Extract social media URLs
+  // Extract social media URLs and add authoritative sources
   const socialProfiles: string[] = []
   socialLinks.forEach((link) => {
     if (link.href) {
       socialProfiles.push(link.href)
     }
   })
+  // Add Wikipedia and Wikidata for entity recognition
+  socialProfiles.push('https://en.wikipedia.org/wiki/Battle_of_the_Tech_Bands')
+  socialProfiles.push('https://www.wikidata.org/wiki/Q137739285')
 
   const schema = {
     '@context': 'https://schema.org',

@@ -131,6 +131,8 @@ export function EventJsonLd({
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'MusicEvent',
+    // Link to Wikidata "battle of the bands" concept for better entity recognition
+    additionalType: 'https://www.wikidata.org/wiki/Q798766',
     name: event.name,
     description:
       eventInfo?.description ||
