@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -55,7 +55,7 @@ export function EventsDropdown({
   }, [])
 
   // Client-side fetch (only if no SSR data provided)
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = async () => {
     if (hasFetched) return
     setHasFetched(true)
 
@@ -86,18 +86,18 @@ export function EventsDropdown({
     } finally {
       setLoading(false)
     }
-  }, [hasFetched])
+  }
 
   // Prefetch on hover if no SSR data
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     if (!hasFetched) fetchEvents()
-  }, [hasFetched, fetchEvents])
+  }
 
   // Fetch on click if needed
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (!hasFetched) fetchEvents()
     setIsOpen((prev) => !prev)
-  }, [hasFetched, fetchEvents])
+  }
 
   // Close on click outside
   useEffect(() => {

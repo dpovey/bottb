@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useRef, memo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -84,8 +84,8 @@ const PREFETCH_THRESHOLD = 15 // Prefetch when within 15 photos of edge (gives t
 const PLAY_INTERVAL_MS = 3000 // 3 seconds between photos in play mode
 const _SWIPE_THRESHOLD = 50 // Minimum horizontal swipe distance in pixels (reserved for future touch handling)
 
-// Memoized thumbnail to prevent re-renders when other thumbnails' selection changes
-const Thumbnail = memo(function Thumbnail({
+// Thumbnail component
+function Thumbnail({
   photo,
   index,
   isSelected,
@@ -116,10 +116,10 @@ const Thumbnail = memo(function Thumbnail({
       />
     </button>
   )
-})
+}
 
-// Memoized slide with native lazy loading and responsive images
-const Slide = memo(function Slide({
+// Slide component with native lazy loading and responsive images
+function Slide({
   photo,
   index,
   isPlaying,
@@ -154,63 +154,60 @@ const Slide = memo(function Slide({
     right: number
   } | null>(null)
 
-  // Calculate the actual rendered image bounds within the object-contain element
-  const updateBadgePosition = useCallback(() => {
+  // Update badge position when image loads or resizes
+  useEffect(() => {
     const img = imgRef.current
     const container = containerRef.current
     if (!img || !container) return
 
-    // Get the natural dimensions
-    const naturalWidth = img.naturalWidth
-    const naturalHeight = img.naturalHeight
-    if (!naturalWidth || !naturalHeight) return
+    // Calculate the actual rendered image bounds within the object-contain element
+    const updateBadgePosition = () => {
+      // Get the natural dimensions
+      const naturalWidth = img.naturalWidth
+      const naturalHeight = img.naturalHeight
+      if (!naturalWidth || !naturalHeight) return
 
-    // Get the element dimensions
-    const elementWidth = img.clientWidth
-    const elementHeight = img.clientHeight
-    const containerRect = container.getBoundingClientRect()
-    const imgRect = img.getBoundingClientRect()
+      // Get the element dimensions
+      const elementWidth = img.clientWidth
+      const elementHeight = img.clientHeight
+      const containerRect = container.getBoundingClientRect()
+      const imgRect = img.getBoundingClientRect()
 
-    // Calculate the aspect ratios
-    const naturalAspect = naturalWidth / naturalHeight
-    const elementAspect = elementWidth / elementHeight
+      // Calculate the aspect ratios
+      const naturalAspect = naturalWidth / naturalHeight
+      const elementAspect = elementWidth / elementHeight
 
-    // Calculate rendered image dimensions within object-contain
-    let renderedWidth: number
-    let renderedHeight: number
-    if (naturalAspect > elementAspect) {
-      // Image is wider - constrained by width
-      renderedWidth = elementWidth
-      renderedHeight = elementWidth / naturalAspect
-    } else {
-      // Image is taller - constrained by height
-      renderedHeight = elementHeight
-      renderedWidth = elementHeight * naturalAspect
+      // Calculate rendered image dimensions within object-contain
+      let renderedWidth: number
+      let renderedHeight: number
+      if (naturalAspect > elementAspect) {
+        // Image is wider - constrained by width
+        renderedWidth = elementWidth
+        renderedHeight = elementWidth / naturalAspect
+      } else {
+        // Image is taller - constrained by height
+        renderedHeight = elementHeight
+        renderedWidth = elementHeight * naturalAspect
+      }
+
+      // Calculate the offset from the element bounds to the rendered image bounds
+      const horizontalPadding = (elementWidth - renderedWidth) / 2
+      const verticalPadding = (elementHeight - renderedHeight) / 2
+
+      // Calculate position relative to container
+      const imgOffsetLeft = imgRect.left - containerRect.left
+      const imgOffsetTop = imgRect.top - containerRect.top
+
+      // Badge position: offset from container bottom-right to image bottom-right
+      const right =
+        containerRect.width - (imgOffsetLeft + elementWidth - horizontalPadding)
+      const bottom =
+        containerRect.height - (imgOffsetTop + elementHeight - verticalPadding)
+
+      // Add a small margin from the edge (12px on mobile, 16px on desktop)
+      const margin = window.innerWidth < 640 ? 12 : 16
+      setBadgePosition({ bottom: bottom + margin, right: right + margin })
     }
-
-    // Calculate the offset from the element bounds to the rendered image bounds
-    const horizontalPadding = (elementWidth - renderedWidth) / 2
-    const verticalPadding = (elementHeight - renderedHeight) / 2
-
-    // Calculate position relative to container
-    const imgOffsetLeft = imgRect.left - containerRect.left
-    const imgOffsetTop = imgRect.top - containerRect.top
-
-    // Badge position: offset from container bottom-right to image bottom-right
-    const right =
-      containerRect.width - (imgOffsetLeft + elementWidth - horizontalPadding)
-    const bottom =
-      containerRect.height - (imgOffsetTop + elementHeight - verticalPadding)
-
-    // Add a small margin from the edge (12px on mobile, 16px on desktop)
-    const margin = window.innerWidth < 640 ? 12 : 16
-    setBadgePosition({ bottom: bottom + margin, right: right + margin })
-  }, [])
-
-  // Update badge position when image loads or resizes
-  useEffect(() => {
-    const img = imgRef.current
-    if (!img) return
 
     // Update when image loads
     const handleLoad = () => updateBadgePosition()
@@ -227,7 +224,7 @@ const Slide = memo(function Slide({
       img.removeEventListener('load', handleLoad)
       resizeObserver.disconnect()
     }
-  }, [updateBadgePosition])
+  }, [])
 
   // Handle badge click to cycle through cluster
   const handleBadgeClick = (e: React.MouseEvent) => {
@@ -271,9 +268,9 @@ const Slide = memo(function Slide({
       )}
     </div>
   )
-})
+}
 
-export const PhotoSlideshow = memo(function PhotoSlideshow({
+export function PhotoSlideshow({
   photos: initialPhotos,
   initialIndex,
   totalPhotos,
@@ -411,31 +408,28 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
   // Fetch a specific page of photos
   // Uses buildPhotoApiParams for consistent behavior with gallery/photo-strip
-  const fetchPage = useCallback(
-    async (page: number): Promise<PhotoWithCluster[]> => {
-      const params = buildPhotoApiParams({
-        eventId: filters.eventId || undefined,
-        bandId: filters.bandId || undefined,
-        photographer: filters.photographer || undefined,
-        companySlug: filters.companySlug || undefined,
-        shuffle: filters.shuffle,
-        page,
-        limit: PAGE_SIZE,
-        // groupTypes defaults to 'near_duplicate,scene'
-      })
+  const fetchPage = async (page: number): Promise<PhotoWithCluster[]> => {
+    const params = buildPhotoApiParams({
+      eventId: filters.eventId || undefined,
+      bandId: filters.bandId || undefined,
+      photographer: filters.photographer || undefined,
+      companySlug: filters.companySlug || undefined,
+      shuffle: filters.shuffle,
+      page,
+      limit: PAGE_SIZE,
+      // groupTypes defaults to 'near_duplicate,scene'
+    })
 
-      const res = await fetch(`/api/photos?${params.toString()}`)
-      if (!res.ok) return []
+    const res = await fetch(`/api/photos?${params.toString()}`)
+    if (!res.ok) return []
 
-      const data = await res.json()
-      setTotalCount(data.pagination.total)
-      return data.photos
-    },
-    [filters]
-  )
+    const data = await res.json()
+    setTotalCount(data.pagination.total)
+    return data.photos
+  }
 
   // Load next page
-  const loadNextPage = useCallback(async () => {
+  const loadNextPage = async () => {
     const nextPage = Math.max(...Array.from(loadedPages)) + 1
     const maxPage = Math.ceil(totalCount / PAGE_SIZE)
 
@@ -458,10 +452,10 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     } finally {
       setIsLoadingMore(false)
     }
-  }, [loadedPages, totalCount, isLoadingMore, fetchPage])
+  }
 
   // Load previous page
-  const loadPrevPage = useCallback(async () => {
+  const loadPrevPage = async () => {
     const prevPage = Math.min(...Array.from(loadedPages)) - 1
 
     if (prevPage < 1 || loadedPages.has(prevPage) || isLoadingMore) return
@@ -487,7 +481,7 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     } finally {
       setIsLoadingMore(false)
     }
-  }, [loadedPages, isLoadingMore, fetchPage])
+  }
 
   // Aggressive initial load - load multiple pages until thumbnail strip is full
   // Each thumbnail is 64px + 12px gap = 76px, aim for 2x screen width
@@ -505,7 +499,8 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     if (needsMore && hasMore && !isLoadingMore) {
       loadNextPage()
     }
-  }, [allPhotos.length, totalCount, isLoadingMore, loadNextPage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allPhotos.length, totalCount, isLoadingMore])
 
   // Check if we need to prefetch based on navigation
   useEffect(() => {
@@ -517,16 +512,17 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     if (currentIndex < PREFETCH_THRESHOLD) {
       loadPrevPage()
     }
-  }, [currentIndex, allPhotos.length, loadNextPage, loadPrevPage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, allPhotos.length])
 
   // Navigate to specific index
-  const goToIndex = useCallback((index: number) => {
+  const goToIndex = (index: number) => {
     if (!swiperRef.current) return
     if (index === swiperRef.current.activeIndex) return
     swiperRef.current.slideTo(index)
-  }, [])
+  }
 
-  const _goToNext = useCallback(() => {
+  const _goToNext = () => {
     if (!swiperRef.current) return
     const current = swiperRef.current.activeIndex
     const canGoNext =
@@ -537,13 +533,13 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
 
     const nextIndex = current === allPhotos.length - 1 ? 0 : current + 1
     swiperRef.current.slideTo(nextIndex)
-  }, [allPhotos.length, isPlaying])
+  }
 
-  const _goToPrevious = useCallback(() => {
+  const _goToPrevious = () => {
     if (!swiperRef.current) return
     if (swiperRef.current.isBeginning) return
     swiperRef.current.slidePrev()
-  }, [])
+  }
 
   // Swiper autoplay control
   useEffect(() => {
@@ -595,20 +591,20 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   ])
 
   // Toggle play mode
-  const togglePlay = useCallback(() => {
+  const togglePlay = () => {
     setIsPlaying((prev) => !prev)
     _setMobileControlsExpanded(false) // Collapse mobile controls when toggling play
-  }, [])
+  }
 
   // Generate a random seed for re-shuffle
-  const generateRandomSeed = useCallback(() => {
+  const generateRandomSeed = () => {
     return Math.random().toString(36).substring(2, 10)
-  }, [])
+  }
 
   // Handle shuffle toggle
   // - OFF → ON: generate new seed (reshuffle)
   // - ON → OFF: turn off shuffle
-  const handleShuffleToggle = useCallback(() => {
+  const handleShuffleToggle = () => {
     if (!onFilterChange) return
 
     if (!filters.shuffle) {
@@ -619,12 +615,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       // Turn off shuffle
       onFilterChange('shuffle', null)
     }
-  }, [filters.shuffle, onFilterChange, generateRandomSeed])
+  }
 
   // Stop play mode (called on image click or manual navigation)
-  const stopPlay = useCallback(() => {
+  const stopPlay = () => {
     setIsPlaying(false)
-  }, [])
+  }
 
   // Keyboard navigation (Swiper handles arrows, we handle Escape + Space)
   useEffect(() => {
@@ -639,11 +635,12 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       if (e.key === 'Escape') onClose()
       if (e.key === ' ') {
         e.preventDefault()
-        togglePlay()
+        setIsPlaying((prev) => !prev)
+        _setMobileControlsExpanded(false)
       }
       // Arrow keys stop autoplay on user interaction
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        stopPlay()
+        setIsPlaying(false)
       }
     }
 
@@ -651,8 +648,6 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     onClose,
-    togglePlay,
-    stopPlay,
     showDeleteConfirm,
     showHeroSettingsModal,
     showShareModal,
@@ -669,18 +664,18 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   stopPlayRef.current = stopPlay
 
   // Swiper event handlers
-  const handleSlideChange = useCallback((swiper: SwiperType) => {
+  const handleSlideChange = (swiper: SwiperType) => {
     const index = swiper.activeIndex
     const current = currentIndexRef.current
     if (index !== current) {
       setDirection(index > current ? 1 : -1)
       setCurrentIndex(index)
     }
-  }, [])
+  }
 
-  const handleTouchStart = useCallback(() => {
+  const handleTouchStart = () => {
     stopPlayRef.current()
-  }, [])
+  }
 
   // Re-initialize Swiper when photos array changes
   const prevPhotoCountRef = useRef(allPhotos.length)
@@ -843,88 +838,77 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
   }
 
   // Handle hero settings save (both labels and focal point)
-  const handleHeroSettingsSave = useCallback(
-    (
-      photoId: string,
-      labels: string[],
-      focalPoint: { x: number; y: number }
-    ) => {
-      // Update the photo in local state
-      setAllPhotos((prev) =>
-        prev.map((p) =>
-          p.id === photoId ? { ...p, labels, hero_focal_point: focalPoint } : p
-        )
+  const handleHeroSettingsSave = (
+    photoId: string,
+    labels: string[],
+    focalPoint: { x: number; y: number }
+  ) => {
+    // Update the photo in local state
+    setAllPhotos((prev) =>
+      prev.map((p) =>
+        p.id === photoId ? { ...p, labels, hero_focal_point: focalPoint } : p
       )
-    },
-    []
-  )
+    )
+  }
 
   // Handle metadata update from EditMetadataModal
-  const handleMetadataUpdated = useCallback(
-    (updatedPhoto: Photo) => {
-      // Update the photo in local state
-      setAllPhotos((prev) =>
-        prev.map((p) =>
-          p.id === updatedPhoto.id
-            ? {
-                ...p,
-                event_id: updatedPhoto.event_id,
-                band_id: updatedPhoto.band_id,
-                photographer: updatedPhoto.photographer,
-                event_name: updatedPhoto.event_name,
-                band_name: updatedPhoto.band_name,
-                company_name: updatedPhoto.company_name,
-                company_slug: updatedPhoto.company_slug,
-                company_icon_url: updatedPhoto.company_icon_url,
-                match_confidence: 'manual',
-              }
-            : p
-        )
+  const handleMetadataUpdated = (updatedPhoto: Photo) => {
+    // Update the photo in local state
+    setAllPhotos((prev) =>
+      prev.map((p) =>
+        p.id === updatedPhoto.id
+          ? {
+              ...p,
+              event_id: updatedPhoto.event_id,
+              band_id: updatedPhoto.band_id,
+              photographer: updatedPhoto.photographer,
+              event_name: updatedPhoto.event_name,
+              band_name: updatedPhoto.band_name,
+              company_name: updatedPhoto.company_name,
+              company_slug: updatedPhoto.company_slug,
+              company_icon_url: updatedPhoto.company_icon_url,
+              match_confidence: 'manual',
+            }
+          : p
       )
-      setShowMetadataModal(false)
-    },
-    [setAllPhotos]
-  )
+    )
+    setShowMetadataModal(false)
+  }
 
   // Get the representative photo at current slide index
   const currentRepPhoto = allPhotos[currentIndex]
 
   // Get the actual display photo (may be different if cycling within a cluster)
-  const getDisplayPhoto = useCallback(
-    (repPhoto: PhotoWithCluster | undefined): Photo | undefined => {
-      if (!repPhoto) return undefined
-      const cluster = repPhoto.cluster_photos
-      if (!cluster || cluster.length <= 1) return repPhoto
-      const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
-      return cluster[clusterIdx] ?? repPhoto
-    },
-    [clusterIndexMap]
-  )
+  const getDisplayPhoto = (
+    repPhoto: PhotoWithCluster | undefined
+  ): Photo | undefined => {
+    if (!repPhoto) return undefined
+    const cluster = repPhoto.cluster_photos
+    if (!cluster || cluster.length <= 1) return repPhoto
+    const clusterIdx = clusterIndexMap.get(repPhoto.id) ?? 0
+    return cluster[clusterIdx] ?? repPhoto
+  }
 
   // Handle cycling through cluster photos
-  const handleCycleCluster = useCallback(
-    (repPhotoId: string) => {
-      const repPhoto = allPhotos.find((p) => p.id === repPhotoId)
-      if (!repPhoto?.cluster_photos || repPhoto.cluster_photos.length <= 1)
-        return
+  const handleCycleCluster = (repPhotoId: string) => {
+    const repPhoto = allPhotos.find((p) => p.id === repPhotoId)
+    if (!repPhoto?.cluster_photos || repPhoto.cluster_photos.length <= 1) return
 
-      const currentClusterIdx = clusterIndexMap.get(repPhotoId) ?? 0
-      const nextIdx = (currentClusterIdx + 1) % repPhoto.cluster_photos.length
+    const currentClusterIdx = clusterIndexMap.get(repPhotoId) ?? 0
+    const nextIdx = (currentClusterIdx + 1) % repPhoto.cluster_photos.length
 
-      setClusterIndexMap((prev) => {
-        const next = new Map(prev)
-        next.set(repPhotoId, nextIdx)
-        return next
-      })
+    setClusterIndexMap((prev) => {
+      const next = new Map(prev)
+      next.set(repPhotoId, nextIdx)
+      return next
+    })
 
-      // Update URL to reflect the new photo being viewed
-      const newPhoto = repPhoto.cluster_photos[nextIdx]
-      if (newPhoto && onPhotoChange) {
-        onPhotoChange(newPhoto.id)
-      }
-    },
-    [allPhotos, clusterIndexMap, onPhotoChange]
-  )
+    // Update URL to reflect the new photo being viewed
+    const newPhoto = repPhoto.cluster_photos[nextIdx]
+    if (newPhoto && onPhotoChange) {
+      onPhotoChange(newPhoto.id)
+    }
+  }
 
   // The actual photo to display (accounting for cluster cycling)
   const currentPhoto = getDisplayPhoto(currentRepPhoto)
@@ -1489,4 +1473,4 @@ export const PhotoSlideshow = memo(function PhotoSlideshow({
       )}
     </div>
   )
-})
+}

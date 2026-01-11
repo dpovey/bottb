@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { upload } from '@vercel/blob/client'
 import { Video } from '@/lib/db'
 import { Button, Card, FileDropzone, SchedulePicker } from '@/components/ui'
@@ -47,7 +47,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
   }
 
   // Eager upload: start uploading as soon as file is selected
-  const handleFileSelect = useCallback(async (file: File | null) => {
+  async function handleFileSelect(file: File | null) {
     setVideoFile(file)
     setUploadedUrl(null)
     setUploadProgress(null)
@@ -74,7 +74,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
       setError(err instanceof Error ? err.message : 'Failed to upload video')
       setUploadProgress(null)
     }
-  }, [])
+  }
 
   const handlePost = async () => {
     if (selectedPlatforms.size === 0) {

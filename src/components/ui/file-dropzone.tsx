@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState } from 'react'
 import { UploadIcon, CloseIcon } from '@/components/icons'
 
 export interface FileDropzoneProps {
@@ -47,108 +47,90 @@ export function FileDropzone({
 
   const displayError = error || localError
 
-  const validateFile = useCallback(
-    (f: File): string | null => {
-      // Check file type
-      if (accept) {
-        const acceptedTypes = accept.split(',').map((t) => t.trim())
-        const isValidType = acceptedTypes.some((type) => {
-          if (type.startsWith('.')) {
-            // Extension match
-            return f.name.toLowerCase().endsWith(type.toLowerCase())
-          } else if (type.endsWith('/*')) {
-            // MIME type wildcard (e.g., "video/*")
-            const category = type.slice(0, -2)
-            return f.type.startsWith(category + '/')
-          } else {
-            // Exact MIME type
-            return f.type === type
-          }
-        })
-        if (!isValidType) {
-          return `File type not accepted. Please upload ${accept}`
+  const validateFile = (f: File): string | null => {
+    // Check file type
+    if (accept) {
+      const acceptedTypes = accept.split(',').map((t) => t.trim())
+      const isValidType = acceptedTypes.some((type) => {
+        if (type.startsWith('.')) {
+          // Extension match
+          return f.name.toLowerCase().endsWith(type.toLowerCase())
+        } else if (type.endsWith('/*')) {
+          // MIME type wildcard (e.g., "video/*")
+          const category = type.slice(0, -2)
+          return f.type.startsWith(category + '/')
+        } else {
+          // Exact MIME type
+          return f.type === type
         }
+      })
+      if (!isValidType) {
+        return `File type not accepted. Please upload ${accept}`
       }
+    }
 
-      // Check file size
-      if (maxSize && f.size > maxSize) {
-        const sizeMB = (maxSize / (1024 * 1024)).toFixed(0)
-        return `File too large. Maximum size is ${sizeMB}MB`
-      }
+    // Check file size
+    if (maxSize && f.size > maxSize) {
+      const sizeMB = (maxSize / (1024 * 1024)).toFixed(0)
+      return `File too large. Maximum size is ${sizeMB}MB`
+    }
 
-      return null
-    },
-    [accept, maxSize]
-  )
+    return null
+  }
 
-  const handleFile = useCallback(
-    (f: File) => {
-      setLocalError(null)
-      const validationError = validateFile(f)
-      if (validationError) {
-        setLocalError(validationError)
-        return
-      }
-      onFileSelect(f)
-    },
-    [validateFile, onFileSelect]
-  )
+  const handleFile = (f: File) => {
+    setLocalError(null)
+    const validationError = validateFile(f)
+    if (validationError) {
+      setLocalError(validationError)
+      return
+    }
+    onFileSelect(f)
+  }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragging(false)
-      if (disabled) return
-
-      const droppedFile = e.dataTransfer.files[0]
-      if (droppedFile) {
-        handleFile(droppedFile)
-      }
-    },
-    [disabled, handleFile]
-  )
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      if (!disabled) {
-        setIsDragging(true)
-      }
-    },
-    [disabled]
-  )
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-  }, [])
+    if (disabled) return
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0]
-      if (selectedFile) {
-        handleFile(selectedFile)
-      }
-      // Reset input so same file can be selected again
-      e.target.value = ''
-    },
-    [handleFile]
-  )
+    const droppedFile = e.dataTransfer.files[0]
+    if (droppedFile) {
+      handleFile(droppedFile)
+    }
+  }
 
-  const handleRemove = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      setLocalError(null)
-      onFileSelect(null)
-    },
-    [onFileSelect]
-  )
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    if (!disabled) {
+      setIsDragging(true)
+    }
+  }
 
-  const handleClick = useCallback(() => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      handleFile(selectedFile)
+    }
+    // Reset input so same file can be selected again
+    e.target.value = ''
+  }
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setLocalError(null)
+    onFileSelect(null)
+  }
+
+  const handleClick = () => {
     if (!disabled && !file) {
       inputRef.current?.click()
     }
-  }, [disabled, file])
+  }
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`

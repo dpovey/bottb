@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Photo } from '@/lib/db-types'
 import { trackPhotoShare } from '@/lib/analytics'
 import { CheckIcon, LinkIcon, ShareIcon } from '@/components/icons'
@@ -32,7 +32,7 @@ export function PhotoShareButton({
   const [copied, setCopied] = useState(false)
 
   // Build share text
-  const getShareText = useCallback(() => {
+  const getShareText = () => {
     let text = 'Check out this photo from Battle of the Tech Bands!'
     if (photo.band_name && photo.event_name) {
       text = `${photo.band_name} at ${photo.event_name} - Battle of the Tech Bands`
@@ -42,20 +42,20 @@ export function PhotoShareButton({
       text = `Photo from ${photo.event_name} - Battle of the Tech Bands`
     }
     return text
-  }, [photo])
+  }
 
   // Get the URL to share
-  const getShareUrl = useCallback(() => {
+  const getShareUrl = () => {
     if (shareUrl) return shareUrl
     // Use current URL if in browser
     if (typeof window !== 'undefined') {
       return window.location.href
     }
     return ''
-  }, [shareUrl])
+  }
 
   // Copy link to clipboard
-  const handleCopyLink = useCallback(async () => {
+  const handleCopyLink = async () => {
     try {
       const url = getShareUrl()
       await navigator.clipboard.writeText(url)
@@ -74,10 +74,10 @@ export function PhotoShareButton({
     } catch (error) {
       console.error('Failed to copy link:', error)
     }
-  }, [photo, getShareUrl])
+  }
 
   // Use native share API if available
-  const handleNativeShare = useCallback(async () => {
+  const handleNativeShare = async () => {
     const url = getShareUrl()
     const text = getShareText()
 
@@ -107,7 +107,7 @@ export function PhotoShareButton({
       // Fallback to copy link
       handleCopyLink()
     }
-  }, [photo, getShareUrl, getShareText, handleCopyLink])
+  }
 
   const handleClick = variant === 'share' ? handleNativeShare : handleCopyLink
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState } from 'react'
 import { Video, VideoType } from '@/lib/db'
 import { EditIcon, DeleteIcon, CloseIcon, PlusIcon } from '@/components/icons'
 import { ConfirmModal, Button, Card, Tabs, type Tab } from '@/components/ui'
@@ -58,20 +58,14 @@ export function VideoAdminClient({
   }
 
   // Filter videos by type
-  const filteredVideos = useMemo(() => {
-    if (typeFilter === 'all') return videos
-    return videos.filter((v) => v.video_type === typeFilter)
-  }, [videos, typeFilter])
+  const filteredVideos =
+    typeFilter === 'all'
+      ? videos
+      : videos.filter((v) => v.video_type === typeFilter)
 
   // Count videos by type
-  const videoCount = useMemo(
-    () => videos.filter((v) => v.video_type === 'video').length,
-    [videos]
-  )
-  const shortCount = useMemo(
-    () => videos.filter((v) => v.video_type === 'short').length,
-    [videos]
-  )
+  const videoCount = videos.filter((v) => v.video_type === 'video').length
+  const shortCount = videos.filter((v) => v.video_type === 'short').length
 
   // Tabs configuration
   const tabs: Tab[] = [
@@ -179,7 +173,7 @@ export function VideoAdminClient({
   }
 
   // Refresh videos list after YouTube import
-  const refreshVideos = useCallback(async () => {
+  async function refreshVideos() {
     try {
       const response = await fetch('/api/videos?limit=100')
       if (response.ok) {
@@ -189,7 +183,7 @@ export function VideoAdminClient({
     } catch (err) {
       console.error('Failed to refresh videos:', err)
     }
-  }, [])
+  }
 
   return (
     <div className="space-y-8">

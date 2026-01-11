@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SetlistSong, SongType } from '@/lib/db'
@@ -133,7 +133,7 @@ export function SongsPageClient({
     page !== 1
 
   // Fetch songs when filters change (skip initial mount since we have SSR data)
-  const fetchSongs = useCallback(async () => {
+  async function fetchSongs() {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
@@ -154,7 +154,7 @@ export function SongsPageClient({
     } finally {
       setIsLoading(false)
     }
-  }, [eventFilter, typeFilter, debouncedSearch, page])
+  }
 
   useEffect(() => {
     // Skip fetch on initial mount - we have SSR data
@@ -162,7 +162,8 @@ export function SongsPageClient({
     if (hasFiltersChanged) {
       fetchSongs()
     }
-  }, [fetchSongs, hasFiltersChanged])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventFilter, typeFilter, debouncedSearch, page, hasFiltersChanged])
 
   // Filter songs by company (client-side since it's not in the API)
   const filteredSongs = companyFilter

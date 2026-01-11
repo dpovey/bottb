@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { PublicLayout } from '@/components/layouts'
 import { Video } from '@/lib/db'
@@ -148,7 +148,7 @@ export function VideosContent({
   const [filtersChanged, setFiltersChanged] = useState(false)
 
   // Fetch videos (only when filters change, not on initial SSR load)
-  const fetchVideos = useCallback(async () => {
+  async function fetchVideos() {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -168,10 +168,10 @@ export function VideosContent({
     } finally {
       setLoading(false)
     }
-  }, [selectedEventId, selectedCompanySlug])
+  }
 
   // Fetch shorts (only when filters change, not on initial SSR load)
-  const fetchShorts = useCallback(async () => {
+  async function fetchShorts() {
     setShortsLoading(true)
     try {
       const params = new URLSearchParams()
@@ -191,21 +191,23 @@ export function VideosContent({
     } finally {
       setShortsLoading(false)
     }
-  }, [selectedEventId, selectedCompanySlug])
+  }
 
   // Only fetch videos if filters changed or no SSR data
   useEffect(() => {
     if (!initialVideos || filtersChanged) {
       fetchVideos()
     }
-  }, [fetchVideos, initialVideos, filtersChanged])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventId, selectedCompanySlug, initialVideos, filtersChanged])
 
   // Only fetch shorts if filters changed or no SSR data
   useEffect(() => {
     if (!initialShorts || filtersChanged) {
       fetchShorts()
     }
-  }, [fetchShorts, initialShorts, filtersChanged])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventId, selectedCompanySlug, initialShorts, filtersChanged])
 
   // Update URL when filters or tab change
   useEffect(() => {

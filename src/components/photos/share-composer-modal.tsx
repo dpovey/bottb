@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Photo } from '@/lib/db-types'
 import {
   SocialPlatform,
@@ -184,7 +184,7 @@ export function ShareComposerModal({
   }
 
   // Submit post
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     if (selectedPlatforms.length === 0) {
       setPostError('Please select at least one platform')
       return
@@ -251,17 +251,7 @@ export function ShareComposerModal({
     } finally {
       setIsPosting(false)
     }
-  }, [
-    selectedPlatforms,
-    caption,
-    title,
-    photos,
-    firstPhoto,
-    selectedTemplateId,
-    includePhotographerCredit,
-    includeEventLink,
-    onSuccess,
-  ])
+  }
 
   // Close on escape
   useEffect(() => {

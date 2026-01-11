@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -46,20 +46,17 @@ export function PhotoPageClient({
   const [photo, setPhoto] = useState<Photo>(initialPhoto)
 
   // Handle photo updates from admin controls
-  const handlePhotoUpdated = useCallback(
-    (updatedPhoto: Photo) => {
-      setPhoto(updatedPhoto)
-      // Refresh the page to get updated server-rendered content
-      router.refresh()
-    },
-    [router]
-  )
+  function handlePhotoUpdated(updatedPhoto: Photo) {
+    setPhoto(updatedPhoto)
+    // Refresh the page to get updated server-rendered content
+    router.refresh()
+  }
 
   // Handle photo deletion
-  const handlePhotoDeleted = useCallback(() => {
+  function handlePhotoDeleted() {
     // Navigate back to gallery after deletion
     router.push(galleryUrl)
-  }, [router, galleryUrl])
+  }
 
   // Handle photo download
   const handleDownload = async () => {

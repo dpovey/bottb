@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type KeyboardEvent,
-} from 'react'
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { create, load, search, type Orama, type Results } from '@orama/orama'
@@ -185,9 +179,9 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     }
   }, [isOpen])
 
-  // Perform search
-  const performSearch = useCallback(
-    async (searchQuery: string) => {
+  // Debounced search
+  useEffect(() => {
+    const performSearch = async (searchQuery: string) => {
       if (!db || !searchQuery.trim()) {
         setResults(null)
         return
@@ -203,55 +197,45 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
       setResults(searchResults as Results<SearchDocument>)
       setSelectedIndex(0)
-    },
-    [db]
-  )
+    }
 
-  // Debounced search
-  useEffect(() => {
     const timer = setTimeout(() => {
       performSearch(query)
     }, 150)
 
     return () => clearTimeout(timer)
-  }, [query, performSearch])
+  }, [query, db])
 
   // Navigate to selected result
-  const navigateToResult = useCallback(
-    (doc: SearchDocument) => {
-      router.push(doc.url)
-      onClose()
-    },
-    [router, onClose]
-  )
+  const navigateToResult = (doc: SearchDocument) => {
+    router.push(doc.url)
+    onClose()
+  }
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      const hits = results?.hits || []
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const hits = results?.hits || []
 
-      switch (e.key) {
-        case 'ArrowDown':
-          e.preventDefault()
-          setSelectedIndex((prev) => Math.min(prev + 1, hits.length - 1))
-          break
-        case 'ArrowUp':
-          e.preventDefault()
-          setSelectedIndex((prev) => Math.max(prev - 1, 0))
-          break
-        case 'Enter':
-          e.preventDefault()
-          if (hits[selectedIndex]) {
-            navigateToResult(hits[selectedIndex].document)
-          }
-          break
-        case 'Escape':
-          onClose()
-          break
-      }
-    },
-    [results, selectedIndex, onClose, navigateToResult]
-  )
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setSelectedIndex((prev) => Math.min(prev + 1, hits.length - 1))
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setSelectedIndex((prev) => Math.max(prev - 1, 0))
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (hits[selectedIndex]) {
+          navigateToResult(hits[selectedIndex].document)
+        }
+        break
+      case 'Escape':
+        onClose()
+        break
+    }
+  }
 
   // Scroll selected result into view
   useEffect(() => {

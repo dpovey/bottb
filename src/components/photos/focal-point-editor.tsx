@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { VinylSpinner } from '@/components/ui'
 
 export interface FocalPoint {
@@ -116,11 +116,25 @@ export function FocalPointEditor({
     onFocalPointChange?.(focalPoint)
   }, [focalPoint, onFocalPointChange])
 
-  const calculateFocalPoint = useCallback(
-    (
-      e: React.MouseEvent<HTMLDivElement> | MouseEvent,
-      element: HTMLDivElement
-    ) => {
+  function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(true)
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = Math.max(
+      0,
+      Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)
+    )
+    const y = Math.max(
+      0,
+      Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
+    )
+    setFocalPoint({ x, y })
+  }
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const calculateFocalPoint = (e: MouseEvent, element: HTMLDivElement) => {
       const rect = element.getBoundingClientRect()
       const x = Math.max(
         0,
@@ -131,22 +145,7 @@ export function FocalPointEditor({
         Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)
       )
       return { x, y }
-    },
-    []
-  )
-
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault()
-      setIsDragging(true)
-      const newPoint = calculateFocalPoint(e, e.currentTarget)
-      setFocalPoint(newPoint)
-    },
-    [calculateFocalPoint]
-  )
-
-  useEffect(() => {
-    if (!isDragging) return
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!sourceImageRef.current) return
@@ -165,7 +164,7 @@ export function FocalPointEditor({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, calculateFocalPoint])
+  }, [isDragging])
 
   const handleSave = async () => {
     setIsSaving(true)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useMounted } from '@/lib/hooks'
 import { DEFAULT_HERO_IMAGE } from '@/lib/stock-images'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
@@ -62,23 +62,21 @@ export function HeroCarousel({
   const [currentIndex, setCurrentIndex] = useState(safeInitialIndex)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  const nextImage = useCallback(() => {
-    if (effectiveImages.length <= 1) return
-
-    setIsTransitioning(true)
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % effectiveImages.length)
-      setIsTransitioning(false)
-    }, 500) // Half of the CSS transition duration
-  }, [effectiveImages.length])
-
   // Start interval for cycling (no randomization needed - handled by server)
   useEffect(() => {
     if (!mounted || effectiveImages.length <= 1) return
 
+    const nextImage = () => {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % effectiveImages.length)
+        setIsTransitioning(false)
+      }, 500) // Half of the CSS transition duration
+    }
+
     const timer = setInterval(nextImage, interval)
     return () => clearInterval(timer)
-  }, [mounted, effectiveImages.length, interval, nextImage])
+  }, [mounted, effectiveImages.length, interval])
 
   const heightClass = {
     sm: 'min-h-[40vh]',

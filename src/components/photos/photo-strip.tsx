@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Photo } from '@/lib/db-types'
@@ -79,7 +79,7 @@ export function PhotoStrip({
   const isInitialMount = useRef(true)
 
   // Build the view all link based on filters (includes shuffle seed for consistent ordering)
-  const galleryLink = useMemo(() => {
+  const galleryLink = (() => {
     if (viewAllLink) return viewAllLink
 
     const params = new URLSearchParams()
@@ -90,7 +90,7 @@ export function PhotoStrip({
     // Include shuffle seed so gallery shows same order as strip
     if (shuffle.seed) params.set('shuffle', shuffle.seed)
     return `/photos${params.toString() ? `?${params.toString()}` : ''}`
-  }, [viewAllLink, eventId, bandId, companySlug, photographer, shuffle.seed])
+  })()
 
   // Check if we need to prefetch based on selected index
   useEffect(() => {
@@ -124,30 +124,27 @@ export function PhotoStrip({
   }, [selectedIndex])
 
   // Handle photo click - navigate to photo page
-  const handlePhotoClick = useCallback(
-    (index: number) => {
-      if (!enableSlideshow) return
+  function handlePhotoClick(index: number) {
+    if (!enableSlideshow) return
 
-      const photo = photos[index]
-      if (!photo) return
+    const photo = photos[index]
+    if (!photo) return
 
-      // Track photo click
-      trackPhotoClick({
-        photo_id: photo.id,
-        event_id: photo.event_id || null,
-        band_id: photo.band_id || null,
-        event_name: photo.event_name || null,
-        band_name: photo.band_name || null,
-      })
+    // Track photo click
+    trackPhotoClick({
+      photo_id: photo.id,
+      event_id: photo.event_id || null,
+      band_id: photo.band_id || null,
+      event_name: photo.event_name || null,
+      band_name: photo.band_name || null,
+    })
 
-      setSelectedIndex(index)
+    setSelectedIndex(index)
 
-      // Use slug for SEO-friendly URL, fallback to id for legacy photos
-      const photoUrl = buildPhotoUrl(photo.slug || photo.id)
-      router.push(photoUrl)
-    },
-    [enableSlideshow, photos, router, buildPhotoUrl]
-  )
+    // Use slug for SEO-friendly URL, fallback to id for legacy photos
+    const photoUrl = buildPhotoUrl(photo.slug || photo.id)
+    router.push(photoUrl)
+  }
 
   // Keyboard navigation - works when strip or any of its children has focus
   useEffect(() => {
@@ -176,7 +173,8 @@ export function PhotoStrip({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [photos.length, selectedIndex, handlePhotoClick])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos.length, selectedIndex, enableSlideshow])
 
   // Don't render anything if there are no photos
   if (!loading && photos.length === 0) {

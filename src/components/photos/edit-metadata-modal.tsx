@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Photo } from '@/lib/db-types'
 import { Modal, VinylSpinner } from '@/components/ui'
 
@@ -48,58 +48,57 @@ export function EditMetadataModal({
   }, [photo])
 
   // Fetch options when modal opens
-  const fetchOptions = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      // Fetch events
-      const eventsRes = await fetch('/api/events')
-      if (!eventsRes.ok) throw new Error('Failed to fetch events')
-      const eventsData = await eventsRes.json()
-      setEvents(
-        Array.isArray(eventsData)
-          ? eventsData.map((e: { id: string; name: string }) => ({
-              id: e.id,
-              name: e.name,
-            }))
-          : []
-      )
+  useEffect(() => {
+    if (!isOpen) return
 
-      // Fetch bands for each event
-      const newBandsMap: Record<string, { id: string; name: string }[]> = {}
-      for (const event of eventsData) {
-        const bandsRes = await fetch(`/api/events/${event.id}/bands`)
-        if (bandsRes.ok) {
-          const bands = await bandsRes.json()
-          newBandsMap[event.id] = Array.isArray(bands)
-            ? bands.map((b: { id: string; name: string }) => ({
-                id: b.id,
-                name: b.name,
+    async function fetchOptions() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        // Fetch events
+        const eventsRes = await fetch('/api/events')
+        if (!eventsRes.ok) throw new Error('Failed to fetch events')
+        const eventsData = await eventsRes.json()
+        setEvents(
+          Array.isArray(eventsData)
+            ? eventsData.map((e: { id: string; name: string }) => ({
+                id: e.id,
+                name: e.name,
               }))
             : []
+        )
+
+        // Fetch bands for each event
+        const newBandsMap: Record<string, { id: string; name: string }[]> = {}
+        for (const event of eventsData) {
+          const bandsRes = await fetch(`/api/events/${event.id}/bands`)
+          if (bandsRes.ok) {
+            const bands = await bandsRes.json()
+            newBandsMap[event.id] = Array.isArray(bands)
+              ? bands.map((b: { id: string; name: string }) => ({
+                  id: b.id,
+                  name: b.name,
+                }))
+              : []
+          }
         }
-      }
-      setBandsMap(newBandsMap)
+        setBandsMap(newBandsMap)
 
-      // Fetch distinct photographers
-      const photographersRes = await fetch('/api/photographers/names')
-      if (photographersRes.ok) {
-        const data = await photographersRes.json()
-        setPhotographers(data.photographers || [])
+        // Fetch distinct photographers
+        const photographersRes = await fetch('/api/photographers/names')
+        if (photographersRes.ok) {
+          const data = await photographersRes.json()
+          setPhotographers(data.photographers || [])
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load options')
+      } finally {
+        setIsLoading(false)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load options')
-    } finally {
-      setIsLoading(false)
     }
-  }, [])
 
-  // Fetch options when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchOptions()
-    }
-  }, [isOpen, fetchOptions])
+    fetchOptions()
+  }, [isOpen])
 
   // Save metadata
   const handleSave = async () => {

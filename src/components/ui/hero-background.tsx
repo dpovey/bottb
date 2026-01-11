@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useMounted } from '@/lib/hooks'
 import { FocalPointImage } from './focal-point-image'
@@ -37,16 +37,6 @@ export function HeroBackground({
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  const nextImage = useCallback(() => {
-    if (photos.length <= 1) return
-
-    setIsTransitioning(true)
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % photos.length)
-      setIsTransitioning(false)
-    }, 500)
-  }, [photos.length])
-
   // Randomize starting image and set up interval for multiple photos
   useEffect(() => {
     if (!mounted || photos.length <= 1) return
@@ -57,9 +47,17 @@ export function HeroBackground({
       setTimeout(() => setCurrentIndex(randomIndex), 0)
     }
 
+    const nextImage = () => {
+      setIsTransitioning(true)
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % photos.length)
+        setIsTransitioning(false)
+      }, 500)
+    }
+
     const timer = setInterval(nextImage, interval)
     return () => clearInterval(timer)
-  }, [mounted, photos.length, interval, nextImage])
+  }, [mounted, photos.length, interval])
 
   // No photos - show gradient or fallback image
   if (photos.length === 0) {
