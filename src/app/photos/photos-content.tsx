@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Event, PhotoWithCluster } from '@/lib/db'
 import {
@@ -269,114 +269,102 @@ export function PhotosContent({
   }, [searchParams])
 
   // Update URL when filters change
-  const updateUrlParams = useCallback(
-    (params: {
-      event?: string | null
-      photographer?: string | null
-      company?: string | null
-      shuffle?: string | null
-      groupDuplicates?: boolean
-      groupScenes?: boolean
-    }) => {
-      const url = new URL(window.location.href)
+  function updateUrlParams(params: {
+    event?: string | null
+    photographer?: string | null
+    company?: string | null
+    shuffle?: string | null
+    groupDuplicates?: boolean
+    groupScenes?: boolean
+  }) {
+    const url = new URL(window.location.href)
 
-      // Update each param using new cleaner names
-      if (params.event !== undefined) {
-        // Remove legacy param if present
-        url.searchParams.delete('eventId')
-        if (params.event) {
-          url.searchParams.set('event', params.event)
-        } else {
-          url.searchParams.delete('event')
-        }
+    // Update each param using new cleaner names
+    if (params.event !== undefined) {
+      // Remove legacy param if present
+      url.searchParams.delete('eventId')
+      if (params.event) {
+        url.searchParams.set('event', params.event)
+      } else {
+        url.searchParams.delete('event')
       }
-      if (params.photographer !== undefined) {
-        if (params.photographer) {
-          url.searchParams.set('photographer', params.photographer)
-        } else {
-          url.searchParams.delete('photographer')
-        }
+    }
+    if (params.photographer !== undefined) {
+      if (params.photographer) {
+        url.searchParams.set('photographer', params.photographer)
+      } else {
+        url.searchParams.delete('photographer')
       }
-      if (params.company !== undefined) {
-        if (params.company) {
-          url.searchParams.set('company', params.company)
-        } else {
-          url.searchParams.delete('company')
-        }
+    }
+    if (params.company !== undefined) {
+      if (params.company) {
+        url.searchParams.set('company', params.company)
+      } else {
+        url.searchParams.delete('company')
       }
-      if (params.shuffle !== undefined) {
-        if (params.shuffle) {
-          url.searchParams.set('shuffle', params.shuffle)
-        } else {
-          url.searchParams.delete('shuffle')
-        }
+    }
+    if (params.shuffle !== undefined) {
+      if (params.shuffle) {
+        url.searchParams.set('shuffle', params.shuffle)
+      } else {
+        url.searchParams.delete('shuffle')
       }
-      // Grouping: only add to URL when disabled (default is ON)
-      if (params.groupDuplicates !== undefined) {
-        if (!params.groupDuplicates) {
-          url.searchParams.set('groupDuplicates', 'false')
-        } else {
-          url.searchParams.delete('groupDuplicates')
-        }
+    }
+    // Grouping: only add to URL when disabled (default is ON)
+    if (params.groupDuplicates !== undefined) {
+      if (!params.groupDuplicates) {
+        url.searchParams.set('groupDuplicates', 'false')
+      } else {
+        url.searchParams.delete('groupDuplicates')
       }
-      if (params.groupScenes !== undefined) {
-        if (!params.groupScenes) {
-          url.searchParams.set('groupScenes', 'false')
-        } else {
-          url.searchParams.delete('groupScenes')
-        }
+    }
+    if (params.groupScenes !== undefined) {
+      if (!params.groupScenes) {
+        url.searchParams.set('groupScenes', 'false')
+      } else {
+        url.searchParams.delete('groupScenes')
       }
+    }
 
-      // Use replaceState to avoid adding to browser history for filter changes
-      window.history.replaceState({}, '', url.pathname + url.search)
-    },
-    []
-  )
+    // Use replaceState to avoid adding to browser history for filter changes
+    window.history.replaceState({}, '', url.pathname + url.search)
+  }
 
   // Wrapper functions that update both state and URL
-  const handleEventChange = useCallback(
-    (eventId: string | null) => {
-      setSelectedEventId(eventId)
-      updateUrlParams({ event: eventId })
+  function handleEventChange(eventId: string | null) {
+    setSelectedEventId(eventId)
+    updateUrlParams({ event: eventId })
 
-      // Track filter change
-      trackPhotoFilterChange({
-        filter_type: 'event',
-        filter_value: eventId,
-      })
-    },
-    [updateUrlParams]
-  )
+    // Track filter change
+    trackPhotoFilterChange({
+      filter_type: 'event',
+      filter_value: eventId,
+    })
+  }
 
-  const handlePhotographerChange = useCallback(
-    (photographer: string | null) => {
-      setSelectedPhotographer(photographer)
-      updateUrlParams({ photographer })
+  function handlePhotographerChange(photographer: string | null) {
+    setSelectedPhotographer(photographer)
+    updateUrlParams({ photographer })
 
-      // Track filter change
-      trackPhotoFilterChange({
-        filter_type: 'photographer',
-        filter_value: photographer,
-      })
-    },
-    [updateUrlParams]
-  )
+    // Track filter change
+    trackPhotoFilterChange({
+      filter_type: 'photographer',
+      filter_value: photographer,
+    })
+  }
 
-  const handleCompanyChange = useCallback(
-    (company: string | null) => {
-      setSelectedCompanySlug(company)
-      // Clear event when company changes (optional - could keep it)
-      setSelectedEventId(null)
-      updateUrlParams({ company, event: null })
+  function handleCompanyChange(company: string | null) {
+    setSelectedCompanySlug(company)
+    // Clear event when company changes (optional - could keep it)
+    setSelectedEventId(null)
+    updateUrlParams({ company, event: null })
 
-      // Track filter change
-      trackPhotoFilterChange({
-        filter_type: 'company',
-        filter_value: company,
-      })
-    },
-    [updateUrlParams]
-  )
+    // Track filter change
+    trackPhotoFilterChange({
+      filter_type: 'company',
+      filter_value: company,
+    })
+  }
 
   // Fetch events on mount (only if not provided via SSR)
   useEffect(() => {
@@ -451,98 +439,97 @@ export function PhotosContent({
   }, [photos, groupDuplicates, groupScenes])
 
   // Fetch photos - initial load or load more
-  const fetchPhotos = useCallback(
-    async (isLoadMore = false) => {
-      if (isLoadMore) {
-        setLoadingMore(true)
+  async function fetchPhotos(isLoadMore = false) {
+    if (isLoadMore) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
+
+    try {
+      // Build groupTypes based on user toggles (can be disabled via UI)
+      let groupTypesValue: string | false
+      if (!groupDuplicates && !groupScenes) {
+        groupTypesValue = false // Disable grouping entirely
       } else {
-        setLoading(true)
+        const types: string[] = []
+        if (groupDuplicates) types.push('near_duplicate')
+        if (groupScenes) types.push('scene')
+        groupTypesValue = types.join(',')
       }
 
-      try {
-        // Build groupTypes based on user toggles (can be disabled via UI)
-        let groupTypesValue: string | false
-        if (!groupDuplicates && !groupScenes) {
-          groupTypesValue = false // Disable grouping entirely
+      // Use buildPhotoApiParams for consistent API calls across gallery/slideshow/strip
+      const params = buildPhotoApiParams({
+        eventId: selectedEventId || undefined,
+        photographer: selectedPhotographer || undefined,
+        companySlug: selectedCompanySlug || undefined,
+        shuffle,
+        page: currentPage.current,
+        limit: PAGE_SIZE,
+        skipMeta: isLoadMore,
+        groupTypes: groupTypesValue,
+      })
+
+      const res = await fetch(`/api/photos?${params.toString()}`)
+      if (res.ok) {
+        const data: PhotosResponse = await res.json()
+        setTotalCount(data.pagination.total)
+
+        // Capture the actual seed from the API response
+        // This is important: when we send shuffle=true, the API generates a seed
+        // We need to use this seed for slideshow navigation
+        if (data.seed && shuffle && shuffle !== data.seed) {
+          setShuffle(data.seed)
+        }
+
+        // Only update filter metadata if returned (not skipped on load-more)
+        if (data.photographers && data.photographers.length > 0) {
+          setPhotographers(data.photographers)
+        }
+        if (data.companies && data.companies.length > 0) {
+          setCompanies(data.companies)
+        }
+        if (data.availableFilters) {
+          setAvailableFilters(data.availableFilters)
+        }
+
+        if (isLoadMore) {
+          // Filter out duplicates (important for shuffle mode)
+          const newPhotos = data.photos.filter(
+            (p) => !loadedPhotoIds.current.has(p.id)
+          )
+          newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
+          setPhotos((prev) => [...prev, ...newPhotos])
+          currentPage.current += 1
         } else {
-          const types: string[] = []
-          if (groupDuplicates) types.push('near_duplicate')
-          if (groupScenes) types.push('scene')
-          groupTypesValue = types.join(',')
+          // Initial load
+          loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
+          setPhotos(data.photos)
+          currentPage.current = 2 // Next load will be page 2
         }
-
-        // Use buildPhotoApiParams for consistent API calls across gallery/slideshow/strip
-        const params = buildPhotoApiParams({
-          eventId: selectedEventId || undefined,
-          photographer: selectedPhotographer || undefined,
-          companySlug: selectedCompanySlug || undefined,
-          shuffle,
-          page: currentPage.current,
-          limit: PAGE_SIZE,
-          skipMeta: isLoadMore,
-          groupTypes: groupTypesValue,
-        })
-
-        const res = await fetch(`/api/photos?${params.toString()}`)
-        if (res.ok) {
-          const data: PhotosResponse = await res.json()
-          setTotalCount(data.pagination.total)
-
-          // Capture the actual seed from the API response
-          // This is important: when we send shuffle=true, the API generates a seed
-          // We need to use this seed for slideshow navigation
-          if (data.seed && shuffle && shuffle !== data.seed) {
-            setShuffle(data.seed)
-          }
-
-          // Only update filter metadata if returned (not skipped on load-more)
-          if (data.photographers && data.photographers.length > 0) {
-            setPhotographers(data.photographers)
-          }
-          if (data.companies && data.companies.length > 0) {
-            setCompanies(data.companies)
-          }
-          if (data.availableFilters) {
-            setAvailableFilters(data.availableFilters)
-          }
-
-          if (isLoadMore) {
-            // Filter out duplicates (important for shuffle mode)
-            const newPhotos = data.photos.filter(
-              (p) => !loadedPhotoIds.current.has(p.id)
-            )
-            newPhotos.forEach((p) => loadedPhotoIds.current.add(p.id))
-            setPhotos((prev) => [...prev, ...newPhotos])
-            currentPage.current += 1
-          } else {
-            // Initial load
-            loadedPhotoIds.current = new Set(data.photos.map((p) => p.id))
-            setPhotos(data.photos)
-            currentPage.current = 2 // Next load will be page 2
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch photos:', error)
-      } finally {
-        setLoading(false)
-        setLoadingMore(false)
       }
-    },
-    [
-      selectedEventId,
-      selectedPhotographer,
-      selectedCompanySlug,
-      shuffle,
-      groupDuplicates,
-      groupScenes,
-    ]
-  )
+    } catch (error) {
+      console.error('Failed to fetch photos:', error)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
 
   // Initial fetch when filters change (wait until localStorage check completes)
   useEffect(() => {
     if (!filtersInitialized) return
     fetchPhotos(false)
-  }, [fetchPhotos, filtersInitialized])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedEventId,
+    selectedPhotographer,
+    selectedCompanySlug,
+    shuffle,
+    groupDuplicates,
+    groupScenes,
+    filtersInitialized,
+  ])
 
   // Infinite scroll - load more when reaching bottom
   useEffect(() => {
@@ -566,59 +553,49 @@ export function PhotosContent({
     }
 
     return () => observer.disconnect()
-  }, [loading, loadingMore, photos.length, totalCount, fetchPhotos])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, loadingMore, photos.length, totalCount])
 
   // Handle photo click - navigate to slideshow
-  const handlePhotoClick = useCallback(
-    (index: number) => {
-      const photo = photos[index]
-      if (!photo) return
+  function handlePhotoClick(index: number) {
+    const photo = photos[index]
+    if (!photo) return
 
-      // If this is a clustered photo, get the currently displayed photo from the cluster
-      const cluster = clusterMap.get(photo.id)
-      const actualPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
+    // If this is a clustered photo, get the currently displayed photo from the cluster
+    const cluster = clusterMap.get(photo.id)
+    const actualPhoto = cluster ? cluster.photos[cluster.currentIndex] : photo
 
-      // Track photo click
-      trackPhotoClick({
-        photo_id: actualPhoto.id,
-        event_id: actualPhoto.event_id || null,
-        band_id: actualPhoto.band_id || null,
-        event_name: actualPhoto.event_name || null,
-        band_name: actualPhoto.band_name || null,
-      })
+    // Track photo click
+    trackPhotoClick({
+      photo_id: actualPhoto.id,
+      event_id: actualPhoto.event_id || null,
+      band_id: actualPhoto.band_id || null,
+      event_name: actualPhoto.event_name || null,
+      band_name: actualPhoto.band_name || null,
+    })
 
-      // Build photo page URL with current filters and shuffle state (use slug for SEO)
-      const params = new URLSearchParams()
-      if (selectedEventId) params.set('event', selectedEventId)
-      if (selectedPhotographer) params.set('photographer', selectedPhotographer)
-      if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-      if (shuffle) params.set('shuffle', shuffle)
+    // Build photo page URL with current filters and shuffle state (use slug for SEO)
+    const params = new URLSearchParams()
+    if (selectedEventId) params.set('event', selectedEventId)
+    if (selectedPhotographer) params.set('photographer', selectedPhotographer)
+    if (selectedCompanySlug) params.set('company', selectedCompanySlug)
+    if (shuffle) params.set('shuffle', shuffle)
 
-      const queryString = params.toString()
-      const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
-      const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
-      router.push(photoUrl)
-    },
-    [
-      photos,
-      clusterMap,
-      router,
-      selectedEventId,
-      selectedPhotographer,
-      selectedCompanySlug,
-      shuffle,
-    ]
-  )
+    const queryString = params.toString()
+    const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
+    const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+    router.push(photoUrl)
+  }
 
   // Generate a random seed for re-shuffle
-  const generateRandomSeed = useCallback(() => {
+  function generateRandomSeed() {
     return Math.random().toString(36).substring(2, 10)
-  }, [])
+  }
 
   // Handle shuffle toggle
   // - OFF → ON: generate new seed (reshuffle)
   // - ON → OFF: turn off shuffle
-  const handleShuffleToggle = useCallback(() => {
+  function handleShuffleToggle() {
     if (!shuffle) {
       // Turn on shuffle with new unique seed
       const newSeed = generateRandomSeed()
@@ -629,35 +606,32 @@ export function PhotosContent({
       setShuffle(null)
       updateUrlParams({ shuffle: null })
     }
-  }, [shuffle, updateUrlParams, generateRandomSeed])
+  }
 
   // Handle grouping toggles
-  const handleGroupDuplicatesToggle = useCallback(() => {
+  function handleGroupDuplicatesToggle() {
     const newValue = !groupDuplicates
     setGroupDuplicates(newValue)
     updateUrlParams({ groupDuplicates: newValue })
-  }, [groupDuplicates, updateUrlParams])
+  }
 
-  const handleGroupScenesToggle = useCallback(() => {
+  function handleGroupScenesToggle() {
     const newValue = !groupScenes
     setGroupScenes(newValue)
     updateUrlParams({ groupScenes: newValue })
-  }, [groupScenes, updateUrlParams])
+  }
 
   // Handle cycling through cluster photos
-  const handleCycleClusterPhoto = useCallback(
-    (photoId: string, newIndex: number) => {
-      setClusterMap((prev) => {
-        const newMap = new Map(prev)
-        const cluster = newMap.get(photoId)
-        if (cluster) {
-          newMap.set(photoId, { ...cluster, currentIndex: newIndex })
-        }
-        return newMap
-      })
-    },
-    []
-  )
+  function handleCycleClusterPhoto(photoId: string, newIndex: number) {
+    setClusterMap((prev) => {
+      const newMap = new Map(prev)
+      const cluster = newMap.get(photoId)
+      if (cluster) {
+        newMap.set(photoId, { ...cluster, currentIndex: newIndex })
+      }
+      return newMap
+    })
+  }
 
   return (
     <PublicLayout

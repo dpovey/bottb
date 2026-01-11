@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Event, PhotoWithCluster } from '@/lib/db'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
@@ -116,7 +116,7 @@ export function SlideshowPageContent({
   }, [])
 
   // Fetch photos based on filters
-  const fetchPhotos = useCallback(async () => {
+  async function fetchPhotos() {
     setLoading(true)
 
     try {
@@ -208,6 +208,12 @@ export function SlideshowPageContent({
     } finally {
       setLoading(false)
     }
+  }
+
+  // Fetch photos on mount and when filters change
+  useEffect(() => {
+    fetchPhotos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     selectedEventId,
     selectedPhotographer,
@@ -216,80 +222,72 @@ export function SlideshowPageContent({
     shuffle,
   ])
 
-  // Fetch photos on mount and when filters change
-  useEffect(() => {
-    fetchPhotos()
-  }, [fetchPhotos])
-
   // Handle close - use browser back
-  const handleClose = useCallback(() => {
+  function handleClose() {
     router.back()
-  }, [router])
+  }
 
   // Handle photo change - update URL
-  const handlePhotoChange = useCallback((photoId: string) => {
+  function handlePhotoChange(photoId: string) {
     const url = new URL(window.location.href)
     // Update the path to the new photo ID
     const newPath = `/slideshow/${photoId}${url.search}`
     window.history.replaceState({}, '', newPath)
-  }, [])
+  }
 
   // Handle photo deleted
-  const handlePhotoDeleted = useCallback((photoId: string) => {
+  function handlePhotoDeleted(photoId: string) {
     setPhotos((prev) => prev.filter((p) => p.id !== photoId))
     setTotalCount((prev) => prev - 1)
-  }, [])
+  }
 
   // Handle filter change from slideshow
-  const handleFilterChange = useCallback(
-    (filterType: string, value: string | null) => {
-      const url = new URL(window.location.href)
+  function handleFilterChange(filterType: string, value: string | null) {
+    const url = new URL(window.location.href)
 
-      switch (filterType) {
-        case 'event':
-          setSelectedEventId(value)
-          if (value) {
-            url.searchParams.set('event', value)
-          } else {
-            url.searchParams.delete('event')
-          }
-          break
-        case 'photographer':
-          setSelectedPhotographer(value)
-          if (value) {
-            url.searchParams.set('photographer', value)
-          } else {
-            url.searchParams.delete('photographer')
-          }
-          break
-        case 'company':
-          setSelectedCompanySlug(value)
-          setSelectedEventId(null) // Clear event when company changes
+    switch (filterType) {
+      case 'event':
+        setSelectedEventId(value)
+        if (value) {
+          url.searchParams.set('event', value)
+        } else {
           url.searchParams.delete('event')
-          if (value) {
-            url.searchParams.set('company', value)
-          } else {
-            url.searchParams.delete('company')
-          }
-          break
-        case 'shuffle':
-          // Handle shuffle toggle from slideshow
-          setShuffle(value)
-          if (value) {
-            url.searchParams.set('shuffle', value)
-          } else {
-            url.searchParams.delete('shuffle')
-          }
-          break
-      }
+        }
+        break
+      case 'photographer':
+        setSelectedPhotographer(value)
+        if (value) {
+          url.searchParams.set('photographer', value)
+        } else {
+          url.searchParams.delete('photographer')
+        }
+        break
+      case 'company':
+        setSelectedCompanySlug(value)
+        setSelectedEventId(null) // Clear event when company changes
+        url.searchParams.delete('event')
+        if (value) {
+          url.searchParams.set('company', value)
+        } else {
+          url.searchParams.delete('company')
+        }
+        break
+      case 'shuffle':
+        // Handle shuffle toggle from slideshow
+        setShuffle(value)
+        if (value) {
+          url.searchParams.set('shuffle', value)
+        } else {
+          url.searchParams.delete('shuffle')
+        }
+        break
+    }
 
-      window.history.replaceState({}, '', url.pathname + url.search)
-      // Reset to first photo when filters change
-      setSlideshowIndex(0)
-      initialPhotoLoaded.current = false
-    },
-    []
-  )
+    window.history.replaceState({}, '', url.pathname + url.search)
+    // Reset to first photo when filters change
+    setSlideshowIndex(0)
+    initialPhotoLoaded.current = false
+  }
 
   // Loading state
   if (loading && photos.length === 0) {

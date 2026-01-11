@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 
 interface PaginationState {
@@ -106,7 +106,7 @@ export function usePaginatedData<
   const pathname = usePathname()
 
   // Initialize filters from URL if syncing
-  const getInitialFilters = useCallback((): TFilters => {
+  const getInitialFilters = (): TFilters => {
     if (!syncWithUrl) return initialFilters
 
     const urlFilters = { ...initialFilters }
@@ -117,13 +117,13 @@ export function usePaginatedData<
       }
     }
     return urlFilters
-  }, [searchParams, syncWithUrl, initialFilters])
+  }
 
-  const getInitialPage = useCallback((): number => {
+  const getInitialPage = (): number => {
     if (!syncWithUrl) return 1
     const pageParam = searchParams.get('page')
     return pageParam ? parseInt(pageParam, 10) : 1
-  }, [searchParams, syncWithUrl])
+  }
 
   const [data, setData] = useState<T[]>(initialData)
   const [total, setTotal] = useState(initialTotal)
@@ -137,155 +137,143 @@ export function usePaginatedData<
   const isInitialMount = useRef(true)
 
   // Calculate pagination state
-  const pagination = useMemo<PaginationState>(
-    () => ({
-      page,
-      limit: pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    }),
-    [page, pageSize, total]
-  )
+  const pagination: PaginationState = {
+    page,
+    limit: pageSize,
+    total,
+    totalPages: Math.ceil(total / pageSize),
+  }
 
   // Build query string from filters
-  const buildQueryString = useCallback(
-    (currentFilters: TFilters, currentPage: number): string => {
-      const params = new URLSearchParams()
+  const buildQueryString = (
+    currentFilters: TFilters,
+    currentPage: number
+  ): string => {
+    const params = new URLSearchParams()
 
-      // Add filters
-      for (const [key, value] of Object.entries(currentFilters)) {
-        if (value) {
-          params.set(key, value)
-        }
-      }
-
-      // Add pagination
-      params.set('page', currentPage.toString())
-      params.set('limit', pageSize.toString())
-
-      // Add additional params
-      for (const [key, value] of Object.entries(additionalParams)) {
+    // Add filters
+    for (const [key, value] of Object.entries(currentFilters)) {
+      if (value) {
         params.set(key, value)
       }
+    }
 
-      return params.toString()
-    },
-    [pageSize, additionalParams]
-  )
+    // Add pagination
+    params.set('page', currentPage.toString())
+    params.set('limit', pageSize.toString())
+
+    // Add additional params
+    for (const [key, value] of Object.entries(additionalParams)) {
+      params.set(key, value)
+    }
+
+    return params.toString()
+  }
 
   // Fetch data from API
-  const fetchData = useCallback(
-    async (currentFilters: TFilters, currentPage: number): Promise<void> => {
-      setIsLoading(true)
-      setError(null)
+  const fetchData = async (
+    currentFilters: TFilters,
+    currentPage: number
+  ): Promise<void> => {
+    setIsLoading(true)
+    setError(null)
 
-      try {
-        const queryString = buildQueryString(currentFilters, currentPage)
-        const response = await fetch(`${endpoint}?${queryString}`)
+    try {
+      const queryString = buildQueryString(currentFilters, currentPage)
+      const response = await fetch(`${endpoint}?${queryString}`)
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.statusText}`)
-        }
-
-        const json = await response.json()
-
-        let newData: T[]
-        let newTotal: number
-
-        if (transformResponse) {
-          const transformed = transformResponse(json)
-          newData = transformed.data
-          newTotal = transformed.total
-        } else {
-          // Default: expect { data: T[], pagination: { total: number } } or { items: T[], total: number }
-          newData = json.data ?? json.items ?? json.photos ?? []
-          newTotal = json.pagination?.total ?? json.total ?? 0
-        }
-
-        setData(newData)
-        setTotal(newTotal)
-        hasFetched.current = true
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch data')
-      } finally {
-        setIsLoading(false)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`)
       }
-    },
-    [endpoint, buildQueryString, transformResponse]
-  )
+
+      const json = await response.json()
+
+      let newData: T[]
+      let newTotal: number
+
+      if (transformResponse) {
+        const transformed = transformResponse(json)
+        newData = transformed.data
+        newTotal = transformed.total
+      } else {
+        // Default: expect { data: T[], pagination: { total: number } } or { items: T[], total: number }
+        newData = json.data ?? json.items ?? json.photos ?? []
+        newTotal = json.pagination?.total ?? json.total ?? 0
+      }
+
+      setData(newData)
+      setTotal(newTotal)
+      hasFetched.current = true
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Update URL when filters or page change
-  const updateUrl = useCallback(
-    (currentFilters: TFilters, currentPage: number): void => {
-      if (!syncWithUrl) return
+  const updateUrl = (currentFilters: TFilters, currentPage: number): void => {
+    if (!syncWithUrl) return
 
-      const params = new URLSearchParams()
+    const params = new URLSearchParams()
 
-      for (const [key, value] of Object.entries(currentFilters)) {
-        if (value) {
-          params.set(key, value)
-        }
+    for (const [key, value] of Object.entries(currentFilters)) {
+      if (value) {
+        params.set(key, value)
       }
+    }
 
-      if (currentPage > 1) {
-        params.set('page', currentPage.toString())
-      }
+    if (currentPage > 1) {
+      params.set('page', currentPage.toString())
+    }
 
-      const queryString = params.toString()
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname
+    const queryString = params.toString()
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname
 
-      router.replace(newUrl, { scroll: false })
-    },
-    [syncWithUrl, pathname, router]
-  )
+    router.replace(newUrl, { scroll: false })
+  }
 
   // Set a single filter
-  const setFilter = useCallback(
-    <K extends keyof TFilters>(key: K, value: TFilters[K]): void => {
-      setFilters((prev) => ({ ...prev, [key]: value }))
-      setPage(1) // Reset to page 1 when filter changes
-    },
-    []
-  )
+  const setFilter = <K extends keyof TFilters>(
+    key: K,
+    value: TFilters[K]
+  ): void => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setPage(1) // Reset to page 1 when filter changes
+  }
 
   // Clear all filters
-  const clearFilters = useCallback((): void => {
+  const clearFilters = (): void => {
     const emptyFilters = Object.keys(initialFilters).reduce(
       (acc, key) => ({ ...acc, [key]: null }),
       {} as TFilters
     )
     setFilters(emptyFilters)
     setPage(1)
-  }, [initialFilters])
+  }
 
   // Page navigation
-  const goToPage = useCallback(
-    (newPage: number): void => {
-      const validPage = Math.max(
-        1,
-        Math.min(newPage, pagination.totalPages || 1)
-      )
-      setPage(validPage)
-    },
-    [pagination.totalPages]
-  )
+  const goToPage = (newPage: number): void => {
+    const validPage = Math.max(1, Math.min(newPage, pagination.totalPages || 1))
+    setPage(validPage)
+  }
 
-  const nextPage = useCallback((): void => {
+  const nextPage = (): void => {
     if (page < pagination.totalPages) {
       setPage((prev) => prev + 1)
     }
-  }, [page, pagination.totalPages])
+  }
 
-  const prevPage = useCallback((): void => {
+  const prevPage = (): void => {
     if (page > 1) {
       setPage((prev) => prev - 1)
     }
-  }, [page])
+  }
 
   // Refresh data
-  const refresh = useCallback(async (): Promise<void> => {
+  const refresh = async (): Promise<void> => {
     await fetchData(filters, page)
-  }, [fetchData, filters, page])
+  }
 
   // Fetch data when filters or page change
   useEffect(() => {
@@ -299,7 +287,8 @@ export function usePaginatedData<
 
     fetchData(filters, page)
     updateUrl(filters, page)
-  }, [filters, page, fetchData, updateUrl, initialData.length])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, page, initialData.length])
 
   return {
     data,

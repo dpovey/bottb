@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Photo } from '@/lib/db-types'
 import { EditIcon, CheckIcon, CloseIcon, WarningIcon } from '@/components/icons'
 import {
@@ -48,34 +48,31 @@ export function PhotoAdminClient({
   const [isBulkSaving, setIsBulkSaving] = useState(false)
 
   // Fetch photos with current filters
-  const fetchPhotos = useCallback(
-    async (pageNum: number) => {
-      setIsLoading(true)
-      try {
-        const params = new URLSearchParams()
-        params.set('page', pageNum.toString())
-        params.set('limit', pageSize.toString())
-        params.set('order', 'uploaded')
+  async function fetchPhotos(pageNum: number) {
+    setIsLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set('page', pageNum.toString())
+      params.set('limit', pageSize.toString())
+      params.set('order', 'uploaded')
 
-        if (filterEvent) params.set('event', filterEvent)
-        if (filterBand) params.set('band', filterBand)
-        if (filterPhotographer) params.set('photographer', filterPhotographer)
-        if (filterUnmatched) params.set('unmatched', 'true')
+      if (filterEvent) params.set('event', filterEvent)
+      if (filterBand) params.set('band', filterBand)
+      if (filterPhotographer) params.set('photographer', filterPhotographer)
+      if (filterUnmatched) params.set('unmatched', 'true')
 
-        const res = await fetch(`/api/photos?${params.toString()}`)
-        if (res.ok) {
-          const data = await res.json()
-          setPhotos(data.photos)
-          setTotal(data.pagination.total)
-        }
-      } catch (error) {
-        console.error('Failed to fetch photos:', error)
-      } finally {
-        setIsLoading(false)
+      const res = await fetch(`/api/photos?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setPhotos(data.photos)
+        setTotal(data.pagination.total)
       }
-    },
-    [filterEvent, filterBand, filterPhotographer, filterUnmatched]
-  )
+    } catch (error) {
+      console.error('Failed to fetch photos:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Apply filters
   const handleApplyFilters = () => {

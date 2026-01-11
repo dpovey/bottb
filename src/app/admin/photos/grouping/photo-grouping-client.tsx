@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { FocalPointEditor } from '@/components/photos/focal-point-editor'
 import { NearbyPhotosStrip } from './nearby-photos-strip'
 
@@ -55,7 +55,7 @@ export function PhotoGroupingClient() {
     new Set()
   )
 
-  const loadClusters = useCallback(async () => {
+  async function loadClusters() {
     try {
       // Fetch both types and combine them
       const [nearDupRes, scenesRes] = await Promise.all([
@@ -98,11 +98,11 @@ export function PhotoGroupingClient() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     loadClusters()
-  }, [loadClusters])
+  }, [])
 
   const loadClusterDetail = async (cluster: ClusterWithPhotos) => {
     try {

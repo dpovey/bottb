@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PlusIcon } from '@/components/icons'
 
 interface NearbyPhoto {
@@ -44,7 +44,7 @@ export function NearbyPhotosStrip({
   const stripRef = useRef<HTMLDivElement>(null)
 
   // Find the capture time range of cluster photos
-  const getTimeRange = useCallback(() => {
+  function getTimeRange() {
     const times = clusterPhotos
       .map((p) => p.captured_at)
       .filter((t): t is string => t !== null)
@@ -61,9 +61,9 @@ export function NearbyPhotosStrip({
       endTime: new Date(maxTime + 5 * 60 * 1000).toISOString(),
       centerTime: new Date((minTime + maxTime) / 2).toISOString(),
     }
-  }, [clusterPhotos])
+  }
 
-  const loadNearbyPhotos = useCallback(async () => {
+  async function loadNearbyPhotos() {
     const timeRange = getTimeRange()
     if (!timeRange) {
       setNearbyPhotos([])
@@ -95,11 +95,12 @@ export function NearbyPhotosStrip({
     } finally {
       setLoading(false)
     }
-  }, [clusterPhotoIds, eventId, bandId, getTimeRange])
+  }
 
   useEffect(() => {
     loadNearbyPhotos()
-  }, [loadNearbyPhotos])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clusterPhotoIds.join(','), eventId, bandId])
 
   // Don't render if we have no time data
   const timeRange = getTimeRange()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { Video } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
@@ -54,17 +54,17 @@ export function ShortsCarousel({
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  // Check scroll state
-  const checkScrollState = useCallback(() => {
-    const container = scrollContainerRef.current
-    if (!container) return
-
-    const { scrollLeft, scrollWidth, clientWidth } = container
-    setCanScrollLeft(scrollLeft > 0)
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1)
-  }, [])
-
   useEffect(() => {
+    // Check scroll state
+    const checkScrollState = () => {
+      const container = scrollContainerRef.current
+      if (!container) return
+
+      const { scrollLeft, scrollWidth, clientWidth } = container
+      setCanScrollLeft(scrollLeft > 0)
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1)
+    }
+
     checkScrollState()
     const container = scrollContainerRef.current
     if (container) {
@@ -75,10 +75,10 @@ export function ShortsCarousel({
         window.removeEventListener('resize', checkScrollState)
       }
     }
-  }, [checkScrollState, videos])
+  }, [videos])
 
   // Scroll handlers
-  const scroll = useCallback((direction: 'left' | 'right') => {
+  const scroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current
     if (!container) return
 
@@ -87,7 +87,7 @@ export function ShortsCarousel({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth',
     })
-  }, [])
+  }
 
   // Close modal on escape
   useEffect(() => {

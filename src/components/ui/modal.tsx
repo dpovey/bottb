@@ -1,11 +1,6 @@
 'use client'
 
-import {
-  useEffect,
-  useCallback,
-  type ReactNode,
-  type KeyboardEvent,
-} from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { CloseIcon } from '@/components/icons'
@@ -73,22 +68,12 @@ export function Modal({
   className,
   footer,
 }: ModalProps) {
-  // Handle escape key
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent | globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape' && closeOnEscape && !disabled) {
-        onClose()
-      }
-    },
-    [closeOnEscape, disabled, onClose]
-  )
-
   // Handle backdrop click
-  const handleBackdropClick = useCallback(() => {
+  function handleBackdropClick() {
     if (closeOnBackdropClick && !disabled) {
       onClose()
     }
-  }, [closeOnBackdropClick, disabled, onClose])
+  }
 
   // Add/remove event listeners and body scroll lock
   useEffect(() => {
@@ -98,16 +83,19 @@ export function Modal({
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
-    // Add keyboard listener
-    const handleEscape = (event: globalThis.KeyboardEvent) =>
-      handleKeyDown(event)
-    window.addEventListener('keydown', handleEscape)
+    // Handle escape key
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape' && closeOnEscape && !disabled) {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       document.body.style.overflow = originalOverflow
-      window.removeEventListener('keydown', handleEscape)
+      window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, handleKeyDown])
+  }, [isOpen, closeOnEscape, disabled, onClose])
 
   // Don't render if not open
   if (!isOpen) return null

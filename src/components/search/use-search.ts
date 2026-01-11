@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
  * Hook to manage search dialog state with keyboard shortcut support.
@@ -9,9 +9,15 @@ import { useState, useEffect, useCallback } from 'react'
 export function useSearch() {
   const [isOpen, setIsOpen] = useState(false)
 
-  const open = useCallback(() => setIsOpen(true), [])
-  const close = useCallback(() => setIsOpen(false), [])
-  const toggle = useCallback(() => setIsOpen((prev) => !prev), [])
+  function open() {
+    setIsOpen(true)
+  }
+  function close() {
+    setIsOpen(false)
+  }
+  function toggle() {
+    setIsOpen((prev) => !prev)
+  }
 
   // Handle keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -19,13 +25,13 @@ export function useSearch() {
       // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        toggle()
+        setIsOpen((prev) => !prev)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [toggle])
+  }, [])
 
   return {
     isOpen,

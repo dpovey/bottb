@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Photo } from '@/lib/db-types'
 import { EditMetadataModal } from './edit-metadata-modal'
@@ -52,38 +52,32 @@ export function PhotoAdminControls({
   )
 
   // Handle hero settings save (both labels and focal point)
-  const handleHeroSettingsSave = useCallback(
-    (
-      photoId: string,
-      labels: string[],
-      focalPoint: { x: number; y: number }
-    ) => {
-      setCurrentLabels(labels)
+  const handleHeroSettingsSave = (
+    photoId: string,
+    labels: string[],
+    focalPoint: { x: number; y: number }
+  ) => {
+    setCurrentLabels(labels)
 
-      if (onLabelsUpdated) {
-        onLabelsUpdated(photoId, labels)
-      }
+    if (onLabelsUpdated) {
+      onLabelsUpdated(photoId, labels)
+    }
 
-      if (onPhotoUpdated) {
-        onPhotoUpdated({
-          ...photo,
-          labels,
-          hero_focal_point: focalPoint,
-        })
-      }
-    },
-    [photo, onLabelsUpdated, onPhotoUpdated]
-  )
+    if (onPhotoUpdated) {
+      onPhotoUpdated({
+        ...photo,
+        labels,
+        hero_focal_point: focalPoint,
+      })
+    }
+  }
 
   // Handle photo deleted
-  const handlePhotoDeleted = useCallback(
-    (photoId: string) => {
-      if (onPhotoDeleted) {
-        onPhotoDeleted(photoId)
-      }
-    },
-    [onPhotoDeleted]
-  )
+  const handlePhotoDeleted = (photoId: string) => {
+    if (onPhotoDeleted) {
+      onPhotoDeleted(photoId)
+    }
+  }
 
   // Don't render if not admin
   if (!isAdmin) {
