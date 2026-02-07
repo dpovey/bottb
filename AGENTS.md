@@ -30,39 +30,39 @@ Key files:
 
 Declarative standards that are always active or scoped to file patterns:
 
-| Rule | Scope | Purpose |
-| --- | --- | --- |
-| `global.mdc` | Always | Project identity, tech stack, code style |
-| `workflow.mdc` | Always | Branch workflow, pre-commit, context management |
-| `typescript.mdc` | `src/**/*.ts(x)` | TypeScript and React conventions |
-| `components.mdc` | `src/components/**/*.tsx` | Component structure, styling, testing |
-| `api-routes.mdc` | `src/app/api/**/*.ts` | API route conventions |
-| `database.mdc` | `src/lib/db*`, `migrations/` | Database and migration conventions |
+| Rule             | Scope                        | Purpose                                         |
+| ---------------- | ---------------------------- | ----------------------------------------------- |
+| `global.mdc`     | Always                       | Project identity, tech stack, code style        |
+| `workflow.mdc`   | Always                       | Branch workflow, pre-commit, context management |
+| `typescript.mdc` | `src/**/*.ts(x)`             | TypeScript and React conventions                |
+| `components.mdc` | `src/components/**/*.tsx`    | Component structure, styling, testing           |
+| `api-routes.mdc` | `src/app/api/**/*.ts`        | API route conventions                           |
+| `database.mdc`   | `src/lib/db*`, `migrations/` | Database and migration conventions              |
 
 ### Subagents (`.cursor/agents/`)
 
 Specialized agents that operate in their own context window for focused tasks:
 
-| Agent | Use For |
-| --- | --- |
-| `senior-engineer` | Code review, architecture, coding standards |
-| `automation-engineer` | Unit tests, integration tests, test infrastructure |
-| `manual-tester` | Playwright browser testing, user journey validation |
-| `product-manager` | Requirements coverage, TODO.md, feature gap analysis |
-| `seo-expert` | SEO audits, meta tags, structured data, sitemap |
-| `tech-writer` | Documentation accuracy, stale references |
+| Agent                 | Use For                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `senior-engineer`     | Code review, architecture, coding standards                 |
+| `automation-engineer` | Unit tests, integration tests, test infrastructure          |
+| `manual-tester`       | Playwright browser testing, user journey validation         |
+| `product-manager`     | Requirements coverage, TODO.md, feature gap analysis        |
+| `seo-expert`          | SEO audits, meta tags, structured data, sitemap             |
+| `tech-writer`         | Documentation accuracy, stale references                    |
 | `pre-commit-reviewer` | Assess code changes against project standards before commit |
 
 ### Skills (`.cursor/skills/`)
 
 Step-by-step procedural workflows invoked on demand:
 
-| Skill | Use For |
-| --- | --- |
-| `worktree-setup` | Creating a git worktree for isolated development |
-| `pre-commit` | Running assessment and checks before committing |
+| Skill              | Use For                                                |
+| ------------------ | ------------------------------------------------------ |
+| `worktree-setup`   | Creating a git worktree for isolated development       |
+| `pre-commit`       | Running assessment and checks before committing        |
 | `create-migration` | Database schema changes with proper migration workflow |
-| `create-pr` | Submitting a pull request and waiting for CI |
+| `create-pr`        | Submitting a pull request and waiting for CI           |
 
 ## Before Starting Any Work
 
@@ -95,11 +95,11 @@ See [doc/agent/workflow.md](doc/agent/workflow.md) for full setup instructions.
 
 Before making changes, consult the relevant documentation:
 
-| Phase | Docs to Reference |
-| --- | --- |
+| Phase                  | Docs to Reference                |
+| ---------------------- | -------------------------------- |
 | **Designing features** | `DESIGN.md`, `doc/requirements/` |
-| **Writing code** | `doc/arch/`, `doc/practices/` |
-| **Before commit** | All of the above |
+| **Writing code**       | `doc/arch/`, `doc/practices/`    |
+| **Before commit**      | All of the above                 |
 
 ## Pre-commit Checklist
 

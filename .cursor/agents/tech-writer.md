@@ -108,9 +108,11 @@ Check internal links work:
 
 ```markdown
 # Relative links (preferred)
+
 [Data Layer](./data-layer.md)
 
 # Root-relative links
+
 [DESIGN.md](/DESIGN.md)
 ```
 

@@ -41,6 +41,7 @@ git worktree add .worktrees/{description} -b {type}/{description} origin/main
 **Directory naming**: `.worktrees/{short-description}`
 
 Examples:
+
 - `.worktrees/auth-fix` for branch `fix/auth-fix`
 - `.worktrees/photo-upload` for branch `feat/photo-upload`
 - `.worktrees/scoring-v2` for branch `refactor/scoring-v2`
