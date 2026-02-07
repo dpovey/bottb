@@ -71,12 +71,12 @@ pnpm migrate
 
 ## Key Files
 
-| File                    | Purpose                          |
-| ----------------------- | -------------------------------- |
-| `migrations/*.js`       | Production migration files       |
-| `src/lib/schema.sql`    | Full schema for fresh test DBs   |
-| `src/lib/db-types.ts`   | TypeScript types for DB entities |
-| `src/lib/db.ts`         | Query functions                  |
+| File                  | Purpose                          |
+| --------------------- | -------------------------------- |
+| `migrations/*.js`     | Production migration files       |
+| `src/lib/schema.sql`  | Full schema for fresh test DBs   |
+| `src/lib/db-types.ts` | TypeScript types for DB entities |
+| `src/lib/db.ts`       | Query functions                  |
 
 ## Reference
 

@@ -245,7 +245,14 @@ export default function AdminDashboard({
                   <p className="text-sm text-muted truncate">
                     {event.location}
                   </p>
-                  <p className="text-xs sm:text-sm text-dim">{event.date}</p>
+                  <p className="text-xs sm:text-sm text-dim">
+                    {new Date(event.date).toLocaleDateString('en-AU', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-2">

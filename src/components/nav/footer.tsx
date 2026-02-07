@@ -9,7 +9,7 @@ const sitemapLinks = {
   main: [
     { label: 'Home', href: '/' },
     { label: 'Events', href: '/events' },
-    { label: 'Bands', href: '/events' },
+    { label: 'Bands', href: '/companies' },
     { label: 'Companies', href: '/companies' },
     { label: 'Songs', href: '/songs' },
   ],
@@ -20,6 +20,7 @@ const sitemapLinks = {
   ],
   info: [
     { label: 'About', href: '/about' },
+    { label: 'FAQ', href: '/faq' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Use', href: '/terms' },
   ],

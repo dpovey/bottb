@@ -20,12 +20,12 @@ Read these documentation files:
 
 | Tool                  | Purpose             |
 | --------------------- | ------------------- |
-| Vitest                | Unit test runner     |
-| React Testing Library | Component testing    |
-| MSW                   | API mocking          |
-| Storybook             | Component isolation  |
-| Chromatic             | Visual regression    |
-| Playwright            | E2E testing          |
+| Vitest                | Unit test runner    |
+| React Testing Library | Component testing   |
+| MSW                   | API mocking         |
+| Storybook             | Component isolation |
+| Chromatic             | Visual regression   |
+| Playwright            | E2E testing         |
 
 ## Testing Philosophy
 

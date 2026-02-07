@@ -1,7 +1,18 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Footer } from '@/components/nav'
 import { SadFaceIcon } from '@/components/icons'
+
+export const metadata: Metadata = {
+  title: 'Page Not Found | Battle of the Tech Bands',
+  description:
+    'The page you are looking for could not be found. Browse events, photos, and more from Battle of the Tech Bands.',
+  robots: {
+    index: false,
+    follow: true,
+  },
+}
 
 export default function NotFound() {
   return (
@@ -69,7 +80,7 @@ export default function NotFound() {
               Back to Home
             </Link>
             <Link
-              href="/"
+              href="/events"
               className="inline-flex items-center justify-center border border-white/30 text-white px-8 py-3 rounded-full text-sm tracking-widest uppercase transition-all duration-300 hover:border-white/60 hover:bg-white/5"
             >
               View Events
@@ -83,7 +94,7 @@ export default function NotFound() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link
-                href="/"
+                href="/events"
                 className="text-text-dim hover:text-white transition-colors text-sm"
               >
                 Events
@@ -97,10 +108,10 @@ export default function NotFound() {
               </Link>
               <span className="text-text-dim/30">•</span>
               <Link
-                href="/results"
+                href="/videos"
                 className="text-text-dim hover:text-white transition-colors text-sm"
               >
-                Results
+                Videos
               </Link>
               <span className="text-text-dim/30">•</span>
               <Link

@@ -359,7 +359,7 @@ export default async function AboutPage() {
             spreading the word — every bit helps.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/">
+            <Link href="/events">
               <Button variant="filled" size="lg">
                 Events
               </Button>

@@ -19,24 +19,30 @@ git diff --cached --name-only
 Based on which files changed, read the applicable docs:
 
 **Always read:**
+
 - `doc/practices/README.md` - Quick reference for all standards
 
 **If React/component files changed:**
+
 - `doc/practices/react.md`
 - `doc/practices/styling.md`
 - `doc/arch/components.md`
 
 **If API routes changed:**
+
 - `doc/arch/api.md`
 - `doc/practices/security.md`
 
 **If database files changed:**
+
 - `doc/arch/data-layer.md`
 
 **If TypeScript patterns are relevant:**
+
 - `doc/practices/typescript.md`
 
 **If new features added:**
+
 - `doc/requirements/` - Check relevant feature spec
 
 ### 3. Review Changes Against Standards
@@ -74,6 +80,7 @@ For each changed file, verify:
 ### 5. Flag Issues
 
 If any check fails, clearly state:
+
 - What the violation is
 - Which file and approximate location
 - What the fix should be
