@@ -201,7 +201,7 @@ export function VideoAdminClient({
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
+      <div className="flex items-start justify-end gap-3">
         <YouTubeScanner
           events={events}
           bandsMap={bandsMap}
