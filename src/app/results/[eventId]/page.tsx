@@ -226,7 +226,7 @@ export default async function ResultsPage({
   const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   const breadcrumbs = [
-    { label: 'Events', href: '/' },
+    { label: 'Events', href: '/events' },
     { label: event.name, href: `/event/${eventId}` },
     { label: 'Results' },
   ]

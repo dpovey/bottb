@@ -75,10 +75,11 @@ export function CompanyCard({ company, selected = false }: CompanyCardProps) {
           <div className={cn('flex gap-3', hasLogo && 'justify-center')}>
             <Badge variant="default" className="bg-white/5">
               {company.event_count} event
-              {company.event_count !== 1 ? 's' : ''}
+              {Number(company.event_count) !== 1 ? 's' : ''}
             </Badge>
             <Badge variant="default" className="bg-white/5">
-              {company.band_count} band{company.band_count !== 1 ? 's' : ''}
+              {company.band_count} band
+              {Number(company.band_count) !== 1 ? 's' : ''}
             </Badge>
           </div>
         </div>

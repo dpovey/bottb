@@ -62,11 +62,21 @@ describe('AdminDashboard', () => {
   it('displays event details correctly', async () => {
     render(<AdminDashboard session={mockSession} />)
 
+    const expectedDate = new Date('2024-12-25T18:30:00Z').toLocaleDateString(
+      'en-AU',
+      {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }
+    )
+
     await waitFor(() => {
       // Check first event details
       expect(screen.getByText('Test Event 1')).toBeInTheDocument()
       expect(screen.getByText('Test Venue 1')).toBeInTheDocument()
-      expect(screen.getByText('2024-12-25T18:30:00Z')).toBeInTheDocument()
+      expect(screen.getByText(expectedDate)).toBeInTheDocument()
     })
   })
 
