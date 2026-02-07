@@ -1,24 +1,21 @@
 # Claude Code Guidelines
 
-**See `AGENTS.md` for full development guidelines** including documentation references, workflow, and coding standards.
+**See `AGENTS.md` for full development guidelines.**
+
+This project primarily uses Cursor's native configuration:
+
+- **Rules**: `.cursor/rules/` - Declarative standards (always-on and file-scoped)
+- **Subagents**: `.cursor/agents/` - Specialized agents for focused tasks
+- **Skills**: `.cursor/skills/` - Step-by-step procedural workflows
+
+Claude Code agents in `.claude/agents/` mirror the Cursor subagents for compatibility.
 
 ## Quick Reference
-
-### Documentation to Consult
-
-| Phase              | Docs                             |
-| ------------------ | -------------------------------- |
-| Designing features | `DESIGN.md`, `doc/requirements/` |
-| Writing code       | `doc/arch/`, `doc/practices/`    |
-| Before commit      | All of the above                 |
 
 ### Pre-commit Commands
 
 ```bash
-pnpm format:check     # Prettier
-pnpm typecheck        # TypeScript
-pnpm lint             # ESLint
-pnpm test             # Tests
+pnpm format && pnpm typecheck && pnpm lint && pnpm test
 ```
 
 All must pass before committing.

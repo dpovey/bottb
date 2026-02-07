@@ -1,27 +1,45 @@
 ---
-description: Global project rules - always active
+description: Core project identity, structure, and conventions - always active
 alwaysApply: true
 ---
 
-# Project Rules
+# BOTTB Project Rules
 
-See `AGENTS.md` for full guidelines. Key points:
+Battle of the Tech Bands (BOTTB) - a Next.js application for tech band competitions.
 
-## Before Any Edits
+## Tech Stack
 
-1. Check branch: `git branch --show-current`
-2. If on main, create a worktree first (see `doc/agent/workflow.md`)
-3. Exception: Trivial one-line fixes may go to main with user approval
+| Layer     | Technology                                    |
+| --------- | --------------------------------------------- |
+| Framework | Next.js 16, React 19                          |
+| Styling   | Tailwind CSS 4                                |
+| Database  | Neon Postgres                                 |
+| Auth      | NextAuth.js v5                                |
+| Storage   | Vercel Blob                                   |
+| Testing   | Vitest, RTL, Storybook, Chromatic, Playwright |
 
-## Pre-commit
+## Project Structure
 
-Run all checks before committing:
-
-```bash
-pnpm format && pnpm typecheck && pnpm lint && pnpm test
+```
+src/
+├── app/           # Next.js App Router pages and API routes
+├── components/    # React components (ui/, icons/, layouts/, photos/, scoring/)
+├── lib/           # Utilities, database (db.ts), hooks
+└── scripts/       # CLI tools for event/user management
 ```
 
-See `doc/agent/checklist.md` for the full Assess process.
+Key files: `src/lib/db.ts` (queries), `src/lib/schema.sql` (schema), `src/lib/scoring.ts` (scoring), `src/components/ui/` (primitives), `next.config.ts` (config).
+
+## Code Style
+
+- TypeScript for all files, strict typing
+- Never use `any` to fix type errors - use `unknown` or specific types
+- Prefix unused variables with underscore (`_error`)
+- Use `@/` alias for src imports
+
+## React Compiler - No Manual Memoization
+
+This project uses React Compiler (`reactCompiler: true` in next.config.ts). Do NOT add `useCallback`, `useMemo`, or `React.memo` - the compiler handles memoization automatically.
 
 ## Commit Messages
 
@@ -31,7 +49,29 @@ Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build
 
 ## Key Documentation
 
-- `DESIGN.md` - Design system and tokens
-- `doc/arch/` - Architecture decisions
-- `doc/practices/` - Coding standards
-- `doc/requirements/` - Feature specs
+| Phase              | Docs                             |
+| ------------------ | -------------------------------- |
+| Designing features | `DESIGN.md`, `doc/requirements/` |
+| Writing code       | `doc/arch/`, `doc/practices/`    |
+| Before commit      | All of the above                 |
+
+## Development Server
+
+Use `pnpm dev:restart` to start the dev server (kills existing server, clears `.next` cache).
+
+- Main repo: Port 3030
+- Worktrees: Unique ports (3031, 3032...) set in `.env.local`
+
+## Automation
+
+- On push: CI runs `format:check`, `typecheck`, `lint`, `test`
+- On PR create: Vercel preview deployment
+- On merge to main: Production deployment
+
+## When Things Go Wrong
+
+- **Merge conflict**: Stop and ask user
+- **CI failure**: Read full error output, fix locally, push again
+- **Database schema drift**: Run `pnpm migrate:latest`, compare with `schema.sql`
+- **Port conflict**: `lsof -i :3030` to find process, then kill or use different port
+- **Tests failing on unchanged code**: Ask user before proceeding

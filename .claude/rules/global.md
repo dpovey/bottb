@@ -1,5 +1,7 @@
 # Project Rules
 
+> Source of truth: `.cursor/rules/global.mdc`
+
 See `AGENTS.md` for full guidelines. Key points:
 
 ## Before Any Edits

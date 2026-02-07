@@ -1,0 +1,49 @@
+---
+description: Git workflow and branch management - always active
+alwaysApply: true
+---
+
+# Workflow Rules
+
+## Before Starting Any Work
+
+**STOP and do this BEFORE making any code edits:**
+
+1. **Check current branch**: `git branch --show-current`
+2. **If NOT on main**: Ask the user what to do (continue here, or navigate to main repo first)
+3. **If on main**: Create a worktree BEFORE editing files (use `/worktree-setup` skill)
+4. **Exception**: Trivial one-line fixes may go directly to main - ask user first
+
+Reading code to understand the task is fine. But NO edits until you're on a feature branch.
+
+## Pre-commit
+
+Before every commit, run both the assessment and checks. These can run in parallel:
+
+1. **Assess** - Delegate to the `pre-commit-reviewer` subagent (reads docs, reviews changes, outputs compliance report)
+2. **Check** - Run `pnpm format && pnpm typecheck && pnpm lint && pnpm test` (all must pass with exit code 0)
+
+The assessment and checks are independent - launch them simultaneously. If either fails, do not commit.
+
+See the `/pre-commit` skill for the full step-by-step process.
+
+## Background Agents vs. Interactive Work
+
+**Good for background agents:**
+- Well-defined, self-contained tasks with clear completion criteria
+- Mechanical refactors (rename across files, update imports, fix lint errors)
+- Adding tests for existing code
+- Documentation updates
+
+**Keep as interactive workflow:**
+- Complex features requiring design decisions
+- Debugging sessions requiring back-and-forth
+- Database migrations or sensitive config changes
+
+## Context Management
+
+For large tasks:
+- Read only files relevant to the current task
+- Prefer `grep` over reading entire files when searching
+- For files >500 lines, request specific line ranges
+- Summarize findings before proceeding with edits
