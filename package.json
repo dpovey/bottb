@@ -133,7 +133,7 @@
     "playwright": "^1.57.0",
     "postcss": "^8.4.49",
     "prettier": "^3.7.4",
-    "storybook": "^10.1.10",
+    "storybook": "^10.2.8",
     "structured-data-testing-tool": "^4.5.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.19.2",
