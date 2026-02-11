@@ -61,7 +61,7 @@
     "@ai-sdk/openai": "^3.0.10",
     "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@orama/orama": "^3.1.18",
-    "@posthog/nextjs-config": "^1.7.3",
+    "@posthog/nextjs-config": "^1.8.15",
     "@types/bcrypt": "^6.0.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^2.0.0",
