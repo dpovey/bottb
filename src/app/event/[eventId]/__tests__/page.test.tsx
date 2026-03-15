@@ -162,6 +162,25 @@ describe('EventPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders markdown links in description', () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        event={{
+          ...mockEvent,
+          info: {
+            description:
+              'Join us with [Battle of the Agile Bands](https://battleoftheagilebands.com/) for a great night',
+          },
+        }}
+      />
+    )
+
+    const link = screen.getByRole('link', { name: 'Battle of the Agile Bands' })
+    expect(link).toHaveAttribute('href', 'https://battleoftheagilebands.com/')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
   it('displays ticket CTA for upcoming events with ticket URL', () => {
     render(
       <EventPageClient

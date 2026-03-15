@@ -12,6 +12,7 @@ import { getNavEvents } from '@/lib/nav-data'
 import { formatEventDate } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
+import { stripMarkdown } from '@/lib/markdown'
 import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
 import { notFound } from 'next/navigation'
@@ -55,7 +56,7 @@ export async function generateMetadata({
     description += `. ${bandCount} band${bandCount !== 1 ? 's' : ''} ${isFinalized ? 'competed' : 'performing'}`
   }
   if (event.info?.description) {
-    description += `. ${event.info.description}`
+    description += `. ${stripMarkdown(event.info.description as string)}`
   }
   if (show2022Winner) {
     description += `. Winner: ${storedWinner}`

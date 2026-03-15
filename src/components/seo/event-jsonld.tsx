@@ -1,5 +1,6 @@
 import { Event, Band } from '@/lib/db'
 import { getBaseUrl } from '@/lib/seo'
+import { stripMarkdown } from '@/lib/markdown'
 
 // Default event image if none provided
 const DEFAULT_EVENT_IMAGE =
@@ -134,9 +135,9 @@ export function EventJsonLd({
     // Link to Wikidata "battle of the bands" concept for better entity recognition
     additionalType: 'https://www.wikidata.org/wiki/Q798766',
     name: event.name,
-    description:
-      eventInfo?.description ||
-      `${event.name} - Battle of the Tech Bands brings together technology professionals for an unforgettable night of rock, competition, and charity supporting Youngcare.`,
+    description: eventInfo?.description
+      ? stripMarkdown(eventInfo.description as string)
+      : `${event.name} - Battle of the Tech Bands brings together technology professionals for an unforgettable night of rock, competition, and charity supporting Youngcare.`,
     startDate,
     endDate,
     location,

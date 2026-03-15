@@ -18,6 +18,7 @@ import { create, insertMultiple, save } from '@orama/orama'
 import { writeFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 import 'dotenv/config'
+import { stripMarkdown } from '../lib/markdown'
 
 // Import database functions
 import {
@@ -180,7 +181,8 @@ async function buildSearchIndex() {
     // Index events
     for (const event of events) {
       // Use top-level description field, fallback to info.description
-      const description = event.description || event.info?.description || ''
+      const rawDescription = event.description || event.info?.description || ''
+      const description = stripMarkdown(rawDescription as string)
       documents.push({
         id: `event-${event.id}`,
         title: event.name,

@@ -16,6 +16,7 @@ import {
   photosToHeroImages,
 } from '@/components/ui'
 import { ChevronRightIcon } from '@/components/icons'
+import { MarkdownText } from '@/lib/markdown'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
 import { ShortsCarousel } from '@/components/shorts-carousel'
@@ -142,9 +143,9 @@ export function EventPageClient({
                 {formatEventDate(event.date, event.timezone)} • {event.location}
               </div>
               {event.description && (
-                <p className="hero-text-muted mt-3 max-w-2xl">
+                <MarkdownText className="hero-text-muted mt-3 max-w-2xl">
                   {event.description}
-                </p>
+                </MarkdownText>
               )}
             </div>
           </div>
@@ -243,9 +244,9 @@ export function EventPageClient({
       {eventInfo?.description && (
         <section className="py-12 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <p className="text-text-muted text-lg max-w-3xl">
+            <MarkdownText className="text-text-muted text-lg max-w-3xl">
               {eventInfo.description}
-            </p>
+            </MarkdownText>
           </div>
         </section>
       )}
