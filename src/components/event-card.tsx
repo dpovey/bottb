@@ -158,7 +158,7 @@ export function EventCard({
             </p>
             {!isPast && bands.length === 0 && (
               <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                Bands TBA · {' '}
+                Bands TBA ·{' '}
                 <a
                   href="mailto:info@bottb.com"
                   className="text-accent hover:underline"
