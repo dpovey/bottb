@@ -158,7 +158,13 @@ export function EventCard({
             </p>
             {!isPast && bands.length === 0 && (
               <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                {formatEventDate(event.date, event.timezone)}
+                Bands TBA · {' '}
+                <a
+                  href="mailto:info@bottb.com"
+                  className="text-accent hover:underline"
+                >
+                  Want to participate?
+                </a>
               </p>
             )}
           </div>
@@ -238,7 +244,7 @@ export function EventCard({
             )}
 
             {/* Bands list */}
-            {bands.length > 0 && (
+            {bands.length > 0 ? (
               <div className="mb-4">
                 <div className="text-text-dim text-xs tracking-wider uppercase mb-2">
                   {bands.length === 1 ? 'Band' : 'Bands'}
@@ -259,6 +265,18 @@ export function EventCard({
                   )}
                 </div>
               </div>
+            ) : (
+              !isPast && (
+                <p className="text-text-muted text-sm mb-4">
+                  Bands TBA.{' '}
+                  <a
+                    href="mailto:info@bottb.com"
+                    className="text-accent hover:underline"
+                  >
+                    Want to participate?
+                  </a>
+                </p>
+              )
             )}
 
             {/* Action buttons */}

@@ -117,12 +117,14 @@ describe('EventPage', () => {
     expect(screen.getByText('2')).toBeInTheDocument()
   })
 
-  it('shows no bands message when empty', () => {
+  it('shows no bands message with contact CTA when empty', () => {
     render(<EventPageClient {...defaultProps} bands={[]} />)
 
     expect(
       screen.getByText('No bands registered for this event yet.')
     ).toBeInTheDocument()
+    const contactLink = screen.getByRole('link', { name: 'info@bottb.com' })
+    expect(contactLink).toHaveAttribute('href', 'mailto:info@bottb.com')
   })
 
   it('shows winner section for 2022.1 finalized events', () => {
