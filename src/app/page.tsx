@@ -534,6 +534,26 @@ export default async function HomePage() {
         </Suspense>
       </ErrorBoundary>
 
+      {/* Powered by Jumbo Interactive */}
+      <section className="py-10 bg-bg border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <Link
+            href="/sponsors"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 group"
+          >
+            <span className="text-xs tracking-[0.3em] uppercase text-text-dim">
+              Powered by
+            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
+              alt="Jumbo Interactive"
+              className="h-8 sm:h-10 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
+            />
+          </Link>
+        </div>
+      </section>
+
       {/* Random Photo Strip - Wrapped in Suspense + ErrorBoundary */}
       <ErrorBoundary
         sectionName="Photo Gallery"
@@ -565,26 +585,6 @@ export default async function HomePage() {
           />
         </Suspense>
       </ErrorBoundary>
-
-      {/* Powered by Jumbo Interactive */}
-      <section className="py-10 bg-bg border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <Link
-            href="/sponsors"
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 group"
-          >
-            <span className="text-xs tracking-[0.3em] uppercase text-text-dim">
-              Powered by
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
-              alt="Jumbo Interactive"
-              className="h-8 sm:h-10 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
-            />
-          </Link>
-        </div>
-      </section>
 
       {/* Video Strip - Wrapped in Suspense + ErrorBoundary */}
       <ErrorBoundary
