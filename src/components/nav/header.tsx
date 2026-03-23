@@ -236,7 +236,7 @@ export function Header({
                 </div>
               ))}
 
-              {/* About link */}
+              {/* About & Sponsors links */}
               <div className="border-t border-white/5 pt-4 -mb-1">
                 <Link
                   href="/about"
@@ -250,6 +250,19 @@ export function Header({
                   className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
                   About
+                </Link>
+                <Link
+                  href="/sponsors"
+                  onClick={() => {
+                    trackNavClick({
+                      nav_item: 'sponsors',
+                      location: 'mobile_menu',
+                    })
+                    setMobileMenuOpen(false)
+                  }}
+                  className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                >
+                  Sponsors
                 </Link>
               </div>
 

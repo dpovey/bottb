@@ -20,6 +20,7 @@ const sitemapLinks = {
   ],
   info: [
     { label: 'About', href: '/about' },
+    { label: 'Sponsors', href: '/sponsors' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Use', href: '/terms' },
