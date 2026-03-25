@@ -16,8 +16,8 @@ importers:
         specifier: ^3.0.10
         version: 3.0.10(zod@4.2.1)
       '@fingerprintjs/fingerprintjs':
-        specifier: ^5.0.1
-        version: 5.0.1
+        specifier: ^5.1.0
+        version: 5.1.0
       '@orama/orama':
         specifier: ^3.1.18
         version: 3.1.18
@@ -789,8 +789,8 @@ packages:
     resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
     engines: {node: '>=14'}
 
-  '@fingerprintjs/fingerprintjs@5.0.1':
-    resolution: {integrity: sha512-KbaeE/rk2WL8MfpRP6jTI4lSr42SJPjvkyrjP3QU6uUDkOMWWYC2Ts1sNSYcegHC8avzOoYTHBj+2fTqvZWQBA==}
+  '@fingerprintjs/fingerprintjs@5.1.0':
+    resolution: {integrity: sha512-8h/CscV3xQ4KSLyXbSK8YFpZ5AaezzHfkl82mn8NJIEWNi1zLfbZSIu7MGGtx4pqa10oejhEk4u0MNutuE63Fw==}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -5916,6 +5916,10 @@ packages:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
 
+  tapable@2.3.2:
+    resolution: {integrity: sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==}
+    engines: {node: '>=6'}
+
   tar-fs@3.1.1:
     resolution: {integrity: sha512-LZA0oaPOc2fVo82Txf3gw+AkEd38szODlptMYejQUhndHMLQ9M059uXR+AfS7DNo0NpINvSqDsvyaCrBVkptWg==}
 
@@ -7064,7 +7068,7 @@ snapshots:
 
   '@fastify/busboy@2.1.1': {}
 
-  '@fingerprintjs/fingerprintjs@5.0.1': {}
+  '@fingerprintjs/fingerprintjs@5.1.0': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
@@ -9868,7 +9872,7 @@ snapshots:
   enhanced-resolve@5.20.1:
     dependencies:
       graceful-fs: 4.2.11
-      tapable: 2.3.0
+      tapable: 2.3.2
 
   enquirer@2.4.1:
     dependencies:
@@ -13000,6 +13004,8 @@ snapshots:
 
   tapable@2.3.0: {}
 
+  tapable@2.3.2: {}
+
   tar-fs@3.1.1:
     dependencies:
       pump: 3.0.3
@@ -13515,7 +13521,7 @@ snapshots:
       mime-types: 2.1.35
       neo-async: 2.6.2
       schema-utils: 4.3.3
-      tapable: 2.3.0
+      tapable: 2.3.2
       terser-webpack-plugin: 5.4.0(esbuild@0.27.2)(webpack@5.104.1(esbuild@0.27.2))
       watchpack: 2.5.1
       webpack-sources: 3.3.4
