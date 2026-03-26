@@ -110,26 +110,52 @@ export default async function AboutPage() {
             </h2>
             <div className="space-y-6 text-text-muted text-lg leading-relaxed">
               <p>
+                Battle of the Tech Bands is a high-energy charity event where
+                Australia&apos;s tech industry hits the stage for live music,
+                friendly rivalry, and serious fun — all while raising funds for{' '}
+                <strong className="text-accent">Youngcare</strong>. Each event
+                brings together{' '}
+                <strong className="text-white">5 tech companies</strong>, each
+                forming a band from their own talented staff, to battle it out
+                on stage.
+              </p>
+              <p>
+                Now in its <strong className="text-white">fifth year</strong>,
+                the event has become a favourite in the Brisbane tech calendar —
+                and after a successful Sydney launch in 2025, we&apos;re adding{' '}
+                <strong className="text-white">Melbourne in 2026</strong>. Three
+                cities. Three massive nights. Each hosted at premium venues that
+                have become synonymous with Battle of the Tech Bands.
+              </p>
+              <p>
+                What started in 2022 with{' '}
+                <strong className="text-white">130 people</strong> has grown
+                fast. Brisbane hit highs of{' '}
+                <strong className="text-white">450+ guests</strong>. Sydney
+                brought close to{' '}
                 <strong className="text-white">
-                  BoTTB isn&apos;t a corporate or policy-driven event
-                </strong>{' '}
-                — it&apos;s a community-run charity gig, created by musicians
-                who just happen to work in tech.
+                  500 on its opening night in 2025
+                </strong>
+                , both pulling standout performances and crowds buzzing with
+                energy.
               </p>
               <p>
                 Every dollar raised (with the exception of generous sponsorship
-                from <strong className="text-white">Jumbo Interactive</strong>)
-                comes from ticket sales and personal contributions from band
-                members, friends and family.
-              </p>
-              <p>
-                The spirit of Battle of the Tech Bands has always been about
-                celebrating human creativity —{' '}
+                from{' '}
+                <Link
+                  href="/sponsors"
+                  className="text-white hover:text-accent transition-colors"
+                >
+                  Jumbo Interactive
+                </Link>
+                ) comes from ticket sales and personal contributions from band
+                members, friends and family. The spirit of Battle of the Tech
+                Bands has always been about celebrating human creativity —{' '}
                 <strong className="text-white">
                   real people performing together
                 </strong>{' '}
-                to help young people with physical support needs through{' '}
-                <strong className="text-accent">Youngcare</strong>. ❤️
+                to help young people with physical support needs through
+                Youngcare.
               </p>
               <p className="text-sm text-text-dim pt-4 border-t border-white/5">
                 Battle of the Tech Bands is operated by BOTB Events Ltd (ACN 691
@@ -166,12 +192,31 @@ export default async function AboutPage() {
                 <HeartIcon className="w-8 h-8 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold text-xl mb-3">Why Youngcare?</h3>
-                <p className="text-text-muted leading-relaxed mb-4">
-                  Youngcare is an Australian charity fighting to ensure young
-                  people with high care needs get the choice, control, and
-                  independence they deserve — not left to live in aged care.
+                <h3 className="font-semibold text-xl mb-3">Play it Forward</h3>
+                <p className="text-text-muted leading-relaxed italic mb-4">
+                  Every young person deserves to live a young life.
                 </p>
+                <p className="text-text-muted leading-relaxed mb-4">
+                  Since 2005, Youngcare has provided choice, independence, and
+                  dignity for young people with complex and permanent physical
+                  disabilities. Despite the rising need, Youngcare receives no
+                  ongoing government funding — they rely solely on generous
+                  supporters.
+                </p>
+                <div className="grid grid-cols-3 gap-4 my-6 py-4 border-y border-white/5">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">21</p>
+                    <p className="text-xs text-text-dim">Years of Impact</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">$12.2M+</p>
+                    <p className="text-xs text-text-dim">Grant Funding</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-white">20</p>
+                    <p className="text-xs text-text-dim">Accessible Homes</p>
+                  </div>
+                </div>
                 <p className="text-text-muted leading-relaxed">
                   Every ticket sold, every donation made, goes directly to
                   supporting young Australians who need physical support to live
@@ -311,6 +356,25 @@ export default async function AboutPage() {
                 </div>
               </div>
             </div>
+
+            <div className="bg-bg-elevated rounded-xl p-6 border border-accent/20">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 w-16 text-center">
+                  <p className="text-2xl font-bold text-accent">2026</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Three Cities</h3>
+                  <p className="text-text-muted leading-relaxed">
+                    Melbourne joins the movement at{' '}
+                    <strong className="text-white">The Howler</strong>, making
+                    it three cities, three massive nights. Brisbane returns to
+                    The Triffid and Sydney to The Factory Theatre — with some of
+                    Australia&apos;s biggest tech companies across all three
+                    lineups.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -337,16 +401,17 @@ export default async function AboutPage() {
 
         {/* Sponsor Acknowledgment */}
         <section className="mb-20">
-          <div className="text-center">
+          <Link href="/sponsors" className="block text-center group">
             <p className="text-xs tracking-widest uppercase text-text-dim mb-4">
-              Proudly Supported By
+              Powered By
             </p>
-            <div className="inline-flex items-center justify-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
-              <span className="text-text-muted text-lg font-medium">
-                Jumbo Interactive
-              </span>
-            </div>
-          </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
+              alt="Jumbo Interactive"
+              className="h-10 w-auto mx-auto opacity-60 group-hover:opacity-100 transition-opacity"
+            />
+          </Link>
         </section>
 
         {/* CTA */}
