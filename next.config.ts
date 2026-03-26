@@ -164,8 +164,14 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withPostHogConfig(nextConfig, {
-  personalApiKey: process.env.POSTHOG_PERSONAL_API_KEY!,
-  projectId: process.env.POSTHOG_PROJECT_ID!,
-  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-})
+// Only enable PostHog sourcemap uploads when credentials are available
+const posthogApiKey = process.env.POSTHOG_PERSONAL_API_KEY
+const posthogProjectId = process.env.POSTHOG_PROJECT_ID
+
+export default posthogApiKey && posthogProjectId
+  ? withPostHogConfig(nextConfig, {
+      personalApiKey: posthogApiKey,
+      projectId: posthogProjectId,
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    })
+  : nextConfig
