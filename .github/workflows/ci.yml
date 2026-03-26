@@ -81,6 +81,17 @@ jobs:
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}
           autoAcceptChanges: ${{ github.ref == 'refs/heads/main' }} # Auto-accept on main to update baselines
+          storybookLogFile: chromatic-build.log
+          debug: true
+
+      - name: Upload Chromatic build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chromatic-build-log
+          path: |
+            chromatic-build.log
+            build-storybook.log
 
   # Deploy Storybook to GitHub Pages
   deploy-storybook:
