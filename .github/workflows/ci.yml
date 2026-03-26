@@ -81,7 +81,7 @@ jobs:
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}
           autoAcceptChanges: ${{ github.ref == 'refs/heads/main' }} # Auto-accept on main to update baselines
-          storybookBuildCmd: pnpm build-storybook --stats-json
+          buildCommand: pnpm build-storybook --stats-json
 
   # Deploy Storybook to GitHub Pages
   deploy-storybook:
