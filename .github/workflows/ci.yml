@@ -73,23 +73,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Storybook
-        run: |
-          pnpm build-storybook 2>&1 | tee /tmp/sb-build.log
-          echo "=== Build output files ==="
-          ls -la storybook-static/
-          if [ ! -f storybook-static/iframe.html ]; then
-            echo "::error::iframe.html not found - Vite preview build failed"
-            echo "=== Full build log ==="
-            cat /tmp/sb-build.log
-            exit 1
-          fi
-
       - name: Run Chromatic
         uses: chromaui/action@latest
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          storybookBuildDir: storybook-static
           onlyChanged: true # TurboSnap - only test changed stories
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}

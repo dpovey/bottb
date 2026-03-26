@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
-    ...(process.env.CI ? [] : ['@chromatic-com/storybook']),
+    '@chromatic-com/storybook',
     '@storybook/addon-vitest',
     '@storybook/addon-a11y',
     '@storybook/addon-docs',

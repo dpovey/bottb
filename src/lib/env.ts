@@ -95,7 +95,7 @@ interface ServerEnv {
 
   // PostHog
   readonly POSTHOG_PERSONAL_API_KEY: string
-  readonly POSTHOG_ENV_ID: string
+  readonly POSTHOG_PROJECT_ID: string
 }
 
 interface OptionalServerEnv {
@@ -147,7 +147,7 @@ function getServerEnv(): ServerEnv {
     POSTHOG_PERSONAL_API_KEY: getEnvVar('POSTHOG_PERSONAL_API_KEY', {
       required: false,
     }),
-    POSTHOG_ENV_ID: getEnvVar('POSTHOG_ENV_ID', { required: false }),
+    POSTHOG_PROJECT_ID: getEnvVar('POSTHOG_PROJECT_ID', { required: false }),
   }
 
   return _serverEnv
