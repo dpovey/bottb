@@ -73,10 +73,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+      - name: Debug storybook output
+        run: ls -la storybook-static/ && ls -la storybook-static/iframe.html storybook-static/index.html storybook-static/index.json 2>&1 || true
+
       - name: Run Chromatic
-        uses: chromaui/action@v11
+        uses: chromaui/action@latest
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: storybook-static
           onlyChanged: true # TurboSnap - only test changed stories
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}
