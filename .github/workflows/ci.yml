@@ -73,16 +73,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Storybook
-        run: pnpm build-storybook
-        env:
-          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-
       - name: Run Chromatic
-        uses: chromaui/action@latest
+        uses: chromaui/action@v11
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          storybookBuildDir: storybook-static
+          onlyChanged: true # TurboSnap - only test changed stories
           exitOnceUploaded: true # Don't wait for build to complete
           skip: ${{ contains(github.event.head_commit.message, '[skip chromatic]') }}
           autoAcceptChanges: ${{ github.ref == 'refs/heads/main' }} # Auto-accept on main to update baselines
