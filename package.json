@@ -76,7 +76,7 @@
     "facebook-nodejs-business-sdk": "^24.0.1",
     "fast-xml-parser": "^5.5.7",
     "framer-motion": "^12.23.26",
-    "next": "16.2.1",
+    "next": "16.2.3",
     "next-auth": "^5.0.0-beta.30",
     "posthog-js": "^1.309.1",
     "qrcode": "^1.5.4",
