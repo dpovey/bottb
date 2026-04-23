@@ -87,8 +87,7 @@ export function EventCard({
 
   // Visual card style (matches design mockups)
   if (visual) {
-    const showTickets =
-      variant === 'upcoming' && !!event.info?.ticket_url
+    const showTickets = variant === 'upcoming' && !!event.info?.ticket_url
 
     return (
       <div
