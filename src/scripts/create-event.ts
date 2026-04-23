@@ -37,7 +37,7 @@ interface EventData {
   location: string
   timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
   address?: string
-  tickets?: string
+  ticket_url?: string
   description?: string // Event description (displayed on event page)
   is_active?: boolean
   status?: 'upcoming' | 'voting' | 'finalized'
@@ -96,7 +96,7 @@ async function createEventFromFile(filePath: string) {
     interface EventInfo {
       scoring_version: string
       address?: string
-      tickets?: string
+      ticket_url?: string
       winner?: string
     }
 
@@ -107,8 +107,8 @@ async function createEventFromFile(filePath: string) {
     if (eventData.address) {
       eventInfo.address = eventData.address
     }
-    if (eventData.tickets) {
-      eventInfo.tickets = eventData.tickets
+    if (eventData.ticket_url) {
+      eventInfo.ticket_url = eventData.ticket_url
     }
 
     // For 2022.1 events, store the winner in event info
