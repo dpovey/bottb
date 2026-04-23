@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
 import { Card, Badge, DateBadge, Button, CompanyBadge } from '@/components/ui'
+import { TicketIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 
@@ -27,6 +28,7 @@ interface EventCardProps {
     timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
     info?: {
       image_url?: string
+      ticket_url?: string
     }
     status?: string
   }
@@ -85,91 +87,112 @@ export function EventCard({
 
   // Visual card style (matches design mockups)
   if (visual) {
+    const showTickets =
+      variant === 'upcoming' && !!event.info?.ticket_url
+
     return (
-      <Link href={`/event/${event.id}`}>
-        <div
-          className={cn(
-            'group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3 cursor-pointer',
-            'border border-white/5 hover:border-accent/30 transition-colors duration-300'
-          )}
-        >
-          {/* Background gradient */}
-          <div className={cn('absolute inset-0 bg-linear-to-br', gradient)} />
+      <div
+        className={cn(
+          'group relative rounded-lg overflow-hidden bg-bg-elevated aspect-4/3',
+          'border border-white/5 hover:border-accent/30 transition-colors duration-300'
+        )}
+      >
+        {/* Background gradient */}
+        <div className={cn('absolute inset-0 bg-linear-to-br', gradient)} />
 
-          {/* Image if available - zooms on hover */}
-          {imageUrl && (
-            <div className="absolute inset-0 overflow-hidden motion-safe:group-hover:scale-105 transition-transform duration-500 ease-out">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl}
-                srcSet={heroPhoto ? buildHeroSrcSet(heroPhoto) : undefined}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                alt={`${event.name} event image`}
-                className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ objectPosition: getObjectPosition(focalPoint) }}
-                loading="lazy"
-              />
-            </div>
-          )}
-
-          {/* Gradient overlay for content readability - lighter to show more image */}
-          <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/30 to-transparent" />
-
-          {/* Date Badge - Top Left */}
-          <div className="absolute top-4 left-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-            <DateBadge
-              date={event.date}
-              timezone={event.timezone}
-              size="sm"
-              showYear
+        {/* Image if available - zooms on hover */}
+        {imageUrl && (
+          <div className="absolute inset-0 overflow-hidden motion-safe:group-hover:scale-105 transition-transform duration-500 ease-out">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              srcSet={heroPhoto ? buildHeroSrcSet(heroPhoto) : undefined}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              alt={`${event.name} event image`}
+              className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ objectPosition: getObjectPosition(focalPoint) }}
+              loading="lazy"
             />
           </div>
+        )}
 
-          {/* Status/Winner Badge - Top Right */}
-          <div className="absolute top-4 right-4">
-            {isActive ? (
-              <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-                🎸 Live Now
-              </span>
-            ) : showWinner && winner ? (
-              <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-                <span>🏆 {winner.name}</span>
-                {winner.companySlug && winner.companyName && (
-                  <CompanyBadge
-                    slug={winner.companySlug}
-                    name={winner.companyName}
-                    iconUrl={winner.companyIconUrl}
-                    variant="muted"
-                    size="sm"
-                    asLink={false}
-                  />
-                )}
-              </span>
-            ) : null}
-          </div>
+        {/* Gradient overlay for content readability - lighter to show more image */}
+        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/30 to-transparent" />
 
-          {/* Content - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-5">
-            <h3 className="font-medium text-xl mb-1 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              {event.name}
-            </h3>
-            <p className="text-white/80 text-sm mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-              {event.location}
-            </p>
-            {!isPast && bands.length === 0 && (
-              <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-                Bands TBA ·{' '}
-                <a
-                  href="mailto:info@bottb.com"
-                  className="text-accent hover:underline"
-                >
-                  Want to participate?
-                </a>
-              </p>
-            )}
-          </div>
+        {/* Stretched link covers the card; interactive elements below use z-20 to sit above it */}
+        <Link
+          href={`/event/${event.id}`}
+          className="absolute inset-0 z-10 cursor-pointer"
+          aria-label={`${event.name} details`}
+        />
+
+        {/* Date Badge - Top Left */}
+        <div className="absolute top-4 left-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+          <DateBadge
+            date={event.date}
+            timezone={event.timezone}
+            size="sm"
+            showYear
+          />
         </div>
-      </Link>
+
+        {/* Status/Winner Badge - Top Right */}
+        <div className="absolute top-4 right-4">
+          {isActive ? (
+            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+              🎸 Live Now
+            </span>
+          ) : showWinner && winner ? (
+            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+              <span>🏆 {winner.name}</span>
+              {winner.companySlug && winner.companyName && (
+                <CompanyBadge
+                  slug={winner.companySlug}
+                  name={winner.companyName}
+                  iconUrl={winner.companyIconUrl}
+                  variant="muted"
+                  size="sm"
+                  asLink={false}
+                />
+              )}
+            </span>
+          ) : null}
+        </div>
+
+        {/* Content - Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          <h3 className="font-medium text-xl mb-1 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+            {event.name}
+          </h3>
+          <p className="text-white/80 text-sm mb-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+            {event.location}
+          </p>
+          {!isPast && bands.length === 0 && (
+            <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+              Bands TBA ·{' '}
+              <a
+                href="mailto:info@bottb.com"
+                className="relative z-20 text-accent hover:underline"
+              >
+                Want to participate?
+              </a>
+            </p>
+          )}
+        </div>
+
+        {/* Tickets button - bottom right corner */}
+        {showTickets && (
+          <Link
+            href={event.info!.ticket_url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-4 right-4 z-20 inline-flex items-center gap-1.5 bg-accent text-bg px-3 py-1.5 rounded-full font-medium text-xs tracking-wide hover:bg-accent-light transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+          >
+            <TicketIcon className="w-3.5 h-3.5" />
+            Tickets
+          </Link>
+        )}
+      </div>
     )
   }
 
@@ -286,6 +309,18 @@ export function EventCard({
                   {isPast ? 'Event' : 'Details'}
                 </Button>
               </Link>
+
+              {!isPast && !isActive && event.info?.ticket_url && (
+                <Link
+                  href={event.info.ticket_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-accent text-bg px-4 py-1.5 rounded-full font-medium text-sm tracking-wide hover:bg-accent-light transition-colors"
+                >
+                  <TicketIcon className="w-4 h-4" />
+                  Tickets
+                </Link>
+              )}
 
               {isActive && (
                 <Link href={`/vote/crowd/${event.id}`}>
