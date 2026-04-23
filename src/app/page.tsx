@@ -20,6 +20,7 @@ import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
 import { HeroCarousel } from '@/components/hero-carousel'
+import { SplitBanner } from '@/components/split-banner'
 import { Button, ErrorBoundary, CompactErrorFallback } from '@/components/ui'
 import {
   parseScoringVersion,
@@ -376,6 +377,17 @@ export default async function HomePage() {
       footerVariant="full"
       navEvents={navEvents}
     >
+      {/* Melbourne 2026 promo banner */}
+      <SplitBanner
+        leftSrc="/banners/melbourne-2026/left.webp"
+        rightSrc="/banners/melbourne-2026/right.webp"
+        leftWidth={561}
+        rightWidth={639}
+        height={630}
+        alt="Battle of the Tech Bands 2026 — 5 June, The Howler, Melbourne. Tickets at moshtix.com.au"
+        href="/event/melbourne-2026"
+      />
+
       {/* Hero Section - supports multiple global hero images */}
       <HeroCarousel
         images={heroImages}
