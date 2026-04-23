@@ -19,7 +19,6 @@ import {
 import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
-import { HeroCarousel } from '@/components/hero-carousel'
 import { SplitBanner } from '@/components/split-banner'
 import { Button, ErrorBoundary, CompactErrorFallback } from '@/components/ui'
 import {
@@ -230,23 +229,6 @@ export default async function HomePage() {
     getNavEvents(),
   ])
 
-  // Transform hero photos for carousel (supports multiple global heroes)
-  const heroImages = globalHeroPhotos.map((photo) => ({
-    url: photo.blob_url,
-    urlHigh: photo.large_4k_url ?? undefined,
-    focalPoint: photo.hero_focal_point,
-    // Include photo URL fields for responsive srcset
-    blob_url: photo.blob_url,
-    large_4k_url: photo.large_4k_url ?? undefined,
-  }))
-
-  // Compute random initial index server-side to avoid flash on hydration
-  // Intentionally random per-request for SSR - different hero on each page load
-  const heroInitialIndex =
-    heroImages.length > 0
-      ? Math.floor(Math.random() * heroImages.length) // eslint-disable-line react-hooks/purity
-      : 0
-
   const initialPhotos = initialPhotosData
   const initialVideos = initialVideosData
   const initialShorts = initialShortsData
@@ -377,24 +359,17 @@ export default async function HomePage() {
       footerVariant="full"
       navEvents={navEvents}
     >
-      {/* Melbourne 2026 promo banner */}
+      {/* Hero: Melbourne 2026 banner with site tagline/CTAs overlaid */}
       <SplitBanner
         leftSrc="/banners/melbourne-2026/left.webp"
         rightSrc="/banners/melbourne-2026/right.webp"
         leftWidth={561}
         rightWidth={639}
         height={630}
+        imageOpacity={0.8}
         alt="Battle of the Tech Bands 2026 — 5 June, The Howler, Melbourne. Tickets at moshtix.com.au"
-        href="/event/melbourne-2026"
-      />
-
-      {/* Hero Section - supports multiple global hero images */}
-      <HeroCarousel
-        images={heroImages}
-        interval={8000}
-        initialIndex={heroInitialIndex}
       >
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 text-center">
+        <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 text-center">
           <h1 className="hero-text font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl mb-4 leading-tight">
             Battle of the Tech Bands
           </h1>
@@ -429,7 +404,7 @@ export default async function HomePage() {
             </Link>
           </div>
         </div>
-      </HeroCarousel>
+      </SplitBanner>
 
       {/* Active Event Section */}
       {activeEvent && (
