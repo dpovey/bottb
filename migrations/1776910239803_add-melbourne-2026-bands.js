@@ -11,8 +11,16 @@ const COMPANIES = [
     website: 'https://www.open.edu.au',
   },
   { slug: 'seek', name: 'SEEK', website: 'https://www.seek.com.au' },
-  { slug: 'rea-group', name: 'REA Group', website: 'https://www.rea-group.com' },
-  { slug: 'servicenow', name: 'ServiceNow', website: 'https://www.servicenow.com' },
+  {
+    slug: 'rea-group',
+    name: 'REA Group',
+    website: 'https://www.rea-group.com',
+  },
+  {
+    slug: 'servicenow',
+    name: 'ServiceNow',
+    website: 'https://www.servicenow.com',
+  },
 ]
 
 const BANDS = [
