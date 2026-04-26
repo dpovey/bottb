@@ -124,6 +124,11 @@ const nextConfig: NextConfig = {
         destination: '/companies/:slug',
         permanent: true,
       },
+      {
+        source: '/band/continuously-grooving-melbourne-2026',
+        destination: '/band/continuously-groovin-melbourne-2026',
+        permanent: true,
+      },
       // Photo URL migration: /slideshow/:id -> /photos/:id
       // The page component will then redirect to the slug version
       // This ensures old shared links still work
