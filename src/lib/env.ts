@@ -87,11 +87,17 @@ interface ServerEnv {
   readonly META_APP_ID: string
   readonly META_APP_SECRET: string
 
-  // Social - Encryption
-  readonly SOCIAL_TOKEN_SECRET: string
+  // Social - Encryption (32-byte hex key for AES-256-GCM)
+  readonly SOCIAL_TOKEN_ENCRYPTION_KEY: string
 
   // OpenAI (for AI caption generation)
   readonly OPENAI_API_KEY: string
+
+  // YouTube Data API v3
+  readonly YOUTUBE_API_KEY: string
+
+  // Google Search Console verification
+  readonly GOOGLE_SITE_VERIFICATION: string
 
   // PostHog
   readonly POSTHOG_PERSONAL_API_KEY: string
@@ -138,10 +144,20 @@ function getServerEnv(): ServerEnv {
     META_APP_SECRET: getEnvVar('META_APP_SECRET', { required: false }),
 
     // Social - Encryption
-    SOCIAL_TOKEN_SECRET: getEnvVar('SOCIAL_TOKEN_SECRET', { required: false }),
+    SOCIAL_TOKEN_ENCRYPTION_KEY: getEnvVar('SOCIAL_TOKEN_ENCRYPTION_KEY', {
+      required: false,
+    }),
 
     // OpenAI
     OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY', { required: false }),
+
+    // YouTube Data API v3
+    YOUTUBE_API_KEY: getEnvVar('YOUTUBE_API_KEY', { required: false }),
+
+    // Google Search Console verification
+    GOOGLE_SITE_VERIFICATION: getEnvVar('GOOGLE_SITE_VERIFICATION', {
+      required: false,
+    }),
 
     // PostHog
     POSTHOG_PERSONAL_API_KEY: getEnvVar('POSTHOG_PERSONAL_API_KEY', {
