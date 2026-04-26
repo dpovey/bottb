@@ -124,7 +124,8 @@ export const youtubeImportSchema = z.object({
     .array(
       z.object({
         videoId: trimmedString('videoId', 64),
-        title: trimmedString('title', 500),
+        // title is optional — the route falls back to metadata.title or 'Untitled'
+        title: z.string().trim().max(500).optional(),
         eventId: z.string().trim().max(64).optional().nullable(),
         bandId: z.string().trim().max(64).optional().nullable(),
         isShort: z.boolean().optional(),
