@@ -12,12 +12,6 @@ export interface FocalPointImageProps {
   src: string
   alt: string
   /**
-   * Optional high-resolution source (e.g., 4K version).
-   * When provided, used for desktop displays for better quality on large screens.
-   * @deprecated Use photoUrls instead for full srcset support
-   */
-  srcHigh?: string
-  /**
    * Optional photo URLs for responsive srcset.
    * Includes medium_url (1200px), blob_url (2000px), large_4k_url (4000px).
    */
@@ -48,11 +42,9 @@ export interface FocalPointImageProps {
  * Uses responsive breakpoints: mobile (portrait) vs md+ (landscape).
  *
  * When photoUrls is provided, builds a responsive srcset with medium/large/4K variants.
- * Falls back to srcHigh for desktop when photoUrls is not available.
  */
 export function FocalPointImage({
   src,
-  srcHigh,
   photoUrls,
   alt,
   focalPoint = { x: 50, y: 50 },
@@ -65,8 +57,7 @@ export function FocalPointImage({
 
   // Use blob_url (2000px) as default - sufficient for 1920px displays at 2x DPR
   // srcSet will upgrade to 4K only when sizes indicates need for larger
-  // Fall back to srcHigh for backwards compat when photoUrls not available
-  const desktopSrc = photoUrls?.blob_url || srcHigh || src
+  const desktopSrc = photoUrls?.blob_url || src
 
   return (
     <div className={cn('absolute inset-0', className)}>
