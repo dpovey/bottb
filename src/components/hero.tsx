@@ -4,9 +4,6 @@ import Link from 'next/link'
 import { Button, FocalPointImage, type FocalPoint } from '@/components/ui'
 import { cn } from '@/lib/utils'
 
-/** @deprecated Use FocalPoint from @/components/ui instead */
-export type HeroFocalPoint = FocalPoint
-
 export interface HeroProps {
   /** Hero title */
   title: string
@@ -17,7 +14,7 @@ export interface HeroProps {
   /** High-resolution background image URL (e.g., 4K version) for large displays */
   backgroundImageHigh?: string
   /** Focal point for image positioning (0-100 for both x and y) */
-  focalPoint?: HeroFocalPoint
+  focalPoint?: FocalPoint
   /** CTA buttons */
   actions?: {
     label: string

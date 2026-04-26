@@ -86,7 +86,7 @@ export function HeroBackground({
     return (
       <FocalPointImage
         src={photo.blob_url}
-        srcHigh={photo.large_4k_url ?? undefined}
+        photoUrls={photo}
         alt={alt}
         focalPoint={photo.hero_focal_point}
         sizes="100vw"
@@ -110,7 +110,7 @@ export function HeroBackground({
           >
             <FocalPointImage
               src={photo.blob_url}
-              srcHigh={photo.large_4k_url ?? undefined}
+              photoUrls={photo}
               alt={alt}
               focalPoint={photo.hero_focal_point}
               sizes="100vw"

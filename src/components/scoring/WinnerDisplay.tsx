@@ -20,8 +20,6 @@ export interface WinnerDisplayProps {
   companyName?: string
   /** Company icon URL */
   companyIconUrl?: string
-  /** @deprecated Use companySlug/companyName instead */
-  company?: string
   /** Total score (only shown for detailed breakdown versions) */
   totalScore?: number
   /** Logo URL for the band */
@@ -47,7 +45,6 @@ export function WinnerDisplay({
   companySlug,
   companyName,
   companyIconUrl,
-  company,
   totalScore,
   logoUrl,
   heroThumbnailUrl,
@@ -110,7 +107,7 @@ export function WinnerDisplay({
           </h2>
 
           {/* Company/Logo */}
-          {(companySlug || company || logoUrl) && (
+          {(companySlug || companyName || logoUrl) && (
             <div className="flex items-center gap-3 mb-6">
               {logoUrl && (
                 <BandThumbnail
@@ -131,9 +128,9 @@ export function WinnerDisplay({
                   />
                 </span>
               ) : (
-                company && (
+                companyName && (
                   <span className="text-text-muted">
-                    representing {company}
+                    representing {companyName}
                   </span>
                 )
               )}
