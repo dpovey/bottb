@@ -104,7 +104,7 @@ export default function AdminLoginPage() {
 
           {/* Login Card */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/5">
-            <ErrorBanner message={error || null} className="mb-6 text-sm" />
+            <ErrorBanner message={error} className="mb-6 text-sm" />
 
             <form onSubmit={handleSignIn}>
               {/* Email */}
