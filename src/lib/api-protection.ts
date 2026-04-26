@@ -212,3 +212,32 @@ export async function requireAdminAuth(_request: NextRequest): Promise<void> {
     throw new Error('Unauthorized - Admin access required')
   }
 }
+
+/**
+ * Wrap a handler so that any thrown/uncaught error is logged server-side
+ * and returned to the client as a generic `{ error: 'Failed to <action>' }`
+ * with status 500. Routes can still `return NextResponse.json({ error })` for
+ * known/expected outcomes; this only catches uncaught throws.
+ *
+ * Usage:
+ *   export const POST = withErrorHandling(
+ *     'create band',
+ *     withAdminProtection(handleCreateBand)
+ *   )
+ */
+export function withErrorHandling(
+  action: string,
+  handler: ApiHandler
+): ApiHandler {
+  return async (request: NextRequest, context?: unknown) => {
+    try {
+      return await handler(request, context)
+    } catch (error) {
+      console.error(`[api error] failed to ${action}:`, error)
+      return NextResponse.json(
+        { error: `Failed to ${action}` },
+        { status: 500 }
+      )
+    }
+  }
+}
