@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { identifyAdmin } from '@/lib/analytics'
-import { Button, VinylSpinner } from '@/components/ui'
+import { Button, VinylSpinner, ErrorBanner } from '@/components/ui'
 import { ArrowLeftIcon } from '@/components/icons'
 
 export default function AdminLoginPage() {
@@ -104,11 +104,7 @@ export default function AdminLoginPage() {
 
           {/* Login Card */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/5">
-            {error && (
-              <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg mb-6 text-sm">
-                {error}
-              </div>
-            )}
+            <ErrorBanner message={error} className="mb-6 text-sm" />
 
             <form onSubmit={handleSignIn}>
               {/* Email */}

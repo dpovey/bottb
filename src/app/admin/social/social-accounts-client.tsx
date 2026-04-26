@@ -17,9 +17,8 @@ import {
   EditIcon,
   InfoIcon,
   PlusIcon,
-  CloseIcon,
 } from '@/components/icons'
-import { ConfirmModal } from '@/components/ui'
+import { ConfirmModal, ErrorBanner } from '@/components/ui'
 
 interface SocialAccountsClientProps {
   initialAccounts: SocialAccount[]
@@ -168,18 +167,10 @@ export function SocialAccountsClient({
         </div>
       )}
 
-      {/* Operation Error Banner */}
-      {operationError && (
-        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
-          <span>{operationError}</span>
-          <button
-            onClick={() => setOperationError(null)}
-            className="text-error hover:text-white cursor-pointer"
-          >
-            <CloseIcon size={16} />
-          </button>
-        </div>
-      )}
+      <ErrorBanner
+        message={operationError}
+        onDismiss={() => setOperationError(null)}
+      />
 
       {error && (
         <div

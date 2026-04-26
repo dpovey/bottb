@@ -3,7 +3,13 @@
 import { useState } from 'react'
 import { upload } from '@vercel/blob/client'
 import { Video } from '@/lib/db'
-import { Button, Card, FileDropzone, SchedulePicker } from '@/components/ui'
+import {
+  Button,
+  Card,
+  FileDropzone,
+  SchedulePicker,
+  ErrorBanner,
+} from '@/components/ui'
 import {
   CloseIcon,
   ShareIcon,
@@ -299,12 +305,7 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
           className="mb-6"
         />
 
-        {/* Error */}
-        {error && (
-          <div className="mb-6 p-3 bg-error/20 border border-error/50 rounded-lg">
-            <p className="text-error whitespace-pre-line">{error}</p>
-          </div>
-        )}
+        <ErrorBanner message={error} className="mb-6 whitespace-pre-line" />
 
         {/* Success */}
         {successMessage && (

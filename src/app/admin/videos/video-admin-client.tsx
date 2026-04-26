@@ -2,8 +2,15 @@
 
 import { useState } from 'react'
 import { Video, VideoType } from '@/lib/db'
-import { EditIcon, DeleteIcon, CloseIcon, PlusIcon } from '@/components/icons'
-import { ConfirmModal, Button, Card, Tabs, type Tab } from '@/components/ui'
+import { EditIcon, DeleteIcon, PlusIcon } from '@/components/icons'
+import {
+  ConfirmModal,
+  Button,
+  Card,
+  Tabs,
+  ErrorBanner,
+  type Tab,
+} from '@/components/ui'
 import { YouTubeScanner } from './youtube-scanner'
 import { VideoShareButton } from './video-social-post'
 
@@ -187,18 +194,10 @@ export function VideoAdminClient({
 
   return (
     <div className="space-y-8">
-      {/* Operation Error Banner */}
-      {operationError && (
-        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
-          <span>{operationError}</span>
-          <button
-            onClick={() => setOperationError(null)}
-            className="text-error hover:text-white cursor-pointer"
-          >
-            <CloseIcon size={16} />
-          </button>
-        </div>
-      )}
+      <ErrorBanner
+        message={operationError}
+        onDismiss={() => setOperationError(null)}
+      />
 
       {/* Action Buttons */}
       <div className="flex items-start justify-end gap-3">
@@ -323,11 +322,7 @@ export function VideoAdminClient({
               </div>
             </div>
 
-            {error && (
-              <div className="bg-error/20 border border-error/50 text-error px-4 py-2 rounded-lg">
-                {error}
-              </div>
-            )}
+            <ErrorBanner message={error} className="py-2" />
 
             <div className="flex gap-3">
               <Button type="submit" variant="accent" disabled={isSubmitting}>
