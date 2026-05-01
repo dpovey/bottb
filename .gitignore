@@ -63,3 +63,9 @@ lighthouse-report*
 events/
 photo-intelligence-output/
 *.pt
+
+# Loose screenshots at repo root (move to doc/screenshots/ if needed for docs)
+/*.png
+
+# Standalone HTML at root (one-off demos, not part of build)
+/*.html

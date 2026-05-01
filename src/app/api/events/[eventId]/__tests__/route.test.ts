@@ -45,9 +45,7 @@ describe('/api/events/[eventId]', () => {
     it('returns 404 when event not found', async () => {
       const eventId = 'nonexistent-event'
       ;(
-        mockGetEventById as unknown as jest.MockedFunction<
-          (eventId: string) => Promise<import('@/lib/db').Event | null>
-        >
+        mockGetEventById as unknown as ReturnType<typeof vi.fn>
       ).mockResolvedValue(null)
 
       const request = new NextRequest(`http://localhost/api/events/${eventId}`)
