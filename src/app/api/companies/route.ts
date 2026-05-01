@@ -11,6 +11,7 @@ import {
   withAdminProtection,
   ProtectedApiHandler,
 } from '@/lib/api-protection'
+import { nameToSlug } from '@/lib/slug-utils'
 
 export const GET = withPublicRateLimit(async function GET(
   request: NextRequest
@@ -51,16 +52,6 @@ export const GET = withPublicRateLimit(async function GET(
     )
   }
 })
-
-// Helper function to generate slug from name
-function nameToSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
-}
 
 interface CompanyCreateBody {
   slug?: string

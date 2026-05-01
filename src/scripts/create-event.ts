@@ -3,19 +3,10 @@
 import { config } from 'dotenv'
 import { sql } from '@vercel/postgres'
 import { readFileSync } from 'fs'
+import { nameToSlug } from '../lib/slug-utils'
 
 // Load environment variables from .env.local
 config({ path: '.env.local' })
-
-// Helper function to convert name to slug
-function nameToSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .trim()
-}
 
 // Helper function to generate band slug using event ID (not full name)
 function generateBandSlug(bandName: string, eventId: string): string {

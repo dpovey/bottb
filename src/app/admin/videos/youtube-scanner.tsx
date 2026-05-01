@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card } from '@/components/ui'
+import { Button, Card, ErrorBanner } from '@/components/ui'
 import { CloseIcon, CheckIcon } from '@/components/icons'
 
 // YouTube icon component
@@ -278,12 +278,7 @@ export function YouTubeScanner({
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg mb-4">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error} className="mb-4" />
 
       {/* Import Message */}
       {importMessage && (

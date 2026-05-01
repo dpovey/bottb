@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CompanyWithStats } from '@/lib/db-types'
+import { nameToSlug } from '@/lib/slug-utils'
 import {
   EditIcon,
   DeleteIcon,
@@ -15,6 +16,7 @@ import {
   ConfirmModal,
   Button,
   Card,
+  ErrorBanner,
 } from '@/components/ui'
 
 interface CompanyAdminClientProps {
@@ -41,16 +43,6 @@ export function CompanyAdminClient({
   )
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Helper to generate slug from name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
-
   const handleAddCompany = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -62,7 +54,7 @@ export function CompanyAdminClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newName,
-          slug: newSlug || generateSlug(newName),
+          slug: newSlug || nameToSlug(newName),
           website: newWebsite || null,
           icon_url: newIconUrl || null,
         }),
@@ -156,18 +148,10 @@ export function CompanyAdminClient({
 
   return (
     <div className="space-y-6">
-      {/* Operation Error Banner */}
-      {operationError && (
-        <div className="bg-error/20 border border-error/50 text-error px-4 py-3 rounded-lg flex items-center justify-between">
-          <span>{operationError}</span>
-          <button
-            onClick={() => setOperationError(null)}
-            className="text-error hover:text-white"
-          >
-            <CloseIcon size={16} />
-          </button>
-        </div>
-      )}
+      <ErrorBanner
+        message={operationError}
+        onDismiss={() => setOperationError(null)}
+      />
 
       {/* Add Company Button */}
       <div className="flex justify-end">
@@ -208,7 +192,7 @@ export function CompanyAdminClient({
                 </label>
                 <input
                   type="text"
-                  value={newSlug || generateSlug(newName)}
+                  value={newSlug || nameToSlug(newName)}
                   onChange={(e) => setNewSlug(e.target.value)}
                   placeholder="auto-generated from name"
                   className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
@@ -242,11 +226,7 @@ export function CompanyAdminClient({
               </div>
             </div>
 
-            {error && (
-              <div className="bg-error/20 border border-error/50 text-error px-4 py-2 rounded-lg">
-                {error}
-              </div>
-            )}
+            <ErrorBanner message={error} className="py-2" />
 
             <div className="flex gap-3">
               <Button type="submit" variant="accent" disabled={isSubmitting}>
