@@ -128,7 +128,7 @@
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.13.0",
     "playwright": "^1.58.2",
-    "postcss": "^8.4.49",
+    "postcss": "^8.5.10",
     "prettier": "^3.8.3",
     "storybook": "10.2.10",
     "structured-data-testing-tool": "^4.5.0",
