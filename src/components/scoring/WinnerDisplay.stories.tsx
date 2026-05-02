@@ -89,7 +89,7 @@ export const WithLogo: Story = {
 export const LegacyWinnerOnly: Story = {
   args: {
     winnerName: 'The Agentics',
-    company: 'Salesforce',
+    companyName: 'Salesforce',
     scoringVersion: '2022.1',
     eventName: 'Brisbane Tech Battle 2022',
     eventDate: 'September 15, 2022',
