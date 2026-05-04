@@ -88,13 +88,18 @@ export function BandThumbnail({
   const sizes = logoSizes.bandThumbnail[size]
 
   if (imageUrl) {
+    const isFloatingHeroLogo = size === 'hero' && !isHeroImage
     return (
       <div
         className={cn(
           config.container,
-          'shrink-0 rounded-lg overflow-hidden bg-bg-surface transition-transform duration-200',
+          'shrink-0 transition-transform duration-200',
           'motion-safe:hover:scale-105',
+          isFloatingHeroLogo
+            ? 'drop-shadow-[0_8px_24px_rgba(0,0,0,0.65)]'
+            : 'rounded-lg overflow-hidden bg-bg-surface',
           size === 'hero' &&
+            isHeroImage &&
             'rounded-2xl bg-bg-elevated/80 backdrop-blur-sm border border-white/10',
           className
         )}

@@ -11,7 +11,7 @@ import {
   SetlistSong,
   type Band,
 } from '@/lib/db'
-import { slugify } from '@/lib/utils'
+import { slugify, cn } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
 import { auth } from '@/lib/auth'
@@ -716,15 +716,28 @@ export default async function BandPage({
         eventLocation={band.location}
       />
       {/* Hero Section - supports multiple band hero photos */}
-      <section className="relative min-h-[70vh] flex items-end">
+      <section
+        className={cn(
+          'relative flex items-end',
+          heroImages.length > 0 && 'min-h-[70vh]'
+        )}
+      >
         {/* Background Image(s) - crossfades if multiple */}
-        <HeroBackground photos={heroImages} alt={`${band.name}`} />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
+        {heroImages.length > 0 && (
+          <>
+            <HeroBackground photos={heroImages} alt={`${band.name}`} />
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
+          </>
+        )}
 
         {/* Content */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-16 pt-32">
+        <div
+          className={cn(
+            'relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8',
+            heroImages.length > 0 ? 'pb-16 pt-32' : 'pb-10 pt-10'
+          )}
+        >
           <div className="flex flex-col md:flex-row items-start gap-8">
             {/* Band Logo */}
             <BandThumbnail
