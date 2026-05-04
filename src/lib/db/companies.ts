@@ -6,16 +6,18 @@ import type { Band, Company, CompanyWithStats } from '../db-types'
 // ============================================================
 
 /**
- * Get all companies with band and event counts
+ * Get all companies with band and event counts.
+ * Excludes companies with zero bands — keeps the underlying row, just hides
+ * it from listings until at least one band is associated.
  */
 export async function getCompanies(): Promise<CompanyWithStats[]> {
   const { rows } = await sql<CompanyWithStats>`
-    SELECT 
+    SELECT
       c.*,
       COUNT(DISTINCT b.id) as band_count,
       COUNT(DISTINCT b.event_id) as event_count
     FROM companies c
-    LEFT JOIN bands b ON c.slug = b.company_slug
+    INNER JOIN bands b ON c.slug = b.company_slug
     GROUP BY c.slug, c.name, c.logo_url, c.icon_url, c.website, c.description, c.created_at
     ORDER BY c.name ASC
   `
