@@ -20,8 +20,8 @@ export function kenBurnsVarsFromFocal(
   // doesn't cover the box on the extreme and a black edge leaks in.
   const config =
     orientation === 'portrait'
-      ? { ampX: 6, ampY: 0, scaleFrom: 1.18, scaleTo: 1.22 }
-      : { ampX: 3, ampY: 2, scaleFrom: 1.1, scaleTo: 1.16 }
+      ? { ampX: 8, ampY: 0, scaleFrom: 1.2, scaleTo: 1.24 }
+      : { ampX: 4, ampY: 2, scaleFrom: 1.1, scaleTo: 1.16 }
 
   const x = focalPanRange(focal.x, config.ampX)
   const y = focalPanRange(focal.y, config.ampY)
@@ -38,19 +38,17 @@ export function kenBurnsVarsFromFocal(
 
 /**
  * For a focal coord (0–100) and an amplitude (in %), return the start/end
- * translate offsets. Pan starts on the *opposite side* of the focal point
- * and ends at zero translate (where object-position has already placed
- * the focal at the visible centre). Centered focals get a default L→R
- * pan so the motion never flatlines.
+ * translate offsets. The pan always uses the full amplitude — focal only
+ * sets the *direction* (camera starts on the opposite side from the
+ * subject and settles on it). Centered focals default to a left-to-centre
+ * sweep so motion never flatlines.
  */
 function focalPanRange(focalPct: number, amplitude: number) {
   if (amplitude === 0) return { start: 0, end: 0 }
   const bias = (focalPct - 50) / 50 // -1 (far left) … +1 (far right)
-  // Floor the magnitude so centered subjects still pan visibly.
-  const magnitude = Math.max(Math.abs(bias), 0.5)
   const direction = bias < 0 ? -1 : 1
   return {
-    start: -direction * amplitude * magnitude,
+    start: -direction * amplitude,
     end: 0,
   }
 }
