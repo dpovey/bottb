@@ -97,14 +97,14 @@ export function HeroBackground({
 
   // Multiple photos - crossfade animation
   return (
-    <div className="absolute inset-0">
+    <div className="absolute inset-0 overflow-hidden">
       {photos.map((photo, index) => {
         const isCurrent = index === currentIndex
 
         return (
           <div
             key={photo.blob_url}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
+            className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
               isCurrent && !isTransitioning ? 'opacity-100' : 'opacity-0'
             }`}
           >

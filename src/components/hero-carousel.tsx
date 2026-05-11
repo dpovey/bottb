@@ -91,7 +91,7 @@ export function HeroCarousel({
   return (
     <section className={`relative ${heightClass} flex ${alignClass}`}>
       {/* Background Images with crossfade */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 overflow-hidden">
         {effectiveImages.map((image, index) => {
           // Build srcset if photo URLs available
           const srcSet =
@@ -111,7 +111,7 @@ export function HeroCarousel({
           return (
             <div
               key={image.url}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
+              className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
                 isCurrent && !isTransitioning ? 'opacity-100' : 'opacity-0'
               }`}
             >
@@ -122,9 +122,10 @@ export function HeroCarousel({
                 srcSet={srcSet}
                 sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
                 alt="Battle of the Tech Bands event"
-                className="absolute inset-0 w-full h-full object-cover md:hidden"
+                className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns md:hidden"
                 style={{
                   objectPosition: getMobileObjectPosition(image.focalPoint),
+                  transformOrigin: `${image.focalPoint?.x ?? 50}% ${image.focalPoint?.y ?? 50}%`,
                 }}
                 fetchPriority={isCurrent ? 'high' : 'auto'}
                 loading={isCurrent ? 'eager' : 'lazy'}
@@ -138,9 +139,10 @@ export function HeroCarousel({
                 srcSet={srcSet}
                 sizes="(max-width: 1920px) 100vw, 1920px"
                 alt="Battle of the Tech Bands event"
-                className="absolute inset-0 w-full h-full object-cover hidden md:block"
+                className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
                 style={{
                   objectPosition: getDesktopObjectPosition(image.focalPoint),
+                  transformOrigin: `${image.focalPoint?.x ?? 50}% ${image.focalPoint?.y ?? 50}%`,
                 }}
                 fetchPriority={isCurrent ? 'high' : 'auto'}
                 loading={isCurrent ? 'eager' : 'lazy'}

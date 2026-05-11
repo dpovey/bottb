@@ -59,8 +59,12 @@ export function FocalPointImage({
   // srcSet will upgrade to 4K only when sizes indicates need for larger
   const desktopSrc = photoUrls?.blob_url || src
 
+  // Anchor the Ken Burns zoom on the focal point so the subtle scale-up
+  // drifts toward the subject rather than the geometric centre.
+  const transformOrigin = `${focalPoint.x}% ${focalPoint.y}%`
+
   return (
-    <div className={cn('absolute inset-0', className)}>
+    <div className={cn('absolute inset-0 overflow-hidden', className)}>
       {/* Mobile/Portrait: horizontal cropping, use focal X, center Y */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -68,8 +72,11 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover md:hidden"
-        style={{ objectPosition: `${focalPoint.x}% 50%` }}
+        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns md:hidden"
+        style={{
+          objectPosition: `${focalPoint.x}% 50%`,
+          transformOrigin,
+        }}
         fetchPriority={priority ? 'high' : 'auto'}
         loading={priority ? 'eager' : 'lazy'}
         decoding={priority ? 'sync' : 'async'}
@@ -82,8 +89,11 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover hidden md:block"
-        style={{ objectPosition: `50% ${focalPoint.y}%` }}
+        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
+        style={{
+          objectPosition: `50% ${focalPoint.y}%`,
+          transformOrigin,
+        }}
         fetchPriority={priority ? 'high' : 'auto'}
         loading={priority ? 'eager' : 'lazy'}
         decoding={priority ? 'sync' : 'async'}

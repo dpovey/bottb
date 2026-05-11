@@ -46,6 +46,16 @@
 
   --animate-shimmer: shimmer 2s infinite linear;
   --animate-vinyl-spin: vinyl-spin 1.8s linear infinite;
+  --animate-ken-burns: ken-burns 18s ease-in-out infinite alternate;
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
 }
 
 @keyframes shimmer {
