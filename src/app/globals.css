@@ -50,25 +50,31 @@
   --animate-ken-burns-pan: ken-burns-pan 14s ease-in-out infinite alternate;
 }
 
-/* Desktop / wide containers: gentle pan + zoom toward focal point. */
+/* Hero pan-and-zoom.
+ *
+ * Each img sets four CSS custom properties inline based on its focal point,
+ * so the animation starts off-focal and settles on the focal point.
+ * The keyframes pick the values up via var() — they're substituted once per
+ * iteration, so the transform itself is what animates. */
 @keyframes ken-burns {
   from {
-    transform: scale(1.08) translate3d(-3%, -1%, 0);
+    transform: scale(var(--kb-scale-from, 1.1))
+      translate3d(var(--kb-x-from, -3%), var(--kb-y-from, -1%), 0);
   }
   to {
-    transform: scale(1.16) translate3d(3%, 1%, 0);
+    transform: scale(var(--kb-scale-to, 1.16))
+      translate3d(var(--kb-x-to, 0%), var(--kb-y-to, 0%), 0);
   }
 }
 
-/* Mobile / portrait containers: stronger horizontal pan, minimal zoom.
- * Landscape photos in a portrait box have lots of horizontal crop room,
- * so a wider translate reveals genuinely different parts of the image. */
 @keyframes ken-burns-pan {
   from {
-    transform: scale(1.05) translate3d(-7%, 0, 0);
+    transform: scale(var(--kb-scale-from, 1.18))
+      translate3d(var(--kb-x-from, -6%), 0, 0);
   }
   to {
-    transform: scale(1.08) translate3d(7%, 0, 0);
+    transform: scale(var(--kb-scale-to, 1.22))
+      translate3d(var(--kb-x-to, 0%), 0, 0);
   }
 }
 
