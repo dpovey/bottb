@@ -468,8 +468,13 @@ async function uploadPhoto(
 }
 
 async function main() {
+  // pnpm forwards a literal `--` to scripts; util.parseArgs treats it as a
+  // terminator and turns every following flag into a positional. Strip it.
+  const rawArgs = process.argv.slice(2)
+  const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs
+
   const { values, positionals } = parseArgs({
-    args: process.argv.slice(2),
+    args,
     options: {
       'dry-run': { type: 'boolean', default: false },
       recursive: { type: 'boolean', default: true },
