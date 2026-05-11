@@ -122,7 +122,7 @@ export function HeroCarousel({
                 srcSet={srcSet}
                 sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
                 alt="Battle of the Tech Bands event"
-                className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns md:hidden"
+                className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
                 style={{
                   objectPosition: getMobileObjectPosition(image.focalPoint),
                   transformOrigin: `${image.focalPoint?.x ?? 50}% ${image.focalPoint?.y ?? 50}%`,

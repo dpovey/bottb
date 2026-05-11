@@ -47,14 +47,28 @@
   --animate-shimmer: shimmer 2s infinite linear;
   --animate-vinyl-spin: vinyl-spin 1.8s linear infinite;
   --animate-ken-burns: ken-burns 16s ease-in-out infinite alternate;
+  --animate-ken-burns-pan: ken-burns-pan 14s ease-in-out infinite alternate;
 }
 
+/* Desktop / wide containers: gentle pan + zoom toward focal point. */
 @keyframes ken-burns {
   from {
     transform: scale(1.08) translate3d(-3%, -1%, 0);
   }
   to {
     transform: scale(1.16) translate3d(3%, 1%, 0);
+  }
+}
+
+/* Mobile / portrait containers: stronger horizontal pan, minimal zoom.
+ * Landscape photos in a portrait box have lots of horizontal crop room,
+ * so a wider translate reveals genuinely different parts of the image. */
+@keyframes ken-burns-pan {
+  from {
+    transform: scale(1.05) translate3d(-7%, 0, 0);
+  }
+  to {
+    transform: scale(1.08) translate3d(7%, 0, 0);
   }
 }
 

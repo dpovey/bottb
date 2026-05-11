@@ -72,7 +72,7 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns md:hidden"
+        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
         style={{
           objectPosition: `${focalPoint.x}% 50%`,
           transformOrigin,
