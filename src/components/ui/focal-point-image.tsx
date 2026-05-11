@@ -1,7 +1,9 @@
 'use client'
 
+import { CSSProperties } from 'react'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
+import { kenBurnsVarsFromFocal } from '@/lib/hero-pan'
 
 export interface FocalPoint {
   x: number // 0-100 percentage from left
@@ -59,8 +61,14 @@ export function FocalPointImage({
   // srcSet will upgrade to 4K only when sizes indicates need for larger
   const desktopSrc = photoUrls?.blob_url || src
 
+  // Anchor the Ken Burns zoom on the focal point so the scale-up
+  // drifts toward the subject rather than the geometric centre.
+  const transformOrigin = `${focalPoint.x}% ${focalPoint.y}%`
+  const mobilePan = kenBurnsVarsFromFocal(focalPoint, 'portrait')
+  const desktopPan = kenBurnsVarsFromFocal(focalPoint, 'landscape')
+
   return (
-    <div className={cn('absolute inset-0', className)}>
+    <div className={cn('absolute inset-0 overflow-hidden', className)}>
       {/* Mobile/Portrait: horizontal cropping, use focal X, center Y */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -68,8 +76,14 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover md:hidden"
-        style={{ objectPosition: `${focalPoint.x}% 50%` }}
+        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
+        style={
+          {
+            objectPosition: `${focalPoint.x}% 50%`,
+            transformOrigin,
+            ...mobilePan,
+          } as CSSProperties
+        }
         fetchPriority={priority ? 'high' : 'auto'}
         loading={priority ? 'eager' : 'lazy'}
         decoding={priority ? 'sync' : 'async'}
@@ -82,8 +96,14 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover hidden md:block"
-        style={{ objectPosition: `50% ${focalPoint.y}%` }}
+        className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
+        style={
+          {
+            objectPosition: `50% ${focalPoint.y}%`,
+            transformOrigin,
+            ...desktopPan,
+          } as CSSProperties
+        }
         fetchPriority={priority ? 'high' : 'auto'}
         loading={priority ? 'eager' : 'lazy'}
         decoding={priority ? 'sync' : 'async'}

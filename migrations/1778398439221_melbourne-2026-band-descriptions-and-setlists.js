@@ -26,22 +26,82 @@ const DESCRIPTIONS = {
 /** @type {Record<string, Song[]>} */
 const SETLISTS = {
   'loop-there-it-is-melbourne-2026': [
-    { position: 1, song_type: 'cover', title: 'Are You Gonna Go My Way', artist: 'Lenny Kravitz' },
-    { position: 2, song_type: 'cover', title: 'Fell in Love with a Girl', artist: 'The White Stripes' },
-    { position: 3, song_type: 'cover', title: 'Torn', artist: 'Natalie Imbruglia' },
-    { position: 4, song_type: 'cover', title: 'You Give Love a Bad Name', artist: 'Bon Jovi' },
-    { position: 5, song_type: 'cover', title: 'I Will Survive', artist: 'Gloria Gaynor' },
-    { position: 6, song_type: 'cover', title: 'Am I Ever Going to See Your Face Again', artist: 'The Angels' },
+    {
+      position: 1,
+      song_type: 'cover',
+      title: 'Are You Gonna Go My Way',
+      artist: 'Lenny Kravitz',
+    },
+    {
+      position: 2,
+      song_type: 'cover',
+      title: 'Fell in Love with a Girl',
+      artist: 'The White Stripes',
+    },
+    {
+      position: 3,
+      song_type: 'cover',
+      title: 'Torn',
+      artist: 'Natalie Imbruglia',
+    },
+    {
+      position: 4,
+      song_type: 'cover',
+      title: 'You Give Love a Bad Name',
+      artist: 'Bon Jovi',
+    },
+    {
+      position: 5,
+      song_type: 'cover',
+      title: 'I Will Survive',
+      artist: 'Gloria Gaynor',
+    },
+    {
+      position: 6,
+      song_type: 'cover',
+      title: 'Am I Ever Going to See Your Face Again',
+      artist: 'The Angels',
+    },
   ],
   'continuously-groovin-melbourne-2026': [
-    { position: 1, song_type: 'cover', title: 'Take Me Out', artist: 'Franz Ferdinand' },
-    { position: 2, song_type: 'cover', title: 'When You Were Young', artist: 'The Killers' },
-    { position: 3, song_type: 'cover', title: 'Everybody Wants to Rule the World', artist: 'Tears for Fears' },
-    { position: 4, song_type: 'cover', title: 'Dancing in the Moonlight', artist: 'Toploader' },
-    { position: 5, song_type: 'cover', title: 'Murder on the Dancefloor', artist: 'Sophie Ellis-Bextor' },
+    {
+      position: 1,
+      song_type: 'cover',
+      title: 'Take Me Out',
+      artist: 'Franz Ferdinand',
+    },
+    {
+      position: 2,
+      song_type: 'cover',
+      title: 'When You Were Young',
+      artist: 'The Killers',
+    },
+    {
+      position: 3,
+      song_type: 'cover',
+      title: 'Everybody Wants to Rule the World',
+      artist: 'Tears for Fears',
+    },
+    {
+      position: 4,
+      song_type: 'cover',
+      title: 'Dancing in the Moonlight',
+      artist: 'Toploader',
+    },
+    {
+      position: 5,
+      song_type: 'cover',
+      title: 'Murder on the Dancefloor',
+      artist: 'Sophie Ellis-Bextor',
+    },
   ],
   'fully-seek-melbourne-2026': [
-    { position: 1, song_type: 'cover', title: 'Lose Control', artist: 'Teddy Swims' },
+    {
+      position: 1,
+      song_type: 'cover',
+      title: 'Lose Control',
+      artist: 'Teddy Swims',
+    },
     {
       position: 2,
       song_type: 'mashup',
@@ -49,16 +109,51 @@ const SETLISTS = {
       artist: 'Justin Timberlake',
       additional_songs: [{ title: 'Cry Me a River', artist: 'Julie London' }],
     },
-    { position: 3, song_type: 'cover', title: 'Where Is My Husband', artist: 'Raye' },
-    { position: 4, song_type: 'cover', title: 'Pretty Young Thing', artist: 'Michael Jackson' },
-    { position: 5, song_type: 'cover', title: 'Baby One More Time', artist: 'Britney Spears' },
+    {
+      position: 3,
+      song_type: 'cover',
+      title: 'Where Is My Husband',
+      artist: 'Raye',
+    },
+    {
+      position: 4,
+      song_type: 'cover',
+      title: 'Pretty Young Thing',
+      artist: 'Michael Jackson',
+    },
+    {
+      position: 5,
+      song_type: 'cover',
+      title: 'Baby One More Time',
+      artist: 'Britney Spears',
+    },
   ],
   'hot-property-melbourne-2026': [
     { position: 1, song_type: 'cover', title: 'Golden', artist: 'Huntr/x' },
-    { position: 2, song_type: 'cover', title: 'Sk8er Boi', artist: 'Avril Lavigne' },
-    { position: 3, song_type: 'cover', title: "Livin' on a Prayer", artist: 'Bon Jovi' },
-    { position: 4, song_type: 'cover', title: 'Are You Gonna Be My Girl', artist: 'Jet' },
-    { position: 5, song_type: 'cover', title: 'Murder on the Dancefloor', artist: 'Sophie Ellis-Bextor & Royel Otis' },
+    {
+      position: 2,
+      song_type: 'cover',
+      title: 'Sk8er Boi',
+      artist: 'Avril Lavigne',
+    },
+    {
+      position: 3,
+      song_type: 'cover',
+      title: "Livin' on a Prayer",
+      artist: 'Bon Jovi',
+    },
+    {
+      position: 4,
+      song_type: 'cover',
+      title: 'Are You Gonna Be My Girl',
+      artist: 'Jet',
+    },
+    {
+      position: 5,
+      song_type: 'cover',
+      title: 'Murder on the Dancefloor',
+      artist: 'Sophie Ellis-Bextor & Royel Otis',
+    },
   ],
 }
 

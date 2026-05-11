@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { CSSProperties, useState, useEffect } from 'react'
 import { useMounted } from '@/lib/hooks'
 import { DEFAULT_HERO_IMAGE } from '@/lib/stock-images'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
+import { kenBurnsVarsFromFocal } from '@/lib/hero-pan'
 
 /**
  * Get object-position for mobile (portrait) - horizontal cropping.
@@ -91,7 +92,7 @@ export function HeroCarousel({
   return (
     <section className={`relative ${heightClass} flex ${alignClass}`}>
       {/* Background Images with crossfade */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 overflow-hidden">
         {effectiveImages.map((image, index) => {
           // Build srcset if photo URLs available
           const srcSet =
@@ -111,41 +112,63 @@ export function HeroCarousel({
           return (
             <div
               key={image.url}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
+              className={`absolute inset-0 overflow-hidden transition-opacity duration-1000 ${
                 isCurrent && !isTransitioning ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              {/* Mobile: horizontal cropping, use focal X */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={image.url}
-                srcSet={srcSet}
-                sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
-                alt="Battle of the Tech Bands event"
-                className="absolute inset-0 w-full h-full object-cover md:hidden"
-                style={{
-                  objectPosition: getMobileObjectPosition(image.focalPoint),
-                }}
-                fetchPriority={isCurrent ? 'high' : 'auto'}
-                loading={isCurrent ? 'eager' : 'lazy'}
-                decoding={isCurrent ? 'sync' : 'async'}
-              />
-              {/* Desktop: vertical cropping, use focal Y */}
-              {/* Uses 2000px by default - srcSet upgrades to 4K only for true 4K displays */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={desktopSrc}
-                srcSet={srcSet}
-                sizes="(max-width: 1920px) 100vw, 1920px"
-                alt="Battle of the Tech Bands event"
-                className="absolute inset-0 w-full h-full object-cover hidden md:block"
-                style={{
-                  objectPosition: getDesktopObjectPosition(image.focalPoint),
-                }}
-                fetchPriority={isCurrent ? 'high' : 'auto'}
-                loading={isCurrent ? 'eager' : 'lazy'}
-                decoding={isCurrent ? 'sync' : 'async'}
-              />
+              {(() => {
+                const focal = image.focalPoint ?? { x: 50, y: 50 }
+                const transformOrigin = `${focal.x}% ${focal.y}%`
+                const mobilePan = kenBurnsVarsFromFocal(focal, 'portrait')
+                const desktopPan = kenBurnsVarsFromFocal(focal, 'landscape')
+                return (
+                  <>
+                    {/* Mobile: horizontal cropping, use focal X */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image.url}
+                      srcSet={srcSet}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
+                      alt="Battle of the Tech Bands event"
+                      className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
+                      style={
+                        {
+                          objectPosition: getMobileObjectPosition(
+                            image.focalPoint
+                          ),
+                          transformOrigin,
+                          ...mobilePan,
+                        } as CSSProperties
+                      }
+                      fetchPriority={isCurrent ? 'high' : 'auto'}
+                      loading={isCurrent ? 'eager' : 'lazy'}
+                      decoding={isCurrent ? 'sync' : 'async'}
+                    />
+                    {/* Desktop: vertical cropping, use focal Y */}
+                    {/* Uses 2000px by default - srcSet upgrades to 4K only for true 4K displays */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={desktopSrc}
+                      srcSet={srcSet}
+                      sizes="(max-width: 1920px) 100vw, 1920px"
+                      alt="Battle of the Tech Bands event"
+                      className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
+                      style={
+                        {
+                          objectPosition: getDesktopObjectPosition(
+                            image.focalPoint
+                          ),
+                          transformOrigin,
+                          ...desktopPan,
+                        } as CSSProperties
+                      }
+                      fetchPriority={isCurrent ? 'high' : 'auto'}
+                      loading={isCurrent ? 'eager' : 'lazy'}
+                      decoding={isCurrent ? 'sync' : 'async'}
+                    />
+                  </>
+                )
+              })()}
             </div>
           )
         })}
