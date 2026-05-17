@@ -28,6 +28,12 @@ export interface Event {
       facebook?: string
     }
     venue_info?: string
+    /** National Partner / title sponsor displayed as a "Powered by" badge on the event page */
+    national_partner?: {
+      name: string
+      logo_url: string
+      link?: string
+    }
     [key: string]: unknown
   }
   created_at: string

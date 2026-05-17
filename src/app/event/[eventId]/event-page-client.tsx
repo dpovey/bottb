@@ -12,6 +12,7 @@ import {
   CompanyBadge,
   NumberedIndicator,
   TicketCTA,
+  SponsorBadge,
   HeroBackground,
   photosToHeroImages,
 } from '@/components/ui'
@@ -77,6 +78,11 @@ interface EventInfo {
   venue_info?: string
   scoring_version?: string
   winner?: string
+  national_partner?: {
+    name: string
+    logo_url: string
+    link?: string
+  }
   [key: string]: unknown
 }
 
@@ -377,6 +383,15 @@ export function EventPageClient({
             />
           </div>
         </section>
+      )}
+
+      {/* National Partner / Sponsor Badge */}
+      {eventInfo?.national_partner && (
+        <SponsorBadge
+          name={eventInfo.national_partner.name}
+          logoUrl={eventInfo.national_partner.logo_url}
+          link={eventInfo.national_partner.link}
+        />
       )}
 
       {/* Photos Section */}
