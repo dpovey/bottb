@@ -96,6 +96,7 @@ export interface Band {
   // Joined fields
   company_name?: string
   company_icon_url?: string
+  company_logo_url?: string
 }
 
 export interface Vote {

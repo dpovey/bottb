@@ -85,4 +85,29 @@ describe('SponsorBadge', () => {
     const link = screen.getByRole('link')
     expect(link).not.toHaveAttribute('target')
   })
+
+  describe('inline variant', () => {
+    it('renders without a wrapping section', () => {
+      const { container } = render(
+        <SponsorBadge
+          name="Test Sponsor"
+          logoUrl="/logo.svg"
+          variant="inline"
+        />
+      )
+      expect(container.querySelector('section')).toBeNull()
+    })
+
+    it('still renders the label and logo', () => {
+      render(
+        <SponsorBadge
+          name="Jumbo Interactive"
+          logoUrl="/logo.svg"
+          variant="inline"
+        />
+      )
+      expect(screen.getByText('Powered by')).toBeInTheDocument()
+      expect(screen.getByAltText('Jumbo Interactive')).toBeInTheDocument()
+    })
+  })
 })

@@ -21,6 +21,7 @@ import { MarkdownText } from '@/lib/markdown'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
 import { ShortsCarousel } from '@/components/shorts-carousel'
+import { EventCompanyStrip } from '@/components/event-company-strip'
 import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
 import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
@@ -158,6 +159,9 @@ export function EventPageClient({
         </div>
       </section>
 
+      {/* Participating Companies Strip */}
+      <EventCompanyStrip bands={bands} />
+
       {/* Winner Section - For all finalized events with a winner */}
       {hasWinner && overallWinner && (
         <section className="py-8 bg-linear-to-r from-warning/10 via-warning/5 to-warning/10 border-b border-warning/20">
@@ -212,6 +216,14 @@ export function EventPageClient({
             <div className="flex flex-wrap gap-4 items-center">
               {event.status === 'upcoming' && eventInfo?.ticket_url && (
                 <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+              )}
+              {event.status === 'upcoming' && eventInfo?.national_partner && (
+                <SponsorBadge
+                  name={eventInfo.national_partner.name}
+                  logoUrl={eventInfo.national_partner.logo_url}
+                  link={eventInfo.national_partner.link}
+                  variant="inline"
+                />
               )}
               {event.status === 'voting' && (
                 <Link href={`/vote/crowd/${eventId}`}>
@@ -383,15 +395,6 @@ export function EventPageClient({
             />
           </div>
         </section>
-      )}
-
-      {/* National Partner / Sponsor Badge */}
-      {eventInfo?.national_partner && (
-        <SponsorBadge
-          name={eventInfo.national_partner.name}
-          logoUrl={eventInfo.national_partner.logo_url}
-          link={eventInfo.national_partner.link}
-        />
       )}
 
       {/* Photos Section */}

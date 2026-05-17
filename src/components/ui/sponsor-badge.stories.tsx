@@ -55,3 +55,13 @@ export const ExternalLink: Story = {
     external: true,
   },
 }
+
+export const Inline: Story = {
+  parameters: { layout: 'centered' },
+  args: {
+    name: 'Jumbo Interactive',
+    logoUrl:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505',
+    variant: 'inline',
+  },
+}

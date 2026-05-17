@@ -3,14 +3,15 @@ import type { Band } from '../db-types'
 
 export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`
-    SELECT b.*, 
+    SELECT b.*,
       c.name as company_name,
       c.icon_url as company_icon_url,
+      c.logo_url as company_logo_url,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
       (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point
-    FROM bands b 
+    FROM bands b
     LEFT JOIN companies c ON b.company_slug = c.slug
-    WHERE b.event_id = ${eventId} 
+    WHERE b.event_id = ${eventId}
     ORDER BY b."order"
   `
   return rows
