@@ -211,6 +211,45 @@ export function trackNavClick(properties: {
 }
 
 /**
+ * Conversion: user clicked Get Tickets on an upcoming event.
+ * Fans out to Meta Pixel (Lead), LinkedIn Insight Tag (per-conversion ID), and PostHog.
+ */
+export function trackTicketClick(properties: {
+  event_id: string
+  event_name: string
+  ticket_url: string
+  location: 'event_page' | 'event_card' | 'event_card_visual'
+}): void {
+  if (!isAnalyticsEnabled()) return
+
+  trackEvent('tickets:clicked', properties)
+
+  if (typeof window === 'undefined') return
+
+  // Meta Pixel: Lead is the canonical event for off-site ticket-redirect intent.
+  // The Pixel snippet may not be loaded yet (it's behind requestIdleCallback) —
+  // fbq is a queue when not initialized, so the call is safe either way.
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', 'Lead', {
+      content_name: properties.event_name,
+      content_category: 'event_ticket_click',
+      content_ids: [properties.event_id],
+    })
+  }
+
+  // LinkedIn Insight Tag: needs a per-conversion ID from Campaign Manager.
+  // No-op until NEXT_PUBLIC_LINKEDIN_CONVERSION_ID_TICKET_CLICK is provisioned.
+  const linkedInConversionId =
+    process.env.NEXT_PUBLIC_LINKEDIN_CONVERSION_ID_TICKET_CLICK
+  if (linkedInConversionId && typeof window.lintrk === 'function') {
+    const conversionId = Number(linkedInConversionId)
+    if (Number.isFinite(conversionId)) {
+      window.lintrk('track', { conversion_id: conversionId })
+    }
+  }
+}
+
+/**
  * Identity management for PostHog
  * Note: Vercel Analytics does not support user identification
  */

@@ -1,26 +1,43 @@
+'use client'
+
 import Link from 'next/link'
 import { TicketIcon, ExternalLinkIcon } from '@/components/icons'
+import { trackTicketClick } from '@/lib/analytics'
 
 interface TicketCTAProps {
   ticketUrl: string
-  eventName?: string
+  eventId: string
+  eventName: string
   variant?: 'default' | 'compact'
 }
 
 /**
- * Call-to-action button for purchasing event tickets
+ * Call-to-action button for purchasing event tickets.
+ * Fires a conversion (Meta Lead + LinkedIn + PostHog) on press. Uses
+ * pointerdown so beacons leave before target=_blank steals focus.
  */
 export function TicketCTA({
   ticketUrl,
+  eventId,
   eventName,
   variant = 'default',
 }: TicketCTAProps) {
+  const handleConversion = () => {
+    trackTicketClick({
+      event_id: eventId,
+      event_name: eventName,
+      ticket_url: ticketUrl,
+      location: variant === 'compact' ? 'event_card' : 'event_page',
+    })
+  }
+
   if (variant === 'compact') {
     return (
       <Link
         href={ticketUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onPointerDown={handleConversion}
         className="inline-flex items-center gap-2 bg-accent text-bg px-5 py-2.5 rounded-full font-medium text-sm tracking-wide hover:bg-accent-light transition-colors group"
       >
         <TicketIcon className="w-4 h-4" />
@@ -45,6 +62,7 @@ export function TicketCTA({
         href={ticketUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onPointerDown={handleConversion}
         className="inline-flex items-center gap-2 bg-accent text-bg px-8 py-3 rounded-full font-semibold tracking-wide hover:bg-accent-light transition-colors group"
       >
         Purchase Tickets

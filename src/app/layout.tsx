@@ -6,6 +6,7 @@ import { Providers } from '@/components/providers'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { FacebookPixel } from '@/components/facebook-pixel'
+import { LinkedInInsight } from '@/components/linkedin-insight'
 import { AdminToggle } from '@/components/admin-toggle'
 import { AdminToolbar } from '@/components/admin-toolbar'
 import { ScrollRestoration } from '@/components/scroll-restoration'
@@ -100,6 +101,9 @@ export default function RootLayout({
         {/* Facebook Pixel */}
         <link rel="preconnect" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        {/* LinkedIn Insight Tag */}
+        <link rel="preconnect" href="https://snap.licdn.com" />
+        <link rel="dns-prefetch" href="https://snap.licdn.com" />
         {/* Vercel Analytics */}
         <link rel="preconnect" href="https://va.vercel-scripts.com" />
         <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
@@ -133,6 +137,7 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <FacebookPixel />
+        <LinkedInInsight />
         <AdminToggle />
       </body>
     </html>
