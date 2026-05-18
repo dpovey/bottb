@@ -45,8 +45,8 @@ const securityHeaders = [
       // Connect: API calls, analytics, PostHog, Vercel Blob uploads.
       // us.posthog.com is the PostHog UI host (toolbar phones home here).
       "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://us.posthog.com https://vitals.vercel-insights.com https://www.facebook.com https://px.ads.linkedin.com https://px4.ads.linkedin.com https://vercel.com https://*.vercel-storage.com",
-      // Frames: YouTube embeds
-      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com",
+      // Frames: YouTube embeds + PostHog toolbar UI panels
+      "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://us.posthog.com",
       // Media: self, blob storage
       "media-src 'self' blob: https://0qipqwe5exqqyona.public.blob.vercel-storage.com",
       // Workers: PostHog session recording uses web workers

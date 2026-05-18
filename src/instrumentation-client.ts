@@ -19,6 +19,8 @@ import posthog from 'posthog-js'
  */
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || '/ph'
+const posthogUiHost =
+  process.env.NEXT_PUBLIC_POSTHOG_UI_HOST || 'https://us.posthog.com'
 const nodeEnv = process.env.NODE_ENV
 
 // Only initialize if:
@@ -50,7 +52,7 @@ if (typeof window !== 'undefined') {
         // api_host is a same-origin proxy at /ph; ui_host tells the SDK
         // (and the toolbar) where the PostHog UI actually lives so it can
         // round-trip authentication, actions, and flag overrides.
-        ui_host: 'https://us.posthog.com',
+        ui_host: posthogUiHost,
         person_profiles: 'identified_only', // Only create profiles for identified users
         capture_exceptions: {
           capture_unhandled_errors: true,
