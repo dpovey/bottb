@@ -2,7 +2,8 @@ import { forwardRef } from 'react'
 import type { IconProps } from '../types'
 
 /**
- * Ticket icon for events
+ * Ticket icon — symmetric rounded stub with semi-circle notches centred on
+ * the perforation line (top and bottom) and three dashes along it.
  */
 export const TicketIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ size = 20, className, ...props }, ref) => (
@@ -20,8 +21,8 @@ export const TicketIcon = forwardRef<SVGSVGElement, IconProps>(
       aria-hidden="true"
       {...props}
     >
-      <path d="M2 9a3 3 0 013-3h14a3 3 0 013 3v0a3 3 0 01-3 3v0a3 3 0 00-3 3v0a3 3 0 01-3 3H5a3 3 0 01-3-3v-6z" />
-      <path d="M13 6v3M13 15v3" />
+      <path d="M4 7h7a1 1 0 0 0 2 0h7a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-7a1 1 0 0 1-2 0H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+      <path d="M12 9.5v1M12 12v1M12 14.5v1" />
     </svg>
   )
 )
