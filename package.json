@@ -78,7 +78,7 @@
     "framer-motion": "^12.23.26",
     "next": "16.2.3",
     "next-auth": "^5.0.0-beta.30",
-    "posthog-js": "^1.309.1",
+    "posthog-js": "^1.373.5",
     "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
