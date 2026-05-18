@@ -191,9 +191,13 @@ export function VideoCarousel({
             >
               {/* Thumbnail */}
               <div className="relative aspect-video rounded-lg overflow-hidden bg-bg-elevated border border-white/5 group-hover:border-white/20 transition-colors">
+                {/* Thumbnail is decorative — the title is already in the
+                    adjacent <h3>, so duplicating it as alt would be
+                    redundant for screen reader users (axe / Lighthouse
+                    `image-redundant-alt`). */}
                 <Image
                   src={getThumbnailUrl(video)}
-                  alt={video.title}
+                  alt=""
                   fill
                   sizes="(max-width: 640px) 280px, 320px"
                   className="object-cover transition-transform duration-300 motion-safe:group-hover:scale-105"
