@@ -19,6 +19,10 @@ const meta: Meta<typeof TicketCTA> = {
       control: 'text',
       description: 'URL to the ticket purchase page',
     },
+    eventId: {
+      control: 'text',
+      description: 'Event id (used for conversion tracking)',
+    },
     eventName: {
       control: 'text',
       description: 'Name of the event (for personalized messaging)',
@@ -38,6 +42,7 @@ type Story = StoryObj<typeof TicketCTA>
 export const Default: Story = {
   args: {
     ticketUrl: 'https://example.com/tickets',
+    eventId: 'sydney-2025',
     eventName: 'Sydney Tech Battle 2025',
     variant: 'default',
   },
@@ -55,6 +60,8 @@ export const Default: Story = {
 export const Compact: Story = {
   args: {
     ticketUrl: 'https://example.com/tickets',
+    eventId: 'sydney-2025',
+    eventName: 'Sydney Tech Battle 2025',
     variant: 'compact',
   },
   parameters: {
@@ -70,6 +77,8 @@ export const Compact: Story = {
 export const WithoutEventName: Story = {
   args: {
     ticketUrl: 'https://example.com/tickets',
+    eventId: 'sydney-2025',
+    eventName: '',
     variant: 'default',
   },
   parameters: {
@@ -92,6 +101,7 @@ export const Comparison: Story = {
         <div className="max-w-md">
           <TicketCTA
             ticketUrl="https://example.com/tickets"
+            eventId="sydney-2025"
             eventName="Sydney Tech Battle 2025"
             variant="default"
           />
@@ -101,7 +111,12 @@ export const Comparison: Story = {
         <p className="text-xs tracking-widest uppercase text-text-dim mb-4">
           Compact (Button)
         </p>
-        <TicketCTA ticketUrl="https://example.com/tickets" variant="compact" />
+        <TicketCTA
+          ticketUrl="https://example.com/tickets"
+          eventId="sydney-2025"
+          eventName="Sydney Tech Battle 2025"
+          variant="compact"
+        />
       </div>
     </div>
   ),
@@ -124,7 +139,12 @@ export const HeaderUsage: Story = {
           October 23, 2025 • The Metro Theatre
         </p>
       </div>
-      <TicketCTA ticketUrl="https://example.com/tickets" variant="compact" />
+      <TicketCTA
+        ticketUrl="https://example.com/tickets"
+        eventId="sydney-2025"
+        eventName="Sydney Tech Battle 2025"
+        variant="compact"
+      />
     </div>
   ),
   parameters: {

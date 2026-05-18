@@ -35,15 +35,15 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       // Scripts: self, inline (Next.js needs this), eval for dev, and trusted domains
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://www.youtube.com https://s.ytimg.com https://va.vercel-scripts.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https://snap.licdn.com https://www.youtube.com https://s.ytimg.com https://va.vercel-scripts.com",
       // Styles: self, inline (Tailwind/Next.js), Google Fonts
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       // Images: self, data URIs, blob storage, external sources
-      "img-src 'self' data: blob: https://0qipqwe5exqqyona.public.blob.vercel-storage.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://www.facebook.com",
+      "img-src 'self' data: blob: https://0qipqwe5exqqyona.public.blob.vercel-storage.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://www.facebook.com https://px.ads.linkedin.com https://px4.ads.linkedin.com",
       // Fonts: self, Google Fonts
       "font-src 'self' https://fonts.gstatic.com",
       // Connect: API calls, analytics, PostHog, Vercel Blob uploads
-      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://vitals.vercel-insights.com https://www.facebook.com https://vercel.com https://*.vercel-storage.com",
+      "connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com https://vitals.vercel-insights.com https://www.facebook.com https://px.ads.linkedin.com https://px4.ads.linkedin.com https://vercel.com https://*.vercel-storage.com",
       // Frames: YouTube embeds
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com",
       // Media: self, blob storage

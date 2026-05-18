@@ -35,6 +35,7 @@ export { SocialIconLink, type SocialIconLinkProps } from './social-icon-link'
 export { ErrorBoundary, CompactErrorFallback } from './error-boundary'
 export { ErrorBanner, type ErrorBannerProps } from './error-banner'
 export { TicketCTA } from './ticket-cta'
+export { TrackedTicketLink } from './tracked-ticket-link'
 export { SponsorBadge, type SponsorBadgeProps } from './sponsor-badge'
 export {
   Skeleton,

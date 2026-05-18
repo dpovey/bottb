@@ -120,7 +120,12 @@ export function EventPageClient({
         {event.status === 'upcoming' && eventInfo?.ticket_url && (
           <div className="absolute inset-x-0 top-4 z-20 sm:top-6 lg:top-8">
             <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-end">
-              <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+              <TicketCTA
+                ticketUrl={eventInfo.ticket_url}
+                eventId={eventId}
+                eventName={event.name}
+                variant="compact"
+              />
             </div>
           </div>
         )}
@@ -394,6 +399,7 @@ export function EventPageClient({
           <div className="max-w-2xl mx-auto px-6 lg:px-8">
             <TicketCTA
               ticketUrl={eventInfo.ticket_url}
+              eventId={eventId}
               eventName={event.name}
             />
           </div>

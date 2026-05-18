@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
-import { Card, Badge, DateBadge, Button, CompanyBadge } from '@/components/ui'
+import {
+  Card,
+  Badge,
+  DateBadge,
+  Button,
+  CompanyBadge,
+  TrackedTicketLink,
+} from '@/components/ui'
 import { TicketIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
@@ -181,15 +188,16 @@ export function EventCard({
 
         {/* Tickets button - bottom right corner */}
         {showTickets && (
-          <Link
-            href={event.info!.ticket_url!}
-            target="_blank"
-            rel="noopener noreferrer"
+          <TrackedTicketLink
+            ticketUrl={event.info!.ticket_url!}
+            eventId={event.id}
+            eventName={event.name}
+            location="event_card_visual"
             className="absolute bottom-4 right-4 z-20 inline-flex items-center gap-1.5 bg-accent text-bg px-3 py-1.5 rounded-full font-medium text-xs tracking-wide hover:bg-accent-light transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
           >
             <TicketIcon className="w-3.5 h-3.5" />
             Tickets
-          </Link>
+          </TrackedTicketLink>
         )}
       </div>
     )
@@ -310,15 +318,16 @@ export function EventCard({
               </Link>
 
               {!isPast && !isActive && event.info?.ticket_url && (
-                <Link
-                  href={event.info.ticket_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <TrackedTicketLink
+                  ticketUrl={event.info.ticket_url}
+                  eventId={event.id}
+                  eventName={event.name}
+                  location="event_card"
                   className="inline-flex items-center gap-1.5 bg-accent text-bg px-4 py-1.5 rounded-full font-medium text-sm tracking-wide hover:bg-accent-light transition-colors"
                 >
                   <TicketIcon className="w-4 h-4" />
                   Tickets
-                </Link>
+                </TrackedTicketLink>
               )}
 
               {isActive && (
