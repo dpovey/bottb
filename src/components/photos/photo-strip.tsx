@@ -253,10 +253,15 @@ export function PhotoStrip({
                 </button>
               )}
 
-              {/* Scrollable strip with padding for ring visibility */}
+              {/* Scrollable strip with padding for ring visibility.
+                  snap-x + scroll-padding stops the carousel resting on a
+                  partially-clipped button at the edge — Lighthouse's
+                  target-size audit flags the visible sliver if it is
+                  smaller than 24×24 px even though the underlying button
+                  is much larger. */}
               <div
                 ref={stripRef}
-                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-muted focus:outline-hidden"
+                className="flex gap-4 overflow-x-auto px-2 py-3 -mx-2 snap-x snap-mandatory scroll-px-2 scrollbar-thin scrollbar-track-bg scrollbar-thumb-muted focus:outline-hidden"
                 style={{ scrollbarWidth: 'thin' }}
                 tabIndex={0}
                 role="listbox"
@@ -270,7 +275,7 @@ export function PhotoStrip({
                     }}
                     onClick={() => handlePhotoClick(index)}
                     onFocus={() => setSelectedIndex(index)}
-                    className="group relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
+                    className="group relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 snap-start rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
                     aria-label={`Photo ${index + 1} of ${totalCount}`}
                     aria-selected={index === selectedIndex}
                     role="option"
