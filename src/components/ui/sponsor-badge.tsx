@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export interface SponsorBadgeProps {
   /** Sponsor display name (used for alt text) */
@@ -18,6 +19,12 @@ export interface SponsorBadgeProps {
    */
   variant?: 'section' | 'inline'
 }
+
+// Intrinsic dimensions used for next/image sizing. Logos are wide-aspect
+// wordmarks; these values let the browser reserve space while the className
+// (h-* w-auto) controls actual rendered size.
+const LOGO_INTRINSIC_WIDTH = 240
+const LOGO_INTRINSIC_HEIGHT = 80
 
 /**
  * Displays a "Powered by <sponsor>" badge. Used on the homepage and event
@@ -45,11 +52,13 @@ export function SponsorBadge({
         <span className="text-[10px] sm:text-xs tracking-[0.25em] uppercase text-text-dim whitespace-nowrap">
           {label}
         </span>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={logoUrl}
           alt={name}
+          width={LOGO_INTRINSIC_WIDTH}
+          height={LOGO_INTRINSIC_HEIGHT}
           className="h-5 sm:h-6 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
+          unoptimized
         />
       </Link>
     )
@@ -66,11 +75,13 @@ export function SponsorBadge({
           <span className="text-xs tracking-[0.3em] uppercase text-text-dim">
             {label}
           </span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={logoUrl}
             alt={name}
+            width={LOGO_INTRINSIC_WIDTH}
+            height={LOGO_INTRINSIC_HEIGHT}
             className="h-8 sm:h-10 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
+            unoptimized
           />
         </Link>
       </div>

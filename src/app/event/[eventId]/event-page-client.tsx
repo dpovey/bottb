@@ -66,25 +66,14 @@ function getStatusBadge(status: string, hasWinner: boolean) {
   }
 }
 
-interface EventInfo {
-  image_url?: string
-  description?: string
-  website?: string
-  ticket_url?: string
-  social_media?: {
-    twitter?: string
-    instagram?: string
-    facebook?: string
-  }
-  venue_info?: string
+/**
+ * Local extension of the central Event.info type. The central type
+ * (src/lib/db-types.ts) describes the structured fields; this adds the
+ * historic scoring_version and winner fields used by older events.
+ */
+type EventInfo = NonNullable<DbEvent['info']> & {
   scoring_version?: string
   winner?: string
-  national_partner?: {
-    name: string
-    logo_url: string
-    link?: string
-  }
-  [key: string]: unknown
 }
 
 export function EventPageClient({
