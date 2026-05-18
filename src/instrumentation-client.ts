@@ -47,6 +47,10 @@ if (typeof window !== 'undefined') {
     const initPostHog = () => {
       posthog.init(posthogKey, {
         api_host: posthogHost,
+        // api_host is a same-origin proxy at /ph; ui_host tells the SDK
+        // (and the toolbar) where the PostHog UI actually lives so it can
+        // round-trip authentication, actions, and flag overrides.
+        ui_host: 'https://us.posthog.com',
         person_profiles: 'identified_only', // Only create profiles for identified users
         capture_exceptions: {
           capture_unhandled_errors: true,
