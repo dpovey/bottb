@@ -96,13 +96,20 @@ Arguments:
     console.log(`Found company: ${company.name}`)
 
     // Upload logo
-    const uploadedLogoUrl = await uploadLocalFile(logoPath, companySlug, 'logo')
+    const rawLogoUrl = await uploadLocalFile(logoPath, companySlug, 'logo')
 
     // Upload icon (only if an explicit icon path was provided — otherwise
     // leave the existing icon untouched)
-    const uploadedIconUrl = iconPath
+    const rawIconUrl = iconPath
       ? await uploadLocalFile(iconPath, companySlug, 'icon')
       : null
+
+    // Append a cache-busting query string so browsers/CDN/proxies pick up the
+    // new file immediately (Vercel Blob serves with a 30-day max-age and we
+    // overwrite at stable paths, so without ?v= cached versions can persist).
+    const cacheBust = Date.now()
+    const uploadedLogoUrl = rawLogoUrl ? `${rawLogoUrl}?v=${cacheBust}` : null
+    const uploadedIconUrl = rawIconUrl ? `${rawIconUrl}?v=${cacheBust}` : null
 
     if (uploadedLogoUrl || uploadedIconUrl) {
       console.log(`\n💾 Updating database...`)
