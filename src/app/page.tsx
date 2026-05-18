@@ -240,8 +240,11 @@ export default async function HomePage() {
     url: photo.blob_url,
     urlHigh: photo.large_4k_url ?? undefined,
     focalPoint: photo.hero_focal_point,
-    // Include photo URL fields for responsive srcset
+    // Include photo URL fields for responsive srcset — all variants so the
+    // browser can pick the right one for the viewport / DPR target.
     blob_url: photo.blob_url,
+    thumbnail_url: photo.thumbnail_url ?? undefined,
+    thumbnail_2x_url: photo.thumbnail_2x_url ?? undefined,
     medium_url: photo.medium_url ?? undefined,
     large_4k_url: photo.large_4k_url ?? undefined,
     width: photo.width ?? undefined,

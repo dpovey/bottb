@@ -80,21 +80,41 @@ export function getBestThumbnailSrc(
 }
 
 /**
- * Build srcSet for full-size slideshow/hero images.
- * Uses medium (1200w) for mobile, blob_url (2000w) for tablet, 4K (4000w) for desktop.
+ * Build srcSet for hero / event-card / slideshow images.
+ *
+ * Includes every variant we have on disk so the browser can pick the
+ * smallest one that fits the slot's CSS-px × DPR target. Important for
+ * small slots like the 256-px event-card desktop image, which would
+ * otherwise pull a 1200-px `medium.webp` (~95 KB) when an 800-px
+ * `thumbnail-2x.webp` (~42 KB) would suffice on 2× DPR.
+ *
+ * For full-bleed hero slots the extra small candidates are harmless —
+ * the browser picks the largest variant matching the viewport target
+ * regardless of how many smaller siblings sit in the list.
  */
 export function buildHeroSrcSet(photo: PhotoImageUrls): string {
   const sources: string[] = []
 
-  // Medium variant (1200px) - perfect for mobile at 3x density
+  // Thumbnail (400px) — fits sub-256-px slots on 1× DPR.
+  if (photo.thumbnail_url) {
+    sources.push(`${photo.thumbnail_url} 400w`)
+  }
+
+  // Thumbnail 2× (800px) — fits 256-px slots on 2× DPR, mid-card slots
+  // on 1× DPR.
+  if (photo.thumbnail_2x_url) {
+    sources.push(`${photo.thumbnail_2x_url} 800w`)
+  }
+
+  // Medium (1200px) — mobile full-width at 3× DPR.
   if (photo.medium_url) {
     sources.push(`${photo.medium_url} 1200w`)
   }
 
-  // Large variant (2000px) - default, always available
+  // Large (2000px) — always available; tablet / desktop hero default.
   sources.push(`${photo.blob_url} 2000w`)
 
-  // 4K variant (4000px) - for high-res displays
+  // 4K (4000px) — only for true 4K displays.
   if (photo.large_4k_url) {
     sources.push(`${photo.large_4k_url} 4000w`)
   }

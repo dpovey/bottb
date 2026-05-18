@@ -97,11 +97,14 @@ export function HeroCarousel({
       {/* Background Images with crossfade */}
       <div className="absolute inset-0 overflow-hidden">
         {effectiveImages.map((image, index) => {
-          // Build srcset if photo URLs available
+          // Build srcset if photo URLs available. Pass through every
+          // variant so the browser can pick the smallest one that fits.
           const srcSet =
             image.blob_url || image.medium_url || image.large_4k_url
               ? buildHeroSrcSet({
                   blob_url: image.blob_url || image.url,
+                  thumbnail_url: image.thumbnail_url,
+                  thumbnail_2x_url: image.thumbnail_2x_url,
                   medium_url: image.medium_url,
                   large_4k_url: image.large_4k_url,
                 })
