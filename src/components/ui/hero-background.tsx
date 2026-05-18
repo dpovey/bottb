@@ -91,15 +91,22 @@ export function HeroBackground({
         focalPoint={photo.hero_focal_point}
         sizes="100vw"
         priority
+        width={photo.width ?? undefined}
+        height={photo.height ?? undefined}
       />
     )
   }
 
-  // Multiple photos - crossfade animation
+  // Multiple photos - crossfade animation.
+  // The image at index 0 is the LCP candidate (it's what SSR/first paint
+  // renders) — keep it priority even after the client randomises, so the
+  // preload scanner doesn't demote it on re-render.
   return (
     <div className="absolute inset-0 overflow-hidden">
       {photos.map((photo, index) => {
         const isCurrent = index === currentIndex
+        const isInitial = index === 0
+        const eager = isCurrent || isInitial
 
         return (
           <div
@@ -114,7 +121,9 @@ export function HeroBackground({
               alt={alt}
               focalPoint={photo.hero_focal_point}
               sizes="100vw"
-              priority={isCurrent}
+              priority={eager}
+              width={photo.width ?? undefined}
+              height={photo.height ?? undefined}
             />
           </div>
         )

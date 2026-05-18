@@ -622,6 +622,8 @@ export async function getPhotosByLabel(
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+               p.xmp_metadata->>'medium_url' as medium_url,
                p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -637,6 +639,8 @@ export async function getPhotosByLabel(
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+               p.xmp_metadata->>'medium_url' as medium_url,
                p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -652,6 +656,8 @@ export async function getPhotosByLabel(
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+               p.xmp_metadata->>'medium_url' as medium_url,
                p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
@@ -667,6 +673,8 @@ export async function getPhotosByLabel(
       const { rows } = await sql<Photo>`
         SELECT p.*, e.name as event_name, b.name as band_name, c.name as company_name, b.company_slug as company_slug, c.icon_url as company_icon_url,
                COALESCE(p.xmp_metadata->>'thumbnail_url', REPLACE(p.blob_url, '/large.webp', '/thumbnail.webp')) as thumbnail_url,
+               p.xmp_metadata->>'thumbnail_2x_url' as thumbnail_2x_url,
+               p.xmp_metadata->>'medium_url' as medium_url,
                p.xmp_metadata->>'large_4k_url' as large_4k_url
         FROM photos p
         LEFT JOIN events e ON p.event_id = e.id
