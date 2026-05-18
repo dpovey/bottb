@@ -219,9 +219,22 @@ export function EventPageClient({
       {(event.status === 'voting' ||
         event.status === 'finalized' ||
         (event.status === 'upcoming' && eventInfo?.national_partner)) && (
-        <section className="py-8 border-b border-white/5">
+        <section
+          className={`border-b border-white/5 ${
+            event.status === 'upcoming' ? 'py-4' : 'py-8'
+          }`}
+        >
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            {event.status === 'upcoming' && eventInfo?.national_partner ? (
+              <div className="flex justify-center">
+                <SponsorBadge
+                  name={eventInfo.national_partner.name}
+                  logoUrl={eventInfo.national_partner.logo_url}
+                  link={eventInfo.national_partner.link}
+                  variant="inline"
+                />
+              </div>
+            ) : (
               <div className="flex flex-wrap gap-4 items-center">
                 {event.status === 'voting' && (
                   <Link href={`/vote/crowd/${eventId}`}>
@@ -252,17 +265,7 @@ export function EventPageClient({
                   </>
                 )}
               </div>
-              {event.status === 'upcoming' && eventInfo?.national_partner && (
-                <div className="flex justify-center sm:justify-end">
-                  <SponsorBadge
-                    name={eventInfo.national_partner.name}
-                    logoUrl={eventInfo.national_partner.logo_url}
-                    link={eventInfo.national_partner.link}
-                    variant="inline"
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </section>
       )}
