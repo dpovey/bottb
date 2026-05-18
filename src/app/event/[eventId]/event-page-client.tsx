@@ -127,6 +127,13 @@ export function EventPageClient({
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
+        {/* Floating Get Tickets CTA — top-right, below the fixed header */}
+        {event.status === 'upcoming' && eventInfo?.ticket_url && (
+          <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6 lg:top-8 lg:right-8">
+            <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+          </div>
+        )}
+
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
@@ -136,6 +143,7 @@ export function EventPageClient({
               timezone={event.timezone}
               size="lg"
               showYear
+              className="self-start md:self-auto"
             />
 
             {/* Event Info */}
@@ -210,17 +218,11 @@ export function EventPageClient({
       {/* Action Section */}
       {(event.status === 'voting' ||
         event.status === 'finalized' ||
-        event.status === 'upcoming') && (
+        (event.status === 'upcoming' && eventInfo?.national_partner)) && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
               <div className="flex flex-wrap gap-4 items-center">
-                {event.status === 'upcoming' && eventInfo?.ticket_url && (
-                  <TicketCTA
-                    ticketUrl={eventInfo.ticket_url}
-                    variant="compact"
-                  />
-                )}
                 {event.status === 'voting' && (
                   <Link href={`/vote/crowd/${eventId}`}>
                     <Button variant="accent" size="lg">
