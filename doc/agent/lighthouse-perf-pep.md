@@ -55,12 +55,9 @@ LCP element is the homepage hero `<img>`. The phase breakdown is telling:
 
 Load Delay dominates because the LCP image was rendered with `loading="lazy" fetchpriority="auto"`. Combined with the `lcp-lazy-loaded` audit failing, this is the smoking gun: **the homepage hero is being treated as below-the-fold by the browser**.
 
-The HeroCarousel already plumbs `loading={isCurrent ? 'eager' : 'lazy'}` and `fetchPriority={isCurrent ? 'high' : 'auto'}`. So one of two things is happening:
+The HeroCarousel already plumbs `loading={isCurrent ? 'eager' : 'lazy'}` and `fetchPriority={isCurrent ? 'high' : 'auto'}`. The likely cause: the browser's preload scanner doesn't see the eventual LCP image during HTML parsing — by the time React mounts and resolves which `<img>` is "current", the scanner has already started fetching everything else. The image element is in the DOM, but the preload scanner only reads attributes from the static HTML, so `loading="eager"` set via SSR'd attributes isn't enough on its own when the URL is buried in a srcset deep in the tree.
 
-1. The "current" image at the time of LCP is _not_ the one Lighthouse captured (after the 8 s interval rotates). Lighthouse sees the LCP element as whatever painted largest, which may be a still-lazy non-current image painting late.
-2. Or: during SSR, `currentIndex` isn't deterministic — `page.tsx:249` uses `Math.random()` to pick `heroInitialIndex` per request, marked with `eslint-disable react-hooks/purity`. The eager/lazy attributes hinge on this random number being preserved through hydration.
-
-Either way, the fix is to **eagerly prefetch one specific image** before the carousel even tries to be smart about it.
+The fix is to **make the LCP image discoverable during HTML parsing**, via a `<link rel="preload" as="image" imagesrcset="…" imagesizes="…">` in `<head>`, pointing at the same image (and srcset/sizes) the chosen `<img>` will render. Random SSR pick is fine — the only constraint is that one server render produces three consistent things: the preload `<link>`, the `<img>` with `loading="eager" fetchpriority="high"`, and the carousel's initial `currentIndex`. They all read the same random value from the same render, so picking randomly per request causes no hydration mismatch and no asset mismatch.
 
 ### CLS = 0.969 (score 0.02)
 
@@ -106,12 +103,12 @@ Smallest patch, biggest perf win.
 
 1. **Reserve hero height up front.** Give the homepage hero `<section>` an `aspect-ratio` (e.g. `aspect-[16/9]` on mobile, `aspect-[21/9]` on desktop) or an explicit `min-h-[60vh] md:min-h-[80vh]`. Match the dimensions Lighthouse measured for the LCP element (1350 × 900 desktop, viewport-width × ~60vh mobile). CLS goal: ≤ 0.05.
 
-2. **Make the first hero image truly eager.**
-   - Stop randomising `heroInitialIndex` on the server. Either:
-     - Always start at index 0 and let the existing client-side `useEffect` randomise once hydrated, or
-     - Use a stable per-request hash (e.g. the `Date.now() / 86400000 | 0`) so the SSR pick is the same as the client pick _and_ deterministic enough for caching.
-   - On the chosen first image only, emit a `<link rel="preload" as="image" href="…/medium.webp" imagesrcset="…" imagesizes="…">` in the document `<head>`. This forces the browser's preload scanner to discover the LCP image during HTML parsing, eliminating the 886 ms Load Delay.
-   - Drop `loading="lazy"` from the first image's `<img>` element. It should always be `loading="eager" fetchpriority="high"` and never depend on `isCurrent` for the _initial_ render.
+2. **Make the first hero image truly eager.** Random SSR pick is fine — keep it. The key is that one server render produces three consistent things:
+   - A `<link rel="preload" as="image" imagesrcset="…" imagesizes="…">` in `<head>` pointing at whichever image was randomly chosen. This forces the browser's preload scanner to discover the LCP image during HTML parsing, eliminating the 886 ms Load Delay.
+   - That same image rendered with `loading="eager" fetchpriority="high"`, independent of `isCurrent` (so it never gets demoted on later re-renders).
+   - The carousel's initial `currentIndex` matching the chosen image so the first paint and the preload point at the same bytes.
+
+   All three read the same `Math.random()` value from the same SSR render, so picking randomly per request causes no hydration mismatch and no asset mismatch. The existing `eslint-disable react-hooks/purity` on `page.tsx:249` is the only smell — the rule warns about randomness in component code, but `page.tsx` is an async server component that renders once per request, so the rule is overcautious here. A small `randomIndex()` helper in a server-only file would silence it more cleanly.
 
 3. **Width/height on every hero img.** Even though we use `object-cover`, the intrinsic `width`/`height` attributes let the browser reserve the right aspect during layout. Read them off the photo's stored `width`/`height` columns (already populated by the image-processor).
 
