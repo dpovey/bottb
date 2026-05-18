@@ -19,9 +19,9 @@ interface TicketCTAProps {
  * Fires a conversion (Meta Lead + LinkedIn + PostHog) on press. Uses
  * pointerdown so beacons leave before target=_blank steals focus.
  *
- * The default variant participates in the PostHog experiment
- * `get-tickets-cta-size` (small | large). Compact is unaffected. PostHog
- * auto-attaches the active variant to captured events for analysis.
+ * Both variants participate in the PostHog experiment
+ * `get-tickets-cta-size` (small | large). PostHog auto-attaches the
+ * active variant to captured events for analysis.
  */
 export function TicketCTA({
   ticketUrl,
@@ -34,7 +34,7 @@ export function TicketCTA({
   // variant from cached cookies before first client render, which would
   // diverge from the server-rendered control variant and trip hydration.
   const mounted = useMounted()
-  const isLarge = mounted && variant === 'default' && ctaSize === 'large'
+  const isLarge = mounted && ctaSize === 'large'
 
   const handleConversion = () => {
     trackTicketClick({
@@ -52,11 +52,21 @@ export function TicketCTA({
         target="_blank"
         rel="noopener noreferrer"
         onPointerDown={handleConversion}
-        className="inline-flex items-center gap-2 bg-accent text-bg px-5 py-2.5 rounded-full font-medium text-sm tracking-wide hover:bg-accent-light transition-colors group"
+        className={cn(
+          'inline-flex items-center gap-2 bg-accent text-bg rounded-full font-medium tracking-wide hover:bg-accent-light transition-colors group',
+          isLarge
+            ? 'w-full sm:w-auto justify-center px-6 py-3 text-base sm:px-7 sm:py-3.5 sm:text-lg'
+            : 'px-5 py-2.5 text-sm'
+        )}
       >
-        <TicketIcon className="w-4 h-4" />
+        <TicketIcon className={cn(isLarge ? 'w-5 h-5' : 'w-4 h-4')} />
         Get Tickets
-        <ExternalLinkIcon className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+        <ExternalLinkIcon
+          className={cn(
+            'opacity-60 group-hover:opacity-100 transition-opacity',
+            isLarge ? 'w-4 h-4' : 'w-3.5 h-3.5'
+          )}
+        />
       </Link>
     )
   }
