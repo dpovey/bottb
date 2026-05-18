@@ -27,6 +27,9 @@ interface HeroImage extends Partial<PhotoImageUrls> {
   /** High-resolution URL (e.g., 4K version) for large displays */
   urlHigh?: string
   focalPoint?: { x: number; y: number }
+  /** Intrinsic image dimensions for layout reservation. */
+  width?: number
+  height?: number
 }
 
 interface HeroCarouselProps {
@@ -105,6 +108,12 @@ export function HeroCarousel({
               : undefined
 
           const isCurrent = index === currentIndex
+          // The image at the server-chosen initialIndex is the LCP candidate —
+          // it must stay eager + high priority even after the carousel cycles,
+          // so the browser's preload scanner picks it up during HTML parsing
+          // and doesn't demote it on later re-renders.
+          const isInitial = index === safeInitialIndex
+          const eager = isCurrent || isInitial
           // Use blob_url (2000px) as default - sufficient for 1920px displays at 2x DPR
           // Let srcSet upgrade to 4K only when truly needed (saves ~1.8MB per image)
           const desktopSrc = image.blob_url || image.url
@@ -130,6 +139,8 @@ export function HeroCarousel({
                       srcSet={srcSet}
                       sizes="(max-width: 640px) 100vw, (max-width: 1920px) 100vw, 1920px"
                       alt="Battle of the Tech Bands event"
+                      width={image.width}
+                      height={image.height}
                       className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
                       style={
                         {
@@ -140,9 +151,9 @@ export function HeroCarousel({
                           ...mobilePan,
                         } as CSSProperties
                       }
-                      fetchPriority={isCurrent ? 'high' : 'auto'}
-                      loading={isCurrent ? 'eager' : 'lazy'}
-                      decoding={isCurrent ? 'sync' : 'async'}
+                      fetchPriority={eager ? 'high' : 'auto'}
+                      loading={eager ? 'eager' : 'lazy'}
+                      decoding={eager ? 'sync' : 'async'}
                     />
                     {/* Desktop: vertical cropping, use focal Y */}
                     {/* Uses 2000px by default - srcSet upgrades to 4K only for true 4K displays */}
@@ -152,6 +163,8 @@ export function HeroCarousel({
                       srcSet={srcSet}
                       sizes="(max-width: 1920px) 100vw, 1920px"
                       alt="Battle of the Tech Bands event"
+                      width={image.width}
+                      height={image.height}
                       className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
                       style={
                         {
@@ -162,9 +175,9 @@ export function HeroCarousel({
                           ...desktopPan,
                         } as CSSProperties
                       }
-                      fetchPriority={isCurrent ? 'high' : 'auto'}
-                      loading={isCurrent ? 'eager' : 'lazy'}
-                      decoding={isCurrent ? 'sync' : 'async'}
+                      fetchPriority={eager ? 'high' : 'auto'}
+                      loading={eager ? 'eager' : 'lazy'}
+                      decoding={eager ? 'sync' : 'async'}
                     />
                   </>
                 )

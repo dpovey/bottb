@@ -20,6 +20,7 @@ import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
 import { HeroCarousel } from '@/components/hero-carousel'
+import { buildHeroSrcSet } from '@/lib/photo-srcset'
 import {
   Button,
   ErrorBoundary,
@@ -241,15 +242,21 @@ export default async function HomePage() {
     focalPoint: photo.hero_focal_point,
     // Include photo URL fields for responsive srcset
     blob_url: photo.blob_url,
+    medium_url: photo.medium_url ?? undefined,
     large_4k_url: photo.large_4k_url ?? undefined,
+    width: photo.width ?? undefined,
+    height: photo.height ?? undefined,
   }))
 
-  // Compute random initial index server-side to avoid flash on hydration
-  // Intentionally random per-request for SSR - different hero on each page load
+  // Compute random initial index server-side to avoid flash on hydration.
+  // Random per-request is fine: this single value is read by both the
+  // <link rel="preload"> below and the carousel's initial currentIndex, so
+  // the preload and the rendered <img> always point at the same bytes.
   const heroInitialIndex =
     heroImages.length > 0
       ? Math.floor(Math.random() * heroImages.length) // eslint-disable-line react-hooks/purity
       : 0
+  const lcpImage = heroImages[heroInitialIndex]
 
   const initialPhotos = initialPhotosData
   const initialVideos = initialVideosData
@@ -375,12 +382,30 @@ export default async function HomePage() {
     })
   )
 
+  // Preload the LCP image — the browser's preload scanner reads <link> tags
+  // during HTML parsing, before React even mounts, so the LCP image starts
+  // downloading immediately. Use buildHeroSrcSet so the preload list is
+  // *identical* to the rendered <img>'s srcset — otherwise the browser
+  // can pick different URLs from each list (especially on low-DPR mobile)
+  // and the preload bytes get discarded.
+  const lcpPreloadSrcSet = lcpImage ? buildHeroSrcSet(lcpImage) : ''
+
   return (
     <PublicLayout
       headerVariant="transparent"
       footerVariant="full"
       navEvents={navEvents}
     >
+      {lcpImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpImage.blob_url}
+          imageSrcSet={lcpPreloadSrcSet || undefined}
+          imageSizes="(max-width: 1920px) 100vw, 1920px"
+          fetchPriority="high"
+        />
+      )}
       {/* Hero Section - supports multiple global hero images */}
       <HeroCarousel
         images={heroImages}

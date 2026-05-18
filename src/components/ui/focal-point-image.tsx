@@ -29,6 +29,9 @@ export interface FocalPointImageProps {
   sizes?: string
   /** Additional className for the container */
   className?: string
+  /** Intrinsic image dimensions — used to reserve layout aspect and avoid CLS. */
+  width?: number
+  height?: number
 }
 
 /**
@@ -53,6 +56,8 @@ export function FocalPointImage({
   priority = false,
   sizes = '(max-width: 1920px) 100vw, 1920px',
   className,
+  width,
+  height,
 }: FocalPointImageProps) {
   // Build srcset if photoUrls available
   const srcSet = photoUrls ? buildHeroSrcSet(photoUrls) : undefined
@@ -76,6 +81,8 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
+        width={width}
+        height={height}
         className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns-pan md:hidden"
         style={
           {
@@ -96,6 +103,8 @@ export function FocalPointImage({
         srcSet={srcSet}
         sizes={sizes}
         alt={alt}
+        width={width}
+        height={height}
         className="absolute inset-0 w-full h-full object-cover motion-safe:animate-ken-burns hidden md:block"
         style={
           {
