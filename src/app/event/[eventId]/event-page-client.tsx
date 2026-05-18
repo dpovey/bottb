@@ -213,45 +213,52 @@ export function EventPageClient({
         event.status === 'upcoming') && (
         <section className="py-8 border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex flex-wrap gap-4 items-center">
-              {event.status === 'upcoming' && eventInfo?.ticket_url && (
-                <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
-              )}
+            <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="flex flex-wrap gap-4 items-center">
+                {event.status === 'upcoming' && eventInfo?.ticket_url && (
+                  <TicketCTA
+                    ticketUrl={eventInfo.ticket_url}
+                    variant="compact"
+                  />
+                )}
+                {event.status === 'voting' && (
+                  <Link href={`/vote/crowd/${eventId}`}>
+                    <Button variant="accent" size="lg">
+                      Vote for Bands
+                    </Button>
+                  </Link>
+                )}
+                {event.status === 'finalized' && !hasWinner && (
+                  <Link href={`/results/${eventId}`}>
+                    <Button variant="accent" size="lg">
+                      Results
+                    </Button>
+                  </Link>
+                )}
+                {event.status !== 'upcoming' && (
+                  <>
+                    <Link href={`/photos?event=${eventId}`}>
+                      <Button variant="outline-solid" size="lg">
+                        Photos
+                      </Button>
+                    </Link>
+                    <Link href={`/videos?event=${eventId}`}>
+                      <Button variant="outline-solid" size="lg">
+                        Videos
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
               {event.status === 'upcoming' && eventInfo?.national_partner && (
-                <SponsorBadge
-                  name={eventInfo.national_partner.name}
-                  logoUrl={eventInfo.national_partner.logo_url}
-                  link={eventInfo.national_partner.link}
-                  variant="inline"
-                />
-              )}
-              {event.status === 'voting' && (
-                <Link href={`/vote/crowd/${eventId}`}>
-                  <Button variant="accent" size="lg">
-                    Vote for Bands
-                  </Button>
-                </Link>
-              )}
-              {event.status === 'finalized' && !hasWinner && (
-                <Link href={`/results/${eventId}`}>
-                  <Button variant="accent" size="lg">
-                    Results
-                  </Button>
-                </Link>
-              )}
-              {event.status !== 'upcoming' && (
-                <>
-                  <Link href={`/photos?event=${eventId}`}>
-                    <Button variant="outline-solid" size="lg">
-                      Photos
-                    </Button>
-                  </Link>
-                  <Link href={`/videos?event=${eventId}`}>
-                    <Button variant="outline-solid" size="lg">
-                      Videos
-                    </Button>
-                  </Link>
-                </>
+                <div className="flex justify-center sm:justify-end">
+                  <SponsorBadge
+                    name={eventInfo.national_partner.name}
+                    logoUrl={eventInfo.national_partner.logo_url}
+                    link={eventInfo.national_partner.link}
+                    variant="inline"
+                  />
+                </div>
               )}
             </div>
           </div>
