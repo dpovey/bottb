@@ -57,13 +57,13 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
               href={`/companies/${company.slug}`}
               className="group relative shrink-0"
             >
-              <div className="flex h-8 items-center justify-center sm:h-10">
+              <div className="flex h-10 items-center justify-center sm:h-12 lg:h-14">
                 <Image
                   src={company.logoUrl}
                   alt={`${company.name} logo`}
                   width={logoIntrinsicWidths.marquee.width}
                   height={logoIntrinsicWidths.marquee.height}
-                  className="h-full w-auto max-w-[140px] object-contain opacity-40 grayscale transition-all duration-200 group-hover:opacity-100 group-hover:grayscale-0"
+                  className="h-full w-auto object-contain opacity-40 grayscale transition-all duration-200 group-hover:opacity-100 group-hover:grayscale-0"
                   loading="lazy"
                   sizes={logoSizes.marquee}
                 />
