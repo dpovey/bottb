@@ -50,12 +50,12 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
       className="py-6 bg-bg border-b border-white/5"
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8 sm:gap-x-20 sm:gap-y-10 md:gap-x-28 lg:gap-x-32 lg:gap-y-12">
+        <div className="flex flex-wrap items-center justify-center">
           {companies.map((company) => (
             <Link
               key={company.slug}
               href={`/companies/${company.slug}`}
-              className="group relative shrink-0"
+              className="group relative shrink-0 px-6 py-3 sm:px-8 sm:py-4 md:px-10 lg:px-12 lg:py-5"
             >
               <div className="flex h-10 items-center justify-center sm:h-12 lg:h-14">
                 <Image
