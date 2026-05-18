@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useFeatureFlagVariantKey } from 'posthog-js/react'
 import { TicketIcon, ExternalLinkIcon } from '@/components/icons'
 import { trackTicketClick } from '@/lib/analytics'
+import { useMounted } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 
 interface TicketCTAProps {
@@ -29,7 +30,11 @@ export function TicketCTA({
   variant = 'default',
 }: TicketCTAProps) {
   const ctaSize = useFeatureFlagVariantKey('get-tickets-cta-size')
-  const isLarge = variant === 'default' && ctaSize === 'large'
+  // Defer flag evaluation until after hydration. PostHog can resolve the
+  // variant from cached cookies before first client render, which would
+  // diverge from the server-rendered control variant and trip hydration.
+  const mounted = useMounted()
+  const isLarge = mounted && variant === 'default' && ctaSize === 'large'
 
   const handleConversion = () => {
     trackTicketClick({
