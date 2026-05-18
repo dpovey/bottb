@@ -27,6 +27,8 @@ const JUMBO: NationalPartner = {
 }
 
 const eventPartners: Record<string, NationalPartner> = {
+  'brisbane-2025': JUMBO,
+  'sydney-2025': JUMBO,
   'melbourne-2026': JUMBO,
 }
 
