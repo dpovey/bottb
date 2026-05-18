@@ -127,10 +127,12 @@ export function EventPageClient({
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
-        {/* Floating Get Tickets CTA — top-right, below the fixed header */}
+        {/* Floating Get Tickets CTA — top-right of the content max-width */}
         {event.status === 'upcoming' && eventInfo?.ticket_url && (
-          <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6 lg:top-8 lg:right-8">
-            <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+          <div className="absolute inset-x-0 top-4 z-20 sm:top-6 lg:top-8">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-end">
+              <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+            </div>
           </div>
         )}
 
