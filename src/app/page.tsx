@@ -20,7 +20,12 @@ import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
 import { HeroCarousel } from '@/components/hero-carousel'
-import { Button, ErrorBoundary, CompactErrorFallback } from '@/components/ui'
+import {
+  Button,
+  ErrorBoundary,
+  CompactErrorFallback,
+  SponsorBadge,
+} from '@/components/ui'
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -535,24 +540,10 @@ export default async function HomePage() {
       </ErrorBoundary>
 
       {/* Powered by Jumbo Interactive */}
-      <section className="py-10 bg-bg border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <Link
-            href="/sponsors"
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 group"
-          >
-            <span className="text-xs tracking-[0.3em] uppercase text-text-dim">
-              Powered by
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
-              alt="Jumbo Interactive"
-              className="h-8 sm:h-10 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
-            />
-          </Link>
-        </div>
-      </section>
+      <SponsorBadge
+        name="Jumbo Interactive"
+        logoUrl="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
+      />
 
       {/* Random Photo Strip - Wrapped in Suspense + ErrorBoundary */}
       <ErrorBoundary

@@ -2,7 +2,9 @@ import { forwardRef } from 'react'
 import type { IconProps } from '../types'
 
 /**
- * Ticket icon for events
+ * Ticket icon — stacked-tickets silhouette.
+ * Source: Lucide "tickets" icon (https://lucide.dev/icons/tickets),
+ * ISC licensed (https://github.com/lucide-icons/lucide/blob/main/LICENSE).
  */
 export const TicketIcon = forwardRef<SVGSVGElement, IconProps>(
   ({ size = 20, className, ...props }, ref) => (
@@ -13,15 +15,18 @@ export const TicketIcon = forwardRef<SVGSVGElement, IconProps>(
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
+      strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
       {...props}
     >
-      <path d="M2 9a3 3 0 013-3h14a3 3 0 013 3v0a3 3 0 01-3 3v0a3 3 0 00-3 3v0a3 3 0 01-3 3H5a3 3 0 01-3-3v-6z" />
-      <path d="M13 6v3M13 15v3" />
+      <path d="m3.173 8.18 11-5a2 2 0 0 1 2.647.993L18.56 8" />
+      <path d="M6 10V8" />
+      <path d="M6 14v1" />
+      <path d="M6 19v2" />
+      <rect x="2" y="8" width="20" height="13" rx="2" />
     </svg>
   )
 )

@@ -12,6 +12,7 @@ import {
   CompanyBadge,
   NumberedIndicator,
   TicketCTA,
+  SponsorBadge,
   HeroBackground,
   photosToHeroImages,
 } from '@/components/ui'
@@ -20,6 +21,7 @@ import { MarkdownText } from '@/lib/markdown'
 import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
 import { ShortsCarousel } from '@/components/shorts-carousel'
+import { EventCompanyStrip } from '@/components/event-company-strip'
 import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
 import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
@@ -64,20 +66,14 @@ function getStatusBadge(status: string, hasWinner: boolean) {
   }
 }
 
-interface EventInfo {
-  image_url?: string
-  description?: string
-  website?: string
-  ticket_url?: string
-  social_media?: {
-    twitter?: string
-    instagram?: string
-    facebook?: string
-  }
-  venue_info?: string
+/**
+ * Local extension of the central Event.info type. The central type
+ * (src/lib/db-types.ts) describes the structured fields; this adds the
+ * historic scoring_version and winner fields used by older events.
+ */
+type EventInfo = NonNullable<DbEvent['info']> & {
   scoring_version?: string
   winner?: string
-  [key: string]: unknown
 }
 
 export function EventPageClient({
@@ -120,6 +116,15 @@ export function EventPageClient({
         {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/60 to-transparent" />
 
+        {/* Floating Get Tickets CTA — top-right of the content max-width */}
+        {event.status === 'upcoming' && eventInfo?.ticket_url && (
+          <div className="absolute inset-x-0 top-4 z-20 sm:top-6 lg:top-8">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-end">
+              <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-8 pb-8">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
@@ -129,6 +134,7 @@ export function EventPageClient({
               timezone={event.timezone}
               size="lg"
               showYear
+              className="self-start md:self-auto"
             />
 
             {/* Event Info */}
@@ -151,6 +157,9 @@ export function EventPageClient({
           </div>
         </div>
       </section>
+
+      {/* Participating Companies Strip */}
+      <EventCompanyStrip bands={bands} />
 
       {/* Winner Section - For all finalized events with a winner */}
       {hasWinner && overallWinner && (
@@ -200,42 +209,54 @@ export function EventPageClient({
       {/* Action Section */}
       {(event.status === 'voting' ||
         event.status === 'finalized' ||
-        event.status === 'upcoming') && (
-        <section className="py-8 border-b border-white/5">
+        (event.status === 'upcoming' && eventInfo?.national_partner)) && (
+        <section
+          className={`border-b border-white/5 ${
+            event.status === 'upcoming' ? 'py-4' : 'py-8'
+          }`}
+        >
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex flex-wrap gap-4 items-center">
-              {event.status === 'upcoming' && eventInfo?.ticket_url && (
-                <TicketCTA ticketUrl={eventInfo.ticket_url} variant="compact" />
-              )}
-              {event.status === 'voting' && (
-                <Link href={`/vote/crowd/${eventId}`}>
-                  <Button variant="accent" size="lg">
-                    Vote for Bands
-                  </Button>
-                </Link>
-              )}
-              {event.status === 'finalized' && !hasWinner && (
-                <Link href={`/results/${eventId}`}>
-                  <Button variant="accent" size="lg">
-                    Results
-                  </Button>
-                </Link>
-              )}
-              {event.status !== 'upcoming' && (
-                <>
-                  <Link href={`/photos?event=${eventId}`}>
-                    <Button variant="outline-solid" size="lg">
-                      Photos
+            {event.status === 'upcoming' && eventInfo?.national_partner ? (
+              <div className="flex justify-center">
+                <SponsorBadge
+                  name={eventInfo.national_partner.name}
+                  logoUrl={eventInfo.national_partner.logo_url}
+                  link={eventInfo.national_partner.link}
+                  variant="inline"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-4 items-center">
+                {event.status === 'voting' && (
+                  <Link href={`/vote/crowd/${eventId}`}>
+                    <Button variant="accent" size="lg">
+                      Vote for Bands
                     </Button>
                   </Link>
-                  <Link href={`/videos?event=${eventId}`}>
-                    <Button variant="outline-solid" size="lg">
-                      Videos
+                )}
+                {event.status === 'finalized' && !hasWinner && (
+                  <Link href={`/results/${eventId}`}>
+                    <Button variant="accent" size="lg">
+                      Results
                     </Button>
                   </Link>
-                </>
-              )}
-            </div>
+                )}
+                {event.status !== 'upcoming' && (
+                  <>
+                    <Link href={`/photos?event=${eventId}`}>
+                      <Button variant="outline-solid" size="lg">
+                        Photos
+                      </Button>
+                    </Link>
+                    <Link href={`/videos?event=${eventId}`}>
+                      <Button variant="outline-solid" size="lg">
+                        Videos
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}

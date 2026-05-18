@@ -41,7 +41,7 @@ jobs:
         continue-on-error: true
         run: |
           # Run schema validation and capture output
-          pnpm schema:validate --url="${{ github.event.deployment_status.target_url }}?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" --json > schema-results.json 2>&1 || true
+          pnpm -s schema:validate --url="${{ github.event.deployment_status.target_url }}?x-vercel-protection-bypass=${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" --json > schema-results.json 2> schema-errors.log || cat schema-errors.log
 
           # Extract summary from JSON output
           if [ -f schema-results.json ]; then
