@@ -21,8 +21,11 @@ import { fetch } from 'undici'
 // Parse command line arguments
 const args = process.argv.slice(2)
 const getArg = (name: string, defaultValue: string): string => {
-  const arg = args.find((a) => a.startsWith(`--${name}=`))
-  return arg ? arg.split('=')[1] : defaultValue
+  const prefix = `--${name}=`
+  const arg = args.find((a) => a.startsWith(prefix))
+  // Use slice() rather than split('=')[1] so values containing '='
+  // (e.g. URLs with query strings like ?bypass=SECRET) survive intact.
+  return arg ? arg.slice(prefix.length) : defaultValue
 }
 const hasFlag = (name: string): boolean => args.includes(`--${name}`)
 
@@ -112,12 +115,19 @@ interface AuditResult {
 }
 
 /**
- * Fetch and parse the sitemap
+ * Fetch and parse the sitemap.
+ *
+ * Builds URLs with `new URL()` so that a query string on baseUrl (e.g. the
+ * Vercel preview's `?x-vercel-protection-bypass=...` token) is preserved on
+ * both the sitemap request and every rewritten page URL — otherwise CI runs
+ * against protected previews 401 on every fetch.
  */
 async function fetchSitemap(baseUrl: string): Promise<SitemapUrl[]> {
-  const sitemapUrl = `${baseUrl}/sitemap.xml`
+  const base = new URL(baseUrl)
+  const sitemapUrl = new URL('/sitemap.xml', base.origin)
+  sitemapUrl.search = base.search
 
-  const response = await fetch(sitemapUrl)
+  const response = await fetch(sitemapUrl.toString())
   if (!response.ok) {
     throw new Error(
       `Failed to fetch sitemap: ${response.status} ${response.statusText}`
@@ -134,14 +144,15 @@ async function fetchSitemap(baseUrl: string): Promise<SitemapUrl[]> {
   const urlset = result.urlset?.url || []
   const urls: { loc: string }[] = Array.isArray(urlset) ? urlset : [urlset]
 
-  // Rewrite URLs to use our target baseUrl and extract paths
+  // Rewrite each URL to use our target origin (and re-attach the baseUrl's
+  // query string, if any, so protected previews stay accessible).
   return urls.map((u) => {
     const originalUrl = new URL(u.loc)
-    const targetUrl = new URL(baseUrl)
-    const rewrittenUrl = `${targetUrl.origin}${originalUrl.pathname}`
+    const rewritten = new URL(originalUrl.pathname, base.origin)
+    rewritten.search = base.search
 
     return {
-      loc: rewrittenUrl,
+      loc: rewritten.toString(),
       path: originalUrl.pathname,
     }
   })
