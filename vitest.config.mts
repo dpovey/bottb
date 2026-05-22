@@ -15,6 +15,7 @@ export default defineConfig({
       '**/*.stories.{ts,tsx}',
       '**/e2e/**',
       '**/.worktrees/**',
+      '**/.claude/worktrees/**',
     ],
     coverage: {
       include: ['src/**/*.{ts,tsx}'],
