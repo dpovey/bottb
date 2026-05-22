@@ -55,14 +55,20 @@ export interface SetlistSongInput {
 }
 
 /**
- * Get all setlist songs for a band
+ * Get all setlist songs for a band.
+ *
+ * @param bandId - the band whose setlist to fetch
+ * @param publicOnly - when true, only locked songs from finalized events are
+ *   returned (the public visibility rule). Defaults to false so admin callers
+ *   see the full setlist, including pending songs.
  */
 export async function getSetlistForBand(
-  bandId: string
+  bandId: string,
+  publicOnly = false
 ): Promise<SetlistSong[]> {
   try {
     const { rows } = await sql<SetlistSong>`
-      SELECT s.*, 
+      SELECT s.*,
              b.name as band_name,
              b.event_id,
              e.name as event_name,
@@ -75,6 +81,10 @@ export async function getSetlistForBand(
       JOIN events e ON b.event_id = e.id
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE s.band_id = ${bandId}
+        AND (
+          NOT ${publicOnly}::boolean
+          OR (e.status = 'finalized' AND s.status = 'locked')
+        )
       ORDER BY s.position ASC
     `
     return rows
@@ -115,7 +125,9 @@ export async function getSetlistsForEvent(
 }
 
 /**
- * Get all setlist songs across all events (for the /songs page)
+ * Get all setlist songs across all events (for the /songs page).
+ * Only returns locked songs from finalized events — setlists stay hidden
+ * until a band's setlist is locked and the event's results are posted.
  */
 export interface GetAllSongsOptions {
   eventId?: string
@@ -148,12 +160,14 @@ export async function getAllSongs(
       JOIN bands b ON s.band_id = b.id
       JOIN events e ON b.event_id = e.id
       LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
-        (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
+      WHERE
+        e.status = 'finalized'
+        AND s.status = 'locked'
+        AND (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR s.band_id = ${bandId || null})
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
-          ${searchPattern}::text IS NULL 
+          ${searchPattern}::text IS NULL
           OR s.title ILIKE ${searchPattern || ''}
           OR s.artist ILIKE ${searchPattern || ''}
           OR s.transition_to_title ILIKE ${searchPattern || ''}
@@ -183,12 +197,15 @@ export async function getSongCount(
       SELECT COUNT(*) as count
       FROM setlist_songs s
       JOIN bands b ON s.band_id = b.id
-      WHERE 
-        (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
+      JOIN events e ON b.event_id = e.id
+      WHERE
+        e.status = 'finalized'
+        AND s.status = 'locked'
+        AND (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR s.band_id = ${bandId || null})
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
-          ${searchPattern}::text IS NULL 
+          ${searchPattern}::text IS NULL
           OR s.title ILIKE ${searchPattern || ''}
           OR s.artist ILIKE ${searchPattern || ''}
           OR s.transition_to_title ILIKE ${searchPattern || ''}
@@ -463,16 +480,20 @@ export async function getSongPerformances(
       JOIN bands b ON s.band_id = b.id
       JOIN events e ON b.event_id = e.id
       LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
-        -- Match primary title/artist
-        (LOWER(s.title) = ${lowerTitle} AND LOWER(s.artist) = ${lowerArtist})
-        -- Match transition_to title/artist
-        OR (LOWER(s.transition_to_title) = ${lowerTitle} AND LOWER(s.transition_to_artist) = ${lowerArtist})
-        -- Match in additional_songs array (JSONB search)
-        OR EXISTS (
-          SELECT 1 FROM jsonb_array_elements(s.additional_songs) AS elem
-          WHERE LOWER(elem->>'title') = ${lowerTitle}
-            AND LOWER(elem->>'artist') = ${lowerArtist}
+      WHERE
+        e.status = 'finalized'
+        AND s.status = 'locked'
+        AND (
+          -- Match primary title/artist
+          (LOWER(s.title) = ${lowerTitle} AND LOWER(s.artist) = ${lowerArtist})
+          -- Match transition_to title/artist
+          OR (LOWER(s.transition_to_title) = ${lowerTitle} AND LOWER(s.transition_to_artist) = ${lowerArtist})
+          -- Match in additional_songs array (JSONB search)
+          OR EXISTS (
+            SELECT 1 FROM jsonb_array_elements(s.additional_songs) AS elem
+            WHERE LOWER(elem->>'title') = ${lowerTitle}
+              AND LOWER(elem->>'artist') = ${lowerArtist}
+          )
         )
       ORDER BY e.date DESC, b.name ASC
     `

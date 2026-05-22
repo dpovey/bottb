@@ -18,8 +18,9 @@ interface RouteContext {
 
 /**
  * GET /api/setlist/[bandId]
- * Public endpoint to get setlist for a band
- * Note: Returns empty array if event is not finalized (visibility controlled by caller)
+ * Public endpoint to get setlist for a band.
+ * Returns only locked songs from finalized events — setlists stay hidden
+ * until the setlist is locked and the event's results are posted.
  */
 async function handleGetSetlist(request: NextRequest) {
   try {
@@ -28,7 +29,8 @@ async function handleGetSetlist(request: NextRequest) {
     const pathParts = url.pathname.split('/')
     const bandId = pathParts[pathParts.length - 1]
 
-    const songs = await getSetlistForBand(bandId)
+    // publicOnly = true: only locked songs from finalized events are returned.
+    const songs = await getSetlistForBand(bandId, true)
 
     return NextResponse.json({ songs })
   } catch (error) {

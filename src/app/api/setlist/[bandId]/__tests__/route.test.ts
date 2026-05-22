@@ -40,58 +40,43 @@ describe('/api/setlist/[bandId]', () => {
   })
 
   describe('GET', () => {
-    it('returns setlist for a band', async () => {
-      const bandId = 'band-1'
-      const mockSetlist = [
-        {
-          id: 'song-1',
-          band_id: bandId,
-          position: 1,
-          song_type: 'cover',
-          title: 'Africa',
-          artist: 'Toto',
-          additional_songs: [],
-          transition_to_title: null,
-          transition_to_artist: null,
-          youtube_video_id: null,
-          status: 'pending',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-        },
-        {
-          id: 'song-2',
-          band_id: bandId,
-          position: 2,
-          song_type: 'mashup',
-          title: 'Super Freaky Girl',
-          artist: 'Nicki Minaj',
-          additional_songs: [
-            { title: 'Call Me Maybe', artist: 'Carly Rae Jepsen' },
-          ],
-          transition_to_title: null,
-          transition_to_artist: null,
-          youtube_video_id: 'abc123',
-          status: 'locked',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-        },
-      ]
+    const lockedSong = {
+      id: 'song-2',
+      band_id: 'band-1',
+      position: 2,
+      song_type: 'mashup',
+      title: 'Super Freaky Girl',
+      artist: 'Nicki Minaj',
+      additional_songs: [
+        { title: 'Call Me Maybe', artist: 'Carly Rae Jepsen' },
+      ],
+      transition_to_title: null,
+      transition_to_artist: null,
+      youtube_video_id: 'abc123',
+      status: 'locked',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    }
 
-      mockGetSetlistForBand.mockResolvedValue(mockSetlist)
+    it('returns the public setlist for a band', async () => {
+      const bandId = 'band-1'
+      // getSetlistForBand applies the finalized + locked filter itself; the
+      // route must request it in public mode.
+      mockGetSetlistForBand.mockResolvedValue([lockedSong])
 
       const request = new NextRequest(`http://localhost/api/setlist/${bandId}`)
       const response = await GET(request, {
         params: Promise.resolve({ bandId }),
       })
 
-      expect(mockGetSetlistForBand).toHaveBeenCalledWith(bandId)
+      expect(mockGetSetlistForBand).toHaveBeenCalledWith(bandId, true)
       expect(response.status).toBe(200)
 
       const data = await response.json()
-      expect(data).toEqual({ songs: mockSetlist })
+      expect(data).toEqual({ songs: [lockedSong] })
     })
 
-    it('returns empty array for band with no setlist', async () => {
+    it('returns empty array when no songs are publicly visible', async () => {
       const bandId = 'band-empty'
       mockGetSetlistForBand.mockResolvedValue([])
 

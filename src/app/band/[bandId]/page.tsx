@@ -510,10 +510,12 @@ export default async function BandPage({
     getVideos({ bandId, videoType: 'short' }),
   ])
 
-  // Fetch setlist for this band (only shown when event is finalized)
+  // Fetch setlist for this band. Publicly it is only shown once the event is
+  // finalized and the setlist is locked; admins see the full setlist
+  // (including pending songs) for preview.
   let setlist: SetlistSong[] = []
   if (eventStatus === 'finalized' || isAdmin) {
-    setlist = await getSetlistForBand(bandId)
+    setlist = await getSetlistForBand(bandId, !isAdmin)
   }
 
   // Only fetch scores if event is finalized or user is admin
@@ -835,7 +837,8 @@ export default async function BandPage({
         </section>
       )}
 
-      {/* Setlist Section - Only shown after event is finalized */}
+      {/* Setlist Section - Only shown after the event is finalized and the
+          setlist is locked (admins see it unconditionally for preview) */}
       {canShowScores && <SetlistSection songs={setlist} />}
 
       {/* Score Breakdown - For detailed scoring versions (2025.1, 2026.1) */}
