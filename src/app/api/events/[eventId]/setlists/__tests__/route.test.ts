@@ -94,6 +94,25 @@ describe('/api/events/[eventId]/setlists', () => {
       },
     ]
 
+    beforeEach(() => {
+      // GET is admin-only; default to an authenticated admin session.
+      mockAuth.mockResolvedValue({ user: { id: 'admin-1', isAdmin: true } })
+    })
+
+    it('returns 401 when not authenticated as admin', async () => {
+      mockAuth.mockResolvedValue(null)
+
+      const request = new NextRequest(
+        'http://localhost/api/events/event-1/setlists'
+      )
+      const response = await GET(request, {
+        params: Promise.resolve({ eventId: 'event-1' }),
+      })
+
+      expect(response.status).toBe(401)
+      expect(mockGetSetlistsForEvent).not.toHaveBeenCalled()
+    })
+
     it('returns all setlists grouped by band with conflicts', async () => {
       const eventId = 'event-1'
 

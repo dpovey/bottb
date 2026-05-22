@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import {
   getSetlistsForEvent,
   detectSongConflicts,
@@ -14,11 +14,13 @@ interface RouteContext {
 
 /**
  * GET /api/events/[eventId]/setlists
- * Get all setlists for an event, grouped by band, with conflict detection
+ * Admin endpoint: get all setlists for an event, grouped by band, with
+ * conflict detection. Returns every song regardless of finalized/locked
+ * status, so it is restricted to admins.
  */
-export async function GET(_request: NextRequest, context: RouteContext) {
+const getHandler: ProtectedApiHandler = async (_request, context) => {
   try {
-    const { eventId } = await context.params
+    const { eventId } = await (context as RouteContext).params
 
     const [songs, conflicts] = await Promise.all([
       getSetlistsForEvent(eventId),
@@ -66,6 +68,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     )
   }
 }
+
+export const GET = withAdminAuth(getHandler)
 
 /**
  * POST /api/events/[eventId]/setlists
