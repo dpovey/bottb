@@ -59,9 +59,6 @@ if (typeof window !== 'undefined') {
           capture_unhandled_rejections: true,
           capture_console_errors: false,
         },
-        // Disable session recording on initial load to defer lazy-recorder.js
-        // Session recording can be enabled later if needed
-        disable_session_recording: true,
         loaded: (posthog) => {
           // Enable debug mode in development for easier debugging
           if (nodeEnv === 'development') {
