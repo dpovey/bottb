@@ -10,7 +10,8 @@ import { LinkedInInsight } from '@/components/linkedin-insight'
 import { AdminToggle } from '@/components/admin-toggle'
 import { AdminToolbar } from '@/components/admin-toolbar'
 import { ScrollRestoration } from '@/components/scroll-restoration'
-import { PostHogProvider } from '@/components/posthog-provider'
+import { PostHogProvider, PostHogPageView } from '@posthog/next'
+import { PostHogBootstrap } from '@/components/posthog-bootstrap'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { getBaseUrl } from '@/lib/seo'
 import { OrganizationJsonLd } from '@/components/seo'
@@ -128,7 +129,23 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <NavigationProgress />
         </Suspense>
-        <PostHogProvider>
+        <PostHogProvider
+          clientOptions={{
+            api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || '/ph',
+            ui_host:
+              process.env.NEXT_PUBLIC_POSTHOG_UI_HOST ||
+              'https://us.posthog.com',
+            person_profiles: 'identified_only',
+            capture_exceptions: {
+              capture_unhandled_errors: true,
+              capture_unhandled_rejections: true,
+              capture_console_errors: false,
+            },
+            debug: process.env.NODE_ENV === 'development',
+          }}
+        >
+          <PostHogBootstrap />
+          <PostHogPageView />
           <Providers>
             {children}
             <AdminToolbar />
