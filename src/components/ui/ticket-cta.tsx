@@ -38,7 +38,7 @@ export function TicketCTA({
         target="_blank"
         rel="noopener noreferrer"
         onPointerDown={handleConversion}
-        className="inline-flex items-center gap-2 bg-accent text-bg rounded-full font-medium tracking-wide hover:bg-accent-light transition-colors group w-full sm:w-auto justify-center px-6 py-3 text-base sm:px-7 sm:py-3.5 sm:text-lg"
+        className="inline-flex items-center gap-2 bg-accent text-bg rounded-full font-medium tracking-wide hover:bg-accent-light transition-colors group px-6 py-3 text-base sm:px-7 sm:py-3.5 sm:text-lg"
       >
         <TicketIcon className="w-5 h-5" />
         Get Tickets
