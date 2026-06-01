@@ -47,9 +47,6 @@ importers:
       '@orama/orama':
         specifier: ^3.1.18
         version: 3.1.18
-      '@posthog/next':
-        specifier: 0.4.67
-        version: 0.4.67(@types/react@19.2.15)(@vercel/functions@3.6.1)(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@posthog/nextjs-config':
         specifier: ^1.9.16
         version: 1.9.16(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(webpack@5.104.1(esbuild@0.27.7))
@@ -62,9 +59,6 @@ importers:
       '@vercel/blob':
         specifier: ^2.0.0
         version: 2.0.0
-      '@vercel/functions':
-        specifier: ^3.6.1
-        version: 3.6.1
       '@vercel/postgres':
         specifier: ^0.10.0
         version: 0.10.0
@@ -107,9 +101,6 @@ importers:
       posthog-js:
         specifier: ^1.376.0
         version: 1.376.0
-      posthog-node:
-        specifier: ^5.35.7
-        version: 5.35.7
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -1620,25 +1611,8 @@ packages:
   '@posthog/core@1.28.0':
     resolution: {integrity: sha512-753giUMWuk602UtS101tDZuNcwiKkr+3UEhLgfOwHAk2W32n53knOxAjyWT0JwMq5/+0uSQ2y4uaZXQAxwvBSw==}
 
-  '@posthog/core@1.29.13':
-    resolution: {integrity: sha512-7Me5zaeAue/wmA364Go8ChYbsVAfNAHbtDxXopWu3D6hq9PVScUcauRgjD1njgvP8NzN91SrIllE+pri3XvJVw==}
-
-  '@posthog/core@1.29.14':
-    resolution: {integrity: sha512-IqfiD5rxdgPHsZMz45uQu824a5CEnpXRIU6QSoQT4NWjLbzKPMxg5zpHSCz+DMbDJ+Ii53T/tO76jGztpTd7uQ==}
-
   '@posthog/core@1.29.9':
     resolution: {integrity: sha512-DjvuIyBZ2Z/gBhtZlITlM2D8PlnMsHSQ1D78dbUYoVsgGguvanpJTobZObjLlFkybyvfZFYkpoJkFNI/2Pw4IQ==}
-
-  '@posthog/next@0.4.67':
-    resolution: {integrity: sha512-uOJmHkwsQQGcP+QACsWjGQNOArSvA056qZ25nme7crHUMpDC14b2pBLvmw5ZI4eBJAIGgljgcnVbscOLSXEnbQ==}
-    peerDependencies:
-      '@vercel/functions': '>=1.0.0'
-      next: '>=13.0.0'
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-    peerDependenciesMeta:
-      '@vercel/functions':
-        optional: true
 
   '@posthog/nextjs-config@1.9.16':
     resolution: {integrity: sha512-/L6YzUpy09bO5rHw1+JNBQQysZS5BtNQkUqyjf6WbTqzTp8FfNdJxtnKExKL82EykCtLdc7W8PFPEP1foLijyw==}
@@ -1649,27 +1623,11 @@ packages:
   '@posthog/plugin-utils@1.1.1':
     resolution: {integrity: sha512-vCbaFeuwf9Pc0gI5bkCGvkOn2Bxru2KbZJtOa6loTJjanCNoMsjECEPijr7X5oln1IIg+VKnGiwV4tKY2b7NuQ==}
 
-  '@posthog/react@1.9.1':
-    resolution: {integrity: sha512-tIGjs8WzKPrHQmSyM/2a3GoedQkttkxgmCsdn0kgy+6mIiSNk36FAFGKbWFJ7/Kln5bHwcM/MQhiGYbwQG8bQQ==}
-    peerDependencies:
-      '@types/react': 19.2.15
-      posthog-js: '>=1.257.2'
-      react: '>=16.8.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
   '@posthog/types@1.372.6':
     resolution: {integrity: sha512-sqI36LBvuo8xcYsXIlVa0q3IXJJjqtatM2LrXlyOM7kgHrldBwS4ldzaTXrTdpe/TiIl1b4ZHxtSHMzPig+DnQ==}
 
   '@posthog/types@1.376.0':
     resolution: {integrity: sha512-gbFfxCuZDs/D4QZMwdE+smD1jsuqgGpS6yKGHZZ19foxMy8RYHsU1E47iG1b88n/uN02fAabLibVwuxLtq8juw==}
-
-  '@posthog/types@1.376.4':
-    resolution: {integrity: sha512-EoDEvA925lf6yxPpbP4wozlXgu4b9WEqxZlFBUDd4k2akP5R/RWyHpvQT8aYyfY6BtSLn8TnVwxPQOM4b90isA==}
-
-  '@posthog/types@1.376.5':
-    resolution: {integrity: sha512-NhpEto2LtaGtdN+xqvh48wiFtAkdA+4onNaUrETnilrvJOqk95jAiPd2n/AXE/TT9zRyivQHhXwFowBInGldiQ==}
 
   '@posthog/webpack-plugin@1.4.16':
     resolution: {integrity: sha512-fRi/Q6GWK1wd8aaKklbuui1XZx6CoFd0JVevBKy7YfI3UmpfK5fT84ICCALvWnXZ91u4uCC7FWVuNJw0ML9iZg==}
@@ -2432,21 +2390,8 @@ packages:
     resolution: {integrity: sha512-oAj7Pdy83YKSwIaMFoM7zFeLYWRc+qUpW3PiDSblxQMnGFb43qs4bmfq7dr/+JIfwhs6PTwe1o2YBwKhyjWxXw==}
     engines: {node: '>=20.0.0'}
 
-  '@vercel/functions@3.6.1':
-    resolution: {integrity: sha512-xz+zZvj/XE6KDHZ8kYNO25Axpjng/kTJd/87SwONa6hzlq94K69OdqH1ZC/CehbtwWknpeyHqUHmpnfoaCbLZQ==}
-    engines: {node: '>= 20'}
-    peerDependencies:
-      '@aws-sdk/credential-provider-web-identity': '*'
-    peerDependenciesMeta:
-      '@aws-sdk/credential-provider-web-identity':
-        optional: true
-
   '@vercel/oidc@3.1.0':
     resolution: {integrity: sha512-Fw28YZpRnA3cAHHDlkt7xQHiJ0fcL+NRcIqsocZQUSmbzeIKRpwttJjik5ZGanXP+vlA4SbTg+AbA3bP363l+w==}
-    engines: {node: '>= 20'}
-
-  '@vercel/oidc@3.5.0':
-    resolution: {integrity: sha512-jo7GgeJx2YMkjg9A28pFM5p88n5SnSHvDeNlf9898bRWiG9jPxwedj/gn/2XTw4UOTyQ50uHlrTGSlf/XU5tgw==}
     engines: {node: '>= 20'}
 
   '@vercel/postgres@0.10.0':
@@ -5067,27 +5012,6 @@ packages:
   posthog-js@1.376.0:
     resolution: {integrity: sha512-YGfQ6gSmqmEh287PHjXRDJ9zML3Su1UIt1+xjRy7Yk6yW43Sc7sFK3CpCkLchCGhIA4x6VaqK+LaqB+7+MCo7A==}
 
-  posthog-js@1.376.4:
-    resolution: {integrity: sha512-SGhZWMBpd9GyV1+Klhx/vRwyy/reRRpJGYc1n1rYG9+LAML/YUEIrfl3Y2CLvuwmhKbPVY5W98Z7pAVQ88Qf1A==}
-
-  posthog-node@5.35.6:
-    resolution: {integrity: sha512-LwoXnR89A0l75jvFrXjtsAs0BbpyCjnwY8YIUkZT91rt1YnIUfBYiLj7qoUYApdNgesgWQQHqLXxLYX59a6ZYw==}
-    engines: {node: ^20.20.0 || >=22.22.0}
-    peerDependencies:
-      rxjs: ^7.0.0
-    peerDependenciesMeta:
-      rxjs:
-        optional: true
-
-  posthog-node@5.35.7:
-    resolution: {integrity: sha512-UP6qXHN8bsVWZq3b5dURc1dZ2tEiumVi430IeOwSMx8ztqIQnmuI7bOm4jJ7HFVdrUOEw2DnNPIQY6IxD1XmwQ==}
-    engines: {node: ^20.20.0 || >=22.22.0}
-    peerDependencies:
-      rxjs: ^7.0.0
-    peerDependenciesMeta:
-      rxjs:
-        optional: true
-
   preact-render-to-string@6.5.11:
     resolution: {integrity: sha512-ubnauqoGczeGISiOh6RjX0/cdaF8v/oDXIjO85XALCQjwQP+SB4RDXXtvZ6yTYSjG+PC1QRP2AhPgCEsM2EvUw==}
     peerDependencies:
@@ -5369,9 +5293,6 @@ packages:
   serve-static@1.16.3:
     resolution: {integrity: sha512-x0RTqQel6g5SY7Lg6ZreMmsOzncHFU7nhnRWkKgWuMTu5NN0DR5oruckMqRvacAN9d5w6ARnRBXl9xhDCgfMeA==}
     engines: {node: '>= 0.8.0'}
-
-  server-only@0.0.1:
-    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
 
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
@@ -7483,33 +7404,9 @@ snapshots:
     dependencies:
       '@posthog/types': 1.372.6
 
-  '@posthog/core@1.29.13':
-    dependencies:
-      '@posthog/types': 1.376.4
-
-  '@posthog/core@1.29.14':
-    dependencies:
-      '@posthog/types': 1.376.5
-
   '@posthog/core@1.29.9':
     dependencies:
       '@posthog/types': 1.376.0
-
-  '@posthog/next@0.4.67(@types/react@19.2.15)(@vercel/functions@3.6.1)(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@posthog/core': 1.29.13
-      '@posthog/react': 1.9.1(@types/react@19.2.15)(posthog-js@1.376.4)(react@19.2.6)
-      next: 16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      posthog-js: 1.376.4
-      posthog-node: 5.35.6
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
-      server-only: 0.0.1
-    optionalDependencies:
-      '@vercel/functions': 3.6.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - rxjs
 
   '@posthog/nextjs-config@1.9.16(next@16.2.6(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.60.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(webpack@5.104.1(esbuild@0.27.7))':
     dependencies:
@@ -7526,20 +7423,9 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
 
-  '@posthog/react@1.9.1(@types/react@19.2.15)(posthog-js@1.376.4)(react@19.2.6)':
-    dependencies:
-      posthog-js: 1.376.4
-      react: 19.2.6
-    optionalDependencies:
-      '@types/react': 19.2.15
-
   '@posthog/types@1.372.6': {}
 
   '@posthog/types@1.376.0': {}
-
-  '@posthog/types@1.376.4': {}
-
-  '@posthog/types@1.376.5': {}
 
   '@posthog/webpack-plugin@1.4.16(webpack@5.104.1(esbuild@0.27.7))':
     dependencies:
@@ -8315,13 +8201,7 @@ snapshots:
       throttleit: 2.1.0
       undici: 7.24.6
 
-  '@vercel/functions@3.6.1':
-    dependencies:
-      '@vercel/oidc': 3.5.0
-
   '@vercel/oidc@3.1.0': {}
-
-  '@vercel/oidc@3.5.0': {}
 
   '@vercel/postgres@0.10.0':
     dependencies:
@@ -11247,30 +11127,6 @@ snapshots:
       query-selector-shadow-dom: 1.0.1
       web-vitals: 5.2.0
 
-  posthog-js@1.376.4:
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/api-logs': 0.208.0
-      '@opentelemetry/exporter-logs-otlp-http': 0.208.0(@opentelemetry/api@1.9.0)
-      '@opentelemetry/resources': 2.7.1(@opentelemetry/api@1.9.0)
-      '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.0)
-      '@posthog/core': 1.29.13
-      '@posthog/types': 1.376.4
-      core-js: 3.47.0
-      dompurify: 3.4.5
-      fflate: 0.4.8
-      preact: 10.29.2
-      query-selector-shadow-dom: 1.0.1
-      web-vitals: 5.2.0
-
-  posthog-node@5.35.6:
-    dependencies:
-      '@posthog/core': 1.29.13
-
-  posthog-node@5.35.7:
-    dependencies:
-      '@posthog/core': 1.29.14
-
   preact-render-to-string@6.5.11(preact@10.24.3):
     dependencies:
       preact: 10.24.3
@@ -11630,8 +11486,6 @@ snapshots:
       send: 0.19.2
     transitivePeerDependencies:
       - supports-color
-
-  server-only@0.0.1: {}
 
   set-blocking@2.0.0: {}
 
