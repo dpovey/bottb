@@ -262,7 +262,10 @@ export function EventCard({
           <img
             src={imageUrl}
             srcSet={heroPhoto ? buildHeroSrcSet(heroPhoto) : undefined}
-            sizes="100vw"
+            // Container is page-width capped at max-w-7xl (1280px); cap
+            // sizes accordingly so high-DPR screens don't pull the 4K
+            // variant unnecessarily.
+            sizes="(max-width: 1280px) 100vw, 1280px"
             alt={`${event.name} event image`}
             className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-80 transition-opacity duration-500"
             style={{ objectPosition: getObjectPosition(focalPoint) }}
@@ -274,6 +277,14 @@ export function EventCard({
       {/* Readability overlay — darker from the left where text sits */}
       <div className="absolute inset-0 bg-linear-to-r from-bg via-bg/70 to-bg/20" />
       <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/30 to-transparent" />
+
+      {/* Stretched link makes the whole card clickable; interactive
+          elements (action buttons, mail link) sit on z-20 above it. */}
+      <Link
+        href={`/event/${event.id}`}
+        className="absolute inset-0 z-10 cursor-pointer"
+        aria-label={`${event.name} details`}
+      />
 
       {/* Content — aspect ratio gives consistent height across viewports */}
       <div className="relative aspect-[16/10] sm:aspect-[16/7] lg:aspect-[21/8] flex flex-col justify-between p-6 md:p-8">
