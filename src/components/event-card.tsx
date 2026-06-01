@@ -251,6 +251,7 @@ export function EventCard({
                 <EventCountdownBadge
                   date={event.date}
                   timezone={event.timezone}
+                  fallback={<Badge variant="info">{relativeDate}</Badge>}
                 />
               )}
             </div>

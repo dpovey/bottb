@@ -48,13 +48,18 @@ interface EventPageClientProps {
   /** Overall winner (for finalized events) */
   overallWinner?: OverallWinner
   /**
-   * Pre-rendered urgency badge for upcoming events. Rendered in the
-   * server `page.tsx` (where `new Date()` is server-stable) and threaded
-   * through as a React node so it doesn't re-evaluate on client hydration
-   * — that would risk a React #418 if the server/client clocks straddle
-   * a calendar-day boundary in the event's timezone.
+   * Pre-computed urgency label ("Tonight", "5 days left", "2 weeks left")
+   * for upcoming events, or `null` if the event date has passed. Computed
+   * on the server in `page.tsx` so `new Date()` doesn't re-evaluate on
+   * client hydration — that would risk a React #418 if the server/client
+   * clocks straddle a calendar-day boundary in the event's timezone.
+   *
+   * Passed as a string rather than a React element because element refs
+   * are always truthy in JSX boolean checks, even when they render `null`
+   * internally — that would mask the fallback `getStatusBadge` branch
+   * when the countdown is empty.
    */
-  countdownBadge?: React.ReactNode
+  countdownLabel?: string | null
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
@@ -92,7 +97,7 @@ export function EventPageClient({
   shorts = [],
   navEvents,
   overallWinner,
-  countdownBadge,
+  countdownLabel,
 }: EventPageClientProps) {
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
@@ -154,9 +159,17 @@ export function EventPageClient({
             {/* Event Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                {event.status === 'upcoming' && countdownBadge
-                  ? countdownBadge
-                  : getStatusBadge(event.status, hasWinner)}
+                {event.status === 'upcoming' && countdownLabel ? (
+                  <Badge
+                    variant={
+                      countdownLabel.includes('week') ? 'info' : 'accent'
+                    }
+                  >
+                    {countdownLabel}
+                  </Badge>
+                ) : (
+                  getStatusBadge(event.status, hasWinner)
+                )}
               </div>
               <h1 className="hero-text text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}

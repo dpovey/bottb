@@ -9,13 +9,12 @@ import {
   PHOTO_LABELS,
 } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
-import { formatEventDate } from '@/lib/date-utils'
+import { formatEventDate, getEventCountdown } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
 import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
-import { EventCountdownBadge } from '@/components/ui'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({
@@ -186,10 +185,10 @@ export default async function EventPage({
         shorts={shorts}
         navEvents={navEvents}
         overallWinner={overallWinner}
-        countdownBadge={
-          event.status === 'upcoming' ? (
-            <EventCountdownBadge date={event.date} timezone={event.timezone} />
-          ) : null
+        countdownLabel={
+          event.status === 'upcoming'
+            ? getEventCountdown(event.date, event.timezone)
+            : null
         }
       />
     </>

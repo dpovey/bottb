@@ -104,16 +104,36 @@ export function getEventCountdown(
     typeof dateString === 'string' ? new Date(dateString) : dateString
   if (isNaN(eventDate.getTime())) return null
 
-  const tz = timezone || 'UTC'
-  // en-CA's short format is YYYY-MM-DD, ideal for cross-timezone calendar math.
-  const dayFmt = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: tz,
-  })
-  const todayMidnightUtc = new Date(`${dayFmt.format(now)}T00:00:00Z`)
-  const eventMidnightUtc = new Date(`${dayFmt.format(eventDate)}T00:00:00Z`)
+  // Build a formatter we can pull year/month/day parts from. Fall back to UTC
+  // if a caller passes an invalid IANA name — Intl.DateTimeFormat throws on
+  // bad timezones and we'd rather degrade than crash a render.
+  let dayFmt: Intl.DateTimeFormat
+  try {
+    dayFmt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: timezone || 'UTC',
+    })
+  } catch {
+    dayFmt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'UTC',
+    })
+  }
+
+  const midnightUtcInTz = (d: Date) => {
+    const parts = dayFmt.formatToParts(d)
+    const year = parts.find((p) => p.type === 'year')?.value
+    const month = parts.find((p) => p.type === 'month')?.value
+    const day = parts.find((p) => p.type === 'day')?.value
+    return new Date(`${year}-${month}-${day}T00:00:00Z`)
+  }
+
+  const todayMidnightUtc = midnightUtcInTz(now)
+  const eventMidnightUtc = midnightUtcInTz(eventDate)
 
   const diffDays = Math.round(
     (eventMidnightUtc.getTime() - todayMidnightUtc.getTime()) /
