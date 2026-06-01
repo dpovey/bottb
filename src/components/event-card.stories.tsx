@@ -56,10 +56,34 @@ const pastEvent = {
 }
 
 const sampleBands = [
-  { id: '1', name: 'The Agentics', order: 1 },
-  { id: '2', name: 'Code Rockers', order: 2 },
-  { id: '3', name: 'Bandlassian', order: 3 },
-  { id: '4', name: 'Byte Club', order: 4 },
+  {
+    id: '1',
+    name: 'The Agentics',
+    order: 1,
+    company_slug: 'seek',
+    company_name: 'SEEK',
+  },
+  {
+    id: '2',
+    name: 'Code Rockers',
+    order: 2,
+    company_slug: 'rea-group',
+    company_name: 'REA Group',
+  },
+  {
+    id: '3',
+    name: 'Bandlassian',
+    order: 3,
+    company_slug: 'atlassian',
+    company_name: 'Atlassian',
+  },
+  {
+    id: '4',
+    name: 'Byte Club',
+    order: 4,
+    company_slug: 'canva',
+    company_name: 'Canva',
+  },
 ]
 
 // Tile card (used in grids of multiple events)
