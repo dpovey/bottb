@@ -47,6 +47,14 @@ interface EventPageClientProps {
   }
   /** Overall winner (for finalized events) */
   overallWinner?: OverallWinner
+  /**
+   * Pre-rendered urgency badge for upcoming events. Rendered in the
+   * server `page.tsx` (where `new Date()` is server-stable) and threaded
+   * through as a React node so it doesn't re-evaluate on client hydration
+   * — that would risk a React #418 if the server/client clocks straddle
+   * a calendar-day boundary in the event's timezone.
+   */
+  countdownBadge?: React.ReactNode
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
@@ -84,6 +92,7 @@ export function EventPageClient({
   shorts = [],
   navEvents,
   overallWinner,
+  countdownBadge,
 }: EventPageClientProps) {
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
@@ -145,7 +154,9 @@ export function EventPageClient({
             {/* Event Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                {getStatusBadge(event.status, hasWinner)}
+                {event.status === 'upcoming' && countdownBadge
+                  ? countdownBadge
+                  : getStatusBadge(event.status, hasWinner)}
               </div>
               <h1 className="hero-text text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}

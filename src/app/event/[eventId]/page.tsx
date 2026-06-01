@@ -15,6 +15,7 @@ import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
 import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
+import { EventCountdownBadge } from '@/components/ui'
 import { notFound } from 'next/navigation'
 
 export async function generateMetadata({
@@ -185,6 +186,11 @@ export default async function EventPage({
         shorts={shorts}
         navEvents={navEvents}
         overallWinner={overallWinner}
+        countdownBadge={
+          event.status === 'upcoming' ? (
+            <EventCountdownBadge date={event.date} timezone={event.timezone} />
+          ) : null
+        }
       />
     </>
   )

@@ -81,6 +81,54 @@ function getOrdinalSuffix(day: number): string {
 }
 
 /**
+ * Returns an urgency-focused countdown for an upcoming event, or null if
+ * the event date has already passed.
+ *
+ *   today    → "Tonight"
+ *   1 day    → "Tomorrow"
+ *   2-6 days → "{N} days left"
+ *   1 week   → "1 week left"
+ *   2+ weeks → "{N} weeks left"   (Math.floor of days / 7)
+ *   past     → null
+ *
+ * Date math runs in the event's timezone using calendar-day boundaries —
+ * an event "tomorrow" in Melbourne reads as "Tomorrow" for a viewer in
+ * any timezone, not "Today" for someone several hours later in UTC.
+ */
+export function getEventCountdown(
+  dateString: string | Date,
+  timezone?: string,
+  now: Date = new Date()
+): string | null {
+  const eventDate =
+    typeof dateString === 'string' ? new Date(dateString) : dateString
+  if (isNaN(eventDate.getTime())) return null
+
+  const tz = timezone || 'UTC'
+  // en-CA's short format is YYYY-MM-DD, ideal for cross-timezone calendar math.
+  const dayFmt = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: tz,
+  })
+  const todayMidnightUtc = new Date(`${dayFmt.format(now)}T00:00:00Z`)
+  const eventMidnightUtc = new Date(`${dayFmt.format(eventDate)}T00:00:00Z`)
+
+  const diffDays = Math.round(
+    (eventMidnightUtc.getTime() - todayMidnightUtc.getTime()) /
+      (1000 * 60 * 60 * 24)
+  )
+
+  if (diffDays < 0) return null
+  if (diffDays === 0) return 'Tonight'
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays < 7) return `${diffDays} days left`
+  const weeks = Math.floor(diffDays / 7)
+  return weeks === 1 ? '1 week left' : `${weeks} weeks left`
+}
+
+/**
  * Gets date parts (day, month, year) in a specific timezone
  * Useful for DateBadge component
  */

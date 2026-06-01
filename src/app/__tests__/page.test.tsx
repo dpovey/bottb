@@ -27,6 +27,7 @@ vi.mock('@/lib/db', () => ({
 vi.mock('@/lib/date-utils', () => ({
   formatEventDate: vi.fn((date) => `Formatted: ${date}`),
   getDatePartsInTimezone: vi.fn(() => ({ day: 25, month: 'Dec', year: 2024 })),
+  getEventCountdown: vi.fn(() => 'Tonight'),
 }))
 
 // Mock next-auth

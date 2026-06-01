@@ -6,6 +6,7 @@ import {
   DateBadge,
   Button,
   CompanyBadge,
+  EventCountdownBadge,
   TrackedTicketLink,
 } from '@/components/ui'
 import { TicketIcon } from '@/components/icons'
@@ -143,13 +144,13 @@ export function EventCard({
         </div>
 
         {/* Status/Winner Badge - Top Right */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
           {isActive ? (
-            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
               🎸 Live Now
             </span>
           ) : showWinner && winner ? (
-            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs">
               <span>🏆 {winner.name}</span>
               {winner.companySlug && winner.companyName && (
                 <CompanyBadge
@@ -162,6 +163,8 @@ export function EventCard({
                 />
               )}
             </span>
+          ) : !isPast ? (
+            <EventCountdownBadge date={event.date} timezone={event.timezone} />
           ) : null}
         </div>
 
@@ -245,7 +248,10 @@ export function EventCard({
               ) : isPast ? (
                 <Badge variant="default">{relativeDate}</Badge>
               ) : (
-                <Badge variant="info">{relativeDate}</Badge>
+                <EventCountdownBadge
+                  date={event.date}
+                  timezone={event.timezone}
+                />
               )}
             </div>
 
