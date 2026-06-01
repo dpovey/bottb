@@ -54,13 +54,40 @@ if (typeof window !== 'undefined') {
         // round-trip authentication, actions, and flag overrides.
         ui_host: posthogUiHost,
         person_profiles: 'identified_only', // Only create profiles for identified users
+        // Suppress the built-in initial pageview so we can fire it ourselves
+        // from `loaded` *after* super properties are registered. Otherwise
+        // the auto-pageview lands without environment metadata and slips
+        // through any dashboard filter that requires it. Route-change
+        // pageviews are still captured by PostHogPageViewTracker.
+        capture_pageview: false,
         capture_exceptions: {
           capture_unhandled_errors: true,
           capture_unhandled_rejections: true,
           capture_console_errors: false,
         },
         loaded: (posthog) => {
-          // Enable debug mode in development for easier debugging
+          const hostname = window.location.hostname
+          const isDev =
+            nodeEnv === 'development' ||
+            hostname.includes('localhost') ||
+            hostname.includes('127.0.0.1') ||
+            (hostname.includes('.vercel.app') && !hostname.includes('bottb'))
+
+          // Register environment metadata as super properties so every event
+          // (including the initial pageview below) carries them automatically.
+          posthog.register({
+            environment: nodeEnv || 'unknown',
+            is_development: isDev ? 'true' : 'false',
+            is_production:
+              nodeEnv === 'production' && !isDev ? 'true' : 'false',
+          })
+
+          // Fire the initial pageview manually. Strip `?photo=` since
+          // slideshow navigation is tracked separately via trackPhotoView.
+          const url = new URL(window.location.href)
+          url.searchParams.delete('photo')
+          posthog.capture('$pageview', { $current_url: url.toString() })
+
           if (nodeEnv === 'development') {
             posthog.debug()
           }
@@ -82,5 +109,5 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Note: Page view tracking is handled by PostHogProvider component
-// which tracks route changes after navigation completes using usePathname/useSearchParams
+// Note: Initial pageview is captured in the `loaded` callback above.
+// Subsequent route-change pageviews are captured by PostHogPageViewTracker.

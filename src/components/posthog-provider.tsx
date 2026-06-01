@@ -1,49 +1,47 @@
 'use client'
 
-import { useEffect, Suspense } from 'react'
+import { useEffect, useRef, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
 
 /**
- * Internal component that uses useSearchParams - must be wrapped in Suspense
- * for static generation compatibility
+ * Captures $pageview on route changes. The initial pageview is fired from
+ * instrumentation-client.ts's `loaded` callback after super properties are
+ * registered, so this tracker skips its first run to avoid a duplicate.
+ *
+ * Environment metadata (environment / is_development / is_production) is
+ * attached via super properties registered at init, so events here don't
+ * need to set them explicitly.
+ *
+ * useSearchParams() needs a Suspense boundary to stay compatible with
+ * static generation.
  */
 function PostHogPageViewTracker() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  // Track page views on route changes with environment metadata
-  // We track the pathname + search params WITHOUT the 'photo' param, since photo
-  // navigation in the slideshow is tracked separately via trackPhotoView
+  // The 'photo' search param is excluded so slideshow navigation doesn't
+  // fire $pageview — that's tracked separately via trackPhotoView.
   const searchParamsWithoutPhoto = new URLSearchParams(searchParams.toString())
   searchParamsWithoutPhoto.delete('photo')
   const stableSearchParams = searchParamsWithoutPhoto.toString()
 
+  const isInitialRender = useRef(true)
+
   useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false
+      return
+    }
     if (typeof window === 'undefined') return
     if (process.env.NODE_ENV === 'test') return
-    // Check if PostHog is actually initialized (not just has the method)
     const isInitialized =
       posthog && (posthog as { __loaded?: boolean }).__loaded === true
     if (!isInitialized) return
 
-    const nodeEnv = process.env.NODE_ENV
-    const hostname = window.location.hostname
-
-    const isDev =
-      nodeEnv === 'development' ||
-      hostname.includes('localhost') ||
-      hostname.includes('127.0.0.1') ||
-      (hostname.includes('.vercel.app') && !hostname.includes('bottb'))
-
-    posthog.capture('$pageview', {
-      $current_url: window.location.href,
-      // Add environment metadata for filtering in PostHog
-      environment: nodeEnv || 'unknown',
-      is_development: isDev ? 'true' : 'false',
-      is_production: nodeEnv === 'production' && !isDev ? 'true' : 'false',
-    })
+    const url = new URL(window.location.href)
+    url.searchParams.delete('photo')
+    posthog.capture('$pageview', { $current_url: url.toString() })
   }, [pathname, stableSearchParams])
 
   return null
