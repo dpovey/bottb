@@ -10,7 +10,7 @@ const meta: Meta<typeof EventCard> = {
     docs: {
       description: {
         component:
-          'Event card with visual (4:3 aspect) and horizontal variants. Shows date badge, status, and winner information.',
+          'Event card with two layouts: `tile` (square 4:3 with image background, for grids) and `horizontal` (wider row with date / content / side image, for the featured next event). Shows date badge, status, and winner information.',
       },
     },
   },
@@ -19,8 +19,9 @@ const meta: Meta<typeof EventCard> = {
       control: 'select',
       options: ['upcoming', 'past', 'active'],
     },
-    visual: {
-      control: 'boolean',
+    layout: {
+      control: 'select',
+      options: ['horizontal', 'tile'],
     },
     showWinner: {
       control: 'boolean',
@@ -61,13 +62,13 @@ const sampleBands = [
   { id: '4', name: 'Byte Club', order: 4 },
 ]
 
-// Visual card (default for grids)
-export const VisualCard: Story = {
+// Tile card (used in grids of multiple events)
+export const TileCard: Story = {
   args: {
     event: sampleEvent,
     relativeDate: 'in 4 months',
     variant: 'upcoming',
-    visual: true,
+    layout: 'tile',
   },
   parameters: {
     docs: {
@@ -84,7 +85,7 @@ export const VisualWithImage: Story = {
     event: sampleEvent,
     relativeDate: 'in 4 months',
     variant: 'upcoming',
-    visual: true,
+    layout: 'tile',
     heroPhoto: {
       blob_url: '/images/test/band-stage.jpg',
       hero_focal_point: { x: 50, y: 30 },
@@ -98,7 +99,7 @@ export const VisualPastWithWinner: Story = {
     event: pastEvent,
     relativeDate: '3 months ago',
     variant: 'past',
-    visual: true,
+    layout: 'tile',
     showWinner: true,
     winner: { name: 'The Agentics', totalScore: 87.5 },
     heroPhoto: {
@@ -120,7 +121,7 @@ export const VisualLiveEvent: Story = {
     event: { ...sampleEvent, status: 'active' },
     relativeDate: 'now',
     variant: 'active',
-    visual: true,
+    layout: 'tile',
     heroPhoto: {
       blob_url: '/images/test/band-stage.jpg',
     },
@@ -140,7 +141,7 @@ export const HorizontalCard: Story = {
     event: sampleEvent,
     relativeDate: 'in 4 months',
     variant: 'upcoming',
-    visual: false,
+    layout: 'horizontal',
     bands: sampleBands,
   },
   parameters: {
@@ -158,7 +159,7 @@ export const HorizontalPastWithWinner: Story = {
     event: pastEvent,
     relativeDate: '3 months ago',
     variant: 'past',
-    visual: false,
+    layout: 'horizontal',
     showWinner: true,
     winner: { name: 'The Agentics', totalScore: 87.5 },
     bands: sampleBands,
@@ -171,7 +172,7 @@ export const HorizontalActive: Story = {
     event: { ...sampleEvent, status: 'active' },
     relativeDate: 'now',
     variant: 'active',
-    visual: false,
+    layout: 'horizontal',
     bands: sampleBands,
   },
   parameters: {
@@ -183,15 +184,15 @@ export const HorizontalActive: Story = {
   },
 }
 
-// Grid of visual cards
-export const VisualCardGrid: Story = {
+// Grid of tile cards
+export const TileGrid: Story = {
   render: () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <EventCard
         event={sampleEvent}
         relativeDate="in 4 months"
         variant="upcoming"
-        visual
+        layout="tile"
       />
       <EventCard
         event={{
@@ -201,14 +202,14 @@ export const VisualCardGrid: Story = {
         }}
         relativeDate="in 6 months"
         variant="upcoming"
-        visual
+        layout="tile"
         heroPhoto={{ blob_url: '/images/test/crowd-energy.jpg' }}
       />
       <EventCard
         event={pastEvent}
         relativeDate="3 months ago"
         variant="past"
-        visual
+        layout="tile"
         showWinner
         winner={{ name: 'The Agentics' }}
         heroPhoto={{ blob_url: '/images/test/hero-concert.jpg' }}
@@ -218,7 +219,7 @@ export const VisualCardGrid: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Visual cards displayed in a responsive grid.',
+        story: 'Tile cards displayed in a responsive grid.',
       },
     },
   },

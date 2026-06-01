@@ -81,6 +81,74 @@ function getOrdinalSuffix(day: number): string {
 }
 
 /**
+ * Returns an urgency-focused countdown for an upcoming event, or null if
+ * the event date has already passed.
+ *
+ *   today    → "Tonight"
+ *   1 day    → "Tomorrow"
+ *   2-6 days → "{N} days left"
+ *   1 week   → "1 week left"
+ *   2+ weeks → "{N} weeks left"   (Math.floor of days / 7)
+ *   past     → null
+ *
+ * Date math runs in the event's timezone using calendar-day boundaries —
+ * an event "tomorrow" in Melbourne reads as "Tomorrow" for a viewer in
+ * any timezone, not "Today" for someone several hours later in UTC.
+ */
+export function getEventCountdown(
+  dateString: string | Date,
+  timezone?: string,
+  now: Date = new Date()
+): string | null {
+  const eventDate =
+    typeof dateString === 'string' ? new Date(dateString) : dateString
+  if (isNaN(eventDate.getTime())) return null
+
+  // Build a formatter we can pull year/month/day parts from. Fall back to UTC
+  // if a caller passes an invalid IANA name — Intl.DateTimeFormat throws on
+  // bad timezones and we'd rather degrade than crash a render.
+  let dayFmt: Intl.DateTimeFormat
+  try {
+    dayFmt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: timezone || 'UTC',
+    })
+  } catch {
+    dayFmt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      timeZone: 'UTC',
+    })
+  }
+
+  const midnightUtcInTz = (d: Date) => {
+    const parts = dayFmt.formatToParts(d)
+    const year = parts.find((p) => p.type === 'year')?.value
+    const month = parts.find((p) => p.type === 'month')?.value
+    const day = parts.find((p) => p.type === 'day')?.value
+    return new Date(`${year}-${month}-${day}T00:00:00Z`)
+  }
+
+  const todayMidnightUtc = midnightUtcInTz(now)
+  const eventMidnightUtc = midnightUtcInTz(eventDate)
+
+  const diffDays = Math.round(
+    (eventMidnightUtc.getTime() - todayMidnightUtc.getTime()) /
+      (1000 * 60 * 60 * 24)
+  )
+
+  if (diffDays < 0) return null
+  if (diffDays === 0) return 'Tonight'
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays < 7) return `${diffDays} days left`
+  const weeks = Math.floor(diffDays / 7)
+  return weeks === 1 ? '1 week left' : `${weeks} weeks left`
+}
+
+/**
  * Gets date parts (day, month, year) in a specific timezone
  * Useful for DateBadge component
  */

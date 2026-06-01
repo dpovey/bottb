@@ -27,6 +27,7 @@ vi.mock('@/lib/db', () => ({
 vi.mock('@/lib/date-utils', () => ({
   formatEventDate: vi.fn((date) => `Formatted: ${date}`),
   getDatePartsInTimezone: vi.fn(() => ({ day: 25, month: 'Dec', year: 2024 })),
+  getEventCountdown: vi.fn(() => 'Tonight'),
 }))
 
 // Mock next-auth
@@ -197,9 +198,15 @@ describe('HomePage', () => {
     render(await HomePage())
 
     expect(screen.getByText('Voting Event')).toBeInTheDocument()
-    // Visual cards link the entire card to the event page
-    const eventLink = screen.getByRole('link', { name: /Voting Event/i })
-    expect(eventLink).toHaveAttribute('href', '/event/voting-event')
+    // The next-upcoming event renders in the horizontal layout (a wide
+    // featured card), which exposes the link via a "Details" Button.
+    // The tile layout used in the grid would expose a full-card link
+    // with aria-label "Voting Event details" — accept either by matching
+    // the destination href instead.
+    const eventLink = screen
+      .getAllByRole('link')
+      .find((el) => el.getAttribute('href') === '/event/voting-event')
+    expect(eventLink).toBeDefined()
   })
 
   it('renders past events with winners when available', async () => {

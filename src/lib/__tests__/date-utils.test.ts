@@ -1,4 +1,8 @@
-import { formatEventDate, getDatePartsInTimezone } from '../date-utils'
+import {
+  formatEventDate,
+  getDatePartsInTimezone,
+  getEventCountdown,
+} from '../date-utils'
 
 describe('formatEventDate', () => {
   describe('with UTC timezone (default)', () => {
@@ -213,5 +217,77 @@ describe('getDatePartsInTimezone', () => {
       month: 'DEC',
       year: 2024,
     })
+  })
+})
+
+describe('getEventCountdown', () => {
+  // Anchor "now" to a fixed instant so tests are deterministic regardless of
+  // when CI runs them. 2026-06-01 00:00 in Melbourne (UTC+10) = 2026-05-31 14:00Z.
+  const NOW_MELB_START_OF_DAY = new Date('2026-05-31T14:00:00Z')
+  const TZ = 'Australia/Melbourne'
+
+  it('returns "Tonight" when the event is today in the given timezone', () => {
+    expect(
+      getEventCountdown('2026-06-01T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('Tonight')
+  })
+
+  it('returns "Tomorrow" when the event is the next calendar day', () => {
+    expect(
+      getEventCountdown('2026-06-02T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('Tomorrow')
+  })
+
+  it('returns "{N} days left" for 2-6 days out', () => {
+    expect(
+      getEventCountdown('2026-06-04T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('3 days left')
+    expect(
+      getEventCountdown('2026-06-06T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('5 days left')
+  })
+
+  it('returns "1 week left" for 7-13 days out', () => {
+    expect(
+      getEventCountdown('2026-06-08T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('1 week left')
+    expect(
+      getEventCountdown('2026-06-14T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('1 week left')
+  })
+
+  it('returns plural "{N} weeks left" for 14+ days', () => {
+    expect(
+      getEventCountdown('2026-06-15T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('2 weeks left')
+    expect(
+      getEventCountdown('2026-07-27T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe('8 weeks left')
+  })
+
+  it('returns null once the event date has passed in the event timezone', () => {
+    expect(
+      getEventCountdown('2026-05-31T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe(null)
+    expect(
+      getEventCountdown('2026-05-01T20:00:00+10:00', TZ, NOW_MELB_START_OF_DAY)
+    ).toBe(null)
+  })
+
+  it('uses the event timezone for the day boundary, not UTC', () => {
+    // "now" = 2026-06-01 14:30Z. In UTC that's still 2026-06-01 (so a UTC
+    // implementation would call a 2026-06-02 event "Tomorrow"), but in
+    // Melbourne (UTC+10) it's already 2026-06-02 00:30 — same calendar day
+    // as the event. Expecting "Tonight" verifies we honour the event tz.
+    const justAfterMelbMidnight = new Date('2026-06-01T14:30:00Z')
+    expect(
+      getEventCountdown('2026-06-02T20:00:00+10:00', TZ, justAfterMelbMidnight)
+    ).toBe('Tonight')
+  })
+
+  it('returns null for invalid date strings', () => {
+    expect(getEventCountdown('not a date', TZ, NOW_MELB_START_OF_DAY)).toBe(
+      null
+    )
   })
 })

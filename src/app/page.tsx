@@ -485,22 +485,40 @@ export default async function HomePage() {
               </h2>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingEventsWithBands.map((event) => {
-                const relativeDate = getRelativeDate(event.date)
-                return (
+            {/* Next upcoming event gets the full-width horizontal card to
+                emphasise its proximity; the rest are tiled below.
+                `getUpcomingEvents` returns events ordered by date
+                ascending, so index 0 is genuinely the nearest event. */}
+            {(() => {
+              const [nextEvent, ...remainingEvents] = upcomingEventsWithBands
+              return (
+                <>
                   <EventCard
-                    key={event.id}
-                    event={event}
-                    relativeDate={relativeDate}
-                    bands={event.bands}
+                    key={nextEvent.id}
+                    event={nextEvent}
+                    relativeDate={getRelativeDate(nextEvent.date)}
+                    bands={nextEvent.bands}
                     variant="upcoming"
-                    heroPhoto={event.heroPhoto}
-                    visual
+                    heroPhoto={nextEvent.heroPhoto}
                   />
-                )
-              })}
-            </div>
+                  {remainingEvents.length > 0 && (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                      {remainingEvents.map((event) => (
+                        <EventCard
+                          key={event.id}
+                          event={event}
+                          relativeDate={getRelativeDate(event.date)}
+                          bands={event.bands}
+                          variant="upcoming"
+                          heroPhoto={event.heroPhoto}
+                          layout="tile"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
         </section>
       )}
@@ -556,7 +574,7 @@ export default async function HomePage() {
                         winner={event.overallWinner || undefined}
                         bands={event.bands}
                         heroPhoto={event.heroPhoto}
-                        visual
+                        layout="tile"
                       />
                     )
                   })}

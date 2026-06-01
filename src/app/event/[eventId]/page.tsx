@@ -9,7 +9,7 @@ import {
   PHOTO_LABELS,
 } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
-import { formatEventDate } from '@/lib/date-utils'
+import { formatEventDate, getEventCountdown } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
@@ -185,6 +185,11 @@ export default async function EventPage({
         shorts={shorts}
         navEvents={navEvents}
         overallWinner={overallWinner}
+        countdownLabel={
+          event.status === 'upcoming'
+            ? getEventCountdown(event.date, event.timezone)
+            : null
+        }
       />
     </>
   )

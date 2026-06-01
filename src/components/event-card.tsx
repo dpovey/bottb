@@ -6,6 +6,7 @@ import {
   DateBadge,
   Button,
   CompanyBadge,
+  EventCountdownBadge,
   TrackedTicketLink,
 } from '@/components/ui'
 import { TicketIcon } from '@/components/icons'
@@ -55,8 +56,14 @@ interface EventCardProps {
   }[]
   variant?: 'upcoming' | 'past' | 'active'
   heroPhoto?: HeroPhoto | null
-  /** Use visual card style (4:3 aspect ratio with gradient background) */
-  visual?: boolean
+  /**
+   * Card shape.
+   * - `'horizontal'` (default): wide row-style card with date / content /
+   *   side image — used for the featured "next event" slot.
+   * - `'tile'`: square 4:3 tile with image-as-background, ideal for grids
+   *   of multiple events.
+   */
+  layout?: 'horizontal' | 'tile'
 }
 
 // Gradient presets for visual variety
@@ -77,7 +84,7 @@ export function EventCard({
   bands = [],
   variant = 'upcoming',
   heroPhoto,
-  visual = false,
+  layout = 'horizontal',
 }: EventCardProps) {
   const isPast = variant === 'past'
   const isActive = variant === 'active'
@@ -92,8 +99,8 @@ export function EventCard({
     GRADIENT_PRESETS.length
   const gradient = GRADIENT_PRESETS[gradientIndex]
 
-  // Visual card style (matches design mockups)
-  if (visual) {
+  // Tile layout (square 4:3 with image-as-background — for grid placement)
+  if (layout === 'tile') {
     const showTickets = variant === 'upcoming' && !!event.info?.ticket_url
 
     return (
@@ -143,13 +150,13 @@ export function EventCard({
         </div>
 
         {/* Status/Winner Badge - Top Right */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
           {isActive ? (
-            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
               🎸 Live Now
             </span>
           ) : showWinner && winner ? (
-            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs">
               <span>🏆 {winner.name}</span>
               {winner.companySlug && winner.companyName && (
                 <CompanyBadge
@@ -162,6 +169,8 @@ export function EventCard({
                 />
               )}
             </span>
+          ) : !isPast ? (
+            <EventCountdownBadge date={event.date} timezone={event.timezone} />
           ) : null}
         </div>
 
@@ -245,7 +254,11 @@ export function EventCard({
               ) : isPast ? (
                 <Badge variant="default">{relativeDate}</Badge>
               ) : (
-                <Badge variant="info">{relativeDate}</Badge>
+                <EventCountdownBadge
+                  date={event.date}
+                  timezone={event.timezone}
+                  fallback={<Badge variant="info">{relativeDate}</Badge>}
+                />
               )}
             </div>
 

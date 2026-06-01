@@ -309,7 +309,7 @@ export default async function EventsPage() {
                     bands={event.bands}
                     variant="upcoming"
                     heroPhoto={event.heroPhoto}
-                    visual
+                    layout="tile"
                   />
                 )
               })}
@@ -345,7 +345,7 @@ export default async function EventsPage() {
                     winner={event.overallWinner || undefined}
                     bands={event.bands}
                     heroPhoto={event.heroPhoto}
-                    visual
+                    layout="tile"
                   />
                 )
               })}
