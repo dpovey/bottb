@@ -56,8 +56,14 @@ interface EventCardProps {
   }[]
   variant?: 'upcoming' | 'past' | 'active'
   heroPhoto?: HeroPhoto | null
-  /** Use visual card style (4:3 aspect ratio with gradient background) */
-  visual?: boolean
+  /**
+   * Card shape.
+   * - `'horizontal'` (default): wide row-style card with date / content /
+   *   side image — used for the featured "next event" slot.
+   * - `'tile'`: square 4:3 tile with image-as-background, ideal for grids
+   *   of multiple events.
+   */
+  layout?: 'horizontal' | 'tile'
 }
 
 // Gradient presets for visual variety
@@ -78,7 +84,7 @@ export function EventCard({
   bands = [],
   variant = 'upcoming',
   heroPhoto,
-  visual = false,
+  layout = 'horizontal',
 }: EventCardProps) {
   const isPast = variant === 'past'
   const isActive = variant === 'active'
@@ -93,8 +99,8 @@ export function EventCard({
     GRADIENT_PRESETS.length
   const gradient = GRADIENT_PRESETS[gradientIndex]
 
-  // Visual card style (matches design mockups)
-  if (visual) {
+  // Tile layout (square 4:3 with image-as-background — for grid placement)
+  if (layout === 'tile') {
     const showTickets = variant === 'upcoming' && !!event.info?.ticket_url
 
     return (
