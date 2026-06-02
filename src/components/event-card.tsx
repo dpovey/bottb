@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
 import {
@@ -274,9 +275,11 @@ export function EventCard({
         </div>
       )}
 
-      {/* Readability overlay — darker from the left where text sits */}
-      <div className="absolute inset-0 bg-linear-to-r from-bg via-bg/70 to-bg/20" />
-      <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/30 to-transparent" />
+      {/* Readability overlay — kept light so the image stays prominent.
+          Two passes (left-shading + bottom-shading) keep text legible
+          without darkening the photo to a near-silhouette. */}
+      <div className="absolute inset-0 bg-linear-to-r from-bg/70 via-bg/35 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-bg/60 via-bg/15 to-transparent" />
 
       {/* Stretched link makes the whole card clickable; interactive
           elements (action buttons, mail link) sit on z-20 above it. */}
@@ -342,25 +345,64 @@ export function EventCard({
             </div>
           )}
 
-          {/* Company icons — deduped, with a +N overflow tile */}
+          {/* Companies — small icons on mobile (compact), full logos on
+              md+ where the wider card has room for them. Logos do more
+              recognition work than square brand marks when there's space. */}
           {uniqueCompanies.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {uniqueCompanies.slice(0, 6).map((c) => (
-                <CompanyIcon
-                  key={c.slug}
-                  iconUrl={c.iconUrl}
-                  logoUrl={c.logoUrl}
-                  companyName={c.name}
-                  size="md"
-                  className="bg-white/5 border border-white/10 p-1 rounded-md"
-                />
-              ))}
-              {uniqueCompanies.length > 6 && (
-                <span className="bg-white/5 border border-white/10 text-text-dim text-xs px-2 py-1 rounded-md">
-                  +{uniqueCompanies.length - 6} more
-                </span>
-              )}
-            </div>
+            <>
+              {/* Mobile: deduped icons */}
+              <div className="flex flex-wrap items-center gap-2 md:hidden">
+                {uniqueCompanies.slice(0, 6).map((c) => (
+                  <CompanyIcon
+                    key={c.slug}
+                    iconUrl={c.iconUrl}
+                    logoUrl={c.logoUrl}
+                    companyName={c.name}
+                    size="md"
+                    className="bg-white/5 border border-white/10 p-1 rounded-md"
+                  />
+                ))}
+                {uniqueCompanies.length > 6 && (
+                  <span className="bg-white/5 border border-white/10 text-text-dim text-xs px-2 py-1 rounded-md">
+                    +{uniqueCompanies.length - 6} more
+                  </span>
+                )}
+              </div>
+
+              {/* Desktop: full logos. Falls back to CompanyIcon when a
+                  company has no logo_url so the row still renders cleanly. */}
+              <div className="hidden md:flex flex-wrap items-center gap-x-5 gap-y-3">
+                {uniqueCompanies
+                  .slice(0, 6)
+                  .map((c) =>
+                    c.logoUrl ? (
+                      <Image
+                        key={c.slug}
+                        src={c.logoUrl}
+                        alt={`${c.name} logo`}
+                        title={c.name}
+                        width={120}
+                        height={32}
+                        className="h-8 w-auto max-w-[120px] object-contain"
+                        loading="lazy"
+                        sizes="120px"
+                      />
+                    ) : (
+                      <CompanyIcon
+                        key={c.slug}
+                        iconUrl={c.iconUrl}
+                        companyName={c.name}
+                        size="lg"
+                      />
+                    )
+                  )}
+                {uniqueCompanies.length > 6 && (
+                  <span className="text-text-dim text-sm">
+                    +{uniqueCompanies.length - 6} more
+                  </span>
+                )}
+              </div>
+            </>
           ) : (
             !isPast &&
             bands.length === 0 && (
