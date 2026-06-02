@@ -393,6 +393,7 @@ export function EventCard({
                         iconUrl={c.iconUrl}
                         companyName={c.name}
                         size="lg"
+                        className="bg-white/5 border border-white/10 p-1 rounded-md"
                       />
                     )
                   )}
