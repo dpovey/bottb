@@ -10,6 +10,7 @@ interface Band {
   id: string
   name: string
   description?: string
+  company_name?: string
   order: number
   hero_thumbnail_url?: string
   info?: {
@@ -351,8 +352,8 @@ export default function JudgeVotingPage() {
                     <h3 className="text-xl font-semibold text-white">
                       {band.name}
                     </h3>
-                    {band.description && (
-                      <p className="text-gray-300">{band.description}</p>
+                    {band.company_name && (
+                      <p className="text-gray-300">{band.company_name}</p>
                     )}
                   </div>
                 </div>

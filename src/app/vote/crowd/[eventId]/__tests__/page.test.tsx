@@ -57,9 +57,9 @@ describe('CrowdVotingPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Test Band 1')).toBeInTheDocument()
-      expect(screen.getByText('A test band')).toBeInTheDocument()
+      expect(screen.getByText('Acme Corp')).toBeInTheDocument()
       expect(screen.getByText('Test Band 2')).toBeInTheDocument()
-      expect(screen.getByText('Another test band')).toBeInTheDocument()
+      expect(screen.getByText('Globex Inc')).toBeInTheDocument()
     })
   })
 
