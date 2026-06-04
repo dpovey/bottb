@@ -51,6 +51,12 @@ export default function CrowdVotingPage() {
   } | null>(null)
 
   useEffect(() => {
+    if (isSubmitted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [isSubmitted])
+
+  useEffect(() => {
     const fetchBands = async () => {
       try {
         const response = await fetch(`/api/bands/${eventId}`)

@@ -57,6 +57,12 @@ export default function JudgeVotingPage() {
   const maxJudgeScore = is2026 ? 90 : 80 // 20+30+20+20 vs 20+30+30
 
   useEffect(() => {
+    if (isSubmitted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [isSubmitted])
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch event to get scoring version
