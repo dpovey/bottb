@@ -39,12 +39,18 @@ async function handleClearScores(request: NextRequest, _context?: unknown) {
       DELETE FROM crowd_noise_measurements WHERE event_id = ${eventId}
     `
 
+    // Clear cached finalized standings so they don't reference deleted votes
+    const { rowCount: finalizedResultsDeleted } = await sql`
+      DELETE FROM finalized_results WHERE event_id = ${eventId}
+    `
+
     return NextResponse.json({
       success: true,
-      message: `Cleared ${votesDeleted} votes and ${noiseDeleted} crowd noise measurements for event "${event.name}"`,
+      message: `Cleared ${votesDeleted} votes, ${noiseDeleted} crowd noise measurements, and ${finalizedResultsDeleted} finalized results for event "${event.name}"`,
       eventId,
       votesDeleted,
       noiseDeleted,
+      finalizedResultsDeleted,
     })
   } catch (error) {
     console.error('Error clearing scores:', error)

@@ -589,6 +589,7 @@ export default function EventAdminDashboard({
             All crowd noise measurements (energy levels, peak volume, crowd
             scores)
           </li>
+          <li>Cached finalized standings (if the event was finalized)</li>
         </ul>
         <p className="text-error">This action cannot be undone.</p>
       </Modal>

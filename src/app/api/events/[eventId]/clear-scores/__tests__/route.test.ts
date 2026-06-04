@@ -29,6 +29,7 @@ describe('Clear Scores API', () => {
 
     const mockVotesDeleted = 5
     const mockNoiseDeleted = 2
+    const mockFinalizedResultsDeleted = 4
 
     // Mock database responses
     vi.mocked(sql).mockResolvedValueOnce({
@@ -55,6 +56,14 @@ describe('Clear Scores API', () => {
       fields: [],
     })
 
+    vi.mocked(sql).mockResolvedValueOnce({
+      rows: [],
+      command: 'DELETE',
+      rowCount: mockFinalizedResultsDeleted,
+      oid: 0,
+      fields: [],
+    })
+
     const request = new NextRequest(
       'http://localhost/api/events/test-event/clear-scores',
       {
@@ -69,6 +78,7 @@ describe('Clear Scores API', () => {
     expect(data.success).toBe(true)
     expect(data.votesDeleted).toBe(mockVotesDeleted)
     expect(data.noiseDeleted).toBe(mockNoiseDeleted)
+    expect(data.finalizedResultsDeleted).toBe(mockFinalizedResultsDeleted)
     expect(data.message).toContain('Test Event')
   })
 
