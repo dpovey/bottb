@@ -423,7 +423,7 @@ export default function EventAdminDashboard({
 
         {/* Judge Scoring */}
         <Link
-          href={`/live/events/${eventId}/judge-qr`}
+          href={`/vote/judge/${eventId}`}
           className="bg-elevated rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center hover:bg-white/10 transition-colors group border border-white/5"
         >
           <div className="text-3xl sm:text-6xl mb-2 sm:mb-4">⚖️</div>
@@ -431,10 +431,10 @@ export default function EventAdminDashboard({
             Judge Scoring
           </h2>
           <p className="text-gray-300 text-xs sm:text-lg mb-3 sm:mb-6 hidden sm:block">
-            Display QR code for judge scoring
+            Enter judge scores for each band
           </p>
           <div className="bg-slate-600 group-hover:bg-slate-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-6 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-base">
-            Judge QR
+            Enter Scores
           </div>
         </Link>
 
