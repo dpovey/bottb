@@ -135,7 +135,7 @@
     "storybook": "10.2.10",
     "structured-data-testing-tool": "^4.5.0",
     "tailwindcss": "^4.2.4",
-    "tsx": "^4.19.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.53.0",
     "undici": "^7.24.5",
