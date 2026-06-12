@@ -135,15 +135,15 @@ describe('scoring', () => {
       expect(parseScoringVersion({ scoring_version: '2022.1' })).toBe('2022.1')
     })
 
-    it('falls back to 2026.1 when missing or null', () => {
-      expect(parseScoringVersion(null)).toBe('2026.1')
-      expect(parseScoringVersion(undefined)).toBe('2026.1')
-      expect(parseScoringVersion({})).toBe('2026.1')
+    it('falls back to the default version when missing or null', () => {
+      expect(parseScoringVersion(null)).toBe('2026.2')
+      expect(parseScoringVersion(undefined)).toBe('2026.2')
+      expect(parseScoringVersion({})).toBe('2026.2')
     })
 
-    it('falls back to 2026.1 for invalid versions', () => {
-      expect(parseScoringVersion({ scoring_version: '1999.9' })).toBe('2026.1')
-      expect(parseScoringVersion({ scoring_version: '' })).toBe('2026.1')
+    it('falls back to the default version for invalid versions', () => {
+      expect(parseScoringVersion({ scoring_version: '1999.9' })).toBe('2026.2')
+      expect(parseScoringVersion({ scoring_version: '' })).toBe('2026.2')
     })
   })
 
@@ -389,7 +389,7 @@ describe('scoring', () => {
 
     it('falls back to default version when event info is null', () => {
       const info = getEventWinnerInfo(null)
-      expect(info.scoringVersion).toBe('2026.1')
+      expect(info.scoringVersion).toBe('2026.2')
       expect(info.hasDetailedResults).toBe(true)
       expect(info.winnerName).toBeUndefined()
     })

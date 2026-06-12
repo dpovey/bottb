@@ -222,10 +222,10 @@ export function parseScoringVersion(
   if (version && isValidScoringVersion(version)) {
     return version
   }
-  // Fallback for EXISTING events that have no stored version. Intentionally
-  // kept at 2026.1 (not getDefaultScoringVersion()) so making 2026.2 the
-  // new-event default does not silently re-weight any legacy event.
-  return '2026.1'
+  // Fallback for events with no stored version. Matches the new-event default
+  // (2026.2). All existing events have an explicit version, so this only
+  // governs future un-versioned inserts.
+  return getDefaultScoringVersion()
 }
 
 /**
