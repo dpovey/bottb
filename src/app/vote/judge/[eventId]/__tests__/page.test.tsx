@@ -82,9 +82,9 @@ describe('JudgeVotingPage', () => {
       ).toBeInTheDocument()
     })
 
-    // Default is 2026.1 scoring: Song(20) + Perf(30) + Vibe(20) + Visuals(20) = 90
+    // Default is 2026.2 scoring: Song(20) + Perf(20) + Vibe(20) + Visuals(20) = 80
     expect(screen.getByText('Song Choice (20 points)')).toBeInTheDocument()
-    expect(screen.getByText('Performance (30 points)')).toBeInTheDocument()
+    expect(screen.getByText('Performance (20 points)')).toBeInTheDocument()
     expect(screen.getByText(/Crowd Vibe \(\d+ points\)/)).toBeInTheDocument()
     expect(screen.getByText('Visuals (20 points)')).toBeInTheDocument()
   })
@@ -97,7 +97,7 @@ describe('JudgeVotingPage', () => {
       expect(screen.getByText('Test Band 2')).toBeInTheDocument()
     })
 
-    // Check for sliders for each band (2026.1 has 4 categories)
+    // Check for sliders for each band (2026.2 has 4 categories)
     const songChoiceSliders = screen.getAllByRole('slider', {
       name: /Song Choice for/,
     })
@@ -149,14 +149,14 @@ describe('JudgeVotingPage', () => {
     expect(crowdVibeSlider).toHaveValue('0')
     expect(visualsSlider).toHaveValue('0')
 
-    // Use fireEvent to properly set range input values
+    // Use fireEvent to properly set range input values (2026.2 maxes are all 20)
     fireEvent.change(songChoiceSlider, { target: { value: '15' } })
-    fireEvent.change(performanceSlider, { target: { value: '25' } })
+    fireEvent.change(performanceSlider, { target: { value: '18' } })
     fireEvent.change(crowdVibeSlider, { target: { value: '18' } })
     fireEvent.change(visualsSlider, { target: { value: '16' } })
 
     expect(songChoiceSlider).toHaveValue('15')
-    expect(performanceSlider).toHaveValue('25')
+    expect(performanceSlider).toHaveValue('18')
     expect(crowdVibeSlider).toHaveValue('18')
     expect(visualsSlider).toHaveValue('16')
   })
@@ -176,10 +176,10 @@ describe('JudgeVotingPage', () => {
     })
 
     // The total text is split across multiple elements, so we need to look for parts
-    // For 2026.1: max is 90 points (20+30+20+20)
+    // For 2026.2: max is 80 points (20+20+20+20)
     const totalElements = screen.getAllByText((content, element) => {
       return (
-        element?.textContent === 'Total: 0/90' && element?.tagName === 'SPAN'
+        element?.textContent === 'Total: 0/80' && element?.tagName === 'SPAN'
       )
     })
     expect(totalElements).toHaveLength(2) // One for each band
@@ -208,7 +208,7 @@ describe('JudgeVotingPage', () => {
     const nameInput = screen.getByPlaceholderText("Enter judge's name")
     await user.type(nameInput, 'Judge Smith')
 
-    // Fill scores for first band only (need all 4 categories for 2026.1)
+    // Fill scores for first band only (need all 4 categories for 2026.2)
     const songChoiceSliders = screen.getAllByRole('slider', {
       name: /Song Choice for/,
     })
@@ -223,7 +223,7 @@ describe('JudgeVotingPage', () => {
     })
 
     fireEvent.change(songChoiceSliders[0], { target: { value: '15' } })
-    fireEvent.change(performanceSliders[0], { target: { value: '25' } })
+    fireEvent.change(performanceSliders[0], { target: { value: '18' } })
     fireEvent.change(crowdVibeSliders[0], { target: { value: '18' } })
     fireEvent.change(visualsSliders[0], { target: { value: '16' } })
 
@@ -231,7 +231,7 @@ describe('JudgeVotingPage', () => {
 
     // Fill scores for second band
     fireEvent.change(songChoiceSliders[1], { target: { value: '12' } })
-    fireEvent.change(performanceSliders[1], { target: { value: '22' } })
+    fireEvent.change(performanceSliders[1], { target: { value: '17' } })
     fireEvent.change(crowdVibeSliders[1], { target: { value: '15' } })
     fireEvent.change(visualsSliders[1], { target: { value: '14' } })
 
@@ -269,11 +269,11 @@ describe('JudgeVotingPage', () => {
     const nameInput = screen.getByPlaceholderText("Enter judge's name")
     await user.type(nameInput, 'Judge Smith')
 
-    // Fill scores for all bands (4 sliders per band for 2026.1)
+    // Fill scores for all bands (4 sliders per band for 2026.2)
     const sliders = screen.getAllByRole('slider')
     for (let i = 0; i < sliders.length; i += 4) {
       fireEvent.change(sliders[i], { target: { value: '15' } }) // Song Choice
-      fireEvent.change(sliders[i + 1], { target: { value: '25' } }) // Performance
+      fireEvent.change(sliders[i + 1], { target: { value: '18' } }) // Performance
       fireEvent.change(sliders[i + 2], { target: { value: '18' } }) // Crowd Vibe
       fireEvent.change(sliders[i + 3], { target: { value: '16' } }) // Visuals
     }

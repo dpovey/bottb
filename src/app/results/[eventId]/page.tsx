@@ -29,6 +29,7 @@ import {
   hasDetailedBreakdown,
   calculateTotalScore,
   getCategories,
+  getCategoryById,
   type BandScoreData,
 } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
@@ -217,6 +218,10 @@ export default async function ResultsPage({
   const eventInfo = event.info as EventInfo | null
   const scoringVersion = parseScoringVersion(eventInfo)
   const showDetailedBreakdown = hasDetailedBreakdown(scoringVersion)
+  // Crowd-vote weight for the normalized "Vote" display column (10 in
+  // 2025.1/2026.1, 20 in 2026.2) — matches the weight used in the total.
+  const crowdVoteMax =
+    getCategoryById(scoringVersion, 'crowd_vote')?.maxPoints ?? 10
 
   // Fetch bands and hero photos - needed for both legacy and modern results
   const [bands, eventHeroPhotos] = await Promise.all([
@@ -384,7 +389,7 @@ export default async function ResultsPage({
       )
       const crowdVoteScore =
         maxVoteCount > 0
-          ? (Number(result.crowd_vote_count || 0) / maxVoteCount) * 10
+          ? (Number(result.crowd_vote_count || 0) / maxVoteCount) * crowdVoteMax
           : 0
 
       return {
@@ -433,7 +438,8 @@ export default async function ResultsPage({
         )
         const crowdVoteScore =
           maxVoteCount > 0
-            ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+            ? (Number(score.crowd_vote_count || 0) / maxVoteCount) *
+              crowdVoteMax
             : 0
 
         // Calculate total using version-aware function

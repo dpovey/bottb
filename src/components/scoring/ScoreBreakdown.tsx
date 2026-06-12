@@ -58,8 +58,8 @@ export function ScoreBreakdown({
     return null // No breakdown for 2022.1
   }
 
-  const is2025 = scoringVersion === '2025.1'
-  const is2026 = scoringVersion === '2026.1'
+  const hasNoise = categories.some((c) => c.id === 'scream_o_meter')
+  const hasVisuals = categories.some((c) => c.id === 'visuals')
 
   return (
     <section className="py-12">
@@ -91,12 +91,12 @@ export function ScoreBreakdown({
                   <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">
                     Vote
                   </th>
-                  {is2025 && (
+                  {hasNoise && (
                     <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">
                       Noise
                     </th>
                   )}
-                  {is2026 && (
+                  {hasVisuals && (
                     <th className="text-center py-4 px-4 text-xs tracking-wider uppercase text-text-muted">
                       Visuals
                     </th>
@@ -160,12 +160,12 @@ export function ScoreBreakdown({
                         </div>
                       )}
                     </td>
-                    {is2025 && (
+                    {hasNoise && (
                       <td className="py-4 px-4 text-center text-text-muted">
                         {Math.round(band.screamOMeter || 0)}
                       </td>
                     )}
-                    {is2026 && (
+                    {hasVisuals && (
                       <td className="py-4 px-4 text-center text-text-muted">
                         {(band.visuals || 0).toFixed(1)}
                       </td>

@@ -17,7 +17,7 @@ const meta: Meta<typeof WinnerDisplay> = {
   argTypes: {
     scoringVersion: {
       control: 'select',
-      options: ['2022.1', '2025.1', '2026.1'],
+      options: ['2022.1', '2025.1', '2026.1', '2026.2'],
       description: 'Scoring version determines display style',
     },
     winnerName: { control: 'text' },

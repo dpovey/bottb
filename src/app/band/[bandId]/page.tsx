@@ -30,6 +30,8 @@ import {
   parseScoringVersion,
   hasDetailedBreakdown,
   calculateTotalScore,
+  getCategoryById,
+  getMaxJudgePoints,
   type BandScoreData,
 } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
@@ -595,6 +597,21 @@ export default async function BandPage({
   // For 2022.1 events, check if this band is the winner
   const isWinner = !showDetailedBreakdown && eventInfo?.winner === band.name
 
+  // Scoring config derived from the version's category definitions
+  const hasVisuals = getCategoryById(scoringVersion, 'visuals') !== undefined
+  const hasScreamOMeter =
+    getCategoryById(scoringVersion, 'scream_o_meter') !== undefined
+  const songChoiceMax =
+    getCategoryById(scoringVersion, 'song_choice')?.maxPoints ?? 20
+  const performanceMax =
+    getCategoryById(scoringVersion, 'performance')?.maxPoints ?? 30
+  const crowdVoteMax =
+    getCategoryById(scoringVersion, 'crowd_vote')?.maxPoints ?? 10
+  const crowdVibeMax =
+    getCategoryById(scoringVersion, 'crowd_vibe')?.maxPoints ?? 30
+  const visualsMax = getCategoryById(scoringVersion, 'visuals')?.maxPoints ?? 20
+  const maxJudgePoints = getMaxJudgePoints(scoringVersion)
+
   // Calculate scores only if we have band score data and detailed breakdown
   let totalScore = 0
   let judgeScore = 0
@@ -613,21 +630,23 @@ export default async function BandPage({
       crowd_score: bandScore.crowd_score,
     }
 
-    // Calculate normalized crowd vote score
+    // Calculate normalized crowd vote score (leader gets the full weight)
     const maxVoteCount = Math.max(
       ...scores.map((s) => Number(s.crowd_vote_count || 0))
     )
     crowdVoteScore =
       maxVoteCount > 0
-        ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) * 10
+        ? (Number(bandScore.crowd_vote_count || 0) / maxVoteCount) *
+          crowdVoteMax
         : 0
 
     // Version-specific scores
-    if (scoringVersion === '2025.1') {
+    if (hasScreamOMeter) {
       screamOMeterScore = bandScore.crowd_score
         ? Number(bandScore.crowd_score)
         : 0
-    } else if (scoringVersion === '2026.1') {
+    }
+    if (hasVisuals) {
       visualsScore = Number(bandScore.avg_visuals || 0)
     }
 
@@ -651,7 +670,7 @@ export default async function BandPage({
       Number(bandScore.avg_performance || 0) +
       Number(bandScore.avg_crowd_vibe || 0)
 
-    if (scoringVersion === '2026.1') {
+    if (hasVisuals) {
       judgeScore += visualsScore
     }
   }
@@ -669,9 +688,6 @@ export default async function BandPage({
     scores.length > 0 &&
     Number(bandScore.crowd_vote_count || 0) ===
       Math.max(...scores.map((s) => Number(s.crowd_vote_count || 0)))
-
-  const crowdVibeMax = scoringVersion === '2026.1' ? 20 : 30
-  const maxJudgePoints = scoringVersion === '2026.1' ? 90 : 80
 
   const canShowScores = eventStatus === 'finalized' || isAdmin
 
@@ -867,13 +883,13 @@ export default async function BandPage({
                     emoji="🎵"
                     label="Song Choice"
                     value={Number(bandScore.avg_song_choice || 0)}
-                    max={20}
+                    max={songChoiceMax}
                   />
                   <ScoreRow
                     emoji="🎤"
                     label="Performance"
                     value={Number(bandScore.avg_performance || 0)}
-                    max={30}
+                    max={performanceMax}
                   />
                   <ScoreRow
                     emoji="🔥"
@@ -881,12 +897,12 @@ export default async function BandPage({
                     value={Number(bandScore.avg_crowd_vibe || 0)}
                     max={crowdVibeMax}
                   />
-                  {scoringVersion === '2026.1' && (
+                  {hasVisuals && (
                     <ScoreRow
                       emoji="🎨"
                       label="Visuals"
                       value={visualsScore}
-                      max={20}
+                      max={visualsMax}
                     />
                   )}
                 </div>
@@ -904,7 +920,9 @@ export default async function BandPage({
                   </h3>
                   <span className="text-2xl font-semibold text-accent">
                     {Math.round(crowdVoteScore)}
-                    <span className="text-sm text-text-dim">/10</span>
+                    <span className="text-sm text-text-dim">
+                      /{crowdVoteMax}
+                    </span>
                   </span>
                 </div>
 
@@ -930,15 +948,15 @@ export default async function BandPage({
                 )}
               </div>
 
-              {/* Scream-o-Meter (2025.1) or Visuals Summary (2026.1) */}
-              {scoringVersion === '2025.1' && (
+              {/* Scream-o-Meter (2025.1) or Visuals Summary (2026.x) */}
+              {hasScreamOMeter && (
                 <ScreamOMeterCard
                   score={screamOMeterScore}
                   energy={bandScore.crowd_noise_energy}
                   peak={bandScore.crowd_noise_peak}
                 />
               )}
-              {scoringVersion === '2026.1' && (
+              {hasVisuals && (
                 <VisualsSummaryCard
                   score={visualsScore}
                   judgeCount={bandScore.judge_vote_count}

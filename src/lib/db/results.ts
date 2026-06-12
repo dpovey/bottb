@@ -1,6 +1,7 @@
 import { sql } from '../sql'
 import type { FinalizedResult } from '../db-types'
 import { getBandScores } from './events'
+import { getCategoryById, parseScoringVersion } from '../scoring'
 
 // ============================================================
 // Finalized Results Functions
@@ -94,6 +95,14 @@ export async function finalizeEventResults(
     ...scores.map((s) => Number(s.crowd_vote_count || 0))
   )
 
+  // Crowd-vote weight comes from the version's config (10 in 2025.1/2026.1,
+  // 20 in 2026.2), so the leader earns the right number of points.
+  const normalizedVersion = parseScoringVersion({
+    scoring_version: scoringVersion,
+  })
+  const crowdVoteMax =
+    getCategoryById(normalizedVersion, 'crowd_vote')?.maxPoints ?? 10
+
   // Calculate final scores and rankings based on scoring version
   const bandResults = scores.map((score) => {
     const songChoice = Number(score.avg_song_choice || 0)
@@ -101,10 +110,10 @@ export async function finalizeEventResults(
     const crowdVibe = Number(score.avg_crowd_vibe || 0)
     const visuals = Number(score.avg_visuals || 0)
 
-    // Normalized crowd vote score (max 10 points)
+    // Normalized crowd vote score (leader gets the full weight)
     const crowdVoteScore =
       maxVoteCount > 0
-        ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * 10
+        ? (Number(score.crowd_vote_count || 0) / maxVoteCount) * crowdVoteMax
         : 0
 
     // Version-specific scoring
@@ -124,6 +133,7 @@ export async function finalizeEventResults(
       totalScore = judgeScore + crowdVoteScore + screamOMeterScore
     } else {
       // 2026.1: Song(20) + Perf(30) + Vibe(20) + Vote(10) + Visuals(20) = 100
+      // 2026.2: Song(20) + Perf(20) + Vibe(20) + Vote(20) + Visuals(20) = 100
       judgeScore = songChoice + performance + crowdVibe + visuals
       visualsScore = visuals
       totalScore = judgeScore + crowdVoteScore

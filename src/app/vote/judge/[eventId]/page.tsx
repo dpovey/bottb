@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 // No fingerprinting needed for judge voting
 import { BandThumbnail } from '@/components/ui'
-import { ScoringVersion, parseScoringVersion } from '@/lib/scoring'
+import {
+  ScoringVersion,
+  parseScoringVersion,
+  getDefaultScoringVersion,
+  getCategoryById,
+  getMaxJudgePoints,
+} from '@/lib/scoring'
 
 interface Band {
   id: string
@@ -36,7 +42,7 @@ interface JudgeScores {
   song_choice: number
   performance: number
   crowd_vibe: number
-  visuals: number // 2026.1 only
+  visuals: number // 2026.x only
 }
 
 export default function JudgeVotingPage() {
@@ -49,12 +55,21 @@ export default function JudgeVotingPage() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [duplicateError, setDuplicateError] = useState<string>('')
-  const [scoringVersion, setScoringVersion] = useState<ScoringVersion>('2026.1')
+  const [scoringVersion, setScoringVersion] = useState<ScoringVersion>(
+    getDefaultScoringVersion()
+  )
 
-  // Scoring config based on version
-  const is2026 = scoringVersion === '2026.1'
-  const crowdVibeMax = is2026 ? 20 : 30
-  const maxJudgeScore = is2026 ? 90 : 80 // 20+30+20+20 vs 20+30+30
+  // Scoring config derived from the version's category definitions, so any
+  // version (current or future) renders with the right maxes and categories.
+  const songChoiceMax =
+    getCategoryById(scoringVersion, 'song_choice')?.maxPoints ?? 20
+  const performanceMax =
+    getCategoryById(scoringVersion, 'performance')?.maxPoints ?? 30
+  const crowdVibeMax =
+    getCategoryById(scoringVersion, 'crowd_vibe')?.maxPoints ?? 30
+  const visualsMax = getCategoryById(scoringVersion, 'visuals')?.maxPoints ?? 20
+  const hasVisuals = getCategoryById(scoringVersion, 'visuals') !== undefined
+  const maxJudgeScore = getMaxJudgePoints(scoringVersion)
 
   useEffect(() => {
     if (isSubmitted) {
@@ -133,8 +148,8 @@ export default function JudgeVotingPage() {
           bandScores.performance > 0 &&
           bandScores.crowd_vibe > 0
 
-        // For 2026.1, visuals is also required
-        if (is2026) {
+        // For versions with a visuals category, visuals is also required
+        if (hasVisuals) {
           return baseValid && bandScores.visuals > 0
         }
         return baseValid
@@ -161,8 +176,8 @@ export default function JudgeVotingPage() {
           performance: scores[band.id].performance,
           crowd_vibe: scores[band.id].crowd_vibe,
         }
-        // Only include visuals for 2026.1
-        if (is2026) {
+        // Only include visuals for versions with a visuals category
+        if (hasVisuals) {
           voteData.visuals = scores[band.id].visuals
         }
         return voteData
@@ -281,11 +296,11 @@ export default function JudgeVotingPage() {
             )}
 
             <div
-              className={`grid gap-4 text-sm ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+              className={`grid gap-4 text-sm ${hasVisuals ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
             >
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
-                  Song Choice (20 points)
+                  Song Choice ({songChoiceMax} points)
                 </h3>
                 <p className="text-gray-300 text-xs">
                   Engaging, recognizable, suited to band&apos;s style, fits
@@ -294,7 +309,7 @@ export default function JudgeVotingPage() {
               </div>
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="font-semibold text-white mb-2">
-                  Performance (30 points)
+                  Performance ({performanceMax} points)
                 </h3>
                 <p className="text-gray-300 text-xs">
                   Musical ability, tightness, stage presence, having fun while
@@ -309,10 +324,10 @@ export default function JudgeVotingPage() {
                   Getting crowd moving, singing, clapping, energy transfer
                 </p>
               </div>
-              {is2026 && (
+              {hasVisuals && (
                 <div className="bg-white/10 rounded-lg p-4">
                   <h3 className="font-semibold text-white mb-2">
-                    Visuals (20 points)
+                    Visuals ({visualsMax} points)
                   </h3>
                   <p className="text-gray-300 text-xs">
                     Costumes, backdrops, set design, visual presentation
@@ -365,16 +380,17 @@ export default function JudgeVotingPage() {
                 </div>
 
                 <div
-                  className={`grid gap-6 ${is2026 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
+                  className={`grid gap-6 ${hasVisuals ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
                 >
                   <div>
                     <label className="block text-white font-medium mb-2">
-                      Song Choice: {scores[band.id]?.song_choice || 0}/20
+                      Song Choice: {scores[band.id]?.song_choice || 0}/
+                      {songChoiceMax}
                     </label>
                     <input
                       type="range"
                       min="0"
-                      max="20"
+                      max={songChoiceMax}
                       value={scores[band.id]?.song_choice || 0}
                       onChange={(e) =>
                         handleScoreChange(
@@ -387,26 +403,31 @@ export default function JudgeVotingPage() {
                       aria-label={`Song Choice for ${band.name}`}
                       style={{
                         background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                          ((scores[band.id]?.song_choice || 0) / 20) * 100
+                          ((scores[band.id]?.song_choice || 0) /
+                            songChoiceMax) *
+                          100
                         }%, #374151 ${
-                          ((scores[band.id]?.song_choice || 0) / 20) * 100
+                          ((scores[band.id]?.song_choice || 0) /
+                            songChoiceMax) *
+                          100
                         }%, #374151 100%)`,
                       }}
                     />
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
                       <span>0</span>
-                      <span>20</span>
+                      <span>{songChoiceMax}</span>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-white font-medium mb-2">
-                      Performance: {scores[band.id]?.performance || 0}/30
+                      Performance: {scores[band.id]?.performance || 0}/
+                      {performanceMax}
                     </label>
                     <input
                       type="range"
                       min="0"
-                      max="30"
+                      max={performanceMax}
                       value={scores[band.id]?.performance || 0}
                       onChange={(e) =>
                         handleScoreChange(
@@ -419,15 +440,19 @@ export default function JudgeVotingPage() {
                       aria-label={`Performance for ${band.name}`}
                       style={{
                         background: `linear-gradient(to right, #10b981 0%, #10b981 ${
-                          ((scores[band.id]?.performance || 0) / 30) * 100
+                          ((scores[band.id]?.performance || 0) /
+                            performanceMax) *
+                          100
                         }%, #374151 ${
-                          ((scores[band.id]?.performance || 0) / 30) * 100
+                          ((scores[band.id]?.performance || 0) /
+                            performanceMax) *
+                          100
                         }%, #374151 100%)`,
                       }}
                     />
                     <div className="flex justify-between text-xs text-gray-400 mt-1">
                       <span>0</span>
-                      <span>30</span>
+                      <span>{performanceMax}</span>
                     </div>
                   </div>
 
@@ -466,15 +491,15 @@ export default function JudgeVotingPage() {
                     </div>
                   </div>
 
-                  {is2026 && (
+                  {hasVisuals && (
                     <div>
                       <label className="block text-white font-medium mb-2">
-                        Visuals: {scores[band.id]?.visuals || 0}/20
+                        Visuals: {scores[band.id]?.visuals || 0}/{visualsMax}
                       </label>
                       <input
                         type="range"
                         min="0"
-                        max="20"
+                        max={visualsMax}
                         value={scores[band.id]?.visuals || 0}
                         onChange={(e) =>
                           handleScoreChange(
@@ -487,15 +512,15 @@ export default function JudgeVotingPage() {
                         aria-label={`Visuals for ${band.name}`}
                         style={{
                           background: `linear-gradient(to right, #a855f7 0%, #a855f7 ${
-                            ((scores[band.id]?.visuals || 0) / 20) * 100
+                            ((scores[band.id]?.visuals || 0) / visualsMax) * 100
                           }%, #374151 ${
-                            ((scores[band.id]?.visuals || 0) / 20) * 100
+                            ((scores[band.id]?.visuals || 0) / visualsMax) * 100
                           }%, #374151 100%)`,
                         }}
                       />
                       <div className="flex justify-between text-xs text-gray-400 mt-1">
                         <span>0</span>
-                        <span>20</span>
+                        <span>{visualsMax}</span>
                       </div>
                     </div>
                   )}
@@ -507,7 +532,7 @@ export default function JudgeVotingPage() {
                     {(scores[band.id]?.song_choice || 0) +
                       (scores[band.id]?.performance || 0) +
                       (scores[band.id]?.crowd_vibe || 0) +
-                      (is2026 ? scores[band.id]?.visuals || 0 : 0)}
+                      (hasVisuals ? scores[band.id]?.visuals || 0 : 0)}
                     /{maxJudgeScore}
                   </span>
                 </div>
