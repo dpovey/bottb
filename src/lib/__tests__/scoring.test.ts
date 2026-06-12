@@ -73,6 +73,27 @@ describe('scoring', () => {
     })
   })
 
+  it('returns 2026.2 config with all categories weighted evenly at 20', () => {
+    const config = getScoringConfig('2026.2')
+    expect(config.version).toBe('2026.2')
+    expect(config.totalPoints).toBe(100)
+    expect(config.hasDetailedBreakdown).toBe(true)
+    expect(config.categories).toHaveLength(5)
+    // Every category is worth 20 points
+    expect(config.categories.every((c) => c.maxPoints === 20)).toBe(true)
+    const ids = config.categories.map((c) => c.id)
+    expect(ids).toContain('visuals')
+    expect(ids).not.toContain('scream_o_meter')
+  })
+
+  it('category points sum to 100 for 2026.2', () => {
+    const sum = getScoringConfig('2026.2').categories.reduce(
+      (acc, c) => acc + c.maxPoints,
+      0
+    )
+    expect(sum).toBe(100)
+  })
+
   describe('hasDetailedBreakdown', () => {
     it('returns false for 2022.1', () => {
       expect(hasDetailedBreakdown('2022.1')).toBe(false)
@@ -274,6 +295,31 @@ describe('scoring', () => {
       }
       const total = calculateTotalScore(scores, '2026.1', [scores])
       expect(total).toBe(100)
+    })
+
+    it('normalizes crowd vote so the leader gets 20 points in 2026.2', () => {
+      const a: BandScoreData = {
+        avg_song_choice: 0,
+        avg_performance: 0,
+        avg_crowd_vibe: 0,
+        avg_visuals: 0,
+        crowd_vote_count: 100,
+      }
+      const b: BandScoreData = { ...a, crowd_vote_count: 50 }
+      // a leads → full 20 crowd-vote points; b has half → 10
+      expect(calculateTotalScore(a, '2026.2', [a, b])).toBe(20)
+      expect(calculateTotalScore(b, '2026.2', [a, b])).toBe(10)
+    })
+
+    it('produces a perfect 100 in 2026.2 when every category is maxed and band is the vote leader', () => {
+      const scores: BandScoreData = {
+        avg_song_choice: 20,
+        avg_performance: 20,
+        avg_crowd_vibe: 20,
+        avg_visuals: 20,
+        crowd_vote_count: 200,
+      }
+      expect(calculateTotalScore(scores, '2026.2', [scores])).toBe(100)
     })
 
     it('produces a perfect 100 in 2025.1 with max scream-o-meter and vote leadership', () => {

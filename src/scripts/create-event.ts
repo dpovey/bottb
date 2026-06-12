@@ -15,10 +15,15 @@ function generateBandSlug(bandName: string, eventId: string): string {
 }
 
 // Valid scoring versions
-type ScoringVersion = '2022.1' | '2025.1' | '2026.1'
+type ScoringVersion = '2022.1' | '2025.1' | '2026.1' | '2026.2'
 
 function isValidScoringVersion(version: string): version is ScoringVersion {
-  return version === '2022.1' || version === '2025.1' || version === '2026.1'
+  return (
+    version === '2022.1' ||
+    version === '2025.1' ||
+    version === '2026.1' ||
+    version === '2026.2'
+  )
 }
 
 interface EventData {
@@ -32,7 +37,7 @@ interface EventData {
   description?: string // Event description (displayed on event page)
   is_active?: boolean
   status?: 'upcoming' | 'voting' | 'finalized'
-  scoring_version?: string // Scoring version: "2022.1", "2025.1", "2026.1"
+  scoring_version?: string // Scoring version: "2022.1", "2025.1", "2026.1", "2026.2"
   winner?: string // Winner name (for 2022.1 events)
   bands: {
     name: string
@@ -78,7 +83,7 @@ async function createEventFromFile(filePath: string) {
     const scoringVersion = eventData.scoring_version || '2026.1' // Default to latest
     if (!isValidScoringVersion(scoringVersion)) {
       console.error(`❌ Invalid scoring_version: ${scoringVersion}`)
-      console.error('   Valid values: 2022.1, 2025.1, 2026.1')
+      console.error('   Valid values: 2022.1, 2025.1, 2026.1, 2026.2')
       process.exit(1)
     }
     console.log(`📊 Scoring version: ${scoringVersion}`)
@@ -260,7 +265,7 @@ if (!filePath) {
   )
   console.error('  - description: event description (displayed on event page)')
   console.error(
-    "  - scoring_version: '2022.1' | '2025.1' | '2026.1' (default: '2026.1')"
+    "  - scoring_version: '2022.1' | '2025.1' | '2026.1' | '2026.2' (default: '2026.1')"
   )
   console.error('  - winner: (for 2022.1 events only) winner band name')
   console.error('  - bands: array of band objects with:')

@@ -5,9 +5,10 @@
  * - 2022.1: Single winner display only (no detailed breakdown)
  * - 2025.1: Full breakdown with Scream-o-meter
  * - 2026.1: Full breakdown with Costumes/Backgrounds (replacing Scream-o-meter)
+ * - 2026.2: Even weighting — every category worth 20 points
  */
 
-export type ScoringVersion = '2022.1' | '2025.1' | '2026.1'
+export type ScoringVersion = '2022.1' | '2025.1' | '2026.1' | '2026.2'
 
 export interface ScoringCategory {
   id: string
@@ -49,6 +50,15 @@ const CATEGORIES = {
     description: 'Musical ability, stage presence, having fun',
     type: 'judge' as const,
   },
+  performance20: {
+    id: 'performance',
+    label: 'Performance',
+    shortLabel: 'Perf',
+    maxPoints: 20,
+    emoji: '🎤',
+    description: 'Musical ability, stage presence, having fun',
+    type: 'judge' as const,
+  },
   crowdVibe30: {
     id: 'crowd_vibe',
     label: 'Crowd Vibe',
@@ -72,6 +82,15 @@ const CATEGORIES = {
     label: 'Crowd Vote',
     shortLabel: 'Votes',
     maxPoints: 10,
+    emoji: '👥',
+    description: 'Audience voting',
+    type: 'crowd' as const,
+  },
+  crowdVote20: {
+    id: 'crowd_vote',
+    label: 'Crowd Vote',
+    shortLabel: 'Votes',
+    maxPoints: 20,
     emoji: '👥',
     description: 'Audience voting',
     type: 'crowd' as const,
@@ -135,6 +154,20 @@ const SCORING_CONFIGS: Record<ScoringVersion, ScoringConfig> = {
     description:
       'Song (20) + Performance (30) + Crowd Vibe (20) + Crowd Vote (10) + Visuals (20)',
   },
+  '2026.2': {
+    version: '2026.2',
+    totalPoints: 100,
+    categories: [
+      CATEGORIES.songChoice,
+      CATEGORIES.performance20,
+      CATEGORIES.crowdVibe20,
+      CATEGORIES.crowdVote20,
+      CATEGORIES.visuals,
+    ],
+    hasDetailedBreakdown: true,
+    description:
+      'Song (20) + Performance (20) + Crowd Vibe (20) + Crowd Vote (20) + Visuals (20)',
+  },
 }
 
 /**
@@ -171,7 +204,12 @@ export function getDefaultScoringVersion(): ScoringVersion {
 export function isValidScoringVersion(
   version: string
 ): version is ScoringVersion {
-  return version === '2022.1' || version === '2025.1' || version === '2026.1'
+  return (
+    version === '2022.1' ||
+    version === '2025.1' ||
+    version === '2026.1' ||
+    version === '2026.2'
+  )
 }
 
 /**
@@ -218,7 +256,8 @@ export function calculateTotalScore(
   const performance = Number(scores.avg_performance || 0)
   const crowdVibe = Number(scores.avg_crowd_vibe || 0)
 
-  // Crowd vote (normalized - band with most votes gets 10 points)
+  // Crowd vote (normalized - band with most votes gets the max crowd-vote points)
+  const crowdVoteMax = getCategoryById(version, 'crowd_vote')?.maxPoints ?? 10
   let crowdVoteScore = 0
   if (allScores && allScores.length > 0) {
     const maxVoteCount = Math.max(
@@ -226,7 +265,7 @@ export function calculateTotalScore(
     )
     if (maxVoteCount > 0) {
       crowdVoteScore =
-        (Number(scores.crowd_vote_count || 0) / maxVoteCount) * 10
+        (Number(scores.crowd_vote_count || 0) / maxVoteCount) * crowdVoteMax
     }
   }
 
@@ -235,7 +274,7 @@ export function calculateTotalScore(
     // Scream-o-meter (already 1-10 scale)
     const screamOMeter = Number(scores.crowd_score || 0)
     return songChoice + performance + crowdVibe + crowdVoteScore + screamOMeter
-  } else if (version === '2026.1') {
+  } else if (version === '2026.1' || version === '2026.2') {
     // Visuals (costumes, backdrops, themes)
     const visuals = Number(scores.avg_visuals || 0)
     return songChoice + performance + crowdVibe + crowdVoteScore + visuals
@@ -259,7 +298,7 @@ export function calculateJudgeScore(
   const performance = Number(scores.avg_performance || 0)
   const crowdVibe = Number(scores.avg_crowd_vibe || 0)
 
-  if (version === '2026.1') {
+  if (version === '2026.1' || version === '2026.2') {
     const visuals = Number(scores.avg_visuals || 0)
     return songChoice + performance + crowdVibe + visuals
   }
@@ -275,6 +314,7 @@ export function getMaxJudgePoints(version: ScoringVersion): number {
   if (version === '2022.1') return 0
   if (version === '2025.1') return 80 // 20 + 30 + 30
   if (version === '2026.1') return 90 // 20 + 30 + 20 + 20
+  if (version === '2026.2') return 80 // 20 + 20 + 20 + 20
   return 0
 }
 
