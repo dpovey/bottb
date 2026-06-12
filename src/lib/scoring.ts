@@ -195,7 +195,7 @@ export function hasDetailedBreakdown(version: ScoringVersion): boolean {
  * Get the default scoring version for new events
  */
 export function getDefaultScoringVersion(): ScoringVersion {
-  return '2026.1'
+  return '2026.2'
 }
 
 /**
@@ -222,7 +222,9 @@ export function parseScoringVersion(
   if (version && isValidScoringVersion(version)) {
     return version
   }
-  // Default to 2026.1 for new events without a version
+  // Fallback for EXISTING events that have no stored version. Intentionally
+  // kept at 2026.1 (not getDefaultScoringVersion()) so making 2026.2 the
+  // new-event default does not silently re-weight any legacy event.
   return '2026.1'
 }
 

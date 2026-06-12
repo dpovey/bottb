@@ -80,7 +80,7 @@ async function createEventFromFile(filePath: string) {
     )
 
     // Validate and set scoring version
-    const scoringVersion = eventData.scoring_version || '2026.1' // Default to latest
+    const scoringVersion = eventData.scoring_version || '2026.2' // Default to latest
     if (!isValidScoringVersion(scoringVersion)) {
       console.error(`❌ Invalid scoring_version: ${scoringVersion}`)
       console.error('   Valid values: 2022.1, 2025.1, 2026.1, 2026.2')
@@ -265,7 +265,7 @@ if (!filePath) {
   )
   console.error('  - description: event description (displayed on event page)')
   console.error(
-    "  - scoring_version: '2022.1' | '2025.1' | '2026.1' | '2026.2' (default: '2026.1')"
+    "  - scoring_version: '2022.1' | '2025.1' | '2026.1' | '2026.2' (default: '2026.2')"
   )
   console.error('  - winner: (for 2022.1 events only) winner band name')
   console.error('  - bands: array of band objects with:')

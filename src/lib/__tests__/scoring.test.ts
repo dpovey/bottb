@@ -109,8 +109,8 @@ describe('scoring', () => {
   })
 
   describe('getDefaultScoringVersion', () => {
-    it('returns 2026.1 as the default', () => {
-      expect(getDefaultScoringVersion()).toBe('2026.1')
+    it('returns 2026.2 as the default', () => {
+      expect(getDefaultScoringVersion()).toBe('2026.2')
     })
   })
 
