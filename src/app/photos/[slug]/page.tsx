@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getPhotoBySlugOrId, isUuid, ensurePhotoSlug } from '@/lib/photo-slugs'
 import { getAdjacentPhotos, getSimilarPhotos } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { slugify } from '@/lib/utils'
 import { buildSlideshowUrl } from '@/lib/shuffle-types'
@@ -129,6 +130,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
+  // Don't leak metadata for private photos to non-admins.
+  if (photo.visibility === 'private') {
+    const session = await auth()
+    if (session?.user?.isAdmin !== true) {
+      return {
+        title: 'Photo Not Found | Battle of the Tech Bands',
+        robots: { index: false, follow: false },
+      }
+    }
+  }
+
   // Extract photo number from slug for uniqueness
   const photoNumber = getPhotoNumberFromSlug(photo.slug)
 
@@ -239,14 +251,23 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     notFound()
   }
 
-  // Fetch adjacent and similar photos for SEO navigation
+  // Private photos are admin-only. Treat them as missing for everyone else.
+  const session = await auth()
+  const isAdmin = session?.user?.isAdmin === true
+  if (photo.visibility === 'private' && !isAdmin) {
+    notFound()
+  }
+
+  // Fetch adjacent and similar photos for SEO navigation. Admins can navigate
+  // through private photos too; the public only sees released ones.
   const [adjacentPhotos, similarPhotos] = await Promise.all([
     getAdjacentPhotos(
       photo.id,
       photo.slug_prefix || null,
-      photo.event_id || null
+      photo.event_id || null,
+      isAdmin
     ),
-    getSimilarPhotos(photo.id, 6),
+    getSimilarPhotos(photo.id, 6, isAdmin),
   ])
 
   // Extract photo number from slug for uniqueness

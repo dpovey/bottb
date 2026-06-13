@@ -29,6 +29,7 @@ function createMockPhoto(id: string): Photo {
     labels: [],
     hero_focal_point: { x: 50, y: 50 },
     is_monochrome: null,
+    visibility: 'public',
     event_name: 'Test Event',
     band_name: 'Test Band',
     thumbnail_url: `https://example.com/${id}-thumb.jpg`,

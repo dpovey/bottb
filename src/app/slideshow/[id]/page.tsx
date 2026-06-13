@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getPhotoById } from '@/lib/db'
+import { auth } from '@/lib/auth'
 import { getBaseUrl } from '@/lib/seo'
 import { SlideshowPageContent } from './slideshow-page-content'
 import { ImageObjectJsonLd } from '@/components/seo'
@@ -23,6 +24,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!photo) {
     return {
       title: 'Photo Not Found | Battle of the Tech Bands',
+    }
+  }
+
+  // Don't leak metadata for private photos to non-admins.
+  if (photo.visibility === 'private') {
+    const session = await auth()
+    if (session?.user?.isAdmin !== true) {
+      return {
+        title: 'Photo Not Found | Battle of the Tech Bands',
+        robots: { index: false, follow: false },
+      }
     }
   }
 
@@ -87,6 +99,14 @@ export default async function SlideshowPage({ params, searchParams }: Props) {
 
   if (!photo) {
     notFound()
+  }
+
+  // Private photos are admin-only — 404 for everyone else.
+  if (photo.visibility === 'private') {
+    const session = await auth()
+    if (session?.user?.isAdmin !== true) {
+      notFound()
+    }
   }
 
   // Ensure the photo has a slug (generates one if missing)

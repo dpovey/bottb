@@ -57,6 +57,10 @@ export function PhotoCard({
   const clusterSize = cluster?.photos.length ?? 0
   const showClusterBadge = clusterSize > 1
 
+  // Private photos are only ever rendered for admins; flag them so unreleased
+  // photos are obvious while reviewing the public gallery.
+  const isPrivate = displayPhoto.visibility === 'private'
+
   return (
     <div
       className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
@@ -72,17 +76,29 @@ export function PhotoCard({
         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
       />
 
-      {/* Cluster badge - top left corner */}
-      {showClusterBadge && (
-        <button
-          onClick={handleCycleClick}
-          className="absolute top-2 left-2 p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all z-10 cursor-pointer"
-          title={`${clusterSize} similar photos – click to cycle`}
-          aria-label={`View ${clusterSize} similar photos`}
-        >
-          <LayersIcon size={14} />
-          <span className="text-xs font-medium">{clusterSize}</span>
-        </button>
+      {/* Top-left badges - stacked so they never overlap */}
+      {(isPrivate || showClusterBadge) && (
+        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+          {isPrivate && (
+            <span
+              className="px-1.5 py-0.5 bg-warning/90 backdrop-blur-xs rounded-lg text-[10px] font-semibold uppercase tracking-wide text-black"
+              title="Private — only visible to admins until released"
+            >
+              Private
+            </span>
+          )}
+          {showClusterBadge && (
+            <button
+              onClick={handleCycleClick}
+              className="p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all cursor-pointer"
+              title={`${clusterSize} similar photos – click to cycle`}
+              aria-label={`View ${clusterSize} similar photos`}
+            >
+              <LayersIcon size={14} />
+              <span className="text-xs font-medium">{clusterSize}</span>
+            </button>
+          )}
+        </div>
       )}
 
       {/* Company icon badge - always visible in top right if available */}

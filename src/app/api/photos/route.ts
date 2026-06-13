@@ -4,10 +4,12 @@ import {
   getGroupedPhotosWithCount,
   type PhotoOrderBy,
   type Photo,
+  type PhotoVisibility,
   type PhotoWithCluster,
 } from '@/lib/db'
 import { getCachedPhotos, getCachedPhotoFilters } from '@/lib/nav-data'
 import { withPublicRateLimit } from '@/lib/api-protection'
+import { auth } from '@/lib/auth'
 import { getTimeBasedSeed } from '@/lib/shuffle'
 
 // Convert string seed to numeric seed for database ordering
@@ -65,6 +67,20 @@ export const GET = withPublicRateLimit(async function GET(
         )[])
       : undefined
 
+    // Admins may see private (unreleased) photos inline, marked with a badge.
+    // Everyone else only ever sees public photos.
+    const session = await auth()
+    const isAdmin = session?.user?.isAdmin === true
+    const includePrivate = isAdmin
+
+    // Explicit visibility filter (admin photo management). Ignored for
+    // non-admins so it can never be used to surface private photos.
+    const visibilityParam = searchParams.get('visibility')
+    const visibility: PhotoVisibility | undefined =
+      isAdmin && (visibilityParam === 'private' || visibilityParam === 'public')
+        ? visibilityParam
+        : undefined
+
     let photos: Photo[] | PhotoWithCluster[]
     let total: number
     let seed: string | null = null
@@ -93,6 +109,8 @@ export const GET = withPublicRateLimit(async function GET(
         seed: numericSeed,
         unmatched,
         groupTypes,
+        includePrivate,
+        visibility,
       })
       photos = result.photos
       total = result.total
@@ -106,6 +124,7 @@ export const GET = withPublicRateLimit(async function GET(
         shuffle,
         limit,
         offset,
+        includePrivate,
       })
       photos = result.photos
       total = result.total
@@ -119,6 +138,7 @@ export const GET = withPublicRateLimit(async function GET(
         shuffle: 'true', // Use shared time-based shuffle
         limit,
         offset,
+        includePrivate,
       })
       photos = result.photos
       total = result.total
@@ -134,6 +154,8 @@ export const GET = withPublicRateLimit(async function GET(
         offset,
         orderBy,
         unmatched,
+        includePrivate,
+        visibility,
       })
       photos = result.photos
       total = result.total
@@ -150,6 +172,7 @@ export const GET = withPublicRateLimit(async function GET(
         eventId,
         photographer,
         companySlug,
+        includePrivate,
       })
       // Extract photographers and companies from availableFilters (no separate queries needed)
       photographers = availableFilters.photographers.map((p) => p.name)

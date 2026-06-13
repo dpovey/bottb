@@ -3,7 +3,8 @@ import { revalidateTag } from 'next/cache'
 import { sql } from '@/lib/sql'
 import { del, list } from '@vercel/blob'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
-import { getPhotoById, Photo } from '@/lib/db'
+import { auth } from '@/lib/auth'
+import { getPhotoById, Photo, type PhotoVisibility } from '@/lib/db'
 
 interface PhotoRow {
   id: string
@@ -16,6 +17,7 @@ interface PhotoUpdateBody {
   event_id?: string | null
   band_id?: string | null
   photographer?: string | null
+  visibility?: PhotoVisibility
 }
 
 // GET a single photo by ID (public endpoint for slideshow deep links)
@@ -37,6 +39,15 @@ export async function GET(
 
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
+    }
+
+    // Private photos are admin-only. For everyone else, behave as if the photo
+    // does not exist (404 rather than 403, to avoid confirming its existence).
+    if (photo.visibility === 'private') {
+      const session = await auth()
+      if (session?.user?.isAdmin !== true) {
+        return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
+      }
     }
 
     return NextResponse.json(photo)
@@ -142,19 +153,32 @@ const handleUpdatePhoto: ProtectedApiHandler = async (
     }
 
     const body: PhotoUpdateBody = await request.json()
-    const { event_id, band_id, photographer } = body
+    const { event_id, band_id, photographer, visibility } = body
 
     // Validate that at least one field is being updated
     if (
       event_id === undefined &&
       band_id === undefined &&
-      photographer === undefined
+      photographer === undefined &&
+      visibility === undefined
     ) {
       return NextResponse.json(
         {
           error:
-            'At least one field (event_id, band_id, photographer) must be provided',
+            'At least one field (event_id, band_id, photographer, visibility) must be provided',
         },
+        { status: 400 }
+      )
+    }
+
+    // Validate visibility if provided
+    if (
+      visibility !== undefined &&
+      visibility !== 'private' &&
+      visibility !== 'public'
+    ) {
+      return NextResponse.json(
+        { error: "visibility must be 'private' or 'public'" },
         { status: 400 }
       )
     }
@@ -184,14 +208,24 @@ const handleUpdatePhoto: ProtectedApiHandler = async (
       }
     }
 
+    // A change to an association field counts as a manual match correction.
+    // A visibility-only change must NOT overwrite the existing match_confidence.
+    const isMetadataEdit =
+      event_id !== undefined ||
+      band_id !== undefined ||
+      photographer !== undefined
+    const matchConfidence = isMetadataEdit
+      ? 'manual'
+      : existingPhoto.match_confidence
+
     // Execute update - preserve existing values for fields not being updated
-    // Set match_confidence to 'manual' since this is a manual correction
     const { rows } = await sql<Photo>`
       UPDATE photos SET
         event_id = ${event_id !== undefined ? event_id : existingPhoto.event_id},
         band_id = ${band_id !== undefined ? band_id : existingPhoto.band_id},
         photographer = ${photographer !== undefined ? photographer : existingPhoto.photographer},
-        match_confidence = 'manual'
+        visibility = ${visibility !== undefined ? visibility : existingPhoto.visibility},
+        match_confidence = ${matchConfidence}
       WHERE id = ${photoId}
       RETURNING *
     `

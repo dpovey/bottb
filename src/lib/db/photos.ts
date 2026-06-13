@@ -1,5 +1,10 @@
 import { sql, sqlQuery } from '../sql'
-import type { HeroFocalPoint, Photo, PhotoOrderBy } from '../db-types'
+import type {
+  HeroFocalPoint,
+  Photo,
+  PhotoOrderBy,
+  PhotoVisibility,
+} from '../db-types'
 import { PHOTO_LABELS } from '../db-types'
 
 // Photo functions
@@ -18,6 +23,14 @@ export interface GetPhotosOptions {
   unmatched?: boolean
   /** Cluster types to group by - when set, returns only representatives with cluster data */
   groupTypes?: ('near_duplicate' | 'scene')[]
+  /**
+   * Access control: when true, private photos are included. Defaults to false
+   * so public callers never see private (admin-only) photos. Only admin
+   * contexts should pass true.
+   */
+  includePrivate?: boolean
+  /** Explicit visibility filter (e.g. admin filtering to only private photos). */
+  visibility?: PhotoVisibility
 }
 
 // Photo with embedded cluster data for grouped queries
@@ -79,6 +92,8 @@ export async function getPhotosWithCount(
     orderBy = 'uploaded',
     seed,
     unmatched,
+    includePrivate = false,
+    visibility,
   } = options
 
   // For random ordering, use deterministic hash-based ordering with seed
@@ -90,6 +105,8 @@ export async function getPhotosWithCount(
       limit,
       offset,
       seed,
+      includePrivate,
+      visibility,
     })
   }
 
@@ -128,6 +145,11 @@ export async function getPhotosWithCount(
           ${unmatched ? 'true' : 'false'}::boolean = false
           OR (p.event_id IS NULL OR p.band_id IS NULL)
         )
+        AND (
+          ${includePrivate ? 'true' : 'false'}::boolean = true
+          OR p.visibility = 'public'
+        )
+        AND (${visibility || null}::text IS NULL OR p.visibility = ${visibility || null})
       ORDER BY p.uploaded_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -159,6 +181,8 @@ async function getPhotosRandomWithCount(options: {
   limit: number
   offset?: number
   seed?: number
+  includePrivate?: boolean
+  visibility?: PhotoVisibility
 }): Promise<PhotosWithCountResult> {
   const {
     eventId,
@@ -167,6 +191,8 @@ async function getPhotosRandomWithCount(options: {
     limit,
     offset = 0,
     seed,
+    includePrivate = false,
+    visibility,
   } = options
 
   try {
@@ -194,8 +220,13 @@ async function getPhotosRandomWithCount(options: {
           OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
           OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
         )
-      ORDER BY 
-        CASE WHEN ${seed ?? null}::bigint IS NOT NULL 
+        AND (
+          ${includePrivate ? 'true' : 'false'}::boolean = true
+          OR p.visibility = 'public'
+        )
+        AND (${visibility || null}::text IS NULL OR p.visibility = ${visibility || null})
+      ORDER BY
+        CASE WHEN ${seed ?? null}::bigint IS NOT NULL
           THEN hashtext(p.id || ${seed ?? 0}::text)
           ELSE floor(random() * 2147483647)::int
         END,
@@ -238,6 +269,8 @@ export async function getGroupedPhotosWithCount(options: {
   seed?: number
   unmatched?: boolean
   groupTypes: ('near_duplicate' | 'scene')[]
+  includePrivate?: boolean
+  visibility?: PhotoVisibility
 }): Promise<GroupedPhotosResult> {
   const {
     eventId,
@@ -250,6 +283,8 @@ export async function getGroupedPhotosWithCount(options: {
     seed,
     unmatched,
     groupTypes,
+    includePrivate = false,
+    visibility,
   } = options
 
   try {
@@ -301,6 +336,8 @@ export async function getGroupedPhotosWithCount(options: {
             $6::boolean = false
             OR (p.event_id IS NULL OR p.band_id IS NULL)
           )
+          AND ($9::boolean = true OR p.visibility = 'public')
+          AND ($10::text IS NULL OR p.visibility = $10)
       )
       SELECT 
         vp.*,
@@ -386,6 +423,8 @@ export async function getGroupedPhotosWithCount(options: {
       unmatched ?? false, // $6
       limit, // $7
       offset, // $8
+      includePrivate, // $9 - access control (include private photos)
+      visibility || null, // $10 - explicit visibility filter
     ]
 
     const { rows } = await sqlQuery<PhotoWithClusterRow>(queryText, values)
@@ -443,21 +482,25 @@ export async function getPhotoById(photoId: string): Promise<Photo | null> {
 export async function getPhotoCount(
   options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
-  const { eventId, photographer, companySlug } = options
+  const { eventId, photographer, companySlug, includePrivate = false } = options
 
   try {
     // Use conditional SQL to combine all filters with AND
     const { rows } = await sql<{ count: string }>`
-      SELECT COUNT(*) as count 
+      SELECT COUNT(*) as count
       FROM photos p
       LEFT JOIN bands b ON p.band_id = b.id
-      WHERE 
+      WHERE
         (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
         AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
         AND (
-          ${companySlug || null}::text IS NULL 
+          ${companySlug || null}::text IS NULL
           OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
           OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
+        )
+        AND (
+          ${includePrivate ? 'true' : 'false'}::boolean = true
+          OR p.visibility = 'public'
         )
     `
     return parseInt(rows[0]?.count || '0', 10)
@@ -495,7 +538,8 @@ export interface AvailablePhotoFilters {
 export async function getAvailablePhotoFilters(
   options: Omit<GetPhotosOptions, 'limit' | 'offset'> = {}
 ): Promise<AvailablePhotoFilters> {
-  const { eventId, photographer, companySlug } = options
+  const { eventId, photographer, companySlug, includePrivate = false } = options
+  const incPrivate = includePrivate ? 'true' : 'false'
 
   try {
     // Run all queries in parallel for better performance
@@ -513,9 +557,10 @@ export async function getAvailablePhotoFilters(
         FROM photos p
         INNER JOIN bands b ON p.band_id = b.id
         INNER JOIN companies c ON b.company_slug = c.slug
-        WHERE 
+        WHERE
           (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
           AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         GROUP BY c.slug, c.name
         ORDER BY c.name
       `,
@@ -526,13 +571,14 @@ export async function getAvailablePhotoFilters(
         FROM photos p
         INNER JOIN events e ON p.event_id = e.id
         LEFT JOIN bands b ON p.band_id = b.id
-        WHERE 
+        WHERE
           (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
           AND (
-            ${companySlug || null}::text IS NULL 
+            ${companySlug || null}::text IS NULL
             OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
             OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
           )
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         GROUP BY e.id, e.name
         ORDER BY e.name
       `,
@@ -542,27 +588,29 @@ export async function getAvailablePhotoFilters(
         SELECT p.photographer as name, COUNT(*)::text as count
         FROM photos p
         LEFT JOIN bands b ON p.band_id = b.id
-        WHERE 
+        WHERE
           p.photographer IS NOT NULL
           AND (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
           AND (
-            ${companySlug || null}::text IS NULL 
+            ${companySlug || null}::text IS NULL
             OR (${companySlug || null} = 'none' AND (b.company_slug IS NULL OR p.band_id IS NULL))
             OR (${companySlug || null} != 'none' AND b.company_slug = ${companySlug || null})
           )
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         GROUP BY p.photographer
         ORDER BY p.photographer
       `,
 
       // Check if there are photos without a company (via band) matching current filters
       sql<{ count: string }>`
-        SELECT COUNT(*)::text as count 
+        SELECT COUNT(*)::text as count
         FROM photos p
         LEFT JOIN bands b ON p.band_id = b.id
-        WHERE 
+        WHERE
           (b.company_slug IS NULL OR p.band_id IS NULL)
           AND (${eventId || null}::text IS NULL OR p.event_id = ${eventId || null})
           AND (${photographer || null}::text IS NULL OR p.photographer = ${photographer || null})
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
       `,
     ])
 
@@ -614,8 +662,17 @@ export async function updatePhotoLabels(
 
 export async function getPhotosByLabel(
   label: string,
-  options?: { eventId?: string; bandId?: string; photographerName?: string }
+  options?: {
+    eventId?: string
+    bandId?: string
+    photographerName?: string
+    /** Include private photos (admin only). Defaults to false. */
+    includePrivate?: boolean
+  }
 ): Promise<Photo[]> {
+  // Heroes/labelled photos are surfaced publicly, so private ones are hidden
+  // unless an admin context explicitly opts in.
+  const incPrivate = options?.includePrivate ? 'true' : 'false'
   try {
     if (options?.bandId) {
       // Get photos with this label for a specific band
@@ -631,6 +688,7 @@ export async function getPhotosByLabel(
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
           AND p.band_id = ${options.bandId}
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         ORDER BY p.uploaded_at DESC
       `
       return rows
@@ -648,6 +706,7 @@ export async function getPhotosByLabel(
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
           AND p.event_id = ${options.eventId}
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         ORDER BY p.uploaded_at DESC
       `
       return rows
@@ -665,6 +724,7 @@ export async function getPhotosByLabel(
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
           AND p.photographer = ${options.photographerName}
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         ORDER BY p.uploaded_at DESC
       `
       return rows
@@ -681,6 +741,7 @@ export async function getPhotosByLabel(
         LEFT JOIN bands b ON p.band_id = b.id
         LEFT JOIN companies c ON b.company_slug = c.slug
         WHERE ${label} = ANY(p.labels)
+          AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         ORDER BY p.uploaded_at DESC
       `
       return rows
@@ -710,6 +771,7 @@ export async function getAllHeroPhotos(): Promise<Photo[]> {
       LEFT JOIN bands b ON p.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
       WHERE p.labels && ${heroLabelsLiteral}::text[]
+        AND p.visibility = 'public'
       ORDER BY p.uploaded_at DESC
     `
     return rows
@@ -737,9 +799,11 @@ export async function getIndexablePhotos(): Promise<Photo[]> {
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
+      WHERE
         -- Photo must have a slug to be indexable
         p.slug IS NOT NULL
+        -- Never index private (admin-only) photos
+        AND p.visibility = 'public'
         AND (
           -- Not in any cluster (unique photo)
           NOT EXISTS (
@@ -770,8 +834,10 @@ export async function getIndexablePhotos(): Promise<Photo[]> {
 export async function getAdjacentPhotos(
   photoId: string,
   slugPrefix: string | null,
-  eventId: string | null
+  eventId: string | null,
+  includePrivate = false
 ): Promise<{ previous: Photo | null; next: Photo | null }> {
+  const incPrivate = includePrivate ? 'true' : 'false'
   try {
     // Get previous photo (highest slug that's less than current)
     const { rows: prevRows } = await sql<Photo>`
@@ -779,9 +845,10 @@ export async function getAdjacentPhotos(
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
-      WHERE 
+      WHERE
         p.slug IS NOT NULL
         AND p.slug < (SELECT slug FROM photos WHERE id = ${photoId})
+        AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         AND (
           (${slugPrefix}::text IS NOT NULL AND p.slug_prefix = ${slugPrefix})
           OR
@@ -797,9 +864,10 @@ export async function getAdjacentPhotos(
       FROM photos p
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
-      WHERE 
+      WHERE
         p.slug IS NOT NULL
         AND p.slug > (SELECT slug FROM photos WHERE id = ${photoId})
+        AND (${incPrivate}::boolean = true OR p.visibility = 'public')
         AND (
           (${slugPrefix}::text IS NOT NULL AND p.slug_prefix = ${slugPrefix})
           OR
@@ -825,8 +893,10 @@ export async function getAdjacentPhotos(
  */
 export async function getSimilarPhotos(
   photoId: string,
-  limit = 6
+  limit = 6,
+  includePrivate = false
 ): Promise<Photo[]> {
+  const incPrivate = includePrivate ? 'true' : 'false'
   try {
     const { rows } = await sql<Photo>`
       SELECT DISTINCT p.*, e.name as event_name, b.name as band_name, c.name as company_name,
@@ -837,10 +907,11 @@ export async function getSimilarPhotos(
       LEFT JOIN events e ON p.event_id = e.id
       LEFT JOIN bands b ON p.band_id = b.id
       LEFT JOIN companies c ON b.company_slug = c.slug
-      WHERE 
+      WHERE
         ${photoId} = ANY(pc.photo_ids)
         AND p.id != ${photoId}
         AND p.slug IS NOT NULL
+        AND (${incPrivate}::boolean = true OR p.visibility = 'public')
       ORDER BY p.uploaded_at DESC
       LIMIT ${limit}
     `
@@ -870,6 +941,64 @@ export async function updateHeroFocalPoint(
     return rows[0] || null
   } catch (error) {
     console.error('Error updating hero focal point:', error)
+    throw error
+  }
+}
+
+// Photo visibility functions
+
+/**
+ * Update a single photo's visibility (private/public).
+ * Used by admins to release individual photos to the public.
+ */
+export async function updatePhotoVisibility(
+  photoId: string,
+  visibility: PhotoVisibility
+): Promise<Photo | null> {
+  try {
+    const { rows } = await sql<Photo>`
+      UPDATE photos
+      SET visibility = ${visibility}
+      WHERE id = ${photoId}
+      RETURNING *
+    `
+    return rows[0] || null
+  } catch (error) {
+    console.error('Error updating photo visibility:', error)
+    throw error
+  }
+}
+
+/**
+ * Bulk-set the visibility of every photo for an event and/or photographer.
+ * Used to release all photos at once ("make all public"). At least one of
+ * eventId or photographer must be provided to avoid updating the whole table.
+ *
+ * @returns the number of photos updated
+ */
+export async function bulkSetPhotosVisibility(
+  scope: { eventId?: string; photographer?: string },
+  visibility: PhotoVisibility
+): Promise<number> {
+  const { eventId, photographer } = scope
+
+  if (!eventId && !photographer) {
+    throw new Error(
+      'bulkSetPhotosVisibility requires an eventId or photographer scope'
+    )
+  }
+
+  try {
+    const { rowCount } = await sql`
+      UPDATE photos
+      SET visibility = ${visibility}
+      WHERE
+        (${eventId || null}::text IS NULL OR event_id = ${eventId || null})
+        AND (${photographer || null}::text IS NULL OR photographer = ${photographer || null})
+    `
+    return rowCount ?? 0
+  } catch (error) {
+    console.error('Error bulk-updating photo visibility:', error)
     throw error
   }
 }

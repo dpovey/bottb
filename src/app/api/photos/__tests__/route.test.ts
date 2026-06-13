@@ -93,6 +93,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
 
@@ -127,6 +129,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -152,6 +156,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -177,6 +183,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -202,6 +210,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -227,6 +237,8 @@ describe('/api/photos', () => {
         offset: 25,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
 
@@ -261,6 +273,7 @@ describe('/api/photos', () => {
         shuffle: 'true',
         limit: 50,
         offset: 0,
+        includePrivate: false,
       })
       expect(response.status).toBe(200)
     })
@@ -284,6 +297,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'date',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -370,6 +385,8 @@ describe('/api/photos', () => {
         offset: 0,
         orderBy: 'uploaded',
         unmatched: false,
+        includePrivate: false,
+        visibility: undefined,
       })
       expect(response.status).toBe(200)
     })
@@ -396,6 +413,7 @@ describe('/api/photos', () => {
           shuffle: 'true',
           limit: 50,
           offset: 0,
+          includePrivate: false,
         })
         expect(response.status).toBe(200)
 
@@ -423,6 +441,7 @@ describe('/api/photos', () => {
           shuffle: 'custom-seed-123',
           limit: 50,
           offset: 0,
+          includePrivate: false,
         })
         expect(response.status).toBe(200)
 
@@ -469,6 +488,7 @@ describe('/api/photos', () => {
           shuffle: 'true',
           limit: 50,
           offset: 0,
+          includePrivate: false,
         })
         expect(response.status).toBe(200)
       })
@@ -494,6 +514,7 @@ describe('/api/photos', () => {
           shuffle: 'true',
           limit: 50,
           offset: 0,
+          includePrivate: false,
         })
         expect(response.status).toBe(200)
       })

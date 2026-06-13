@@ -16,11 +16,12 @@ export default async function PhotoAdminPage() {
     redirect('/admin/login')
   }
 
-  // Fetch photos (start with unmatched photos first)
+  // Fetch photos (admins see private/unreleased photos too)
   const { photos, total } = await getPhotosWithCount({
     limit: 50,
     offset: 0,
     orderBy: 'uploaded',
+    includePrivate: true,
   })
 
   // Fetch events

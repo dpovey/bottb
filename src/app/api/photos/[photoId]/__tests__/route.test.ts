@@ -84,6 +84,38 @@ describe('/api/photos/[photoId]', () => {
       expect(data).toEqual({ error: 'Photo not found' })
     })
 
+    it('returns 404 for a private photo when not admin', async () => {
+      mockGetPhotoById.mockResolvedValue({
+        ...mockPhoto,
+        visibility: 'private',
+      })
+      mockAuth.mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost/api/photos/photo-1')
+      const response = await GET(request, {
+        params: Promise.resolve({ photoId: 'photo-1' }),
+      })
+
+      expect(response.status).toBe(404)
+      const data = await response.json()
+      expect(data).toEqual({ error: 'Photo not found' })
+    })
+
+    it('returns a private photo to an admin', async () => {
+      const privatePhoto = { ...mockPhoto, visibility: 'private' }
+      mockGetPhotoById.mockResolvedValue(privatePhoto)
+      mockAuth.mockResolvedValue({ user: { id: 'admin-1', isAdmin: true } })
+
+      const request = new NextRequest('http://localhost/api/photos/photo-1')
+      const response = await GET(request, {
+        params: Promise.resolve({ photoId: 'photo-1' }),
+      })
+
+      expect(response.status).toBe(200)
+      const data = await response.json()
+      expect(data).toEqual(privatePhoto)
+    })
+
     it('returns 400 when photoId is missing', async () => {
       const request = new NextRequest('http://localhost/api/photos/')
       const response = await GET(request, {

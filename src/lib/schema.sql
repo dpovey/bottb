@@ -178,8 +178,13 @@ CREATE TABLE IF NOT EXISTS photos (
     slug character varying(255) UNIQUE,
     -- Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
     slug_prefix character varying(255),
-    CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[])))
+    -- Visibility: new uploads default to 'private' (admin-only); admins release to 'public'
+    visibility character varying(20) DEFAULT 'private' NOT NULL,
+    CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[]))),
+    CONSTRAINT photos_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['private'::character varying, 'public'::character varying])::text[])))
 );
+
+CREATE INDEX IF NOT EXISTS idx_photos_visibility ON photos (visibility);
 
 -- Photo intelligence tables
 

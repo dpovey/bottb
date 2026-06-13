@@ -203,6 +203,13 @@ export interface CachedPhotosOptions {
   shuffle?: string | null // 'true' for shared shuffle, or a specific seed
   limit?: number
   offset?: number
+  /**
+   * Include private (admin-only) photos. Only admin requests pass true.
+   * Because the value is part of the cache key, admin (true) and public
+   * (false) requests never share a cache entry, so private photos can't
+   * leak into the public cache.
+   */
+  includePrivate?: boolean
 }
 
 export interface CachedPhotosResult {
@@ -248,6 +255,7 @@ export async function getCachedPhotos(
     shuffle,
     limit = 50,
     offset = 0,
+    includePrivate = false,
   } = options
 
   // Determine the seed to use
@@ -275,6 +283,7 @@ export async function getCachedPhotos(
     offset,
     orderBy: seed ? 'random' : 'date',
     seed: seed ? stringToNumericSeed(seed) : undefined,
+    includePrivate,
   })
 
   return { photos, total, seed }
@@ -287,6 +296,7 @@ export async function getCachedPhotoFilters(options: {
   eventId?: string
   photographer?: string
   companySlug?: string
+  includePrivate?: boolean
 }) {
   cacheLife('fifteenMinutes')
   cacheTag('photo-filters')

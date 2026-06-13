@@ -198,6 +198,16 @@ export interface HeroFocalPoint {
   y: number // 0-100 percentage from top
 }
 
+// Photo visibility states. New uploads start 'private' (admin-only) and are
+// released to 'public' a few at a time (or in bulk per event/photographer).
+export const PHOTO_VISIBILITY = {
+  PRIVATE: 'private',
+  PUBLIC: 'public',
+} as const
+
+export type PhotoVisibility =
+  (typeof PHOTO_VISIBILITY)[keyof typeof PHOTO_VISIBILITY]
+
 export interface Photo {
   id: string
   event_id: string | null
@@ -231,6 +241,8 @@ export interface Photo {
   slug: string | null
   // Prefix for sequence grouping (e.g., "the-fuggles-brisbane-2024")
   slug_prefix: string | null
+  // Visibility: 'private' (admin-only) or 'public'. New uploads default to 'private'.
+  visibility: PhotoVisibility
   // Joined fields
   event_name?: string
   band_name?: string

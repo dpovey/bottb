@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPhotoById } from '@/lib/db'
 import { withRateLimit } from '@/lib/api-protection'
+import { auth } from '@/lib/auth'
 import sharp from 'sharp'
 
 async function handler(
@@ -28,6 +29,14 @@ async function handler(
 
     if (!photo) {
       return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
+    }
+
+    // Private photos are admin-only — 404 for everyone else.
+    if (photo.visibility === 'private') {
+      const session = await auth()
+      if (session?.user?.isAdmin !== true) {
+        return NextResponse.json({ error: 'Photo not found' }, { status: 404 })
+      }
     }
 
     // Parse query params

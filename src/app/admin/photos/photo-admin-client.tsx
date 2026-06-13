@@ -38,6 +38,10 @@ export function PhotoAdminClient({
   const [filterBand, setFilterBand] = useState<string>('')
   const [filterPhotographer, setFilterPhotographer] = useState<string>('')
   const [filterUnmatched, setFilterUnmatched] = useState<boolean>(false)
+  const [filterVisibility, setFilterVisibility] = useState<
+    '' | 'private' | 'public'
+  >('')
+  const [isReleasing, setIsReleasing] = useState(false)
 
   // Bulk selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -60,6 +64,7 @@ export function PhotoAdminClient({
       if (filterBand) params.set('band', filterBand)
       if (filterPhotographer) params.set('photographer', filterPhotographer)
       if (filterUnmatched) params.set('unmatched', 'true')
+      if (filterVisibility) params.set('visibility', filterVisibility)
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (res.ok) {
@@ -87,6 +92,7 @@ export function PhotoAdminClient({
     setFilterBand('')
     setFilterPhotographer('')
     setFilterUnmatched(false)
+    setFilterVisibility('')
     setPage(1)
     setSelectedIds(new Set())
     fetchPhotos(1)
@@ -161,6 +167,70 @@ export function PhotoAdminClient({
     }
   }
 
+  // Set visibility on the currently selected photos ("release a few at a time")
+  const handleBulkVisibility = async (visibility: 'private' | 'public') => {
+    if (selectedIds.size === 0) return
+
+    setIsBulkSaving(true)
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((photoId) =>
+          fetch(`/api/photos/${photoId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visibility }),
+          })
+        )
+      )
+      await fetchPhotos(page)
+      clearSelection()
+    } catch (error) {
+      console.error('Bulk visibility update failed:', error)
+    } finally {
+      setIsBulkSaving(false)
+    }
+  }
+
+  // Release (or hide) every photo for the active event/photographer scope
+  const handleReleaseScope = async (visibility: 'private' | 'public') => {
+    if (!filterEvent && !filterPhotographer) return
+
+    const scopeLabel =
+      events.find((e) => e.id === filterEvent)?.name ||
+      filterPhotographer ||
+      'this scope'
+    const verb = visibility === 'public' ? 'make public' : 'make private'
+    if (
+      !window.confirm(
+        `This will ${verb} ALL photos for ${scopeLabel}, including ones not on this page. Continue?`
+      )
+    ) {
+      return
+    }
+
+    setIsReleasing(true)
+    try {
+      const res = await fetch('/api/admin/photos/visibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visibility,
+          ...(filterEvent && { eventId: filterEvent }),
+          ...(filterPhotographer && { photographer: filterPhotographer }),
+        }),
+      })
+      if (res.ok) {
+        await fetchPhotos(page)
+      } else {
+        console.error('Release scope failed:', await res.text())
+      }
+    } catch (error) {
+      console.error('Release scope failed:', error)
+    } finally {
+      setIsReleasing(false)
+    }
+  }
+
   // Count unmatched (no event or no band)
   const unmatchedCount = photos.filter((p) => !p.event_id || !p.band_id).length
 
@@ -215,6 +285,19 @@ export function PhotoAdminClient({
           ))}
         </FilterSelect>
 
+        <FilterSelect
+          label="Visibility"
+          value={filterVisibility}
+          onChange={(e) =>
+            setFilterVisibility(e.target.value as '' | 'private' | 'public')
+          }
+          containerClassName="min-w-[140px]"
+        >
+          <option value="">All</option>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </FilterSelect>
+
         {/* Unmatched Filter */}
         <div className="flex items-end pb-1">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -242,6 +325,36 @@ export function PhotoAdminClient({
         </div>
       </FilterBar>
 
+      {/* Scoped release: make every photo for the active event/photographer
+          public (or private) at once. Requires an event or photographer filter
+          so it never touches the whole library by accident. */}
+      {(filterEvent || filterPhotographer) && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <span className="text-sm text-gray-300">
+            Release all photos for the current{' '}
+            {filterEvent ? 'event' : 'photographer'}
+            {filterEvent && filterPhotographer ? ' + photographer' : ''} scope:
+          </span>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => handleReleaseScope('public')}
+            disabled={isReleasing}
+          >
+            {isReleasing ? <VinylSpinner size="xxs" /> : null}
+            Make all public
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleReleaseScope('private')}
+            disabled={isReleasing}
+          >
+            Make all private
+          </Button>
+        </div>
+      )}
+
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
         <div className="bg-accent/20 border border-accent/30 rounded-xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -257,14 +370,32 @@ export function PhotoAdminClient({
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {!bulkEditMode ? (
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => setBulkEditMode(true)}
-              >
-                <EditIcon size={16} />
-                Bulk Edit
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => setBulkEditMode(true)}
+                >
+                  <EditIcon size={16} />
+                  Bulk Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleBulkVisibility('public')}
+                  disabled={isBulkSaving}
+                >
+                  Make Public
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleBulkVisibility('private')}
+                  disabled={isBulkSaving}
+                >
+                  Make Private
+                </Button>
+              </div>
             ) : (
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <select
@@ -407,6 +538,7 @@ export function PhotoAdminClient({
                   <th className="px-4 py-3">Event</th>
                   <th className="px-4 py-3">Band</th>
                   <th className="px-4 py-3">Photographer</th>
+                  <th className="px-4 py-3 w-28">Visibility</th>
                   <th className="px-4 py-3 w-24">Match</th>
                   <th className="px-4 py-3 w-32">Actions</th>
                 </tr>
@@ -460,8 +592,30 @@ function PhotoRow({
     photo.photographer || ''
   )
   const [isSaving, setIsSaving] = useState(false)
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState(false)
 
   const hasIssue = !photo.event_id || !photo.band_id
+  const isPublic = photo.visibility === 'public'
+
+  const handleToggleVisibility = async () => {
+    setIsTogglingVisibility(true)
+    try {
+      const response = await fetch(`/api/photos/${photo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visibility: isPublic ? 'private' : 'public',
+        }),
+      })
+      if (response.ok) {
+        onUpdate()
+      }
+    } catch (error) {
+      console.error('Failed to toggle visibility:', error)
+    } finally {
+      setIsTogglingVisibility(false)
+    }
+  }
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -610,6 +764,30 @@ function PhotoRow({
             <option key={name} value={name} />
           ))}
         </datalist>
+      </td>
+      <td className="px-4 py-3">
+        <button
+          onClick={handleToggleVisibility}
+          disabled={isTogglingVisibility}
+          title={
+            isPublic
+              ? 'Public — click to make private'
+              : 'Private (admin-only) — click to make public'
+          }
+          className={`text-xs px-2 py-1 rounded transition-colors disabled:opacity-50 cursor-pointer ${
+            isPublic
+              ? 'bg-success/20 text-success hover:bg-success/30'
+              : 'bg-warning/20 text-warning hover:bg-warning/30'
+          }`}
+        >
+          {isTogglingVisibility ? (
+            <VinylSpinner size="xxs" />
+          ) : isPublic ? (
+            'Public'
+          ) : (
+            'Private'
+          )}
+        </button>
       </td>
       <td className="px-4 py-3">
         <span

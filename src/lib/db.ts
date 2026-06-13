@@ -14,10 +14,11 @@ export type {
   HeroFocalPoint,
   Photo,
   PhotoLabel,
+  PhotoVisibility,
   PhotoOrderBy,
 } from './db-types'
 
-export { PHOTO_LABELS } from './db-types'
+export { PHOTO_LABELS, PHOTO_VISIBILITY } from './db-types'
 
 // Re-export functions and types from focused modules
 export * from './db/events'

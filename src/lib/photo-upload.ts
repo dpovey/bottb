@@ -2,6 +2,7 @@ import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 import { processImage } from './image-processor'
 import { sql } from './sql'
+import type { PhotoVisibility } from './db-types'
 
 export interface ProcessAndStorePhotoInput {
   /** Raw image bytes — any sharp-supported format. */
@@ -22,6 +23,11 @@ export interface ProcessAndStorePhotoInput {
    * pass it here so it survives on the photo row.
    */
   extraXmpMetadata?: Record<string, unknown>
+  /**
+   * Visibility for the new photo. Defaults to 'private' so uploads start
+   * admin-only and are released to the public later.
+   */
+  visibility?: PhotoVisibility
 }
 
 export interface ProcessAndStorePhotoResult {
@@ -117,7 +123,7 @@ export async function processAndStorePhoto(
       id, event_id, band_id, photographer,
       blob_url, blob_pathname, original_filename,
       width, height, file_size, content_type,
-      xmp_metadata, labels,
+      xmp_metadata, labels, visibility,
       uploaded_at, captured_at
     ) VALUES (
       ${photoId},
@@ -133,6 +139,7 @@ export async function processAndStorePhoto(
       ${`image/${processed.format}`},
       ${JSON.stringify(xmpMetadata)}::jsonb,
       ${labels}::text[],
+      ${input.visibility ?? 'private'},
       NOW(),
       ${input.capturedAt ?? null}::timestamp with time zone
     )
