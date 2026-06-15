@@ -89,7 +89,7 @@ describe('JudgeVotingPage', () => {
     expect(screen.getByText('Visuals (20 points)')).toBeInTheDocument()
   })
 
-  it('displays bands with scoring sliders', async () => {
+  it('displays bands with scoring number inputs', async () => {
     render(<JudgeVotingPage />)
 
     await waitFor(() => {
@@ -97,27 +97,27 @@ describe('JudgeVotingPage', () => {
       expect(screen.getByText('Test Band 2')).toBeInTheDocument()
     })
 
-    // Check for sliders for each band (2026.2 has 4 categories)
-    const songChoiceSliders = screen.getAllByRole('slider', {
+    // Check for number inputs for each band (2026.2 has 4 categories)
+    const songChoiceInputs = screen.getAllByRole('spinbutton', {
       name: /Song Choice for/,
     })
-    const performanceSliders = screen.getAllByRole('slider', {
+    const performanceInputs = screen.getAllByRole('spinbutton', {
       name: /Performance for/,
     })
-    const crowdVibeSliders = screen.getAllByRole('slider', {
+    const crowdVibeInputs = screen.getAllByRole('spinbutton', {
       name: /Crowd Vibe for/,
     })
-    const visualsSliders = screen.getAllByRole('slider', {
+    const visualsInputs = screen.getAllByRole('spinbutton', {
       name: /Visuals for/,
     })
 
-    expect(songChoiceSliders).toHaveLength(2)
-    expect(performanceSliders).toHaveLength(2)
-    expect(crowdVibeSliders).toHaveLength(2)
-    expect(visualsSliders).toHaveLength(2)
+    expect(songChoiceInputs).toHaveLength(2)
+    expect(performanceInputs).toHaveLength(2)
+    expect(crowdVibeInputs).toHaveLength(2)
+    expect(visualsInputs).toHaveLength(2)
   })
 
-  it('allows score input via sliders', async () => {
+  it('allows score input via number fields', async () => {
     render(<JudgeVotingPage />)
 
     // Wait for loading to complete
@@ -131,34 +131,62 @@ describe('JudgeVotingPage', () => {
       expect(screen.getByText('Test Band 1')).toBeInTheDocument()
     })
 
-    const songChoiceSlider = screen.getAllByRole('slider', {
+    const songChoiceInput = screen.getAllByRole('spinbutton', {
       name: /Song Choice for/,
     })[0]
-    const performanceSlider = screen.getAllByRole('slider', {
+    const performanceInput = screen.getAllByRole('spinbutton', {
       name: /Performance for/,
     })[0]
-    const crowdVibeSlider = screen.getAllByRole('slider', {
+    const crowdVibeInput = screen.getAllByRole('spinbutton', {
       name: /Crowd Vibe for/,
     })[0]
-    const visualsSlider = screen.getAllByRole('slider', {
+    const visualsInput = screen.getAllByRole('spinbutton', {
       name: /Visuals for/,
     })[0]
 
-    expect(songChoiceSlider).toHaveValue('0')
-    expect(performanceSlider).toHaveValue('0')
-    expect(crowdVibeSlider).toHaveValue('0')
-    expect(visualsSlider).toHaveValue('0')
+    // Inputs start empty (0 is rendered as a blank field)
+    expect(songChoiceInput).toHaveValue(null)
+    expect(performanceInput).toHaveValue(null)
+    expect(crowdVibeInput).toHaveValue(null)
+    expect(visualsInput).toHaveValue(null)
 
-    // Use fireEvent to properly set range input values (2026.2 maxes are all 20)
-    fireEvent.change(songChoiceSlider, { target: { value: '15' } })
-    fireEvent.change(performanceSlider, { target: { value: '18' } })
-    fireEvent.change(crowdVibeSlider, { target: { value: '18' } })
-    fireEvent.change(visualsSlider, { target: { value: '16' } })
+    // Type values within range (2026.2 maxes are all 20)
+    await user.type(songChoiceInput, '15')
+    await user.type(performanceInput, '18')
+    await user.type(crowdVibeInput, '18')
+    await user.type(visualsInput, '16')
 
-    expect(songChoiceSlider).toHaveValue('15')
-    expect(performanceSlider).toHaveValue('18')
-    expect(crowdVibeSlider).toHaveValue('18')
-    expect(visualsSlider).toHaveValue('16')
+    expect(songChoiceInput).toHaveValue(15)
+    expect(performanceInput).toHaveValue(18)
+    expect(crowdVibeInput).toHaveValue(18)
+    expect(visualsInput).toHaveValue(16)
+  })
+
+  it('flags out-of-range scores and blocks submission', async () => {
+    render(<JudgeVotingPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Band 1')).toBeInTheDocument()
+    })
+
+    const nameInput = screen.getByPlaceholderText("Enter judge's name")
+    await user.type(nameInput, 'Judge Smith')
+
+    const submitButton = screen.getByRole('button', {
+      name: 'Submit All Scores',
+    })
+
+    // Enter a value above the category max (Song Choice max is 20 for 2026.2)
+    const songChoiceInput = screen.getAllByRole('spinbutton', {
+      name: /Song Choice for/,
+    })[0]
+    await user.type(songChoiceInput, '25')
+
+    expect(songChoiceInput).toBeInvalid()
+    expect(
+      screen.getByText('Enter a value between 1 and 20')
+    ).toBeInTheDocument()
+    expect(submitButton).toBeDisabled()
   })
 
   it('shows total score for each band', async () => {
@@ -209,31 +237,31 @@ describe('JudgeVotingPage', () => {
     await user.type(nameInput, 'Judge Smith')
 
     // Fill scores for first band only (need all 4 categories for 2026.2)
-    const songChoiceSliders = screen.getAllByRole('slider', {
+    const songChoiceInputs = screen.getAllByRole('spinbutton', {
       name: /Song Choice for/,
     })
-    const performanceSliders = screen.getAllByRole('slider', {
+    const performanceInputs = screen.getAllByRole('spinbutton', {
       name: /Performance for/,
     })
-    const crowdVibeSliders = screen.getAllByRole('slider', {
+    const crowdVibeInputs = screen.getAllByRole('spinbutton', {
       name: /Crowd Vibe for/,
     })
-    const visualsSliders = screen.getAllByRole('slider', {
+    const visualsInputs = screen.getAllByRole('spinbutton', {
       name: /Visuals for/,
     })
 
-    fireEvent.change(songChoiceSliders[0], { target: { value: '15' } })
-    fireEvent.change(performanceSliders[0], { target: { value: '18' } })
-    fireEvent.change(crowdVibeSliders[0], { target: { value: '18' } })
-    fireEvent.change(visualsSliders[0], { target: { value: '16' } })
+    fireEvent.change(songChoiceInputs[0], { target: { value: '15' } })
+    fireEvent.change(performanceInputs[0], { target: { value: '18' } })
+    fireEvent.change(crowdVibeInputs[0], { target: { value: '18' } })
+    fireEvent.change(visualsInputs[0], { target: { value: '16' } })
 
     expect(submitButton).toBeDisabled() // Still disabled - second band not filled
 
     // Fill scores for second band
-    fireEvent.change(songChoiceSliders[1], { target: { value: '12' } })
-    fireEvent.change(performanceSliders[1], { target: { value: '17' } })
-    fireEvent.change(crowdVibeSliders[1], { target: { value: '15' } })
-    fireEvent.change(visualsSliders[1], { target: { value: '14' } })
+    fireEvent.change(songChoiceInputs[1], { target: { value: '12' } })
+    fireEvent.change(performanceInputs[1], { target: { value: '17' } })
+    fireEvent.change(crowdVibeInputs[1], { target: { value: '15' } })
+    fireEvent.change(visualsInputs[1], { target: { value: '14' } })
 
     expect(submitButton).not.toBeDisabled()
   })
@@ -269,13 +297,13 @@ describe('JudgeVotingPage', () => {
     const nameInput = screen.getByPlaceholderText("Enter judge's name")
     await user.type(nameInput, 'Judge Smith')
 
-    // Fill scores for all bands (4 sliders per band for 2026.2)
-    const sliders = screen.getAllByRole('slider')
-    for (let i = 0; i < sliders.length; i += 4) {
-      fireEvent.change(sliders[i], { target: { value: '15' } }) // Song Choice
-      fireEvent.change(sliders[i + 1], { target: { value: '18' } }) // Performance
-      fireEvent.change(sliders[i + 2], { target: { value: '18' } }) // Crowd Vibe
-      fireEvent.change(sliders[i + 3], { target: { value: '16' } }) // Visuals
+    // Fill scores for all bands (4 number inputs per band for 2026.2)
+    const inputs = screen.getAllByRole('spinbutton')
+    for (let i = 0; i < inputs.length; i += 4) {
+      fireEvent.change(inputs[i], { target: { value: '15' } }) // Song Choice
+      fireEvent.change(inputs[i + 1], { target: { value: '18' } }) // Performance
+      fireEvent.change(inputs[i + 2], { target: { value: '18' } }) // Crowd Vibe
+      fireEvent.change(inputs[i + 3], { target: { value: '16' } }) // Visuals
     }
 
     const submitButton = screen.getByRole('button', {

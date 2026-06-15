@@ -80,6 +80,7 @@ interface Photo {
   labels: string[]
   hero_focal_point: { x: number; y: number }
   is_monochrome?: boolean | null
+  visibility?: 'public' | 'private'
 }
 
 interface User {
@@ -256,8 +257,8 @@ async function main() {
     console.log('Seeding photos...')
     for (const photo of photos) {
       await client.query(
-        `INSERT INTO photos (id, blob_url, blob_pathname, event_id, band_id, photographer, labels, hero_focal_point)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        `INSERT INTO photos (id, blob_url, blob_pathname, event_id, band_id, photographer, labels, hero_focal_point, visibility)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           photo.id, // Use explicit ID from fixture for cluster references
           photo.blob_url,
@@ -267,6 +268,10 @@ async function main() {
           photo.photographer_slug, // Use photographer_slug from fixture as photographer
           photo.labels,
           JSON.stringify(photo.hero_focal_point),
+          // Photos default to 'private' in the schema; seed them 'public' so the
+          // public-facing gallery/slideshow e2e tests see them, unless a fixture
+          // explicitly opts into 'private' (e.g. for admin-visibility tests).
+          photo.visibility ?? 'public',
         ]
       )
     }
