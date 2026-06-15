@@ -45,6 +45,65 @@ interface JudgeScores {
   visuals: number // 2026.x only
 }
 
+interface ScoreInputProps {
+  label: string
+  value: number
+  max: number
+  ariaLabel: string
+  onChange: (value: number) => void
+}
+
+// Number entry for a single judging criterion. Validates that the entered
+// value is a whole number within the 0..max range allowed by the scoring
+// version, surfacing an inline error when it isn't.
+function ScoreInput({
+  label,
+  value,
+  max,
+  ariaLabel,
+  onChange,
+}: ScoreInputProps) {
+  const isOutOfRange = value < 0 || value > max
+  return (
+    <div>
+      <label className="block text-white font-medium mb-2">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={max}
+          step={1}
+          value={value === 0 ? '' : value}
+          onChange={(e) => {
+            const raw = e.target.value
+            if (raw === '') {
+              onChange(0)
+              return
+            }
+            const parsed = parseInt(raw, 10)
+            if (Number.isNaN(parsed)) return
+            onChange(parsed)
+          }}
+          aria-label={ariaLabel}
+          aria-invalid={isOutOfRange}
+          className={`w-24 px-3 py-2 bg-white/10 border rounded-lg text-white text-lg text-center focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+            isOutOfRange
+              ? 'border-red-500 ring-1 ring-red-500'
+              : 'border-gray-600'
+          }`}
+        />
+        <span className="text-gray-400 text-sm">/ {max}</span>
+      </div>
+      {isOutOfRange && (
+        <p className="text-red-400 text-xs mt-1" role="alert">
+          Enter a value between 0 and {max}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function JudgeVotingPage() {
   const params = useParams()
   const eventId = params.eventId as string
@@ -137,6 +196,11 @@ export default function JudgeVotingPage() {
     }))
   }
 
+  // A score is valid when it has been entered (> 0) and stays within the
+  // 0..max range defined by the scoring version's voting rules.
+  const isScoreInRange = (value: number, max: number) =>
+    value > 0 && value <= max
+
   const isFormValid = () => {
     return (
       name.trim() !== '' && // Name is required
@@ -144,13 +208,13 @@ export default function JudgeVotingPage() {
         const bandScores = scores[band.id]
         const baseValid =
           bandScores &&
-          bandScores.song_choice > 0 &&
-          bandScores.performance > 0 &&
-          bandScores.crowd_vibe > 0
+          isScoreInRange(bandScores.song_choice, songChoiceMax) &&
+          isScoreInRange(bandScores.performance, performanceMax) &&
+          isScoreInRange(bandScores.crowd_vibe, crowdVibeMax)
 
         // For versions with a visuals category, visuals is also required
         if (hasVisuals) {
-          return baseValid && bandScores.visuals > 0
+          return baseValid && isScoreInRange(bandScores.visuals, visualsMax)
         }
         return baseValid
       })
@@ -382,147 +446,46 @@ export default function JudgeVotingPage() {
                 <div
                   className={`grid gap-6 ${hasVisuals ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}
                 >
-                  <div>
-                    <label className="block text-white font-medium mb-2">
-                      Song Choice: {scores[band.id]?.song_choice || 0}/
-                      {songChoiceMax}
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max={songChoiceMax}
-                      value={scores[band.id]?.song_choice || 0}
-                      onChange={(e) =>
-                        handleScoreChange(
-                          band.id,
-                          'song_choice',
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                      aria-label={`Song Choice for ${band.name}`}
-                      style={{
-                        background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                          ((scores[band.id]?.song_choice || 0) /
-                            songChoiceMax) *
-                          100
-                        }%, #374151 ${
-                          ((scores[band.id]?.song_choice || 0) /
-                            songChoiceMax) *
-                          100
-                        }%, #374151 100%)`,
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0</span>
-                      <span>{songChoiceMax}</span>
-                    </div>
-                  </div>
+                  <ScoreInput
+                    label="Song Choice"
+                    value={scores[band.id]?.song_choice || 0}
+                    max={songChoiceMax}
+                    ariaLabel={`Song Choice for ${band.name}`}
+                    onChange={(value) =>
+                      handleScoreChange(band.id, 'song_choice', value)
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-white font-medium mb-2">
-                      Performance: {scores[band.id]?.performance || 0}/
-                      {performanceMax}
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max={performanceMax}
-                      value={scores[band.id]?.performance || 0}
-                      onChange={(e) =>
-                        handleScoreChange(
-                          band.id,
-                          'performance',
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                      aria-label={`Performance for ${band.name}`}
-                      style={{
-                        background: `linear-gradient(to right, #10b981 0%, #10b981 ${
-                          ((scores[band.id]?.performance || 0) /
-                            performanceMax) *
-                          100
-                        }%, #374151 ${
-                          ((scores[band.id]?.performance || 0) /
-                            performanceMax) *
-                          100
-                        }%, #374151 100%)`,
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0</span>
-                      <span>{performanceMax}</span>
-                    </div>
-                  </div>
+                  <ScoreInput
+                    label="Performance"
+                    value={scores[band.id]?.performance || 0}
+                    max={performanceMax}
+                    ariaLabel={`Performance for ${band.name}`}
+                    onChange={(value) =>
+                      handleScoreChange(band.id, 'performance', value)
+                    }
+                  />
 
-                  <div>
-                    <label className="block text-white font-medium mb-2">
-                      Crowd Vibe: {scores[band.id]?.crowd_vibe || 0}/
-                      {crowdVibeMax}
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max={crowdVibeMax}
-                      value={scores[band.id]?.crowd_vibe || 0}
-                      onChange={(e) =>
-                        handleScoreChange(
-                          band.id,
-                          'crowd_vibe',
-                          parseInt(e.target.value) || 0
-                        )
-                      }
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                      aria-label={`Crowd Vibe for ${band.name}`}
-                      style={{
-                        background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) *
-                          100
-                        }%, #374151 ${
-                          ((scores[band.id]?.crowd_vibe || 0) / crowdVibeMax) *
-                          100
-                        }%, #374151 100%)`,
-                      }}
-                    />
-                    <div className="flex justify-between text-xs text-gray-400 mt-1">
-                      <span>0</span>
-                      <span>{crowdVibeMax}</span>
-                    </div>
-                  </div>
+                  <ScoreInput
+                    label="Crowd Vibe"
+                    value={scores[band.id]?.crowd_vibe || 0}
+                    max={crowdVibeMax}
+                    ariaLabel={`Crowd Vibe for ${band.name}`}
+                    onChange={(value) =>
+                      handleScoreChange(band.id, 'crowd_vibe', value)
+                    }
+                  />
 
                   {hasVisuals && (
-                    <div>
-                      <label className="block text-white font-medium mb-2">
-                        Visuals: {scores[band.id]?.visuals || 0}/{visualsMax}
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max={visualsMax}
-                        value={scores[band.id]?.visuals || 0}
-                        onChange={(e) =>
-                          handleScoreChange(
-                            band.id,
-                            'visuals',
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                        aria-label={`Visuals for ${band.name}`}
-                        style={{
-                          background: `linear-gradient(to right, #a855f7 0%, #a855f7 ${
-                            ((scores[band.id]?.visuals || 0) / visualsMax) * 100
-                          }%, #374151 ${
-                            ((scores[band.id]?.visuals || 0) / visualsMax) * 100
-                          }%, #374151 100%)`,
-                        }}
-                      />
-                      <div className="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>0</span>
-                        <span>{visualsMax}</span>
-                      </div>
-                    </div>
+                    <ScoreInput
+                      label="Visuals"
+                      value={scores[band.id]?.visuals || 0}
+                      max={visualsMax}
+                      ariaLabel={`Visuals for ${band.name}`}
+                      onChange={(value) =>
+                        handleScoreChange(band.id, 'visuals', value)
+                      }
+                    />
                   )}
                 </div>
 
