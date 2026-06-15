@@ -161,7 +161,12 @@ function restoreFromDump() {
 function main() {
   log('Checking if dump regeneration is needed...')
 
-  if (needsRegeneration()) {
+  // In CI we always seed fresh from the schema + fixtures. The committed dump
+  // is only a local convenience cache and can lag behind schema changes (e.g.
+  // new columns); restoring a stale dump would leave the DB incompatible with
+  // the app. mtimes are unreliable after a fresh checkout, so don't rely on
+  // needsRegeneration() to catch this in CI.
+  if (isCI() || needsRegeneration()) {
     log('Regenerating dump from fixtures...')
     runCommand('npm run e2e:seed', 'Seed database')
     if (!isCI()) {
