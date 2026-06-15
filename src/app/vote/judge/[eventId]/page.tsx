@@ -97,7 +97,7 @@ function ScoreInput({
       </div>
       {isOutOfRange && (
         <p className="text-red-400 text-xs mt-1" role="alert">
-          Enter a value between 0 and {max}
+          Enter a value between 1 and {max}
         </p>
       )}
     </div>

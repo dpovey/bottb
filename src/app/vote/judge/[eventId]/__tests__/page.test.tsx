@@ -184,7 +184,7 @@ describe('JudgeVotingPage', () => {
 
     expect(songChoiceInput).toBeInvalid()
     expect(
-      screen.getByText('Enter a value between 0 and 20')
+      screen.getByText('Enter a value between 1 and 20')
     ).toBeInTheDocument()
     expect(submitButton).toBeDisabled()
   })
