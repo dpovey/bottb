@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'fs'
 import { basename } from 'path'
 
 import { processAndStorePhoto } from '../lib/photo-upload'
+import { triggerRevalidate } from '../lib/revalidate-client'
 
 // Load environment variables from .env.local
 config({ path: '.env.local' })
@@ -78,6 +79,13 @@ async function uploadEventImage(
   console.log(
     `🎉 Done. Hero is queryable via getPhotosByLabel('event_hero', { eventId: '${eventId}' }).`
   )
+
+  // Flush public caches so the new hero appears immediately on the home /
+  // events / event pages instead of after the 5-minute window or a redeploy.
+  await triggerRevalidate({
+    paths: ['/', '/events', `/event/${eventId}`],
+    tags: ['nav-events'],
+  })
 }
 
 async function main() {

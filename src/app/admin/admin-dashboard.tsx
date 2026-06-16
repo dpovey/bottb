@@ -39,6 +39,7 @@ export default function AdminDashboard({
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [refreshingCache, setRefreshingCache] = useState(false)
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error'
     text: string
@@ -106,6 +107,35 @@ export default function AdminDashboard({
       setStatusMessage({ type: 'error', text: 'Failed to update event status' })
     } finally {
       setUpdatingStatus(null)
+    }
+  }
+
+  const handleRefreshCache = async () => {
+    setRefreshingCache(true)
+    setStatusMessage(null)
+    try {
+      const response = await fetch('/api/admin/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Empty body → refreshes the default public set (home, events, nav).
+        body: JSON.stringify({}),
+      })
+      if (response.ok) {
+        const result = await response.json()
+        setStatusMessage({ type: 'success', text: result.message })
+        setTimeout(() => setStatusMessage(null), 3000)
+      } else {
+        const error = await response.json().catch(() => ({}))
+        setStatusMessage({
+          type: 'error',
+          text: error.error || 'Failed to refresh cache',
+        })
+      }
+    } catch (error) {
+      console.error('Error refreshing cache:', error)
+      setStatusMessage({ type: 'error', text: 'Failed to refresh cache' })
+    } finally {
+      setRefreshingCache(false)
     }
   }
 
@@ -221,6 +251,18 @@ export default function AdminDashboard({
       <div className="bg-elevated rounded-2xl p-4 sm:p-6 border border-white/5">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-white">Events</h2>
+          <div className="flex items-center gap-2">
+            {refreshingCache && <VinylSpinner size="xxs" />}
+            <Button
+              variant="outline-solid"
+              size="sm"
+              onClick={handleRefreshCache}
+              disabled={refreshingCache}
+              title="Flush public ISR/data caches (home, events, nav) after CLI changes"
+            >
+              {refreshingCache ? 'Refreshing…' : 'Refresh public cache'}
+            </Button>
+          </div>
         </div>
 
         {loading ? (

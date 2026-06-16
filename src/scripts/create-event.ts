@@ -4,6 +4,7 @@ import { config } from 'dotenv'
 import { sql } from '@vercel/postgres'
 import { readFileSync } from 'fs'
 import { nameToSlug } from '../lib/slug-utils'
+import { triggerRevalidate } from '../lib/revalidate-client'
 
 // Load environment variables from .env.local
 config({ path: '.env.local' })
@@ -260,6 +261,13 @@ async function createEventFromFile(filePath: string) {
     console.log(`Event ID: ${event.id}`)
     console.log(`Scoring Version: ${scoringVersion}`)
     console.log(`Bands: ${eventData.bands.length}`)
+
+    // Flush the public ISR/data caches so the new event shows immediately
+    // instead of waiting for the 5-minute revalidation window or a redeploy.
+    await triggerRevalidate({
+      paths: ['/', '/events', `/event/${event.id}`],
+      tags: ['nav-events'],
+    })
   } catch (error) {
     console.error('❌ Error creating event:', error)
     process.exit(1)
