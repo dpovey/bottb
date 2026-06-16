@@ -130,6 +130,19 @@ export function trackPhotoDownload(properties: {
   trackEvent('photo:download', properties)
 }
 
+export function trackPhotoHeart(properties: {
+  photo_id: string
+  /** True when the visitor hearted the photo, false when un-hearting. */
+  hearted: boolean
+  event_id?: string | null
+  band_id?: string | null
+  photographer?: string | null
+  event_name?: string | null
+  band_name?: string | null
+}): void {
+  trackEvent('photo:heart', properties)
+}
+
 export function trackPhotoShare(properties: {
   photo_id: string
   share_method: 'copy_link' | 'linkedin' | 'facebook' | 'instagram'

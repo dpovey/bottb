@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Photo } from '@/lib/db-types'
 import { PhotoAdminControls } from '@/components/photos/photo-admin-controls'
 import { PhotoShareButton } from '@/components/photos/photo-share-button'
+import { HeartButton } from '@/components/photos/heart-button'
 import {
   CalendarIcon,
   CameraIcon,
@@ -16,6 +18,7 @@ import {
   DownloadIcon,
 } from '@/components/icons'
 import { trackPhotoDownload } from '@/lib/analytics'
+import { recordPhotoDownload } from '@/lib/photo-hearts-client'
 
 interface PhotoPageClientProps {
   /** The photo to display */
@@ -43,6 +46,8 @@ export function PhotoPageClient({
   galleryUrl,
 }: PhotoPageClientProps) {
   const router = useRouter()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.isAdmin ?? false
   const [photo, setPhoto] = useState<Photo>(initialPhoto)
 
   // Handle photo updates from admin controls
@@ -80,7 +85,7 @@ export function PhotoPageClient({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
 
-      // Track download
+      // Track download (analytics) and increment the persistent counter.
       trackPhotoDownload({
         photo_id: photo.id,
         event_id: photo.event_id || null,
@@ -88,6 +93,7 @@ export function PhotoPageClient({
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
       })
+      recordPhotoDownload(photo.id)
     } catch (error) {
       console.error('Download failed:', error)
     }
@@ -132,6 +138,13 @@ export function PhotoPageClient({
           className="border border-white/20 hover:border-white/40 rounded-full px-4"
         />
 
+        {/* Public heart button + count */}
+        <HeartButton
+          photo={photo}
+          size="md"
+          className="border border-white/20 hover:border-white/40 rounded-full px-4 bg-transparent backdrop-blur-none"
+        />
+
         {/* Download button */}
         <button
           onClick={handleDownload}
@@ -141,6 +154,17 @@ export function PhotoPageClient({
         >
           <DownloadIcon size={18} />
         </button>
+
+        {/* Admin-only: persistent download count */}
+        {isAdmin && (
+          <span
+            className="flex items-center gap-1.5 text-xs text-accent/70"
+            title="Total downloads (Admin)"
+          >
+            <DownloadIcon size={16} />
+            <span className="tabular-nums">{photo.download_count ?? 0}</span>
+          </span>
+        )}
 
         {/* Admin controls (only visible to admins) */}
         <PhotoAdminControls

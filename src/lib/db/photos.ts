@@ -373,6 +373,8 @@ export async function getGroupedPhotosWithCount(options: {
               'labels', cp.labels,
               'hero_focal_point', cp.hero_focal_point,
               'is_monochrome', NULL::boolean,
+              'heart_count', cp.heart_count,
+              'download_count', cp.download_count,
               'thumbnail_url', COALESCE(cp.xmp_metadata->>'thumbnail_url', REPLACE(cp.blob_url, '/large.webp', '/thumbnail.webp')),
               'thumbnail_2x_url', cp.xmp_metadata->>'thumbnail_2x_url',
               'thumbnail_3x_url', cp.xmp_metadata->>'thumbnail_3x_url',
@@ -999,6 +1001,115 @@ export async function bulkSetPhotosVisibility(
     return rowCount ?? 0
   } catch (error) {
     console.error('Error bulk-updating photo visibility:', error)
+    throw error
+  }
+}
+
+// Photo hearts (likes) and download counters
+
+export interface HeartToggleResult {
+  /** True if the photo is now hearted by this visitor, false if un-hearted. */
+  hearted: boolean
+  /** The photo's heart count after the toggle. */
+  heart_count: number
+}
+
+/**
+ * Toggle a heart on a photo for an anonymous visitor.
+ *
+ * Runs as a single data-modifying CTE so the heart row and the denormalized
+ * `photos.heart_count` stay consistent atomically (all CTE branches share one
+ * snapshot, so we adjust the counter by the +1/-1 delta rather than recounting
+ * within the same statement). The unique (photo_id, visitor_key) constraint
+ * enforces one heart per visitor.
+ *
+ * @returns whether the photo is now hearted and the resulting heart count
+ */
+export async function togglePhotoHeart(
+  photoId: string,
+  visitorKey: string
+): Promise<HeartToggleResult> {
+  try {
+    const { rows } = await sql<{ hearted: boolean; heart_count: number }>`
+      WITH deleted AS (
+        DELETE FROM photo_hearts
+        WHERE photo_id = ${photoId} AND visitor_key = ${visitorKey}
+        RETURNING id
+      ),
+      inserted AS (
+        INSERT INTO photo_hearts (photo_id, visitor_key)
+        SELECT ${photoId}::uuid, ${visitorKey}
+        WHERE NOT EXISTS (SELECT 1 FROM deleted)
+        ON CONFLICT (photo_id, visitor_key) DO NOTHING
+        RETURNING id
+      ),
+      updated AS (
+        UPDATE photos
+        SET heart_count = GREATEST(
+          0,
+          -- All CTE branches share the pre-statement snapshot, so this count
+          -- is the pre-toggle total; adding the +1/-1 delta yields the exact
+          -- post-toggle count and self-heals any prior drift in the counter.
+          (SELECT count(*) FROM photo_hearts WHERE photo_id = ${photoId})::int
+            + (SELECT count(*) FROM inserted)::int
+            - (SELECT count(*) FROM deleted)::int
+        )
+        WHERE id = ${photoId}
+        RETURNING heart_count
+      )
+      SELECT
+        EXISTS (SELECT 1 FROM inserted) AS hearted,
+        (SELECT heart_count FROM updated) AS heart_count
+    `
+    const row = rows[0]
+    return {
+      hearted: row?.hearted ?? false,
+      heart_count: row?.heart_count ?? 0,
+    }
+  } catch (error) {
+    console.error('Error toggling photo heart:', error)
+    throw error
+  }
+}
+
+/**
+ * Check whether a given visitor has hearted a photo (for initial UI state).
+ */
+export async function hasHeartedPhoto(
+  photoId: string,
+  visitorKey: string
+): Promise<boolean> {
+  try {
+    const { rows } = await sql<{ hearted: boolean }>`
+      SELECT EXISTS (
+        SELECT 1 FROM photo_hearts
+        WHERE photo_id = ${photoId} AND visitor_key = ${visitorKey}
+      ) AS hearted
+    `
+    return rows[0]?.hearted ?? false
+  } catch (error) {
+    console.error('Error checking photo heart:', error)
+    return false
+  }
+}
+
+/**
+ * Increment a photo's download counter. Downloads are not deduped — every
+ * download counts. Returns the new total (0 if the photo no longer exists).
+ */
+export async function incrementPhotoDownloadCount(
+  photoId: string
+): Promise<number> {
+  try {
+    const { rows } = await sql<{ download_count: number }>`
+      UPDATE photos
+      SET download_count = download_count + 1
+      WHERE id = ${photoId}
+      RETURNING download_count
+    `
+    return rows[0]?.download_count ?? 0
+  } catch (error) {
+    console.error('Error incrementing photo download count:', error)
     throw error
   }
 }

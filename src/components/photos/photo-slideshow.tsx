@@ -17,6 +17,8 @@ import { CompanyIcon, VinylSpinner } from '@/components/ui'
 import { ShareComposerModal } from './share-composer-modal'
 import { HeroSettingsModal } from './hero-settings-modal'
 import { EditMetadataModal } from './edit-metadata-modal'
+import { HeartButton } from './heart-button'
+import { recordPhotoDownload } from '@/lib/photo-hearts-client'
 import {
   trackPhotoDownload,
   trackPhotoShare,
@@ -823,7 +825,7 @@ export function PhotoSlideshow({
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
 
-      // Track download
+      // Track download (analytics) and increment the persistent counter.
       trackPhotoDownload({
         photo_id: photo.id,
         event_id: photo.event_id || null,
@@ -832,6 +834,7 @@ export function PhotoSlideshow({
         event_name: photo.event_name || null,
         band_name: photo.band_name || null,
       })
+      recordPhotoDownload(photo.id)
     } catch (error) {
       console.error('Failed to download image:', error)
     }
@@ -1151,6 +1154,26 @@ export function PhotoSlideshow({
 
             {/* Public Controls - available to everyone */}
             <div className="slideshow-controls flex items-center gap-1 sm:gap-2 pl-2 sm:pl-4 border-l border-white/10">
+              {currentPhoto && (
+                <HeartButton
+                  key={currentPhoto.id}
+                  photo={currentPhoto}
+                  size="md"
+                  className="bg-transparent backdrop-blur-none text-text-muted hover:bg-white/5"
+                />
+              )}
+              {/* Admin-only: persistent download count for this photo */}
+              {isAdmin && currentPhoto && (
+                <span
+                  className="flex items-center gap-1.5 px-2 text-xs text-accent/70"
+                  title="Total downloads (Admin)"
+                >
+                  <DownloadIcon size={16} />
+                  <span className="tabular-nums">
+                    {currentPhoto.download_count ?? 0}
+                  </span>
+                </span>
+              )}
               <button
                 onClick={handleCopyLink}
                 className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-colors relative"
