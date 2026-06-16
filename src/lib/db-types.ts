@@ -260,6 +260,10 @@ export interface Photo {
   slug_prefix: string | null
   // Visibility: 'private' (admin-only) or 'public'. New uploads default to 'private'.
   visibility: PhotoVisibility
+  // Public heart (like) count, kept in sync with the photo_hearts table.
+  heart_count: number
+  // Total download count (not deduped). Admin-only metric.
+  download_count: number
   // Joined fields
   event_name?: string
   band_name?: string

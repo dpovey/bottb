@@ -180,11 +180,26 @@ CREATE TABLE IF NOT EXISTS photos (
     slug_prefix character varying(255),
     -- Visibility: new uploads default to 'private' (admin-only); admins release to 'public'
     visibility character varying(20) DEFAULT 'private' NOT NULL,
+    -- Public heart (like) count; kept in sync with the photo_hearts table
+    heart_count integer DEFAULT 0 NOT NULL,
+    -- Total download count (not deduped); admin-only metric
+    download_count integer DEFAULT 0 NOT NULL,
     CONSTRAINT photos_match_confidence_check CHECK (((match_confidence)::text = ANY ((ARRAY['exact'::character varying, 'fuzzy'::character varying, 'manual'::character varying, 'unmatched'::character varying])::text[]))),
     CONSTRAINT photos_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['private'::character varying, 'public'::character varying])::text[])))
 );
 
 CREATE INDEX IF NOT EXISTS idx_photos_visibility ON photos (visibility);
+
+-- Photo hearts - one row per (photo, anonymous visitor) for deduped likes
+CREATE TABLE IF NOT EXISTS photo_hearts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    photo_id uuid NOT NULL REFERENCES photos(id) ON DELETE CASCADE,
+    -- FingerprintJS visitor id when available, else the server vote_fingerprint hash
+    visitor_key character varying(255) NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT photo_hearts_photo_visitor_unique UNIQUE (photo_id, visitor_key)
+);
+CREATE INDEX IF NOT EXISTS idx_photo_hearts_photo ON photo_hearts (photo_id);
 
 -- Photo intelligence tables
 

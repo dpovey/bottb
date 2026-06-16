@@ -5,6 +5,7 @@ import { Photo } from '@/lib/db-types'
 import { CompanyIcon } from '@/components/ui'
 import { LayersIcon } from '@/components/icons'
 import { PhotoImage } from './photo-image'
+import { HeartButton } from './heart-button'
 
 /**
  * Cluster data for grouped photos
@@ -112,6 +113,11 @@ export function PhotoCard({
           />
         </div>
       )}
+
+      {/* Heart button + public count - always visible (social proof) */}
+      <div className="absolute bottom-2 right-2 z-10">
+        <HeartButton photo={displayPhoto} size="sm" />
+      </div>
 
       {/* Hover overlay with info */}
       <div className="absolute inset-0 bg-linear-to-t from-bg via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
