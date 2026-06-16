@@ -9,7 +9,7 @@ import {
   PHOTO_LABELS,
 } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
-import { formatEventDate, getEventCountdown } from '@/lib/date-utils'
+import { formatEventDateLabel, getEventCountdown } from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
@@ -51,7 +51,7 @@ export async function generateMetadata({
   const title = buildSeoTitle(baseTitle)
 
   // Build description
-  let description = `${event.name} - ${formatEventDate(event.date, event.timezone)} at ${event.location}`
+  let description = `${event.name} - ${formatEventDateLabel(event.date, event.timezone, event.info)} at ${event.location}`
   if (bandCount > 0) {
     description += `. ${bandCount} band${bandCount !== 1 ? 's' : ''} ${isFinalized ? 'competed' : 'performing'}`
   }
@@ -186,7 +186,7 @@ export default async function EventPage({
         navEvents={navEvents}
         overallWinner={overallWinner}
         countdownLabel={
-          event.status === 'upcoming'
+          event.status === 'upcoming' && !event.info?.date_tbc
             ? getEventCountdown(event.date, event.timezone)
             : null
         }

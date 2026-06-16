@@ -61,6 +61,34 @@ export function formatEventDate(dateString: string, timezone?: string): string {
 }
 
 /**
+ * Tentative-date metadata carried on `event.info`. See `Event.info` in
+ * `db-types.ts` for the full contract.
+ */
+export interface TentativeDateInfo {
+  date_tbc?: boolean
+  date_display?: string
+}
+
+/**
+ * Display label for an event's date, honouring a tentative ("TBC") date.
+ *
+ * When `info.date_tbc` is set, returns the human-authored `date_display`
+ * (e.g. "October 2026") rather than the precise day/time — the stored
+ * `date` is only a best estimate in that case and shouldn't be shown as
+ * if it were confirmed. Otherwise falls back to the full formatted date.
+ */
+export function formatEventDateLabel(
+  dateString: string,
+  timezone?: string,
+  info?: TentativeDateInfo | null
+): string {
+  if (info?.date_tbc) {
+    return info.date_display || 'Date to be confirmed'
+  }
+  return formatEventDate(dateString, timezone)
+}
+
+/**
  * Gets the ordinal suffix for a day (1st, 2nd, 3rd, 4th, etc.)
  */
 function getOrdinalSuffix(day: number): string {

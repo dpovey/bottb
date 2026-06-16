@@ -1,0 +1,13 @@
+{
+  "id": "sydney-2026",
+  "name": "Sydney 2026",
+  "date": "2026-10-15T08:30:00Z",
+  "timezone": "Australia/Sydney",
+  "location": "Venue to be confirmed",
+  "date_tbc": true,
+  "date_display": "October 2026",
+  "is_active": false,
+  "status": "upcoming",
+  "scoring_version": "2026.2",
+  "bands": []
+}

@@ -1,5 +1,6 @@
 import {
   formatEventDate,
+  formatEventDateLabel,
   getDatePartsInTimezone,
   getEventCountdown,
 } from '../date-utils'
@@ -184,6 +185,43 @@ describe('formatEventDate', () => {
       const result = formatEventDate(dateString, 'America/Los_Angeles')
       expect(result).toBe('25th December 2024 @ 10:30AM')
     })
+  })
+})
+
+describe('formatEventDateLabel', () => {
+  const dateString = '2026-10-15T08:30:00Z'
+
+  it('formats the precise date when not tentative', () => {
+    expect(formatEventDateLabel(dateString, 'Australia/Sydney')).toBe(
+      formatEventDate(dateString, 'Australia/Sydney')
+    )
+  })
+
+  it('formats the precise date when info omits date_tbc', () => {
+    expect(
+      formatEventDateLabel(dateString, 'Australia/Sydney', { date_tbc: false })
+    ).toBe(formatEventDate(dateString, 'Australia/Sydney'))
+  })
+
+  it('returns the custom label when the date is tentative', () => {
+    expect(
+      formatEventDateLabel(dateString, 'Australia/Sydney', {
+        date_tbc: true,
+        date_display: 'October 2026',
+      })
+    ).toBe('October 2026')
+  })
+
+  it('falls back to a generic label when tentative without a display label', () => {
+    expect(
+      formatEventDateLabel(dateString, 'Australia/Sydney', { date_tbc: true })
+    ).toBe('Date to be confirmed')
+  })
+
+  it('handles a null info argument', () => {
+    expect(formatEventDateLabel(dateString, 'Australia/Sydney', null)).toBe(
+      formatEventDate(dateString, 'Australia/Sydney')
+    )
   })
 })
 

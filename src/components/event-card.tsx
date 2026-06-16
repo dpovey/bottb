@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatEventDate } from '@/lib/date-utils'
+import { formatEventDateLabel } from '@/lib/date-utils'
 import {
   Badge,
   DateBadge,
@@ -38,6 +38,8 @@ interface EventCardProps {
     info?: {
       image_url?: string
       ticket_url?: string
+      date_tbc?: boolean
+      date_display?: string
     }
     status?: string
   }
@@ -93,6 +95,11 @@ export function EventCard({
 }: EventCardProps) {
   const isPast = variant === 'past'
   const isActive = variant === 'active'
+
+  // Tentative ("TBC") date — show the authored label instead of a precise
+  // day/time, and a neutral badge in place of the countdown.
+  const isDateTbc = !!event.info?.date_tbc
+  const dateLabel = formatEventDateLabel(event.date, event.timezone, event.info)
 
   // Prefer heroPhoto over event.info.image_url
   const imageUrl = heroPhoto?.blob_url ?? event.info?.image_url
@@ -151,6 +158,7 @@ export function EventCard({
             timezone={event.timezone}
             size="sm"
             showYear
+            tbc={isDateTbc}
           />
         </div>
 
@@ -173,6 +181,10 @@ export function EventCard({
                   asLink={false}
                 />
               )}
+            </span>
+          ) : !isPast && isDateTbc ? (
+            <span className="bg-bg/60 backdrop-blur-md border border-white/10 text-text-muted rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
+              Date TBC
             </span>
           ) : !isPast ? (
             <EventCountdownBadge date={event.date} timezone={event.timezone} />
@@ -298,12 +310,15 @@ export function EventCard({
             timezone={event.timezone}
             size="sm"
             showYear
+            tbc={isDateTbc}
           />
           <div>
             {isActive ? (
               <Badge variant="accent">Live Now</Badge>
             ) : isPast ? (
               <Badge variant="default">{relativeDate}</Badge>
+            ) : isDateTbc ? (
+              <Badge variant="info">Date TBC</Badge>
             ) : (
               <EventCountdownBadge
                 date={event.date}
@@ -321,7 +336,7 @@ export function EventCard({
               {event.name}
             </h3>
             <p className="text-white/80 text-sm md:text-base">
-              {formatEventDate(event.date, event.timezone)} • {event.location}
+              {dateLabel} • {event.location}
             </p>
           </div>
 

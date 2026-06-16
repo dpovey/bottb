@@ -26,6 +26,11 @@ vi.mock('@/lib/db', () => ({
 // Mock the date utils
 vi.mock('@/lib/date-utils', () => ({
   formatEventDate: vi.fn((date) => `Formatted: ${date}`),
+  formatEventDateLabel: vi.fn((date, _tz, info) =>
+    info?.date_tbc
+      ? info.date_display || 'Date to be confirmed'
+      : `Formatted: ${date}`
+  ),
   getDatePartsInTimezone: vi.fn(() => ({ day: 25, month: 'Dec', year: 2024 })),
   getEventCountdown: vi.fn(() => 'Tonight'),
 }))

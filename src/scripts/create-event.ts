@@ -37,6 +37,8 @@ interface EventData {
   description?: string // Event description (displayed on event page)
   is_active?: boolean
   status?: 'upcoming' | 'voting' | 'finalized'
+  date_tbc?: boolean // Date is tentative; show date_display instead of the precise date
+  date_display?: string // Human label shown when date_tbc (e.g. "October 2026")
   scoring_version?: string // Scoring version: "2022.1", "2025.1", "2026.1", "2026.2"
   winner?: string // Winner name (for 2022.1 events)
   bands: {
@@ -94,6 +96,8 @@ async function createEventFromFile(filePath: string) {
       address?: string
       ticket_url?: string
       winner?: string
+      date_tbc?: boolean
+      date_display?: string
     }
 
     const eventInfo: EventInfo = {
@@ -105,6 +109,13 @@ async function createEventFromFile(filePath: string) {
     }
     if (eventData.ticket_url) {
       eventInfo.ticket_url = eventData.ticket_url
+    }
+    if (eventData.date_tbc) {
+      eventInfo.date_tbc = true
+      eventInfo.date_display = eventData.date_display
+      console.log(
+        `🗓️  Tentative date: ${eventData.date_display || '(no label)'}`
+      )
     }
 
     // For 2022.1 events, store the winner in event info

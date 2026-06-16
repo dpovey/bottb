@@ -7,11 +7,25 @@ export interface DateBadgeProps extends HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg'
   showYear?: boolean
   timezone?: string // IANA timezone name (e.g., "Australia/Brisbane")
+  /**
+   * Tentative date — renders "TBC" in place of the day number while keeping
+   * the month/year from the (best-estimate) date. Used for events whose
+   * exact date isn't confirmed yet.
+   */
+  tbc?: boolean
 }
 
 const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
   (
-    { className, date, size = 'md', showYear = false, timezone, ...props },
+    {
+      className,
+      date,
+      size = 'md',
+      showYear = false,
+      timezone,
+      tbc = false,
+      ...props
+    },
     ref
   ) => {
     const { day, month, year } = getDatePartsInTimezone(date, timezone)
@@ -44,15 +58,20 @@ const DateBadge = forwardRef<HTMLDivElement, DateBadgeProps>(
           {month}
         </div>
 
-        {/* Day */}
+        {/* Day (or "TBC" for tentative dates) */}
         <div
           className={cn('font-semibold text-white leading-tight', {
             'text-xl': size === 'sm',
             'text-2xl': size === 'md',
             'text-3xl': size === 'lg',
+            // "TBC" needs a smaller type ramp than the big day numeral so it
+            // doesn't overflow the badge's min-width.
+            '!text-sm': tbc && size === 'sm',
+            '!text-base': tbc && size === 'md',
+            '!text-lg': tbc && size === 'lg',
           })}
         >
-          {day}
+          {tbc ? 'TBC' : day}
         </div>
 
         {/* Year (optional) */}

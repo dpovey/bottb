@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { formatEventDate } from '@/lib/date-utils'
+import { formatEventDateLabel } from '@/lib/date-utils'
 import { WebLayout } from '@/components/layouts'
 import {
   Button,
@@ -153,13 +153,16 @@ export function EventPageClient({
               timezone={event.timezone}
               size="lg"
               showYear
+              tbc={!!eventInfo?.date_tbc}
               className="self-start md:self-auto"
             />
 
             {/* Event Info */}
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                {event.status === 'upcoming' && countdownLabel ? (
+                {event.status === 'upcoming' && eventInfo?.date_tbc ? (
+                  <Badge variant="info">Date TBC</Badge>
+                ) : event.status === 'upcoming' && countdownLabel ? (
                   <Badge
                     variant={
                       countdownLabel.includes('week') ? 'info' : 'accent'
@@ -175,7 +178,8 @@ export function EventPageClient({
                 {event.name}
               </h1>
               <div className="hero-text-muted text-lg">
-                {formatEventDate(event.date, event.timezone)} • {event.location}
+                {formatEventDateLabel(event.date, event.timezone, eventInfo)} •{' '}
+                {event.location}
               </div>
               {event.description && (
                 <MarkdownText className="hero-text-muted mt-3 max-w-2xl">

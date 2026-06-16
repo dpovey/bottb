@@ -1,0 +1,12 @@
+{
+  "id": "brisbane-2026",
+  "name": "Brisbane 2026",
+  "date": "2026-08-27T08:30:00Z",
+  "timezone": "Australia/Brisbane",
+  "location": "The Triffid",
+  "address": "7-9 Stratton Street, Newstead QLD 4006, Australia",
+  "is_active": false,
+  "status": "upcoming",
+  "scoring_version": "2026.2",
+  "bands": []
+}

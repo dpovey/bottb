@@ -28,6 +28,17 @@ export interface Event {
       facebook?: string
     }
     venue_info?: string
+    /**
+     * Tentative-date support. When the exact date isn't confirmed yet, set
+     * `date_tbc` to true and store a human label in `date_display` (e.g.
+     * "October 2026"). The `date` column still holds a best-estimate
+     * timestamp so the event sorts and filters correctly as "upcoming";
+     * the UI shows `date_display` instead of the precise day/time and
+     * suppresses the countdown. The venue can be left tentative simply by
+     * setting `location` to text like "Venue to be confirmed".
+     */
+    date_tbc?: boolean
+    date_display?: string
     /** National Partner / title sponsor displayed as a "Powered by" badge on the event page */
     national_partner?: {
       name: string

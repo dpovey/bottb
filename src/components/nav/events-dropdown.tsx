@@ -18,6 +18,8 @@ export interface NavEvent {
     winner_company_slug?: string
     winner_company_name?: string
     winner_company_icon_url?: string
+    date_tbc?: boolean
+    date_display?: string
     [key: string]: unknown
   }
 }
@@ -130,9 +132,13 @@ export function EventsDropdown({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
-  // Format date for display
-  function formatDate(dateString: string): string {
-    const date = new Date(dateString)
+  // Format date for display. Tentative ("TBC") events show the month only —
+  // the stored date is just a best estimate, so a precise day would mislead.
+  function formatDate(event: NavEvent): string {
+    const date = new Date(event.date)
+    if (event.info?.date_tbc) {
+      return date.toLocaleDateString('en-AU', { month: 'short' })
+    }
     return date.toLocaleDateString('en-AU', {
       month: 'short',
       day: 'numeric',
@@ -190,7 +196,7 @@ export function EventsDropdown({
                     }}
                   >
                     <span className="text-xs text-text-dim min-w-[60px]">
-                      {formatDate(event.date)}
+                      {formatDate(event)}
                     </span>
                     <div>
                       <div className="text-white font-medium uppercase tracking-widest text-sm">
@@ -230,7 +236,7 @@ export function EventsDropdown({
                       }}
                     >
                       <span className="text-xs text-text-dim min-w-[60px]">
-                        {formatDate(event.date)}
+                        {formatDate(event)}
                       </span>
                       <div>
                         <div className="text-white font-medium uppercase tracking-widest text-sm">
