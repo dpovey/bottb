@@ -40,6 +40,7 @@ interface EventCardProps {
       ticket_url?: string
       date_tbc?: boolean
       date_display?: string
+      lineup_locked?: boolean
     }
     status?: string
   }
@@ -100,6 +101,10 @@ export function EventCard({
   // day/time, and a neutral badge in place of the countdown.
   const isDateTbc = !!event.info?.date_tbc
   const dateLabel = formatEventDateLabel(event.date, event.timezone, event.info)
+
+  // Lineup is locked but unannounced — show a neutral "to be announced" note
+  // rather than soliciting participants.
+  const lineupLocked = !!event.info?.lineup_locked
 
   // Prefer heroPhoto over event.info.image_url
   const imageUrl = heroPhoto?.blob_url ?? event.info?.image_url
@@ -201,13 +206,19 @@ export function EventCard({
           </p>
           {!isPast && bands.length === 0 && (
             <p className="text-white/60 text-sm line-clamp-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
-              Bands TBA ·{' '}
-              <a
-                href="mailto:info@bottb.com"
-                className="relative z-20 text-accent hover:underline"
-              >
-                Want to participate?
-              </a>
+              {lineupLocked ? (
+                'Lineup to be announced'
+              ) : (
+                <>
+                  Bands TBA ·{' '}
+                  <a
+                    href="mailto:info@bottb.com"
+                    className="relative z-20 text-accent hover:underline"
+                  >
+                    Want to participate?
+                  </a>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -423,13 +434,19 @@ export function EventCard({
             !isPast &&
             bands.length === 0 && (
               <p className="text-text-muted text-sm">
-                Bands TBA ·{' '}
-                <a
-                  href="mailto:info@bottb.com"
-                  className="relative z-20 text-accent hover:underline"
-                >
-                  Want to participate?
-                </a>
+                {lineupLocked ? (
+                  'Lineup to be announced'
+                ) : (
+                  <>
+                    Bands TBA ·{' '}
+                    <a
+                      href="mailto:info@bottb.com"
+                      className="relative z-20 text-accent hover:underline"
+                    >
+                      Want to participate?
+                    </a>
+                  </>
+                )}
               </p>
             )
           )}

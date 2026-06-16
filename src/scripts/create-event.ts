@@ -39,6 +39,7 @@ interface EventData {
   status?: 'upcoming' | 'voting' | 'finalized'
   date_tbc?: boolean // Date is tentative; show date_display instead of the precise date
   date_display?: string // Human label shown when date_tbc (e.g. "October 2026")
+  lineup_locked?: boolean // Lineup confirmed but unannounced; hides the "Want to participate?" CTA
   scoring_version?: string // Scoring version: "2022.1", "2025.1", "2026.1", "2026.2"
   winner?: string // Winner name (for 2022.1 events)
   bands: {
@@ -98,6 +99,7 @@ async function createEventFromFile(filePath: string) {
       winner?: string
       date_tbc?: boolean
       date_display?: string
+      lineup_locked?: boolean
     }
 
     const eventInfo: EventInfo = {
@@ -116,6 +118,10 @@ async function createEventFromFile(filePath: string) {
       console.log(
         `🗓️  Tentative date: ${eventData.date_display || '(no label)'}`
       )
+    }
+    if (eventData.lineup_locked) {
+      eventInfo.lineup_locked = true
+      console.log('🔒 Lineup locked (bands to be announced)')
     }
 
     // For 2022.1 events, store the winner in event info

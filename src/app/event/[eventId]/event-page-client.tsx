@@ -321,18 +321,26 @@ export function EventPageClient({
 
           {bands.length === 0 ? (
             <Card variant="elevated" className="text-center py-12">
-              <p className="text-text-muted">
-                No bands registered for this event yet.
-              </p>
-              <p className="text-text-muted mt-2">
-                Want to participate? Contact{' '}
-                <a
-                  href="mailto:info@bottb.com"
-                  className="text-accent hover:underline"
-                >
-                  info@bottb.com
-                </a>
-              </p>
+              {eventInfo?.lineup_locked ? (
+                <p className="text-text-muted">
+                  The lineup is locked in — bands will be announced soon.
+                </p>
+              ) : (
+                <>
+                  <p className="text-text-muted">
+                    No bands registered for this event yet.
+                  </p>
+                  <p className="text-text-muted mt-2">
+                    Want to participate? Contact{' '}
+                    <a
+                      href="mailto:info@bottb.com"
+                      className="text-accent hover:underline"
+                    >
+                      info@bottb.com
+                    </a>
+                  </p>
+                </>
+              )}
             </Card>
           ) : (
             <div className="grid gap-4">

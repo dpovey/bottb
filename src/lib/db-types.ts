@@ -39,6 +39,12 @@ export interface Event {
      */
     date_tbc?: boolean
     date_display?: string
+    /**
+     * Lineup is confirmed/full but not yet publicly announced. When true the
+     * UI shows "Lineup to be announced" instead of soliciting participants
+     * ("Want to participate?") for an event that still has no bands attached.
+     */
+    lineup_locked?: boolean
     /** National Partner / title sponsor displayed as a "Powered by" badge on the event page */
     national_partner?: {
       name: string

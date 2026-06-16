@@ -8,5 +8,6 @@
   "is_active": false,
   "status": "upcoming",
   "scoring_version": "2026.2",
+  "lineup_locked": true,
   "bands": []
 }
