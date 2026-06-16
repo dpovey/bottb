@@ -170,11 +170,11 @@ export function EventCard({
         {/* Status/Winner Badge - Top Right */}
         <div className="absolute top-4 right-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
           {isActive ? (
-            <span className="bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
+            <span className="bg-accent/25 border border-accent/40 text-accent-light backdrop-blur-md [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
               🎸 Live Now
             </span>
           ) : showWinner && winner ? (
-            <span className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 text-accent rounded-sm px-3 py-1 text-xs">
+            <span className="inline-flex items-center gap-2 bg-accent/25 border border-accent/40 text-accent-light backdrop-blur-md [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] rounded-sm px-3 py-1 text-xs">
               <span>🏆 {winner.name}</span>
               {winner.companySlug && winner.companyName && (
                 <CompanyBadge
@@ -188,7 +188,7 @@ export function EventCard({
               )}
             </span>
           ) : !isPast && isDateTbc ? (
-            <span className="bg-bg/60 backdrop-blur-md border border-white/10 text-text-muted rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
+            <span className="bg-bg/60 backdrop-blur-md border border-white/15 text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
               Date TBC
             </span>
           ) : !isPast ? (
@@ -353,7 +353,7 @@ export function EventCard({
 
           {/* Winner inline (past events) */}
           {showWinner && winner && (
-            <div className="inline-flex items-center gap-2 bg-warning/10 border border-warning/20 rounded-md px-3 py-1.5 text-warning text-sm">
+            <div className="inline-flex items-center gap-2 bg-warning/15 border border-warning/30 rounded-md px-3 py-1.5 text-warning-light [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] text-sm">
               <span>
                 🏆{' '}
                 <span className="text-white font-semibold">{winner.name}</span>
