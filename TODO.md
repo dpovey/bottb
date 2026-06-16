@@ -37,6 +37,22 @@
 ### Testing
 
 - [x] **Lighthouse CI** - Added to CI/CD pipeline with PR comments and schema validation
+- [ ] **E2E coverage for photo visibility gating** - The private/public visibility
+      feature (default `private`, admin-released) shipped with no e2e test, and a
+      gap in the e2e seed (photos defaulted to `private`) silently broke the
+      slideshow/gallery tests for two commits — they retried on 404s until the
+      whole e2e job hit its 15-min timeout. Add explicit coverage so the gating
+      is protected and failures fail fast:
+  - Seed at least one `visibility: 'private'` photo via the new fixture override
+    in `e2e/seed-test-db.ts`
+  - Assert `/slideshow/<private-id>` and the photo detail page return 404 for an
+    anonymous (non-admin) visitor
+  - Assert an authenticated admin can view the same private photo
+  - Assert private photos are excluded from the public gallery/slideshow list but
+    appear (badged) for admins
+  - Consider a fast smoke check in `smart-restore`/seed that fails loudly if no
+    public photos exist, so a future "everything private" regression can't quietly
+    time the suite out
 
 ---
 
