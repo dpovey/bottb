@@ -1047,7 +1047,10 @@ export async function togglePhotoHeart(
         UPDATE photos
         SET heart_count = GREATEST(
           0,
-          heart_count
+          -- All CTE branches share the pre-statement snapshot, so this count
+          -- is the pre-toggle total; adding the +1/-1 delta yields the exact
+          -- post-toggle count and self-heals any prior drift in the counter.
+          (SELECT count(*) FROM photo_hearts WHERE photo_id = ${photoId})::int
             + (SELECT count(*) FROM inserted)::int
             - (SELECT count(*) FROM deleted)::int
         )

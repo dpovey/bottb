@@ -1156,6 +1156,7 @@ export function PhotoSlideshow({
             <div className="slideshow-controls flex items-center gap-1 sm:gap-2 pl-2 sm:pl-4 border-l border-white/10">
               {currentPhoto && (
                 <HeartButton
+                  key={currentPhoto.id}
                   photo={currentPhoto}
                   size="md"
                   className="bg-transparent backdrop-blur-none text-text-muted hover:bg-white/5"

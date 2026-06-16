@@ -116,7 +116,7 @@ export function PhotoCard({
 
       {/* Heart button + public count - always visible (social proof) */}
       <div className="absolute bottom-2 right-2 z-10">
-        <HeartButton photo={displayPhoto} size="sm" />
+        <HeartButton key={displayPhoto.id} photo={displayPhoto} size="sm" />
       </div>
 
       {/* Hover overlay with info */}
