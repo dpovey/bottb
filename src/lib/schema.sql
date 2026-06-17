@@ -197,9 +197,10 @@ CREATE TABLE IF NOT EXISTS photo_hearts (
     -- FingerprintJS visitor id when available, else the server vote_fingerprint hash
     visitor_key character varying(255) NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
+    -- The composite unique index has photo_id as its leading column, so it
+    -- also serves per-photo lookups; no separate photo_id index is needed.
     CONSTRAINT photo_hearts_photo_visitor_unique UNIQUE (photo_id, visitor_key)
 );
-CREATE INDEX IF NOT EXISTS idx_photo_hearts_photo ON photo_hearts (photo_id);
 
 -- Photo intelligence tables
 
