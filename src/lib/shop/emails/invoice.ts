@@ -61,9 +61,7 @@ export function renderInvoiceEmail(order: MerchOrder): {
         </td>
         <td style="vertical-align:top;text-align:right;padding:0;">
           <a href="${SITE_URL}" style="text-decoration:none;">
-            <span style="display:inline-block;background:#000;line-height:0;">
-              <img src="${SITE_URL}/images/logos/bottb-dark-square.png" alt="Battle of the Tech Bands" width="64" height="64" style="display:block;border:0;" />
-            </span>
+            <img src="${SITE_URL}/images/logos/bottb-square-black.png" alt="Battle of the Tech Bands" width="64" height="64" style="display:inline-block;border:0;" />
           </a>
         </td>
       </tr>

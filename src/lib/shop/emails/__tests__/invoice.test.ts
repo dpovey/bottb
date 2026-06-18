@@ -43,7 +43,7 @@ describe('renderInvoiceEmail', () => {
   it('links to the site and embeds the logo', () => {
     const { html } = renderInvoiceEmail(order)
     expect(html).toContain('https://www.battleofthetechbands.com')
-    expect(html).toContain('/images/logos/bottb-dark-square.png')
+    expect(html).toContain('/images/logos/bottb-square-black.png')
     expect(html).toContain('www.battleofthetechbands.com')
   })
 
