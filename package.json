@@ -144,7 +144,7 @@
     "undici": "^7.24.5",
     "vite": "^7.3.2",
     "vite-tsconfig-paths": "^6.0.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.6"
   },
   "pnpm": {
     "overrides": {
