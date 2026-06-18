@@ -9,7 +9,10 @@ import {
   MAX_QUANTITY,
   SHIPPING_CENTS,
   TSHIRT,
+  TSHIRT_BULK_MIN_QTY,
+  TSHIRT_BULK_UNIT_PRICE_CENTS,
   TSHIRT_SIZES,
+  unitPriceCents,
   type TShirtSize,
 } from '@/lib/shop/config'
 
@@ -24,7 +27,8 @@ export function ShopClient() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const subtotal = TSHIRT.priceCents * quantity
+  const unit = unitPriceCents(quantity)
+  const subtotal = unit * quantity
   const total = subtotal + SHIPPING_CENTS
 
   async function handleBuy() {
@@ -103,6 +107,10 @@ export function ShopClient() {
             + {formatAUD(SHIPPING_CENTS)} shipping (Australia)
           </span>
         </p>
+        <p className="mt-1 text-sm text-accent">
+          {formatAUD(TSHIRT_BULK_UNIT_PRICE_CENTS)} each when you buy{' '}
+          {TSHIRT_BULK_MIN_QTY} or more
+        </p>
         <p className="mt-6 leading-relaxed text-text-muted">
           {TSHIRT.description}
         </p>
@@ -162,7 +170,7 @@ export function ShopClient() {
         <dl className="mt-8 space-y-2 border-t border-white/10 pt-6 text-sm">
           <div className="flex justify-between text-text-muted">
             <dt>
-              Subtotal ({quantity} × {formatAUD(TSHIRT.priceCents)})
+              Subtotal ({quantity} × {formatAUD(unit)})
             </dt>
             <dd>{formatAUD(subtotal)}</dd>
           </div>

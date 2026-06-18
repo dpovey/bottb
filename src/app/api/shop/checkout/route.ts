@@ -9,6 +9,7 @@ import {
   SHIPPING_CENTS,
   SHOP_CURRENCY,
   TSHIRT,
+  unitPriceCents,
 } from '@/lib/shop/config'
 
 /**
@@ -35,9 +36,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 })
     }
 
-    const priceId = env.server.STRIPE_TSHIRT_PRICE_ID
-    if (!priceId) {
-      console.error('Shop checkout: STRIPE_TSHIRT_PRICE_ID is not set')
+    const productId = env.server.STRIPE_TSHIRT_PRODUCT_ID
+    if (!productId) {
+      console.error('Shop checkout: STRIPE_TSHIRT_PRODUCT_ID is not set')
       return NextResponse.json(
         { error: 'Shop is not configured' },
         { status: 500 }
@@ -48,7 +49,18 @@ export async function POST(request: NextRequest) {
 
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
-      line_items: [{ price: priceId, quantity }],
+      // Dynamic price_data applies the volume discount (unit price varies by
+      // quantity) against the catalog product — no per-tier Price objects.
+      line_items: [
+        {
+          price_data: {
+            currency: SHOP_CURRENCY,
+            product: productId,
+            unit_amount: unitPriceCents(quantity),
+          },
+          quantity,
+        },
+      ],
       // Australia-only shipping for now.
       shipping_address_collection: { allowed_countries: ['AU'] },
       phone_number_collection: { enabled: true },

@@ -2,8 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   isValidSize,
   TSHIRT_SIZES,
-  TSHIRT_PRICE_CENTS,
+  TSHIRT_UNIT_PRICE_CENTS,
+  TSHIRT_BULK_UNIT_PRICE_CENTS,
+  TSHIRT_BULK_MIN_QTY,
   SHIPPING_CENTS,
+  unitPriceCents,
   SELLER,
 } from '../config'
 
@@ -22,9 +25,17 @@ describe('shop config', () => {
     expect(isValidSize(undefined)).toBe(false)
   })
 
-  it('prices the t-shirt at $35 + $5 shipping', () => {
-    expect(TSHIRT_PRICE_CENTS).toBe(3500)
-    expect(SHIPPING_CENTS).toBe(500)
+  it('prices a single shirt at $40, bulk at $35, shipping $10', () => {
+    expect(TSHIRT_UNIT_PRICE_CENTS).toBe(4000)
+    expect(TSHIRT_BULK_UNIT_PRICE_CENTS).toBe(3500)
+    expect(SHIPPING_CENTS).toBe(1000)
+    expect(TSHIRT_BULK_MIN_QTY).toBe(2)
+  })
+
+  it('applies the volume discount at two or more', () => {
+    expect(unitPriceCents(1)).toBe(4000)
+    expect(unitPriceCents(2)).toBe(3500)
+    expect(unitPriceCents(5)).toBe(3500)
   })
 
   it('sells as a non-GST-registered entity (invoice, not tax invoice)', () => {

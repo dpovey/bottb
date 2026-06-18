@@ -105,7 +105,7 @@ interface ServerEnv {
 
   // Merch shop - Stripe
   readonly STRIPE_SECRET_KEY: string
-  readonly STRIPE_TSHIRT_PRICE_ID: string
+  readonly STRIPE_TSHIRT_PRODUCT_ID: string
   readonly STRIPE_WEBHOOK_SECRET: string
 
   // Merch shop - transactional email (Resend)
@@ -178,7 +178,7 @@ function getServerEnv(): ServerEnv {
     // (and tests) don't fail when the shop isn't configured; the checkout route
     // checks for presence explicitly and errors with a clear message if unset.
     STRIPE_SECRET_KEY: getEnvVar('STRIPE_SECRET_KEY', { required: false }),
-    STRIPE_TSHIRT_PRICE_ID: getEnvVar('STRIPE_TSHIRT_PRICE_ID', {
+    STRIPE_TSHIRT_PRODUCT_ID: getEnvVar('STRIPE_TSHIRT_PRODUCT_ID', {
       required: false,
     }),
     STRIPE_WEBHOOK_SECRET: getEnvVar('STRIPE_WEBHOOK_SECRET', {
