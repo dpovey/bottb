@@ -40,6 +40,13 @@ describe('renderInvoiceEmail', () => {
     expect(subject).toContain('Invoice')
   })
 
+  it('links to the site and embeds the logo', () => {
+    const { html } = renderInvoiceEmail(order)
+    expect(html).toContain('https://www.battleofthetechbands.com')
+    expect(html).toContain('/images/logos/bottb-dark-square.png')
+    expect(html).toContain('www.battleofthetechbands.com')
+  })
+
   it('shows the seller ABN and states no GST was charged', () => {
     const { html } = renderInvoiceEmail(order)
     expect(html).toContain('BOTB Events Ltd')

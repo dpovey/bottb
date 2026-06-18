@@ -1,6 +1,6 @@
 import type { MerchOrder } from '@/lib/db-types'
 import { formatAUD } from '@/lib/currency'
-import { SELLER, TSHIRT } from '@/lib/shop/config'
+import { SELLER, SITE_URL, TSHIRT } from '@/lib/shop/config'
 import {
   addressLines,
   effectiveItems,
@@ -48,10 +48,17 @@ export function renderInvoiceEmail(order: MerchOrder): {
 
   const html = `
   <div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
-      <div>
-        <h1 style="margin:0;font-size:22px;letter-spacing:.02em;">Invoice</h1>
-        <p style="margin:4px 0 0;color:#666;font-size:13px;">${ref} · ${formatOrderDate(order.created_at)}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <a href="${SITE_URL}" style="text-decoration:none;">
+          <span style="display:inline-block;width:56px;height:56px;border-radius:50%;background:#0a0a0a;text-align:center;line-height:56px;">
+            <img src="${SITE_URL}/images/logos/bottb-dark-square.png" alt="Battle of the Tech Bands" width="40" height="40" style="vertical-align:middle;border:0;" />
+          </span>
+        </a>
+        <div>
+          <h1 style="margin:0;font-size:22px;letter-spacing:.02em;">Invoice</h1>
+          <p style="margin:4px 0 0;color:#666;font-size:13px;">${ref} · ${formatOrderDate(order.created_at)}</p>
+        </div>
       </div>
       <div style="text-align:right;font-size:13px;line-height:1.5;">
         <strong>${escapeHtml(SELLER.name)}</strong><br/>
@@ -96,7 +103,9 @@ export function renderInvoiceEmail(order: MerchOrder): {
 
     <p style="margin:24px 0 0;font-size:12px;color:#888;line-height:1.5;">
       No GST has been charged. ${escapeHtml(SELLER.name)} is not registered for GST.<br/>
-      Thank you for supporting Battle of the Tech Bands.
+      Thank you for supporting
+      <a href="${SITE_URL}" style="color:#111;">Battle of the Tech Bands</a> —
+      <a href="${SITE_URL}" style="color:#888;">www.battleofthetechbands.com</a>
     </p>
   </div>`.trim()
 

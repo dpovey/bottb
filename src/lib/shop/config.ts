@@ -89,6 +89,13 @@ export function parseOrderItems(input: unknown): OrderItem[] | null {
 export const FULFILLMENT_EMAIL = 'info@bottb.com'
 
 /**
+ * Canonical public site URL. Used in emails for links/images, which need a
+ * stable absolute URL on the public domain (not the per-deploy Vercel URL,
+ * which sits behind deployment protection).
+ */
+export const SITE_URL = 'https://www.battleofthetechbands.com'
+
+/**
  * Seller identity printed on the invoice. BOTB Events Ltd is not registered
  * for GST, so invoices are titled "Invoice" (not "Tax Invoice") and carry no
  * GST line — see `gstRegistered`.
