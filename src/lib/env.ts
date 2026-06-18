@@ -102,6 +102,10 @@ interface ServerEnv {
   // PostHog
   readonly POSTHOG_PERSONAL_API_KEY: string
   readonly POSTHOG_PROJECT_ID: string
+
+  // Merch shop - Stripe
+  readonly STRIPE_SECRET_KEY: string
+  readonly STRIPE_TSHIRT_PRICE_ID: string
 }
 
 interface OptionalServerEnv {
@@ -164,6 +168,14 @@ function getServerEnv(): ServerEnv {
       required: false,
     }),
     POSTHOG_PROJECT_ID: getEnvVar('POSTHOG_PROJECT_ID', { required: false }),
+
+    // Merch shop - Stripe. Optional at validation time so the rest of the app
+    // (and tests) don't fail when the shop isn't configured; the checkout route
+    // checks for presence explicitly and errors with a clear message if unset.
+    STRIPE_SECRET_KEY: getEnvVar('STRIPE_SECRET_KEY', { required: false }),
+    STRIPE_TSHIRT_PRICE_ID: getEnvVar('STRIPE_TSHIRT_PRICE_ID', {
+      required: false,
+    }),
   }
 
   return _serverEnv
@@ -183,6 +195,11 @@ interface ClientEnv {
 
   // Base URL
   readonly NEXT_PUBLIC_BASE_URL: string
+
+  // Merch shop - Stripe publishable key (safe to expose). Not strictly needed
+  // for the redirect-to-Checkout flow, but exposed for future client use and
+  // for the storefront to detect test mode.
+  readonly NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: string
 }
 
 let _clientEnv: ClientEnv | null = null
@@ -198,6 +215,9 @@ function getClientEnv(): ClientEnv {
     ),
     NEXT_PUBLIC_DISABLE_DEV_TRACKING:
       getOptionalEnvVar('NEXT_PUBLIC_DISABLE_DEV_TRACKING') === 'true',
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: getOptionalEnvVar(
+      'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'
+    ),
     NEXT_PUBLIC_BASE_URL: getOptionalEnvVar(
       'NEXT_PUBLIC_BASE_URL',
       process.env.VERCEL_URL
