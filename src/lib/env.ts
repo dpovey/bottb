@@ -106,6 +106,11 @@ interface ServerEnv {
   // Merch shop - Stripe
   readonly STRIPE_SECRET_KEY: string
   readonly STRIPE_TSHIRT_PRICE_ID: string
+  readonly STRIPE_WEBHOOK_SECRET: string
+
+  // Merch shop - transactional email (Resend)
+  readonly RESEND_API_KEY: string
+  readonly SHOP_EMAIL_FROM: string
 }
 
 interface OptionalServerEnv {
@@ -176,6 +181,11 @@ function getServerEnv(): ServerEnv {
     STRIPE_TSHIRT_PRICE_ID: getEnvVar('STRIPE_TSHIRT_PRICE_ID', {
       required: false,
     }),
+    STRIPE_WEBHOOK_SECRET: getEnvVar('STRIPE_WEBHOOK_SECRET', {
+      required: false,
+    }),
+    RESEND_API_KEY: getEnvVar('RESEND_API_KEY', { required: false }),
+    SHOP_EMAIL_FROM: getEnvVar('SHOP_EMAIL_FROM', { required: false }),
   }
 
   return _serverEnv

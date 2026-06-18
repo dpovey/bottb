@@ -325,3 +325,37 @@ export interface ArtistMetadata {
   fetched_at: string | null
   created_at: string
 }
+
+// Merchandise shop orders
+export type MerchOrderStatus = 'paid' | 'fulfilled' | 'refunded' | 'cancelled'
+
+export interface MerchShippingAddress {
+  line1: string | null
+  line2: string | null
+  city: string | null
+  state: string | null
+  postal_code: string | null
+  country: string | null
+}
+
+export interface MerchOrder {
+  id: string
+  stripe_session_id: string
+  stripe_payment_intent_id: string | null
+  product: string
+  size: string
+  quantity: number
+  amount_subtotal: number // cents
+  amount_shipping: number // cents
+  amount_total: number // cents
+  currency: string
+  customer_name: string | null
+  customer_email: string | null
+  customer_phone: string | null
+  shipping_address: MerchShippingAddress | null
+  status: MerchOrderStatus
+  fulfillment_emailed_at: string | null
+  invoice_emailed_at: string | null
+  fulfilled_at: string | null
+  created_at: string
+}

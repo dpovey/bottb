@@ -463,3 +463,28 @@ ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_event_id_fkey FOREIGN 
 ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL;
 ALTER TABLE ONLY social_posts ADD CONSTRAINT social_posts_template_id_fkey FOREIGN KEY (template_id) REFERENCES social_post_templates(id) ON DELETE SET NULL;
 ALTER TABLE ONLY social_post_results ADD CONSTRAINT social_post_results_post_id_fkey FOREIGN KEY (post_id) REFERENCES social_posts(id) ON DELETE CASCADE;
+
+-- Merchandise shop orders (one row per paid Stripe Checkout Session)
+CREATE TABLE IF NOT EXISTS merch_orders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    stripe_session_id character varying(255) NOT NULL,
+    stripe_payment_intent_id character varying(255),
+    product character varying(64) NOT NULL,
+    size character varying(8) NOT NULL,
+    quantity integer NOT NULL,
+    amount_subtotal integer NOT NULL,
+    amount_shipping integer DEFAULT 0 NOT NULL,
+    amount_total integer NOT NULL,
+    currency character varying(8) DEFAULT 'aud' NOT NULL,
+    customer_name character varying(255),
+    customer_email character varying(255),
+    customer_phone character varying(64),
+    shipping_address jsonb,
+    status character varying(20) DEFAULT 'paid' NOT NULL,
+    fulfillment_emailed_at timestamp with time zone,
+    invoice_emailed_at timestamp with time zone,
+    fulfilled_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+ALTER TABLE ONLY merch_orders ADD CONSTRAINT merch_orders_stripe_session_id_unique UNIQUE (stripe_session_id);
+CREATE INDEX idx_merch_orders_status_created ON merch_orders (status, created_at);

@@ -16,6 +16,9 @@ export type {
   PhotoLabel,
   PhotoVisibility,
   PhotoOrderBy,
+  MerchOrder,
+  MerchOrderStatus,
+  MerchShippingAddress,
 } from './db-types'
 
 export { PHOTO_LABELS, PHOTO_VISIBILITY } from './db-types'
@@ -32,3 +35,4 @@ export * from './db/photographers'
 export * from './db/videos'
 export * from './db/songs'
 export * from './db/photo-intelligence'
+export * from './db/orders'
