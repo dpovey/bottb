@@ -48,23 +48,21 @@ export function renderInvoiceEmail(order: MerchOrder): {
 
   const html = `
   <div style="font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:0 auto;color:#111;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
       <div>
         <h1 style="margin:0;font-size:22px;letter-spacing:.02em;">Invoice</h1>
         <p style="margin:4px 0 0;color:#666;font-size:13px;">${ref} · ${formatOrderDate(order.created_at)}</p>
-      </div>
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div style="text-align:right;font-size:13px;line-height:1.5;">
+        <p style="margin:12px 0 0;font-size:13px;line-height:1.5;">
           <strong>${escapeHtml(SELLER.name)}</strong><br/>
           ABN ${escapeHtml(SELLER.abn)}<br/>
           <a href="mailto:${escapeHtml(SELLER.contactEmail)}" style="color:#666;">${escapeHtml(SELLER.contactEmail)}</a>
-        </div>
-        <a href="${SITE_URL}" style="text-decoration:none;">
-          <span style="display:inline-block;width:56px;height:56px;border-radius:8px;background:#0a0a0a;text-align:center;line-height:56px;">
-            <img src="${SITE_URL}/images/logos/bottb-dark-square.png" alt="Battle of the Tech Bands" width="40" height="40" style="vertical-align:middle;border:0;" />
-          </span>
-        </a>
+        </p>
       </div>
+      <a href="${SITE_URL}" style="text-decoration:none;line-height:0;">
+        <span style="display:inline-block;background:#000;line-height:0;">
+          <img src="${SITE_URL}/images/logos/bottb-dark-square.png" alt="Battle of the Tech Bands" width="64" height="64" style="display:block;border:0;" />
+        </span>
+      </a>
     </div>
 
     ${
