@@ -37,7 +37,7 @@ export function unitPriceCents(quantity: number): number {
 export const MAX_QUANTITY = 20
 
 /** Available t-shirt sizes, in display order. */
-export const TSHIRT_SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
+export const TSHIRT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const
 export type TShirtSize = (typeof TSHIRT_SIZES)[number]
 
 export function isValidSize(value: unknown): value is TShirtSize {

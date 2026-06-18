@@ -133,23 +133,23 @@ export function ShopClient() {
           {formatAUD(TSHIRT_BULK_UNIT_PRICE_CENTS)} each when you buy{' '}
           {TSHIRT_BULK_MIN_QTY} or more (mix &amp; match sizes)
         </p>
-        <p className="mt-6 leading-relaxed text-text-muted">
+        <p className="mt-5 leading-relaxed text-text-muted">
           {TSHIRT.description}
         </p>
 
-        {/* Per-size quantities */}
-        <fieldset className="mt-8">
+        {/* Per-size quantities (2-column grid to keep the buy button in view) */}
+        <fieldset className="mt-6">
           <legend className="text-sm font-medium text-white">
             Choose sizes
           </legend>
-          <div className="mt-3 divide-y divide-white/10 border-y border-white/10">
+          <div className="mt-3 grid grid-cols-2 gap-x-6">
             {TSHIRT_SIZES.map((size) => (
               <div
                 key={size}
-                className="flex items-center justify-between py-3"
+                className="flex items-center justify-between border-b border-white/10 py-2.5"
               >
                 <span className="font-medium text-white">{size}</span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => adjust(size, -1)}
@@ -186,7 +186,7 @@ export function ShopClient() {
         </fieldset>
 
         {/* Totals */}
-        <dl className="mt-8 space-y-2 border-t border-white/10 pt-6 text-sm">
+        <dl className="mt-6 space-y-2 border-t border-white/10 pt-5 text-sm">
           <div className="flex justify-between text-text-muted">
             <dt>
               Subtotal ({totalQty} {totalQty === 1 ? 'shirt' : 'shirts'} ×{' '}
@@ -213,7 +213,7 @@ export function ShopClient() {
         <Button
           variant="accent"
           size="lg"
-          className="mt-6 w-full"
+          className="mt-5 w-full"
           onClick={handleBuy}
           disabled={loading || totalQty === 0}
         >
