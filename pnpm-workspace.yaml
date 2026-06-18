@@ -1,0 +1,14 @@
+# pnpm 11 blocks dependency build scripts by default and aborts CI installs
+# with ERR_PNPM_IGNORED_BUILDS until each is explicitly approved here. These
+# deps legitimately need their install/build scripts (native builds:
+# sharp/bcrypt/esbuild/unrs-resolver; postinstall: core-js/protobufjs/msw/etc).
+allowBuilds:
+  '@posthog/cli': true
+  bcrypt: true
+  bufferutil: true
+  core-js: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true
