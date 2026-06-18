@@ -7,6 +7,7 @@ const order: MerchOrder = {
   stripe_session_id: 'cs_test_1',
   stripe_payment_intent_id: 'pi_1',
   product: 'tshirt-2026',
+  items: [{ size: 'L', quantity: 2 }],
   size: 'L',
   quantity: 2,
   amount_subtotal: 7000,
@@ -59,5 +60,37 @@ describe('renderInvoiceEmail', () => {
     const { html } = renderInvoiceEmail(evil)
     expect(html).not.toContain('<script>alert(1)</script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+
+  it('renders one line per size for a multi-size order', () => {
+    const multi: MerchOrder = {
+      ...order,
+      items: [
+        { size: 'M', quantity: 1 },
+        { size: 'L', quantity: 2 },
+      ],
+      size: null,
+      quantity: 3,
+      amount_subtotal: 10500, // 3 × $35
+      amount_total: 11500,
+    }
+    const { html } = renderInvoiceEmail(multi)
+    expect(html).toContain('(Size M)')
+    expect(html).toContain('(Size L)')
+    expect(html).toContain('$105.00') // subtotal
+  })
+
+  it('falls back to the legacy single size when items is empty', () => {
+    const legacy: MerchOrder = {
+      ...order,
+      items: [],
+      size: 'M',
+      quantity: 1,
+      amount_subtotal: 4000,
+      amount_total: 5000,
+    }
+    const { html } = renderInvoiceEmail(legacy)
+    expect(html).toContain('(Size M)')
+    expect(html).toContain('$40.00')
   })
 })

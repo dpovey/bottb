@@ -17,6 +17,7 @@ export type {
   PhotoVisibility,
   PhotoOrderBy,
   MerchOrder,
+  MerchOrderItem,
   MerchOrderStatus,
   MerchShippingAddress,
 } from './db-types'

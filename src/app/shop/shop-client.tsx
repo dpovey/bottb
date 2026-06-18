@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui'
-import { cn } from '@/lib/utils'
 import { formatAUD } from '@/lib/currency'
 import {
   MAX_QUANTITY,
@@ -20,20 +19,43 @@ const isTestMode = (
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
 ).startsWith('pk_test')
 
+type Quantities = Record<TShirtSize, number>
+
+const EMPTY_QUANTITIES = Object.fromEntries(
+  TSHIRT_SIZES.map((size) => [size, 0])
+) as Quantities
+
 export function ShopClient() {
   const [activeImage, setActiveImage] = useState(0)
-  const [size, setSize] = useState<TShirtSize | null>(null)
-  const [quantity, setQuantity] = useState(1)
+  const [quantities, setQuantities] = useState<Quantities>(EMPTY_QUANTITIES)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const unit = unitPriceCents(quantity)
-  const subtotal = unit * quantity
-  const total = subtotal + SHIPPING_CENTS
+  const totalQty = TSHIRT_SIZES.reduce((sum, s) => sum + quantities[s], 0)
+  const unit = unitPriceCents(totalQty)
+  const subtotal = unit * totalQty
+  const orderTotal = totalQty > 0 ? subtotal + SHIPPING_CENTS : 0
+
+  function adjust(size: TShirtSize, delta: number) {
+    setError(null)
+    setQuantities((prev) => {
+      const next = prev[size] + delta
+      if (next < 0) return prev
+      // Derive the total from `prev` (not the render-scope `totalQty`) so two
+      // rapid taps before a re-render can't both pass a stale cap check.
+      const prevTotal = TSHIRT_SIZES.reduce((sum, s) => sum + prev[s], 0)
+      if (delta > 0 && prevTotal >= MAX_QUANTITY) return prev
+      return { ...prev, [size]: next }
+    })
+  }
 
   async function handleBuy() {
-    if (!size) {
-      setError('Please choose a size.')
+    const items = TSHIRT_SIZES.filter((s) => quantities[s] > 0).map((s) => ({
+      size: s,
+      quantity: quantities[s],
+    }))
+    if (items.length === 0) {
+      setError('Add at least one shirt.')
       return
     }
     setLoading(true)
@@ -42,7 +64,7 @@ export function ShopClient() {
       const res = await fetch('/api/shop/checkout', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ size, quantity }),
+        body: JSON.stringify({ items }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.url) {
@@ -109,78 +131,76 @@ export function ShopClient() {
         </p>
         <p className="mt-1 text-sm text-accent">
           {formatAUD(TSHIRT_BULK_UNIT_PRICE_CENTS)} each when you buy{' '}
-          {TSHIRT_BULK_MIN_QTY} or more
+          {TSHIRT_BULK_MIN_QTY} or more (mix &amp; match sizes)
         </p>
         <p className="mt-6 leading-relaxed text-text-muted">
           {TSHIRT.description}
         </p>
 
-        {/* Size */}
+        {/* Per-size quantities */}
         <fieldset className="mt-8">
-          <legend className="text-sm font-medium text-white">Size</legend>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {TSHIRT_SIZES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => {
-                  setSize(s)
-                  setError(null)
-                }}
-                aria-pressed={size === s}
-                className={`min-w-[3.5rem] rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                  size === s
-                    ? 'border-accent bg-accent text-white'
-                    : 'border-white/30 text-white hover:border-white/60 hover:bg-white/5'
-                }`}
+          <legend className="text-sm font-medium text-white">
+            Choose sizes
+          </legend>
+          <div className="mt-3 divide-y divide-white/10 border-y border-white/10">
+            {TSHIRT_SIZES.map((size) => (
+              <div
+                key={size}
+                className="flex items-center justify-between py-3"
               >
-                {s}
-              </button>
+                <span className="font-medium text-white">{size}</span>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => adjust(size, -1)}
+                    disabled={quantities[size] === 0}
+                    aria-label={`Remove one ${size}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 text-white transition-colors hover:bg-white/5 disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span
+                    className="w-6 text-center tabular-nums text-white"
+                    aria-live="polite"
+                  >
+                    {quantities[size]}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => adjust(size, 1)}
+                    disabled={totalQty >= MAX_QUANTITY}
+                    aria-label={`Add one ${size}`}
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 text-white transition-colors hover:bg-white/5 disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
+          {totalQty >= MAX_QUANTITY && (
+            <p className="mt-2 text-xs text-text-dim">
+              Maximum {MAX_QUANTITY} shirts per order.
+            </p>
+          )}
         </fieldset>
-
-        {/* Quantity */}
-        <div className="mt-6">
-          <label htmlFor="quantity" className="text-sm font-medium text-white">
-            Quantity
-          </label>
-          <select
-            id="quantity"
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            className={cn(
-              'mt-3 block w-24 rounded-lg border border-white/20 bg-bg-elevated py-2 pl-3 pr-9 text-white',
-              'focus:border-accent focus:outline-hidden',
-              // Replace the native arrow (which has no padding control) with a
-              // custom chevron, matching FilterSelect's treatment.
-              'appearance-none bg-no-repeat bg-size-[1.25em_1.25em] bg-position-[right_0.5rem_center]',
-              "bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')]"
-            )}
-          >
-            {Array.from({ length: MAX_QUANTITY }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Totals */}
         <dl className="mt-8 space-y-2 border-t border-white/10 pt-6 text-sm">
           <div className="flex justify-between text-text-muted">
             <dt>
-              Subtotal ({quantity} × {formatAUD(unit)})
+              Subtotal ({totalQty} {totalQty === 1 ? 'shirt' : 'shirts'} ×{' '}
+              {formatAUD(unit)})
             </dt>
             <dd>{formatAUD(subtotal)}</dd>
           </div>
           <div className="flex justify-between text-text-muted">
             <dt>Shipping</dt>
-            <dd>{formatAUD(SHIPPING_CENTS)}</dd>
+            <dd>{totalQty > 0 ? formatAUD(SHIPPING_CENTS) : '—'}</dd>
           </div>
           <div className="flex justify-between pt-2 text-base font-semibold text-white">
             <dt>Total</dt>
-            <dd>{formatAUD(total)}</dd>
+            <dd>{formatAUD(orderTotal)}</dd>
           </div>
         </dl>
 
@@ -195,12 +215,12 @@ export function ShopClient() {
           size="lg"
           className="mt-6 w-full"
           onClick={handleBuy}
-          disabled={loading}
+          disabled={loading || totalQty === 0}
         >
           {loading ? 'Redirecting…' : 'Buy now'}
         </Button>
         <p className="mt-3 text-center text-xs text-text-dim">
-          Secure checkout by Stripe · Apple Pay & Google Pay supported
+          Secure checkout by Stripe · Apple Pay &amp; Google Pay supported
         </p>
 
         {isTestMode && (

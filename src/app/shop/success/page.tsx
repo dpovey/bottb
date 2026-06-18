@@ -4,6 +4,7 @@ import { PublicLayout } from '@/components/layouts'
 import { Button } from '@/components/ui'
 import { getStripe } from '@/lib/shop/stripe'
 import { formatAUD } from '@/lib/currency'
+import { parseOrderItems, totalQuantity } from '@/lib/shop/config'
 
 export const metadata: Metadata = {
   title: 'Order confirmed | Battle of the Tech Bands',
@@ -13,20 +14,38 @@ export const metadata: Metadata = {
 interface OrderSummary {
   reference: string
   email: string | null
-  size: string | null
-  quantity: string | null
+  items: string | null
+  quantity: number | null
   total: number | null
+}
+
+function summarizeItems(raw: string | undefined): {
+  summary: string | null
+  quantity: number | null
+} {
+  if (!raw) return { summary: null, quantity: null }
+  try {
+    const items = parseOrderItems(JSON.parse(raw))
+    if (!items) return { summary: null, quantity: null }
+    return {
+      summary: items.map((i) => `${i.quantity} × ${i.size}`).join(', '),
+      quantity: totalQuantity(items),
+    }
+  } catch {
+    return { summary: null, quantity: null }
+  }
 }
 
 async function loadOrder(sessionId: string): Promise<OrderSummary | null> {
   try {
     const session = await getStripe().checkout.sessions.retrieve(sessionId)
     if (session.payment_status !== 'paid') return null
+    const { summary, quantity } = summarizeItems(session.metadata?.items)
     return {
       reference: session.id.replace('cs_', '').slice(0, 12).toUpperCase(),
       email: session.customer_details?.email ?? null,
-      size: session.metadata?.size ?? null,
-      quantity: session.metadata?.quantity ?? null,
+      items: summary,
+      quantity,
       total: session.amount_total,
     }
   } catch {
@@ -77,13 +96,13 @@ export default async function ShopSuccessPage({
               <dt className="text-text-muted">Order reference</dt>
               <dd className="font-mono text-white">{order.reference}</dd>
             </div>
-            {order.size && (
+            {order.items && (
               <div className="flex justify-between">
-                <dt className="text-text-muted">Size</dt>
-                <dd className="text-white">{order.size}</dd>
+                <dt className="text-text-muted">Items</dt>
+                <dd className="text-white">{order.items}</dd>
               </div>
             )}
-            {order.quantity && (
+            {order.quantity != null && !order.items && (
               <div className="flex justify-between">
                 <dt className="text-text-muted">Quantity</dt>
                 <dd className="text-white">{order.quantity}</dd>

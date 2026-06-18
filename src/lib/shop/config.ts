@@ -33,8 +33,8 @@ export function unitPriceCents(quantity: number): number {
     : TSHIRT_UNIT_PRICE_CENTS
 }
 
-/** Max units per checkout — a soft guard against fat-finger / abuse. */
-export const MAX_QUANTITY = 10
+/** Max total shirts per order (across all sizes) — a soft guard against abuse. */
+export const MAX_QUANTITY = 20
 
 /** Available t-shirt sizes, in display order. */
 export const TSHIRT_SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const
@@ -45,6 +45,44 @@ export function isValidSize(value: unknown): value is TShirtSize {
     typeof value === 'string' &&
     (TSHIRT_SIZES as readonly string[]).includes(value)
   )
+}
+
+/** A line in an order: a size and how many of it. */
+export interface OrderItem {
+  size: TShirtSize
+  quantity: number
+}
+
+/** Total shirts across all line items. */
+export function totalQuantity(items: readonly { quantity: number }[]): number {
+  return items.reduce((sum, item) => sum + item.quantity, 0)
+}
+
+/**
+ * Validate and normalize a raw order-items payload (from the request body).
+ * Returns the cleaned items, or null if invalid. Rules: each entry is a known
+ * size with an integer quantity ≥ 1, no duplicate sizes, at least one shirt,
+ * and the total within MAX_QUANTITY. Entries with quantity 0 are dropped.
+ */
+export function parseOrderItems(input: unknown): OrderItem[] | null {
+  if (!Array.isArray(input) || input.length === 0) return null
+
+  const items: OrderItem[] = []
+  const seen = new Set<string>()
+  for (const raw of input) {
+    const size = (raw as { size?: unknown })?.size
+    const quantity = Number((raw as { quantity?: unknown })?.quantity)
+    if (!isValidSize(size)) return null
+    if (!Number.isInteger(quantity) || quantity < 0) return null
+    if (quantity === 0) continue
+    if (seen.has(size)) return null // collapse duplicates rather than guess
+    seen.add(size)
+    items.push({ size, quantity })
+  }
+
+  const total = totalQuantity(items)
+  if (total < 1 || total > MAX_QUANTITY) return null
+  return items
 }
 
 /** Where fulfillment notifications are sent. */
@@ -68,7 +106,7 @@ export const TSHIRT = {
   name: '2026 Battle of the Tech Bands T-Shirt',
   tagline: 'Brisbane · Sydney · Melbourne · 2026',
   description:
-    'Official 2026 tour tee. Heavyweight black cotton with a monochrome rock-poster print — small front logo, full back artwork.',
+    'Official 2026 tour tee, printed on premium AS Colour tees in Charcoal — soft 100% combed cotton with a monochrome rock-poster print: small front logo, full back artwork.',
   priceCents: TSHIRT_UNIT_PRICE_CENTS,
   images: [
     {

@@ -33,8 +33,8 @@ beforeEach(() => {
 })
 
 describe('POST /api/shop/checkout', () => {
-  it('charges the bulk unit price ($35) at quantity 2 via price_data', async () => {
-    const res = await POST(mockRequest({ size: 'M', quantity: 2 }))
+  it('charges the single unit price ($40) for one shirt', async () => {
+    const res = await POST(mockRequest({ items: [{ size: 'L', quantity: 1 }] }))
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toEqual({
       url: 'https://stripe.test/checkout/abc',
@@ -46,38 +46,64 @@ describe('POST /api/shop/checkout', () => {
         price_data: {
           currency: 'aud',
           product: 'prod_test',
+          unit_amount: 4000,
+        },
+        quantity: 1,
+      },
+    ])
+    expect(params.metadata.quantity).toBe('1')
+    expect(JSON.parse(params.metadata.items)).toEqual([
+      { size: 'L', quantity: 1 },
+    ])
+  })
+
+  it('applies the bulk price ($35) across mixed sizes totalling 2+', async () => {
+    await POST(
+      mockRequest({
+        items: [
+          { size: 'M', quantity: 1 },
+          { size: 'L', quantity: 1 },
+        ],
+      })
+    )
+    const params = create.mock.calls[0][0]
+    // One line item for the whole order at the discounted unit price.
+    expect(params.line_items).toEqual([
+      {
+        price_data: {
+          currency: 'aud',
+          product: 'prod_test',
           unit_amount: 3500,
         },
         quantity: 2,
       },
     ])
+    expect(JSON.parse(params.metadata.items)).toEqual([
+      { size: 'M', quantity: 1 },
+      { size: 'L', quantity: 1 },
+    ])
     expect(params.shipping_address_collection.allowed_countries).toEqual(['AU'])
-    expect(params.metadata).toMatchObject({ size: 'M', quantity: '2' })
     expect(params.success_url).toContain('/shop/success')
   })
 
-  it('charges the single unit price ($40) at quantity 1', async () => {
-    await POST(mockRequest({ size: 'L', quantity: 1 }))
-    const params = create.mock.calls[0][0]
-    expect(params.line_items[0].price_data.unit_amount).toBe(4000)
-    expect(params.line_items[0].quantity).toBe(1)
-  })
-
-  it('rejects an invalid size', async () => {
-    const res = await POST(mockRequest({ size: 'XS', quantity: 1 }))
-    expect(res.status).toBe(400)
-    expect(create).not.toHaveBeenCalled()
-  })
-
-  it.each([0, 11, 1.5, 'two'])('rejects invalid quantity %s', async (qty) => {
-    const res = await POST(mockRequest({ size: 'M', quantity: qty }))
+  it.each([
+    { label: 'empty items', body: { items: [] } },
+    { label: 'missing items', body: {} },
+    { label: 'invalid size', body: { items: [{ size: 'XS', quantity: 1 }] } },
+    { label: 'zero total', body: { items: [{ size: 'M', quantity: 0 }] } },
+    {
+      label: 'over the max',
+      body: { items: [{ size: 'M', quantity: 21 }] },
+    },
+  ])('rejects $label with 400', async ({ body }) => {
+    const res = await POST(mockRequest(body))
     expect(res.status).toBe(400)
     expect(create).not.toHaveBeenCalled()
   })
 
   it('returns 500 when the product id is not configured', async () => {
     mutableEnv.server.STRIPE_TSHIRT_PRODUCT_ID = ''
-    const res = await POST(mockRequest({ size: 'M', quantity: 1 }))
+    const res = await POST(mockRequest({ items: [{ size: 'M', quantity: 1 }] }))
     expect(res.status).toBe(500)
     expect(create).not.toHaveBeenCalled()
   })

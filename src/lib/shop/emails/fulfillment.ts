@@ -3,7 +3,9 @@ import { formatAUD } from '@/lib/currency'
 import { TSHIRT } from '@/lib/shop/config'
 import {
   addressLines,
+  effectiveItems,
   escapeHtml,
+  formatItemsSummary,
   formatOrderDate,
   orderReference,
 } from './format'
@@ -17,7 +19,8 @@ export function renderFulfillmentEmail(order: MerchOrder): {
   html: string
 } {
   const ref = orderReference(order)
-  const subject = `New order ${ref} — ${order.quantity}× ${order.size} ${TSHIRT.name}`
+  const items = effectiveItems(order)
+  const subject = `New order ${ref} — ${order.quantity}× ${TSHIRT.name}`
 
   const address = addressLines(order.shipping_address)
   const addressHtml = address.length
@@ -33,7 +36,7 @@ export function renderFulfillmentEmail(order: MerchOrder): {
     <p style="margin:0 0 16px;color:#666;">${ref} · ${formatOrderDate(order.created_at)}</p>
     <table style="border-collapse:collapse;font-size:14px;margin-bottom:20px;">
       ${row('Product', escapeHtml(TSHIRT.name))}
-      ${row('Size', escapeHtml(order.size))}
+      ${row('Sizes', formatItemsSummary(items))}
       ${row('Quantity', String(order.quantity))}
       ${row('Total paid', `${formatAUD(order.amount_total)} (incl. ${formatAUD(order.amount_shipping)} shipping)`)}
     </table>

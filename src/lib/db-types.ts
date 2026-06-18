@@ -338,12 +338,20 @@ export interface MerchShippingAddress {
   country: string | null
 }
 
+export interface MerchOrderItem {
+  size: string
+  quantity: number
+}
+
 export interface MerchOrder {
   id: string
   stripe_session_id: string
   stripe_payment_intent_id: string | null
   product: string
-  size: string
+  // Per-size breakdown of the order. `size` is a convenience summary (the
+  // single size for single-size orders, else null); `quantity` is the total.
+  items: MerchOrderItem[]
+  size: string | null
   quantity: number
   amount_subtotal: number // cents
   amount_shipping: number // cents

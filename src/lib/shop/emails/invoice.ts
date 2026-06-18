@@ -3,6 +3,7 @@ import { formatAUD } from '@/lib/currency'
 import { SELLER, TSHIRT } from '@/lib/shop/config'
 import {
   addressLines,
+  effectiveItems,
   escapeHtml,
   formatOrderDate,
   orderReference,
@@ -20,6 +21,7 @@ export function renderInvoiceEmail(order: MerchOrder): {
   const ref = orderReference(order)
   const subject = `Your Battle of the Tech Bands order — Invoice ${ref}`
 
+  const items = effectiveItems(order)
   const unitPrice =
     order.quantity > 0
       ? Math.round(order.amount_subtotal / order.quantity)
@@ -74,7 +76,16 @@ export function renderInvoiceEmail(order: MerchOrder): {
         </tr>
       </thead>
       <tbody>
-        ${lineItem(`${escapeHtml(TSHIRT.name)} (Size ${escapeHtml(order.size)})`, order.quantity, unitPrice, order.amount_subtotal)}
+        ${items
+          .map((item) =>
+            lineItem(
+              `${escapeHtml(TSHIRT.name)} (Size ${escapeHtml(item.size)})`,
+              item.quantity,
+              unitPrice,
+              unitPrice * item.quantity
+            )
+          )
+          .join('')}
       </tbody>
       <tfoot>
         ${totalRow('Subtotal', formatAUD(order.amount_subtotal))}

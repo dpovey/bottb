@@ -4,10 +4,10 @@ import { env } from '@/lib/env'
 import { getBaseUrl } from '@/lib/seo'
 import { getStripe } from '@/lib/shop/stripe'
 import {
-  isValidSize,
-  MAX_QUANTITY,
+  parseOrderItems,
   SHIPPING_CENTS,
   SHOP_CURRENCY,
+  totalQuantity,
   TSHIRT,
   unitPriceCents,
 } from '@/lib/shop/config'
@@ -22,19 +22,15 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => null)
-    const size = body?.size
-    const quantity = Number(body?.quantity)
-
-    if (!isValidSize(size)) {
-      return NextResponse.json({ error: 'Invalid size' }, { status: 400 })
+    const items = parseOrderItems(body?.items)
+    if (!items) {
+      return NextResponse.json(
+        { error: 'Invalid order — choose at least one shirt' },
+        { status: 400 }
+      )
     }
-    if (
-      !Number.isInteger(quantity) ||
-      quantity < 1 ||
-      quantity > MAX_QUANTITY
-    ) {
-      return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 })
-    }
+    const total = totalQuantity(items)
+    const unitAmount = unitPriceCents(total)
 
     const productId = env.server.STRIPE_TSHIRT_PRODUCT_ID
     if (!productId) {
@@ -49,16 +45,17 @@ export async function POST(request: NextRequest) {
 
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
-      // Dynamic price_data applies the volume discount (unit price varies by
-      // quantity) against the catalog product — no per-tier Price objects.
+      // One line item for the whole order — every shirt is the same product at
+      // the same volume-discounted unit price (the discount keys off the total
+      // across sizes). The per-size breakdown rides in metadata.items.
       line_items: [
         {
           price_data: {
             currency: SHOP_CURRENCY,
             product: productId,
-            unit_amount: unitPriceCents(quantity),
+            unit_amount: unitAmount,
           },
-          quantity,
+          quantity: total,
         },
       ],
       // Australia-only shipping for now.
@@ -84,8 +81,8 @@ export async function POST(request: NextRequest) {
       },
       metadata: {
         product: TSHIRT.id,
-        size,
-        quantity: String(quantity),
+        items: JSON.stringify(items),
+        quantity: String(total),
       },
       success_url: `${baseUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/shop/cancel`,

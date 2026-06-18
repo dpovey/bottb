@@ -1,11 +1,16 @@
 import { sql } from '../sql'
-import type { MerchOrder, MerchShippingAddress } from '../db-types'
+import type {
+  MerchOrder,
+  MerchOrderItem,
+  MerchShippingAddress,
+} from '../db-types'
 
 export interface NewMerchOrder {
   stripe_session_id: string
   stripe_payment_intent_id: string | null
   product: string
-  size: string
+  items: MerchOrderItem[]
+  size: string | null
   quantity: number
   amount_subtotal: number
   amount_shipping: number
@@ -29,12 +34,12 @@ export async function insertMerchOrderIfNew(
 ): Promise<{ order: MerchOrder; isNew: boolean }> {
   const { rows } = await sql<MerchOrder>`
     INSERT INTO merch_orders (
-      stripe_session_id, stripe_payment_intent_id, product, size, quantity,
+      stripe_session_id, stripe_payment_intent_id, product, items, size, quantity,
       amount_subtotal, amount_shipping, amount_total, currency,
       customer_name, customer_email, customer_phone, shipping_address
     ) VALUES (
       ${input.stripe_session_id}, ${input.stripe_payment_intent_id},
-      ${input.product}, ${input.size}, ${input.quantity},
+      ${input.product}, ${JSON.stringify(input.items)}, ${input.size}, ${input.quantity},
       ${input.amount_subtotal}, ${input.amount_shipping}, ${input.amount_total},
       ${input.currency}, ${input.customer_name}, ${input.customer_email},
       ${input.customer_phone},

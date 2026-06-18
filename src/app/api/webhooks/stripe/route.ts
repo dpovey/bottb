@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { env } from '@/lib/env'
 import { getStripe } from '@/lib/shop/stripe'
-import type { MerchShippingAddress } from '@/lib/db-types'
+import type { MerchOrderItem, MerchShippingAddress } from '@/lib/db-types'
 import {
   insertMerchOrderIfNew,
   markFulfillmentEmailed,
@@ -11,7 +11,12 @@ import {
 import { sendEmail } from '@/lib/email/resend'
 import { renderFulfillmentEmail } from '@/lib/shop/emails/fulfillment'
 import { renderInvoiceEmail } from '@/lib/shop/emails/invoice'
-import { FULFILLMENT_EMAIL, TSHIRT } from '@/lib/shop/config'
+import {
+  FULFILLMENT_EMAIL,
+  parseOrderItems,
+  totalQuantity,
+  TSHIRT,
+} from '@/lib/shop/config'
 
 // Note: route handlers default to the Node.js runtime (which the Stripe SDK
 // needs for crypto). We don't set `export const runtime` explicitly because
@@ -57,6 +62,10 @@ async function handleCheckoutCompleted(stub: Stripe.Checkout.Session) {
 
   const metadata = session.metadata ?? {}
   const shipping = extractShipping(session)
+  const items = parseItemsMetadata(metadata.items)
+  const quantity = items.length
+    ? totalQuantity(items)
+    : Number(metadata.quantity ?? 0)
 
   const { order } = await insertMerchOrderIfNew({
     stripe_session_id: session.id,
@@ -65,8 +74,9 @@ async function handleCheckoutCompleted(stub: Stripe.Checkout.Session) {
         ? session.payment_intent
         : (session.payment_intent?.id ?? null),
     product: metadata.product ?? TSHIRT.id,
-    size: metadata.size ?? '',
-    quantity: Number(metadata.quantity ?? 1),
+    items,
+    size: items.length === 1 ? items[0].size : null,
+    quantity,
     amount_subtotal: session.amount_subtotal ?? 0,
     amount_shipping: session.shipping_cost?.amount_total ?? 0,
     amount_total: session.amount_total ?? 0,
@@ -100,6 +110,15 @@ async function handleCheckoutCompleted(stub: Stripe.Checkout.Session) {
       replyTo: FULFILLMENT_EMAIL,
     })
     if (res.sent) await markInvoiceEmailed(order.id)
+  }
+}
+
+function parseItemsMetadata(raw: string | undefined): MerchOrderItem[] {
+  if (!raw) return []
+  try {
+    return parseOrderItems(JSON.parse(raw)) ?? []
+  } catch {
+    return []
   }
 }
 

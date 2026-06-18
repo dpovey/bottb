@@ -36,6 +36,7 @@ const ORDER: MerchOrder = {
   stripe_session_id: 'cs_test_1',
   stripe_payment_intent_id: 'pi_1',
   product: 'tshirt-2026',
+  items: [{ size: 'L', quantity: 2 }],
   size: 'L',
   quantity: 2,
   amount_subtotal: 7000,
@@ -64,7 +65,11 @@ const PAID_SESSION = {
   id: 'cs_test_1',
   payment_status: 'paid',
   payment_intent: 'pi_1',
-  metadata: { product: 'tshirt-2026', size: 'L', quantity: '2' },
+  metadata: {
+    product: 'tshirt-2026',
+    items: JSON.stringify([{ size: 'L', quantity: 2 }]),
+    quantity: '2',
+  },
   amount_subtotal: 7000,
   amount_total: 7500,
   currency: 'aud',
@@ -134,6 +139,7 @@ describe('POST /api/webhooks/stripe', () => {
     const orderArg = insertMerchOrderIfNew.mock.calls[0][0]
     expect(orderArg).toMatchObject({
       stripe_session_id: 'cs_test_1',
+      items: [{ size: 'L', quantity: 2 }],
       size: 'L',
       quantity: 2,
       amount_total: 7500,
