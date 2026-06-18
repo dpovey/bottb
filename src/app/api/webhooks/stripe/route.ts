@@ -13,8 +13,9 @@ import { renderFulfillmentEmail } from '@/lib/shop/emails/fulfillment'
 import { renderInvoiceEmail } from '@/lib/shop/emails/invoice'
 import { FULFILLMENT_EMAIL, TSHIRT } from '@/lib/shop/config'
 
-// Stripe SDK needs the Node runtime (crypto) and the raw request body.
-export const runtime = 'nodejs'
+// Note: route handlers default to the Node.js runtime (which the Stripe SDK
+// needs for crypto). We don't set `export const runtime` explicitly because
+// this project enables experimental.useCache, which is incompatible with it.
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
