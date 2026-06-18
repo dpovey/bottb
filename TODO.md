@@ -114,6 +114,20 @@
 - [ ] **Form validation UX** - Inline validation with error/success states
 - [ ] **Touch target audit** - Ensure 44x44px minimum on photo grid
 
+### Design System
+
+- [ ] **Replace native elements with design-system components** - There's no
+      general-purpose DS form control, so native `<select>`/inputs and one-off
+      styled variants are duplicated: `FilterSelect` (`src/components/ui/filter-bar.tsx`),
+      `AdminSelect` (`src/components/ui/admin-form-field.tsx`), and ad-hoc native
+      elements (e.g. the shop reused FilterSelect's chevron pattern inline).
+      Extract size-agnostic `Select`/`Input`/`Field` primitives into
+      `src/components/ui/` and replace the native elements + duplicated styling.
+- [ ] **Design system audit** - General pass over `src/components/ui/` and the
+      `/design-system` page: design-token consistency, duplicated/one-off styles,
+      accessibility (labels, focus rings, contrast), native vs DS elements, and
+      Storybook coverage gaps. Capture findings as follow-up tasks.
+
 ### Advanced Features
 
 - [ ] **Photo comments/reactions** - Like/heart photos
