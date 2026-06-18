@@ -9,8 +9,8 @@
 /** Stripe expects lowercase ISO currency codes. */
 export const SHOP_CURRENCY = 'aud'
 
-/** Unit price of the t-shirt, in cents (A$50.00). Mirrors the Stripe Price. */
-export const TSHIRT_PRICE_CENTS = 5000
+/** Unit price of the t-shirt, in cents (A$35.00). Mirrors the Stripe Price. */
+export const TSHIRT_PRICE_CENTS = 3500
 
 /** Flat shipping within Australia, in cents (A$5.00). */
 export const SHIPPING_CENTS = 500

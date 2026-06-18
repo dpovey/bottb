@@ -22,8 +22,8 @@ describe('shop config', () => {
     expect(isValidSize(undefined)).toBe(false)
   })
 
-  it('prices the t-shirt at $50 + $5 shipping', () => {
-    expect(TSHIRT_PRICE_CENTS).toBe(5000)
+  it('prices the t-shirt at $35 + $5 shipping', () => {
+    expect(TSHIRT_PRICE_CENTS).toBe(3500)
     expect(SHIPPING_CENTS).toBe(500)
   })
 
