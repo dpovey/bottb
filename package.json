@@ -147,6 +147,17 @@
     "vitest": "^3.2.4"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "@posthog/cli",
+      "bcrypt",
+      "bufferutil",
+      "core-js",
+      "esbuild",
+      "msw",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ],
     "overrides": {
       "@types/react": "19.2.15",
       "@types/react-dom": "19.2.3",
