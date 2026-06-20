@@ -29,7 +29,11 @@ export interface ThumbnailContent {
 
 type Source = CanvasImageSource
 
-/** Draw `src` to fill the destination rect, centre-cropping (object-fit: cover). */
+/**
+ * Draw `src` to fill the destination rect, cropping to a focal point
+ * (object-fit: cover + object-position). `focusX`/`focusY` run 0..1, where 0.5
+ * is centred, 0 anchors the left/top edge and 1 the right/bottom edge.
+ */
 function drawCover(
   ctx: CanvasRenderingContext2D,
   src: Source,
@@ -38,13 +42,35 @@ function drawCover(
   dx: number,
   dy: number,
   dw: number,
-  dh: number
+  dh: number,
+  focusX = 0.5,
+  focusY = 0.5
 ): void {
   if (!sw || !sh) return
   const scale = Math.max(dw / sw, dh / sh)
   const w = sw * scale
   const h = sh * scale
-  ctx.drawImage(src, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h)
+  // (dw - w) and (dh - h) are <= 0 (the overflow); the focal fraction slides
+  // the source within that overflow.
+  ctx.drawImage(src, dx + (dw - w) * focusX, dy + (dh - h) * focusY, w, h)
+}
+
+/**
+ * How far (in destination pixels) a cover-fitted source can slide on each axis.
+ * Used to map a drag gesture on the preview back into focal-point fractions.
+ */
+export function coverSlack(
+  sw: number,
+  sh: number,
+  dw: number,
+  dh: number
+): { slackX: number; slackY: number } {
+  if (!sw || !sh) return { slackX: 0, slackY: 0 }
+  const scale = Math.max(dw / sw, dh / sh)
+  return {
+    slackX: Math.max(0, sw * scale - dw),
+    slackY: Math.max(0, sh * scale - dh),
+  }
 }
 
 /** Scale (down only) to fit inside a box, preserving aspect ratio. */
@@ -187,11 +213,13 @@ export function composeInstagram(
   ctx: CanvasRenderingContext2D,
   source: Source | null,
   sourceW: number,
-  sourceH: number
+  sourceH: number,
+  focusX = 0.5,
+  focusY = 0.5
 ): void {
   ctx.clearRect(0, 0, IG_W, IG_H)
   if (source) {
-    drawCover(ctx, source, sourceW, sourceH, 0, 0, IG_W, IG_H)
+    drawCover(ctx, source, sourceW, sourceH, 0, 0, IG_W, IG_H, focusX, focusY)
   } else {
     ctx.fillStyle = '#0a0a0a'
     ctx.fillRect(0, 0, IG_W, IG_H)

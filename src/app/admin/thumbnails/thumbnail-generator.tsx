@@ -8,6 +8,7 @@ import type { CompanyWithStats } from '@/lib/db-types'
 import {
   composeInstagram,
   composeYouTube,
+  coverSlack,
   IG_H,
   IG_W,
   YT_H,
@@ -15,6 +16,7 @@ import {
   type LogoCorner,
 } from './compose'
 import { loadJostFont } from './jost-font'
+import { useKeyframes } from './use-keyframes'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
 const FRAME = 1 / 30 // assume ~30fps for single-frame stepping
@@ -47,6 +49,10 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}.${t}`
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value))
+}
+
 export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   // Only companies with a usable logo can drive the top-left brand mark.
   const withLogos = companies.filter((c) => c.logo_url)
@@ -58,19 +64,35 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [duration, setDuration] = useState(0)
+  // scrubTime tracks the slider thumb (immediate); currentTime tracks the
+  // actually-decoded frame and is what drives a redraw.
+  const [scrubTime, setScrubTime] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [videoReady, setVideoReady] = useState(false)
+  const [videoDims, setVideoDims] = useState<{ w: number; h: number } | null>(
+    null
+  )
 
   const [companySlug, setCompanySlug] = useState('')
   const [artist, setArtist] = useState('')
   const [song, setSong] = useState('')
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
+  // Instagram crop focal point (0..1 on each axis; 0.5 = centred).
+  const [igFocusX, setIgFocusX] = useState(0.5)
+  const [igFocusY, setIgFocusY] = useState(0.5)
+
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
   const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
   const [fontReady, setFontReady] = useState(false)
 
+  // Seek coalescing — never queue more than one pending seek so fast dragging
+  // doesn't back up a long chain of decodes.
+  const seekingRef = useRef(false)
+  const pendingSeekRef = useRef<number | null>(null)
+
+  const keyframes = useKeyframes(videoUrl)
   const selectedCompany = withLogos.find((c) => c.slug === companySlug) ?? null
 
   // Load the Bottb square logo + website font once.
@@ -84,8 +106,7 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   }, [])
 
   // Load the selected company logo through the same-origin proxy. All state
-  // updates happen inside the async callbacks (never synchronously in the
-  // effect body) to avoid cascading renders.
+  // updates happen inside the async callbacks to avoid cascading renders.
   useEffect(() => {
     let cancelled = false
     const logoUrl = selectedCompany?.logo_url
@@ -139,9 +160,18 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
 
     const ig = igCanvasRef.current?.getContext('2d')
     if (ig) {
-      composeInstagram(ig, source, sw, sh)
+      composeInstagram(ig, source, sw, sh, igFocusX, igFocusY)
     }
-  }, [videoReady, artist, song, bottbLogo, companyLogo, bottbCorner])
+  }, [
+    videoReady,
+    artist,
+    song,
+    bottbLogo,
+    companyLogo,
+    bottbCorner,
+    igFocusX,
+    igFocusY,
+  ])
 
   useEffect(() => {
     draw()
@@ -149,9 +179,15 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
 
   const handleVideoSelect = (file: File | null) => {
     if (videoUrl) URL.revokeObjectURL(videoUrl)
+    seekingRef.current = false
+    pendingSeekRef.current = null
     setVideoReady(false)
+    setVideoDims(null)
     setDuration(0)
+    setScrubTime(0)
     setCurrentTime(0)
+    setIgFocusX(0.5)
+    setIgFocusY(0.5)
     setVideoFile(file)
     setVideoUrl(file ? URL.createObjectURL(file) : null)
   }
@@ -160,25 +196,96 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     const video = videoRef.current
     if (!video) return
     setDuration(video.duration || 0)
+    if (video.videoWidth && video.videoHeight) {
+      setVideoDims({ w: video.videoWidth, h: video.videoHeight })
+    }
+  }
+
+  // Coalesced seek: move the thumb immediately, but only ever have one decode
+  // in flight; the most recent requested time wins.
+  const requestSeek = (time: number) => {
+    const video = videoRef.current
+    if (!video || !duration) return
+    const target = clamp(time, 0, duration)
+    setScrubTime(target)
+    if (seekingRef.current) {
+      pendingSeekRef.current = target
+    } else {
+      seekingRef.current = true
+      video.currentTime = target
+    }
   }
 
   const handleSeeked = () => {
     const video = videoRef.current
-    if (video) setCurrentTime(video.currentTime)
-  }
-
-  const seekTo = (time: number) => {
-    const video = videoRef.current
-    if (!video || !duration) return
-    const clamped = Math.max(0, Math.min(duration, time))
-    video.currentTime = clamped
-    setCurrentTime(clamped)
+    if (!video) return
+    // Live feedback on every decoded frame.
+    draw()
+    const next = pendingSeekRef.current
+    if (next != null && Math.abs(next - video.currentTime) > 0.001) {
+      pendingSeekRef.current = null
+      video.currentTime = next
+    } else {
+      seekingRef.current = false
+      pendingSeekRef.current = null
+      setCurrentTime(video.currentTime)
+    }
   }
 
   const handleCompanyChange = (slug: string) => {
     setCompanySlug(slug)
     const company = withLogos.find((c) => c.slug === slug)
     if (company) setArtist(company.name)
+  }
+
+  // --- Instagram crop drag-to-reposition -----------------------------------
+  const igDragRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    focusX: number
+    focusY: number
+  } | null>(null)
+
+  const handleIgPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!videoReady) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    igDragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      focusX: igFocusX,
+      focusY: igFocusY,
+    }
+  }
+
+  const handleIgPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const drag = igDragRef.current
+    const video = videoRef.current
+    if (!drag || !video) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const { slackX, slackY } = coverSlack(
+      video.videoWidth,
+      video.videoHeight,
+      IG_W,
+      IG_H
+    )
+    // Convert on-screen drag (px) to canvas px, then to a focal fraction.
+    // Dragging right reveals more of the left of the frame → focus decreases.
+    if (slackX > 0 && rect.width) {
+      const dxCanvas = ((e.clientX - drag.startX) * IG_W) / rect.width
+      setIgFocusX(clamp(drag.focusX - dxCanvas / slackX, 0, 1))
+    }
+    if (slackY > 0 && rect.height) {
+      const dyCanvas = ((e.clientY - drag.startY) * IG_H) / rect.height
+      setIgFocusY(clamp(drag.focusY - dyCanvas / slackY, 0, 1))
+    }
+  }
+
+  const handleIgPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (igDragRef.current?.pointerId === e.pointerId) {
+      igDragRef.current = null
+    }
   }
 
   const downloadCanvas = (
@@ -207,9 +314,13 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   }
 
   const hasVideo = Boolean(videoUrl)
+  const igSlack = videoDims
+    ? coverSlack(videoDims.w, videoDims.h, IG_W, IG_H)
+    : { slackX: 0, slackY: 0 }
+  const igCanPan = igSlack.slackX > 1 || igSlack.slackY > 1
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,380px)_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
       {/* Hidden frame source. */}
       {videoUrl && (
         <video
@@ -302,66 +413,6 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
             </div>
           </AdminFormField>
         </Card>
-
-        <Card padding="md" className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">
-            3. Choose a frame
-          </h2>
-          {!hasVideo ? (
-            <p className="text-sm text-gray-400">
-              Add a video to scrub through frames.
-            </p>
-          ) : (
-            <>
-              <input
-                type="range"
-                min={0}
-                max={duration || 0}
-                step={0.01}
-                value={currentTime}
-                onChange={(e) => seekTo(parseFloat(e.target.value))}
-                disabled={!duration}
-                className="w-full accent-accent"
-              />
-              <div className="flex items-center justify-between text-sm text-gray-300">
-                <span className="tabular-nums">{formatTime(currentTime)}</span>
-                <span className="tabular-nums text-gray-500">
-                  {formatTime(duration)}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline-solid"
-                  onClick={() => seekTo(currentTime - 1)}
-                >
-                  −1s
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline-solid"
-                  onClick={() => seekTo(currentTime - FRAME)}
-                >
-                  −1 frame
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline-solid"
-                  onClick={() => seekTo(currentTime + FRAME)}
-                >
-                  +1 frame
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline-solid"
-                  onClick={() => seekTo(currentTime + 1)}
-                >
-                  +1s
-                </Button>
-              </div>
-            </>
-          )}
-        </Card>
       </div>
 
       {/* ---------------- Previews ---------------- */}
@@ -381,12 +432,93 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
               Download
             </Button>
           </div>
+
           <canvas
             ref={ytCanvasRef}
             width={YT_W}
             height={YT_H}
             className="w-full rounded-lg border border-white/10 bg-black"
           />
+
+          {/* Scrubber + keyframe filmstrip live directly under the preview. */}
+          {!hasVideo ? (
+            <p className="text-sm text-gray-400">
+              Add a video to scrub through frames.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {keyframes.length > 0 && (
+                <div className="flex gap-1 overflow-x-auto">
+                  {keyframes.map((kf) => {
+                    const active =
+                      Math.abs(kf.time - scrubTime) < (duration || 1) / 20
+                    return (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={kf.time}
+                        src={kf.url}
+                        alt={`Frame at ${formatTime(kf.time)}`}
+                        onClick={() => requestSeek(kf.time)}
+                        className={`h-12 w-auto shrink-0 cursor-pointer rounded border transition ${
+                          active
+                            ? 'border-accent opacity-100'
+                            : 'border-white/10 opacity-70 hover:opacity-100'
+                        }`}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+
+              <input
+                type="range"
+                min={0}
+                max={duration || 0}
+                step={0.01}
+                value={scrubTime}
+                onChange={(e) => requestSeek(parseFloat(e.target.value))}
+                disabled={!duration}
+                className="w-full accent-accent"
+              />
+
+              <div className="flex items-center justify-between text-sm text-gray-300">
+                <span className="tabular-nums">{formatTime(scrubTime)}</span>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline-solid"
+                    onClick={() => requestSeek(scrubTime - 1)}
+                  >
+                    −1s
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline-solid"
+                    onClick={() => requestSeek(scrubTime - FRAME)}
+                  >
+                    −1f
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline-solid"
+                    onClick={() => requestSeek(scrubTime + FRAME)}
+                  >
+                    +1f
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline-solid"
+                    onClick={() => requestSeek(scrubTime + 1)}
+                  >
+                    +1s
+                  </Button>
+                </div>
+                <span className="tabular-nums text-gray-500">
+                  {formatTime(duration)}
+                </span>
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card padding="md" className="space-y-3">
@@ -405,13 +537,22 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
             </Button>
           </div>
           <p className="text-xs text-gray-500">
-            Clean frame, no overlays — the caption carries the text.
+            Clean frame, no overlays.{' '}
+            {igCanPan
+              ? 'Drag the preview to reposition the crop.'
+              : 'Caption carries the text.'}
           </p>
           <canvas
             ref={igCanvasRef}
             width={IG_W}
             height={IG_H}
-            className="mx-auto w-full max-w-[260px] rounded-lg border border-white/10 bg-black"
+            onPointerDown={handleIgPointerDown}
+            onPointerMove={handleIgPointerMove}
+            onPointerUp={handleIgPointerUp}
+            onPointerCancel={handleIgPointerUp}
+            className={`mx-auto w-full max-w-[260px] touch-none rounded-lg border border-white/10 bg-black ${
+              igCanPan ? 'cursor-grab active:cursor-grabbing' : ''
+            }`}
           />
         </Card>
       </div>
