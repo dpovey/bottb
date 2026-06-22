@@ -7,12 +7,16 @@ import { DownloadIcon } from '@/components/icons'
 import type { CompanyWithStats } from '@/lib/db-types'
 import {
   composeInstagram,
+  composeOverlay,
   composeYouTube,
   coverSlack,
   IG_H,
   IG_W,
+  OV_H,
+  OV_W,
   YT_H,
   YT_W,
+  type InstagramMode,
   type LogoCorner,
 } from './compose'
 import { loadJostFont } from './jost-font'
@@ -81,6 +85,8 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   // Instagram crop focal point (0..1 on each axis; 0.5 = centred).
   const [igFocusX, setIgFocusX] = useState(0.5)
   const [igFocusY, setIgFocusY] = useState(0.5)
+  const [igMode, setIgMode] = useState<InstagramMode>('fill')
+  const [showSafeZones, setShowSafeZones] = useState(true)
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
   const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
@@ -160,7 +166,14 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
 
     const ig = igCanvasRef.current?.getContext('2d')
     if (ig) {
-      composeInstagram(ig, source, sw, sh, igFocusX, igFocusY)
+      // A vertical source already fills the 9:16 box, so it never needs the
+      // letterbox ('fit') treatment — only landscape sources do.
+      const portrait = sh > sw
+      composeInstagram(ig, source, sw, sh, {
+        focusX: igFocusX,
+        focusY: igFocusY,
+        mode: portrait ? 'fill' : igMode,
+      })
     }
   }, [
     videoReady,
@@ -171,6 +184,7 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     bottbCorner,
     igFocusX,
     igFocusY,
+    igMode,
   ])
 
   useEffect(() => {
@@ -188,6 +202,7 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     setCurrentTime(0)
     setIgFocusX(0.5)
     setIgFocusY(0.5)
+    setIgMode('fill')
     setVideoFile(file)
     setVideoUrl(file ? URL.createObjectURL(file) : null)
   }
@@ -234,8 +249,6 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
 
   const handleCompanyChange = (slug: string) => {
     setCompanySlug(slug)
-    const company = withLogos.find((c) => c.slug === slug)
-    if (company) setArtist(company.name)
   }
 
   // --- Instagram crop drag-to-reposition -----------------------------------
@@ -288,36 +301,60 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     }
   }
 
+  const triggerDownload = (blob: Blob | null, filename: string) => {
+    if (!blob) return
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const buildName = (suffix: string, ext: string) => {
+    const base =
+      selectedCompany?.slug || (artist ? slugify(artist) : 'thumbnail')
+    const songPart = song.trim() ? `-${slugify(song)}` : ''
+    return `${base}${songPart}-${suffix}.${ext}`
+  }
+
   const downloadCanvas = (
     ref: React.RefObject<HTMLCanvasElement | null>,
     suffix: string
   ) => {
     const canvas = ref.current
     if (!canvas) return
-    const base =
-      selectedCompany?.slug || (artist ? slugify(artist) : 'thumbnail')
-    const songPart = song.trim() ? `-${slugify(song)}` : ''
-    const filename = `${base}${songPart}-${suffix}.jpg`
     canvas.toBlob(
-      (blob) => {
-        if (!blob) return
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        a.click()
-        setTimeout(() => URL.revokeObjectURL(url), 1000)
-      },
+      (blob) => triggerDownload(blob, buildName(suffix, 'jpg')),
       'image/jpeg',
       0.92
     )
   }
 
+  // Transparent 4K PNG of just the logos + text, for compositing over the
+  // start of a video. Rendered off-screen so we never mount a 4K canvas.
+  const downloadOverlay = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = OV_W
+    canvas.height = OV_H
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    composeOverlay(ctx, { artist, song, bottbLogo, companyLogo, bottbCorner })
+    canvas.toBlob(
+      (blob) => triggerDownload(blob, buildName('overlay-4k', 'png')),
+      'image/png'
+    )
+  }
+
   const hasVideo = Boolean(videoUrl)
+  const isPortrait = videoDims ? videoDims.h > videoDims.w : false
+  const effectiveIgMode: InstagramMode = isPortrait ? 'fill' : igMode
   const igSlack = videoDims
     ? coverSlack(videoDims.w, videoDims.h, IG_W, IG_H)
     : { slackX: 0, slackY: 0 }
-  const igCanPan = igSlack.slackX > 1 || igSlack.slackY > 1
+  // Repositioning only makes sense when we're actually cropping (fill mode).
+  const igCanPan =
+    effectiveIgMode === 'fill' && (igSlack.slackX > 1 || igSlack.slackY > 1)
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,360px)_1fr]">
@@ -418,19 +455,42 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
       {/* ---------------- Previews ---------------- */}
       <div className="space-y-6">
         <Card padding="md" className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-white">
-              YouTube · {YT_W}×{YT_H}
+              YouTube{!isPortrait && ' / LinkedIn'} · {YT_W}×{YT_H}
             </h2>
-            <Button
-              size="sm"
-              variant="accent"
-              disabled={!hasVideo}
-              onClick={() => downloadCanvas(ytCanvasRef, 'youtube')}
-            >
-              <DownloadIcon className="mr-1.5 h-4 w-4" />
-              Download
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="accent"
+                disabled={!hasVideo}
+                onClick={() => downloadCanvas(ytCanvasRef, 'youtube')}
+              >
+                <DownloadIcon className="mr-1.5 h-4 w-4" />
+                YouTube
+              </Button>
+              {!isPortrait && (
+                <Button
+                  size="sm"
+                  variant="outline-solid"
+                  disabled={!hasVideo}
+                  onClick={() => downloadCanvas(ytCanvasRef, 'linkedin')}
+                >
+                  <DownloadIcon className="mr-1.5 h-4 w-4" />
+                  LinkedIn
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline-solid"
+                disabled={!fontReady}
+                title="Transparent 4K PNG of the logos + text, to composite over the start of the video"
+                onClick={downloadOverlay}
+              >
+                <DownloadIcon className="mr-1.5 h-4 w-4" />
+                Overlay 4K
+              </Button>
+            </div>
           </div>
 
           <canvas
@@ -439,6 +499,13 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
             height={YT_H}
             className="w-full rounded-lg border border-white/10 bg-black"
           />
+          {isPortrait && (
+            <p className="text-xs text-amber-400/80">
+              Vertical source — this 16:9 frame is cropped for YouTube. For
+              LinkedIn, use the vertical export below (LinkedIn matches the
+              video&apos;s shape).
+            </p>
+          )}
 
           {/* Scrubber + keyframe filmstrip live directly under the preview. */}
           {!hasVideo ? (
@@ -522,38 +589,117 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
         </Card>
 
         <Card padding="md" className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-white">
-              Instagram Reel/Story · {IG_W}×{IG_H}
+              Reel / Story{isPortrait && ' / LinkedIn'} · {IG_W}×{IG_H}
             </h2>
-            <Button
-              size="sm"
-              variant="accent"
-              disabled={!hasVideo}
-              onClick={() => downloadCanvas(igCanvasRef, 'instagram')}
-            >
-              <DownloadIcon className="mr-1.5 h-4 w-4" />
-              Download
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="accent"
+                disabled={!hasVideo}
+                onClick={() => downloadCanvas(igCanvasRef, 'instagram')}
+              >
+                <DownloadIcon className="mr-1.5 h-4 w-4" />
+                Instagram
+              </Button>
+              {isPortrait && (
+                <Button
+                  size="sm"
+                  variant="outline-solid"
+                  disabled={!hasVideo}
+                  onClick={() => downloadCanvas(igCanvasRef, 'linkedin')}
+                >
+                  <DownloadIcon className="mr-1.5 h-4 w-4" />
+                  LinkedIn
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* Crop mode (landscape source only) + safe-zone toggle. */}
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            {hasVideo && !isPortrait && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={igMode === 'fill' ? 'accent' : 'outline-solid'}
+                  onClick={() => setIgMode('fill')}
+                >
+                  Fill (crop)
+                </Button>
+                <Button
+                  size="sm"
+                  variant={igMode === 'fit' ? 'accent' : 'outline-solid'}
+                  onClick={() => setIgMode('fit')}
+                >
+                  Fit (letterbox)
+                </Button>
+              </div>
+            )}
+            <label className="ml-auto flex cursor-pointer items-center gap-2 text-gray-300">
+              <input
+                type="checkbox"
+                checked={showSafeZones}
+                onChange={(e) => setShowSafeZones(e.target.checked)}
+                className="accent-accent"
+              />
+              Safe zones
+            </label>
+          </div>
+
           <p className="text-xs text-gray-500">
-            Clean frame, no overlays.{' '}
-            {igCanPan
-              ? 'Drag the preview to reposition the crop.'
-              : 'Caption carries the text.'}
+            {isPortrait
+              ? 'Vertical source — fills the frame.'
+              : effectiveIgMode === 'fit'
+                ? 'Whole frame over a blurred fill.'
+                : igCanPan
+                  ? 'Cropped to vertical — drag the preview to reposition.'
+                  : 'Cropped to vertical.'}
           </p>
-          <canvas
-            ref={igCanvasRef}
-            width={IG_W}
-            height={IG_H}
-            onPointerDown={handleIgPointerDown}
-            onPointerMove={handleIgPointerMove}
-            onPointerUp={handleIgPointerUp}
-            onPointerCancel={handleIgPointerUp}
-            className={`mx-auto w-full max-w-[260px] touch-none rounded-lg border border-white/10 bg-black ${
-              igCanPan ? 'cursor-grab active:cursor-grabbing' : ''
-            }`}
-          />
+
+          <div className="relative mx-auto w-full max-w-[260px]">
+            <canvas
+              ref={igCanvasRef}
+              width={IG_W}
+              height={IG_H}
+              onPointerDown={handleIgPointerDown}
+              onPointerMove={handleIgPointerMove}
+              onPointerUp={handleIgPointerUp}
+              onPointerCancel={handleIgPointerUp}
+              className={`block w-full touch-none rounded-lg border border-white/10 bg-black ${
+                igCanPan ? 'cursor-grab active:cursor-grabbing' : ''
+              }`}
+            />
+            {showSafeZones && hasVideo && (
+              <div className="pointer-events-none absolute inset-0 text-[9px] font-medium uppercase tracking-wide">
+                {/* Profile-grid crop (~4:5, centred). */}
+                <div
+                  className="absolute inset-x-0 border-y border-dashed border-accent/70"
+                  style={{ top: '14.8%', bottom: '14.8%' }}
+                >
+                  <span className="absolute left-1 top-0.5 text-accent/80">
+                    Grid 4:5
+                  </span>
+                </div>
+                {/* Top profile/handle chrome. */}
+                <div
+                  className="absolute inset-x-0 top-0 bg-black/35"
+                  style={{ height: '13%' }}
+                />
+                {/* Bottom caption / audio chrome. */}
+                <div
+                  className="absolute inset-x-0 bottom-0 bg-black/35"
+                  style={{ height: '21%' }}
+                />
+                {/* Right-hand action buttons. */}
+                <div
+                  className="absolute right-0 bg-black/30"
+                  style={{ top: '45%', bottom: '21%', width: '15%' }}
+                />
+              </div>
+            )}
+          </div>
         </Card>
       </div>
     </div>

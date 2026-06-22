@@ -16,7 +16,7 @@ export default async function ThumbnailsPage() {
   return (
     <AdminLayout
       title="Thumbnail Generator"
-      subtitle="Grab a frame from a video and export YouTube + Instagram thumbnails"
+      subtitle="Grab a frame from a video and export YouTube, Instagram/Reels and LinkedIn thumbnails"
       breadcrumbs={[{ label: 'Thumbnails' }]}
     >
       <ThumbnailGenerator companies={companies} />
