@@ -299,6 +299,14 @@ function SetlistSection({ songs }: { songs: SetlistSong[] }) {
                     >
                       {row.artist}
                     </Link>
+                    {/* Cover version performed, when it differs from the
+                        canonical artist (primary song row only) */}
+                    {song.cover_artist && !row.id.endsWith('-cover') && (
+                      <span className="text-text-dim">
+                        {' '}
+                        ({song.cover_artist} version)
+                      </span>
+                    )}
                     {/* Show additional songs for mashups/medleys */}
                     {(row.displayType === 'mashup' ||
                       row.displayType === 'medley') &&

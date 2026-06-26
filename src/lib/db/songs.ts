@@ -19,6 +19,10 @@ export interface SetlistSong {
   song_type: SongType
   title: string
   artist: string
+  // The specific version/arrangement performed when it differs from the
+  // canonical `artist` (e.g. artist "Sabrina Carpenter", cover_artist "Good
+  // Neighbours"). Display-only — conflict detection keys on `artist`.
+  cover_artist: string | null
   additional_songs: AdditionalSong[]
   transition_to_title: string | null
   transition_to_artist: string | null
@@ -45,6 +49,7 @@ export interface SetlistSongInput {
   song_type: SongType
   title: string
   artist: string
+  cover_artist?: string
   additional_songs?: AdditionalSong[]
   transition_to_title?: string
   transition_to_artist?: string
@@ -230,13 +235,14 @@ export async function createSetlistSong(
 
     const { rows } = await sql<SetlistSong>`
       INSERT INTO setlist_songs (
-        id, band_id, position, song_type, title, artist,
+        id, band_id, position, song_type, title, artist, cover_artist,
         additional_songs, transition_to_title, transition_to_artist,
         youtube_video_id, artist_description, spotify_track_id, status
       )
       VALUES (
         ${song.id}, ${song.band_id}, ${song.position}, ${song.song_type},
-        ${song.title}, ${song.artist}, ${additionalSongsJson}::jsonb,
+        ${song.title}, ${song.artist}, ${song.cover_artist || null},
+        ${additionalSongsJson}::jsonb,
         ${song.transition_to_title || null}, ${song.transition_to_artist || null},
         ${song.youtube_video_id || null}, ${song.artist_description || null},
         ${song.spotify_track_id || null}, ${song.status || 'pending'}
@@ -268,6 +274,7 @@ export async function updateSetlistSong(
         song_type = COALESCE(${updates.song_type || null}, song_type),
         title = COALESCE(${updates.title || null}, title),
         artist = COALESCE(${updates.artist || null}, artist),
+        cover_artist = ${updates.cover_artist === undefined ? null : updates.cover_artist},
         additional_songs = COALESCE(${additionalSongsJson}::jsonb, additional_songs),
         transition_to_title = ${updates.transition_to_title === undefined ? null : updates.transition_to_title},
         transition_to_artist = ${updates.transition_to_artist === undefined ? null : updates.transition_to_artist},

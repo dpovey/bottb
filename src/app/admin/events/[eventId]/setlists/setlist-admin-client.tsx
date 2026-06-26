@@ -378,6 +378,9 @@ function SongRow({
         </div>
         <div className="text-sm text-text-muted mt-1">
           {song.artist}
+          {song.cover_artist && (
+            <span className="text-text-dim"> ({song.cover_artist} version)</span>
+          )}
           {song.song_type === 'transition' && song.transition_to_artist && (
             <> / {song.transition_to_artist}</>
           )}
@@ -479,6 +482,7 @@ function SongForm({
   )
   const [title, setTitle] = useState(editSong?.title || '')
   const [artist, setArtist] = useState(editSong?.artist || '')
+  const [coverArtist, setCoverArtist] = useState(editSong?.cover_artist || '')
   const [position, setPosition] = useState(editSong?.position || nextPosition)
   const [transitionToTitle, setTransitionToTitle] = useState(
     editSong?.transition_to_title || ''
@@ -508,6 +512,7 @@ function SongForm({
       song_type: songType,
       title,
       artist,
+      cover_artist: coverArtist.trim() || null,
       additional_songs: additionalSongs.filter((s) => s.title && s.artist),
       transition_to_title: songType === 'transition' ? transitionToTitle : null,
       transition_to_artist:
@@ -653,6 +658,24 @@ function SongForm({
           />
         </div>
       </div>
+
+      {/* Cover version (optional) — the specific arrangement being performed,
+          when it differs from the canonical artist above. Conflict detection
+          still keys on the canonical artist. */}
+      {songType !== 'transition' && (
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">
+            Cover version — artist (optional)
+          </label>
+          <input
+            type="text"
+            value={coverArtist}
+            onChange={(e) => setCoverArtist(e.target.value)}
+            placeholder="e.g. Good Neighbours (if performing their version)"
+            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
+          />
+        </div>
+      )}
 
       {/* Artist Description */}
       <div>

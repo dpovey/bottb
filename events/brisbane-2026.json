@@ -8,6 +8,37 @@
   "is_active": false,
   "status": "upcoming",
   "scoring_version": "2026.2",
-  "lineup_locked": true,
-  "bands": []
+  "lineup_locked": false,
+  "bands": [
+    {
+      "name": "Total Loss",
+      "company_slug": "suncorp",
+      "description": "You never know what might happen if you take your guitar to team drinks. Musicians seem to come out of the woodwork! Twelve years later, we are still getting together and playing music… good friends, good tunes, good times!",
+      "order": 1
+    },
+    {
+      "name": "Jumbo Band",
+      "company_slug": "jumbo-interactive",
+      "description": "As the veteran crew from Jumbo Interactive, these tech professionals transform into a powerhouse live act that delivers crowd-pleasing covers with raw energy, infectious enthusiasm, and serious attitude. Expect a genre-hopping setlist packed with bangers and curveballs — from Michael Jackson's \"Beat It\" and System of a Down's \"Chop Suey\" to Aussie favourites like The Chats' \"Smoko\".\n\nWhether they're storming the stage with expanded vocals, themed energy, or pure pub-rock velocity, Jumbo Band turns every show into a sweaty, sing-along celebration that gets the whole room jumping. Winners of the inaugural Brisbane event and consistent scene favourites, they embody the perfect mix of corporate camaraderie, musical passion, and feel-good chaos that makes Battle of the Tech Bands unforgettable.",
+      "order": 2
+    },
+    {
+      "name": "Epsonics",
+      "company_slug": "epsilon",
+      "description": "Epsonics are Epsilon's house band for the big build and the bigger chorus. A mix of engineering, product and design folk — building the software behind retail media advertising — they spend their days shipping code and shaping features, and their nights chasing the loud, communal high of indie rock — choruses big enough to send a whole room's arms skyward.\n\nTheir sound is built on the anthemic alt-rock of the late '90s and early 2000s — desert-rock grooves, stadium-sized choruses and slow-burn, prog-tinged crescendos — all filtered through a melodic indie sensibility. But they're just as happy to dig back into a classic-rock staple or an '80s synth-pop singalong, then swerve onto the dancefloor with a psych-pop curveball. Whatever the decade, the brief stays the same: find the big moment and lean all the way into it.",
+      "order": 3
+    },
+    {
+      "name": "The ShipRex",
+      "company_slug": "rex-software",
+      "description": "ShipReX is the band you get when two great teams behind keeping real estate tech running decide to plug in and turn it up. We're drawn from the crews behind Rex and UrbanX - by day we ship software and solve problems, by night we ship riffs and cause our own.\n\nThe setlist? Classified. What we will tell you: it's loud, it's a little unhinged, it lurches across genres and decades with zero shame, and it builds to a finish that'll have the whole room singing. Trust us, it's a vibe. You'll just have to show up to find out!",
+      "order": 4
+    },
+    {
+      "name": "Off the Record",
+      "company_slug": "for-the-record",
+      "description": "For The Record has spent 30 years making sure every word spoken in a courtroom ends up on the record. Come performance night, they're going Off The Record — no transcripts, no timestamps, no objections. Expect a full-throttle set with more range than their lawyers would recommend. From hard rock to power ballads, they'll bring dual vocalists, guitars, bass, drums, keys, and a surprise fiddle to The Triffid. Loud, occasionally inadmissible, and entirely Off The Record.",
+      "order": 5
+    }
+  ]
 }

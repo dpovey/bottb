@@ -266,6 +266,7 @@ CREATE TABLE IF NOT EXISTS setlist_songs (
     updated_at timestamp with time zone DEFAULT now(),
     artist_description text,
     spotify_track_id character varying(50),
+    cover_artist character varying(255),
     CONSTRAINT setlist_songs_song_type_check CHECK (((song_type)::text = ANY ((ARRAY['cover'::character varying, 'mashup'::character varying, 'medley'::character varying, 'transition'::character varying])::text[]))),
     CONSTRAINT setlist_songs_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'locked'::character varying, 'conflict'::character varying])::text[])))
 );
