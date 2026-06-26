@@ -2,6 +2,13 @@
 # with ERR_PNPM_IGNORED_BUILDS until each is explicitly approved here. These
 # deps legitimately need their install/build scripts (native builds:
 # sharp/bcrypt/esbuild/unrs-resolver; postinstall: core-js/protobufjs/msw/etc).
+# Dependency overrides. pnpm 11 reads overrides from here (the package.json
+# `pnpm.overrides` block is not applied under this setup). Used to pin
+# transitive deps to patched versions for security advisories Dependabot
+# can't fix directly (e.g. dompurify is pulled in transitively via posthog-js).
+overrides:
+  dompurify: '>=3.4.11'
+
 allowBuilds:
   '@posthog/cli': true
   bcrypt: true
