@@ -137,6 +137,7 @@ export async function getSetlistsForEvent(
 export interface GetAllSongsOptions {
   eventId?: string
   bandId?: string
+  companySlug?: string
   songType?: SongType
   search?: string
   limit?: number
@@ -146,7 +147,15 @@ export interface GetAllSongsOptions {
 export async function getAllSongs(
   options: GetAllSongsOptions = {}
 ): Promise<SetlistSong[]> {
-  const { eventId, bandId, songType, search, limit = 100, offset = 0 } = options
+  const {
+    eventId,
+    bandId,
+    companySlug,
+    songType,
+    search,
+    limit = 100,
+    offset = 0,
+  } = options
 
   try {
     // Build search pattern if provided
@@ -170,6 +179,7 @@ export async function getAllSongs(
         AND s.status = 'locked'
         AND (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR s.band_id = ${bandId || null})
+        AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
           ${searchPattern}::text IS NULL
@@ -194,7 +204,7 @@ export async function getAllSongs(
 export async function getSongCount(
   options: Omit<GetAllSongsOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
-  const { eventId, bandId, songType, search } = options
+  const { eventId, bandId, companySlug, songType, search } = options
   const searchPattern = search ? `%${search}%` : null
 
   try {
@@ -208,6 +218,7 @@ export async function getSongCount(
         AND s.status = 'locked'
         AND (${eventId || null}::text IS NULL OR b.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR s.band_id = ${bandId || null})
+        AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
         AND (${songType || null}::text IS NULL OR s.song_type = ${songType || null})
         AND (
           ${searchPattern}::text IS NULL

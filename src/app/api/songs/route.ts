@@ -15,6 +15,7 @@ export const GET = withPublicRateLimit(async function GET(
     const searchParams = new URL(request.url).searchParams
     const eventId = searchParams.get('event') || undefined
     const bandId = searchParams.get('band') || undefined
+    const companySlug = searchParams.get('company') || undefined
     const songType = (searchParams.get('type') as SongType) || undefined
     const search = searchParams.get('search') || undefined
     const page = parseInt(searchParams.get('page') || '1', 10)
@@ -33,8 +34,16 @@ export const GET = withPublicRateLimit(async function GET(
     }
 
     const [songs, total] = await Promise.all([
-      getAllSongs({ eventId, bandId, songType, search, limit, offset }),
-      getSongCount({ eventId, bandId, songType, search }),
+      getAllSongs({
+        eventId,
+        bandId,
+        companySlug,
+        songType,
+        search,
+        limit,
+        offset,
+      }),
+      getSongCount({ eventId, bandId, companySlug, songType, search }),
     ])
 
     // Get unique events and bands for filter options

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { SetlistSong, SongType } from '@/lib/db'
@@ -125,19 +125,14 @@ export function SongsPageClient({
     return () => clearTimeout(timer)
   }, [search])
 
-  // Track if filters have changed from initial state (to skip unnecessary initial fetch)
-  const hasFiltersChanged =
-    eventFilter !== '' ||
-    typeFilter !== '' ||
-    debouncedSearch !== '' ||
-    page !== 1
-
-  // Fetch songs when filters change (skip initial mount since we have SSR data)
+  // Fetch songs whenever a filter or the page changes. All filters are applied
+  // server-side so counts and pagination stay correct.
   async function fetchSongs() {
     setIsLoading(true)
     try {
       const params = new URLSearchParams()
       if (eventFilter) params.set('event', eventFilter)
+      if (companyFilter) params.set('company', companyFilter)
       if (typeFilter) params.set('type', typeFilter)
       if (debouncedSearch) params.set('search', debouncedSearch)
       params.set('page', String(page))
@@ -156,22 +151,21 @@ export function SongsPageClient({
     }
   }
 
+  // Skip the very first run: the server already provided initial data. Every
+  // subsequent filter/page change (including clearing filters back to empty)
+  // triggers a fetch so the list always reflects the current filters.
+  const hasMounted = useRef(false)
   useEffect(() => {
-    // Skip fetch on initial mount - we have SSR data
-    // Only fetch when user applies filters or changes page
-    if (hasFiltersChanged) {
-      fetchSongs()
+    if (!hasMounted.current) {
+      hasMounted.current = true
+      return
     }
+    fetchSongs()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventFilter, typeFilter, debouncedSearch, page, hasFiltersChanged])
-
-  // Filter songs by company (client-side since it's not in the API)
-  const filteredSongs = companyFilter
-    ? songs.filter((s) => s.company_slug === companyFilter)
-    : songs
+  }, [eventFilter, companyFilter, typeFilter, debouncedSearch, page])
 
   // Transform songs to display rows (splits transitions into 2 rows)
-  const displayRows = transformToDisplayRows(filteredSongs)
+  const displayRows = transformToDisplayRows(songs)
 
   // Sort display rows
   const sortedRows = [...displayRows].sort((a, b) => {
@@ -336,8 +330,8 @@ export function SongsPageClient({
               'Loading...'
             ) : (
               <>
-                Showing <span className="text-white">{sortedRows.length}</span>{' '}
-                {total !== filteredSongs.length && <>of {total} </>}
+                Showing <span className="text-white">{songs.length}</span>{' '}
+                {songs.length !== total && <>of {total} </>}
                 songs
               </>
             )}
@@ -420,6 +414,21 @@ export function SongsPageClient({
                           >
                             {row.title}
                           </Link>
+                          {/* For mashups/medleys, list the other song titles here
+                              (titles belong in the Song column, artists in Artist) */}
+                          {(row.displayType === 'mashup' ||
+                            row.displayType === 'medley') &&
+                            song.additional_songs?.map((additional, idx) => (
+                              <span key={idx} className="text-text-muted">
+                                {' / '}
+                                <Link
+                                  href={`/songs/${slugify(additional.artist)}/${slugify(additional.title)}`}
+                                  className="font-medium hover:text-accent transition-colors"
+                                >
+                                  {additional.title}
+                                </Link>
+                              </span>
+                            ))}
                         </td>
                         <td className="px-6 py-4 text-text-muted">
                           <Link
@@ -428,34 +437,41 @@ export function SongsPageClient({
                           >
                             {row.artist}
                           </Link>
-                          {/* Show additional songs for mashups/medleys */}
+                          {/* The specific cover version performed (primary row only) */}
+                          {song.cover_artist && !row.isTransitionCover && (
+                            <span className="text-text-dim">
+                              {' '}
+                              ({song.cover_artist} version)
+                            </span>
+                          )}
+                          {/* For mashups/medleys, list any additional artists that
+                              differ from the primary, de-duplicated */}
                           {(row.displayType === 'mashup' ||
                             row.displayType === 'medley') &&
-                            song.additional_songs &&
-                            song.additional_songs.length > 0 && (
-                              <>
-                                {song.additional_songs.map(
-                                  (additional, idx) => (
-                                    <span key={idx}>
-                                      {' / '}
-                                      <Link
-                                        href={`/songs/${slugify(additional.artist)}`}
-                                        className="hover:text-accent transition-colors"
-                                      >
-                                        {additional.artist}
-                                      </Link>
-                                      {' - '}
-                                      <Link
-                                        href={`/songs/${slugify(additional.artist)}/${slugify(additional.title)}`}
-                                        className="hover:text-accent transition-colors"
-                                      >
-                                        {additional.title}
-                                      </Link>
-                                    </span>
+                            Array.from(
+                              new Map(
+                                (song.additional_songs ?? [])
+                                  .filter(
+                                    (a) =>
+                                      a.artist.toLowerCase() !==
+                                      song.artist.toLowerCase()
                                   )
-                                )}
-                              </>
-                            )}
+                                  .map((a) => [
+                                    a.artist.toLowerCase(),
+                                    a.artist,
+                                  ])
+                              ).values()
+                            ).map((artistName) => (
+                              <span key={artistName}>
+                                {' / '}
+                                <Link
+                                  href={`/songs/${slugify(artistName)}`}
+                                  className="hover:text-accent transition-colors"
+                                >
+                                  {artistName}
+                                </Link>
+                              </span>
+                            ))}
                         </td>
                         <td className="px-6 py-4">
                           <span
