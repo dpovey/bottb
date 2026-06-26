@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Video, VideoType } from '@/lib/db'
+import { useState, useEffect } from 'react'
+import { Video, VideoType, SetlistSong } from '@/lib/db'
 import { EditIcon, DeleteIcon, PlusIcon } from '@/components/icons'
 import {
   ConfirmModal,
@@ -47,6 +47,75 @@ export function VideoAdminClient({
 
   // Type filter state
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+
+  // Setlist songs per band, for matching a video to a specific song. Loaded
+  // on demand per event (admin endpoint returns every song regardless of
+  // locked/finalized status).
+  const [songsByBand, setSongsByBand] = useState<Record<string, SetlistSong[]>>(
+    {}
+  )
+  const [loadedEventIds, setLoadedEventIds] = useState<Set<string>>(new Set())
+  const [selectedSongId, setSelectedSongId] = useState('')
+
+  async function loadEventSongs(eventId: string) {
+    if (!eventId || loadedEventIds.has(eventId)) return
+    try {
+      const res = await fetch(`/api/events/${eventId}/setlists`)
+      if (res.ok) {
+        const data = await res.json()
+        const map: Record<string, SetlistSong[]> = {}
+        for (const sl of data.setlists || []) {
+          map[sl.band_id] = sl.songs
+        }
+        setSongsByBand((prev) => ({ ...prev, ...map }))
+        setLoadedEventIds((prev) => new Set(prev).add(eventId))
+      }
+    } catch (err) {
+      console.error('Failed to load setlist songs:', err)
+    }
+  }
+
+  /**
+   * Bridge a video to a song: set the song's youtube_video_id so it shows
+   * against that song on the public pages. Sends the song's full current
+   * payload because the setlist PUT nulls any omitted fields.
+   */
+  async function matchSongToVideo(
+    bandId: string,
+    songId: string,
+    youtubeVideoId: string
+  ) {
+    const song = (songsByBand[bandId] || []).find((s) => s.id === songId)
+    if (!song) return
+    const res = await fetch(`/api/setlist/${bandId}/${songId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        position: song.position,
+        song_type: song.song_type,
+        title: song.title,
+        artist: song.artist,
+        cover_artist: song.cover_artist,
+        additional_songs: song.additional_songs,
+        transition_to_title: song.transition_to_title,
+        transition_to_artist: song.transition_to_artist,
+        artist_description: song.artist_description,
+        status: song.status,
+        youtube_video_id: youtubeVideoId,
+      }),
+    })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      throw new Error(d.error || 'Failed to match song to video')
+    }
+    // Reflect the new match locally so the dropdown shows the ✓.
+    setSongsByBand((prev) => ({
+      ...prev,
+      [bandId]: (prev[bandId] || []).map((s) =>
+        s.id === songId ? { ...s, youtube_video_id: youtubeVideoId } : s
+      ),
+    }))
+  }
 
   // Delete confirmation modal state
   const [deleteTarget, setDeleteTarget] = useState<Video | null>(null)
@@ -101,11 +170,28 @@ export function VideoAdminClient({
 
       if (response.ok) {
         const data = await response.json()
+        // Optionally bridge the new video to a specific song.
+        if (selectedSongId && selectedBandId) {
+          try {
+            await matchSongToVideo(
+              selectedBandId,
+              selectedSongId,
+              data.video.youtube_video_id
+            )
+          } catch (matchErr) {
+            setOperationError(
+              matchErr instanceof Error
+                ? matchErr.message
+                : 'Video added, but matching it to the song failed'
+            )
+          }
+        }
         setVideos([data.video, ...videos])
         setYoutubeUrl('')
         setTitle('')
         setSelectedEventId('')
         setSelectedBandId('')
+        setSelectedSongId('')
         setSelectedVideoType('video')
         setIsAddingVideo(false)
       } else if (response.status === 409) {
@@ -290,6 +376,8 @@ export function VideoAdminClient({
                   onChange={(e) => {
                     setSelectedEventId(e.target.value)
                     setSelectedBandId('') // Reset band when event changes
+                    setSelectedSongId('')
+                    loadEventSongs(e.target.value)
                   }}
                   className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
@@ -308,7 +396,10 @@ export function VideoAdminClient({
                 </label>
                 <select
                   value={selectedBandId}
-                  onChange={(e) => setSelectedBandId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedBandId(e.target.value)
+                    setSelectedSongId('')
+                  }}
                   disabled={!selectedEventId}
                   className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden disabled:opacity-50"
                 >
@@ -321,6 +412,34 @@ export function VideoAdminClient({
                 </select>
               </div>
             </div>
+
+            {/* Match to song (optional) — sets the song's video so it shows
+                against that song on the public pages */}
+            {selectedBandId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Match to song (optional)
+                </label>
+                <select
+                  value={selectedSongId}
+                  onChange={(e) => setSelectedSongId(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
+                >
+                  <option value="">No song</option>
+                  {(songsByBand[selectedBandId] || []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title} — {s.artist}
+                      {s.youtube_video_id ? ' ✓' : ''}
+                    </option>
+                  ))}
+                </select>
+                {(songsByBand[selectedBandId] || []).length === 0 && (
+                  <p className="mt-1 text-xs text-gray-400">
+                    This band has no setlist songs yet.
+                  </p>
+                )}
+              </div>
+            )}
 
             <ErrorBanner message={error} className="py-2" />
 
@@ -380,6 +499,9 @@ export function VideoAdminClient({
                 video={video}
                 events={events}
                 bandsMap={bandsMap}
+                songsByBand={songsByBand}
+                loadEventSongs={loadEventSongs}
+                matchSongToVideo={matchSongToVideo}
                 onUpdate={handleUpdateVideo}
                 onRequestDelete={setDeleteTarget}
               />
@@ -407,6 +529,13 @@ interface VideoRowProps {
   video: Video
   events: { id: string; name: string }[]
   bandsMap: Record<string, { id: string; name: string }[]>
+  songsByBand: Record<string, SetlistSong[]>
+  loadEventSongs: (eventId: string) => Promise<void>
+  matchSongToVideo: (
+    bandId: string,
+    songId: string,
+    youtubeVideoId: string
+  ) => Promise<void>
   onUpdate: (
     videoId: string,
     title: string | null,
@@ -421,6 +550,9 @@ function VideoRow({
   video,
   events,
   bandsMap,
+  songsByBand,
+  loadEventSongs,
+  matchSongToVideo,
   onUpdate,
   onRequestDelete,
 }: VideoRowProps) {
@@ -431,11 +563,28 @@ function VideoRow({
   const [editVideoType, setEditVideoType] = useState<VideoType>(
     video.video_type || 'video'
   )
+  const [songOverride, setSongOverride] = useState<string | null>(null)
+  const [matchError, setMatchError] = useState<string | null>(null)
 
   const availableBands = editEventId ? bandsMap[editEventId] || [] : []
+  const bandSongs = editBandId ? songsByBand[editBandId] || [] : []
   const isShort = video.video_type === 'short'
 
+  // The song this video is already matched to (the match lives on the song's
+  // youtube_video_id). Used as the default selection; songOverride holds any
+  // manual change the admin makes before saving.
+  const matchedSongId =
+    bandSongs.find((s) => s.youtube_video_id === video.youtube_video_id)?.id ??
+    ''
+  const editSongId = songOverride ?? matchedSongId
+
+  // Load the event's setlist songs when editing, so the song dropdown fills.
+  useEffect(() => {
+    if (isEditing && editEventId) loadEventSongs(editEventId)
+  }, [isEditing, editEventId, loadEventSongs])
+
   const handleSave = async () => {
+    setMatchError(null)
     await onUpdate(
       video.id,
       editTitle,
@@ -443,6 +592,16 @@ function VideoRow({
       editBandId || null,
       editVideoType
     )
+    if (editSongId && editBandId) {
+      try {
+        await matchSongToVideo(editBandId, editSongId, video.youtube_video_id)
+      } catch (err) {
+        setMatchError(
+          err instanceof Error ? err.message : 'Failed to match song'
+        )
+        return // keep the editor open so the error is visible
+      }
+    }
     setIsEditing(false)
   }
 
@@ -503,6 +662,7 @@ function VideoRow({
                 onChange={(e) => {
                   setEditEventId(e.target.value)
                   setEditBandId('')
+                  setSongOverride(null)
                 }}
                 className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               >
@@ -516,7 +676,10 @@ function VideoRow({
 
               <select
                 value={editBandId}
-                onChange={(e) => setEditBandId(e.target.value)}
+                onChange={(e) => {
+                  setEditBandId(e.target.value)
+                  setSongOverride(null)
+                }}
                 disabled={!editEventId}
                 className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
               >
@@ -524,6 +687,22 @@ function VideoRow({
                 {availableBands.map((band) => (
                   <option key={band.id} value={band.id}>
                     {band.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={editSongId}
+                onChange={(e) => setSongOverride(e.target.value)}
+                disabled={!editBandId}
+                title="Match this video to a song"
+                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
+              >
+                <option value="">No song</option>
+                {bandSongs.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title} — {s.artist}
+                    {s.youtube_video_id ? ' ✓' : ''}
                   </option>
                 ))}
               </select>
@@ -537,6 +716,8 @@ function VideoRow({
               <button
                 onClick={() => {
                   setIsEditing(false)
+                  setMatchError(null)
+                  setSongOverride(null)
                   setEditTitle(video.title)
                   setEditEventId(video.event_id || '')
                   setEditBandId(video.band_id || '')
@@ -547,6 +728,7 @@ function VideoRow({
                 Cancel
               </button>
             </div>
+            {matchError && <p className="text-sm text-red-400">{matchError}</p>}
           </div>
         ) : (
           <>
