@@ -5,7 +5,34 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  dompurify: '>=3.4.11'
+  '@types/react': 19.2.15
+  '@types/react-dom': 19.2.3
+  axios@<1.15.2: '>=1.15.2'
+  basic-ftp@<=5.3.0: '>=5.3.1'
+  brace-expansion@<1.1.13: '>=1.1.13'
+  brace-expansion@>=2.0.0 <2.0.3: '>=2.0.3'
+  brace-expansion@>=5.0.0 <5.0.6: '>=5.0.6'
+  '@isaacs/brace-expansion@<=5.0.0': '>=5.0.1'
+  dompurify@<=3.4.10: '>=3.4.11'
+  fast-uri@<=3.1.1: '>=3.1.2'
+  fast-xml-builder@<=1.1.6: '>=1.1.7'
+  flatted@<=3.4.1: '>=3.4.2'
+  follow-redirects@<=1.15.11: '>=1.16.0'
+  ip-address@<=10.1.0: '>=10.1.1'
+  lodash@<=4.17.23: '>=4.18.0'
+  lodash-es@<=4.17.23: '>=4.18.0'
+  minimatch@<3.1.4: '>=3.1.4'
+  minimatch@>=9.0.0 <9.0.7: '>=9.0.7'
+  minimatch@>=10.0.0 <10.2.3: '>=10.2.3'
+  nth-check@<2.0.1: '>=2.0.1'
+  path-to-regexp@<0.1.13: '>=0.1.13'
+  picomatch@>=4.0.0 <4.0.4: '>=4.0.4'
+  postcss@<8.5.10: '>=8.5.10'
+  qs@<6.14.2: '>=6.14.2'
+  tmp@<=0.2.3: '>=0.2.4'
+  uuid@<11.1.1: '>=11.1.1'
+  validator@<13.15.22: '>=13.15.22'
+  ws@>=8.0.0 <8.20.1: '>=8.20.1'
 
 importers:
 
@@ -1392,7 +1419,7 @@ packages:
   '@mdx-js/react@3.1.1':
     resolution: {integrity: sha512-f++rKLQgUVYDAtECQ6fn/is15GkEH9+nZPM3MS0RcxVqoTfawHvDlSCH7JbMhAM6uJ32v3eXLvLmLvjGu7PTQw==}
     peerDependencies:
-      '@types/react': '>=16'
+      '@types/react': 19.2.15
       react: '>=16'
 
   '@mswjs/interceptors@0.40.0':
@@ -2271,8 +2298,8 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@testing-library/dom': ^10.0.0
-      '@types/react': ^18.0.0 || ^19.0.0
-      '@types/react-dom': ^18.0.0 || ^19.0.0
+      '@types/react': 19.2.15
+      '@types/react-dom': 19.2.3
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -2365,7 +2392,7 @@ packages:
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
-      '@types/react': ^19.2.0
+      '@types/react': 19.2.15
 
   '@types/react@19.2.15':
     resolution: {integrity: sha512-eRwcGNHve+E8qtEQSSRl6urh+rFop4v8gm6O8rGv25CodbvFdLjA1vVQ1KkiFE0w0UPOnb8tDiFKL5lp0rtY5Q==}
@@ -3022,6 +3049,10 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  boolbase@2.0.0:
+    resolution: {integrity: sha512-DkVaaQHymRhpYEYo9x1oo7Q7B0Y6KJUsjm3c9eTyFDby4MHLBTwZ6ZDWBel5zrYxj1WsZgC5oLpiz+93MluXeA==}
+    engines: {node: '>=20.19.0'}
 
   brace-expansion@1.1.15:
     resolution: {integrity: sha512-EwOCDEex4quD37XhqM3omwtMoJjr//isUZz1JopUNWms+4Z2ViyM/k1YIRePpoVNnQhENnxtFjLaxNHrT7xIUg==}
@@ -3861,7 +3892,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: '>=4.0.4'
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -5040,8 +5071,9 @@ packages:
   normalize-wheel@1.0.1:
     resolution: {integrity: sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==}
 
-  nth-check@1.0.2:
-    resolution: {integrity: sha512-WeBOdju8SnzPN5vTUJYxYUxLeXpCaVP5i5e0LF8fg7WORF2Wd7wFX/pk0tYZk7s8T+J7VLy0Da6J1+wCT0AtHg==}
+  nth-check@3.0.1:
+    resolution: {integrity: sha512-GX0gsdbGVCgnRgbeGaubfjpBXyYRWOOCVeYh08bSQvDZqxz5ndXs1OTfAt/h36G1xvI94YIspsI0sVFqAV9+RQ==}
+    engines: {node: '>=20.19.0'}
 
   nub@0.0.0:
     resolution: {integrity: sha512-dK0Ss9C34R/vV0FfYJXuqDAqHlaW9fvWVufq9MmGF2umCuDbd5GRfRD9fpi/LiM0l4ZXf8IBB+RYmZExqCrf0w==}
@@ -5114,10 +5146,6 @@ packages:
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
-
-  os-tmpdir@1.0.2:
-    resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
-    engines: {node: '>=0.10.0'}
 
   outvariant@1.4.3:
     resolution: {integrity: sha512-+Sl2UErvtsoajRDKCE5/dBz4DIvHXQQnAxtQTF04OJxY0+DyZXSo5P5Bb7XYWOh81syohlYL24hbDwxedPUJCA==}
@@ -5302,10 +5330,6 @@ packages:
 
   postal-mime@2.7.4:
     resolution: {integrity: sha512-0WdnFQYUrPGGTFu1uOqD2s7omwua8xaeYGdO6rb88oD5yJ/4pPHDA4sdWqfD8wQVfCny563n/HQS7zTFft+f/g==}
-
-  postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
-    engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.10:
     resolution: {integrity: sha512-pMMHxBOZKFU6HgAZ4eyGnwXF/EvPGGqUr0MnZ5+99485wwW41kW91A4LOGxSHhgugZmSChL5AlElNdwlNgcnLQ==}
@@ -5550,11 +5574,6 @@ packages:
   reusify@1.1.0:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
-
-  rimraf@2.7.1:
-    resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
-    deprecated: Rimraf versions prior to v4 are no longer supported
-    hasBin: true
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
@@ -6031,13 +6050,9 @@ packages:
     resolution: {integrity: sha512-Y1KQBgDd/NUc+LfOtKS6mNsC9CCaH+m2P1RoIZy7RAPo3C3/t8X45+zgut31cRZtZ3xKPjfn3TkGTrctC2TQIQ==}
     hasBin: true
 
-  tmp@0.0.33:
-    resolution: {integrity: sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==}
-    engines: {node: '>=0.6.0'}
-
-  tmp@0.1.0:
-    resolution: {integrity: sha512-J7Z2K08jbGcdA1kkQpJSqLF6T0tdQqpR2pnSUXsIchbPdTI9v3e85cLW0d6WDhwuAleOV71j2xWs8qMPfK7nKw==}
-    engines: {node: '>=6'}
+  tmp@0.2.7:
+    resolution: {integrity: sha512-e0votIpp4Uo2AJYSzVHV6xCcawuiez3DzqDAbrTc3YxBkplN6e+dM13ZeIcZnDg/QpSuU2zfZ3rzwY8ukEnaXw==}
+    engines: {node: '>=14.14'}
 
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -6229,13 +6244,8 @@ packages:
     resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
 
-  uuid@8.3.2:
-    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-    hasBin: true
-
-  validator@11.1.0:
-    resolution: {integrity: sha512-qiQ5ktdO7CD6C/5/mYV4jku/7qnqzjrxb3C/Q5wR3vGGinHTgJZN/TdFT3ZX4vXhX2R1PXx42fB1cn5W+uJ4lg==}
+  validator@13.15.35:
+    resolution: {integrity: sha512-TQ5pAGhd5whStmqWvYF4OjQROlmv9SMFVt37qoCBdqRffuuklWYQlCNnEs2ZaIBD1kZRNnikiZOS1eqgkar0iw==}
     engines: {node: '>= 0.10'}
 
   vary@1.1.2:
@@ -7436,8 +7446,8 @@ snapshots:
       lighthouse-logger: 1.2.0
       open: 7.4.2
       proxy-agent: 6.5.0
-      tmp: 0.1.0
-      uuid: 8.3.2
+      tmp: 0.2.7
+      uuid: 14.0.0
       yargs: 15.4.1
       yargs-parser: 13.1.2
     transitivePeerDependencies:
@@ -9190,6 +9200,8 @@ snapshots:
 
   boolbase@1.0.0: {}
 
+  boolbase@2.0.0: {}
+
   brace-expansion@1.1.15:
     dependencies:
       balanced-match: 1.0.2
@@ -9476,7 +9488,7 @@ snapshots:
       boolbase: 1.0.0
       css-what: 2.1.3
       domutils: 1.5.1
-      nth-check: 1.0.2
+      nth-check: 3.0.1
 
   css-tree@3.2.1:
     dependencies:
@@ -10213,7 +10225,7 @@ snapshots:
     dependencies:
       chardet: 0.7.0
       iconv-lite: 0.4.24
-      tmp: 0.0.33
+      tmp: 0.2.7
 
   extract-zip@2.0.1:
     dependencies:
@@ -11368,7 +11380,7 @@ snapshots:
       '@swc/helpers': 0.5.15
       baseline-browser-mapping: 2.10.25
       caniuse-lite: 1.0.30001791
-      postcss: 8.4.31
+      postcss: 8.5.15
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
       styled-jsx: 5.1.6(@babel/core@7.28.5)(react@19.2.6)
@@ -11426,9 +11438,9 @@ snapshots:
 
   normalize-wheel@1.0.1: {}
 
-  nth-check@1.0.2:
+  nth-check@3.0.1:
     dependencies:
-      boolbase: 1.0.0
+      boolbase: 2.0.0
 
   nub@0.0.0: {}
 
@@ -11518,8 +11530,6 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
       word-wrap: 1.2.5
-
-  os-tmpdir@1.0.2: {}
 
   outvariant@1.4.3: {}
 
@@ -11688,12 +11698,6 @@ snapshots:
   possible-typed-array-names@1.1.0: {}
 
   postal-mime@2.7.4: {}
-
-  postcss@8.4.31:
-    dependencies:
-      nanoid: 3.3.12
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
 
   postcss@8.5.10:
     dependencies:
@@ -11964,10 +11968,6 @@ snapshots:
   rettime@0.7.0: {}
 
   reusify@1.1.0: {}
-
-  rimraf@2.7.1:
-    dependencies:
-      glob: 7.2.3
 
   rimraf@3.0.2:
     dependencies:
@@ -12437,7 +12437,7 @@ snapshots:
       is-stream: 2.0.1
       jmespath: 0.15.0
       node-fetch: 2.7.0
-      validator: 11.1.0
+      validator: 13.15.35
       web-auto-extractor: 1.0.17
       yargs: 13.3.2
     transitivePeerDependencies:
@@ -12579,13 +12579,7 @@ snapshots:
     dependencies:
       tldts-core: 7.0.23
 
-  tmp@0.0.33:
-    dependencies:
-      os-tmpdir: 1.0.2
-
-  tmp@0.1.0:
-    dependencies:
-      rimraf: 2.7.1
+  tmp@0.2.7: {}
 
   to-regex-range@5.0.1:
     dependencies:
@@ -12797,9 +12791,7 @@ snapshots:
 
   uuid@14.0.0: {}
 
-  uuid@8.3.2: {}
-
-  validator@11.1.0: {}
+  validator@13.15.35: {}
 
   vary@1.1.2: {}
 
