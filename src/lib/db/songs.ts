@@ -159,7 +159,8 @@ export async function getAllSongs(
 
   try {
     // Build search pattern if provided
-    const searchPattern = search ? `%${search}%` : null
+    const trimmedSearch = search?.trim()
+    const searchPattern = trimmedSearch ? `%${trimmedSearch}%` : null
 
     const { rows } = await sql<SetlistSong>`
       SELECT s.*, 

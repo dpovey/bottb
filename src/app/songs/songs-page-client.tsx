@@ -134,7 +134,8 @@ export function SongsPageClient({
       if (eventFilter) params.set('event', eventFilter)
       if (companyFilter) params.set('company', companyFilter)
       if (typeFilter) params.set('type', typeFilter)
-      if (debouncedSearch) params.set('search', debouncedSearch)
+      const trimmedSearch = debouncedSearch.trim()
+      if (trimmedSearch) params.set('search', trimmedSearch)
       params.set('page', String(page))
       params.set('limit', String(limit))
 
