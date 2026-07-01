@@ -176,3 +176,20 @@ SELECT id, company_slug, true, 0 FROM bands WHERE company_slug IS NOT NULL;
 6. **Tests** throughout (J).
 
 Pre-commit gate each phase: `pnpm format && pnpm typecheck && pnpm lint && pnpm test`.
+
+## Progress
+
+PR #192 (`feat/multi-company-bands`):
+
+- **Phase 1 — done.** Migration applied; `band_companies` + backfill + `urbanx`
+  company row live. ShipReX 2026 linked to `rex-software` (primary) + `urbanx`.
+- **Phase 2 — done (core).** `companies[]` aggregate on band reads + band page;
+  company-side counts/filters via the join table (`Band.companies`). Song/video/
+  photo reads (B3) and setlists API (B4) not yet plumbed.
+- **UrbanX asset — done.** White (inverted) logo + X-mark icon uploaded to Blob.
+- **Phase 4 — partial.** `CompanyBadgeGroup` + `bandCompanyList()` helper; band
+  page hero, event lineup badge, event company-logo strip, and event-card dedup
+  now render all companies. **Still primary-only** (data not plumbed): winner/
+  scoring badges (needs G1/G2), song/video/photo cards (B3), OG image + JSON-LD
+  (F4 tail).
+- **Phase 3 (write paths / admin multi-select) — not started** (C, F6, I3).
