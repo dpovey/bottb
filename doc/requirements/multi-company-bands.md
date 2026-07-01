@@ -187,9 +187,15 @@ PR #192 (`feat/multi-company-bands`):
   company-side counts/filters via the join table (`Band.companies`). Song/video/
   photo reads (B3) and setlists API (B4) not yet plumbed.
 - **UrbanX asset — done.** White (inverted) logo + X-mark icon uploaded to Blob.
-- **Phase 4 — partial.** `CompanyBadgeGroup` + `bandCompanyList()` helper; band
-  page hero, event lineup badge, event company-logo strip, and event-card dedup
-  now render all companies. **Still primary-only** (data not plumbed): winner/
-  scoring badges (needs G1/G2), song/video/photo cards (B3), OG image + JSON-LD
-  (F4 tail).
-- **Phase 3 (write paths / admin multi-select) — not started** (C, F6, I3).
+- **Phase 4 — mostly done.** `CompanyBadgeGroup` + `bandCompanyList()` helper.
+  Renders all companies on: band page hero, event lineup badge, event
+  company-logo strip, event-card dedup, and the scoring/winner surfaces
+  (WinnerDisplay, ScoreBreakdown, results page, event page winner, home + events
+  cards) via `getBandScores`/`getPastEventsWithWinners` companies arrays (G1/G2).
+  **Still primary-only:** nav events-dropdown (separate NavEvent shape),
+  song/video/photo cards (B3), OG image + JSON-LD (F4 tail).
+- **Phase 3 — done.** `setBandCompanies()`/`findMissingCompanySlugs()`; POST
+  /api/bands + PATCH /api/band/[id] accept `company_slugs[]` + `primary_company`;
+  admin dashboard primary + additional company selects; `create-event.ts`
+  `additional_companies[]`. Company-delete guard blocks any membership (C4).
+- **Rename:** The ShipRex → ShipReX for brisbane-2026 (id/URL pinned).
