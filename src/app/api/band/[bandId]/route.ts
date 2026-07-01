@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/sql'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
+import { setBandCompanies, findMissingCompanySlugs } from '@/lib/db/bands'
 import { Band } from '@/lib/db-types'
 
 // GET a single band by ID (public)
@@ -39,7 +40,12 @@ export async function GET(
 interface BandUpdateBody {
   name?: string
   description?: string | null
+  /** Legacy single-company field; primary/lead company. */
   company_slug?: string | null
+  /** All companies the band is made up of (multi-company bands). */
+  company_slugs?: string[]
+  /** Which of company_slugs is the primary/lead (defaults to the first). */
+  primary_company?: string | null
   order?: number
   info?: Record<string, unknown>
 }
@@ -71,7 +77,40 @@ const handleUpdateBand: ProtectedApiHandler = async (
 
     const band = existing[0]
     const body: BandUpdateBody = await request.json()
-    const { name, description, company_slug, order, info } = body
+    const {
+      name,
+      description,
+      company_slug,
+      company_slugs,
+      primary_company,
+      order,
+      info,
+    } = body
+
+    // Whether this request wants to change the band's company affiliation.
+    const manageCompanies =
+      company_slugs !== undefined ||
+      primary_company !== undefined ||
+      company_slug !== undefined
+
+    let slugs: string[] = []
+    let primary: string | null = null
+    if (manageCompanies) {
+      slugs =
+        company_slugs && company_slugs.length > 0
+          ? company_slugs
+          : company_slug
+            ? [company_slug]
+            : []
+      primary = primary_company ?? company_slug ?? slugs[0] ?? null
+      const missing = await findMissingCompanySlugs(slugs)
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: `Unknown company slug(s): ${missing.join(', ')}` },
+          { status: 400 }
+        )
+      }
+    }
 
     const { rows } = await sql<Band>`
       UPDATE bands SET
@@ -83,6 +122,11 @@ const handleUpdateBand: ProtectedApiHandler = async (
       WHERE id = ${bandId}
       RETURNING *
     `
+
+    // Rewrite the band <-> company links (also re-syncs bands.company_slug).
+    if (manageCompanies) {
+      await setBandCompanies(bandId, slugs, primary)
+    }
 
     return NextResponse.json({ band: rows[0] })
   } catch (error) {

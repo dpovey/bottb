@@ -1,5 +1,58 @@
-import { sql } from '../sql'
+import { sql, sqlQuery } from '../sql'
 import type { Band } from '../db-types'
+
+/**
+ * Replace the set of companies a band is made up of (multi-company bands).
+ *
+ * Rewrites the band's `band_companies` rows to exactly `companySlugs`
+ * (deduped), marks `primarySlug` (or the first slug) as primary, and keeps the
+ * denormalised `bands.company_slug` in sync with that primary. Passing an empty
+ * list clears all associations and nulls `company_slug`.
+ *
+ * Callers should validate that the slugs exist first (the FK will otherwise
+ * reject the insert). See doc/requirements/multi-company-bands.md.
+ */
+export async function setBandCompanies(
+  bandId: string,
+  companySlugs: string[],
+  primarySlug?: string | null
+): Promise<void> {
+  const slugs = [...new Set(companySlugs.filter(Boolean))]
+  const primary =
+    primarySlug && slugs.includes(primarySlug) ? primarySlug : slugs[0]
+  const ordered = primary
+    ? [primary, ...slugs.filter((s) => s !== primary)]
+    : slugs
+
+  await sql`DELETE FROM band_companies WHERE band_id = ${bandId}`
+  for (let position = 0; position < ordered.length; position++) {
+    const slug = ordered[position]
+    await sql`
+      INSERT INTO band_companies (band_id, company_slug, is_primary, position)
+      VALUES (${bandId}, ${slug}, ${slug === primary}, ${position})
+    `
+  }
+  await sql`UPDATE bands SET company_slug = ${primary ?? null} WHERE id = ${bandId}`
+}
+
+/**
+ * Return the subset of `slugs` that do not exist in `companies` (for validation
+ * before writing band_companies).
+ */
+export async function findMissingCompanySlugs(
+  slugs: string[]
+): Promise<string[]> {
+  const unique = [...new Set(slugs.filter(Boolean))]
+  if (unique.length === 0) return []
+  // Array param via sqlQuery — @vercel/postgres' tagged template only accepts
+  // primitive params, so ANY($1) with a text[] must go through db.query.
+  const { rows } = await sqlQuery<{ slug: string }>(
+    'SELECT slug FROM companies WHERE slug = ANY($1)',
+    [unique]
+  )
+  const found = new Set(rows.map((r) => r.slug))
+  return unique.filter((s) => !found.has(s))
+}
 
 export async function getBandsForEvent(eventId: string) {
   const { rows } = await sql<Band>`

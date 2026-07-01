@@ -45,7 +45,8 @@ interface EventData {
   winner?: string // Winner name (for 2022.1 events)
   bands: {
     name: string
-    company_slug: string // REQUIRED: Foreign key to companies table (e.g., "rex-software")
+    company_slug: string // REQUIRED: primary/lead company. Foreign key to companies table (e.g., "rex-software")
+    additional_companies?: string[] // Optional: extra companies for multi-company bands (e.g. ShipReX = rex-software + urbanx)
     description?: string // Band description (displayed on band page)
     band_description?: string // DEPRECATED: Use description instead. Kept for backward compatibility.
     order: number
@@ -190,14 +191,18 @@ async function createEventFromFile(filePath: string) {
           process.exit(1)
         }
 
-        const validation = await validateCompanySlug(band.company_slug)
-        if (!validation.valid) {
-          invalidCompanies.push({ band: band.name, slug: band.company_slug })
-        } else {
-          validatedCompanies.set(band.company_slug, validation.name!)
-          console.log(
-            `  ✅ ${band.name} → ${validation.name} (${band.company_slug})`
-          )
+        // Validate the primary company plus any additional companies.
+        for (const slug of [
+          band.company_slug,
+          ...(band.additional_companies ?? []),
+        ]) {
+          const validation = await validateCompanySlug(slug)
+          if (!validation.valid) {
+            invalidCompanies.push({ band: band.name, slug })
+          } else {
+            validatedCompanies.set(slug, validation.name!)
+            console.log(`  ✅ ${band.name} → ${validation.name} (${slug})`)
+          }
         }
       }
 
@@ -247,6 +252,22 @@ async function createEventFromFile(filePath: string) {
           VALUES (${bandSlug}, ${event.id}, ${band.name}, ${bandDescription}, ${band.company_slug}, ${band.order}, ${JSON.stringify(bandInfo)}::jsonb)
           RETURNING id, name
         `
+
+        // Band <-> company links: primary first, then any additional companies.
+        await sql`
+          INSERT INTO band_companies (band_id, company_slug, is_primary, position)
+          VALUES (${bandSlug}, ${band.company_slug}, true, 0)
+          ON CONFLICT (band_id, company_slug) DO NOTHING
+        `
+        let companyPosition = 1
+        for (const extra of band.additional_companies ?? []) {
+          await sql`
+            INSERT INTO band_companies (band_id, company_slug, is_primary, position)
+            VALUES (${bandSlug}, ${extra}, false, ${companyPosition})
+            ON CONFLICT (band_id, company_slug) DO NOTHING
+          `
+          companyPosition++
+        }
 
         console.log(
           `  ✅ Band created: ${bandRows[0].name} (${bandRows[0].id}) → ${companyName}`
