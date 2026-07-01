@@ -42,6 +42,10 @@ interface Logistics {
 interface SeedBand {
   name: string
   company_slug: string
+  // Additional companies whose members also make up this band (multi-company
+  // bands). company_slug is the primary/lead; these are secondary. See
+  // doc/requirements/multi-company-bands.md.
+  additional_companies?: string[]
   order: number
   description?: string
   contact_email: string
@@ -56,6 +60,18 @@ const COMPANY = {
   description:
     'Suncorp is one of Australia and New Zealand’s largest financial services groups, providing insurance, banking and superannuation. Headquartered in Brisbane.',
 }
+
+// Companies introduced by this lineup that need a row (logo/icon set separately
+// via set-company-logo.ts / upload-local-logo.ts). UrbanX co-owns The ShipRex.
+const EXTRA_COMPANIES = [
+  {
+    slug: 'urbanx',
+    name: 'UrbanX',
+    website: 'https://www.urbanx.io',
+    description:
+      'UrbanX is an Australian proptech company in the real estate technology space.',
+  },
+]
 
 const BANDS: SeedBand[] = [
   {
@@ -136,6 +152,7 @@ const BANDS: SeedBand[] = [
   {
     name: 'The ShipRex',
     company_slug: 'rex-software',
+    additional_companies: ['urbanx'],
     order: 4,
     contact_email: 'kirranorrie@gmail.com',
     description:
@@ -202,14 +219,29 @@ async function main() {
   `
   console.log(`✅ Company upserted: ${COMPANY.name} (${COMPANY.slug})`)
 
-  // Validate all company slugs exist
+  for (const c of EXTRA_COMPANIES) {
+    await sql`
+      INSERT INTO companies (slug, name, website, description)
+      VALUES (${c.slug}, ${c.name}, ${c.website}, ${c.description})
+      ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name,
+            website = EXCLUDED.website,
+            description = COALESCE(companies.description, EXCLUDED.description)
+    `
+    console.log(`✅ Company upserted: ${c.name} (${c.slug})`)
+  }
+
+  // Validate all company slugs exist (primary + additional)
   for (const band of BANDS) {
-    const { rows } =
-      await sql`SELECT name FROM companies WHERE slug = ${band.company_slug}`
-    if (rows.length === 0) {
-      throw new Error(
-        `Missing company "${band.company_slug}" for band "${band.name}"`
-      )
+    for (const slug of [
+      band.company_slug,
+      ...(band.additional_companies ?? []),
+    ]) {
+      const { rows } =
+        await sql`SELECT name FROM companies WHERE slug = ${slug}`
+      if (rows.length === 0) {
+        throw new Error(`Missing company "${slug}" for band "${band.name}"`)
+      }
     }
   }
 
@@ -234,6 +266,23 @@ async function main() {
       VALUES (${id}, ${EVENT_ID}, ${band.name}, ${band.description ?? null},
               ${band.company_slug}, ${band.order}, ${JSON.stringify(info)}::jsonb)
     `
+
+    // Band <-> company links: primary first, then any additional companies.
+    // (band_companies rows for this event were cascade-deleted above.)
+    await sql`
+      INSERT INTO band_companies (band_id, company_slug, is_primary, position)
+      VALUES (${id}, ${band.company_slug}, true, 0)
+      ON CONFLICT (band_id, company_slug) DO NOTHING
+    `
+    let companyPosition = 1
+    for (const extra of band.additional_companies ?? []) {
+      await sql`
+        INSERT INTO band_companies (band_id, company_slug, is_primary, position)
+        VALUES (${id}, ${extra}, false, ${companyPosition})
+        ON CONFLICT (band_id, company_slug) DO NOTHING
+      `
+      companyPosition++
+    }
 
     let position = 1
     for (const song of band.songs) {

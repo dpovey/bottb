@@ -474,9 +474,17 @@ export default async function BandPage({
   // Get all events to find which one contains this band
   const { sql } = await import('@vercel/postgres')
   const { rows: bandData } = await sql`
-    SELECT b.*, 
+    SELECT b.*,
            e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
            c.name as company_name, c.slug as company_slug, c.icon_url as company_icon_url,
+           COALESCE((
+             SELECT json_agg(json_build_object(
+               'slug', c2.slug, 'name', c2.name, 'logo_url', c2.logo_url,
+               'icon_url', c2.icon_url, 'is_primary', bc.is_primary
+             ) ORDER BY bc.is_primary DESC, bc.position, c2.name)
+             FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
+             WHERE bc.band_id = b.id
+           ), '[]'::json) as companies,
            (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
     FROM bands b
     JOIN events e ON b.event_id = e.id

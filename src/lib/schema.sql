@@ -63,6 +63,14 @@ CREATE TABLE IF NOT EXISTS bands (
     company_slug character varying(255)
 );
 
+-- Band <-> company join (multi-company bands; bands.company_slug is the primary/lead)
+CREATE TABLE IF NOT EXISTS band_companies (
+    band_id character varying(255) NOT NULL,
+    company_slug character varying(255) NOT NULL,
+    is_primary boolean NOT NULL DEFAULT false,
+    "position" integer NOT NULL DEFAULT 0
+);
+
 -- Votes table
 CREATE TABLE IF NOT EXISTS votes (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -370,6 +378,7 @@ ALTER TABLE ONLY events ADD CONSTRAINT events_slug_unique UNIQUE (id);
 ALTER TABLE ONLY companies ADD CONSTRAINT companies_pkey PRIMARY KEY (slug);
 ALTER TABLE ONLY photographers ADD CONSTRAINT photographers_pkey PRIMARY KEY (slug);
 ALTER TABLE ONLY bands ADD CONSTRAINT bands_slug_unique UNIQUE (id);
+ALTER TABLE ONLY band_companies ADD CONSTRAINT band_companies_pkey PRIMARY KEY (band_id, company_slug);
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_vote_fingerprint_key UNIQUE (vote_fingerprint);
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_pkey PRIMARY KEY (id);
@@ -396,6 +405,8 @@ CREATE INDEX IF NOT EXISTS idx_photographers_name ON photographers(name);
 CREATE INDEX IF NOT EXISTS idx_bands_event_id ON bands(event_id);
 CREATE INDEX IF NOT EXISTS idx_bands_company_slug ON bands(company_slug);
 CREATE INDEX IF NOT EXISTS idx_bands_info_gin ON bands USING gin (info);
+CREATE INDEX IF NOT EXISTS idx_band_companies_company ON band_companies(company_slug);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_band_companies_primary ON band_companies(band_id) WHERE is_primary;
 CREATE INDEX IF NOT EXISTS idx_votes_event_id ON votes(event_id);
 CREATE INDEX IF NOT EXISTS idx_votes_band_id ON votes(band_id);
 CREATE INDEX IF NOT EXISTS idx_votes_voter_type ON votes(voter_type);
@@ -448,6 +459,8 @@ CREATE INDEX IF NOT EXISTS idx_social_post_results_status ON social_post_results
 -- Foreign key constraints
 ALTER TABLE ONLY bands ADD CONSTRAINT bands_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY bands ADD CONSTRAINT bands_company_slug_fkey FOREIGN KEY (company_slug) REFERENCES companies(slug) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE ONLY band_companies ADD CONSTRAINT band_companies_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
+ALTER TABLE ONLY band_companies ADD CONSTRAINT band_companies_company_slug_fkey FOREIGN KEY (company_slug) REFERENCES companies(slug) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY votes ADD CONSTRAINT votes_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
