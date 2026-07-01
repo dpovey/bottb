@@ -305,6 +305,7 @@ export default async function HomePage() {
               companySlug: winnerBand?.company_slug,
               companyName: winnerBand?.company_name,
               companyIconUrl: winnerBand?.company_icon_url,
+              companies: winnerBand?.companies,
             },
             bands,
             scoringVersion,
@@ -335,6 +336,7 @@ export default async function HomePage() {
             companySlug: winnerBand?.company_slug,
             companyName: winnerBand?.company_name,
             companyIconUrl: winnerBand?.company_icon_url,
+            companies: winnerBand?.companies,
           }
           return { ...event, overallWinner, bands, scoringVersion, heroPhoto }
         }

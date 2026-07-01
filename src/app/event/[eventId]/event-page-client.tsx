@@ -9,7 +9,6 @@ import {
   Card,
   DateBadge,
   BandThumbnail,
-  CompanyBadge,
   CompanyBadgeGroup,
   NumberedIndicator,
   TicketCTA,
@@ -23,7 +22,13 @@ import { PhotoStrip } from '@/components/photos/photo-strip'
 import { VideoCarousel } from '@/components/video-carousel'
 import { ShortsCarousel } from '@/components/shorts-carousel'
 import { EventCompanyStrip } from '@/components/event-company-strip'
-import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
+import type {
+  Video,
+  Band as DbBand,
+  Event as DbEvent,
+  Photo,
+  BandCompany,
+} from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
 import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
 import { bandCompanyList } from '@/lib/band-companies'
@@ -35,6 +40,7 @@ export interface OverallWinner {
   companySlug?: string
   companyName?: string
   companyIconUrl?: string
+  companies?: BandCompany[]
 }
 
 interface EventPageClientProps {
@@ -218,17 +224,29 @@ export function EventPageClient({
                         </span>
                       )}
                   </div>
-                  {overallWinner.companySlug && overallWinner.companyName && (
-                    <div className="mt-1">
-                      <CompanyBadge
-                        slug={overallWinner.companySlug}
-                        name={overallWinner.companyName}
-                        iconUrl={overallWinner.companyIconUrl}
-                        variant="default"
-                        size="sm"
-                      />
-                    </div>
-                  )}
+                  {(() => {
+                    const winnerCompanies: BandCompany[] = overallWinner
+                      .companies?.length
+                      ? overallWinner.companies
+                      : overallWinner.companySlug && overallWinner.companyName
+                        ? [
+                            {
+                              slug: overallWinner.companySlug,
+                              name: overallWinner.companyName,
+                              icon_url: overallWinner.companyIconUrl,
+                            },
+                          ]
+                        : []
+                    return winnerCompanies.length > 0 ? (
+                      <div className="mt-1">
+                        <CompanyBadgeGroup
+                          companies={winnerCompanies}
+                          variant="default"
+                          size="sm"
+                        />
+                      </div>
+                    ) : null
+                  })()}
                 </div>
               </div>
               <Link href={`/results/${eventId}`}>

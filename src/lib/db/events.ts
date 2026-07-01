@@ -1,5 +1,5 @@
 import { sql } from '../sql'
-import type { Event } from '../db-types'
+import type { Event, BandCompany } from '../db-types'
 
 export async function getEvents() {
   const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`
@@ -38,6 +38,8 @@ export interface PastEventWithWinner extends Event {
   winner_company_slug?: string
   winner_company_name?: string
   winner_company_icon_url?: string
+  /** All companies the winning band is made up of, primary-first. */
+  winner_companies?: BandCompany[]
 }
 
 /**
@@ -53,7 +55,15 @@ export async function getPastEventsWithWinners(): Promise<
       COALESCE(fr.band_name, e.info->>'winner') as winner_band_name,
       COALESCE(b.company_slug, b_name.company_slug, NULL) as winner_company_slug,
       COALESCE(c.name, c_name.name, NULL) as winner_company_name,
-      COALESCE(c.icon_url, c_name.icon_url, NULL) as winner_company_icon_url
+      COALESCE(c.icon_url, c_name.icon_url, NULL) as winner_company_icon_url,
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'slug', c2.slug, 'name', c2.name, 'logo_url', c2.logo_url,
+          'icon_url', c2.icon_url, 'is_primary', bc.is_primary
+        ) ORDER BY bc.is_primary DESC, bc.position, c2.name)
+        FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
+        WHERE bc.band_id = COALESCE(b.id, b_name.id)
+      ), '[]'::json) as winner_companies
     FROM events e
     LEFT JOIN finalized_results fr ON fr.event_id = e.id AND fr.final_rank = 1
     LEFT JOIN bands b ON b.id = COALESCE(fr.band_id, e.info->>'winner_band_id')
@@ -123,6 +133,14 @@ export async function getBandScores(eventId: string) {
       b.company_slug,
       c.name as company_name,
       c.icon_url as company_icon_url,
+      COALESCE((
+        SELECT json_agg(json_build_object(
+          'slug', c2.slug, 'name', c2.name, 'logo_url', c2.logo_url,
+          'icon_url', c2.icon_url, 'is_primary', bc.is_primary
+        ) ORDER BY bc.is_primary DESC, bc.position, c2.name)
+        FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
+        WHERE bc.band_id = b.id
+      ), '[]'::json) as companies,
       (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
       (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,

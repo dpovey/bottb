@@ -5,7 +5,7 @@ import {
   Badge,
   DateBadge,
   Button,
-  CompanyBadge,
+  CompanyBadgeGroup,
   CompanyIcon,
   EventCountdownBadge,
   TrackedTicketLink,
@@ -14,6 +14,26 @@ import { TicketIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
 import type { BandCompany } from '@/lib/db-types'
+
+/** The winning band's companies, primary-first, with a legacy single fallback. */
+function winnerCompanyList(winner: {
+  companySlug?: string
+  companyName?: string
+  companyIconUrl?: string
+  companies?: BandCompany[]
+}): BandCompany[] {
+  if (winner.companies && winner.companies.length > 0) return winner.companies
+  if (winner.companySlug && winner.companyName) {
+    return [
+      {
+        slug: winner.companySlug,
+        name: winner.companyName,
+        icon_url: winner.companyIconUrl,
+      },
+    ]
+  }
+  return []
+}
 
 /**
  * Get object-position for the focal point.
@@ -53,6 +73,7 @@ interface EventCardProps {
     companySlug?: string
     companyName?: string
     companyIconUrl?: string
+    companies?: BandCompany[]
   } | null
   bands?: {
     id: string
@@ -178,11 +199,9 @@ export function EventCard({
           ) : showWinner && winner ? (
             <span className="inline-flex items-center gap-2 bg-accent/25 border border-accent/40 text-accent-light backdrop-blur-md [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] rounded-sm px-3 py-1 text-xs">
               <span>🏆 {winner.name}</span>
-              {winner.companySlug && winner.companyName && (
-                <CompanyBadge
-                  slug={winner.companySlug}
-                  name={winner.companyName}
-                  iconUrl={winner.companyIconUrl}
+              {winnerCompanyList(winner).length > 0 && (
+                <CompanyBadgeGroup
+                  companies={winnerCompanyList(winner)}
                   variant="muted"
                   size="sm"
                   asLink={false}
@@ -376,11 +395,9 @@ export function EventCard({
                 🏆{' '}
                 <span className="text-white font-semibold">{winner.name}</span>
               </span>
-              {winner.companySlug && winner.companyName && (
-                <CompanyBadge
-                  slug={winner.companySlug}
-                  name={winner.companyName}
-                  iconUrl={winner.companyIconUrl}
+              {winnerCompanyList(winner).length > 0 && (
+                <CompanyBadgeGroup
+                  companies={winnerCompanyList(winner)}
                   variant="muted"
                   size="sm"
                   asLink={false}

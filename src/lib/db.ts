@@ -6,6 +6,7 @@ export type {
   Photographer,
   PhotographerWithStats,
   Band,
+  BandCompany,
   Vote,
   CrowdNoiseMeasurement,
   FinalizedResult,
