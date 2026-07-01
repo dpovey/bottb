@@ -41,6 +41,10 @@ interface Logistics {
 
 interface SeedBand {
   name: string
+  // Optional explicit band id. Pin this to keep the id (and URL) stable when the
+  // display name changes — e.g. ShipReX keeps its historical id. Defaults to a
+  // slug derived from `name`.
+  id?: string
   company_slug: string
   // Additional companies whose members also make up this band (multi-company
   // bands). company_slug is the primary/lead; these are secondary. See
@@ -150,7 +154,8 @@ const BANDS: SeedBand[] = [
     ],
   },
   {
-    name: 'The ShipRex',
+    name: 'ShipReX',
+    id: 'the-shiprex-brisbane-2026',
     company_slug: 'rex-software',
     additional_companies: ['urbanx'],
     order: 4,
@@ -255,7 +260,7 @@ async function main() {
 
   // 2. Insert bands + 3. setlists
   for (const band of BANDS) {
-    const id = bandSlug(band.name)
+    const id = band.id ?? bandSlug(band.name)
     const info = {
       logistics: band.logistics,
       contact_email: band.contact_email,

@@ -19,7 +19,7 @@ export interface CompanyBadgeGroupProps {
 /**
  * Renders every company a band belongs to as a row of badges. Use this instead
  * of a single {@link CompanyBadge} wherever a band's company affiliation is
- * shown, so multi-company bands (e.g. The ShipReX = Rex Software + UrbanX)
+ * shown, so multi-company bands (e.g. ShipReX = Rex Software + UrbanX)
  * display all of their companies. Renders nothing when the list is empty.
  */
 export function CompanyBadgeGroup({
