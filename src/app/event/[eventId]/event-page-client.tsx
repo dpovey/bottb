@@ -10,6 +10,7 @@ import {
   DateBadge,
   BandThumbnail,
   CompanyBadge,
+  CompanyBadgeGroup,
   NumberedIndicator,
   TicketCTA,
   SponsorBadge,
@@ -25,6 +26,7 @@ import { EventCompanyStrip } from '@/components/event-company-strip'
 import type { Video, Band as DbBand, Event as DbEvent, Photo } from '@/lib/db'
 import type { NavEvent } from '@/components/nav'
 import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
+import { bandCompanyList } from '@/lib/band-companies'
 
 /** Overall winner data passed from server component */
 export interface OverallWinner {
@@ -395,13 +397,11 @@ export function EventPageClient({
                               </Badge>
                             )}
                           </div>
-                          {/* Company badge - asLink=false to avoid nested <a> tags */}
-                          {band.company_slug && band.company_name && (
+                          {/* Company badge(s) - asLink=false to avoid nested <a> tags */}
+                          {bandCompanyList(band).length > 0 && (
                             <div className="mt-1">
-                              <CompanyBadge
-                                slug={band.company_slug}
-                                name={band.company_name}
-                                iconUrl={band.company_icon_url}
+                              <CompanyBadgeGroup
+                                companies={bandCompanyList(band)}
                                 variant="default"
                                 size="sm"
                                 asLink={false}

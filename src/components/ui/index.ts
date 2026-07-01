@@ -13,6 +13,10 @@ export { DateBadge, type DateBadgeProps } from './date-badge'
 export { EventCountdownBadge } from './event-countdown-badge'
 export { BandThumbnail, type BandThumbnailProps } from './band-thumbnail'
 export { CompanyBadge, type CompanyBadgeProps } from './company-badge'
+export {
+  CompanyBadgeGroup,
+  type CompanyBadgeGroupProps,
+} from './company-badge-group'
 export { CompanyIcon } from './company-icon'
 export {
   FilterBar,

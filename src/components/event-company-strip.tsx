@@ -1,12 +1,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { logoSizes, logoIntrinsicWidths } from '@/lib/logo-utils'
+import type { BandCompany } from '@/lib/db-types'
 
 export interface EventCompanyStripBand {
   company_slug?: string
   company_name?: string
   company_logo_url?: string
   company_icon_url?: string
+  /** All companies the band is made up of (multi-company bands). */
+  companies?: BandCompany[]
 }
 
 export interface EventCompanyStripProps {
@@ -30,16 +33,32 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
   const seen = new Set<string>()
   const companies: CompanyDisplay[] = []
   for (const band of bands) {
-    if (!band.company_slug || !band.company_name) continue
-    if (seen.has(band.company_slug)) continue
-    const logoUrl = band.company_logo_url || band.company_icon_url
-    if (!logoUrl) continue
-    seen.add(band.company_slug)
-    companies.push({
-      slug: band.company_slug,
-      name: band.company_name,
-      logoUrl,
-    })
+    // Each company the band is made up of contributes its logo. Prefer the
+    // multi-company array; fall back to the legacy single-company fields.
+    const bandCompanies: BandCompany[] =
+      band.companies && band.companies.length > 0
+        ? band.companies
+        : band.company_slug && band.company_name
+          ? [
+              {
+                slug: band.company_slug,
+                name: band.company_name,
+                logo_url: band.company_logo_url,
+                icon_url: band.company_icon_url,
+              },
+            ]
+          : []
+    for (const company of bandCompanies) {
+      if (seen.has(company.slug)) continue
+      const logoUrl = company.logo_url || company.icon_url
+      if (!logoUrl) continue
+      seen.add(company.slug)
+      companies.push({
+        slug: company.slug,
+        name: company.name,
+        logoUrl,
+      })
+    }
   }
 
   if (companies.length === 0) return null

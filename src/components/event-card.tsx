@@ -13,6 +13,7 @@ import {
 import { TicketIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
+import type { BandCompany } from '@/lib/db-types'
 
 /**
  * Get object-position for the focal point.
@@ -61,6 +62,7 @@ interface EventCardProps {
     company_name?: string
     company_icon_url?: string
     company_logo_url?: string
+    companies?: BandCompany[]
   }[]
   variant?: 'upcoming' | 'past' | 'active'
   heroPhoto?: HeroPhoto | null
@@ -257,14 +259,30 @@ export function EventCard({
       logoUrl?: string
     }>
   >((acc, band) => {
-    if (!band.company_slug) return acc
-    if (acc.some((c) => c.slug === band.company_slug)) return acc
-    acc.push({
-      slug: band.company_slug,
-      name: band.company_name || band.company_slug,
-      iconUrl: band.company_icon_url,
-      logoUrl: band.company_logo_url,
-    })
+    // Each company the band is made up of (multi-company bands) is a distinct
+    // social-proof logo; fall back to the legacy single-company fields.
+    const bandCompanies: BandCompany[] =
+      band.companies && band.companies.length > 0
+        ? band.companies
+        : band.company_slug
+          ? [
+              {
+                slug: band.company_slug,
+                name: band.company_name || band.company_slug,
+                icon_url: band.company_icon_url,
+                logo_url: band.company_logo_url,
+              },
+            ]
+          : []
+    for (const company of bandCompanies) {
+      if (acc.some((c) => c.slug === company.slug)) continue
+      acc.push({
+        slug: company.slug,
+        name: company.name,
+        iconUrl: company.icon_url,
+        logoUrl: company.logo_url,
+      })
+    }
     return acc
   }, [])
 

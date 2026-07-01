@@ -12,12 +12,13 @@ import {
   type Band,
 } from '@/lib/db'
 import { slugify, cn } from '@/lib/utils'
+import { bandCompanyList } from '@/lib/band-companies'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
 import { auth } from '@/lib/auth'
 import Link from 'next/link'
 import {
-  CompanyBadge,
+  CompanyBadgeGroup,
   BandThumbnail,
   SocialIconLink,
   HeroBackground,
@@ -808,13 +809,11 @@ export default async function BandPage({
                 {band.name}
               </h1>
 
-              {/* Company Badge */}
-              {band.company_slug && band.company_name && (
+              {/* Company badge(s) — all companies the band is made up of */}
+              {bandCompanyList(band).length > 0 && (
                 <div className="mb-3">
-                  <CompanyBadge
-                    slug={band.company_slug}
-                    name={band.company_name}
-                    iconUrl={band.company_icon_url}
+                  <CompanyBadgeGroup
+                    companies={bandCompanyList(band)}
                     variant="default"
                     size="md"
                   />
