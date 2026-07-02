@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Melbourne 2026 — Judge Scoring</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+          sans-serif;
+        color: #111;
+        font-size: 12pt;
+      }
+      .sheet {
+        width: 186mm;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        text-align: center;
+        padding-bottom: 6mm;
+        border-bottom: 2px solid #111;
+        margin-bottom: 8mm;
+      }
+      header h1 {
+        font-size: 28pt;
+        margin: 0 0 2mm;
+        line-height: 1.05;
+      }
+      header .meta {
+        font-size: 12pt;
+        color: #444;
+        margin-top: 2mm;
+      }
+      header .meta span + span::before {
+        content: ' \00b7 ';
+        color: #999;
+      }
+
+      .card-title {
+        font-size: 22pt;
+        font-weight: 700;
+        margin: 0 0 1mm;
+      }
+      .card-sub {
+        font-size: 13pt;
+        color: #555;
+        margin: 0 0 6mm;
+      }
+
+      .qr-wrap {
+        text-align: center;
+        padding: 6mm;
+        border: 2px solid #111;
+        border-radius: 3mm;
+        margin: 0 auto 8mm;
+        width: 130mm;
+      }
+      .qr-wrap img {
+        width: 120mm;
+        height: 120mm;
+        display: block;
+        margin: 0 auto;
+      }
+      .qr-url {
+        margin-top: 4mm;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 9pt;
+        color: #333;
+        word-break: break-all;
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8mm;
+        align-items: start;
+      }
+      .body .left {
+        text-align: center;
+      }
+
+      .steps {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .steps li {
+        display: flex;
+        align-items: flex-start;
+        gap: 4mm;
+        margin-bottom: 4mm;
+        font-size: 12pt;
+        line-height: 1.35;
+      }
+      .steps .num {
+        flex: 0 0 9mm;
+        height: 9mm;
+        width: 9mm;
+        border-radius: 50%;
+        background: #111;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 11pt;
+      }
+      .steps .text {
+        padding-top: 1mm;
+      }
+
+      .panel-title {
+        font-size: 16pt;
+        font-weight: 700;
+        margin: 0 0 4mm;
+      }
+
+      footer {
+        margin-top: auto;
+        padding-top: 6mm;
+        border-top: 1px solid #ccc;
+        font-size: 9pt;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      @media screen {
+        body {
+          background: #e5e5e5;
+          padding: 12mm 0;
+        }
+        .sheet {
+          background: #fff;
+          padding: 12mm;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+          min-height: 270mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header>
+        <h1>Melbourne 2026</h1>
+        <div class="meta">
+          <span>The Howler</span>
+          <span>Friday 5 June 2026</span>
+        </div>
+      </header>
+
+      <div class="body">
+        <div class="left">
+          <div class="card-title">Judge Scoring</div>
+          <div class="card-sub">Scan to enter your judge scores</div>
+          <div class="qr-wrap">
+            <img
+              src="data:image/png;base64,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"
+              alt="Judge Scoring QR code"
+            />
+            <div class="qr-url">
+              https://www.battleofthetechbands.com/vote/judge/melbourne-2026
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="panel-title">How to score</div>
+          <ol class="steps">
+            <li>
+              <span class="num">1</span
+              ><span class="text">Scan the QR code with your phone camera</span>
+            </li>
+            <li>
+              <span class="num">2</span
+              ><span class="text">Enter your name</span>
+            </li>
+            <li>
+              <span class="num">3</span
+              ><span class="text"
+                >Score each band on the four judging criteria</span
+              >
+            </li>
+            <li>
+              <span class="num">4</span
+              ><span class="text">Submit all scores in one go</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <footer>
+        <div>Melbourne 2026 &middot; Judge scoring</div>
+        <div>battleofthetechbands.com</div>
+      </footer>
+    </div>
+  </body>
+</html>
