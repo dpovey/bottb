@@ -31,7 +31,7 @@ async function generateVotes(eventId: string) {
     }
 
     // Find band IDs by name
-    const shipRex = bands.find((b) => b.name === 'The ShipRex')
+    const shipRex = bands.find((b) => b.name === 'ShipReX')
     const jumboBand = bands.find((b) => b.name === 'Jumbo Band')
     const epsonics = bands.find((b) => b.name === 'Epsonics')
     const offTheRecord = bands.find((b) => b.name === 'Off the Record')

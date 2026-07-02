@@ -1,7 +1,8 @@
 'use client'
 
-import { Card, BandThumbnail, CompanyBadge } from '@/components/ui'
+import { Card, BandThumbnail, CompanyBadgeGroup } from '@/components/ui'
 import { ScoringVersion, getCategories, getScoringFormula } from '@/lib/scoring'
+import type { BandCompany } from '@/lib/db-types'
 
 export interface BandResultData {
   id: string
@@ -9,6 +10,8 @@ export interface BandResultData {
   companySlug?: string
   companyName?: string
   companyIconUrl?: string
+  /** All companies the band is made up of (primary-first). */
+  companies?: BandCompany[]
   rank: number
   logoUrl?: string
   heroThumbnailUrl?: string
@@ -129,17 +132,29 @@ export function ScoreBreakdown({
                         />
                         <div>
                           <span className="font-medium">{band.name}</span>
-                          {band.companySlug && band.companyName && (
-                            <div className="mt-0.5">
-                              <CompanyBadge
-                                slug={band.companySlug}
-                                name={band.companyName}
-                                iconUrl={band.companyIconUrl}
-                                variant="default"
-                                size="sm"
-                              />
-                            </div>
-                          )}
+                          {(() => {
+                            const displayCompanies: BandCompany[] =
+                              band.companies && band.companies.length > 0
+                                ? band.companies
+                                : band.companySlug && band.companyName
+                                  ? [
+                                      {
+                                        slug: band.companySlug,
+                                        name: band.companyName,
+                                        icon_url: band.companyIconUrl,
+                                      },
+                                    ]
+                                  : []
+                            return displayCompanies.length > 0 ? (
+                              <div className="mt-0.5">
+                                <CompanyBadgeGroup
+                                  companies={displayCompanies}
+                                  variant="default"
+                                  size="sm"
+                                />
+                              </div>
+                            ) : null
+                          })()}
                         </div>
                       </div>
                     </td>

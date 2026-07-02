@@ -1,8 +1,9 @@
 'use client'
 
-import { Card, Badge, BandThumbnail, CompanyBadge } from '@/components/ui'
+import { Card, Badge, BandThumbnail, CompanyBadgeGroup } from '@/components/ui'
 import { ScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { buildHeroSrcSet, type PhotoImageUrls } from '@/lib/photo-srcset'
+import type { BandCompany } from '@/lib/db-types'
 
 /**
  * Get object-position for the focal point.
@@ -20,6 +21,8 @@ export interface WinnerDisplayProps {
   companyName?: string
   /** Company icon URL */
   companyIconUrl?: string
+  /** All companies the winning band is made up of (primary-first). */
+  companies?: BandCompany[]
   /** Total score (only shown for detailed breakdown versions) */
   totalScore?: number
   /** Logo URL for the band */
@@ -45,6 +48,7 @@ export function WinnerDisplay({
   companySlug,
   companyName,
   companyIconUrl,
+  companies,
   totalScore,
   logoUrl,
   heroThumbnailUrl,
@@ -107,35 +111,49 @@ export function WinnerDisplay({
           </h2>
 
           {/* Company/Logo */}
-          {(companySlug || companyName || logoUrl) && (
-            <div className="flex items-center gap-3 mb-6">
-              {logoUrl && (
-                <BandThumbnail
-                  logoUrl={logoUrl}
-                  bandName={winnerName}
-                  size="md"
-                />
-              )}
-              {companySlug && companyName ? (
-                <span className="text-text-muted flex items-center gap-2">
-                  representing{' '}
-                  <CompanyBadge
-                    slug={companySlug}
-                    name={companyName}
-                    iconUrl={companyIconUrl}
-                    variant="default"
+          {(() => {
+            const displayCompanies: BandCompany[] =
+              companies && companies.length > 0
+                ? companies
+                : companySlug && companyName
+                  ? [
+                      {
+                        slug: companySlug,
+                        name: companyName,
+                        icon_url: companyIconUrl,
+                      },
+                    ]
+                  : []
+            if (!displayCompanies.length && !companyName && !logoUrl)
+              return null
+            return (
+              <div className="flex items-center gap-3 mb-6">
+                {logoUrl && (
+                  <BandThumbnail
+                    logoUrl={logoUrl}
+                    bandName={winnerName}
                     size="md"
                   />
-                </span>
-              ) : (
-                companyName && (
-                  <span className="text-text-muted">
-                    representing {companyName}
+                )}
+                {displayCompanies.length > 0 ? (
+                  <span className="text-text-muted flex flex-wrap items-center gap-2">
+                    representing{' '}
+                    <CompanyBadgeGroup
+                      companies={displayCompanies}
+                      variant="default"
+                      size="md"
+                    />
                   </span>
-                )
-              )}
-            </div>
-          )}
+                ) : (
+                  companyName && (
+                    <span className="text-text-muted">
+                      representing {companyName}
+                    </span>
+                  )
+                )}
+              </div>
+            )
+          })()}
 
           {/* Score (only for detailed breakdown versions) */}
           {showScore && (

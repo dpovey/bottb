@@ -24,6 +24,7 @@ import {
   type CategoryWinnerData,
   type BandResultData,
 } from '@/components/scoring'
+import type { BandCompany } from '@/lib/db-types'
 import {
   parseScoringVersion,
   hasDetailedBreakdown,
@@ -68,6 +69,7 @@ interface BandScore {
   company_slug?: string
   company_name?: string
   company_icon_url?: string
+  companies?: BandCompany[]
 }
 
 interface EventInfo {
@@ -288,6 +290,7 @@ export default async function ResultsPage({
                 companySlug={winnerBand?.company_slug}
                 companyName={winnerBand?.company_name}
                 companyIconUrl={winnerBand?.company_icon_url}
+                companies={winnerBand?.companies}
                 logoUrl={winnerBand?.info?.logo_url}
                 heroThumbnailUrl={winnerBand?.hero_thumbnail_url}
                 heroFocalPoint={winnerBand?.hero_focal_point}
@@ -357,6 +360,7 @@ export default async function ResultsPage({
     companySlug?: string
     companyName?: string
     companyIconUrl?: string
+    companies?: BandCompany[]
     songChoice: number
     performance: number
     crowdVibe: number
@@ -398,6 +402,7 @@ export default async function ResultsPage({
         companySlug: band?.company_slug,
         companyName: band?.company_name,
         companyIconUrl: band?.company_icon_url,
+        companies: band?.companies,
         songChoice: Number(result.avg_song_choice || 0),
         performance: Number(result.avg_performance || 0),
         crowdVibe: Number(result.avg_crowd_vibe || 0),
@@ -463,6 +468,7 @@ export default async function ResultsPage({
           companySlug: score.company_slug,
           companyName: score.company_name,
           companyIconUrl: score.company_icon_url,
+          companies: score.companies,
           songChoice: Number(score.avg_song_choice || 0),
           performance: Number(score.avg_performance || 0),
           crowdVibe: Number(score.avg_crowd_vibe || 0),
@@ -571,6 +577,7 @@ export default async function ResultsPage({
     companySlug: band.companySlug,
     companyName: band.companyName,
     companyIconUrl: band.companyIconUrl,
+    companies: band.companies,
     rank: band.rank,
     logoUrl: band.logoUrl,
     heroThumbnailUrl: band.heroThumbnailUrl,
@@ -617,6 +624,7 @@ export default async function ResultsPage({
               companySlug={overallWinner.companySlug}
               companyName={overallWinner.companyName}
               companyIconUrl={overallWinner.companyIconUrl}
+              companies={overallWinner.companies}
               totalScore={overallWinner.totalScore}
               logoUrl={overallWinner.logoUrl}
               heroThumbnailUrl={overallWinner.heroThumbnailUrl}

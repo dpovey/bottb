@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sql } from '@/lib/sql'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
+import { setBandCompanies, findMissingCompanySlugs } from '@/lib/db/bands'
 import { v4 as uuidv4 } from 'uuid'
 
 interface BandCreateBody {
   event_id: string
   name: string
   description?: string | null
+  /** Legacy single-company field; primary/lead company. */
   company_slug?: string | null
+  /** All companies the band is made up of (multi-company bands). */
+  company_slugs?: string[]
+  /** Which of company_slugs is the primary/lead (defaults to the first). */
+  primary_company?: string | null
   order?: number
   info?: Record<string, unknown>
 }
@@ -16,11 +22,38 @@ interface BandCreateBody {
 const handleCreateBand: ProtectedApiHandler = async (request: NextRequest) => {
   try {
     const body: BandCreateBody = await request.json()
-    const { event_id, name, description, company_slug, info } = body
+    const {
+      event_id,
+      name,
+      description,
+      company_slug,
+      company_slugs,
+      primary_company,
+      info,
+    } = body
 
     if (!event_id || !name) {
       return NextResponse.json(
         { error: 'Event ID and name are required' },
+        { status: 400 }
+      )
+    }
+
+    // Resolve the full company set: prefer company_slugs, fall back to the
+    // legacy single company_slug. Primary defaults to primary_company, then the
+    // legacy field, then the first slug.
+    const slugs =
+      company_slugs && company_slugs.length > 0
+        ? company_slugs
+        : company_slug
+          ? [company_slug]
+          : []
+    const primary = primary_company ?? company_slug ?? slugs[0] ?? null
+
+    const missing = await findMissingCompanySlugs(slugs)
+    if (missing.length > 0) {
+      return NextResponse.json(
+        { error: `Unknown company slug(s): ${missing.join(', ')}` },
         { status: 400 }
       )
     }
@@ -47,9 +80,14 @@ const handleCreateBand: ProtectedApiHandler = async (request: NextRequest) => {
 
     const { rows } = await sql`
       INSERT INTO bands (id, event_id, name, description, company_slug, "order", info)
-      VALUES (${id}, ${event_id}, ${name}, ${description || null}, ${company_slug || null}, ${nextOrder}, ${JSON.stringify(info || {})})
+      VALUES (${id}, ${event_id}, ${name}, ${description || null}, ${primary}, ${nextOrder}, ${JSON.stringify(info || {})})
       RETURNING *
     `
+
+    // Write the band <-> company links (also keeps bands.company_slug in sync).
+    if (slugs.length > 0) {
+      await setBandCompanies(id, slugs, primary)
+    }
 
     return NextResponse.json({ band: rows[0] }, { status: 201 })
   } catch (error) {

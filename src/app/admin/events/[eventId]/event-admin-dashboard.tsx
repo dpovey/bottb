@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
+import type { BandCompany } from '@/lib/db-types'
 import {
   EditIcon,
   DeleteIcon,
@@ -34,6 +35,7 @@ interface Band {
   description: string | null
   company_slug: string | null
   company_name?: string | null
+  companies?: BandCompany[]
   order: number
 }
 
@@ -44,6 +46,30 @@ interface Company {
 
 interface EventAdminDashboardProps {
   eventId: string
+}
+
+/**
+ * Build a primary-first BandCompany[] from the known company list, for
+ * optimistic local state after add/update (the server is the source of truth).
+ */
+function buildBandCompanies(
+  companies: Company[],
+  slugs: string[],
+  primary: string | null
+): BandCompany[] {
+  const unique = [...new Set(slugs.filter(Boolean))]
+  const ordered =
+    primary && unique.includes(primary)
+      ? [primary, ...unique.filter((s) => s !== primary)]
+      : unique
+  return ordered
+    .map((slug): BandCompany | null => {
+      const c = companies.find((x) => x.slug === slug)
+      return c
+        ? { slug: c.slug, name: c.name, is_primary: slug === primary }
+        : null
+    })
+    .filter((c): c is BandCompany => c !== null)
 }
 
 export default function EventAdminDashboard({
@@ -177,7 +203,11 @@ export default function EventAdminDashboard({
   }
 
   // Band management handlers
-  const handleAddBand = async (name: string, companySlug: string | null) => {
+  const handleAddBand = async (
+    name: string,
+    companySlugs: string[],
+    primary: string | null
+  ) => {
     setOperationError(null)
     try {
       const response = await fetch('/api/bands', {
@@ -186,7 +216,8 @@ export default function EventAdminDashboard({
         body: JSON.stringify({
           event_id: eventId,
           name,
-          company_slug: companySlug,
+          company_slugs: companySlugs,
+          primary_company: primary,
         }),
       })
 
@@ -194,7 +225,8 @@ export default function EventAdminDashboard({
         const data = await response.json()
         const newBand = {
           ...data.band,
-          company_name: companies.find((c) => c.slug === companySlug)?.name,
+          company_name: companies.find((c) => c.slug === primary)?.name,
+          companies: buildBandCompanies(companies, companySlugs, primary),
         }
         setBands([...bands, newBand])
         return true
@@ -214,7 +246,8 @@ export default function EventAdminDashboard({
     bandId: string,
     updates: {
       name?: string
-      company_slug?: string | null
+      company_slugs?: string[]
+      primary_company?: string | null
       description?: string | null
     }
   ) => {
@@ -237,6 +270,14 @@ export default function EventAdminDashboard({
                   company_name: companies.find(
                     (c) => c.slug === data.band.company_slug
                   )?.name,
+                  companies:
+                    updates.company_slugs !== undefined
+                      ? buildBandCompanies(
+                          companies,
+                          updates.company_slugs,
+                          updates.primary_company ?? null
+                        )
+                      : b.companies,
                 }
               : b
           )
@@ -615,22 +656,29 @@ function AddBandForm({
   onAdd,
 }: {
   companies: Company[]
-  onAdd: (name: string, companySlug: string | null) => Promise<boolean>
+  onAdd: (
+    name: string,
+    companySlugs: string[],
+    primary: string | null
+  ) => Promise<boolean>
 }) {
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState('')
   const [companySlug, setCompanySlug] = useState('')
+  const [additionalCompanySlug, setAdditionalCompanySlug] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
+    const slugs = [companySlug, additionalCompanySlug].filter(Boolean)
     setIsSubmitting(true)
-    const success = await onAdd(name.trim(), companySlug || null)
+    const success = await onAdd(name.trim(), slugs, companySlug || null)
     if (success) {
       setName('')
       setCompanySlug('')
+      setAdditionalCompanySlug('')
       setIsAdding(false)
     }
     setIsSubmitting(false)
@@ -658,8 +706,14 @@ function AddBandForm({
       />
       <select
         value={companySlug}
-        onChange={(e) => setCompanySlug(e.target.value)}
+        onChange={(e) => {
+          setCompanySlug(e.target.value)
+          // Keep the additional company distinct from the primary.
+          if (e.target.value === additionalCompanySlug)
+            setAdditionalCompanySlug('')
+        }}
         className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white"
+        aria-label="Primary company"
       >
         <option value="">No Company</option>
         {companies.map((c) => (
@@ -668,6 +722,23 @@ function AddBandForm({
           </option>
         ))}
       </select>
+      {companySlug && (
+        <select
+          value={additionalCompanySlug}
+          onChange={(e) => setAdditionalCompanySlug(e.target.value)}
+          className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white"
+          aria-label="Additional company"
+        >
+          <option value="">+ Company (optional)</option>
+          {companies
+            .filter((c) => c.slug !== companySlug)
+            .map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+        </select>
+      )}
       <button
         type="submit"
         disabled={isSubmitting || !name.trim()}
@@ -683,6 +754,7 @@ function AddBandForm({
           setIsAdding(false)
           setName('')
           setCompanySlug('')
+          setAdditionalCompanySlug('')
         }}
       >
         Cancel
@@ -706,25 +778,33 @@ function BandRow({
     bandId: string,
     updates: {
       name?: string
-      company_slug?: string | null
+      company_slugs?: string[]
+      primary_company?: string | null
       description?: string | null
     }
   ) => Promise<boolean>
   onRequestDelete: (band: Band) => void
 }) {
+  // The band's additional (non-primary) company, if any.
+  const initialAdditional =
+    band.companies?.find((c) => !c.is_primary)?.slug || ''
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(band.name)
   const [editCompanySlug, setEditCompanySlug] = useState(
     band.company_slug || ''
   )
+  const [editAdditionalCompanySlug, setEditAdditionalCompanySlug] =
+    useState(initialAdditional)
   const [editDescription, setEditDescription] = useState(band.description || '')
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async () => {
+    const slugs = [editCompanySlug, editAdditionalCompanySlug].filter(Boolean)
     setIsSaving(true)
     const success = await onUpdate(band.id, {
       name: editName,
-      company_slug: editCompanySlug || null,
+      company_slugs: slugs,
+      primary_company: editCompanySlug || null,
       description: editDescription || null,
     })
     if (success) {
@@ -737,6 +817,7 @@ function BandRow({
     setIsEditing(false)
     setEditName(band.name)
     setEditCompanySlug(band.company_slug || '')
+    setEditAdditionalCompanySlug(initialAdditional)
     setEditDescription(band.description || '')
   }
 
@@ -761,8 +842,13 @@ function BandRow({
               />
               <select
                 value={editCompanySlug}
-                onChange={(e) => setEditCompanySlug(e.target.value)}
+                onChange={(e) => {
+                  setEditCompanySlug(e.target.value)
+                  if (e.target.value === editAdditionalCompanySlug)
+                    setEditAdditionalCompanySlug('')
+                }}
                 className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
+                aria-label="Primary company"
               >
                 <option value="">No Company</option>
                 {companies.map((c) => (
@@ -771,6 +857,25 @@ function BandRow({
                   </option>
                 ))}
               </select>
+              {editCompanySlug && (
+                <select
+                  value={editAdditionalCompanySlug}
+                  onChange={(e) =>
+                    setEditAdditionalCompanySlug(e.target.value)
+                  }
+                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
+                  aria-label="Additional company"
+                >
+                  <option value="">+ Company (optional)</option>
+                  {companies
+                    .filter((c) => c.slug !== editCompanySlug)
+                    .map((c) => (
+                      <option key={c.slug} value={c.slug}>
+                        {c.name}
+                      </option>
+                    ))}
+                </select>
+              )}
             </div>
             <textarea
               value={editDescription}
@@ -783,8 +888,14 @@ function BandRow({
         ) : (
           <>
             <h4 className="font-medium text-white">{band.name}</h4>
-            {band.company_name && (
-              <p className="text-sm text-gray-400">{band.company_name}</p>
+            {band.companies && band.companies.length > 0 ? (
+              <p className="text-sm text-gray-400">
+                {band.companies.map((c) => c.name).join(' + ')}
+              </p>
+            ) : (
+              band.company_name && (
+                <p className="text-sm text-gray-400">{band.company_name}</p>
+              )
             )}
             {band.description && (
               <p className="text-sm text-gray-300 mt-1 line-clamp-2">

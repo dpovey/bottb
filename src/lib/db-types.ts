@@ -71,6 +71,19 @@ export interface CompanyWithStats extends Company {
   event_count: number
 }
 
+/**
+ * A company as it appears in a band's `companies` array (multi-company bands).
+ * Display-only subset; ordered primary-first. See
+ * doc/requirements/multi-company-bands.md.
+ */
+export interface BandCompany {
+  slug: string
+  name: string
+  logo_url?: string
+  icon_url?: string
+  is_primary?: boolean
+}
+
 export interface Photographer {
   slug: string
   name: string
@@ -110,10 +123,13 @@ export interface Band {
     [key: string]: unknown
   }
   created_at: string
-  // Joined fields
+  // Joined fields — the primary/lead company (bands.company_slug), kept for
+  // backward compatibility. `companies` below carries the full set.
   company_name?: string
   company_icon_url?: string
   company_logo_url?: string
+  // All companies this band is made up of, primary-first (multi-company bands).
+  companies?: BandCompany[]
 }
 
 export interface Vote {

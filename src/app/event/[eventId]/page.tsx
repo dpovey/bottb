@@ -149,6 +149,7 @@ export default async function EventPage({
         companySlug: winnerBand?.company_slug,
         companyName: winnerBand?.company_name,
         companyIconUrl: winnerBand?.company_icon_url,
+        companies: winnerBand?.companies,
       }
     } else if (showDetailedBreakdown && (await hasFinalizedResults(eventId))) {
       // 2025.1/2026.1 events: fetch from finalized_results table
@@ -162,6 +163,7 @@ export default async function EventPage({
           companySlug: winnerBand?.company_slug,
           companyName: winnerBand?.company_name,
           companyIconUrl: winnerBand?.company_icon_url,
+          companies: winnerBand?.companies,
         }
       }
     }

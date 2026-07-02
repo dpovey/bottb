@@ -12,12 +12,13 @@ import {
   type Band,
 } from '@/lib/db'
 import { slugify, cn } from '@/lib/utils'
+import { bandCompanyList } from '@/lib/band-companies'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
 import { auth } from '@/lib/auth'
 import Link from 'next/link'
 import {
-  CompanyBadge,
+  CompanyBadgeGroup,
   BandThumbnail,
   SocialIconLink,
   HeroBackground,
@@ -474,9 +475,17 @@ export default async function BandPage({
   // Get all events to find which one contains this band
   const { sql } = await import('@vercel/postgres')
   const { rows: bandData } = await sql`
-    SELECT b.*, 
+    SELECT b.*,
            e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
            c.name as company_name, c.slug as company_slug, c.icon_url as company_icon_url,
+           COALESCE((
+             SELECT json_agg(json_build_object(
+               'slug', c2.slug, 'name', c2.name, 'logo_url', c2.logo_url,
+               'icon_url', c2.icon_url, 'is_primary', bc.is_primary
+             ) ORDER BY bc.is_primary DESC, bc.position, c2.name)
+             FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
+             WHERE bc.band_id = b.id
+           ), '[]'::json) as companies,
            (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
     FROM bands b
     JOIN events e ON b.event_id = e.id
@@ -800,13 +809,11 @@ export default async function BandPage({
                 {band.name}
               </h1>
 
-              {/* Company Badge */}
-              {band.company_slug && band.company_name && (
+              {/* Company badge(s) — all companies the band is made up of */}
+              {bandCompanyList(band).length > 0 && (
                 <div className="mb-3">
-                  <CompanyBadge
-                    slug={band.company_slug}
-                    name={band.company_name}
-                    iconUrl={band.company_icon_url}
+                  <CompanyBadgeGroup
+                    companies={bandCompanyList(band)}
                     variant="default"
                     size="md"
                   />
