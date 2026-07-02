@@ -5,6 +5,7 @@
   "timezone": "Australia/Brisbane",
   "location": "The Triffid",
   "address": "7-9 Stratton Street, Newstead QLD 4006, Australia",
+  "ticket_url": "https://moshtix.com.au/v2/event/battle-of-the-tech-bands/197223?skin=thetriffid",
   "is_active": false,
   "status": "upcoming",
   "scoring_version": "2026.2",
@@ -29,7 +30,7 @@
       "order": 3
     },
     {
-      "name": "The ShipRex",
+      "name": "ShipReX",
       "company_slug": "rex-software",
       "description": "ShipReX is the band you get when two great teams behind keeping real estate tech running decide to plug in and turn it up. We're drawn from the crews behind Rex and UrbanX - by day we ship software and solve problems, by night we ship riffs and cause our own.\n\nThe setlist? Classified. What we will tell you: it's loud, it's a little unhinged, it lurches across genres and decades with zero shame, and it builds to a finish that'll have the whole room singing. Trust us, it's a vibe. You'll just have to show up to find out!",
       "order": 4
