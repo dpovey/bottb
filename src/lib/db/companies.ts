@@ -46,6 +46,9 @@ export async function getCompanyBands(
       b.*,
       e.name as event_name,
       e.date as event_date,
+      c.name as company_name,
+      c.icon_url as company_icon_url,
+      c.logo_url as company_logo_url,
       COALESCE((
         SELECT json_agg(json_build_object(
           'slug', c2.slug, 'name', c2.name, 'logo_url', c2.logo_url,
@@ -58,6 +61,7 @@ export async function getCompanyBands(
     FROM bands b
     JOIN events e ON b.event_id = e.id
     JOIN band_companies bc ON bc.band_id = b.id AND bc.company_slug = ${companySlug}
+    LEFT JOIN companies c ON b.company_slug = c.slug
     ORDER BY e.date DESC, b."order" ASC
   `
   return rows
