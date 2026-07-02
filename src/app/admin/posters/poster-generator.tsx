@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Card, FileDropzone } from '@/components/ui'
 import { AdminFormField, AdminInput, AdminSelect } from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
-import type { Event, Photo } from '@/lib/db-types'
+import type { Band, Event, Photo } from '@/lib/db-types'
 import { formatEventDateLabel } from '@/lib/date-utils'
 import { coverSlack, loadImage } from '@/lib/canvas'
 import { loadJostFont } from '../thumbnails/jost-font'
@@ -12,10 +12,12 @@ import {
   composePoster,
   POSTER_FORMATS,
   type LogoCorner,
+  type PosterDimensions,
   type PosterFormat,
 } from './compose'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
+const YOUNGCARE_LOGO_SRC = '/images/logos/youngcare.png'
 
 interface PosterGeneratorProps {
   events: Event[]
@@ -48,12 +50,81 @@ function bestPhotoUrl(photo: Photo): string {
   return photo.large_4k_url || photo.medium_url || photo.blob_url
 }
 
+/** Every company logo a band is made up of (multi-company bands, or the legacy single company). */
+function bandLogoUrls(band: Band): { slug: string; url: string }[] {
+  if (band.companies?.length) {
+    return band.companies
+      .filter((c) => c.logo_url)
+      .map((c) => ({ slug: c.slug, url: c.logo_url as string }))
+  }
+  if (band.company_slug && band.company_logo_url) {
+    return [{ slug: band.company_slug, url: band.company_logo_url }]
+  }
+  return []
+}
+
+/** Every distinct company logo competing at an event, in band order. */
+function eventCompanyLogoUrls(bands: Band[]): string[] {
+  const seen = new Set<string>()
+  const urls: string[] = []
+  for (const band of bands) {
+    for (const { slug, url } of bandLogoUrls(band)) {
+      if (seen.has(slug)) continue
+      seen.add(slug)
+      urls.push(url)
+    }
+  }
+  return urls
+}
+
 const PORTRAIT = POSTER_FORMATS.portrait
+
+/**
+ * Crisp on-screen preview: match the canvas's bitmap resolution to its
+ * displayed CSS size (at the device pixel ratio) instead of the full
+ * export resolution. Painting text natively at the displayed size avoids the
+ * browser downscaling a much larger bitmap, which aliases fine strokes into
+ * a "pixelated" look. The full-resolution export (`downloadFormat`) is
+ * unaffected — it always renders off-screen at `POSTER_FORMATS[format]`.
+ */
+function usePreviewSize(
+  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  format: PosterFormat
+): PosterDimensions {
+  const aspect = POSTER_FORMATS[format].w / POSTER_FORMATS[format].h
+  const [size, setSize] = useState<PosterDimensions>(POSTER_FORMATS[format])
+
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+
+    const update = (cssWidth: number) => {
+      if (!cssWidth) return
+      const dpr = window.devicePixelRatio || 1
+      const w = Math.round(cssWidth * dpr)
+      const h = Math.round(w / aspect)
+      setSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }))
+    }
+
+    update(el.getBoundingClientRect().width)
+    const observer = new ResizeObserver(([entry]) =>
+      update(entry.contentRect.width)
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [canvasRef, aspect])
+
+  return size
+}
 
 export function PosterGenerator({ events }: PosterGeneratorProps) {
   const portraitRef = useRef<HTMLCanvasElement>(null)
   const landscapeRef = useRef<HTMLCanvasElement>(null)
   const fbcoverRef = useRef<HTMLCanvasElement>(null)
+
+  const portraitSize = usePreviewSize(portraitRef, 'portrait')
+  const landscapeSize = usePreviewSize(landscapeRef, 'landscape')
+  const fbcoverSize = usePreviewSize(fbcoverRef, 'fbcover')
 
   const [eventId, setEventId] = useState('')
   const [name, setName] = useState('')
@@ -68,6 +139,9 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
   const [focusX, setFocusX] = useState(0.5)
   const [focusY, setFocusY] = useState(0.5)
 
+  // Which event's photos the picker browses — defaults to the poster's event
+  // but can be pointed at any past event to reuse an older hero shot.
+  const [photoEventId, setPhotoEventId] = useState('')
   const [eventPhotos, setEventPhotos] = useState<Photo[]>([])
   // Which event the loaded `eventPhotos` belong to; lets us derive the loading
   // state without a synchronous setState in the fetch effect.
@@ -75,16 +149,23 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
   const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
+  const [youngcareLogo, setYoungcareLogo] = useState<HTMLImageElement | null>(
+    null
+  )
+  const [companyLogos, setCompanyLogos] = useState<HTMLImageElement[]>([])
   const [fontReady, setFontReady] = useState(false)
 
   const selectedEvent = events.find((e) => e.id === eventId) ?? null
   const partner = selectedEvent?.info?.national_partner ?? null
-  const photosLoading = Boolean(eventId) && photosEventId !== eventId
+  const photosLoading = Boolean(photoEventId) && photosEventId !== photoEventId
 
-  // Load the Bottb square logo + website font once.
+  // Load the Bottb square logo, the Youngcare logo + website font once.
   useEffect(() => {
     loadImage(BOTTB_LOGO_SRC)
       .then(setBottbLogo)
+      .catch(() => {})
+    loadImage(YOUNGCARE_LOGO_SRC)
+      .then(setYoungcareLogo)
       .catch(() => {})
     loadJostFont()
       .then(() => setFontReady(true))
@@ -115,13 +196,47 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
     }
   }, [partner?.logo_url])
 
-  // Fetch this event's photos for the picker. (The grid only renders when an
-  // event is selected, so we needn't clear the list when eventId is empty.)
+  // Load the competing bands' company logos for the footer strip, deduped
+  // and proxied the same way as the partner logo.
   useEffect(() => {
-    if (!eventId) return
     let cancelled = false
-    const targetId = eventId
-    fetch(`/api/photos?event=${eventId}&limit=100&skipMeta=true`)
+    const pending: Promise<Band[]> = eventId
+      ? fetch(`/api/bands/${eventId}`).then((res) => (res.ok ? res.json() : []))
+      : Promise.resolve([])
+
+    pending
+      .then((bands) => {
+        const urls = eventCompanyLogoUrls(bands)
+        return Promise.all(
+          urls.map((url) =>
+            loadImage(
+              `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(url)}`
+            ).catch(() => null)
+          )
+        )
+      })
+      .then((logos) => {
+        if (cancelled) return
+        setCompanyLogos(
+          logos.filter((img): img is HTMLImageElement => img !== null)
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setCompanyLogos([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Fetch the browsed event's photos for the picker. (The grid only renders
+  // when an event is chosen, so we needn't clear the list when it's empty.)
+  useEffect(() => {
+    if (!photoEventId) return
+    let cancelled = false
+    const targetId = photoEventId
+    fetch(`/api/photos?event=${targetId}&limit=100&skipMeta=true`)
       .then((res) => (res.ok ? res.json() : { photos: [] }))
       .then((data: { photos?: Photo[] }) => {
         if (cancelled) return
@@ -137,7 +252,7 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
     return () => {
       cancelled = true
     }
-  }, [eventId])
+  }, [photoEventId])
 
   // Clean up an uploaded object URL when it changes / unmounts.
   useEffect(() => {
@@ -154,22 +269,32 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
       venue,
       bottbLogo,
       partnerLogo,
+      youngcareLogo,
+      companyLogos,
       bottbCorner,
     }
     const sw = photo?.naturalWidth ?? 0
     const sh = photo?.naturalHeight ?? 0
     const source = photo
 
-    const targets: [React.RefObject<HTMLCanvasElement | null>, PosterFormat][] =
-      [
-        [portraitRef, 'portrait'],
-        [landscapeRef, 'landscape'],
-        [fbcoverRef, 'fbcover'],
-      ]
-    for (const [ref, format] of targets) {
+    const targets: [
+      React.RefObject<HTMLCanvasElement | null>,
+      PosterFormat,
+      PosterDimensions,
+    ][] = [
+      [portraitRef, 'portrait', portraitSize],
+      [landscapeRef, 'landscape', landscapeSize],
+      [fbcoverRef, 'fbcover', fbcoverSize],
+    ]
+    for (const [ref, format, dimensions] of targets) {
       const ctx = ref.current?.getContext('2d')
       if (ctx) {
-        composePoster(ctx, source, sw, sh, content, { format, focusX, focusY })
+        composePoster(ctx, source, sw, sh, content, {
+          format,
+          focusX,
+          focusY,
+          dimensions,
+        })
       }
     }
   }, [
@@ -178,10 +303,15 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
     venue,
     bottbLogo,
     partnerLogo,
+    youngcareLogo,
+    companyLogos,
     bottbCorner,
     photo,
     focusX,
     focusY,
+    portraitSize,
+    landscapeSize,
+    fbcoverSize,
   ])
 
   useEffect(() => {
@@ -190,6 +320,7 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
 
   const handleEventChange = (id: string) => {
     setEventId(id)
+    setPhotoEventId(id)
     const event = events.find((e) => e.id === id)
     if (event) {
       setName(event.name)
@@ -304,7 +435,16 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
       photo,
       photo.naturalWidth,
       photo.naturalHeight,
-      { name, date, venue, bottbLogo, partnerLogo, bottbCorner },
+      {
+        name,
+        date,
+        venue,
+        bottbLogo,
+        partnerLogo,
+        youngcareLogo,
+        companyLogos,
+        bottbCorner,
+      },
       { format, focusX, focusY }
     )
     const base = slugify(name || selectedEvent?.name || 'event')
@@ -353,9 +493,24 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
         <Card padding="md" className="space-y-4">
           <h2 className="text-lg font-semibold text-white">2. Photo</h2>
 
-          {eventId && (
+          {events.length > 0 && (
+            <AdminFormField label="Browse photos from">
+              <AdminSelect
+                value={photoEventId}
+                onChange={(e) => setPhotoEventId(e.target.value)}
+              >
+                <option value="">— Select an event —</option>
+                {events.map((event) => (
+                  <option key={event.id} value={event.id}>
+                    {event.name}
+                  </option>
+                ))}
+              </AdminSelect>
+            </AdminFormField>
+          )}
+
+          {photoEventId && (
             <div className="space-y-2">
-              <p className="text-sm text-gray-300">From this event</p>
               {photosLoading ? (
                 <p className="text-sm text-gray-500">Loading photos…</p>
               ) : eventPhotos.length === 0 ? (
@@ -394,13 +549,17 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           <h2 className="text-lg font-semibold text-white">
             3. Text &amp; branding
           </h2>
-          <AdminFormField label="Event name">
+          <AdminFormField label="Event edition">
             <AdminInput
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Battle of the Tech Bands"
+              placeholder="e.g. Sydney Tech Battle 2025"
             />
           </AdminFormField>
+          <p className="text-xs text-gray-500">
+            &ldquo;Battle of the Tech Bands&rdquo; is always shown as the
+            headline; this line appears as the subtitle beneath it.
+          </p>
           <AdminFormField label="Date">
             <AdminInput
               value={date}
@@ -447,6 +606,15 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
               {!partnerLogo && ' (could not load)'}
             </p>
           )}
+          <p className="text-xs text-gray-500">
+            Supporting Youngcare logo
+            {!youngcareLogo && ' (could not load)'}
+          </p>
+          {companyLogos.length > 0 && (
+            <p className="text-xs text-gray-500">
+              Band logos: {companyLogos.length} loaded
+            </p>
+          )}
         </Card>
       </div>
 
@@ -477,8 +645,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           <div className="relative mx-auto w-full max-w-[300px]">
             <canvas
               ref={portraitRef}
-              width={PORTRAIT.w}
-              height={PORTRAIT.h}
+              width={portraitSize.w}
+              height={portraitSize.h}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -508,8 +676,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           </div>
           <canvas
             ref={landscapeRef}
-            width={POSTER_FORMATS.landscape.w}
-            height={POSTER_FORMATS.landscape.h}
+            width={landscapeSize.w}
+            height={landscapeSize.h}
             className="w-full rounded-lg border border-white/10 bg-black"
           />
         </Card>
@@ -532,8 +700,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           </div>
           <canvas
             ref={fbcoverRef}
-            width={POSTER_FORMATS.fbcover.w}
-            height={POSTER_FORMATS.fbcover.h}
+            width={fbcoverSize.w}
+            height={fbcoverSize.h}
             className="w-full rounded-lg border border-white/10 bg-black"
           />
         </Card>

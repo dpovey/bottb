@@ -72,7 +72,7 @@ describe('composePoster', () => {
     expect(calls.clearRect[0]).toEqual([0, 0, w, h])
   })
 
-  it('draws the event name, date and venue text', () => {
+  it('draws the event edition, date and venue text', () => {
     const { ctx, calls } = createMockContext()
     composePoster(ctx, fakeSource, 4000, 3000, baseContent, {
       format: 'portrait',
@@ -80,7 +80,20 @@ describe('composePoster', () => {
     const drawn = calls.fillText.map((c) => c.text)
     expect(drawn).toContain('23rd October 2025 @ 6:30PM')
     expect(drawn).toContain('Factory Theatre, Sydney')
-    // The long name wraps across (up to) two lines; every word survives.
+    expect(drawn).toContain('Battle of the Tech Bands')
+  })
+
+  it('always draws the brand wordmark, even with an empty event name', () => {
+    const { ctx, calls } = createMockContext()
+    composePoster(
+      ctx,
+      fakeSource,
+      4000,
+      3000,
+      { ...baseContent, name: '' },
+      { format: 'portrait' }
+    )
+    const drawn = calls.fillText.map((c) => c.text)
     expect(drawn.join(' ')).toContain('Battle')
     expect(drawn.join(' ')).toContain('Bands')
   })
@@ -110,6 +123,39 @@ describe('composePoster', () => {
     expect(calls.drawImage.length).toBe(3)
   })
 
+  it('labels the partner and Youngcare logos as "Powered by" / "Supporting"', () => {
+    const { ctx, calls } = createMockContext()
+    const logo = { naturalWidth: 200, naturalHeight: 200 } as HTMLImageElement
+    composePoster(
+      ctx,
+      fakeSource,
+      4000,
+      3000,
+      { ...baseContent, partnerLogo: logo, youngcareLogo: logo },
+      { format: 'portrait' }
+    )
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn).toContain('POWERED BY')
+    expect(drawn).toContain('SUPPORTING')
+    // photo + partner + youngcare = 3 drawImage calls (no bottb logo here).
+    expect(calls.drawImage.length).toBe(3)
+  })
+
+  it('draws a footer strip of every company logo and reserves space above it', () => {
+    const { ctx, calls } = createMockContext()
+    const logo = { naturalWidth: 200, naturalHeight: 100 } as HTMLImageElement
+    composePoster(
+      ctx,
+      fakeSource,
+      4000,
+      3000,
+      { ...baseContent, companyLogos: [logo, logo, logo] },
+      { format: 'portrait' }
+    )
+    // photo + 3 company logos = 4 drawImage calls.
+    expect(calls.drawImage.length).toBe(4)
+  })
+
   it('fills a placeholder background when no photo is provided', () => {
     const { ctx, calls } = createMockContext()
     composePoster(ctx, null, 0, 0, baseContent, { format: 'fbcover' })
@@ -130,5 +176,15 @@ describe('composePoster', () => {
         { format: 'portrait' }
       )
     ).not.toThrow()
+  })
+
+  it('renders at a custom `dimensions` size for crisp previews', () => {
+    const { ctx, calls } = createMockContext()
+    const dimensions = { w: 300, h: 375 } // same 4:5 aspect as portrait
+    composePoster(ctx, fakeSource, 4000, 3000, baseContent, {
+      format: 'portrait',
+      dimensions,
+    })
+    expect(calls.clearRect[0]).toEqual([0, 0, 300, 375])
   })
 })
