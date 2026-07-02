@@ -5,11 +5,11 @@ import { Button, Card, FileDropzone } from '@/components/ui'
 import { AdminFormField, AdminInput, AdminSelect } from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
 import type { CompanyWithStats } from '@/lib/db-types'
+import { coverSlack, loadImage } from '@/lib/canvas'
 import {
   composeInstagram,
   composeOverlay,
   composeYouTube,
-  coverSlack,
   IG_H,
   IG_W,
   OV_H,
@@ -27,15 +27,6 @@ const FRAME = 1 / 30 // assume ~30fps for single-frame stepping
 
 interface ThumbnailGeneratorProps {
   companies: CompanyWithStats[]
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`))
-    img.src = src
-  })
 }
 
 function slugify(text: string): string {
