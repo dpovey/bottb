@@ -40,6 +40,14 @@ function createMockContext() {
       calls.gradients++
       return { addColorStop: () => {} }
     },
+    createRadialGradient: () => {
+      calls.gradients++
+      return { addColorStop: () => {} }
+    },
+    save: () => {},
+    restore: () => {},
+    translate: () => {},
+    scale: () => {},
     drawImage: (...a: unknown[]) => calls.drawImage.push(a),
     // Width scales with text length so wrapping/shrinking logic exercises.
     measureText: (t: string) => ({ width: t.length * 10 }),
@@ -76,12 +84,13 @@ describe('composeTitleOverlay', () => {
     expect(OV_H).toBe(2160)
   })
 
-  it('clears the full canvas without drawing a frame', () => {
+  it('clears the full canvas without drawing a video frame', () => {
     const { ctx, calls } = createMockContext()
     composeTitleOverlay(ctx, baseTitle)
     expect(calls.clearRect[0]).toEqual([0, 0, OV_W, OV_H])
     expect(calls.drawImage.length).toBe(0)
-    expect(calls.gradients).toBe(0)
+    // The legibility vignette behind the text is still a gradient fill.
+    expect(calls.gradients).toBeGreaterThan(0)
   })
 
   it('draws the band name and event details', () => {
@@ -122,6 +131,28 @@ describe('composeTitleOverlay', () => {
       })
     ).not.toThrow()
   })
+
+  it('draws a "Powered by / Supporting" sponsor row when logos are supplied', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      partnerLogo: fakeLogo,
+      youngcareLogo: fakeLogo,
+    })
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn).toContain('POWERED BY')
+    expect(drawn).toContain('SUPPORTING')
+    // No corner logos here, so both drawImage calls are the sponsor logos.
+    expect(calls.drawImage.length).toBe(2)
+  })
+
+  it('omits the sponsor row entirely when no sponsor logos are supplied', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, baseTitle)
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn).not.toContain('POWERED BY')
+    expect(drawn).not.toContain('SUPPORTING')
+  })
 })
 
 describe('composeCreditsOverlay', () => {
@@ -132,16 +163,26 @@ describe('composeCreditsOverlay', () => {
     expect(calls.drawImage.length).toBe(0)
   })
 
-  it('draws the band name, a heading, and every non-blank member line', () => {
+  it('draws the band name, a heading, and each member split into name + role', () => {
     const { ctx, calls } = createMockContext()
     composeCreditsOverlay(ctx, baseCredits)
     const drawn = calls.fillText.map((c) => c.text)
     expect(drawn).toContain('The Null Pointers')
     expect(drawn).toContain('BAND MEMBERS')
-    expect(drawn).toContain('Jane Doe — Vocals')
-    expect(drawn).toContain('John Smith — Guitar')
+    expect(drawn).toContain('Jane Doe')
+    expect(drawn).toContain('VOCALS')
+    expect(drawn).toContain('John Smith')
+    expect(drawn).toContain('GUITAR')
     // The blank line in `members` contributes nothing.
     expect(drawn).not.toContain('')
+  })
+
+  it('draws a name-only member with no role line', () => {
+    const { ctx, calls } = createMockContext()
+    composeCreditsOverlay(ctx, { ...baseCredits, members: ['Jane Doe'] })
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn).toContain('Jane Doe')
+    expect(drawn).not.toContain('VOCALS')
   })
 
   it('does not throw with an empty member list', () => {
@@ -187,7 +228,8 @@ describe('preview variants', () => {
     composeTitlePreview(ctx, fakeSource, 4000, 3000, baseTitle)
     expect(calls.clearRect[0]).toEqual([0, 0, PV_W, PV_H])
     expect(calls.drawImage.length).toBe(1) // the video frame; no logos supplied
-    expect(calls.gradients).toBe(2)
+    // Two frame scrims (top/bottom) plus the legibility vignette behind the text.
+    expect(calls.gradients).toBe(3)
     expect(calls.fillText.map((c) => c.text)).toContain('The Null Pointers')
   })
 

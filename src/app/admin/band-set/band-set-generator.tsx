@@ -31,6 +31,7 @@ import { useKeyframes } from '../thumbnails/use-keyframes'
 import { useVideoScrubber, SCRUB_FRAME } from '../thumbnails/use-video-scrubber'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
+const YOUNGCARE_LOGO_SRC = '/images/logos/youngcare.png'
 
 interface BandSetGeneratorProps {
   events: Event[]
@@ -65,6 +66,11 @@ function bandLogoUrl(band: Band): string | undefined {
   )
 }
 
+/** Drop a trailing "@ 6:30PM"-style time — the title card only needs the date. */
+function stripTime(label: string): string {
+  return label.replace(/\s*@\s*\d{1,2}:\d{2}\s*[AaPp]\.?[Mm]\.?$/, '').trim()
+}
+
 export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [mode, setMode] = useState<Mode>('title')
 
@@ -81,6 +87,10 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
   const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
+  const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
+  const [youngcareLogo, setYoungcareLogo] = useState<HTMLImageElement | null>(
+    null
+  )
   const [logoError, setLogoError] = useState<string | null>(null)
   const [fontReady, setFontReady] = useState(false)
 
@@ -92,10 +102,13 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const scrubber = useVideoScrubber(videoRef)
   const keyframes = useKeyframes(scrubber.videoUrl)
 
-  // Load the Bottb square logo + website font once.
+  // Load the Bottb square logo, the Youngcare logo, + website font once.
   useEffect(() => {
     loadImage(BOTTB_LOGO_SRC)
       .then(setBottbLogo)
+      .catch(() => {})
+    loadImage(YOUNGCARE_LOGO_SRC)
+      .then(setYoungcareLogo)
       .catch(() => {})
     loadJostFont()
       .then(() => setFontReady(true))
@@ -122,6 +135,34 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       cancelled = true
     }
   }, [eventId])
+
+  const selectedEvent = events.find((e) => e.id === eventId) ?? null
+  const partner = selectedEvent?.info?.national_partner ?? null
+
+  // Load the event's national-partner "Powered by" logo (e.g. Jumbo
+  // Interactive) through the same-origin proxy (arbitrary external URL, may
+  // lack CORS headers).
+  useEffect(() => {
+    let cancelled = false
+    const logoUrl = selectedEvent?.info?.national_partner?.logo_url
+    const pending = logoUrl
+      ? loadImage(
+          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(logoUrl)}`
+        )
+      : Promise.resolve(null)
+
+    pending
+      .then((img) => {
+        if (!cancelled) setPartnerLogo(img)
+      })
+      .catch(() => {
+        if (!cancelled) setPartnerLogo(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedEvent?.info?.national_partner?.logo_url])
 
   const selectedBand = bands.find((b) => b.id === bandId) ?? null
 
@@ -162,7 +203,13 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     const source = scrubber.videoReady && video ? video : null
     const sw = video?.videoWidth ?? 0
     const sh = video?.videoHeight ?? 0
-    const logos = { bottbLogo, companyLogo, bottbCorner }
+    const logos = {
+      bottbLogo,
+      companyLogo,
+      bottbCorner,
+      partnerLogo,
+      youngcareLogo,
+    }
 
     if (mode === 'title') {
       composeTitlePreview(ctx, source, sw, sh, {
@@ -185,6 +232,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     mode,
     bottbLogo,
     companyLogo,
+    partnerLogo,
+    youngcareLogo,
     bottbCorner,
     bandName,
     eventName,
@@ -203,7 +252,9 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     const event = events.find((e) => e.id === id)
     if (event) {
       setEventName(event.name)
-      setEventDate(formatEventDateLabel(event.date, event.timezone, event.info))
+      setEventDate(
+        stripTime(formatEventDateLabel(event.date, event.timezone, event.info))
+      )
       setEventVenue(event.location)
     }
   }
@@ -242,7 +293,13 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     canvas.height = OV_H
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const logos = { bottbLogo, companyLogo, bottbCorner }
+    const logos = {
+      bottbLogo,
+      companyLogo,
+      bottbCorner,
+      partnerLogo,
+      youngcareLogo,
+    }
 
     if (mode === 'title') {
       composeTitleOverlay(ctx, {
@@ -333,6 +390,17 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
             </AdminFormField>
           )}
           {logoError && <p className="text-sm text-error">{logoError}</p>}
+
+          {partner && (
+            <p className="text-xs text-gray-500">
+              Powered-by logo:{' '}
+              <span className="text-gray-300">{partner.name}</span>
+              {!partnerLogo && ' (could not load)'}
+            </p>
+          )}
+          <p className="text-xs text-gray-500">
+            Supporting Youngcare logo{!youngcareLogo && ' (could not load)'}
+          </p>
 
           <AdminFormField label="Logo layout">
             <div className="flex gap-2">
