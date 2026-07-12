@@ -151,6 +151,12 @@ const navSections: NavSection[] = [
         icon: <LayersIcon className="w-5 h-5" />,
         matchPath: ['/admin/posters'],
       },
+      {
+        label: 'Band Set',
+        href: '/admin/band-set',
+        icon: <UsersIcon className="w-5 h-5" />,
+        matchPath: ['/admin/band-set'],
+      },
     ],
   },
   // Directory section
