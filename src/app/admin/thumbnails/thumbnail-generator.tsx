@@ -93,6 +93,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
   const [logoError, setLogoError] = useState<string | null>(null)
   const [fontReady, setFontReady] = useState(false)
+  const [pngSizeWarning, setPngSizeWarning] = useState<string | null>(null)
 
   // Seek coalescing — never queue more than one pending seek so fast dragging
   // doesn't back up a long chain of decodes.
@@ -381,6 +382,8 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     return `${base}${songPart}-${suffix}.${ext}`
   }
 
+  const YOUTUBE_MAX_BYTES = 2 * 1024 * 1024
+
   const downloadCanvas = (
     ref: React.RefObject<HTMLCanvasElement | null>,
     suffix: string
@@ -392,6 +395,26 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
       'image/jpeg',
       0.92
     )
+  }
+
+  // YouTube re-compresses whatever we upload, so a lossless source avoids
+  // stacking our own JPEG pass on top of theirs. PNG can blow past YouTube's
+  // 2MB thumbnail cap on a busy/noisy frame, so we warn rather than silently
+  // handing over a file that'll get rejected.
+  const downloadYouTubePng = () => {
+    const canvas = ytCanvasRef.current
+    if (!canvas) return
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      if (blob.size > YOUTUBE_MAX_BYTES) {
+        setPngSizeWarning(
+          `PNG export is ${(blob.size / (1024 * 1024)).toFixed(1)}MB, over YouTube's 2MB thumbnail limit. Use the JPEG export instead.`
+        )
+      } else {
+        setPngSizeWarning(null)
+      }
+      triggerDownload(blob, buildName('youtube', 'png'))
+    }, 'image/png')
   }
 
   // Transparent 4K PNG of just the logos + text, for compositing over the
@@ -559,7 +582,17 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 onClick={() => downloadCanvas(ytCanvasRef, 'youtube')}
               >
                 <DownloadIcon className="mr-1.5 h-4 w-4" />
-                YouTube
+                YouTube (JPEG)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline-solid"
+                disabled={!hasVideo}
+                title="Lossless PNG — avoids double JPEG compression, but may exceed YouTube's 2MB limit on busy frames"
+                onClick={downloadYouTubePng}
+              >
+                <DownloadIcon className="mr-1.5 h-4 w-4" />
+                YouTube (PNG)
               </Button>
               {!isPortrait && (
                 <Button
@@ -584,6 +617,10 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
               </Button>
             </div>
           </div>
+
+          {pngSizeWarning && (
+            <p className="text-xs text-amber-400/80">{pngSizeWarning}</p>
+          )}
 
           <canvas
             ref={ytCanvasRef}
