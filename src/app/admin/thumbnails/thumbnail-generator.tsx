@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Card, FileDropzone } from '@/components/ui'
 import { AdminFormField, AdminInput, AdminSelect } from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
-import type { CompanyWithStats } from '@/lib/db-types'
+import type { SetlistSong } from '@/lib/db'
+import type { Band, Event } from '@/lib/db-types'
 import { coverSlack, loadImage } from '@/lib/canvas'
 import {
   composeInstagram,
@@ -26,7 +27,7 @@ const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
 const FRAME = 1 / 30 // assume ~30fps for single-frame stepping
 
 interface ThumbnailGeneratorProps {
-  companies: CompanyWithStats[]
+  events: Event[]
 }
 
 function slugify(text: string): string {
@@ -34,6 +35,13 @@ function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** The band's primary company logo (multi-company bands, or the legacy single company). */
+function bandLogoUrl(band: Band): string | undefined {
+  return (
+    band.companies?.find((c) => c.logo_url)?.logo_url ?? band.company_logo_url
+  )
 }
 
 function formatTime(seconds: number): string {
@@ -48,10 +56,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value))
 }
 
-export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
-  // Only companies with a usable logo can drive the top-left brand mark.
-  const withLogos = companies.filter((c) => c.logo_url)
-
+export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const ytCanvasRef = useRef<HTMLCanvasElement>(null)
   const igCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -68,7 +73,12 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     null
   )
 
-  const [companySlug, setCompanySlug] = useState('')
+  const [eventId, setEventId] = useState('')
+  const [bands, setBands] = useState<Band[]>([])
+  const [bandId, setBandId] = useState('')
+  const [songsByBand, setSongsByBand] = useState<Record<string, SetlistSong[]>>(
+    {}
+  )
   const [artist, setArtist] = useState('')
   const [song, setSong] = useState('')
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
@@ -90,7 +100,6 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   const pendingSeekRef = useRef<number | null>(null)
 
   const keyframes = useKeyframes(videoUrl)
-  const selectedCompany = withLogos.find((c) => c.slug === companySlug) ?? null
 
   // Load the Bottb square logo + website font once.
   useEffect(() => {
@@ -102,11 +111,64 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
       .catch(() => setFontReady(true))
   }, [])
 
-  // Load the selected company logo through the same-origin proxy. All state
+  // Load the bands competing at the selected event.
+  useEffect(() => {
+    if (!eventId) {
+      // Clear asynchronously to avoid a synchronous setState in the effect body.
+      Promise.resolve().then(() => setBands([]))
+      return
+    }
+    let cancelled = false
+    fetch(`/api/bands/${eventId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: Band[]) => {
+        if (!cancelled) setBands(data)
+      })
+      .catch(() => {
+        if (!cancelled) setBands([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Load every band's setlist for the selected event (admin endpoint, so it
+  // includes songs regardless of locked/finalized status) — used to power
+  // the song combobox.
+  useEffect(() => {
+    if (!eventId) {
+      Promise.resolve().then(() => setSongsByBand({}))
+      return
+    }
+    let cancelled = false
+    fetch(`/api/events/${eventId}/setlists`)
+      .then((res) => (res.ok ? res.json() : { setlists: [] }))
+      .then(
+        (data: { setlists?: { band_id: string; songs: SetlistSong[] }[] }) => {
+          if (cancelled) return
+          const map: Record<string, SetlistSong[]> = {}
+          for (const setlist of data.setlists ?? []) {
+            map[setlist.band_id] = setlist.songs
+          }
+          setSongsByBand(map)
+        }
+      )
+      .catch(() => {
+        if (!cancelled) setSongsByBand({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  const selectedBand = bands.find((b) => b.id === bandId) ?? null
+  const bandSongs = bandId ? (songsByBand[bandId] ?? []) : []
+
+  // Load the selected band's logo through the same-origin proxy. All state
   // updates happen inside the async callbacks to avoid cascading renders.
   useEffect(() => {
     let cancelled = false
-    const logoUrl = selectedCompany?.logo_url
+    const logoUrl = selectedBand ? bandLogoUrl(selectedBand) : undefined
     const pending = logoUrl
       ? loadImage(
           `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(logoUrl)}`
@@ -122,13 +184,13 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
       .catch(() => {
         if (cancelled) return
         setCompanyLogo(null)
-        setLogoError('Could not load this company logo.')
+        setLogoError('Could not load this band logo.')
       })
 
     return () => {
       cancelled = true
     }
-  }, [selectedCompany?.logo_url])
+  }, [selectedBand])
 
   // Clean up the object URL when the video changes / unmounts.
   useEffect(() => {
@@ -238,8 +300,15 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
     }
   }
 
-  const handleCompanyChange = (slug: string) => {
-    setCompanySlug(slug)
+  const handleEventChange = (id: string) => {
+    setEventId(id)
+    setBandId('')
+  }
+
+  const handleBandChange = (id: string) => {
+    setBandId(id)
+    const band = bands.find((b) => b.id === id)
+    if (band) setArtist(band.name)
   }
 
   // --- Instagram crop drag-to-reposition -----------------------------------
@@ -303,8 +372,11 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
   }
 
   const buildName = (suffix: string, ext: string) => {
-    const base =
-      selectedCompany?.slug || (artist ? slugify(artist) : 'thumbnail')
+    const base = selectedBand
+      ? slugify(selectedBand.name)
+      : artist
+        ? slugify(artist)
+        : 'thumbnail'
     const songPart = song.trim() ? `-${slugify(song)}` : ''
     return `${base}${songPart}-${suffix}.${ext}`
   }
@@ -385,19 +457,35 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
 
         <Card padding="md" className="space-y-4">
           <h2 className="text-lg font-semibold text-white">2. Branding</h2>
-          <AdminFormField label="Band / company">
+          <AdminFormField label="Event">
             <AdminSelect
-              value={companySlug}
-              onChange={(e) => handleCompanyChange(e.target.value)}
+              value={eventId}
+              onChange={(e) => handleEventChange(e.target.value)}
             >
-              <option value="">— Select a company —</option>
-              {withLogos.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
+              <option value="">— Select an event —</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name}
                 </option>
               ))}
             </AdminSelect>
           </AdminFormField>
+
+          {eventId && (
+            <AdminFormField label="Band">
+              <AdminSelect
+                value={bandId}
+                onChange={(e) => handleBandChange(e.target.value)}
+              >
+                <option value="">— Select a band —</option>
+                {bands.map((band) => (
+                  <option key={band.id} value={band.id}>
+                    {band.name}
+                  </option>
+                ))}
+              </AdminSelect>
+            </AdminFormField>
+          )}
           {logoError && <p className="text-sm text-error">{logoError}</p>}
 
           <AdminFormField label="Artist name">
@@ -408,12 +496,25 @@ export function ThumbnailGenerator({ companies }: ThumbnailGeneratorProps) {
             />
           </AdminFormField>
 
-          <AdminFormField label="Song title">
+          <AdminFormField
+            label="Song title"
+            helperText={
+              bandSongs.length > 0
+                ? `Pick from this band's ${bandSongs.length}-song setlist, or type any title.`
+                : 'Type any title — no setlist songs loaded for this band yet.'
+            }
+          >
             <AdminInput
               value={song}
               onChange={(e) => setSong(e.target.value)}
               placeholder="e.g. Stairway to Production"
+              list="setlist-songs"
             />
+            <datalist id="setlist-songs">
+              {bandSongs.map((s) => (
+                <option key={s.id} value={s.title} />
+              ))}
+            </datalist>
           </AdminFormField>
 
           <AdminFormField label="Logo layout">

@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { getCompanies } from '@/lib/db'
+import { getEvents } from '@/lib/db'
 import { AdminLayout } from '@/components/layouts'
 import { ThumbnailGenerator } from './thumbnail-generator'
 
@@ -11,7 +11,7 @@ export default async function ThumbnailsPage() {
     redirect('/admin/login')
   }
 
-  const companies = await getCompanies()
+  const events = await getEvents()
 
   return (
     <AdminLayout
@@ -19,7 +19,7 @@ export default async function ThumbnailsPage() {
       subtitle="Grab a frame from a video and export YouTube, Instagram/Reels and LinkedIn thumbnails"
       breadcrumbs={[{ label: 'Thumbnails' }]}
     >
-      <ThumbnailGenerator companies={companies} />
+      <ThumbnailGenerator events={events} />
     </AdminLayout>
   )
 }

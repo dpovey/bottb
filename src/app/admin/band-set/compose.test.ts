@@ -9,6 +9,7 @@ import {
   PV_H,
   PV_W,
   type CreditsContent,
+  type CreditsMember,
   type TitleContent,
 } from './compose'
 
@@ -69,7 +70,11 @@ const baseTitle: TitleContent = {
 
 const baseCredits: CreditsContent = {
   bandName: 'The Null Pointers',
-  members: ['Jane Doe — Vocals', 'John Smith — Guitar', ''],
+  members: [
+    { name: 'John Smith', role: 'Guitar' },
+    { name: 'Jane Doe', role: 'Vocals' },
+    { name: '', role: '' },
+  ],
   bottbLogo: null,
   companyLogo: null,
   bottbCorner: 'top-right',
@@ -163,23 +168,34 @@ describe('composeCreditsOverlay', () => {
     expect(calls.drawImage.length).toBe(0)
   })
 
-  it('draws the band name, a heading, and each member split into name + role', () => {
+  it('draws the band name, a "FEATURING" heading, and each member split into name + role', () => {
     const { ctx, calls } = createMockContext()
     composeCreditsOverlay(ctx, baseCredits)
     const drawn = calls.fillText.map((c) => c.text)
     expect(drawn).toContain('The Null Pointers')
-    expect(drawn).toContain('BAND MEMBERS')
+    expect(drawn).toContain('FEATURING')
     expect(drawn).toContain('Jane Doe')
     expect(drawn).toContain('VOCALS')
     expect(drawn).toContain('John Smith')
     expect(drawn).toContain('GUITAR')
-    // The blank line in `members` contributes nothing.
+    // The blank entry in `members` contributes nothing.
     expect(drawn).not.toContain('')
+  })
+
+  it('sorts members alphabetically by surname', () => {
+    const { ctx, calls } = createMockContext()
+    // baseCredits lists John Smith before Jane Doe; Doe should draw first.
+    composeCreditsOverlay(ctx, baseCredits)
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn.indexOf('Jane Doe')).toBeLessThan(drawn.indexOf('John Smith'))
   })
 
   it('draws a name-only member with no role line', () => {
     const { ctx, calls } = createMockContext()
-    composeCreditsOverlay(ctx, { ...baseCredits, members: ['Jane Doe'] })
+    composeCreditsOverlay(ctx, {
+      ...baseCredits,
+      members: [{ name: 'Jane Doe' }],
+    })
     const drawn = calls.fillText.map((c) => c.text)
     expect(drawn).toContain('Jane Doe')
     expect(drawn).not.toContain('VOCALS')
@@ -192,20 +208,23 @@ describe('composeCreditsOverlay', () => {
     ).not.toThrow()
   })
 
-  it('shrinks the per-member line height as the roster grows', () => {
+  it('shrinks the per-member line height as a (single-column) roster grows', () => {
     const short = createMockContext()
     composeCreditsOverlay(short.ctx, {
       ...baseCredits,
-      members: ['Jane Doe', 'John Smith'],
+      members: [{ name: 'Doe' }, { name: 'Smith' }],
     })
     const long = createMockContext()
-    const roster = Array.from({ length: 15 }, (_, i) => `Member ${i}`)
+    // Below TWO_COLUMN_THRESHOLD, so this stays a single column.
+    const roster: CreditsMember[] = Array.from({ length: 5 }, (_, i) => ({
+      name: `Member${i}`,
+    }))
     composeCreditsOverlay(long.ctx, { ...baseCredits, members: roster })
 
     const gapBetween = (calls: { text: string; y: number }[]) => {
       const memberYs = calls
         .filter(
-          (c) => c.text.startsWith('Member') || /^(Jane|John)/.test(c.text)
+          (c) => c.text.startsWith('Member') || /^(Doe|Smith)/.test(c.text)
         )
         .map((c) => c.y)
       return memberYs.length > 1 ? memberYs[1] - memberYs[0] : 0
@@ -214,6 +233,32 @@ describe('composeCreditsOverlay', () => {
     expect(gapBetween(long.calls.fillText)).toBeLessThan(
       gapBetween(short.calls.fillText)
     )
+  })
+
+  it('keeps a single centred column at the two-column threshold', () => {
+    const { ctx, calls } = createMockContext()
+    const roster: CreditsMember[] = Array.from({ length: 5 }, (_, i) => ({
+      name: `Member${i}`,
+    }))
+    composeCreditsOverlay(ctx, { ...baseCredits, members: roster })
+    const xs = new Set(
+      calls.fillText.filter((c) => c.text.startsWith('Member')).map((c) => c.x)
+    )
+    expect(xs.size).toBe(1)
+  })
+
+  it('splits into two columns once the roster exceeds the threshold', () => {
+    const { ctx, calls } = createMockContext()
+    const roster: CreditsMember[] = Array.from({ length: 8 }, (_, i) => ({
+      name: `Member${i}`,
+    }))
+    composeCreditsOverlay(ctx, { ...baseCredits, members: roster })
+    const memberCalls = calls.fillText.filter((c) =>
+      c.text.startsWith('Member')
+    )
+    expect(memberCalls).toHaveLength(8)
+    const xs = new Set(memberCalls.map((c) => c.x))
+    expect(xs.size).toBe(2)
   })
 })
 

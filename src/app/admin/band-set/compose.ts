@@ -44,10 +44,16 @@ export interface TitleContent extends BrandLogos {
   eventVenue: string
 }
 
+export interface CreditsMember {
+  name: string
+  /** e.g. "Vocals", "Guitar" — optional. */
+  role?: string
+}
+
 export interface CreditsContent extends BrandLogos {
   bandName: string
-  /** One line per credit, e.g. "Jane Doe — Vocals"; blank lines are ignored. */
-  members: string[]
+  /** Entries with a blank `name` are ignored. */
+  members: CreditsMember[]
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -196,11 +202,19 @@ function drawAccentRule(
   ctx.fillRect(centerX - width / 2, y, width, thickness)
 }
 
-/** Split "Jane Doe — Vocals" into a name and an optional role. */
-function parseMemberLine(line: string): { name: string; role?: string } {
-  const parts = line.split(/\s+[-–—]\s+/)
-  if (parts.length < 2) return { name: line }
-  return { name: parts[0], role: parts.slice(1).join(' – ') }
+/** The last whitespace-separated token of a name, for surname sorting. */
+function surnameOf(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  return parts[parts.length - 1] ?? ''
+}
+
+/** Sort credits alphabetically by surname (last name), case-insensitively. */
+function sortBySurname(members: CreditsMember[]): CreditsMember[] {
+  return [...members].sort((a, b) =>
+    surnameOf(a.name).localeCompare(surnameOf(b.name), undefined, {
+      sensitivity: 'base',
+    })
+  )
 }
 
 /**
@@ -328,8 +342,89 @@ function drawTitleAdornments(
 }
 
 /**
+ * Draw one member's name (+ optional role beneath it, in the accent colour)
+ * centred at `centerX`, occupying `entryH` of vertical space starting at
+ * `baseline`.
+ */
+function drawMemberEntry(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  baseline: number,
+  entryH: number,
+  maxTextW: number,
+  { name, role }: CreditsMember
+): void {
+  if (role) {
+    const nameSize = fitFont(
+      ctx,
+      name,
+      600,
+      Math.round(entryH * 0.42),
+      maxTextW
+    )
+    ctx.font = `600 ${nameSize}px ${FONT_FAMILY}`
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(name, centerX, baseline + entryH * 0.55)
+
+    const roleSize = fitFont(
+      ctx,
+      role,
+      500,
+      Math.round(entryH * 0.26),
+      maxTextW
+    )
+    ctx.font = `500 ${roleSize}px ${FONT_FAMILY}`
+    ctx.fillStyle = ACCENT_COLOR
+    setLetterSpacing(ctx, 0.5)
+    ctx.fillText(
+      role.toUpperCase(),
+      centerX,
+      baseline + entryH * 0.55 + roleSize * 1.2
+    )
+    setLetterSpacing(ctx, 0)
+  } else {
+    const nameSize = fitFont(
+      ctx,
+      name,
+      500,
+      Math.round(entryH * 0.55),
+      maxTextW
+    )
+    ctx.font = `500 ${nameSize}px ${FONT_FAMILY}`
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(name, centerX, baseline + entryH * 0.75)
+  }
+}
+
+/** Weight a member entry: a role needs ~1.7x the vertical space of a bare name. */
+function memberWeight(member: CreditsMember): number {
+  return member.role ? 1.7 : 1
+}
+
+/** Stack a column of member entries starting at `startBaseline`. */
+function drawMemberColumn(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  startBaseline: number,
+  maxTextW: number,
+  members: CreditsMember[],
+  unit: number
+): void {
+  let baseline = startBaseline
+  for (const member of members) {
+    const entryH = unit * memberWeight(member)
+    drawMemberEntry(ctx, centerX, baseline, entryH, maxTextW, member)
+    baseline += entryH
+  }
+}
+
+/** Above this roster size, split into two side-by-side columns instead of one long list. */
+const TWO_COLUMN_THRESHOLD = 5
+
+/**
  * Draw the credits-page adornments — corner logos, the band name as a
- * heading, and a centred, auto-shrunk list of member credits.
+ * heading, and an auto-shrunk, surname-sorted list of member credits
+ * (single centred column, or two columns once the roster gets long).
  */
 function drawCreditsAdornments(
   ctx: CanvasRenderingContext2D,
@@ -343,8 +438,11 @@ function drawCreditsAdornments(
   const centerX = w / 2
   const maxTextW = Math.round(w * 0.82)
   const bandName = content.bandName.trim()
-  const members = content.members.map((m) => m.trim()).filter(Boolean)
-  const parsed = members.map(parseMemberLine)
+  const members = sortBySurname(
+    content.members
+      .map((m) => ({ name: m.name.trim(), role: m.role?.trim() || undefined }))
+      .filter((m) => m.name)
+  )
 
   setTextStyle(ctx, h)
   let baseline = Math.round(h * 0.3)
@@ -357,7 +455,7 @@ function drawCreditsAdornments(
     baseline += Math.round(size * 0.55)
   }
 
-  const label = 'BAND MEMBERS'
+  const label = 'FEATURING'
   const labelSize = Math.max(12, Math.round(h * 0.024))
   ctx.font = `600 ${labelSize}px ${FONT_FAMILY}`
   ctx.fillStyle = ACCENT_COLOR
@@ -368,61 +466,34 @@ function drawCreditsAdornments(
   ctx.fillStyle = '#ffffff'
   baseline += Math.round(h * 0.05)
 
-  if (parsed.length > 0) {
-    // Roster entries with a role get ~1.7x the vertical space of a plain
-    // name line (room for name + role stacked); shrink as the roster grows
-    // so a long list still fits above the sponsor row / bottom margin.
+  if (members.length > 0) {
+    // Shrink line height as the roster grows so it still fits above the
+    // sponsor row / bottom margin; beyond TWO_COLUMN_THRESHOLD, split into
+    // two columns instead of shrinking indefinitely.
     const bottomLimit =
       h * (content.partnerLogo || content.youngcareLogo ? 0.84 : 0.92)
     const availableH = Math.max(bottomLimit - baseline, h * 0.1)
-    const weights = parsed.map((m) => (m.role ? 1.7 : 1))
-    const totalWeight = weights.reduce((a, b) => a + b, 0)
-    const unit = clamp(availableH / totalWeight, h * 0.028, h * 0.09)
 
-    parsed.forEach(({ name, role }, i) => {
-      const entryH = unit * weights[i]
-      if (role) {
-        const nameSize = fitFont(
-          ctx,
-          name,
-          600,
-          Math.round(entryH * 0.42),
-          maxTextW
-        )
-        ctx.font = `600 ${nameSize}px ${FONT_FAMILY}`
-        ctx.fillStyle = '#ffffff'
-        baseline += entryH * 0.55
-        ctx.fillText(name, centerX, baseline)
-
-        const roleSize = fitFont(
-          ctx,
-          role,
-          500,
-          Math.round(entryH * 0.26),
-          maxTextW
-        )
-        ctx.font = `500 ${roleSize}px ${FONT_FAMILY}`
-        ctx.fillStyle = ACCENT_COLOR
-        setLetterSpacing(ctx, 0.5)
-        baseline += roleSize * 1.2
-        ctx.fillText(role.toUpperCase(), centerX, baseline)
-        setLetterSpacing(ctx, 0)
-        baseline += entryH * 0.15
-      } else {
-        const nameSize = fitFont(
-          ctx,
-          name,
-          500,
-          Math.round(entryH * 0.55),
-          maxTextW
-        )
-        ctx.font = `500 ${nameSize}px ${FONT_FAMILY}`
-        ctx.fillStyle = '#ffffff'
-        baseline += entryH * 0.75
-        ctx.fillText(name, centerX, baseline)
-        baseline += entryH * 0.25
-      }
-    })
+    if (members.length > TWO_COLUMN_THRESHOLD) {
+      const mid = Math.ceil(members.length / 2)
+      const left = members.slice(0, mid)
+      const right = members.slice(mid)
+      const colTotalWeight = Math.max(
+        left.reduce((sum, m) => sum + memberWeight(m), 0),
+        right.reduce((sum, m) => sum + memberWeight(m), 0)
+      )
+      const unit = clamp(availableH / colTotalWeight, h * 0.032, h * 0.075)
+      const colGap = w * 0.06
+      const colTextW = Math.round((w * 0.82 - colGap) / 2)
+      const leftX = centerX - colGap / 2 - colTextW / 2
+      const rightX = centerX + colGap / 2 + colTextW / 2
+      drawMemberColumn(ctx, leftX, baseline, colTextW, left, unit)
+      drawMemberColumn(ctx, rightX, baseline, colTextW, right, unit)
+    } else {
+      const totalWeight = members.reduce((sum, m) => sum + memberWeight(m), 0)
+      const unit = clamp(availableH / totalWeight, h * 0.028, h * 0.09)
+      drawMemberColumn(ctx, centerX, baseline, maxTextW, members, unit)
+    }
   }
 
   resetTextStyle(ctx)

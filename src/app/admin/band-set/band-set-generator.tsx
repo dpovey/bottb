@@ -5,13 +5,12 @@ import {
   AdminFormField,
   AdminInput,
   AdminSelect,
-  AdminTextarea,
   Button,
   Card,
   FileDropzone,
   Tabs,
 } from '@/components/ui'
-import { DownloadIcon } from '@/components/icons'
+import { DeleteIcon, DownloadIcon, PlusIcon } from '@/components/icons'
 import type { Band, Event } from '@/lib/db-types'
 import { formatEventDateLabel } from '@/lib/date-utils'
 import { loadImage } from '@/lib/canvas'
@@ -38,6 +37,11 @@ interface BandSetGeneratorProps {
 }
 
 type Mode = 'title' | 'credits'
+
+interface MemberRow {
+  name: string
+  role: string
+}
 
 const TABS = [
   { id: 'title' as const, label: 'Title page' },
@@ -82,7 +86,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [eventName, setEventName] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [eventVenue, setEventVenue] = useState('')
-  const [membersText, setMembersText] = useState('')
+  const [members, setMembers] = useState<MemberRow[]>([{ name: '', role: '' }])
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
@@ -223,7 +227,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       composeCreditsPreview(ctx, source, sw, sh, {
         ...logos,
         bandName,
-        members: membersText.split('\n'),
+        members,
       })
     }
   }, [
@@ -239,7 +243,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     eventName,
     eventDate,
     eventVenue,
-    membersText,
+    members,
   ])
 
   useEffect(() => {
@@ -264,8 +268,31 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     const band = bands.find((b) => b.id === id)
     if (band) {
       setBandName(band.name)
-      setMembersText((band.info?.members ?? []).join('\n'))
+      const saved = band.info?.members ?? []
+      setMembers(
+        saved.length
+          ? saved.map((name) => ({ name, role: '' }))
+          : [{ name: '', role: '' }]
+      )
     }
+  }
+
+  const addMember = () => {
+    setMembers((prev) => [...prev, { name: '', role: '' }])
+  }
+
+  const removeMember = (index: number) => {
+    setMembers((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const updateMember = (
+    index: number,
+    field: keyof MemberRow,
+    value: string
+  ) => {
+    setMembers((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, [field]: value } : m))
+    )
   }
 
   const triggerDownload = (blob: Blob | null, filename: string) => {
@@ -313,7 +340,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       composeCreditsOverlay(ctx, {
         ...logos,
         bandName,
-        members: membersText.split('\n'),
+        members,
       })
     }
     canvas.toBlob(
@@ -478,14 +505,48 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
               </AdminFormField>
               <AdminFormField
                 label="Band members"
-                helperText="One per line, e.g. &ldquo;Jane Doe — Vocals&rdquo;. Pre-filled from the band's saved lineup when available."
+                helperText="Pre-filled from the band's saved lineup when available. Shown alphabetically by surname, split into two columns once there are more than 6."
               >
-                <AdminTextarea
-                  value={membersText}
-                  onChange={(e) => setMembersText(e.target.value)}
-                  placeholder={'Jane Doe — Vocals\nJohn Smith — Guitar'}
-                  rows={8}
-                />
+                <div className="space-y-2">
+                  {members.map((member, i) => (
+                    <div key={i} className="flex gap-2">
+                      <AdminInput
+                        value={member.name}
+                        onChange={(e) =>
+                          updateMember(i, 'name', e.target.value)
+                        }
+                        placeholder="Name"
+                        className="flex-1"
+                      />
+                      <AdminInput
+                        value={member.role}
+                        onChange={(e) =>
+                          updateMember(i, 'role', e.target.value)
+                        }
+                        placeholder="Instrument"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline-solid"
+                        aria-label="Remove member"
+                        onClick={() => removeMember(i)}
+                      >
+                        <DeleteIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline-solid"
+                    onClick={addMember}
+                  >
+                    <PlusIcon className="mr-1.5 h-4 w-4" />
+                    Add member
+                  </Button>
+                </div>
               </AdminFormField>
             </div>
           )}
