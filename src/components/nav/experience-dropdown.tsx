@@ -10,6 +10,7 @@ import {
   PhotoIcon,
   PlayCircleIcon,
   CameraIcon,
+  VideoIcon,
   ChevronDownIcon,
 } from '@/components/icons'
 
@@ -36,6 +37,12 @@ const experienceLinks = [
     label: 'Photographers',
     description: 'Our talented photographers',
     icon: <CameraIcon className="w-5 h-5" />,
+  },
+  {
+    href: '/videographers',
+    label: 'Videographers',
+    description: 'The filmmakers behind our videos',
+    icon: <VideoIcon className="w-5 h-5" />,
   },
 ]
 

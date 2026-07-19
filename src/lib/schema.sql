@@ -503,3 +503,28 @@ CREATE TABLE IF NOT EXISTS merch_orders (
 );
 ALTER TABLE ONLY merch_orders ADD CONSTRAINT merch_orders_stripe_session_id_unique UNIQUE (stripe_session_id);
 CREATE INDEX idx_merch_orders_status_created ON merch_orders (status, created_at);
+
+-- Videographers (mirrors photographers). A videographer shoots a whole event,
+-- so they are linked to events via the event_videographers join table.
+CREATE TABLE IF NOT EXISTS videographers (
+    slug character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    bio text,
+    location character varying(255),
+    website text,
+    instagram text,
+    email text,
+    avatar_url text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+ALTER TABLE ONLY videographers ADD CONSTRAINT videographers_pkey PRIMARY KEY (slug);
+CREATE INDEX IF NOT EXISTS idx_videographers_name ON videographers(name);
+
+CREATE TABLE IF NOT EXISTS event_videographers (
+    event_id character varying(255) NOT NULL,
+    videographer_slug character varying(255) NOT NULL
+);
+ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_pkey PRIMARY KEY (event_id, videographer_slug);
+CREATE INDEX IF NOT EXISTS idx_event_videographers_slug ON event_videographers(videographer_slug);
+ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_videographer_slug_fkey FOREIGN KEY (videographer_slug) REFERENCES videographers(slug) ON DELETE CASCADE;

@@ -100,6 +100,23 @@ export interface PhotographerWithStats extends Photographer {
   photo_count: number
 }
 
+export interface Videographer {
+  slug: string
+  name: string
+  bio: string | null
+  location: string | null
+  website: string | null
+  instagram: string | null
+  email: string | null
+  avatar_url: string | null
+  created_at: string
+}
+
+export interface VideographerWithStats extends Videographer {
+  /** Number of events this videographer has filmed */
+  event_count: number
+}
+
 export interface Band {
   id: string
   event_id: string

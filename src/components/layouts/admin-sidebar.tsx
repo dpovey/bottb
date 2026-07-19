@@ -175,6 +175,12 @@ const navSections: NavSection[] = [
         icon: <CameraIcon className="w-5 h-5" />,
         matchPath: ['/admin/photographers'],
       },
+      {
+        label: 'Videographers',
+        href: '/admin/videographers',
+        icon: <VideoIcon className="w-5 h-5" />,
+        matchPath: ['/admin/videographers'],
+      },
     ],
   },
   // Settings section

@@ -233,6 +233,20 @@ export default function AdminDashboard({
         </Link>
 
         <Link
+          href="/admin/videographers"
+          className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
+        >
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+              <VideoIcon className="w-5 h-5 text-accent" />
+            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-accent transition-colors">
+              Videographers
+            </h3>
+          </div>
+        </Link>
+
+        <Link
           href="/admin/social"
           className="bg-elevated rounded-xl p-4 hover:bg-white/10 transition-colors group border border-white/5"
         >

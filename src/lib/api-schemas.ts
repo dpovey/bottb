@@ -95,6 +95,20 @@ export const photographerCreateSchema = z.object({
 })
 export type PhotographerCreateBody = z.infer<typeof photographerCreateSchema>
 
+export const videographerCreateSchema = z.object({
+  slug: slugString,
+  name: trimmedString('name', 120),
+  bio: optionalText(2000),
+  location: optionalText(120),
+  website: optionalUrl,
+  instagram: optionalText(60),
+  email: optionalText(120),
+  avatar_url: optionalUrl,
+  /** Event ids this videographer filmed (whole-event attribution) */
+  event_ids: z.array(z.string().trim().max(64)).optional(),
+})
+export type VideographerCreateBody = z.infer<typeof videographerCreateSchema>
+
 export const companyCreateSchema = z.object({
   slug: slugString,
   name: trimmedString('name', 120),

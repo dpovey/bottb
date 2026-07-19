@@ -47,6 +47,7 @@ const mobileMenuSections = [
       { href: '/photos', label: 'Photos' },
       { href: '/videos', label: 'Videos' },
       { href: '/photographers', label: 'Photographers' },
+      { href: '/videographers', label: 'Videographers' },
     ],
   },
 ]

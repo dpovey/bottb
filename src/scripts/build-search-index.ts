@@ -121,6 +121,16 @@ const staticPages: SearchDocument[] = [
     image: '',
   },
   {
+    id: 'page-videographers',
+    title: 'Videographers',
+    content:
+      'Meet the videographers who film Battle of the Tech Bands events. See the filmmakers behind our highlight reels and performance videos.',
+    type: 'page',
+    url: '/videographers',
+    subtitle: 'Event videographers',
+    image: '',
+  },
+  {
     id: 'page-events',
     title: 'All Events',
     content:

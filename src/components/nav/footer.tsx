@@ -17,6 +17,7 @@ const sitemapLinks = {
     { label: 'Photos', href: '/photos' },
     { label: 'Videos', href: '/videos' },
     { label: 'Photographers', href: '/photographers' },
+    { label: 'Videographers', href: '/videographers' },
   ],
   info: [
     { label: 'About', href: '/about' },
