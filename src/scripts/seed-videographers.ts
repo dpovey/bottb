@@ -50,7 +50,9 @@ const videographers: VideographerSeed[] = [
     website: 'https://www.linkedin.com/in/ramsay-waterhouse-aa19b038b/',
     instagram: 'https://www.instagram.com/ramsaywaterhouse/',
     email: null,
-    avatar_url: null,
+    // Re-hosted from Instagram via upload-videographer-avatars.ts
+    avatar_url:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/videographers/ramsay-waterhouse/avatar.jpg',
     eventIds: ['melbourne-2026'],
   },
 ]
