@@ -37,7 +37,9 @@ const videographers: VideographerSeed[] = [
     website: 'https://jacobbriantphotography.com.au/',
     instagram: 'https://www.instagram.com/j.b_photo/',
     email: null,
-    avatar_url: null,
+    // Reuse Jacob's photographer avatar (same person)
+    avatar_url:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/photographers/jacob-briant/avatar.jpg',
     eventIds: ['brisbane-2025'],
   },
   {
