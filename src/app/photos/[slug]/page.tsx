@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { slugify } from '@/lib/utils'
 import { buildSlideshowUrl } from '@/lib/shuffle-types'
+import { buildGalleryUrl } from '@/lib/photo-filters'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoPageClient } from './photo-page-client'
@@ -286,14 +287,13 @@ export default async function PhotoPage({ params, searchParams }: Props) {
     h1Text += ` #${photoNumber}`
   }
 
-  // Build gallery URL with filters preserved
-  const galleryParams = new URLSearchParams()
-  if (filters.event) galleryParams.set('event', filters.event)
-  if (filters.photographer)
-    galleryParams.set('photographer', filters.photographer)
-  if (filters.company) galleryParams.set('company', filters.company)
-  if (filters.shuffle) galleryParams.set('shuffle', filters.shuffle)
-  const galleryUrl = `/photos${galleryParams.toString() ? `?${galleryParams.toString()}` : ''}`
+  // Build gallery URL with filters preserved (shared serializer)
+  const galleryUrl = buildGalleryUrl({
+    eventId: filters.event ?? null,
+    photographer: filters.photographer ?? null,
+    companySlug: filters.company ?? null,
+    shuffle: filters.shuffle ?? null,
+  })
 
   // Build breadcrumbs: Home > Photos > Event > Company > #42
   const breadcrumbs: { label: string; href?: string }[] = [

@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Event, PhotoWithCluster } from '@/lib/db'
 import { PhotoSlideshow } from '@/components/photos/photo-slideshow'
-import { buildPhotoApiParams, type ShuffleParam } from '@/lib/shuffle-types'
+import { photoFiltersToApiParams } from '@/lib/photo-filters'
+import { usePhotoFilters } from '@/lib/use-photo-filters'
 import { VinylSpinner } from '@/components/ui'
 
 interface Company {
@@ -42,7 +43,6 @@ export function SlideshowPageContent({
   initialShuffle,
 }: SlideshowPageContentProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   const [photos, setPhotos] = useState<PhotoWithCluster[]>([])
   const [events, setEvents] = useState<Event[]>([])
@@ -55,35 +55,31 @@ export function SlideshowPageContent({
     Map<string, number>
   >(new Map())
 
-  // Shuffle state - preserves the seed from gallery for consistent ordering
-  const [shuffle, setShuffle] = useState<ShuffleParam>(initialShuffle)
+  // Shared filter state. Filter changes are committed to the URL through the
+  // Next router (keeping useSearchParams authoritative), so closing the
+  // slideshow and returning to the gallery preserves the active filters.
+  // No localStorage here - the slideshow follows the URL it was opened with.
+  const { filters, setFilters } = usePhotoFilters({
+    initial: {
+      eventId: initialEventId,
+      photographer: initialPhotographer,
+      companySlug: initialCompanySlug,
+      shuffle: initialShuffle,
+      groupDuplicates: true,
+      groupScenes: true,
+    },
+    basePath: `/slideshow/${initialPhotoId}`,
+  })
 
-  // Filters from URL
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(
-    initialEventId
-  )
-  const [selectedPhotographer, setSelectedPhotographer] = useState<
-    string | null
-  >(initialPhotographer)
-  const [selectedCompanySlug, setSelectedCompanySlug] = useState<string | null>(
-    initialCompanySlug
-  )
+  const {
+    eventId: selectedEventId,
+    photographer: selectedPhotographer,
+    companySlug: selectedCompanySlug,
+    shuffle,
+  } = filters
 
   // Track if initial photo has been loaded
   const initialPhotoLoaded = useRef(false)
-
-  // Sync filters with URL params when they change (browser back/forward)
-  useEffect(() => {
-    const eventId = searchParams.get('event')
-    const photographer = searchParams.get('photographer')
-    const company = searchParams.get('company')
-    const shuffleParam = searchParams.get('shuffle')
-
-    setSelectedEventId(eventId || null)
-    setSelectedPhotographer(photographer || null)
-    setSelectedCompanySlug(company || null)
-    setShuffle(shuffleParam || initialShuffle)
-  }, [searchParams, initialShuffle])
 
   // Fetch events on mount
   useEffect(() => {
@@ -120,15 +116,9 @@ export function SlideshowPageContent({
     setLoading(true)
 
     try {
-      // Use type-safe buildPhotoApiParams to ensure consistent API calls
-      // groupTypes defaults to 'near_duplicate,scene', order defaults to 'date'
-      const params = buildPhotoApiParams({
-        eventId: selectedEventId || undefined,
-        photographer: selectedPhotographer || undefined,
-        companySlug: selectedCompanySlug || undefined,
-        shuffle, // Uses 'shuffle' param, not deprecated 'order=random&seed=X'
-        limit: 50,
-      })
+      // Single source of truth for filter → API params (shared with the
+      // gallery). groupTypes defaults to 'near_duplicate,scene', order to 'date'.
+      const params = photoFiltersToApiParams(filters, { limit: 50 })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
       if (res.ok) {
@@ -136,9 +126,10 @@ export function SlideshowPageContent({
         setTotalCount(data.pagination.total)
         if (data.companies) setCompanies(data.companies)
 
-        // Resolve seed from API response if we sent 'true'
+        // Resolve seed from API response if we sent 'true'. Keep it out of the
+        // URL (commitUrl: false) - it just pins the order we're already showing.
         if (data.seed && shuffle === 'true') {
-          setShuffle(data.seed)
+          setFilters({ shuffle: data.seed }, { commitUrl: false })
         }
 
         // Find the initial photo in the results
@@ -227,12 +218,12 @@ export function SlideshowPageContent({
     router.back()
   }
 
-  // Handle photo change - update URL
+  // Handle photo change - update the URL path to the new photo ID without a
+  // navigation. Preserve the existing Next router history state (never pass an
+  // empty object) so browser back/forward restoration keeps working.
   function handlePhotoChange(photoId: string) {
-    const url = new URL(window.location.href)
-    // Update the path to the new photo ID
-    const newPath = `/slideshow/${photoId}${url.search}`
-    window.history.replaceState({}, '', newPath)
+    const newPath = `/slideshow/${photoId}${window.location.search}`
+    window.history.replaceState(window.history.state, '', newPath)
   }
 
   // Handle photo deleted
@@ -241,49 +232,28 @@ export function SlideshowPageContent({
     setTotalCount((prev) => prev - 1)
   }
 
-  // Handle filter change from slideshow
+  // Handle filter change from slideshow. Commit the change to the current
+  // slideshow URL (keeping the photo id in the path) via the shared hook, which
+  // routes through the Next router so the gallery sees it on close/back.
   function handleFilterChange(filterType: string, value: string | null) {
-    const url = new URL(window.location.href)
+    const path = window.location.pathname
 
     switch (filterType) {
       case 'event':
-        setSelectedEventId(value)
-        if (value) {
-          url.searchParams.set('event', value)
-        } else {
-          url.searchParams.delete('event')
-        }
+        setFilters({ eventId: value }, { path })
         break
       case 'photographer':
-        setSelectedPhotographer(value)
-        if (value) {
-          url.searchParams.set('photographer', value)
-        } else {
-          url.searchParams.delete('photographer')
-        }
+        setFilters({ photographer: value }, { path })
         break
       case 'company':
-        setSelectedCompanySlug(value)
-        setSelectedEventId(null) // Clear event when company changes
-        url.searchParams.delete('event')
-        if (value) {
-          url.searchParams.set('company', value)
-        } else {
-          url.searchParams.delete('company')
-        }
+        // Clear event when company changes
+        setFilters({ companySlug: value, eventId: null }, { path })
         break
       case 'shuffle':
-        // Handle shuffle toggle from slideshow
-        setShuffle(value)
-        if (value) {
-          url.searchParams.set('shuffle', value)
-        } else {
-          url.searchParams.delete('shuffle')
-        }
+        setFilters({ shuffle: value }, { path })
         break
     }
 
-    window.history.replaceState({}, '', url.pathname + url.search)
     // Reset to first photo when filters change
     setSlideshowIndex(0)
     initialPhotoLoaded.current = false

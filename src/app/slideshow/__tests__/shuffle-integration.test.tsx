@@ -19,13 +19,8 @@ const mockRouter = {
 }
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
-  useSearchParams: () => ({
-    get: vi.fn((key: string) => {
-      // Simulate URL with shuffle param: /slideshow/photo-1?shuffle=test-seed-123
-      if (key === 'shuffle') return 'test-seed-123'
-      return null
-    }),
-  }),
+  // Simulate URL with shuffle param: /slideshow/photo-1?shuffle=test-seed-123
+  useSearchParams: () => new URLSearchParams('shuffle=test-seed-123'),
 }))
 
 // Mock next-auth

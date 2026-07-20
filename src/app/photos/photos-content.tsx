@@ -15,7 +15,13 @@ import { PlayCircleIcon, BuildingIcon, ScenesIcon } from '@/components/icons'
 import { VinylSpinner } from '@/components/ui'
 import { ShuffleButton } from '@/components/photos/shuffle-button'
 import { GroupingButton } from '@/components/photos/grouping-button'
-import { buildPhotoApiParams, buildSlideshowUrl } from '@/lib/shuffle-types'
+import {
+  buildSlideshowUrl,
+  buildPhotoUrl,
+  generateShuffleSeed,
+} from '@/lib/shuffle-types'
+import { photoFiltersToApiParams } from '@/lib/photo-filters'
+import { usePhotoFilters } from '@/lib/use-photo-filters'
 import type { FilterOptions } from '@/lib/nav-data'
 
 interface Company {
@@ -57,15 +63,6 @@ interface PhotosContentProps {
 // localStorage key for persisting filter preferences
 const FILTERS_STORAGE_KEY = 'photos-filters'
 
-interface StoredFilters {
-  event?: string | null
-  photographer?: string | null
-  company?: string | null
-  shuffle?: string | null
-  groupDuplicates?: boolean
-  groupScenes?: boolean
-}
-
 export function PhotosContent({
   initialEventId = null,
   initialPhotographer = null,
@@ -99,21 +96,8 @@ export function PhotosContent({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
-  // Shuffle state: null = off (date order), 'true' = shared shuffle, '<seed>' = specific seed
-  // Default to null (date order) for SEO - consistent content for crawlers
-  const [shuffle, setShuffle] = useState<string | null>(
-    searchParams.get('shuffle') ?? null
-  )
   const [gridSize, setGridSize] = useState<GridSize>('md')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
-  // Grouping states: collapse near-duplicate and/or scene photos
-  // Both default to true (grouping enabled)
-  const [groupDuplicates, setGroupDuplicates] = useState<boolean>(
-    searchParams.get('groupDuplicates') !== 'false'
-  )
-  const [groupScenes, setGroupScenes] = useState<boolean>(
-    searchParams.get('groupScenes') !== 'false'
-  )
   // Map of representative photo ID to cluster data (photos + current display index)
   const [clusterMap, setClusterMap] = useState<ClusterMap>(new Map())
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -124,216 +108,40 @@ export function PhotosContent({
   // Track loaded photo IDs to prevent duplicates in random mode
   const loadedPhotoIds = useRef<Set<string>>(new Set())
 
-  // Filters - initialize from props (resolved server-side)
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(
-    initialEventId
-  )
-  const [selectedPhotographer, setSelectedPhotographer] = useState<
-    string | null
-  >(initialPhotographer)
-  const [selectedCompanySlug, setSelectedCompanySlug] = useState<string | null>(
-    initialCompanySlug
-  )
-
   // Track current page for ordered mode
   const currentPage = useRef(1)
 
-  // Check if URL has any filter params (means user navigated with specific filters)
-  // This is computed once on mount and cached
-  const hasUrlFiltersRef = useRef(
-    searchParams.has('event') ||
-      searchParams.has('eventId') ||
-      searchParams.has('photographer') ||
-      searchParams.has('company') ||
-      searchParams.has('shuffle') ||
-      searchParams.has('groupDuplicates') ||
-      searchParams.has('groupScenes')
-  )
+  // Shared filter state: owns the filter object, keeps it in sync with the URL
+  // (via the Next router so back/forward works), and persists to localStorage.
+  // `hydrated` gates the initial fetch until any stored filters are restored.
+  const {
+    filters,
+    hydrated: filtersInitialized,
+    setFilters,
+  } = usePhotoFilters({
+    initial: {
+      eventId: initialEventId,
+      photographer: initialPhotographer,
+      companySlug: initialCompanySlug,
+      shuffle: searchParams.get('shuffle') ?? null,
+      groupDuplicates: searchParams.get('groupDuplicates') !== 'false',
+      groupScenes: searchParams.get('groupScenes') !== 'false',
+    },
+    persistKey: FILTERS_STORAGE_KEY,
+  })
 
-  // Track if filters have been initialized (localStorage checked or URL params applied)
-  // Starts as true if URL has params (no need to wait), false otherwise
-  const [filtersInitialized, setFiltersInitialized] = useState(
-    hasUrlFiltersRef.current
-  )
-
-  // Restore filters from localStorage on mount (only if no URL filters)
-  // This effect runs exactly once on mount
-  useEffect(() => {
-    // If URL has filters, we're already initialized (URL takes precedence)
-    if (hasUrlFiltersRef.current) return
-
-    // No URL filters - restore from localStorage
-    try {
-      const stored = localStorage.getItem(FILTERS_STORAGE_KEY)
-      if (stored) {
-        const filters: StoredFilters = JSON.parse(stored)
-        if (filters.event) setSelectedEventId(filters.event)
-        if (filters.photographer) setSelectedPhotographer(filters.photographer)
-        if (filters.company) setSelectedCompanySlug(filters.company)
-        if (filters.shuffle !== undefined) {
-          setShuffle(filters.shuffle)
-        }
-        if (filters.groupDuplicates !== undefined) {
-          setGroupDuplicates(filters.groupDuplicates)
-        }
-        if (filters.groupScenes !== undefined) {
-          setGroupScenes(filters.groupScenes)
-        }
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
-
-    // Mark as initialized after restoration
-    setFiltersInitialized(true)
-  }, []) // Empty deps - run once on mount
-
-  // Save filters to localStorage when they change
-  useEffect(() => {
-    // Only save after filters are initialized (prevents saving default values)
-    if (!filtersInitialized) return
-
-    const filters: StoredFilters = {
-      event: selectedEventId,
-      photographer: selectedPhotographer,
-      company: selectedCompanySlug,
-      shuffle,
-      groupDuplicates,
-      groupScenes,
-    }
-    try {
-      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filters))
-    } catch {
-      // Ignore localStorage errors
-    }
-  }, [
-    selectedEventId,
-    selectedPhotographer,
-    selectedCompanySlug,
+  const {
+    eventId: selectedEventId,
+    photographer: selectedPhotographer,
+    companySlug: selectedCompanySlug,
     shuffle,
     groupDuplicates,
     groupScenes,
-    filtersInitialized,
-  ])
-
-  // Sync filters with URL params when they change (for browser back/forward)
-  // Only update each filter if URL explicitly has that param - this preserves
-  // localStorage-restored values when navigating to /photos without params
-  useEffect(() => {
-    // Only update event if URL explicitly has an event param
-    if (searchParams.has('event') || searchParams.has('eventId')) {
-      const eventId = searchParams.get('event') || searchParams.get('eventId')
-      setSelectedEventId((prev) => {
-        const urlValue = eventId || null
-        return prev !== urlValue ? urlValue : prev
-      })
-    }
-
-    // Only update photographer if URL explicitly has the param
-    if (searchParams.has('photographer')) {
-      const photographer = searchParams.get('photographer')
-      setSelectedPhotographer((prev) => {
-        const urlValue = photographer || null
-        return prev !== urlValue ? urlValue : prev
-      })
-    }
-
-    // Only update company if URL explicitly has the param
-    if (searchParams.has('company')) {
-      const company = searchParams.get('company')
-      setSelectedCompanySlug((prev) => {
-        const urlValue = company || null
-        return prev !== urlValue ? urlValue : prev
-      })
-    }
-
-    // Only update shuffle if URL explicitly has a shuffle param
-    // This preserves the default 'true' when navigating without shuffle param
-    if (searchParams.has('shuffle')) {
-      const shuffleParam = searchParams.get('shuffle')
-      setShuffle((prev) => {
-        const urlValue = shuffleParam || null
-        return prev !== urlValue ? urlValue : prev
-      })
-    }
-
-    // Only update grouping if URL explicitly has the params
-    if (searchParams.has('groupDuplicates')) {
-      const param = searchParams.get('groupDuplicates')
-      setGroupDuplicates(param !== 'false')
-    }
-    if (searchParams.has('groupScenes')) {
-      const param = searchParams.get('groupScenes')
-      setGroupScenes(param !== 'false')
-    }
-  }, [searchParams])
-
-  // Update URL when filters change
-  function updateUrlParams(params: {
-    event?: string | null
-    photographer?: string | null
-    company?: string | null
-    shuffle?: string | null
-    groupDuplicates?: boolean
-    groupScenes?: boolean
-  }) {
-    const url = new URL(window.location.href)
-
-    // Update each param using new cleaner names
-    if (params.event !== undefined) {
-      // Remove legacy param if present
-      url.searchParams.delete('eventId')
-      if (params.event) {
-        url.searchParams.set('event', params.event)
-      } else {
-        url.searchParams.delete('event')
-      }
-    }
-    if (params.photographer !== undefined) {
-      if (params.photographer) {
-        url.searchParams.set('photographer', params.photographer)
-      } else {
-        url.searchParams.delete('photographer')
-      }
-    }
-    if (params.company !== undefined) {
-      if (params.company) {
-        url.searchParams.set('company', params.company)
-      } else {
-        url.searchParams.delete('company')
-      }
-    }
-    if (params.shuffle !== undefined) {
-      if (params.shuffle) {
-        url.searchParams.set('shuffle', params.shuffle)
-      } else {
-        url.searchParams.delete('shuffle')
-      }
-    }
-    // Grouping: only add to URL when disabled (default is ON)
-    if (params.groupDuplicates !== undefined) {
-      if (!params.groupDuplicates) {
-        url.searchParams.set('groupDuplicates', 'false')
-      } else {
-        url.searchParams.delete('groupDuplicates')
-      }
-    }
-    if (params.groupScenes !== undefined) {
-      if (!params.groupScenes) {
-        url.searchParams.set('groupScenes', 'false')
-      } else {
-        url.searchParams.delete('groupScenes')
-      }
-    }
-
-    // Use replaceState to avoid adding to browser history for filter changes
-    window.history.replaceState({}, '', url.pathname + url.search)
-  }
+  } = filters
 
   // Wrapper functions that update both state and URL
   function handleEventChange(eventId: string | null) {
-    setSelectedEventId(eventId)
-    updateUrlParams({ event: eventId })
+    setFilters({ eventId })
 
     // Track filter change
     trackPhotoFilterChange({
@@ -343,8 +151,7 @@ export function PhotosContent({
   }
 
   function handlePhotographerChange(photographer: string | null) {
-    setSelectedPhotographer(photographer)
-    updateUrlParams({ photographer })
+    setFilters({ photographer })
 
     // Track filter change
     trackPhotoFilterChange({
@@ -354,10 +161,8 @@ export function PhotosContent({
   }
 
   function handleCompanyChange(company: string | null) {
-    setSelectedCompanySlug(company)
     // Clear event when company changes (optional - could keep it)
-    setSelectedEventId(null)
-    updateUrlParams({ company, event: null })
+    setFilters({ companySlug: company, eventId: null })
 
     // Track filter change
     trackPhotoFilterChange({
@@ -447,27 +252,11 @@ export function PhotosContent({
     }
 
     try {
-      // Build groupTypes based on user toggles (can be disabled via UI)
-      let groupTypesValue: string | false
-      if (!groupDuplicates && !groupScenes) {
-        groupTypesValue = false // Disable grouping entirely
-      } else {
-        const types: string[] = []
-        if (groupDuplicates) types.push('near_duplicate')
-        if (groupScenes) types.push('scene')
-        groupTypesValue = types.join(',')
-      }
-
-      // Use buildPhotoApiParams for consistent API calls across gallery/slideshow/strip
-      const params = buildPhotoApiParams({
-        eventId: selectedEventId || undefined,
-        photographer: selectedPhotographer || undefined,
-        companySlug: selectedCompanySlug || undefined,
-        shuffle,
+      // Single source of truth for filter → API params across gallery/slideshow/strip
+      const params = photoFiltersToApiParams(filters, {
         page: currentPage.current,
         limit: PAGE_SIZE,
         skipMeta: isLoadMore,
-        groupTypes: groupTypesValue,
       })
 
       const res = await fetch(`/api/photos?${params.toString()}`)
@@ -477,9 +266,10 @@ export function PhotosContent({
 
         // Capture the actual seed from the API response
         // This is important: when we send shuffle=true, the API generates a seed
-        // We need to use this seed for slideshow navigation
+        // We need to use this seed for slideshow navigation. Don't push it to the
+        // URL (commitUrl: false) - it's a resolution of the existing shuffle state.
         if (data.seed && shuffle && shuffle !== data.seed) {
-          setShuffle(data.seed)
+          setFilters({ shuffle: data.seed }, { commitUrl: false })
         }
 
         // Only update filter metadata if returned (not skipped on load-more)
@@ -575,21 +365,15 @@ export function PhotosContent({
     })
 
     // Build photo page URL with current filters and shuffle state (use slug for SEO)
-    const params = new URLSearchParams()
-    if (selectedEventId) params.set('event', selectedEventId)
-    if (selectedPhotographer) params.set('photographer', selectedPhotographer)
-    if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-    if (shuffle) params.set('shuffle', shuffle)
-
-    const queryString = params.toString()
     const photoSlug = actualPhoto.slug || actualPhoto.id // Fallback to id for legacy
-    const photoUrl = `/photos/${photoSlug}${queryString ? `?${queryString}` : ''}`
+    const photoUrl = buildPhotoUrl({
+      photoSlug,
+      eventId: selectedEventId || undefined,
+      photographer: selectedPhotographer || undefined,
+      companySlug: selectedCompanySlug || undefined,
+      shuffle,
+    })
     router.push(photoUrl)
-  }
-
-  // Generate a random seed for re-shuffle
-  function generateRandomSeed() {
-    return Math.random().toString(36).substring(2, 10)
   }
 
   // Handle shuffle toggle
@@ -598,27 +382,20 @@ export function PhotosContent({
   function handleShuffleToggle() {
     if (!shuffle) {
       // Turn on shuffle with new unique seed
-      const newSeed = generateRandomSeed()
-      setShuffle(newSeed)
-      updateUrlParams({ shuffle: newSeed })
+      setFilters({ shuffle: generateShuffleSeed() })
     } else {
       // Turn off shuffle
-      setShuffle(null)
-      updateUrlParams({ shuffle: null })
+      setFilters({ shuffle: null })
     }
   }
 
   // Handle grouping toggles
   function handleGroupDuplicatesToggle() {
-    const newValue = !groupDuplicates
-    setGroupDuplicates(newValue)
-    updateUrlParams({ groupDuplicates: newValue })
+    setFilters({ groupDuplicates: !groupDuplicates })
   }
 
   function handleGroupScenesToggle() {
-    const newValue = !groupScenes
-    setGroupScenes(newValue)
-    updateUrlParams({ groupScenes: newValue })
+    setFilters({ groupScenes: !groupScenes })
   }
 
   // Handle cycling through cluster photos
