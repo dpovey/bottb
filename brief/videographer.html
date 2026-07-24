@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BOTTB Videographer Brief</title>
+<link rel="stylesheet" href="./assets/fonts.css">
+<style>
+  :root{
+    --gold:#E9A23B;
+    --gold-deep:#E7912E;
+    --dark:#141014;
+    --panel:#221c26;
+    --panel-line:rgba(255,255,255,.09);
+    --dark-body:#e9e4ee;
+    --dark-muted:#a79fae;
+    --dark-faint:#8b8391;
+    --ink:#1b191d;
+    --ink-muted:#6d6a72;
+    --serif:'Playfair Display',Georgia,serif;
+    --sans:'Inter',system-ui,-apple-system,sans-serif;
+    --cond:'Oswald','Inter',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:var(--sans);font-size:10.5px;line-height:1.5;color:var(--ink);}
+  @page{size:A4;margin:0;}
+
+  .page{
+    position:relative;
+    width:210mm;height:297mm;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    page-break-after:always;
+  }
+  .page:last-child{page-break-after:auto;}
+  .page.light{background:#fff;color:var(--ink);}
+  .page.dark{
+    background:var(--dark);color:var(--dark-body);
+    background-image:radial-gradient(130% 90% at 50% -12%, #241b28 0%, #16111a 48%, #100c13 100%);
+  }
+  .pad{padding:64px 62px 0;flex:1;display:flex;flex-direction:column;}
+
+  /* header / footer */
+  .pg-head{display:flex;align-items:center;justify-content:space-between;}
+  .eyebrow{font-family:var(--cond);text-transform:uppercase;letter-spacing:.2em;font-size:10px;font-weight:500;}
+  .eyebrow .sec{color:var(--gold);}
+  .light .eyebrow .lead,.light .eyebrow{color:#8c8892;}
+  .dark  .eyebrow .lead,.dark  .eyebrow{color:#8b8391;}
+  .head-logo{height:26px;width:auto;opacity:.92;}
+  .light .head-logo{filter:invert(1);opacity:.85;}
+  .rule{height:1px;margin:12px 0 0;}
+  .light .rule{background:#e7e5ea;}
+  .dark  .rule{background:rgba(255,255,255,.11);}
+
+  .pg-foot{display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-size:8.5px;font-weight:400;
+    padding:16px 62px 22px;border-top:1px solid transparent;margin-top:auto;}
+  .light .pg-foot{color:#a7a3ac;border-top-color:#ececf0;}
+  .dark  .pg-foot{color:#7d7684;border-top-color:rgba(255,255,255,.08);}
+  .pg-foot .mid{letter-spacing:.2em;}
+
+  /* section titles */
+  .sec-row{display:flex;gap:16px;align-items:flex-start;margin-top:26px;}
+  .sec-num{font-family:var(--cond);font-weight:600;font-size:24px;line-height:1;color:var(--gold);padding-top:6px;min-width:26px;}
+  .sec-head h2{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.04;letter-spacing:.2px;}
+  .light .sec-head h2{color:#171419;}
+  .dark  .sec-head h2{color:#fff;}
+  .sec-head .lede{margin-top:8px;max-width:640px;font-size:11px;line-height:1.55;}
+  .light .sec-head .lede{color:#54515a;}
+  .dark  .sec-head .lede{color:var(--dark-muted);}
+  .body-block{margin-left:42px;}
+
+  a{color:inherit;text-decoration:none;}
+  b,strong{font-weight:600;}
+  .light strong{color:#25222a;}
+  .dark strong{color:#fff;}
+  .gold{color:var(--gold);}
+
+  /* two-column card grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{border-radius:11px;padding:16px 18px;}
+  .light .card{background:#faf9fb;border:1px solid #ececef;}
+  .dark  .card{background:var(--panel);border:1px solid var(--panel-line);}
+  .card .k{font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-weight:600;font-size:10px;color:var(--gold);margin-bottom:9px;}
+  .dark .card .k{color:var(--gold);}
+
+  /* diamond bullet lists */
+  ul.dia{list-style:none;}
+  ul.dia li{position:relative;padding-left:17px;margin:7px 0;font-size:10.5px;line-height:1.5;}
+  ul.dia li:first-child{margin-top:0;}
+  ul.dia li::before{content:"";position:absolute;left:0;top:6px;width:6px;height:6px;background:var(--gold);transform:rotate(45deg);border-radius:1px;}
+  .dark ul.dia li{color:var(--dark-body);}
+  .light ul.dia li{color:#3d3a42;}
+
+  /* callout box (amber) */
+  .callout{border:1px solid rgba(233,162,59,.5);background:rgba(233,162,59,.055);border-radius:12px;padding:17px 20px;}
+  .callout .k{font-family:var(--cond);text-transform:uppercase;letter-spacing:.15em;font-weight:600;font-size:10.5px;color:var(--gold);margin-bottom:8px;}
+  .callout p{font-size:10.5px;line-height:1.55;}
+  .dark .callout p{color:var(--dark-body);}
+  .light .callout p{color:#3d3a42;}
+
+  /* badges */
+  .badge{display:inline-block;font-family:var(--cond);text-transform:uppercase;letter-spacing:.13em;font-size:8px;font-weight:600;
+    color:var(--gold);border:1px solid rgba(233,162,59,.55);border-radius:20px;padding:2px 8px;vertical-align:middle;margin-left:8px;position:relative;top:-1px;}
+
+  /* ---- page 1 cover ---- */
+  .cover-photo{position:relative;height:322px;flex:none;}
+  .cover-photo img{width:100%;height:100%;object-fit:cover;}
+  .cover-photo::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(20,16,20,.15) 0%,rgba(20,16,20,.05) 40%,rgba(20,16,20,.55) 78%,var(--dark) 100%);}
+  .cover-logo{position:absolute;top:66px;left:0;right:0;z-index:2;text-align:center;}
+  .cover-logo img{width:330px;max-width:64%;}
+  .cover-body{padding:26px 62px 0;flex:1;display:flex;flex-direction:column;}
+  .cover-eyebrow{font-family:var(--cond);text-transform:uppercase;letter-spacing:.34em;font-size:12px;font-weight:500;color:var(--gold);margin-bottom:14px;}
+  .cover-title{font-family:var(--serif);font-weight:800;font-size:62px;line-height:.98;color:#fff;letter-spacing:.5px;}
+  .cover-title .it{display:block;font-weight:500;font-style:italic;color:var(--gold-deep);font-size:60px;margin-top:2px;}
+  .cover-lead{margin-top:22px;max-width:600px;font-size:12px;line-height:1.62;color:var(--dark-body);}
+  .cover-foot{margin-top:auto;padding-bottom:40px;}
+  .cover-foot .cf-rule{height:1px;background:rgba(255,255,255,.14);margin-bottom:16px;}
+  .cover-foot .cf-cols{display:flex;justify-content:space-between;align-items:flex-end;}
+  .cf-lab{font-family:var(--cond);text-transform:uppercase;letter-spacing:.24em;font-size:9px;color:#8b8391;margin-bottom:6px;}
+  .cf-val{font-size:12px;color:#fff;}
+  .cf-val .gold{color:var(--gold);}
+  .cf-right{font-family:var(--serif);font-weight:700;font-size:13px;color:#fff;}
+
+  /* ---- image with caption overlay ---- */
+  .feature{position:relative;border-radius:12px;overflow:hidden;margin-top:4px;}
+  .feature img{width:100%;display:block;}
+  .feature .cap{position:absolute;left:0;right:0;bottom:0;padding:36px 16px 12px;
+    background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.72) 100%);
+    font-family:var(--cond);text-transform:uppercase;letter-spacing:.08em;font-size:9px;color:#efe9df;}
+  .feature .cap b{color:var(--gold);font-weight:600;letter-spacing:.1em;}
+
+  /* platform chips (CSS, no SVG — previews in Gmail) */
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+  .chip{display:flex;align-items:center;gap:12px;border-radius:10px;padding:11px 14px;background:var(--panel);border:1px solid var(--panel-line);}
+  .chip .mk{flex:none;width:30px;height:30px;border-radius:7px;background:var(--gold);color:#1a1206;
+    font-family:var(--cond);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;text-transform:lowercase;letter-spacing:0;}
+  .chip .t{font-weight:600;font-size:10.5px;color:#fff;}
+  .chip .t small{display:block;font-weight:400;font-size:9px;color:var(--dark-faint);font-family:var(--cond);letter-spacing:.02em;text-transform:none;margin-top:1px;}
+  .aside{font-size:9.5px;font-style:italic;color:var(--dark-faint);margin-top:11px;line-height:1.5;}
+  .light .aside{color:#8f8b95;}
+
+  /* event fact strip */
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #ececef;border-radius:11px;overflow:hidden;}
+  .facts .f{padding:14px 16px;border-left:1px solid #ececef;}
+  .facts .f:first-child{border-left:none;}
+  .facts .fl{font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-size:8.5px;color:#9a96a0;margin-bottom:6px;}
+  .facts .fv{font-weight:600;font-size:13px;color:#1d1a21;}
+  .facts .fv small{display:block;font-weight:400;font-size:9.5px;color:#77737c;margin-top:2px;}
+
+  .run-h{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-weight:600;font-size:11px;color:#1d1a21;margin:22px 0 4px;}
+  .run-h em{font-family:var(--sans);font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;color:#8f8b95;font-size:10px;}
+  .run{border-top:1px solid #ececef;}
+  .run .r{display:flex;gap:16px;padding:9px 0;border-bottom:1px solid #f0eff2;}
+  .run .rt{font-family:var(--cond);font-weight:500;font-size:11px;color:var(--gold);min-width:96px;letter-spacing:.02em;}
+  .run .rd{font-size:10.5px;line-height:1.45;color:#3d3a42;}
+
+  /* pricing table */
+  .ptab{border:1px solid var(--panel-line);border-radius:12px;overflow:hidden;margin-top:4px;}
+  .ptab .thead{display:grid;grid-template-columns:34px 1fr 132px;background:rgba(255,255,255,.035);
+    font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-size:9px;color:var(--dark-faint);padding:9px 0;}
+  .ptab .thead .c1{padding-left:16px;}
+  .ptab .thead .c3{text-align:right;padding-right:18px;}
+  .ptab .prow{display:grid;grid-template-columns:34px 1fr 132px;border-top:1px solid var(--panel-line);}
+  .ptab .prow .n{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--gold);padding:15px 0 0 16px;}
+  .ptab .prow .m{padding:14px 8px 15px 0;}
+  .ptab .prow .m .ttl{font-weight:600;font-size:12px;color:#fff;margin-bottom:3px;}
+  .ptab .prow .m .desc{font-size:9.7px;line-height:1.42;color:var(--dark-muted);}
+  .ptab .prow .q{border-left:1px solid var(--panel-line);display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:0 18px;}
+  .ptab .prow .q .line{width:96px;border-bottom:1px dashed rgba(255,255,255,.28);height:1px;margin-bottom:8px;}
+  .ptab .prow .q .aud{font-family:var(--cond);font-size:9px;letter-spacing:.16em;color:var(--dark-faint);}
+  .badge.req{color:var(--gold);}
+
+  /* timelines */
+  .tl{margin-top:6px;position:relative;padding-left:6px;}
+  .tl .row{position:relative;padding:0 0 16px 26px;border-left:2px solid rgba(233,162,59,.35);margin-left:6px;}
+  .tl .row:last-child{border-left-color:transparent;padding-bottom:0;}
+  .tl .row::before{content:"";position:absolute;left:-8px;top:1px;width:13px;height:13px;border-radius:50%;
+    background:var(--dark);border:2px solid var(--gold);}
+  .tl .when{font-family:var(--cond);font-weight:500;text-transform:none;letter-spacing:.02em;font-size:11px;color:var(--gold);margin-bottom:2px;}
+  .tl .what{font-weight:600;font-size:12px;color:#fff;margin-bottom:2px;}
+  .tl .note{font-size:9.8px;line-height:1.45;color:var(--dark-muted);max-width:600px;}
+
+  /* two info cards on dark */
+  .info2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+  /* contact tiles */
+  .contact{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px;}
+  .ct{background:var(--panel);border:1px solid var(--panel-line);border-radius:11px;padding:16px 18px;text-align:center;}
+  .ct .cl{font-family:var(--cond);text-transform:uppercase;letter-spacing:.2em;font-size:9px;color:var(--dark-faint);margin-bottom:7px;}
+  .ct .cv{font-weight:600;font-size:15px;color:var(--gold);}
+  .closing{display:flex;gap:16px;align-items:flex-start;margin-top:26px;padding-top:20px;border-top:1px solid rgba(255,255,255,.09);}
+  .closing img{height:34px;width:auto;flex:none;margin-top:2px;}
+  .closing p{font-size:10.5px;line-height:1.55;color:var(--dark-muted);}
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 34px;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 · COVER ============ -->
+<section class="page dark">
+  <div class="cover-photo">
+    <img src="./assets/cover.jpg" alt="">
+  </div>
+  <div class="cover-logo"><img src="./assets/logo-horizontal.png" alt="Battle of the Tech Bands"></div>
+  <div class="cover-body">
+    <div class="cover-eyebrow">Videographer Brief&nbsp;&nbsp;·&nbsp;&nbsp;2026 Season</div>
+    <h1 class="cover-title">Make them feel like<span class="it">rock stars.</span></h1>
+    <p class="cover-lead">Battle of the Tech Bands is a community charity music event where tech-industry bands compete live on stage for Youngcare. We're inviting videographers to capture the energy, the noise and the vibe of the night — and we want your art to lead. This brief sets out our creative intent, the shots we need, and how we credit and promote your work.</p>
+    <div class="cover-foot">
+      <div class="cf-rule"></div>
+      <div class="cf-cols">
+        <div>
+          <div class="cf-lab">The Event</div>
+          <div class="cf-val">Thursday <span class="gold">27 August 2026</span> · The Triffid, Brisbane</div>
+        </div>
+        <div style="text-align:right">
+          <div class="cf-lab">Prepared by</div>
+          <div class="cf-right"><a href="https://battleofthetechbands.com">battleofthetechbands.com</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PAGE 2 · THE VIBE ============ -->
+<section class="page light">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">The Vibe</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+    <div class="sec-row">
+      <div class="sec-num">01</div>
+      <div class="sec-head">
+        <h2>What we're about</h2>
+        <p class="lede">We put on a genuine rock show. Four to six tech-industry bands, real instruments, a real crowd, and a room that gets loud. Our job with video is to make the people on that stage <strong>feel like rock stars</strong> — and to give the crowd a night they want to relive.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:20px">
+      <div class="feature">
+        <img src="./assets/vibe.jpg" alt="">
+        <div class="cap"><b>Real BOTTB, real stakes.</b>&nbsp;&nbsp;The Triffid, Brisbane — this is the energy we want on camera.</div>
+      </div>
+      <div class="grid2" style="margin-top:22px;gap:22px 34px">
+        <div>
+          <p style="margin-bottom:14px"><strong>Your creativity leads.</strong> We are not after sterile corporate coverage. We want originality, a point of view, and a signature. Get on stage, get into the thick of the crowd, chase the light and the energy.</p>
+          <p><strong>We're a charity, and honest about it.</strong> We keep costs low and are sometimes limited by what sponsorship provides. That's exactly why we offer a menu of options — pitch what fits your kit and your rate.</p>
+        </div>
+        <div>
+          <p style="margin-bottom:14px"><strong>We back local artists.</strong> Supporting up-and-coming photographers and videographers is part of why this event exists. We promote the people who shoot it — see page 8.</p>
+          <p><strong>We shoot for reuse.</strong> Footage promotes future events, so timeliness and technical reliability genuinely matter. Where we're specific, it's from experience — not to box in your craft.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">The Vibe</span><span>Page 2</span></div>
+</section>
+
+<!-- ============ PAGE 3 · SEE THE WORK ============ -->
+<section class="page dark">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">See the Work</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+    <div class="sec-row">
+      <div class="sec-num">02</div>
+      <div class="sec-head">
+        <h2>See the work we make</h2>
+        <p class="lede">Before you quote, spend ten minutes with our back catalogue — full sets, highlight reels and vertical shorts. It's the fastest way to read the tone, pace and energy we're after.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:16px">
+      <div class="chips">
+        <a class="chip" href="https://youtube.com/@battleofthetechbands"><div class="mk">yt</div><div class="t">YouTube — full sets &amp; reels<small>youtube.com/@battleofthetechbands</small></div></a>
+        <a class="chip" href="https://instagram.com/battleofthetechbands"><div class="mk">ig</div><div class="t">Instagram — reels &amp; stills<small>@battleofthetechbands</small></div></a>
+        <a class="chip" href="https://tiktok.com/@bottb0"><div class="mk">tt</div><div class="t">TikTok — vertical shorts<small>@bottb0</small></div></a>
+        <a class="chip" href="https://linkedin.com/company/battle-of-the-tech-bands"><div class="mk">in</div><div class="t">LinkedIn — event highlights<small>/company/battle-of-the-tech-bands</small></div></a>
+      </div>
+      <p class="aside">Also on Facebook — <a href="https://facebook.com/battleofthetechbands"><b>/battleofthetechbands</b></a>. Full photo galleries by event, band and photographer live at <a href="https://battleofthetechbands.com/photos"><b>battleofthetechbands.com/photos</b></a>.</p>
+    </div>
+    <div class="sec-row">
+      <div class="sec-num">03</div>
+      <div class="sec-head">
+        <h2>What lands best</h2>
+        <p class="lede">Not a formula — just the moments our audience reacts to most. Use it as a starting point, then make it yours.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:16px">
+      <div class="grid2">
+        <div class="card">
+          <div class="k">The Moments</div>
+          <ul class="dia">
+            <li>The <strong>big musical peaks</strong> — solos, key changes, the crowd singing back</li>
+            <li>The <strong>winner reveal</strong> and the reaction that follows</li>
+            <li><strong>Crowd energy</strong> — hands up, faces, the pit</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">The Feel</div>
+          <ul class="dia">
+            <li><strong>Pace with the music</strong>; let the loud moments breathe</li>
+            <li>Frame <strong>vertical-safe</strong> so reels crop cleanly from horizontal</li>
+            <li><strong>Real audio up front</strong> — the room, the roar, the band</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">See the Work</span><span>Page 3</span></div>
+</section>
+
+<!-- ============ PAGE 4 · THE EVENT ============ -->
+<section class="page light">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">The Event</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+    <div class="sec-row">
+      <div class="sec-num">04</div>
+      <div class="sec-head">
+        <h2>The event</h2>
+        <p class="lede">The Triffid, Brisbane · typically draws 400–500 people · running since 2022.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:18px">
+      <div class="facts">
+        <div class="f"><div class="fl">Date</div><div class="fv">Thu 27 Aug 2026</div></div>
+        <div class="f"><div class="fl">Venue</div><div class="fv">The Triffid<small>Newstead, Brisbane</small></div></div>
+        <div class="f"><div class="fl">Format</div><div class="fv">5 bands<small>25–30 min sets, ~10 min gaps</small></div></div>
+        <div class="f"><div class="fl">Crowd</div><div class="fv">400–500<small>general admission</small></div></div>
+      </div>
+      <div class="run-h">Run of show <em>(indicative — confirmed closer to the date)</em></div>
+      <div class="run">
+        <div class="r"><div class="rt">2:00–6:00pm</div><div class="rd"><strong>Soundcheck &amp; setup</strong> — your window to load in, lock safe camera positions, run cabling, and grab B-roll of the empty room.</div></div>
+        <div class="r"><div class="rt">6:30pm</div><div class="rd"><strong>Doors open</strong> — crowd arrivals, atmosphere, sponsor and charity signage.</div></div>
+        <div class="r"><div class="rt">Evening</div><div class="rd"><strong>5 band sets</strong>, plus <strong>MC remarks</strong> and <strong>sponsor &amp; charity remarks</strong> between sets — all to be captured.</div></div>
+        <div class="r"><div class="rt">~11:00pm</div><div class="rd"><strong>Closing award presentation</strong> — the winner reveal is a key moment. Do not miss it.</div></div>
+      </div>
+      <div class="feature" style="margin-top:20px">
+        <img src="./assets/event.jpg" alt="" style="height:398px;object-fit:cover;object-position:50% 20%;">
+        <div class="cap"><b>Five bands. One night.</b>&nbsp;&nbsp;Every set matters — the wide, the angles and the roving camera all run for the full show.</div>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">The Event</span><span>Page 4</span></div>
+</section>
+
+<!-- ============ PAGE 5 · SCOPE & PRICING ============ -->
+<section class="page dark">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">Scope &amp; Pricing</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+    <div class="sec-row">
+      <div class="sec-num">05</div>
+      <div class="sec-head">
+        <h2>Scope &amp; pricing</h2>
+        <p class="lede">Please quote each line separately. Listed roughly in order of priority — take on what suits your kit and rate.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:14px">
+      <div class="ptab">
+        <div class="thead"><div class="c1">#</div><div>Service</div><div class="c3">Your quote</div></div>
+        <div class="prow">
+          <div class="n">1</div>
+          <div class="m"><div class="ttl">Footage only <span class="badge req">Required</span></div>
+            <div class="desc">Multi-camera capture of the full show — four angles (wide, two angled, one roving), run by a small crew: one roving operator plus a producer/operator on the fixed cameras. Full technical spec on page 6.</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+        <div class="prow">
+          <div class="n">2</div>
+          <div class="m"><div class="ttl">Reels &amp; highlights <span class="badge">Add-on</span></div>
+            <div class="desc">Six reels — one event overview plus one per band. Cut to a pre-provided "hero" song per band (pre-recorded audio, not the live mix), so they're never blocked on final audio. Horizontal source, vertical-safe framing.</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+        <div class="prow">
+          <div class="n">3</div>
+          <div class="m"><div class="ttl">Multitrack audio <span class="badge">Add-on</span></div>
+            <div class="desc">A ~20-channel split off the desk to a dedicated recorder, run by a dedicated audio tech — handed off as .wav files. Record only; we mix and master in-house. We'll supply input lists per act a few days out.</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+        <div class="prow">
+          <div class="n">4</div>
+          <div class="m"><div class="ttl">Additional videographer <span class="badge">If available</span></div>
+            <div class="desc">A third operator for extra on-stage shots, B-roll and crowd interviews / vox pops — best in set breaks and after the show, ideally with a presenter we provide to draw out quotes.</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+        <div class="prow">
+          <div class="n">5</div>
+          <div class="m"><div class="ttl">Graded footage <span class="badge">If available</span></div>
+            <div class="desc">Footage colour-graded, delivered as an editor project — Premiere Pro or DaVinci Resolve (see note below).</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+        <div class="prow">
+          <div class="n">6</div>
+          <div class="m"><div class="ttl">Full edited show <span class="badge">If available</span></div>
+            <div class="desc">The complete show edited from multicam, including grading — delivered as an editor project plus a final rendered master (see note below).</div></div>
+          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:16px">
+        <div class="k">Editing tools — Premiere or Resolve</div>
+        <p>We're glad to take either — cut in <strong>Premiere Pro</strong> or <strong>DaVinci Resolve</strong>. Deliver a standard interchange (<strong>FCPXML / Premiere XML / AAF / EDL</strong>) that relinks cleanly, alongside the graded media and the final rendered master. We archive in Resolve, so a Resolve project is welcome — but never required.</p>
+      </div>
+    </div>
+    <div class="sec-row">
+      <div class="sec-num">06</div>
+      <div class="sec-head"><h2>Equipment</h2></div>
+    </div>
+    <div class="body-block" style="margin-top:12px">
+      <div class="callout">
+        <div class="k">We can hire in — tell us what lifts the result</div>
+        <p>If additional gear would meaningfully improve coverage, <strong>recommend it and we'll look at hiring it in.</strong> Hire costs factor into our final decision on pricing, so flag what's essential versus nice-to-have — feel free to quote with and without recommended hire so we can compare.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">Scope &amp; Pricing</span><span>Page 5</span></div>
+</section>
+
+<!-- ============ PAGE 6 · TECHNICAL REQUIREMENTS ============ -->
+<section class="page dark">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">Technical Requirements</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+
+    <div class="sec-row">
+      <div class="sec-num">07</div>
+      <div class="sec-head">
+        <h2>Footage — the shots</h2>
+        <p class="lede">Everything filmed horizontally, with framing mindful of vertical reuse. Extra angles are always a bonus.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:14px">
+      <div class="grid2">
+        <div class="card">
+          <div class="k">1 · Wide — full stage</div>
+          <ul class="dia">
+            <li><strong>Ideally 6K</strong> to maximise post digital zoom</li>
+            <li>Locked and stable; covers the whole stage for the full show</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">2 · Two angled cameras</div>
+          <ul class="dia">
+            <li>Shooting <strong>towards the stage</strong>, typically from the left and right</li>
+            <li>Tighter performer coverage to intercut with the wide</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">3 · One roving camera</div>
+          <ul class="dia">
+            <li>Roams the <strong>photo pit</strong> between stage and barricade — free to spin back for crowd reactions</li>
+            <li>Up on stage for a few grabs each set for the reels — get amongst the action</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">+ Bonus angles</div>
+          <ul class="dia">
+            <li><strong>Slider or behind-the-band</strong>, crowd-facing angles are gold</li>
+            <li>Any additional angles welcome — surprise us, originality is the point</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-row">
+      <div class="sec-num">08</div>
+      <div class="sec-head"><h2>Delivery &amp; capture spec</h2></div>
+    </div>
+    <div class="body-block" style="margin-top:14px">
+      <div class="grid2">
+        <div class="card">
+          <div class="k">Formats &amp; media</div>
+          <ul class="dia">
+            <li>Raw footage <strong>minimum 4K</strong>, in Log or Blackmagic RAW</li>
+            <li><strong>24 fps</strong> base rate — set shutter to avoid flicker under stage lighting (25 fps is fine); higher rates welcome for slow-mo B-roll</li>
+            <li>Delivered on an <strong>SSD we provide</strong></li>
+            <li>Where a format lacks camera metadata, include <strong>camera make &amp; model</strong></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">Audio</div>
+          <ul class="dia">
+            <li><strong>All video must include audio</strong> for syncing — set sensible levels</li>
+            <li>Taking the multitrack line (page 5)? You capture the desk split; we'll send input lists a few days out</li>
+            <li>We also run our own board + mic recording (Zoom) as backup and to mix in a little crowd</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="k">Reliability &amp; consistency on the night</div>
+        <div class="grid2" style="gap:2px 24px;margin-top:2px">
+          <ul class="dia">
+            <li>Record to <strong>dual cards / backup</strong> where your camera supports it</li>
+            <li>Keep <strong>white balance &amp; picture profile matched</strong> across cameras for cleaner multicam grading</li>
+            <li>Mind <strong>camera vibration</strong> in your setup and mounting</li>
+          </ul>
+          <ul class="dia">
+            <li>Check cameras <strong>between sets</strong> for overheating / shut-off</li>
+            <li>Confirm cards are recording and levels are healthy after each changeover</li>
+            <li>Have a <strong>redundancy plan</strong> for the winner reveal and key moments</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">Technical Requirements</span><span>Page 6</span></div>
+</section>
+
+<!-- ============ PAGE 7 · TIMELINES & TERMS ============ -->
+<section class="page dark">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">Timelines &amp; Terms</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+
+    <div class="sec-row">
+      <div class="sec-num">09</div>
+      <div class="sec-head">
+        <h2>Deliverables &amp; timelines</h2>
+        <p class="lede">Value declines the further we get from the event, so timeliness matters — but the dates below are a starting point, not a deadline wall. We agree what works up-front, and earlier is always appreciated.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:16px">
+      <div class="tl">
+        <div class="row">
+          <div class="when">Mon 31 Aug 2026</div>
+          <div class="what">All footage — every camera</div>
+          <div class="note">Minimum 4K Log / BRAW on the supplied SSD, with audio. Multitrack .wav files (if booked) on the night or with this hand-off.</div>
+        </div>
+        <div class="row">
+          <div class="when">Tue 1 Sep 2026 · morning</div>
+          <div class="what">Event highlight reel ×1</div>
+          <div class="note">The hero cut we push out first, while the buzz is fresh. Cut to a backing track, so it's not waiting on any mix.</div>
+        </div>
+        <div class="row">
+          <div class="when">Rolling — from Tue 1 Sep</div>
+          <div class="what">Winning-band reel ×1</div>
+          <div class="note">Winner announced on the night; their reel follows quickly, also cut to a pre-provided song.</div>
+        </div>
+        <div class="row">
+          <div class="when">Fri 11 Sep 2026</div>
+          <div class="what">Remaining band reels ×4</div>
+          <div class="note">The four other bands, by the Friday about two weeks on. Deliver individually as they're ready.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-row">
+      <div class="sec-num">10</div>
+      <div class="sec-head"><h2>Ownership &amp; usage</h2></div>
+    </div>
+    <div class="body-block" style="margin-top:12px">
+      <div class="callout">
+        <div class="k">We own the work — you're free to show it</div>
+        <p style="margin-bottom:9px">You're paid to create it, so BOTTB owns the footage and edits — and we keep that fair:</p>
+        <ul class="dia">
+          <li><strong>Use your own work, always</strong> — feature anything you shoot for us in your portfolio and showreel, crediting BOTTB.</li>
+          <li><strong>Published under CC BY-NC 4.0</strong> — like all media on our site, released for non-commercial use with attribution to you, so it gets seen and shared.</li>
+          <li><strong>Commercial use stays with us</strong> — and if a paid or commercial opportunity for the work comes up, we'll come to you first.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sec-row">
+      <div class="sec-num">11</div>
+      <div class="sec-head"><h2>Delivery &amp; payment</h2></div>
+    </div>
+    <div class="body-block" style="margin-top:12px">
+      <div class="callout">
+        <div class="k">Flexible on dates, simple on payment</div>
+        <ul class="dia">
+          <li><strong>Delivery dates are negotiable</strong> — the dates above are what we'd love, agreed with you up-front. A heads-up keeps everything flexible and we can almost always shuffle a date.</li>
+          <li><strong>No penalty clauses baked in</strong> — we'd rather get the timing right together than dock a fee. Anything that waits on us (audio, a hero song, an asset we owe you) never counts against your timeline.</li>
+          <li><strong>50% deposit</strong> to lock the date, balance on delivery; edited finals are released once payment clears. Standard, and negotiable.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">Timelines &amp; Terms</span><span>Page 7</span></div>
+</section>
+
+<!-- ============ PAGE 8 · SUPPORT & CONTACT ============ -->
+<section class="page dark">
+  <div class="pad">
+    <div class="pg-head">
+      <div class="eyebrow"><span class="lead">Videographer Brief ·</span> <span class="sec">Support &amp; Contact</span></div>
+      <img class="head-logo" src="./assets/logo-horizontal.png" alt="">
+    </div>
+    <div class="rule"></div>
+
+    <div class="sec-row">
+      <div class="sec-num">12</div>
+      <div class="sec-head">
+        <h2>What you get from us</h2>
+        <p class="lede">Supporting local artists is part of the point. Beyond your fee, we actively promote the people who shoot the event.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:14px">
+      <div class="grid2">
+        <div class="card">
+          <div class="k">Promotion</div>
+          <ul class="dia">
+            <li>A profile on our <strong>videographers page</strong>, alongside our photographers</li>
+            <li>Your work seen across our event and band pages</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="k">Credit &amp; collaboration</div>
+          <ul class="dia">
+            <li>Added as a <strong>collaborator</strong> on Instagram posts</li>
+            <li><strong>@mentioned on LinkedIn</strong> for video posts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-row">
+      <div class="sec-num">13</div>
+      <div class="sec-head">
+        <h2>How to quote</h2>
+        <p class="lede">Send us a short reply covering the following. No formal proposal needed — a clear email is perfect.</p>
+      </div>
+    </div>
+    <div class="body-block" style="margin-top:12px">
+      <ul class="dia qgrid">
+        <li>A <strong>price per service line</strong> (1–6, page 5)</li>
+        <li>Which <strong>timelines</strong> you can commit to</li>
+        <li>Any <strong>recommended gear hire</strong> (essential vs nice-to-have)</li>
+        <li>Your <strong>kit</strong> — cameras, resolution, formats</li>
+        <li>A <strong>showreel or portfolio</strong> — ideally your live-music work</li>
+        <li>Whether you'd add an <strong>additional videographer</strong> or the <strong>multitrack audio</strong></li>
+      </ul>
+      <div class="contact">
+        <a class="ct" href="mailto:info@bottb.com"><div class="cl">Email</div><div class="cv">info@bottb.com</div></a>
+        <a class="ct" href="https://battleofthetechbands.com"><div class="cl">Website</div><div class="cv">battleofthetechbands.com</div></a>
+      </div>
+      <div class="closing">
+        <img src="./assets/youngcare.png" alt="Youngcare">
+        <p>All proceeds support <strong>Youngcare</strong>, an Australian charity helping young people with high care needs. Thanks for helping us make this night look and feel unforgettable.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pg-foot"><span>Battle of the Tech Bands</span><span class="mid">info@bottb.com · battleofthetechbands.com</span><span>Page 8</span></div>
+</section>
+
+</body>
+</html>
