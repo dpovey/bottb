@@ -21,6 +21,7 @@ import {
   type LogoCorner,
 } from './compose'
 import { loadJostFont } from './jost-font'
+import { findSongByTitle, songArtist } from './setlist-artist'
 import { useKeyframes } from './use-keyframes'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
@@ -312,6 +313,17 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     if (band) setArtist(band.name)
   }
 
+  /**
+   * Completing a setlist title also fills in that song's artist — the act
+   * being covered, which is what the thumbnail credits. Free text leaves the
+   * artist alone, so a hand-entered one survives further typing.
+   */
+  const handleSongChange = (title: string) => {
+    setSong(title)
+    const match = findSongByTitle(bandSongs, title)
+    if (match) setArtist(songArtist(match))
+  }
+
   // --- Instagram crop drag-to-reposition -----------------------------------
   const igDragRef = useRef<{
     pointerId: number
@@ -523,19 +535,19 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
             label="Song title"
             helperText={
               bandSongs.length > 0
-                ? `Pick from this band's ${bandSongs.length}-song setlist, or type any title.`
+                ? `Pick from this band's ${bandSongs.length}-song setlist to fill in the artist too, or type any title.`
                 : 'Type any title — no setlist songs loaded for this band yet.'
             }
           >
             <AdminInput
               value={song}
-              onChange={(e) => setSong(e.target.value)}
+              onChange={(e) => handleSongChange(e.target.value)}
               placeholder="e.g. Stairway to Production"
               list="setlist-songs"
             />
             <datalist id="setlist-songs">
               {bandSongs.map((s) => (
-                <option key={s.id} value={s.title} />
+                <option key={s.id} value={s.title} label={songArtist(s)} />
               ))}
             </datalist>
           </AdminFormField>
