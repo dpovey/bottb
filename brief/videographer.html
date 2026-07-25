@@ -158,18 +158,14 @@
 
   /* pricing table */
   .ptab{border:1px solid var(--panel-line);border-radius:12px;overflow:hidden;margin-top:4px;}
-  .ptab .thead{display:grid;grid-template-columns:34px 1fr 132px;background:rgba(255,255,255,.035);
+  .ptab .thead{display:grid;grid-template-columns:34px 1fr;background:rgba(255,255,255,.035);
     font-family:var(--cond);text-transform:uppercase;letter-spacing:.16em;font-size:9px;color:var(--dark-faint);padding:9px 0;}
   .ptab .thead .c1{padding-left:16px;}
-  .ptab .thead .c3{text-align:right;padding-right:18px;}
-  .ptab .prow{display:grid;grid-template-columns:34px 1fr 132px;border-top:1px solid var(--panel-line);}
+  .ptab .prow{display:grid;grid-template-columns:34px 1fr;border-top:1px solid var(--panel-line);}
   .ptab .prow .n{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--gold);padding:15px 0 0 16px;}
-  .ptab .prow .m{padding:14px 8px 15px 0;}
+  .ptab .prow .m{padding:14px 20px 15px 0;}
   .ptab .prow .m .ttl{font-weight:600;font-size:12px;color:#fff;margin-bottom:3px;}
   .ptab .prow .m .desc{font-size:9.7px;line-height:1.42;color:var(--dark-muted);}
-  .ptab .prow .q{border-left:1px solid var(--panel-line);display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:0 18px;}
-  .ptab .prow .q .line{width:96px;border-bottom:1px dashed rgba(255,255,255,.28);height:1px;margin-bottom:8px;}
-  .ptab .prow .q .aud{font-family:var(--cond);font-size:9px;letter-spacing:.16em;color:var(--dark-faint);}
   .badge.req{color:var(--gold);}
 
   /* timelines */
@@ -369,31 +365,23 @@
     </div>
     <div class="body-block" style="margin-top:14px">
       <div class="ptab">
-        <div class="thead"><div class="c1">#</div><div>Service</div><div class="c3">Your quote</div></div>
+        <div class="thead"><div class="c1">#</div><div>Service</div></div>
         <div class="prow">
           <div class="n">1</div>
           <div class="m"><div class="ttl">Footage only <span class="badge req">Required</span></div>
-            <div class="desc">Multi-camera capture of the full show — four angles (wide, two angled, one roving), run by a small crew: one roving operator plus a producer/operator on the fixed cameras. Full technical spec on page 6.</div></div>
-          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
-        </div>
+            <div class="desc">Multi-camera capture of the full show — four angles (wide, two angled, one roving), run by a small crew: one roving operator plus a producer/operator on the fixed cameras. Full technical spec on page 6.</div></div>        </div>
         <div class="prow">
           <div class="n">2</div>
           <div class="m"><div class="ttl">Reels &amp; highlights <span class="badge">Add-on</span></div>
-            <div class="desc">Six reels — one event overview plus one per band. Cut to a pre-provided "hero" song per band (pre-recorded audio, not the live mix), so they're never blocked on final audio. Horizontal source, vertical-safe framing.</div></div>
-          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
-        </div>
+            <div class="desc">Six reels — one event overview plus one per band. Backed by the studio original of the song the band covered (e.g. a band covering Rage Against the Machine → the RATM original), not the live mix — kept to ≤60s for fair use, so they're never blocked on our audio. Horizontal source, vertical-safe framing.</div></div>        </div>
         <div class="prow">
           <div class="n">3</div>
           <div class="m"><div class="ttl">Multitrack audio <span class="badge">Add-on</span></div>
-            <div class="desc">The Triffid's desk has no multitrack outs, so the incoming feeds need to be split (a splitter/snake on the inputs) into a recorder — handed off as .wav files. A dedicated tech to monitor the record is optional. Record only; we mix and master in-house, and we'll supply input lists per act a few days out.</div></div>
-          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
-        </div>
+            <div class="desc">The Triffid's desk has no multitrack outs, so the incoming feeds need to be split (a splitter/snake on the inputs) into a recorder — handed off as .wav files. A dedicated tech to monitor the record is optional. Record only; we mix and master in-house, and we'll supply input lists per act a few days out.</div></div>        </div>
         <div class="prow">
           <div class="n">4</div>
           <div class="m"><div class="ttl">Full edited show <span class="badge">If available</span></div>
-            <div class="desc">The complete show edited from multicam, including grading — delivered as an editor project plus a final rendered master (see note below).</div></div>
-          <div class="q"><div class="line"></div><div class="aud">AUD</div></div>
-        </div>
+            <div class="desc">The complete show edited from multicam, including grading — delivered as an editor project plus a final rendered master (see note below).</div></div>        </div>
       </div>
       <div class="callout" style="margin-top:16px">
         <div class="k">Editing tools — Premiere or Resolve</div>
@@ -533,12 +521,12 @@
         <div class="row">
           <div class="when">Tue 1 Sep 2026 · morning</div>
           <div class="what">Event highlight reel ×1</div>
-          <div class="note">The hero cut we push out first, while the buzz is fresh. Cut to a backing track, so it's not waiting on any mix.</div>
+          <div class="note">The hero cut we push out first, while the buzz is fresh. Backed by the studio original of a covered song (≤60s, fair use), so it's not waiting on any mix.</div>
         </div>
         <div class="row">
           <div class="when">Rolling — from Tue 1 Sep</div>
           <div class="what">Winning-band reel ×1</div>
-          <div class="note">Winner announced on the night; their reel follows quickly, also cut to a pre-provided song.</div>
+          <div class="note">Winner announced on the night; their reel follows quickly, backed the same way.</div>
         </div>
         <div class="row">
           <div class="when">Fri 11 Sep 2026</div>
