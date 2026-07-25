@@ -10,3 +10,8 @@ pnpm-lock.yaml
 # HTML with syntax errors
 design/header-dropdown.html
 
+# Print document rendered to PDF by brief/render.js. Its inline layout is
+# whitespace-sensitive: reflowing the tags injects leading whitespace inside
+# `.eyebrow`, which shifts every page's running header a few pixels.
+brief/videographer.html
+
