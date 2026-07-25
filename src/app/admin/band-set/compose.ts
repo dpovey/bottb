@@ -11,8 +11,9 @@
  * - Credits page — company + Bottb logos and a centred list of band members.
  */
 
-import { drawCover, fitContain, naturalSize } from '@/lib/canvas'
+import { drawCover, fitContain, naturalSize, wrapLines } from '@/lib/canvas'
 import { OV_H, OV_W } from '../thumbnails/compose'
+import { MIN_TYPE, safeInsets } from '../video-safe-area'
 
 export type LogoCorner = 'top-left' | 'top-right'
 
@@ -56,10 +57,6 @@ export interface CreditsContent extends BrandLogos {
   members: CreditsMember[]
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
-}
-
 /** Shrink the font size until the text fits `maxWidth` (down to a floor). */
 function fitFont(
   ctx: CanvasRenderingContext2D,
@@ -78,41 +75,14 @@ function fitFont(
   return size
 }
 
-/**
- * Greedy word-wrap `text` into at most `maxLines` lines that each fit
- * `maxWidth` at the current `ctx.font`. Overflowing words stay on the last
- * line (the caller shrinks the font to compensate).
- */
-function wrapLines(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  maxLines: number
-): string[] {
-  const words = text.split(/\s+/).filter(Boolean)
-  if (words.length === 0) return []
-  const lines: string[] = []
-  let current = words[0]
-
-  for (let i = 1; i < words.length; i++) {
-    const candidate = `${current} ${words[i]}`
-    if (
-      ctx.measureText(candidate).width <= maxWidth ||
-      lines.length === maxLines - 1
-    ) {
-      current = candidate
-    } else {
-      lines.push(current)
-      current = words[i]
-    }
-  }
-  lines.push(current)
-  return lines.slice(0, maxLines)
-}
+/** Height of the Bottb square as a fraction of the frame height. */
+const LOGO_H = 0.17
 
 /**
  * Draw the Bottb square in `bottbCorner` and the company logo in the
- * opposite corner, vertically centred on the square. Proportional to `h`.
+ * opposite corner, vertically centred on the square. Inset by the shared
+ * safe-area margins so neither logo hangs off the edge of a cropped or
+ * overscanned frame.
  */
 function drawCornerLogos(
   ctx: CanvasRenderingContext2D,
@@ -120,14 +90,14 @@ function drawCornerLogos(
   h: number,
   { bottbLogo, companyLogo, bottbCorner }: BrandLogos
 ): void {
-  const pad = Math.round(h * 0.055)
-  const bottbSize = Math.round(h * 0.17)
-  const centerY = pad + bottbSize / 2
+  const safe = safeInsets(w, h)
+  const bottbSize = Math.round(h * LOGO_H)
+  const centerY = safe.top + bottbSize / 2
   const bottbOnRight = bottbCorner === 'top-right'
 
   if (bottbLogo) {
-    const x = bottbOnRight ? w - pad - bottbSize : pad
-    ctx.drawImage(bottbLogo, x, pad, bottbSize, bottbSize)
+    const x = bottbOnRight ? w - safe.x - bottbSize : safe.x
+    ctx.drawImage(bottbLogo, x, safe.top, bottbSize, bottbSize)
   }
 
   if (companyLogo) {
@@ -135,12 +105,40 @@ function drawCornerLogos(
     const fitted = fitContain(
       nw,
       nh,
-      Math.round(w * 0.28),
+      Math.round(w * 0.26),
       Math.round(h * 0.14)
     )
-    const x = bottbOnRight ? pad : w - pad - fitted.w
+    const x = bottbOnRight ? safe.x : w - safe.x - fitted.w
     const y = centerY - fitted.h / 2
     ctx.drawImage(companyLogo, x, y, fitted.w, fitted.h)
+  }
+}
+
+/** Sponsor-row metrics, as fractions of the frame height. */
+const SPONSOR_LOGO_H = 0.055
+const SPONSOR_LABEL_H = 0.026
+const SPONSOR_LABEL_GAP = 0.012
+/** Total height the sponsor row occupies, as a fraction of the frame height. */
+const SPONSOR_BLOCK_H = SPONSOR_LOGO_H + SPONSOR_LABEL_GAP + SPONSOR_LABEL_H
+
+/**
+ * The band of the frame available for centred copy: below the corner logos and
+ * above the sponsor row (or the bottom safe margin when there are no sponsors).
+ * Both pages measure their text block and centre it in here, so growing the
+ * type doesn't push the copy down into the player's control bar.
+ */
+function contentRegion(
+  w: number,
+  h: number,
+  hasSponsors: boolean
+): { top: number; bottom: number } {
+  const safe = safeInsets(w, h)
+  return {
+    top: safe.top + Math.round(h * LOGO_H) + Math.round(h * 0.035),
+    bottom:
+      h -
+      safe.bottom -
+      (hasSponsors ? Math.round(h * (SPONSOR_BLOCK_H + 0.04)) : 0),
   }
 }
 
@@ -234,11 +232,13 @@ function drawSponsorRow(
   ].filter((g): g is { label: string; logo: HTMLImageElement } => Boolean(g))
   if (groups.length === 0) return
 
-  const logoH = Math.round(h * 0.05)
-  const labelSize = Math.max(11, Math.round(h * 0.02))
-  const labelGap = Math.round(h * 0.012)
+  const logoH = Math.round(h * SPONSOR_LOGO_H)
+  const labelSize = Math.max(11, Math.round(h * SPONSOR_LABEL_H))
+  const labelGap = Math.round(h * SPONSOR_LABEL_GAP)
   const groupGap = Math.round(w * 0.045)
-  const bottom = Math.round(h * 0.955)
+  // Sits on the bottom safe margin, clear of the YouTube control bar — the old
+  // 0.955 baseline put these logos directly behind the scrubber.
+  const bottom = h - safeInsets(w, h).bottom
 
   ctx.font = `600 ${labelSize}px ${FONT_FAMILY}`
   setLetterSpacing(ctx, 1)
@@ -282,11 +282,9 @@ function drawTitleAdornments(
   h: number,
   content: TitleContent
 ): void {
-  drawTextPlate(ctx, w / 2, h * 0.48, w * 0.42, h * 0.26)
-  drawCornerLogos(ctx, w, h, content)
-
   const centerX = w / 2
-  const maxTextW = Math.round(w * 0.82)
+  const safe = safeInsets(w, h)
+  const maxTextW = w - safe.x * 2
   const bandName = content.bandName.trim()
   const eventName = content.eventName.trim()
   // Date and venue only — the exact time isn't meaningful on a title card.
@@ -294,47 +292,116 @@ function drawTitleAdornments(
     .filter(Boolean)
     .join('  ·  ')
 
-  setTextStyle(ctx, h)
-  let baseline = Math.round(h * 0.4)
+  // --- Measure ---------------------------------------------------------------
+  // Sizes are resolved up front so the whole stack can be centred in the
+  // available band rather than growing downwards from a fixed baseline.
+  const region = contentRegion(
+    w,
+    h,
+    Boolean(content.partnerLogo || content.youngcareLogo)
+  )
 
+  let nameSize = bandName
+    ? fitFont(
+        ctx,
+        bandName,
+        800,
+        Math.round(h * 0.145),
+        // Allowed to measure against a wider box than it wraps to: at this
+        // size a long name is expected to break over two lines.
+        maxTextW * 1.6,
+        Math.round(h * MIN_TYPE.hero)
+      )
+    : 0
+  let nameLines: string[] = []
   if (bandName) {
-    const size = fitFont(
-      ctx,
-      bandName,
-      800,
-      Math.round(h * 0.13),
-      maxTextW * 1.6
-    )
-    ctx.font = `800 ${size}px ${FONT_FAMILY}`
-    const lines = wrapLines(ctx, bandName, maxTextW, 2)
-    const lineHeight = size * 1.1
-    for (const line of lines) {
-      baseline += lineHeight
+    ctx.font = `800 ${nameSize}px ${FONT_FAMILY}`
+    nameLines = wrapLines(ctx, bandName, maxTextW, 2)
+    // A name that wraps to two lines can outgrow the region; the name
+    // dominates the stack, so scaling it alone is enough to bring it back.
+    if (nameLines.length > 1) {
+      const overflow =
+        nameLines.length * nameSize * 1.1 - (region.bottom - region.top) * 0.55
+      if (overflow > 0) {
+        nameSize = Math.max(
+          Math.round(h * MIN_TYPE.hero),
+          Math.round(nameSize - overflow / nameLines.length)
+        )
+        ctx.font = `800 ${nameSize}px ${FONT_FAMILY}`
+        nameLines = wrapLines(ctx, bandName, maxTextW, 2)
+      }
+    }
+  }
+  const nameLineH = nameSize * 1.1
+
+  const eventSize = eventName
+    ? fitFont(
+        ctx,
+        eventName,
+        600,
+        Math.round(h * 0.058),
+        maxTextW,
+        Math.round(h * MIN_TYPE.primary)
+      )
+    : 0
+  const dateSize = dateVenue
+    ? fitFont(
+        ctx,
+        dateVenue,
+        500,
+        Math.round(h * 0.044),
+        maxTextW,
+        Math.round(h * MIN_TYPE.secondary)
+      )
+    : 0
+
+  const ruleGap = Math.round(h * 0.035)
+  const ruleH = Math.round(h * 0.005)
+  const blockH =
+    nameLines.length * nameLineH +
+    (nameLines.length ? ruleGap * 2 + ruleH : 0) +
+    (eventSize ? eventSize * 1.2 : 0) +
+    (dateSize ? dateSize * 1.5 : 0)
+
+  // --- Place -----------------------------------------------------------------
+  const top = Math.max(region.top, (region.top + region.bottom - blockH) / 2)
+
+  drawTextPlate(
+    ctx,
+    centerX,
+    top + blockH / 2,
+    w * 0.44,
+    Math.max(h * 0.24, blockH * 0.78)
+  )
+  drawCornerLogos(ctx, w, h, content)
+
+  // --- Draw ------------------------------------------------------------------
+  setTextStyle(ctx, h)
+  let baseline = top
+
+  if (nameLines.length) {
+    ctx.font = `800 ${nameSize}px ${FONT_FAMILY}`
+    for (const line of nameLines) {
+      baseline += nameLineH
       ctx.fillText(line, centerX, baseline)
     }
-    baseline += Math.round(h * 0.035)
-    drawAccentRule(ctx, centerX, baseline, w * 0.06, Math.round(h * 0.004))
-    baseline += Math.round(h * 0.035)
+    baseline += ruleGap
+    drawAccentRule(ctx, centerX, baseline, w * 0.06, ruleH)
+    baseline += ruleGap
   }
 
-  if (eventName) {
-    const size = fitFont(ctx, eventName, 600, Math.round(h * 0.048), maxTextW)
-    ctx.font = `600 ${size}px ${FONT_FAMILY}`
-    const priorFill = ctx.fillStyle
+  if (eventSize) {
+    ctx.font = `600 ${eventSize}px ${FONT_FAMILY}`
     ctx.fillStyle = ACCENT_COLOR
-    baseline += size * 1.2
+    baseline += eventSize * 1.2
     ctx.fillText(eventName, centerX, baseline)
-    ctx.fillStyle = priorFill
   }
 
-  if (dateVenue) {
-    const size = fitFont(ctx, dateVenue, 500, Math.round(h * 0.034), maxTextW)
-    ctx.font = `500 ${size}px ${FONT_FAMILY}`
-    const priorFill = ctx.fillStyle
+  if (dateSize) {
+    ctx.font = `500 ${dateSize}px ${FONT_FAMILY}`
     ctx.fillStyle = 'rgba(255,255,255,0.82)'
-    baseline += size * 1.5
+    baseline += dateSize * 1.5
     ctx.fillText(dateVenue, centerX, baseline)
-    ctx.fillStyle = priorFill
   }
 
   resetTextStyle(ctx)
@@ -348,6 +415,7 @@ function drawTitleAdornments(
  */
 function drawMemberEntry(
   ctx: CanvasRenderingContext2D,
+  h: number,
   centerX: number,
   baseline: number,
   entryH: number,
@@ -360,7 +428,8 @@ function drawMemberEntry(
       name,
       600,
       Math.round(entryH * 0.42),
-      maxTextW
+      maxTextW,
+      Math.round(h * MIN_TYPE.secondary)
     )
     ctx.font = `600 ${nameSize}px ${FONT_FAMILY}`
     ctx.fillStyle = '#ffffff'
@@ -370,8 +439,9 @@ function drawMemberEntry(
       ctx,
       role,
       500,
-      Math.round(entryH * 0.26),
-      maxTextW
+      Math.round(entryH * 0.3),
+      maxTextW,
+      Math.round(h * MIN_TYPE.label)
     )
     ctx.font = `500 ${roleSize}px ${FONT_FAMILY}`
     ctx.fillStyle = ACCENT_COLOR
@@ -388,7 +458,8 @@ function drawMemberEntry(
       name,
       500,
       Math.round(entryH * 0.55),
-      maxTextW
+      maxTextW,
+      Math.round(h * MIN_TYPE.secondary)
     )
     ctx.font = `500 ${nameSize}px ${FONT_FAMILY}`
     ctx.fillStyle = '#ffffff'
@@ -404,6 +475,7 @@ function memberWeight(member: CreditsMember): number {
 /** Stack a column of member entries starting at `startBaseline`. */
 function drawMemberColumn(
   ctx: CanvasRenderingContext2D,
+  h: number,
   centerX: number,
   startBaseline: number,
   maxTextW: number,
@@ -413,13 +485,52 @@ function drawMemberColumn(
   let baseline = startBaseline
   for (const member of members) {
     const entryH = unit * memberWeight(member)
-    drawMemberEntry(ctx, centerX, baseline, entryH, maxTextW, member)
+    drawMemberEntry(ctx, h, centerX, baseline, entryH, maxTextW, member)
     baseline += entryH
   }
 }
 
-/** Above this roster size, split into two side-by-side columns instead of one long list. */
-const TWO_COLUMN_THRESHOLD = 5
+/** Most columns worth splitting a roster across before names get too narrow. */
+const MAX_COLUMNS = 3
+
+/** Deal `members` into `count` balanced, top-to-bottom columns. */
+function splitColumns(
+  members: CreditsMember[],
+  count: number
+): CreditsMember[][] {
+  const perColumn = Math.ceil(members.length / count)
+  return Array.from({ length: count }, (_, i) =>
+    members.slice(i * perColumn, (i + 1) * perColumn)
+  ).filter((column) => column.length > 0)
+}
+
+/** The tallest column's weight — all columns share one line height. */
+function tallestColumnWeight(columns: CreditsMember[][]): number {
+  return Math.max(
+    0,
+    ...columns.map((column) =>
+      column.reduce((sum, m) => sum + memberWeight(m), 0)
+    )
+  )
+}
+
+/**
+ * Pick the fewest columns whose line height still clears `minUnit`. A single
+ * centred list reads best, so we only go wide when staying narrow would push
+ * the names below legible size — which is what a long single column used to
+ * do. Past {@link MAX_COLUMNS} an unusually large roster shrinks instead.
+ */
+function chooseColumnCount(
+  members: CreditsMember[],
+  availableH: number,
+  minUnit: number
+): number {
+  for (let count = 1; count < MAX_COLUMNS; count++) {
+    const weight = tallestColumnWeight(splitColumns(members, count))
+    if (weight === 0 || availableH / weight >= minUnit) return count
+  }
+  return MAX_COLUMNS
+}
 
 /**
  * Draw the credits-page adornments — corner logos, the band name as a
@@ -432,11 +543,9 @@ function drawCreditsAdornments(
   h: number,
   content: CreditsContent
 ): void {
-  drawTextPlate(ctx, w / 2, h * 0.52, w * 0.4, h * 0.4)
-  drawCornerLogos(ctx, w, h, content)
-
   const centerX = w / 2
-  const maxTextW = Math.round(w * 0.82)
+  const safe = safeInsets(w, h)
+  const maxTextW = w - safe.x * 2
   const bandName = content.bandName.trim()
   const members = sortBySurname(
     content.members
@@ -444,19 +553,69 @@ function drawCreditsAdornments(
       .filter((m) => m.name)
   )
 
-  setTextStyle(ctx, h)
-  let baseline = Math.round(h * 0.3)
+  // --- Measure the heading ---------------------------------------------------
+  const nameSize = bandName
+    ? fitFont(
+        ctx,
+        bandName,
+        800,
+        Math.round(h * 0.08),
+        maxTextW,
+        Math.round(h * MIN_TYPE.hero)
+      )
+    : 0
+  const label = 'FEATURING'
+  const labelSize = Math.max(12, Math.round(h * 0.028))
+  const labelGap = Math.round(h * 0.038)
+  const headingH = (nameSize ? nameSize * 1.45 : 0) + labelSize * 1.4 + labelGap
 
-  if (bandName) {
-    const size = fitFont(ctx, bandName, 800, Math.round(h * 0.07), maxTextW)
-    ctx.font = `800 ${size}px ${FONT_FAMILY}`
-    baseline += size
+  // --- Measure the member block ----------------------------------------------
+  const region = contentRegion(
+    w,
+    h,
+    Boolean(content.partnerLogo || content.youngcareLogo)
+  )
+  const availableH = Math.max(region.bottom - region.top - headingH, h * 0.1)
+  // A role entry stacks a name over a role, so it needs ~1.7 units; `unit` is
+  // the line height that entry weighting is measured in. The floor is the
+  // smallest unit that still yields a legible name (0.42 × 1.7 × unit).
+  const minUnit = h * 0.05
+  const columns = splitColumns(
+    members,
+    chooseColumnCount(members, availableH, minUnit)
+  )
+  const columnCount = Math.max(columns.length, 1)
+  const colWeight = tallestColumnWeight(columns)
+  // Never exceed `availableH`: overshooting would run the roster into the
+  // sponsor row, so an oversized roster shrinks past the floor instead.
+  const unit = colWeight
+    ? Math.min(availableH / colWeight, h * (columnCount > 1 ? 0.085 : 0.1))
+    : 0
+  const blockH = headingH + unit * colWeight
+
+  // --- Place -----------------------------------------------------------------
+  const top = Math.max(region.top, (region.top + region.bottom - blockH) / 2)
+
+  drawTextPlate(
+    ctx,
+    centerX,
+    top + blockH / 2,
+    w * 0.44,
+    Math.max(h * 0.3, blockH * 0.7)
+  )
+  drawCornerLogos(ctx, w, h, content)
+
+  // --- Draw ------------------------------------------------------------------
+  setTextStyle(ctx, h)
+  let baseline = top
+
+  if (nameSize) {
+    ctx.font = `800 ${nameSize}px ${FONT_FAMILY}`
+    baseline += nameSize
     ctx.fillText(bandName, centerX, baseline)
-    baseline += Math.round(size * 0.55)
+    baseline += nameSize * 0.55
   }
 
-  const label = 'FEATURING'
-  const labelSize = Math.max(12, Math.round(h * 0.024))
   ctx.font = `600 ${labelSize}px ${FONT_FAMILY}`
   ctx.fillStyle = ACCENT_COLOR
   setLetterSpacing(ctx, 2)
@@ -464,37 +623,23 @@ function drawCreditsAdornments(
   ctx.fillText(label, centerX, baseline)
   setLetterSpacing(ctx, 0)
   ctx.fillStyle = '#ffffff'
-  baseline += Math.round(h * 0.05)
+  baseline += labelGap
 
-  if (members.length > 0) {
-    // Shrink line height as the roster grows so it still fits above the
-    // sponsor row / bottom margin; beyond TWO_COLUMN_THRESHOLD, split into
-    // two columns instead of shrinking indefinitely.
-    const bottomLimit =
-      h * (content.partnerLogo || content.youngcareLogo ? 0.84 : 0.92)
-    const availableH = Math.max(bottomLimit - baseline, h * 0.1)
-
-    if (members.length > TWO_COLUMN_THRESHOLD) {
-      const mid = Math.ceil(members.length / 2)
-      const left = members.slice(0, mid)
-      const right = members.slice(mid)
-      const colTotalWeight = Math.max(
-        left.reduce((sum, m) => sum + memberWeight(m), 0),
-        right.reduce((sum, m) => sum + memberWeight(m), 0)
-      )
-      const unit = clamp(availableH / colTotalWeight, h * 0.032, h * 0.075)
-      const colGap = w * 0.06
-      const colTextW = Math.round((w * 0.82 - colGap) / 2)
-      const leftX = centerX - colGap / 2 - colTextW / 2
-      const rightX = centerX + colGap / 2 + colTextW / 2
-      drawMemberColumn(ctx, leftX, baseline, colTextW, left, unit)
-      drawMemberColumn(ctx, rightX, baseline, colTextW, right, unit)
-    } else {
-      const totalWeight = members.reduce((sum, m) => sum + memberWeight(m), 0)
-      const unit = clamp(availableH / totalWeight, h * 0.028, h * 0.09)
-      drawMemberColumn(ctx, centerX, baseline, maxTextW, members, unit)
-    }
-  }
+  // Each column takes an equal share of the safe width; names are centred in
+  // their share, with a gutter kept clear between neighbours.
+  const colW = maxTextW / columnCount
+  const colTextW = Math.round(colW - w * 0.03)
+  columns.forEach((column, i) => {
+    drawMemberColumn(
+      ctx,
+      h,
+      safe.x + colW * (i + 0.5),
+      baseline,
+      colTextW,
+      column,
+      unit
+    )
+  })
 
   resetTextStyle(ctx)
   drawSponsorRow(ctx, w, h, content.partnerLogo, content.youngcareLogo)

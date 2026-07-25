@@ -79,3 +79,35 @@ export function naturalSize(img: HTMLImageElement): { w: number; h: number } {
   const h = img.naturalHeight || img.height || 1
   return { w, h }
 }
+
+/**
+ * Greedy word-wrap `text` into at most `maxLines` lines that each fit
+ * `maxWidth` at the current `ctx.font`. Overflowing words stay on the last
+ * line (callers shrink the font to compensate).
+ */
+export function wrapLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxLines: number
+): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return []
+  const lines: string[] = []
+  let current = words[0]
+
+  for (let i = 1; i < words.length; i++) {
+    const candidate = `${current} ${words[i]}`
+    if (
+      ctx.measureText(candidate).width <= maxWidth ||
+      lines.length === maxLines - 1
+    ) {
+      current = candidate
+    } else {
+      lines.push(current)
+      current = words[i]
+    }
+  }
+  lines.push(current)
+  return lines.slice(0, maxLines)
+}

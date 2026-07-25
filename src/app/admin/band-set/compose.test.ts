@@ -235,7 +235,7 @@ describe('composeCreditsOverlay', () => {
     )
   })
 
-  it('keeps a single centred column at the two-column threshold', () => {
+  it('keeps a roster that fits in a single centred column', () => {
     const { ctx, calls } = createMockContext()
     const roster: CreditsMember[] = Array.from({ length: 5 }, (_, i) => ({
       name: `Member${i}`,
@@ -247,18 +247,98 @@ describe('composeCreditsOverlay', () => {
     expect(xs.size).toBe(1)
   })
 
-  it('splits into two columns once the roster exceeds the threshold', () => {
+  it('splits into columns rather than shrinking a long roster', () => {
     const { ctx, calls } = createMockContext()
-    const roster: CreditsMember[] = Array.from({ length: 8 }, (_, i) => ({
+    // Role entries need ~1.7x the height of a bare name, so a roster this size
+    // cannot hold the legibility floor in one column.
+    const roster: CreditsMember[] = Array.from({ length: 12 }, (_, i) => ({
       name: `Member${i}`,
+      role: 'Guitar',
     }))
     composeCreditsOverlay(ctx, { ...baseCredits, members: roster })
     const memberCalls = calls.fillText.filter((c) =>
       c.text.startsWith('Member')
     )
-    expect(memberCalls).toHaveLength(8)
+    expect(memberCalls).toHaveLength(12)
     const xs = new Set(memberCalls.map((c) => c.x))
-    expect(xs.size).toBe(2)
+    expect(xs.size).toBeGreaterThan(1)
+    expect(xs.size).toBeLessThanOrEqual(3)
+  })
+
+  it('keeps a large roster clear of the sponsor row', () => {
+    const { ctx, calls } = createMockContext()
+    const roster: CreditsMember[] = Array.from({ length: 12 }, (_, i) => ({
+      name: `Member${i}`,
+      role: 'Guitar',
+    }))
+    composeCreditsOverlay(ctx, {
+      ...baseCredits,
+      members: roster,
+      partnerLogo: fakeLogo,
+      youngcareLogo: fakeLogo,
+    })
+    const lowestMember = Math.max(
+      ...calls.fillText
+        .filter((c) => c.text.startsWith('Member'))
+        .map((c) => c.y)
+    )
+    const sponsorLabel = calls.fillText.find((c) => c.text === 'POWERED BY')
+    expect(sponsorLabel).toBeDefined()
+    expect(lowestMember).toBeLessThan(sponsorLabel!.y)
+  })
+})
+
+describe('safe areas', () => {
+  /**
+   * Everything must sit inside SMPTE HD title-safe (the inner 90%) so it
+   * survives cropping, and clear of the bottom of the frame where the YouTube
+   * player draws its scrubber and control bar.
+   */
+  const TITLE_SAFE = 0.05
+  const CONTROL_BAR = 0.9
+
+  it('insets the corner logos from every edge', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      bottbLogo: fakeLogo,
+      companyLogo: fakeLogo,
+    })
+    expect(calls.drawImage).toHaveLength(2)
+    for (const [, x, y, w, h] of calls.drawImage as number[][]) {
+      expect(x).toBeGreaterThanOrEqual(OV_W * TITLE_SAFE)
+      expect(y).toBeGreaterThanOrEqual(OV_H * TITLE_SAFE)
+      expect(x + w).toBeLessThanOrEqual(OV_W * (1 - TITLE_SAFE))
+      expect(y + h).toBeLessThanOrEqual(OV_H * (1 - TITLE_SAFE))
+    }
+  })
+
+  it('keeps the sponsor row above the YouTube control bar', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      partnerLogo: fakeLogo,
+      youngcareLogo: fakeLogo,
+    })
+    // Sponsor logos are the only images drawn here (no corner logos supplied).
+    for (const [, , y, , h] of calls.drawImage as number[][]) {
+      expect(y + h).toBeLessThanOrEqual(OV_H * CONTROL_BAR)
+    }
+    for (const call of calls.fillText) {
+      expect(call.y).toBeLessThanOrEqual(OV_H * CONTROL_BAR)
+    }
+  })
+
+  it('keeps credits text above the YouTube control bar', () => {
+    const { ctx, calls } = createMockContext()
+    composeCreditsOverlay(ctx, {
+      ...baseCredits,
+      partnerLogo: fakeLogo,
+      youngcareLogo: fakeLogo,
+    })
+    for (const call of calls.fillText) {
+      expect(call.y).toBeLessThanOrEqual(OV_H * CONTROL_BAR)
+    }
   })
 })
 

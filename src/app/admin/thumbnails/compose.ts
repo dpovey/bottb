@@ -8,7 +8,8 @@
  *   clean frame, no overlays — either filled (cropped) or fitted (letterboxed).
  */
 
-import { drawCover, fitContain, naturalSize } from '@/lib/canvas'
+import { drawCover, fitContain, naturalSize, wrapLines } from '@/lib/canvas'
+import { MIN_TYPE, safeInsets } from '../video-safe-area'
 
 export type LogoCorner = 'top-left' | 'top-right'
 
@@ -39,8 +40,12 @@ type Source = CanvasImageSource
 /**
  * Draw just the brand adornments — the two logos across the top and the
  * artist + song bottom-left — scaled to a `w`×`h` 16:9 area. Everything is
- * proportional to `h`, so this renders identically at any resolution. Used by
- * both the YouTube thumbnail and the transparent intro overlay.
+ * proportional to the frame, so this renders identically at any resolution.
+ * Used by both the YouTube thumbnail and the transparent intro overlay.
+ *
+ * Margins come from `../video-safe-area`: the sides are a fraction of *width*
+ * (so they aren't squashed on a 16:9 frame) and the bottom is deeper than the
+ * top so the artist/song block clears the YouTube control bar.
  */
 function drawAdornments(
   ctx: CanvasRenderingContext2D,
@@ -48,16 +53,16 @@ function drawAdornments(
   h: number,
   content: ThumbnailContent
 ): void {
-  const pad = Math.round(h * 0.055)
+  const safe = safeInsets(w, h)
 
   // --- Logos -----------------------------------------------------------------
   const bottbSize = Math.round(h * 0.17)
-  const centerY = pad + bottbSize / 2
+  const centerY = safe.top + bottbSize / 2
   const bottbOnRight = content.bottbCorner === 'top-right'
 
   if (content.bottbLogo) {
-    const x = bottbOnRight ? w - pad - bottbSize : pad
-    ctx.drawImage(content.bottbLogo, x, pad, bottbSize, bottbSize)
+    const x = bottbOnRight ? w - safe.x - bottbSize : safe.x
+    ctx.drawImage(content.bottbLogo, x, safe.top, bottbSize, bottbSize)
   }
 
   if (content.companyLogo) {
@@ -65,11 +70,11 @@ function drawAdornments(
     const fitted = fitContain(
       nw,
       nh,
-      Math.round(w * 0.28),
+      Math.round(w * 0.26),
       Math.round(h * 0.14)
     )
     // Company logo takes the opposite corner, vertically centred on the square.
-    const x = bottbOnRight ? pad : w - pad - fitted.w
+    const x = bottbOnRight ? safe.x : w - safe.x - fitted.w
     const y = centerY - fitted.h / 2
     ctx.drawImage(content.companyLogo, x, y, fitted.w, fitted.h)
   }
@@ -77,7 +82,7 @@ function drawAdornments(
   // --- Text (artist + song) --------------------------------------------------
   const artist = content.artist.trim()
   const song = content.song.trim()
-  const maxTextW = w - pad * 2
+  const maxTextW = w - safe.x * 2
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -87,19 +92,40 @@ function drawAdornments(
   ctx.shadowOffsetY = Math.round(h * 0.006)
   ctx.fillStyle = '#ffffff'
 
-  let baseline = h - pad
+  let baseline = h - safe.bottom
 
   if (song) {
-    const size = fitFont(ctx, song, 500, Math.round(h * 0.058), maxTextW)
+    const size = fitFont(
+      ctx,
+      song,
+      500,
+      Math.round(h * 0.068),
+      maxTextW,
+      Math.round(h * MIN_TYPE.primary)
+    )
     ctx.font = `500 ${size}px ${FONT_FAMILY}`
-    ctx.fillText(song, pad, baseline)
+    ctx.fillText(song, safe.x, baseline)
     baseline -= size * 1.25
   }
 
   if (artist) {
-    const size = fitFont(ctx, artist, 700, Math.round(h * 0.1), maxTextW)
+    // Measured against a wider box than it wraps to: a long name is expected
+    // to break over two lines rather than shrink away or run off the frame.
+    const size = fitFont(
+      ctx,
+      artist,
+      700,
+      Math.round(h * 0.125),
+      maxTextW * 1.9,
+      Math.round(h * MIN_TYPE.hero)
+    )
     ctx.font = `700 ${size}px ${FONT_FAMILY}`
-    ctx.fillText(artist, pad, baseline)
+    // Drawn bottom-up, so the block always sits on the bottom safe margin.
+    const lines = wrapLines(ctx, artist, maxTextW, 2)
+    for (let i = lines.length - 1; i >= 0; i--) {
+      ctx.fillText(lines[i], safe.x, baseline)
+      baseline -= size * 1.12
+    }
   }
 
   // Reset shadow so callers aren't surprised.
@@ -166,17 +192,22 @@ export function composeOverlay(
   drawAdornments(ctx, w, h, content)
 }
 
-/** Shrink the font size until the text fits `maxWidth` (down to a floor). */
+/**
+ * Shrink the font size until the text fits `maxWidth`, but never below
+ * `minSize` — a very long name is better slightly wide than unreadable at
+ * thumbnail scale (see `MIN_TYPE` in `../video-safe-area`).
+ */
 function fitFont(
   ctx: CanvasRenderingContext2D,
   text: string,
   weight: number,
   startSize: number,
-  maxWidth: number
+  maxWidth: number,
+  minSize = 18
 ): number {
   let size = startSize
   ctx.font = `${weight} ${size}px ${FONT_FAMILY}`
-  while (size > 18 && ctx.measureText(text).width > maxWidth) {
+  while (size > minSize && ctx.measureText(text).width > maxWidth) {
     size -= 2
     ctx.font = `${weight} ${size}px ${FONT_FAMILY}`
   }
