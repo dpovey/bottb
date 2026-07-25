@@ -1,8 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Card, FileDropzone } from '@/components/ui'
-import { AdminFormField, AdminInput, AdminSelect } from '@/components/ui'
+import {
+  AdminCheckbox,
+  AdminCombobox,
+  AdminFormField,
+  AdminRange,
+  AdminSelect,
+  Button,
+  Card,
+  FileDropzone,
+} from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
 import type { SetlistSong } from '@/lib/db'
 import type { Band, Event } from '@/lib/db-types'
@@ -21,7 +29,7 @@ import {
   type LogoCorner,
 } from './compose'
 import { loadJostFont } from './jost-font'
-import { findSongByTitle, songArtist } from './setlist-artist'
+import { findSongByTitle, setlistArtists, songArtist } from './setlist-artist'
 import { useKeyframes } from './use-keyframes'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
@@ -309,8 +317,6 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
 
   const handleBandChange = (id: string) => {
     setBandId(id)
-    const band = bands.find((b) => b.id === id)
-    if (band) setArtist(band.name)
   }
 
   /**
@@ -523,14 +529,6 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
           )}
           {logoError && <p className="text-sm text-error">{logoError}</p>}
 
-          <AdminFormField label="Artist name">
-            <AdminInput
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="e.g. The Null Pointers"
-            />
-          </AdminFormField>
-
           <AdminFormField
             label="Song title"
             helperText={
@@ -539,17 +537,27 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 : 'Type any title — no setlist songs loaded for this band yet.'
             }
           >
-            <AdminInput
+            <AdminCombobox
               value={song}
               onChange={(e) => handleSongChange(e.target.value)}
               placeholder="e.g. Stairway to Production"
-              list="setlist-songs"
+              options={bandSongs.map((s) => ({
+                value: s.title,
+                label: songArtist(s),
+              }))}
             />
-            <datalist id="setlist-songs">
-              {bandSongs.map((s) => (
-                <option key={s.id} value={s.title} label={songArtist(s)} />
-              ))}
-            </datalist>
+          </AdminFormField>
+
+          <AdminFormField
+            label="Artist name"
+            helperText="Filled in from the song above; override it for anything else."
+          >
+            <AdminCombobox
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              placeholder="e.g. The Null Pointers"
+              options={setlistArtists(bandSongs)}
+            />
           </AdminFormField>
 
           <AdminFormField label="Logo layout">
@@ -678,15 +686,14 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 </div>
               )}
 
-              <input
-                type="range"
+              <AdminRange
                 min={0}
                 max={duration || 0}
                 step={0.01}
                 value={scrubTime}
                 onChange={(e) => requestSeek(parseFloat(e.target.value))}
                 disabled={!duration}
-                className="w-full accent-accent"
+                aria-label="Scrub video"
               />
 
               <div className="flex items-center justify-between text-sm text-gray-300">
@@ -778,15 +785,12 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 </Button>
               </div>
             )}
-            <label className="ml-auto flex cursor-pointer items-center gap-2 text-gray-300">
-              <input
-                type="checkbox"
-                checked={showSafeZones}
-                onChange={(e) => setShowSafeZones(e.target.checked)}
-                className="accent-accent"
-              />
-              Safe zones
-            </label>
+            <AdminCheckbox
+              label="Safe zones"
+              className="ml-auto"
+              checked={showSafeZones}
+              onChange={(e) => setShowSafeZones(e.target.checked)}
+            />
           </div>
 
           <p className="text-xs text-gray-500">

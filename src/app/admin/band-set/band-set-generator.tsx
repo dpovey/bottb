@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   AdminFormField,
   AdminInput,
+  AdminRange,
   AdminSelect,
   Button,
   Card,
@@ -610,8 +611,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                 </div>
               )}
 
-              <input
-                type="range"
+              <AdminRange
                 min={0}
                 max={scrubber.duration || 0}
                 step={0.01}
@@ -620,7 +620,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                   scrubber.requestSeek(parseFloat(e.target.value))
                 }
                 disabled={!scrubber.duration}
-                className="w-full accent-accent"
+                aria-label="Scrub video"
               />
 
               <div className="flex items-center justify-between text-sm text-gray-300">

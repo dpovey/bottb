@@ -22,7 +22,7 @@
 
 import { config } from 'dotenv'
 import { parseArgs } from 'util'
-import { readFile, writeFile, mkdir, readdir, unlink, stat } from 'fs/promises'
+import { readFile, writeFile, mkdir, readdir, unlink } from 'fs/promises'
 import { existsSync, readdirSync, statSync } from 'fs'
 import { join, basename, extname } from 'path'
 import sharp from 'sharp'

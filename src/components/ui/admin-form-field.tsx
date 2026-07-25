@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useId,
   ReactNode,
   InputHTMLAttributes,
   SelectHTMLAttributes,
@@ -168,3 +169,120 @@ export const AdminTextarea = forwardRef<
   )
 })
 AdminTextarea.displayName = 'AdminTextarea'
+
+/* =============================================================================
+ * AdminCombobox - Text input with suggestions; free text always allowed
+ * ============================================================================= */
+
+/** A suggestion offered by {@link AdminCombobox}. */
+export interface AdminComboboxOption {
+  /** Written into the field when picked. */
+  value: string
+  /** Optional hint shown beside the value in the dropdown (e.g. the artist). */
+  label?: string
+}
+
+export interface AdminComboboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'className' | 'list'
+> {
+  /** Suggestions to offer. Plain strings are treated as bare values. */
+  options: ReadonlyArray<string | AdminComboboxOption>
+  /** Additional class names */
+  className?: string
+  /** Whether the input has an error */
+  hasError?: boolean
+}
+
+/**
+ * A combobox: an {@link AdminInput} backed by a native `<datalist>`, so the
+ * field suggests known values but still accepts anything typed. Use it wherever
+ * a `<select>` would be too strict — picking a setlist song, say, while leaving
+ * room for a title that isn't in the setlist yet.
+ *
+ * The `<datalist>` id is generated with `useId`, so several comboboxes can
+ * coexist on a page without the caller inventing unique ids.
+ */
+export const AdminCombobox = forwardRef<HTMLInputElement, AdminComboboxProps>(
+  ({ options, ...inputProps }, ref) => {
+    const listId = useId()
+    return (
+      <>
+        <AdminInput ref={ref} list={listId} {...inputProps} />
+        <datalist id={listId}>
+          {options.map((option) => {
+            const { value, label } =
+              typeof option === 'string'
+                ? { value: option, label: undefined }
+                : option
+            return <option key={value} value={value} label={label} />
+          })}
+        </datalist>
+      </>
+    )
+  }
+)
+AdminCombobox.displayName = 'AdminCombobox'
+
+/* =============================================================================
+ * AdminCheckbox - Checkbox with an inline label
+ * ============================================================================= */
+
+export interface AdminCheckboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'className' | 'type'
+> {
+  /** Text shown beside the box; the whole thing is clickable. */
+  label: ReactNode
+  /** Additional class names, applied to the wrapping label. */
+  className?: string
+}
+
+export const AdminCheckbox = forwardRef<HTMLInputElement, AdminCheckboxProps>(
+  ({ label, className, ...inputProps }, ref) => (
+    <label
+      className={cn(
+        'flex cursor-pointer items-center gap-2 text-gray-300',
+        inputProps.disabled && 'cursor-not-allowed opacity-50',
+        className
+      )}
+    >
+      <input
+        ref={ref}
+        type="checkbox"
+        className="accent-accent"
+        {...inputProps}
+      />
+      {label}
+    </label>
+  )
+)
+AdminCheckbox.displayName = 'AdminCheckbox'
+
+/* =============================================================================
+ * AdminRange - Slider, used for video scrubbing in the media generators
+ * ============================================================================= */
+
+export interface AdminRangeProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'className' | 'type'
+> {
+  /** Additional class names */
+  className?: string
+}
+
+export const AdminRange = forwardRef<HTMLInputElement, AdminRangeProps>(
+  ({ className, ...inputProps }, ref) => (
+    <input
+      ref={ref}
+      type="range"
+      className={cn(
+        'w-full accent-accent',
+        inputProps.disabled && 'cursor-not-allowed opacity-50',
+        className
+      )}
+      {...inputProps}
+    />
+  )
+)
+AdminRange.displayName = 'AdminRange'

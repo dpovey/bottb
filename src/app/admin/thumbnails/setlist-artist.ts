@@ -33,3 +33,21 @@ export function findSongByTitle(
   if (!wanted) return undefined
   return songs.find((s) => s.title.trim().toLowerCase() === wanted)
 }
+
+/**
+ * The distinct artists across a setlist, alphabetically — the suggestions for
+ * the artist combobox. A band covering two songs by the same act should offer
+ * that act once.
+ */
+export function setlistArtists(songs: SetlistSong[]): string[] {
+  const seen = new Map<string, string>()
+  for (const song of songs) {
+    const artist = songArtist(song).trim()
+    if (artist && !seen.has(artist.toLowerCase())) {
+      seen.set(artist.toLowerCase(), artist)
+    }
+  }
+  return [...seen.values()].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' })
+  )
+}

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import type { PhotoCluster, Photo } from '@/lib/db-types'
 
@@ -115,12 +116,14 @@ export function PeopleClustersClient() {
             {clusterPhotos.map((photo) => (
               <div
                 key={photo.id}
-                className="aspect-square rounded overflow-hidden"
+                className="relative aspect-square rounded overflow-hidden"
               >
-                <img
+                <Image
                   src={photo.thumbnail_url || photo.blob_url}
                   alt={photo.original_filename || 'Photo'}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 17vw"
                 />
               </div>
             ))}

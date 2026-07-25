@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SetlistSong } from '@/lib/db'
-import { findSongByTitle, songArtist } from './setlist-artist'
+import { findSongByTitle, setlistArtists, songArtist } from './setlist-artist'
 
 function song(partial: Partial<SetlistSong>): SetlistSong {
   return {
@@ -66,5 +66,35 @@ describe('findSongByTitle', () => {
 
   it('returns undefined for an empty setlist', () => {
     expect(findSongByTitle([], 'Everlong')).toBeUndefined()
+  })
+})
+
+describe('setlistArtists', () => {
+  it('lists distinct artists alphabetically', () => {
+    const artists = setlistArtists([
+      song({ title: 'Mr. Brightside', artist: 'The Killers' }),
+      song({ title: 'Everlong', artist: 'Foo Fighters' }),
+      song({ title: 'My Hero', artist: 'Foo Fighters' }),
+    ])
+    expect(artists).toEqual(['Foo Fighters', 'The Killers'])
+  })
+
+  it('uses the performed version when covering a cover', () => {
+    const artists = setlistArtists([
+      song({ artist: 'Sabrina Carpenter', cover_artist: 'Good Neighbours' }),
+    ])
+    expect(artists).toEqual(['Good Neighbours'])
+  })
+
+  it('de-duplicates case-insensitively, keeping the first spelling', () => {
+    const artists = setlistArtists([
+      song({ title: 'a', artist: 'Foo Fighters' }),
+      song({ title: 'b', artist: 'foo fighters' }),
+    ])
+    expect(artists).toEqual(['Foo Fighters'])
+  })
+
+  it('is empty for an empty setlist', () => {
+    expect(setlistArtists([])).toEqual([])
   })
 })
