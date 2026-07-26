@@ -670,25 +670,41 @@ For date ranges, stack multiple badges horizontally:
 
 ### Form Inputs
 
-```html
-<div>
-  <label class="block text-xs tracking-wider uppercase text-text-muted mb-2"
-    >Email</label
-  >
-  <input
+Use the shared primitives from `src/components/ui/form.tsx` — don't hand-roll
+the classes. They are the same controls everywhere: there is no separate
+"admin" input.
+
+**Components:** `FormField`, `Input`, `Select`, `Textarea`, `Combobox`,
+`Checkbox`, `Radio`, `Range`
+
+```tsx
+<FormField label="Email" required error={errors.email}>
+  <Input
     type="email"
     placeholder="you@example.com"
-    class="
-      w-full px-4 py-3
-      bg-bg border border-white/10 rounded-lg
-      text-white placeholder-text-dim
-      transition-all
-      focus:outline-hidden focus:border-white/30
-      hover:border-white/20
-    "
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    hasError={Boolean(errors.email)}
   />
-</div>
+</FormField>
 ```
+
+The skin is `bg-bg`, `border-white/10`, `hover:border-white/20`, and
+`focus:border-accent`, with `border-error` when `hasError` is set.
+
+**Density** is a `size` prop, not a separate component:
+
+| `size`         | Padding       | Use for                           |
+| -------------- | ------------- | --------------------------------- |
+| `md` (default) | `px-4 py-3`   | Standard forms                    |
+| `sm`           | `px-3 py-1.5` | Dense toolbars above admin tables |
+
+`Combobox` is an `Input` backed by a native `<datalist>` — it suggests known
+values but always accepts free text. Pass `options` as strings, or as
+`{ value, label }` to show a hint beside each suggestion.
+
+`Checkbox` renders a clickable label when given one; omit `label` and pass
+`aria-label` for a bare box, such as a table's select-all.
 
 ### Filter Bar System
 

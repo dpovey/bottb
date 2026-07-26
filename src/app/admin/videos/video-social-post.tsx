@@ -6,9 +6,10 @@ import { Video } from '@/lib/db'
 import {
   Button,
   Card,
+  ErrorBanner,
   FileDropzone,
   SchedulePicker,
-  ErrorBanner,
+  Textarea,
 } from '@/components/ui'
 import {
   CloseIcon,
@@ -226,11 +227,10 @@ export function VideoSocialPost({ video, onClose }: VideoSocialPostProps) {
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Caption
           </label>
-          <textarea
+          <Textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden resize-none"
             placeholder="Write a caption for your video..."
           />
           <p className="text-xs text-gray-500 mt-1">

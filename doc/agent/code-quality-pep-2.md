@@ -26,13 +26,13 @@ These were named in `code-quality-pep.md` but deferred during execution to keep 
 
 **Exit:** All four admin clients shrink ≥ 30%; CRUD logic lives in one place.
 
-### A2. `<AdminInput>` sweep (PEP 2.3)
+### A2. `<Input>` sweep (PEP 2.3) — **done**
 
 **Why deferred:** Wave 2 used `<ErrorBanner>` everywhere but left ~30 raw `<input className="w-full px-4 py-2 rounded-lg bg-white/5 …">` instances in admin clients untouched.
 
-**Scope:** Replace those with the existing `<AdminInput>` / `<AdminFormField>` primitives in `src/components/ui/admin-form-field.tsx`. Mostly mechanical.
+**What shipped:** The `Admin*` family was removed rather than spread. There was no real difference between an "admin" input and a site one — the two sets had only drifted on incidental values, and the admin set was the one bypassing the design tokens. `src/components/ui/form.tsx` now holds one family (`FormField`, `Input`, `Select`, `Textarea`, `Combobox`, `Checkbox`, `Radio`, `Range`) on the canonical DESIGN.md styling, with density as a `size` prop. All 89 raw controls across the 14 admin clients moved onto it.
 
-**Exit:** Zero raw `<input className="w-full px-4 py-2 …">` in `src/app/admin/`.
+**Exit:** met — zero raw `<input>`, `<select>`, or `<textarea>` in `src/app/admin/`.
 
 ### A3. Response envelope (PEP 3.3)
 

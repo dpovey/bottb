@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { identifyAdmin } from '@/lib/analytics'
-import { Button, VinylSpinner, ErrorBanner } from '@/components/ui'
+import { Button, ErrorBanner, Input, VinylSpinner } from '@/components/ui'
 import { ArrowLeftIcon } from '@/components/icons'
 
 export default function AdminLoginPage() {
@@ -112,12 +112,11 @@ export default function AdminLoginPage() {
                 <label className="block text-[10px] tracking-widest uppercase text-text-muted mb-2">
                   Email
                 </label>
-                <input
+                <Input
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-gray-500 transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
                   required
                   autoComplete="email"
                 />
@@ -128,12 +127,11 @@ export default function AdminLoginPage() {
                 <label className="block text-[10px] tracking-widest uppercase text-text-muted mb-2">
                   Password
                 </label>
-                <input
+                <Input
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-bg border border-white/10 rounded-lg text-white placeholder-gray-500 transition-all focus:outline-hidden focus:border-white/30 hover:border-white/20"
                   required
                   autoComplete="current-password"
                 />

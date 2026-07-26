@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Card, ErrorBanner } from '@/components/ui'
+import { Button, Card, ErrorBanner, Input, Select } from '@/components/ui'
 import { CloseIcon, CheckIcon } from '@/components/icons'
 
 // YouTube icon component
@@ -507,11 +507,10 @@ function ScannedVideoRow({
                 <label className="block text-xs text-gray-400 mb-1">
                   Title
                 </label>
-                <input
-                  type="text"
+                <Input
+                  size="sm"
                   value={override?.title ?? video.suggestedTitle}
                   onChange={(e) => onUpdateOverride('title', e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
                 />
               </div>
 
@@ -521,13 +520,13 @@ function ScannedVideoRow({
                   <label className="block text-xs text-gray-400 mb-1">
                     Event
                   </label>
-                  <select
+                  <Select
+                    size="sm"
                     value={effectiveEventId}
                     onChange={(e) => {
                       onUpdateOverride('eventId', e.target.value)
                       onUpdateOverride('bandId', '') // Reset band
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
                   >
                     <option value="">No Event</option>
                     {events.map((event) => (
@@ -535,7 +534,7 @@ function ScannedVideoRow({
                         {event.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 {/* Band selector */}
@@ -543,11 +542,11 @@ function ScannedVideoRow({
                   <label className="block text-xs text-gray-400 mb-1">
                     Band
                   </label>
-                  <select
+                  <Select
+                    size="sm"
                     value={effectiveBandId}
                     onChange={(e) => onUpdateOverride('bandId', e.target.value)}
                     disabled={!effectiveEventId}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
                   >
                     <option value="">No Band</option>
                     {availableBands.map((band) => (
@@ -555,7 +554,7 @@ function ScannedVideoRow({
                         {band.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>

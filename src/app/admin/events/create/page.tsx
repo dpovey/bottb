@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/layouts'
-import { VinylSpinner } from '@/components/ui'
+import {
+  Input,
+  Select,
+  VinylSpinner,
+} from '@/components/ui'
 
 export default function CreateEventPage() {
   const router = useRouter()
@@ -75,12 +79,10 @@ export default function CreateEventPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Event Name *
               </label>
-              <input
-                type="text"
+              <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., Battle of the Bands 2025"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>
@@ -89,12 +91,10 @@ export default function CreateEventPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Event ID (URL-friendly)
               </label>
-              <input
-                type="text"
+              <Input
                 value={id || generateId(name)}
                 onChange={(e) => setId(e.target.value)}
                 placeholder="auto-generated from name"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
               />
               <p className="text-xs text-gray-500 mt-1">
                 This will be used in URLs: /event/
@@ -107,11 +107,10 @@ export default function CreateEventPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Date *
                 </label>
-                <input
+                <Input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                   required
                 />
               </div>
@@ -120,10 +119,9 @@ export default function CreateEventPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Timezone
                 </label>
-                <select
+                <Select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
                   <option value="Australia/Brisbane">Australia/Brisbane</option>
                   <option value="Australia/Sydney">Australia/Sydney</option>
@@ -133,7 +131,7 @@ export default function CreateEventPage() {
                   <option value="Australia/Perth">Australia/Perth</option>
                   <option value="Australia/Adelaide">Australia/Adelaide</option>
                   <option value="Pacific/Auckland">Pacific/Auckland</option>
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -141,12 +139,10 @@ export default function CreateEventPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Location *
               </label>
-              <input
-                type="text"
+              <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g., Brisbane Convention Centre"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>

@@ -1,8 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Card, FileDropzone } from '@/components/ui'
-import { AdminFormField, AdminInput, AdminSelect } from '@/components/ui'
+import {
+  Button,
+  Card,
+  FileDropzone,
+  FormField,
+  Input,
+  Select,
+} from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
 import type { Band, Event, Photo } from '@/lib/db-types'
 import { formatEventDateLabel } from '@/lib/date-utils'
@@ -472,8 +478,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
       <div className="space-y-6">
         <Card padding="md" className="space-y-4">
           <h2 className="text-lg font-semibold text-white">1. Event</h2>
-          <AdminFormField label="Event">
-            <AdminSelect
+          <FormField label="Event">
+            <Select
               value={eventId}
               onChange={(e) => handleEventChange(e.target.value)}
             >
@@ -483,8 +489,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
                   {event.name}
                 </option>
               ))}
-            </AdminSelect>
-          </AdminFormField>
+            </Select>
+          </FormField>
           <p className="text-xs text-gray-500">
             Selecting an event fills in the details below and loads its photos.
           </p>
@@ -494,8 +500,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           <h2 className="text-lg font-semibold text-white">2. Photo</h2>
 
           {events.length > 0 && (
-            <AdminFormField label="Browse photos from">
-              <AdminSelect
+            <FormField label="Browse photos from">
+              <Select
                 value={photoEventId}
                 onChange={(e) => setPhotoEventId(e.target.value)}
               >
@@ -505,8 +511,8 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
                     {event.name}
                   </option>
                 ))}
-              </AdminSelect>
-            </AdminFormField>
+              </Select>
+            </FormField>
           )}
 
           {photoEventId && (
@@ -549,33 +555,33 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
           <h2 className="text-lg font-semibold text-white">
             3. Text &amp; branding
           </h2>
-          <AdminFormField label="Event edition">
-            <AdminInput
+          <FormField label="Event edition">
+            <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Sydney Tech Battle 2025"
             />
-          </AdminFormField>
+          </FormField>
           <p className="text-xs text-gray-500">
             &ldquo;Battle of the Tech Bands&rdquo; is always shown as the
             headline; this line appears as the subtitle beneath it.
           </p>
-          <AdminFormField label="Date">
-            <AdminInput
+          <FormField label="Date">
+            <Input
               value={date}
               onChange={(e) => setDate(e.target.value)}
               placeholder="e.g. 23rd October 2025 @ 6:30PM"
             />
-          </AdminFormField>
-          <AdminFormField label="Venue">
-            <AdminInput
+          </FormField>
+          <FormField label="Venue">
+            <Input
               value={venue}
               onChange={(e) => setVenue(e.target.value)}
               placeholder="e.g. Factory Theatre, Sydney"
             />
-          </AdminFormField>
+          </FormField>
 
-          <AdminFormField label="Logo layout">
+          <FormField label="Logo layout">
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -598,7 +604,7 @@ export function PosterGenerator({ events }: PosterGeneratorProps) {
                 Bottb top-left
               </Button>
             </div>
-          </AdminFormField>
+          </FormField>
           {partner && (
             <p className="text-xs text-gray-500">
               Powered-by logo:{' '}

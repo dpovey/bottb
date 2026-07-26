@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Photo, PHOTO_LABELS } from '@/lib/db-types'
+import { Select } from '@/components/ui'
 import {
   HeroSettingsModal,
   HERO_LABEL_INFO,
@@ -77,10 +78,10 @@ export function HeroAdminClient({
       <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-muted">Label:</label>
-          <select
+          <Select
             value={filterLabel}
             onChange={(e) => setFilterLabel(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-bg-elevated border border-white/10 text-white text-sm focus:border-accent focus:outline-none"
+            className="bg-bg-elevated"
           >
             <option value="">All Labels</option>
             {Object.entries(HERO_LABEL_INFO).map(([key, info]) => (
@@ -88,15 +89,15 @@ export function HeroAdminClient({
                 {info.icon} {info.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-muted">Event:</label>
-          <select
+          <Select
             value={filterEvent}
             onChange={(e) => setFilterEvent(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-bg-elevated border border-white/10 text-white text-sm focus:border-accent focus:outline-none"
+            className="bg-bg-elevated"
           >
             <option value="">All Events</option>
             {events.map((event) => (
@@ -104,7 +105,7 @@ export function HeroAdminClient({
                 {event.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="ml-auto text-sm text-text-muted">

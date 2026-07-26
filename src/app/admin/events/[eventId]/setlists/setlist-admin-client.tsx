@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { SetlistSong, SongType, SetlistStatus } from '@/lib/db'
-import { Badge, NumberedIndicator, CompanyBadge } from '@/components/ui'
+import {
+  Badge,
+  CompanyBadge,
+  Input,
+  NumberedIndicator,
+  Textarea,
+} from '@/components/ui'
 import { YouTubeIcon, EditIcon, DeleteIcon } from '@/components/icons'
 
 interface Band {
@@ -605,12 +611,11 @@ function SongForm({
           <label className="block text-sm font-medium text-text-muted mb-2">
             Position
           </label>
-          <input
+          <Input
             type="number"
             min="1"
             value={position}
             onChange={(e) => setPosition(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
           />
         </div>
 
@@ -619,12 +624,10 @@ function SongForm({
           <label className="block text-sm font-medium text-text-muted mb-2">
             YouTube Video ID (optional)
           </label>
-          <input
-            type="text"
+          <Input
             value={youtubeVideoId}
             onChange={(e) => setYoutubeVideoId(e.target.value)}
             placeholder="dQw4w9WgXcQ"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
           />
         </div>
       </div>
@@ -635,12 +638,10 @@ function SongForm({
           <label className="block text-sm font-medium text-text-muted mb-2">
             {songType === 'transition' ? 'From Song Title' : 'Title'} *
           </label>
-          <input
-            type="text"
+          <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Don't Stop Me Now"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
             required
           />
         </div>
@@ -648,12 +649,10 @@ function SongForm({
           <label className="block text-sm font-medium text-text-muted mb-2">
             {songType === 'transition' ? 'From Artist' : 'Artist'} *
           </label>
-          <input
-            type="text"
+          <Input
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
             placeholder="Queen"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
             required
           />
         </div>
@@ -667,12 +666,10 @@ function SongForm({
           <label className="block text-sm font-medium text-text-muted mb-2">
             Cover version — artist (optional)
           </label>
-          <input
-            type="text"
+          <Input
             value={coverArtist}
             onChange={(e) => setCoverArtist(e.target.value)}
             placeholder="e.g. Good Neighbours (if performing their version)"
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
           />
         </div>
       )}
@@ -682,12 +679,11 @@ function SongForm({
         <label className="block text-sm font-medium text-text-muted mb-2">
           Artist Description (optional)
         </label>
-        <textarea
+        <Textarea
           value={artistDescription}
           onChange={(e) => setArtistDescription(e.target.value)}
           placeholder="Brief description of the artist (auto-generated if left blank)"
           rows={2}
-          className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden resize-none"
         />
       </div>
 
@@ -698,12 +694,10 @@ function SongForm({
             <label className="block text-sm font-medium text-text-muted mb-2">
               To Song Title *
             </label>
-            <input
-              type="text"
+            <Input
               value={transitionToTitle}
               onChange={(e) => setTransitionToTitle(e.target.value)}
               placeholder="Umbrella"
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               required={songType === 'transition'}
             />
           </div>
@@ -711,12 +705,10 @@ function SongForm({
             <label className="block text-sm font-medium text-text-muted mb-2">
               To Artist *
             </label>
-            <input
-              type="text"
+            <Input
               value={transitionToArtist}
               onChange={(e) => setTransitionToArtist(e.target.value)}
               placeholder="Rihanna"
-              className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               required={songType === 'transition'}
             />
           </div>
@@ -740,24 +732,20 @@ function SongForm({
           </div>
           {additionalSongs.map((song, index) => (
             <div key={index} className="grid grid-cols-2 gap-4 mb-2">
-              <input
-                type="text"
+              <Input
                 value={song.title}
                 onChange={(e) =>
                   updateAdditionalSong(index, 'title', e.target.value)
                 }
                 placeholder="Song title"
-                className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
               />
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <Input
                   value={song.artist}
                   onChange={(e) =>
                     updateAdditionalSong(index, 'artist', e.target.value)
                   }
                   placeholder="Artist"
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-text-dim focus:border-accent focus:outline-hidden"
                 />
                 <button
                   type="button"

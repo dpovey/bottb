@@ -10,7 +10,7 @@ import {
   CameraIcon,
   StarIcon,
 } from '@/components/icons'
-import { Button, VinylSpinner } from '@/components/ui'
+import { Button, Select, VinylSpinner } from '@/components/ui'
 
 interface Event {
   id: string
@@ -312,35 +312,25 @@ export default function AdminDashboard({
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-2">
-                    <select
+                    <Select
+                      size="sm"
                       value={event.status}
                       onChange={(e) =>
                         handleStatusChange(event.id, e.target.value)
                       }
                       disabled={updatingStatus === event.id}
-                      className={`
-                        px-3 sm:px-4 py-2 rounded-lg text-sm font-medium
-                        bg-bg border border-white/10 
-                        focus:outline-hidden focus:border-accent 
-                        hover:border-white/20 transition-colors
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        appearance-none cursor-pointer
-                        bg-[url('data:image/svg+xml,%3csvg%20xmlns%3d%27http%3a%2f%2fwww.w3.org%2f2000%2fsvg%27%20fill%3d%27none%27%20viewBox%3d%270%200%2020%2020%27%3e%3cpath%20stroke%3d%27%23666666%27%20stroke-linecap%3d%27round%27%20stroke-linejoin%3d%27round%27%20stroke-width%3d%271.5%27%20d%3d%27M6%208l4%204%204-4%27%2f%3e%3c%2fsvg%3e')]
-                        bg-[length:1.25em_1.25em] bg-[position:right_0.5rem_center] bg-no-repeat
-                        pr-8
-                        ${
-                          event.status === 'voting'
-                            ? 'text-success'
-                            : event.status === 'upcoming'
-                              ? 'text-blue-400'
-                              : 'text-text-muted'
-                        }
-                      `}
+                      className={`w-auto cursor-pointer font-medium ${
+                        event.status === 'voting'
+                          ? 'text-success'
+                          : event.status === 'upcoming'
+                            ? 'text-blue-400'
+                            : 'text-text-muted'
+                      }`}
                     >
                       <option value="upcoming">Upcoming</option>
                       <option value="voting">Voting</option>
                       <option value="finalized">Finalized</option>
-                    </select>
+                    </Select>
                     {updatingStatus === event.id && <VinylSpinner size="xxs" />}
                   </div>
                   <Link href={`/admin/events/${event.id}`}>

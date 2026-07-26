@@ -11,12 +11,14 @@ import {
   PlusIcon,
 } from '@/components/icons'
 import {
-  VinylSpinner,
-  CompanyIcon,
-  ConfirmModal,
   Button,
   Card,
+  CompanyIcon,
+  ConfirmModal,
   ErrorBanner,
+  Input,
+  Textarea,
+  VinylSpinner,
 } from '@/components/ui'
 
 interface CompanyAdminClientProps {
@@ -171,8 +173,7 @@ export function CompanyAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Company Name *
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newName}
                   onChange={(e) => {
                     setNewName(e.target.value)
@@ -181,7 +182,6 @@ export function CompanyAdminClient({
                     }
                   }}
                   placeholder="e.g., Dance Corp"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                   required
                 />
               </div>
@@ -190,12 +190,10 @@ export function CompanyAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Slug (URL-friendly ID)
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newSlug || nameToSlug(newName)}
                   onChange={(e) => setNewSlug(e.target.value)}
                   placeholder="auto-generated from name"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -203,12 +201,11 @@ export function CompanyAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Website
                 </label>
-                <input
+                <Input
                   type="url"
                   value={newWebsite}
                   onChange={(e) => setNewWebsite(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -216,12 +213,11 @@ export function CompanyAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Icon URL
                 </label>
-                <input
+                <Input
                   type="url"
                   value={newIconUrl}
                   onChange={(e) => setNewIconUrl(e.target.value)}
                   placeholder="https://... (small icon for badges)"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
             </div>
@@ -370,35 +366,34 @@ function CompanyRow({ company, onUpdate, onRequestDelete }: CompanyRowProps) {
       <div className="flex-1 min-w-0">
         {isEditing ? (
           <div className="space-y-2">
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Company name"
-              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
             <div className="grid grid-cols-2 gap-2">
-              <input
+              <Input
+                size="sm"
                 type="url"
                 value={editWebsite}
                 onChange={(e) => setEditWebsite(e.target.value)}
                 placeholder="Website URL"
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               />
-              <input
+              <Input
+                size="sm"
                 type="url"
                 value={editIconUrl}
                 onChange={(e) => setEditIconUrl(e.target.value)}
                 placeholder="Icon URL"
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               />
             </div>
-            <textarea
+            <Textarea
+              size="sm"
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               placeholder="Company description (optional)"
               rows={2}
-              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm resize-none"
             />
           </div>
         ) : (

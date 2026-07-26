@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  AdminCheckbox,
-  AdminCombobox,
-  AdminFormField,
-  AdminRange,
-  AdminSelect,
   Button,
   Card,
+  Checkbox,
+  Combobox,
   FileDropzone,
+  FormField,
+  Range,
+  Select,
 } from '@/components/ui'
 import { DownloadIcon } from '@/components/icons'
 import type { SetlistSong } from '@/lib/db'
@@ -498,8 +498,8 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
 
         <Card padding="md" className="space-y-4">
           <h2 className="text-lg font-semibold text-white">2. Branding</h2>
-          <AdminFormField label="Event">
-            <AdminSelect
+          <FormField label="Event">
+            <Select
               value={eventId}
               onChange={(e) => handleEventChange(e.target.value)}
             >
@@ -509,12 +509,12 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                   {event.name}
                 </option>
               ))}
-            </AdminSelect>
-          </AdminFormField>
+            </Select>
+          </FormField>
 
           {eventId && (
-            <AdminFormField label="Band">
-              <AdminSelect
+            <FormField label="Band">
+              <Select
                 value={bandId}
                 onChange={(e) => handleBandChange(e.target.value)}
               >
@@ -524,12 +524,12 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                     {band.name}
                   </option>
                 ))}
-              </AdminSelect>
-            </AdminFormField>
+              </Select>
+            </FormField>
           )}
           {logoError && <p className="text-sm text-error">{logoError}</p>}
 
-          <AdminFormField
+          <FormField
             label="Song title"
             helperText={
               bandSongs.length > 0
@@ -537,7 +537,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 : 'Type any title — no setlist songs loaded for this band yet.'
             }
           >
-            <AdminCombobox
+            <Combobox
               value={song}
               onChange={(e) => handleSongChange(e.target.value)}
               placeholder="e.g. Stairway to Production"
@@ -546,21 +546,21 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 label: songArtist(s),
               }))}
             />
-          </AdminFormField>
+          </FormField>
 
-          <AdminFormField
+          <FormField
             label="Artist name"
             helperText="Filled in from the song above; override it for anything else."
           >
-            <AdminCombobox
+            <Combobox
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
               placeholder="e.g. The Null Pointers"
               options={setlistArtists(bandSongs)}
             />
-          </AdminFormField>
+          </FormField>
 
-          <AdminFormField label="Logo layout">
+          <FormField label="Logo layout">
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -583,7 +583,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 Bottb top-left
               </Button>
             </div>
-          </AdminFormField>
+          </FormField>
         </Card>
       </div>
 
@@ -686,7 +686,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 </div>
               )}
 
-              <AdminRange
+              <Range
                 min={0}
                 max={duration || 0}
                 step={0.01}
@@ -785,7 +785,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
                 </Button>
               </div>
             )}
-            <AdminCheckbox
+            <Checkbox
               label="Safe zones"
               className="ml-auto"
               checked={showSafeZones}

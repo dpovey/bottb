@@ -12,11 +12,14 @@ import {
   PlusIcon,
 } from '@/components/icons'
 import {
-  VinylSpinner,
-  Modal,
-  ConfirmModal,
   Button,
   Card,
+  ConfirmModal,
+  Input,
+  Modal,
+  Select,
+  Textarea,
+  VinylSpinner,
 } from '@/components/ui'
 
 interface Event {
@@ -392,12 +395,11 @@ export default function EventAdminDashboard({
             </h3>
             {isEditingDescription ? (
               <div className="space-y-3">
-                <textarea
+                <Textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   placeholder="Enter a description for this event..."
                   rows={3}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden resize-none"
                 />
                 <div className="flex gap-2">
                   <button
@@ -695,16 +697,14 @@ function AddBandForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-3">
-      <input
-        type="text"
+      <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Band name"
-        className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
         autoFocus
         required
       />
-      <select
+      <Select
         value={companySlug}
         onChange={(e) => {
           setCompanySlug(e.target.value)
@@ -712,7 +712,6 @@ function AddBandForm({
           if (e.target.value === additionalCompanySlug)
             setAdditionalCompanySlug('')
         }}
-        className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white"
         aria-label="Primary company"
       >
         <option value="">No Company</option>
@@ -721,12 +720,11 @@ function AddBandForm({
             {c.name}
           </option>
         ))}
-      </select>
+      </Select>
       {companySlug && (
-        <select
+        <Select
           value={additionalCompanySlug}
           onChange={(e) => setAdditionalCompanySlug(e.target.value)}
-          className="px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white"
           aria-label="Additional company"
         >
           <option value="">+ Company (optional)</option>
@@ -737,7 +735,7 @@ function AddBandForm({
                 {c.name}
               </option>
             ))}
-        </select>
+        </Select>
       )}
       <button
         type="submit"
@@ -833,21 +831,18 @@ function BandRow({
         {isEditing ? (
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <input
-                type="text"
+              <Input size="sm"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="flex-1 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
                 autoFocus
               />
-              <select
+              <Select size="sm"
                 value={editCompanySlug}
                 onChange={(e) => {
                   setEditCompanySlug(e.target.value)
                   if (e.target.value === editAdditionalCompanySlug)
                     setEditAdditionalCompanySlug('')
                 }}
-                className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
                 aria-label="Primary company"
               >
                 <option value="">No Company</option>
@@ -856,14 +851,13 @@ function BandRow({
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               {editCompanySlug && (
-                <select
+                <Select size="sm"
                   value={editAdditionalCompanySlug}
                   onChange={(e) =>
                     setEditAdditionalCompanySlug(e.target.value)
                   }
-                  className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white"
                   aria-label="Additional company"
                 >
                   <option value="">+ Company (optional)</option>
@@ -874,15 +868,14 @@ function BandRow({
                         {c.name}
                       </option>
                     ))}
-                </select>
+                </Select>
               )}
             </div>
-            <textarea
+            <Textarea size="sm"
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               placeholder="Band description (optional)"
               rows={2}
-              className="w-full px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm resize-none placeholder-gray-500"
             />
           </div>
         ) : (

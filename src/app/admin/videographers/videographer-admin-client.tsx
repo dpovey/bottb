@@ -11,11 +11,14 @@ import {
   VideoIcon,
 } from '@/components/icons'
 import {
-  VinylSpinner,
-  ConfirmModal,
   Button,
   Card,
+  Checkbox,
+  ConfirmModal,
   ErrorBanner,
+  Input,
+  Textarea,
+  VinylSpinner,
 } from '@/components/ui'
 
 export interface EventOption {
@@ -44,18 +47,13 @@ function EventPicker({
   return (
     <div className="grid sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 p-3">
       {events.map((event) => (
-        <label
+        <Checkbox
           key={event.id}
-          className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
-        >
-          <input
-            type="checkbox"
-            checked={selected.includes(event.id)}
-            onChange={() => onToggle(event.id)}
-            className="accent-accent"
-          />
-          {event.name}
-        </label>
+          className="text-sm"
+          label={event.name}
+          checked={selected.includes(event.id)}
+          onChange={() => onToggle(event.id)}
+        />
       ))}
     </div>
   )
@@ -252,12 +250,10 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Name *
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g., Jane Smith"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                   required
                 />
               </div>
@@ -266,12 +262,10 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Slug (URL-friendly ID)
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newSlug || nameToSlug(newName)}
                   onChange={(e) => setNewSlug(e.target.value)}
                   placeholder="auto-generated from name"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -279,12 +273,11 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Bio
                 </label>
-                <textarea
+                <Textarea
                   value={newBio}
                   onChange={(e) => setNewBio(e.target.value)}
                   placeholder="Short biography..."
                   rows={3}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -292,12 +285,10 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Location
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newLocation}
                   onChange={(e) => setNewLocation(e.target.value)}
                   placeholder="e.g., Melbourne, Australia"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -305,12 +296,11 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Website
                 </label>
-                <input
+                <Input
                   type="url"
                   value={newWebsite}
                   onChange={(e) => setNewWebsite(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -318,12 +308,10 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Instagram
                 </label>
-                <input
-                  type="text"
+                <Input
                   value={newInstagram}
                   onChange={(e) => setNewInstagram(e.target.value)}
                   placeholder="@username or full URL"
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -331,12 +319,11 @@ export function VideographerAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Email
                 </label>
-                <input
+                <Input
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="contact@..."
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 />
               </div>
 
@@ -495,49 +482,46 @@ function VideographerRow({
       {isEditing ? (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Name"
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
               placeholder="Location"
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
           </div>
-          <textarea
+          <Textarea
+            size="sm"
             value={editBio}
             onChange={(e) => setEditBio(e.target.value)}
             placeholder="Bio"
             rows={2}
-            className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
           />
           <div className="grid grid-cols-3 gap-3">
-            <input
+            <Input
+              size="sm"
               type="url"
               value={editWebsite}
               onChange={(e) => setEditWebsite(e.target.value)}
               placeholder="Website"
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={editInstagram}
               onChange={(e) => setEditInstagram(e.target.value)}
               placeholder="Instagram"
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
-            <input
+            <Input
+              size="sm"
               type="email"
               value={editEmail}
               onChange={(e) => setEditEmail(e.target.value)}
               placeholder="Email"
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
             />
           </div>
           <div>

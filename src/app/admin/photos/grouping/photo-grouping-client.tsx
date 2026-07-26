@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { FocalPointEditor } from '@/components/photos/focal-point-editor'
 import { NearbyPhotosStrip } from './nearby-photos-strip'
+import { Checkbox } from '@/components/ui'
 
 interface ClusterPhoto {
   id: string
@@ -478,11 +479,11 @@ export function PhotoGroupingClient() {
             >
               {/* Selection checkbox */}
               {selectMode && (
-                <input
-                  type="checkbox"
+                <Checkbox
+                  aria-label="Select group"
+                  className="h-5 w-5 cursor-pointer"
                   checked={selectedClusterIds.has(cluster.id)}
                   onChange={() => toggleClusterSelection(cluster.id)}
-                  className="w-5 h-5 rounded border-2 border-muted accent-accent cursor-pointer"
                 />
               )}
 

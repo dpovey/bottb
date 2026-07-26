@@ -4,12 +4,15 @@ import { useState } from 'react'
 import { Photo } from '@/lib/db-types'
 import { EditIcon, CheckIcon, CloseIcon, WarningIcon } from '@/components/icons'
 import {
-  VinylSpinner,
-  FilterBar,
-  FilterSelect,
-  FilterClearButton,
   Button,
   Card,
+  Checkbox,
+  FilterBar,
+  FilterClearButton,
+  FilterSelect,
+  Input,
+  Select,
+  VinylSpinner,
 } from '@/components/ui'
 
 interface PhotoAdminClientProps {
@@ -300,20 +303,18 @@ export function PhotoAdminClient({
 
         {/* Unmatched Filter */}
         <div className="flex items-end pb-1">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filterUnmatched}
-              onChange={(e) => setFilterUnmatched(e.target.checked)}
-              className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
-            />
-            <span className="text-sm text-gray-300">
-              Unmatched only
-              {unmatchedCount > 0 && (
-                <span className="ml-1 text-warning">({unmatchedCount})</span>
-              )}
-            </span>
-          </label>
+          <Checkbox
+            checked={filterUnmatched}
+            onChange={(e) => setFilterUnmatched(e.target.checked)}
+            label={
+              <span className="text-sm">
+                Unmatched only
+                {unmatchedCount > 0 && (
+                  <span className="ml-1 text-warning">({unmatchedCount})</span>
+                )}
+              </span>
+            }
+          />
         </div>
 
         {/* Filter Buttons */}
@@ -398,13 +399,14 @@ export function PhotoAdminClient({
               </div>
             ) : (
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <select
+                <Select
+                  size="sm"
                   value={bulkEventId}
                   onChange={(e) => {
                     setBulkEventId(e.target.value)
                     setBulkBandId('')
                   }}
-                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm min-w-0 w-full sm:w-auto"
+                  className="min-w-0 sm:w-auto"
                 >
                   <option value="">Set Event...</option>
                   {events.map((event) => (
@@ -412,12 +414,13 @@ export function PhotoAdminClient({
                       {event.name}
                     </option>
                   ))}
-                </select>
-                <select
+                </Select>
+                <Select
+                  size="sm"
                   value={bulkBandId}
                   onChange={(e) => setBulkBandId(e.target.value)}
                   disabled={!bulkEventId}
-                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm disabled:opacity-50 min-w-0 w-full sm:w-auto"
+                  className="min-w-0 sm:w-auto"
                 >
                   <option value="">Set Band...</option>
                   {bulkEventId &&
@@ -426,14 +429,14 @@ export function PhotoAdminClient({
                         {band.name}
                       </option>
                     ))}
-                </select>
-                <input
-                  type="text"
+                </Select>
+                <Input
+                  size="sm"
                   placeholder="Photographer..."
                   value={bulkPhotographer}
                   onChange={(e) => setBulkPhotographer(e.target.value)}
                   list="bulk-photographer-list"
-                  className="px-2 sm:px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-gray-500 min-w-0 w-full sm:w-32 lg:w-40"
+                  className="min-w-0 sm:w-32 lg:w-40"
                 />
                 <datalist id="bulk-photographer-list">
                   {photographers.map((name) => (
@@ -523,15 +526,14 @@ export function PhotoAdminClient({
               <thead>
                 <tr className="border-b border-white/10 text-left">
                   <th className="px-4 py-3 w-8">
-                    <input
-                      type="checkbox"
+                    <Checkbox
+                      aria-label="Select all photos"
                       checked={
                         selectedIds.size === photos.length && photos.length > 0
                       }
                       onChange={(e) =>
                         e.target.checked ? selectAll() : clearSelection()
                       }
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
                     />
                   </th>
                   <th className="px-4 py-3 w-32">Preview</th>
@@ -655,11 +657,10 @@ function PhotoRow({
       }`}
     >
       <td className="px-4 py-3">
-        <input
-          type="checkbox"
+        <Checkbox
+          aria-label="Select photo"
           checked={isSelected}
           onChange={onToggleSelect}
-          className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent focus:ring-accent"
         />
       </td>
       <td className="px-4 py-3">
@@ -691,13 +692,13 @@ function PhotoRow({
       </td>
       <td className="px-4 py-3">
         {isEditing ? (
-          <select
+          <Select
+            size="sm"
             value={editEventId}
             onChange={(e) => {
               setEditEventId(e.target.value)
               setEditBandId('')
             }}
-            className="w-full px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-sm"
           >
             <option value="">None</option>
             {events.map((event) => (
@@ -705,7 +706,7 @@ function PhotoRow({
                 {event.name}
               </option>
             ))}
-          </select>
+          </Select>
         ) : (
           <span className={!photo.event_name ? 'text-warning' : 'text-white'}>
             {photo.event_name || (
@@ -719,11 +720,11 @@ function PhotoRow({
       </td>
       <td className="px-4 py-3">
         {isEditing ? (
-          <select
+          <Select
+            size="sm"
             value={editBandId}
             onChange={(e) => setEditBandId(e.target.value)}
             disabled={!editEventId}
-            className="w-full px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-sm disabled:opacity-50"
           >
             <option value="">None</option>
             {editEventId &&
@@ -732,7 +733,7 @@ function PhotoRow({
                   {band.name}
                 </option>
               ))}
-          </select>
+          </Select>
         ) : (
           <span className={!photo.band_name ? 'text-warning' : 'text-white'}>
             {photo.band_name || (
@@ -746,12 +747,11 @@ function PhotoRow({
       </td>
       <td className="px-4 py-3">
         {isEditing ? (
-          <input
-            type="text"
+          <Input
+            size="sm"
             value={editPhotographer}
             onChange={(e) => setEditPhotographer(e.target.value)}
             list={`photographer-list-${photo.id}`}
-            className="w-full px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-sm"
             placeholder="None"
           />
         ) : (

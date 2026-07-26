@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { Video, VideoType, SetlistSong } from '@/lib/db'
 import { EditIcon, DeleteIcon, PlusIcon } from '@/components/icons'
 import {
-  ConfirmModal,
   Button,
   Card,
-  Tabs,
+  ConfirmModal,
   ErrorBanner,
+  Input,
+  Radio,
+  Select,
+  Tabs,
   type Tab,
 } from '@/components/ui'
 import { YouTubeScanner } from './youtube-scanner'
@@ -307,12 +310,10 @@ export function VideoAdminClient({
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 YouTube URL or Video ID *
               </label>
-              <input
-                type="text"
+              <Input
                 value={youtubeUrl}
                 onChange={(e) => handleYoutubeUrlChange(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=... or /shorts/..."
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>
@@ -321,12 +322,10 @@ export function VideoAdminClient({
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Title *
               </label>
-              <input
-                type="text"
+              <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Video title"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white placeholder-gray-500 focus:border-accent focus:outline-hidden"
                 required
               />
             </div>
@@ -336,28 +335,20 @@ export function VideoAdminClient({
                 Video Type *
               </label>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="videoType"
-                    value="video"
-                    checked={selectedVideoType === 'video'}
-                    onChange={() => setSelectedVideoType('video')}
-                    className="w-4 h-4 text-accent bg-white/5 border-white/20 focus:ring-accent"
-                  />
-                  <span className="text-white">Regular Video</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="videoType"
-                    value="short"
-                    checked={selectedVideoType === 'short'}
-                    onChange={() => setSelectedVideoType('short')}
-                    className="w-4 h-4 text-accent bg-white/5 border-white/20 focus:ring-accent"
-                  />
-                  <span className="text-white">YouTube Short</span>
-                </label>
+                <Radio
+                  label="Regular Video"
+                  name="videoType"
+                  value="video"
+                  checked={selectedVideoType === 'video'}
+                  onChange={() => setSelectedVideoType('video')}
+                />
+                <Radio
+                  label="YouTube Short"
+                  name="videoType"
+                  value="short"
+                  checked={selectedVideoType === 'short'}
+                  onChange={() => setSelectedVideoType('short')}
+                />
               </div>
               {selectedVideoType === 'short' && (
                 <p className="mt-1 text-xs text-gray-400">
@@ -371,7 +362,7 @@ export function VideoAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Event (optional)
                 </label>
-                <select
+                <Select
                   value={selectedEventId}
                   onChange={(e) => {
                     setSelectedEventId(e.target.value)
@@ -379,7 +370,6 @@ export function VideoAdminClient({
                     setSelectedSongId('')
                     loadEventSongs(e.target.value)
                   }}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
                   <option value="">Select Event</option>
                   {events.map((event) => (
@@ -387,21 +377,20 @@ export function VideoAdminClient({
                       {event.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Band (optional)
                 </label>
-                <select
+                <Select
                   value={selectedBandId}
                   onChange={(e) => {
                     setSelectedBandId(e.target.value)
                     setSelectedSongId('')
                   }}
                   disabled={!selectedEventId}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden disabled:opacity-50"
                 >
                   <option value="">Select Band</option>
                   {availableBands.map((band) => (
@@ -409,7 +398,7 @@ export function VideoAdminClient({
                       {band.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
 
@@ -420,10 +409,9 @@ export function VideoAdminClient({
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Match to song (optional)
                 </label>
-                <select
+                <Select
                   value={selectedSongId}
                   onChange={(e) => setSelectedSongId(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/20 text-white focus:border-accent focus:outline-hidden"
                 >
                   <option value="">No song</option>
                   {(songsByBand[selectedBandId] || []).map((s) => (
@@ -432,7 +420,7 @@ export function VideoAdminClient({
                       {s.youtube_video_id ? ' ✓' : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {(songsByBand[selectedBandId] || []).length === 0 && (
                   <p className="mt-1 text-xs text-gray-400">
                     This band has no setlist songs yet.
@@ -637,34 +625,33 @@ function VideoRow({
         {isEditing ? (
           <div className="space-y-3">
             {/* Title input */}
-            <input
-              type="text"
+            <Input
+              size="sm"
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               placeholder="Video title"
-              className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm focus:border-accent focus:outline-hidden"
             />
             <p className="text-sm text-gray-400">{video.youtube_video_id}</p>
 
             <div className="flex gap-3 items-center flex-wrap">
               {/* Video Type Selector */}
-              <select
+              <Select
+                size="sm"
                 value={editVideoType}
                 onChange={(e) => setEditVideoType(e.target.value as VideoType)}
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               >
                 <option value="video">Video</option>
                 <option value="short">Short</option>
-              </select>
+              </Select>
 
-              <select
+              <Select
+                size="sm"
                 value={editEventId}
                 onChange={(e) => {
                   setEditEventId(e.target.value)
                   setEditBandId('')
                   setSongOverride(null)
                 }}
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm"
               >
                 <option value="">No Event</option>
                 {events.map((event) => (
@@ -672,16 +659,16 @@ function VideoRow({
                     {event.name}
                   </option>
                 ))}
-              </select>
+              </Select>
 
-              <select
+              <Select
+                size="sm"
                 value={editBandId}
                 onChange={(e) => {
                   setEditBandId(e.target.value)
                   setSongOverride(null)
                 }}
                 disabled={!editEventId}
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
               >
                 <option value="">No Band</option>
                 {availableBands.map((band) => (
@@ -689,14 +676,14 @@ function VideoRow({
                     {band.name}
                   </option>
                 ))}
-              </select>
+              </Select>
 
-              <select
+              <Select
+                size="sm"
                 value={editSongId}
                 onChange={(e) => setSongOverride(e.target.value)}
                 disabled={!editBandId}
                 title="Match this video to a song"
-                className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/20 text-white text-sm disabled:opacity-50"
               >
                 <option value="">No song</option>
                 {bandSongs.map((s) => (
@@ -705,7 +692,7 @@ function VideoRow({
                     {s.youtube_video_id ? ' ✓' : ''}
                   </option>
                 ))}
-              </select>
+              </Select>
 
               <button
                 onClick={handleSave}

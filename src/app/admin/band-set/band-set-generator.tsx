@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  AdminFormField,
-  AdminInput,
-  AdminRange,
-  AdminSelect,
   Button,
   Card,
   FileDropzone,
+  FormField,
+  Input,
+  Range,
+  Select,
   Tabs,
 } from '@/components/ui'
 import { DeleteIcon, DownloadIcon, PlusIcon } from '@/components/icons'
@@ -388,8 +388,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
         <Card padding="md" className="space-y-4">
           <h2 className="text-lg font-semibold text-white">2. Event & band</h2>
-          <AdminFormField label="Event">
-            <AdminSelect
+          <FormField label="Event">
+            <Select
               value={eventId}
               onChange={(e) => handleEventChange(e.target.value)}
             >
@@ -399,12 +399,12 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                   {event.name}
                 </option>
               ))}
-            </AdminSelect>
-          </AdminFormField>
+            </Select>
+          </FormField>
 
           {eventId && (
-            <AdminFormField label="Band">
-              <AdminSelect
+            <FormField label="Band">
+              <Select
                 value={bandId}
                 onChange={(e) => handleBandChange(e.target.value)}
               >
@@ -414,8 +414,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                     {band.name}
                   </option>
                 ))}
-              </AdminSelect>
-            </AdminFormField>
+              </Select>
+            </FormField>
           )}
           {logoError && <p className="text-sm text-error">{logoError}</p>}
 
@@ -430,7 +430,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
             Supporting Youngcare logo{!youngcareLogo && ' (could not load)'}
           </p>
 
-          <AdminFormField label="Logo layout">
+          <FormField label="Logo layout">
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -453,7 +453,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                 Bottb top-left
               </Button>
             </div>
-          </AdminFormField>
+          </FormField>
         </Card>
 
         <Card padding="md" className="space-y-4">
@@ -466,52 +466,52 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
           {mode === 'title' ? (
             <div className="space-y-4">
-              <AdminFormField label="Band name">
-                <AdminInput
+              <FormField label="Band name">
+                <Input
                   value={bandName}
                   onChange={(e) => setBandName(e.target.value)}
                   placeholder="e.g. The Null Pointers"
                 />
-              </AdminFormField>
-              <AdminFormField label="Event name">
-                <AdminInput
+              </FormField>
+              <FormField label="Event name">
+                <Input
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
                   placeholder="e.g. Sydney Tech Battle 2025"
                 />
-              </AdminFormField>
-              <AdminFormField label="Date">
-                <AdminInput
+              </FormField>
+              <FormField label="Date">
+                <Input
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
                   placeholder="e.g. 23rd October 2025"
                 />
-              </AdminFormField>
-              <AdminFormField label="Venue">
-                <AdminInput
+              </FormField>
+              <FormField label="Venue">
+                <Input
                   value={eventVenue}
                   onChange={(e) => setEventVenue(e.target.value)}
                   placeholder="e.g. Factory Theatre, Sydney"
                 />
-              </AdminFormField>
+              </FormField>
             </div>
           ) : (
             <div className="space-y-4">
-              <AdminFormField label="Band name">
-                <AdminInput
+              <FormField label="Band name">
+                <Input
                   value={bandName}
                   onChange={(e) => setBandName(e.target.value)}
                   placeholder="e.g. The Null Pointers"
                 />
-              </AdminFormField>
-              <AdminFormField
+              </FormField>
+              <FormField
                 label="Band members"
                 helperText="Pre-filled from the band's saved lineup when available. Shown alphabetically by surname, split into two columns once there are more than 6."
               >
                 <div className="space-y-2">
                   {members.map((member, i) => (
                     <div key={i} className="flex gap-2">
-                      <AdminInput
+                      <Input
                         value={member.name}
                         onChange={(e) =>
                           updateMember(i, 'name', e.target.value)
@@ -519,7 +519,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                         placeholder="Name"
                         className="flex-1"
                       />
-                      <AdminInput
+                      <Input
                         value={member.role}
                         onChange={(e) =>
                           updateMember(i, 'role', e.target.value)
@@ -548,7 +548,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                     Add member
                   </Button>
                 </div>
-              </AdminFormField>
+              </FormField>
             </div>
           )}
         </Card>
@@ -611,7 +611,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                 </div>
               )}
 
-              <AdminRange
+              <Range
                 min={0}
                 max={scrubber.duration || 0}
                 step={0.01}
