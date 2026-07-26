@@ -32,6 +32,21 @@ const SIZES: Record<FieldSize, string> = {
   md: 'px-4 py-3 text-sm',
 }
 
+/**
+ * Chevron placement per size, for `Select`.
+ *
+ * The chevron is a background image, so it is positioned by its left edge
+ * while the text is positioned by the padding box — set both to the same
+ * number and the chevron reads as inset further than the text, because half
+ * its own width is added on. These offsets put the chevron's *optical centre*
+ * on the field's horizontal padding (12px at `sm`, 16px at `md`) given the
+ * 1.25em glyph. `pr` then keeps the text clear of it.
+ */
+const SELECT_CHEVRON: Record<FieldSize, string> = {
+  sm: 'pr-7 bg-position-[right_0.25rem_center]',
+  md: 'pr-8 bg-position-[right_0.5rem_center]',
+}
+
 /** Shared skin: surface, border, focus ring, and disabled treatment. */
 function fieldClasses(
   size: FieldSize,
@@ -154,9 +169,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ref={ref}
       className={cn(
         fieldClasses(size, hasError, undefined),
-        'appearance-none pr-10',
+        'appearance-none',
         CHEVRON,
-        'bg-size-[1.25em_1.25em] bg-position-[right_0.75rem_center] bg-no-repeat',
+        'bg-size-[1.25em_1.25em] bg-no-repeat',
+        SELECT_CHEVRON[size],
         'filter-select',
         className
       )}
