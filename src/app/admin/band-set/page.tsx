@@ -16,7 +16,7 @@ export default async function BandSetPage() {
   return (
     <AdminLayout
       title="Band Set Overlay Generator"
-      subtitle="Transparent title & credits overlays for a band's full-set video"
+      subtitle="Transparent title, credits, and per-song overlays for a band's full-set video"
       breadcrumbs={[{ label: 'Band Set' }]}
     >
       <BandSetGenerator events={events} />
