@@ -103,6 +103,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
   const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
+  // The band's own logo (band.info.logo_url), distinct from the company logo.
+  const [bandLogo, setBandLogo] = useState<HTMLImageElement | null>(null)
   const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
   const [youngcareLogo, setYoungcareLogo] = useState<HTMLImageElement | null>(
     null
@@ -236,6 +238,30 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     }
   }, [selectedBand])
 
+  // The band's own logo, when it has one. Optional: if it is missing or fails
+  // to load, the title card simply falls back to the name-only layout.
+  useEffect(() => {
+    let cancelled = false
+    const logoUrl = selectedBand?.info?.logo_url
+    const pending = logoUrl
+      ? loadImage(
+          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(logoUrl)}`
+        )
+      : Promise.resolve(null)
+
+    pending
+      .then((img) => {
+        if (!cancelled) setBandLogo(img)
+      })
+      .catch(() => {
+        if (!cancelled) setBandLogo(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedBand])
+
   const bandSongs = bandId ? (songsByBand[bandId] ?? []) : []
   const currentSong = bandSongs[songIndex] ?? null
 
@@ -276,6 +302,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     if (mode === 'title') {
       composeTitlePreview(ctx, source, sw, sh, {
         ...logos,
+        bandLogo,
         bandName,
         eventName,
         eventDate,
@@ -305,6 +332,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     songContent,
     bottbLogo,
     companyLogo,
+    bandLogo,
     partnerLogo,
     youngcareLogo,
     bottbCorner,
@@ -444,6 +472,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     if (mode === 'title') {
       composeTitleOverlay(ctx, {
         ...logos,
+        bandLogo,
         bandName,
         eventName,
         eventDate,

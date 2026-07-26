@@ -43,6 +43,13 @@ export interface TitleContent extends BrandLogos {
   eventName: string
   eventDate: string
   eventVenue: string
+  /**
+   * The band's own logo (`band.info.logo_url`), as distinct from the company
+   * logo in the corner. When present it becomes the hero of the title card and
+   * the band name drops to a supporting size beneath it; when absent the card
+   * is laid out exactly as before.
+   */
+  bandLogo?: HTMLImageElement | null
 }
 
 export interface CreditsMember {
@@ -301,12 +308,18 @@ function drawTitleAdornments(
     Boolean(content.partnerLogo || content.youngcareLogo)
   )
 
+  // With a band logo the logo carries the billing, so the name steps back to
+  // a supporting size and the two read as one lockup rather than competing.
+  const bandLogo = content.bandLogo ?? null
+  const logoGap = bandLogo ? Math.round(h * 0.045) : 0
+  const nameStart = Math.round(h * (bandLogo ? 0.075 : 0.145))
+
   let nameSize = bandName
     ? fitFont(
         ctx,
         bandName,
         800,
-        Math.round(h * 0.145),
+        nameStart,
         // Allowed to measure against a wider box than it wraps to: at this
         // size a long name is expected to break over two lines.
         maxTextW * 1.6,
@@ -357,11 +370,29 @@ function drawTitleAdornments(
 
   const ruleGap = Math.round(h * 0.035)
   const ruleH = Math.round(h * 0.005)
-  const blockH =
+  const textH =
     nameLines.length * nameLineH +
     (nameLines.length ? ruleGap * 2 + ruleH : 0) +
     (eventSize ? eventSize * 1.2 : 0) +
     (dateSize ? dateSize * 1.5 : 0)
+
+  // Size the logo against what the copy leaves free, not a fixed fraction —
+  // otherwise a tall logo pushes the date line down into the sponsor row.
+  const logoBox = bandLogo
+    ? fitContain(
+        naturalSize(bandLogo).w,
+        naturalSize(bandLogo).h,
+        Math.round(w * 0.46),
+        Math.max(
+          Math.round(h * 0.08),
+          Math.min(
+            Math.round(h * 0.2),
+            Math.round(region.bottom - region.top - textH - logoGap)
+          )
+        )
+      )
+    : null
+  const blockH = textH + (logoBox ? logoBox.h + logoGap : 0)
 
   // --- Place -----------------------------------------------------------------
   const top = Math.max(region.top, (region.top + region.bottom - blockH) / 2)
@@ -378,6 +409,19 @@ function drawTitleAdornments(
   // --- Draw ------------------------------------------------------------------
   setTextStyle(ctx, h)
   let baseline = top
+
+  if (bandLogo && logoBox) {
+    // Shadowed like the text beneath it, so a logo with light artwork still
+    // separates from a bright frame.
+    ctx.drawImage(
+      bandLogo,
+      centerX - logoBox.w / 2,
+      baseline,
+      logoBox.w,
+      logoBox.h
+    )
+    baseline += logoBox.h + logoGap
+  }
 
   if (nameLines.length) {
     ctx.font = `800 ${nameSize}px ${FONT_FAMILY}`

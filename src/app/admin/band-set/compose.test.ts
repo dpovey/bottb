@@ -20,7 +20,7 @@ import {
  */
 function createMockContext() {
   const calls = {
-    fillText: [] as { text: string; x: number; y: number }[],
+    fillText: [] as { text: string; x: number; y: number; font: string }[],
     drawImage: [] as unknown[][],
     fillRect: [] as number[][],
     clearRect: [] as number[][],
@@ -53,7 +53,7 @@ function createMockContext() {
     // Width scales with text length so wrapping/shrinking logic exercises.
     measureText: (t: string) => ({ width: t.length * 10 }),
     fillText: (text: string, x: number, y: number) =>
-      calls.fillText.push({ text, x, y }),
+      calls.fillText.push({ text, x, y, font: ctx.font }),
   }
   return { ctx: ctx as unknown as CanvasRenderingContext2D, calls }
 }
@@ -363,5 +363,62 @@ describe('preview variants', () => {
     composeCreditsPreview(ctx, null, 0, 0, baseCredits)
     expect(calls.drawImage.length).toBe(0)
     expect(calls.fillRect.length).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe('band logo on the title page', () => {
+  /** Pixel size baked into a `ctx.font` shorthand string. */
+  const fontSize = (font: string) =>
+    parseFloat(font.match(/(\d+)px/)?.[1] ?? '0')
+  const nameFont = (calls: { text: string; font: string }[]) =>
+    fontSize(calls.find((c) => c.text === 'The Null Pointers')!.font)
+
+  it('draws the band logo in addition to the corner logos', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      bottbLogo: fakeLogo,
+      companyLogo: fakeLogo,
+      bandLogo: fakeLogo,
+    })
+    expect(calls.drawImage).toHaveLength(3)
+  })
+
+  it('steps the band name back to a supporting size', () => {
+    const withLogo = createMockContext()
+    composeTitleOverlay(withLogo.ctx, { ...baseTitle, bandLogo: fakeLogo })
+    const without = createMockContext()
+    composeTitleOverlay(without.ctx, baseTitle)
+
+    expect(nameFont(withLogo.calls.fillText)).toBeLessThan(
+      nameFont(without.calls.fillText)
+    )
+  })
+
+  it('leaves the layout untouched when the band has no logo', () => {
+    const absent = createMockContext()
+    composeTitleOverlay(absent.ctx, baseTitle)
+    const explicitNull = createMockContext()
+    composeTitleOverlay(explicitNull.ctx, { ...baseTitle, bandLogo: null })
+
+    expect(explicitNull.calls.fillText).toEqual(absent.calls.fillText)
+    expect(explicitNull.calls.drawImage).toEqual(absent.calls.drawImage)
+  })
+
+  it('keeps the block clear of the sponsor row when a logo is present', () => {
+    const { ctx, calls } = createMockContext()
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      bandLogo: fakeLogo,
+      partnerLogo: fakeLogo,
+      youngcareLogo: fakeLogo,
+    })
+    const sponsorLabel = calls.fillText.find((c) => c.text === 'POWERED BY')!
+    const lowestCopy = Math.max(
+      ...calls.fillText
+        .filter((c) => c.text !== 'POWERED BY' && c.text !== 'SUPPORTING')
+        .map((c) => c.y)
+    )
+    expect(lowestCopy).toBeLessThan(sponsorLabel.y)
   })
 })
