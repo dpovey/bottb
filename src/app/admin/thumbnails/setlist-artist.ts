@@ -6,14 +6,38 @@
 
 import type { SetlistSong } from '@/lib/db'
 
+/** How a setlist song is credited on an overlay. */
+export interface SongCredit {
+  /** The act to bill — the song's original artist. */
+  artist: string
+  /**
+   * The particular version performed, when it differs from the original
+   * (e.g. "Good Neighbours version"). Undefined when there is only one act
+   * to credit, which is the common case.
+   */
+  version?: string
+}
+
 /**
- * The act to credit for a setlist song: the specific version being performed
- * when the band is covering a cover (`cover_artist` — e.g. artist "Sabrina
- * Carpenter", cover_artist "Good Neighbours"), otherwise the canonical
- * original artist. For an original, that is the band itself.
+ * Split a setlist song into the artist to bill and, where the band is covering
+ * someone else's cover, the version being performed.
+ *
+ * `cover_artist` records that second act (e.g. artist "Sabrina Carpenter",
+ * cover_artist "Good Neighbours"). Billing only one of the two — as this used
+ * to, by preferring `cover_artist` — throws away the more recognisable name
+ * about half the time, so the overlay now shows the original as the headline
+ * and the version beneath it.
  */
+export function songCredit(song: SetlistSong): SongCredit {
+  const artist = song.artist.trim()
+  const cover = song.cover_artist?.trim()
+  if (!cover || cover.toLowerCase() === artist.toLowerCase()) return { artist }
+  return { artist, version: `${cover} version` }
+}
+
+/** The act to bill for a setlist song, without the version qualifier. */
 export function songArtist(song: SetlistSong): string {
-  return song.cover_artist?.trim() || song.artist
+  return songCredit(song).artist
 }
 
 /**

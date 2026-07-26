@@ -12,7 +12,9 @@ import {
   Tabs,
 } from '@/components/ui'
 import { DeleteIcon, DownloadIcon, PlusIcon } from '@/components/icons'
+import type { SetlistSong } from '@/lib/db'
 import type { Band, Event } from '@/lib/db-types'
+import { createZipBlob, type ZipEntry } from '@/lib/zip'
 import { formatEventDateLabel } from '@/lib/date-utils'
 import { loadImage } from '@/lib/canvas'
 import {
@@ -26,6 +28,8 @@ import {
   PV_W,
   type LogoCorner,
 } from './compose'
+import { composeOverlay, composeYouTube } from '../thumbnails/compose'
+import { songCredit } from '../thumbnails/setlist-artist'
 import { loadJostFont } from '../thumbnails/jost-font'
 import { useKeyframes } from '../thumbnails/use-keyframes'
 import { useVideoScrubber, SCRUB_FRAME } from '../thumbnails/use-video-scrubber'
@@ -37,7 +41,7 @@ interface BandSetGeneratorProps {
   events: Event[]
 }
 
-type Mode = 'title' | 'credits'
+type Mode = 'title' | 'credits' | 'songs'
 
 interface MemberRow {
   name: string
@@ -47,6 +51,7 @@ interface MemberRow {
 const TABS = [
   { id: 'title' as const, label: 'Title page' },
   { id: 'credits' as const, label: 'Credits page' },
+  { id: 'songs' as const, label: 'Song overlays' },
 ]
 
 function slugify(text: string): string {
@@ -88,6 +93,12 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [eventDate, setEventDate] = useState('')
   const [eventVenue, setEventVenue] = useState('')
   const [members, setMembers] = useState<MemberRow[]>([{ name: '', role: '' }])
+  const [songsByBand, setSongsByBand] = useState<Record<string, SetlistSong[]>>(
+    {}
+  )
+  // Which song the 'songs' tab is previewing.
+  const [songIndex, setSongIndex] = useState(0)
+  const [isZipping, setIsZipping] = useState(false)
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
@@ -135,6 +146,33 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       })
       .catch(() => {
         if (!cancelled) setBands([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Every band's setlist for the event, powering the song-overlay batch.
+  useEffect(() => {
+    if (!eventId) {
+      Promise.resolve().then(() => setSongsByBand({}))
+      return
+    }
+    let cancelled = false
+    fetch(`/api/events/${eventId}/setlists`)
+      .then((res) => (res.ok ? res.json() : { setlists: [] }))
+      .then(
+        (data: { setlists?: { band_id: string; songs: SetlistSong[] }[] }) => {
+          if (cancelled) return
+          const map: Record<string, SetlistSong[]> = {}
+          for (const setlist of data.setlists ?? []) {
+            map[setlist.band_id] = setlist.songs
+          }
+          setSongsByBand(map)
+        }
+      )
+      .catch(() => {
+        if (!cancelled) setSongsByBand({})
       })
     return () => {
       cancelled = true
@@ -198,6 +236,25 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     }
   }, [selectedBand])
 
+  const bandSongs = bandId ? (songsByBand[bandId] ?? []) : []
+  const currentSong = bandSongs[songIndex] ?? null
+
+  /** The overlay content for one setlist song. */
+  const songContent = useCallback(
+    (song: SetlistSong) => {
+      const credit = songCredit(song)
+      return {
+        artist: credit.artist,
+        song: song.title,
+        version: credit.version,
+        bottbLogo,
+        companyLogo,
+        bottbCorner,
+      }
+    },
+    [bottbLogo, companyLogo, bottbCorner]
+  )
+
   // Redraw the preview whenever any input changes.
   const draw = useCallback(() => {
     const canvas = previewCanvas
@@ -224,17 +281,28 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
         eventDate,
         eventVenue,
       })
-    } else {
+    } else if (mode === 'credits') {
       composeCreditsPreview(ctx, source, sw, sh, {
         ...logos,
         bandName,
         members,
       })
+    } else if (currentSong) {
+      // The song overlay is corner-anchored rather than centred, and the
+      // preview canvas is already 1920x1080, so the YouTube composition
+      // doubles as its preview (frame + scrims + adornments).
+      composeYouTube(ctx, source, sw, sh, songContent(currentSong))
+    } else {
+      ctx.clearRect(0, 0, PV_W, PV_H)
+      ctx.fillStyle = '#0a0a0a'
+      ctx.fillRect(0, 0, PV_W, PV_H)
     }
   }, [
     previewCanvas,
     scrubber.videoReady,
     mode,
+    currentSong,
+    songContent,
     bottbLogo,
     companyLogo,
     partnerLogo,
@@ -250,6 +318,11 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   useEffect(() => {
     draw()
   }, [draw, scrubber.frameTick, fontReady])
+
+  // A shorter setlist must not leave the preview pointing past its end.
+  useEffect(() => {
+    setSongIndex((i) => (i < bandSongs.length ? i : 0))
+  }, [bandSongs.length])
 
   const handleEventChange = (id: string) => {
     setEventId(id)
@@ -306,10 +379,49 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
-  const buildName = (suffix: string) => {
+  const buildName = (suffix: string, ext = 'png') => {
     const base =
       selectedBand?.name || (bandName ? slugify(bandName) : 'band-set')
-    return `${slugify(base)}-${suffix}.png`
+    return `${slugify(base)}-${suffix}.${ext}`
+  }
+
+  /** Render one song's transparent 4K overlay off-screen. */
+  const renderSongOverlay = (song: SetlistSong): Promise<Blob | null> => {
+    const canvas = document.createElement('canvas')
+    canvas.width = OV_W
+    canvas.height = OV_H
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return Promise.resolve(null)
+    composeOverlay(ctx, songContent(song), OV_W, OV_H)
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+  }
+
+  /**
+   * Every song's overlay in one download. They arrive as separate PNGs inside
+   * a zip — a browser will only reliably fire one download per gesture, so
+   * N separate saves is not an option.
+   */
+  const downloadAllSongs = async () => {
+    if (bandSongs.length === 0) return
+    setIsZipping(true)
+    try {
+      const entries: ZipEntry[] = []
+      for (const [i, song] of bandSongs.entries()) {
+        const blob = await renderSongOverlay(song)
+        if (!blob) continue
+        entries.push({
+          name: `${String(i + 1).padStart(2, '0')}-${slugify(song.title)}.png`,
+          data: new Uint8Array(await blob.arrayBuffer()),
+        })
+      }
+      if (entries.length === 0) return
+      triggerDownload(
+        createZipBlob(entries, new Date()),
+        buildName('song-overlays-4k', 'zip')
+      )
+    } finally {
+      setIsZipping(false)
+    }
   }
 
   // Transparent 4K PNG of just the logos + text, for compositing over the
@@ -348,6 +460,13 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       (blob) => triggerDownload(blob, buildName(`${mode}-overlay-4k`)),
       'image/png'
     )
+  }
+
+  /** The song currently being previewed, on its own. */
+  const downloadCurrentSong = async () => {
+    if (!currentSong) return
+    const blob = await renderSongOverlay(currentSong)
+    triggerDownload(blob, buildName(`${slugify(currentSong.title)}-overlay-4k`))
   }
 
   const hasVideo = Boolean(scrubber.videoUrl)
@@ -464,7 +583,97 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
             aria-label="Overlay type"
           />
 
-          {mode === 'title' ? (
+          {mode === 'songs' ? (
+            <div className="space-y-4">
+              {bandSongs.length === 0 ? (
+                <p className="text-sm text-text-muted">
+                  {bandId
+                    ? "This band has no setlist songs yet — add them under the event's setlists."
+                    : 'Pick an event and band to load their setlist.'}
+                </p>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline-solid"
+                      aria-label="Previous song"
+                      onClick={() =>
+                        setSongIndex(
+                          (i) => (i - 1 + bandSongs.length) % bandSongs.length
+                        )
+                      }
+                    >
+                      ‹ Prev
+                    </Button>
+                    <span className="text-sm tabular-nums text-text-muted">
+                      {songIndex + 1} / {bandSongs.length}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline-solid"
+                      aria-label="Next song"
+                      onClick={() =>
+                        setSongIndex((i) => (i + 1) % bandSongs.length)
+                      }
+                    >
+                      Next ›
+                    </Button>
+                  </div>
+
+                  <FormField
+                    label="Song"
+                    helperText="Straight from the setlist. Edit a song under the event's setlists to change what appears here."
+                  >
+                    <Select
+                      value={String(songIndex)}
+                      onChange={(e) => setSongIndex(Number(e.target.value))}
+                    >
+                      {bandSongs.map((song, i) => (
+                        <option key={song.id} value={i}>
+                          {i + 1}. {song.title} — {songCredit(song).artist}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  {currentSong && songCredit(currentSong).version && (
+                    <p className="text-xs text-text-dim">
+                      Performing the {songCredit(currentSong).version}.
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline-solid"
+                      disabled={!fontReady || !currentSong}
+                      onClick={downloadCurrentSong}
+                    >
+                      <DownloadIcon className="mr-1.5 h-4 w-4" />
+                      This song
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="accent"
+                      disabled={!fontReady || isZipping}
+                      title="One transparent 4K PNG per song, delivered as a zip"
+                      onClick={downloadAllSongs}
+                    >
+                      <DownloadIcon className="mr-1.5 h-4 w-4" />
+                      {isZipping
+                        ? 'Rendering…'
+                        : `All ${bandSongs.length} songs (.zip)`}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : mode === 'title' ? (
             <div className="space-y-4">
               <FormField label="Band name">
                 <Input
@@ -561,16 +770,18 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
             <h2 className="text-lg font-semibold text-white">
               {mode === 'title' ? 'Title page' : 'Credits page'} · {PV_W}×{PV_H}
             </h2>
-            <Button
-              size="sm"
-              variant="outline-solid"
-              disabled={!fontReady}
-              title="Transparent 4K PNG of the logos + text, to composite over the start of the full-set video"
-              onClick={downloadOverlay}
-            >
-              <DownloadIcon className="mr-1.5 h-4 w-4" />
-              Overlay 4K
-            </Button>
+            {mode !== 'songs' && (
+              <Button
+                size="sm"
+                variant="outline-solid"
+                disabled={!fontReady}
+                title="Transparent 4K PNG of the logos + text, to composite over the start of the full-set video"
+                onClick={downloadOverlay}
+              >
+                <DownloadIcon className="mr-1.5 h-4 w-4" />
+                Overlay 4K
+              </Button>
+            )}
           </div>
 
           <canvas

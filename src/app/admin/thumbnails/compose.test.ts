@@ -153,3 +153,60 @@ describe('long text', () => {
     )
   })
 })
+
+describe('artist and version', () => {
+  it('draws the version between the artist and the song', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, {
+      ...base,
+      artist: 'Sabrina Carpenter',
+      song: 'Espresso',
+      version: 'Good Neighbours version',
+    })
+    const y = (text: string) => calls.fillText.find((c) => c.text === text)!.y
+    // Smaller y is higher up the frame.
+    expect(y('Sabrina Carpenter')).toBeLessThan(y('Good Neighbours version'))
+    expect(y('Good Neighbours version')).toBeLessThan(y('Espresso'))
+  })
+
+  it('draws nothing extra when there is no version', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, base)
+    expect(calls.fillText).toHaveLength(2)
+  })
+
+  it('sets the version smaller than the song', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, { ...base, version: 'Good Neighbours version' })
+    const size = (text: string) =>
+      fontSize(calls.fillText.find((c) => c.text === text)!.font)
+    expect(size('Good Neighbours version')).toBeLessThan(size('Everlong'))
+  })
+
+  it('shrinks a mid-length artist rather than breaking it', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, { ...base, artist: 'Nick Cave and the Bad Seeds' })
+    const lines = calls.fillText.filter((c) => c.text !== 'Everlong')
+    expect(lines).toHaveLength(1)
+    // It had to give up some size to hold that single line.
+    expect(fontSize(lines[0].font)).toBeLessThan(Math.round(OV_H * 0.125))
+  })
+
+  it('still falls back to two lines when shrinking is not enough', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, {
+      ...base,
+      artist: 'The Extraordinarily Long Named Persistence Layer Orchestra',
+    })
+    expect(calls.fillText.filter((c) => c.text !== 'Everlong')).toHaveLength(2)
+  })
+
+  it('never takes the artist below the hero floor', () => {
+    const { ctx, calls } = createMockContext()
+    composeOverlay(ctx, { ...base, artist: 'Supercalifragilistic'.repeat(12) })
+    const lines = calls.fillText.filter((c) => c.text !== 'Everlong')
+    for (const line of lines) {
+      expect(fontSize(line.font)).toBeGreaterThanOrEqual(OV_H * MIN_TYPE.hero)
+    }
+  })
+})

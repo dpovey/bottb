@@ -29,7 +29,12 @@ import {
   type LogoCorner,
 } from './compose'
 import { loadJostFont } from './jost-font'
-import { findSongByTitle, setlistArtists, songArtist } from './setlist-artist'
+import {
+  findSongByTitle,
+  setlistArtists,
+  songCredit,
+  songArtist,
+} from './setlist-artist'
 import { useKeyframes } from './use-keyframes'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
@@ -90,6 +95,9 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   )
   const [artist, setArtist] = useState('')
   const [song, setSong] = useState('')
+  // Set when the picked setlist song is a cover of a cover; shown small under
+  // the artist. Cleared as soon as the artist is edited by hand.
+  const [version, setVersion] = useState('')
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
   // Instagram crop focal point (0..1 on each axis; 0.5 = centred).
@@ -221,6 +229,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
       composeYouTube(yt, source, sw, sh, {
         artist,
         song,
+        version,
         bottbLogo,
         companyLogo,
         bottbCorner,
@@ -242,6 +251,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     videoReady,
     artist,
     song,
+    version,
     bottbLogo,
     companyLogo,
     bottbCorner,
@@ -327,7 +337,15 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   const handleSongChange = (title: string) => {
     setSong(title)
     const match = findSongByTitle(bandSongs, title)
-    if (match) setArtist(songArtist(match))
+    if (!match) return
+    const credit = songCredit(match)
+    setArtist(credit.artist)
+    setVersion(credit.version ?? '')
+  }
+
+  const handleArtistChange = (value: string) => {
+    setArtist(value)
+    setVersion('')
   }
 
   // --- Instagram crop drag-to-reposition -----------------------------------
@@ -443,7 +461,14 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     canvas.height = OV_H
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    composeOverlay(ctx, { artist, song, bottbLogo, companyLogo, bottbCorner })
+    composeOverlay(ctx, {
+      artist,
+      song,
+      version,
+      bottbLogo,
+      companyLogo,
+      bottbCorner,
+    })
     canvas.toBlob(
       (blob) => triggerDownload(blob, buildName('overlay-4k', 'png')),
       'image/png'
@@ -554,7 +579,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
           >
             <Combobox
               value={artist}
-              onChange={(e) => setArtist(e.target.value)}
+              onChange={(e) => handleArtistChange(e.target.value)}
               placeholder="e.g. The Null Pointers"
               options={setlistArtists(bandSongs)}
             />

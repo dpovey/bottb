@@ -25,8 +25,16 @@ export const IG_H = 1920
 const FONT_FAMILY = "'Jost', system-ui, sans-serif"
 
 export interface ThumbnailContent {
+  /** The act being credited — normally the song's original artist. */
   artist: string
   song: string
+  /**
+   * The particular version performed, when the band is covering someone
+   * else's cover (e.g. artist "Sabrina Carpenter", version "Good Neighbours
+   * version"). Drawn small and dim under the artist; omit when there is only
+   * one act to credit.
+   */
+  version?: string
   /** Square Bottb logo (black tile), already loaded. */
   bottbLogo: HTMLImageElement | null
   /** Band / company logo, already loaded (may be wide or tall). */
@@ -92,6 +100,9 @@ function drawAdornments(
   ctx.shadowOffsetY = Math.round(h * 0.006)
   ctx.fillStyle = '#ffffff'
 
+  // The block is drawn bottom-up from the bottom safe margin, so it always
+  // sits on that margin however many lines the artist needs. Visually, top to
+  // bottom, that reads: artist, version, song.
   let baseline = h - safe.bottom
 
   if (song) {
@@ -99,7 +110,7 @@ function drawAdornments(
       ctx,
       song,
       500,
-      Math.round(h * 0.068),
+      Math.round(h * 0.078),
       maxTextW,
       Math.round(h * MIN_TYPE.primary)
     )
@@ -108,20 +119,27 @@ function drawAdornments(
     baseline -= size * 1.25
   }
 
-  if (artist) {
-    // Measured against a wider box than it wraps to: a long name is expected
-    // to break over two lines rather than shrink away or run off the frame.
+  const version = content.version?.trim()
+  if (version) {
     const size = fitFont(
       ctx,
-      artist,
-      700,
-      Math.round(h * 0.125),
-      maxTextW * 1.9,
-      Math.round(h * MIN_TYPE.hero)
+      version,
+      500,
+      Math.round(h * 0.048),
+      maxTextW,
+      Math.round(h * MIN_TYPE.label)
     )
+    ctx.font = `500 ${size}px ${FONT_FAMILY}`
+    const priorFill = ctx.fillStyle
+    ctx.fillStyle = 'rgba(255,255,255,0.78)'
+    ctx.fillText(version, safe.x, baseline)
+    ctx.fillStyle = priorFill
+    baseline -= size * 1.5
+  }
+
+  if (artist) {
+    const { size, lines } = fitArtist(ctx, artist, h, maxTextW)
     ctx.font = `700 ${size}px ${FONT_FAMILY}`
-    // Drawn bottom-up, so the block always sits on the bottom safe margin.
-    const lines = wrapLines(ctx, artist, maxTextW, 2)
     for (let i = lines.length - 1; i >= 0; i--) {
       ctx.fillText(lines[i], safe.x, baseline)
       baseline -= size * 1.12
@@ -190,6 +208,44 @@ export function composeOverlay(
 ): void {
   ctx.clearRect(0, 0, w, h)
   drawAdornments(ctx, w, h, content)
+}
+
+/**
+ * Size and break the artist line.
+ *
+ * A name that only just overruns should tighten up rather than break, so this
+ * first tries to hold one line, shrinking by up to a fifth. Past that it falls
+ * back to two lines and keeps shrinking, never below the hero floor in
+ * `MIN_TYPE` — beyond that point a name is better slightly wide than
+ * unreadable at thumbnail scale.
+ */
+function fitArtist(
+  ctx: CanvasRenderingContext2D,
+  artist: string,
+  h: number,
+  maxWidth: number
+): { size: number; lines: string[] } {
+  const start = Math.round(h * 0.125)
+  const floor = Math.round(h * MIN_TYPE.hero)
+
+  // Shrink a little to try to hold a single line.
+  const oneLine = fitFont(
+    ctx,
+    artist,
+    700,
+    start,
+    maxWidth,
+    Math.max(floor, Math.round(start * 0.8))
+  )
+  ctx.font = `700 ${oneLine}px ${FONT_FAMILY}`
+  if (ctx.measureText(artist).width <= maxWidth) {
+    return { size: oneLine, lines: [artist] }
+  }
+
+  // Still too wide: allow two lines, measured against the wider box they span.
+  const size = fitFont(ctx, artist, 700, oneLine, maxWidth * 1.9, floor)
+  ctx.font = `700 ${size}px ${FONT_FAMILY}`
+  return { size, lines: wrapLines(ctx, artist, maxWidth, 2) }
 }
 
 /**

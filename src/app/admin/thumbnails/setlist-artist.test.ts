@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { SetlistSong } from '@/lib/db'
-import { findSongByTitle, setlistArtists, songArtist } from './setlist-artist'
+import {
+  findSongByTitle,
+  setlistArtists,
+  songArtist,
+  songCredit,
+} from './setlist-artist'
 
 function song(partial: Partial<SetlistSong>): SetlistSong {
   return {
@@ -23,21 +28,40 @@ function song(partial: Partial<SetlistSong>): SetlistSong {
   } as SetlistSong
 }
 
-describe('songArtist', () => {
-  it('credits the original artist', () => {
-    expect(songArtist(song({}))).toBe('Foo Fighters')
+describe('songCredit', () => {
+  it('bills the original artist, with no version to qualify it', () => {
+    expect(songCredit(song({}))).toEqual({ artist: 'Foo Fighters' })
   })
 
-  it('prefers the version actually performed when covering a cover', () => {
+  it('keeps both acts when covering someone else’s cover', () => {
     const s = song({
       artist: 'Sabrina Carpenter',
       cover_artist: 'Good Neighbours',
     })
-    expect(songArtist(s)).toBe('Good Neighbours')
+    expect(songCredit(s)).toEqual({
+      artist: 'Sabrina Carpenter',
+      version: 'Good Neighbours version',
+    })
   })
 
-  it('falls back to the original artist when cover_artist is blank', () => {
-    expect(songArtist(song({ cover_artist: '   ' }))).toBe('Foo Fighters')
+  it('omits the version when cover_artist is blank', () => {
+    expect(songCredit(song({ cover_artist: '   ' })).version).toBeUndefined()
+  })
+
+  it('omits the version when it just repeats the artist', () => {
+    const s = song({ artist: 'Foo Fighters', cover_artist: 'foo fighters' })
+    expect(songCredit(s).version).toBeUndefined()
+  })
+})
+
+describe('songArtist', () => {
+  it('is the billed artist, without the version qualifier', () => {
+    expect(songArtist(song({}))).toBe('Foo Fighters')
+    expect(
+      songArtist(
+        song({ artist: 'Sabrina Carpenter', cover_artist: 'Good Neighbours' })
+      )
+    ).toBe('Sabrina Carpenter')
   })
 })
 
@@ -79,11 +103,11 @@ describe('setlistArtists', () => {
     expect(artists).toEqual(['Foo Fighters', 'The Killers'])
   })
 
-  it('uses the performed version when covering a cover', () => {
+  it('suggests the billed artist, not the cover act', () => {
     const artists = setlistArtists([
       song({ artist: 'Sabrina Carpenter', cover_artist: 'Good Neighbours' }),
     ])
-    expect(artists).toEqual(['Good Neighbours'])
+    expect(artists).toEqual(['Sabrina Carpenter'])
   })
 
   it('de-duplicates case-insensitively, keeping the first spelling', () => {
