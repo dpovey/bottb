@@ -80,7 +80,7 @@
     "fast-xml-parser": "^5.9.3",
     "framer-motion": "^12.23.26",
     "next": "16.2.6",
-    "next-auth": "^5.0.0-beta.30",
+    "next-auth": "^5.0.0-beta.32",
     "posthog-js": "^1.376.6",
     "qrcode": "^1.5.4",
     "react": "19.2.6",
