@@ -5,7 +5,7 @@ import type { BandCompany } from '@/lib/db-types'
 
 const companies: BandCompany[] = [
   { slug: 'rex-software', name: 'Rex Software', is_primary: true },
-  { slug: 'urbanx', name: 'UrbanX', is_primary: false },
+  { slug: 'urbanx', name: 'URBAN X', is_primary: false },
 ]
 
 describe('CompanyBadgeGroup', () => {
@@ -13,7 +13,7 @@ describe('CompanyBadgeGroup', () => {
     render(<CompanyBadgeGroup companies={companies} />)
 
     expect(screen.getByText('Rex Software')).toBeInTheDocument()
-    expect(screen.getByText('UrbanX')).toBeInTheDocument()
+    expect(screen.getByText('URBAN X')).toBeInTheDocument()
   })
 
   it('links each badge to its company page', () => {
@@ -23,7 +23,7 @@ describe('CompanyBadgeGroup', () => {
       'href',
       '/companies/rex-software'
     )
-    expect(screen.getByRole('link', { name: /UrbanX/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /URBAN X/ })).toHaveAttribute(
       'href',
       '/companies/urbanx'
     )
@@ -33,7 +33,7 @@ describe('CompanyBadgeGroup', () => {
     render(<CompanyBadgeGroup companies={companies} asLink={false} />)
 
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
-    expect(screen.getByText('UrbanX')).toBeInTheDocument()
+    expect(screen.getByText('URBAN X')).toBeInTheDocument()
   })
 
   it('renders nothing when the company list is empty', () => {

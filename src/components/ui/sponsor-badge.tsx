@@ -57,7 +57,7 @@ export function SponsorBadge({
           alt={name}
           width={LOGO_INTRINSIC_WIDTH}
           height={LOGO_INTRINSIC_HEIGHT}
-          className="h-5 sm:h-6 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
+          className="logo-muted h-5 sm:h-6 w-auto"
           unoptimized
         />
       </Link>
@@ -80,7 +80,7 @@ export function SponsorBadge({
             alt={name}
             width={LOGO_INTRINSIC_WIDTH}
             height={LOGO_INTRINSIC_HEIGHT}
-            className="h-8 sm:h-10 w-auto opacity-70 group-hover:opacity-100 transition-opacity"
+            className="logo-muted h-8 sm:h-10 w-auto"
             unoptimized
           />
         </Link>

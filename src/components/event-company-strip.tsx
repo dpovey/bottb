@@ -24,10 +24,11 @@ interface CompanyDisplay {
 }
 
 /**
- * Static row of greyed-out company logos for the bands competing in an event.
- * Logos animate to full colour on hover. Falls back to the square company icon
- * when a wide logo is not available. Renders nothing when no companies have a
- * usable logo (e.g. no bands assigned yet).
+ * Static row of company logos for the bands competing in an event. Logos are
+ * muted at rest and brighten on hover (see `.logo-muted` in globals.css).
+ * Falls back to the square company icon when a wide logo is not available.
+ * Renders nothing when no companies have a usable logo (e.g. no bands
+ * assigned yet).
  */
 export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
   const seen = new Set<string>()
@@ -74,7 +75,7 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
             <Link
               key={company.slug}
               href={`/companies/${company.slug}`}
-              className="group relative shrink-0 px-6 py-3 sm:px-8 sm:py-4 md:px-10 lg:px-12 lg:py-5"
+              className="group shrink-0 px-6 py-3 sm:px-8 sm:py-4 md:px-10 lg:px-12 lg:py-5"
             >
               <div className="flex h-10 items-center justify-center sm:h-12 lg:h-14">
                 <Image
@@ -82,14 +83,11 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
                   alt={`${company.name} logo`}
                   width={logoIntrinsicWidths.marquee.width}
                   height={logoIntrinsicWidths.marquee.height}
-                  className="h-full w-auto object-contain opacity-40 grayscale transition-all duration-200 group-hover:opacity-100 group-hover:grayscale-0"
+                  className="logo-muted h-full w-auto object-contain"
                   loading="lazy"
                   sizes={logoSizes.marquee}
                 />
               </div>
-              <span className="absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded-sm border border-white/10 bg-bg-elevated px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                {company.name}
-              </span>
             </Link>
           ))}
         </div>

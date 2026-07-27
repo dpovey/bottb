@@ -1,8 +1,8 @@
 # Multi-Company Bands — Design & Migration Plan
 
 > Status: **Planned** (Phase 1 in progress). Motivating case: the **ShipReX** band in
-> `events/brisbane-2026.json` is drawn from **Rex Software + UrbanX**, but the data model
-> only records a single `bands.company_slug`, so UrbanX is unrepresentable.
+> `events/brisbane-2026.json` is drawn from **Rex Software + URBAN X**, but the data model
+> only records a single `bands.company_slug`, so URBAN X is unrepresentable.
 >
 > Steady-state spec lives in [`bands-companies.md`](./bands-companies.md); this doc covers
 > the change and its consequences.
@@ -13,7 +13,7 @@
    company (backward-compatible: the ~15 existing single-company joins keep working). Add a
    `band_companies` join table holding the full set, including the primary.
 2. **Display — show all companies everywhere.** Every company badge slot renders all of a
-   band's companies (e.g. `Rex Software + UrbanX`), including song/video/photo cards. The
+   band's companies (e.g. `Rex Software + URBAN X`), including song/video/photo cards. The
    primary flag still exists (ordering, backward-compat, winner attribution) but display
    never branches on it — one `CompanyBadgeGroup` is used everywhere.
 3. **Cardinality — assume ≤ 2 companies** for now. No "+N more" overflow handling yet; a
@@ -22,7 +22,7 @@
    company-free; company is derived from live band data at display time.
 5. **API / seed field — `company_slugs[]` + explicit `primary_company`** as the single
    source of truth (aligns the existing `company` vs `company_slug` naming drift).
-6. **Data scope — 2026 only.** UrbanX attaches to ShipReX in `brisbane-2026.json` /
+6. **Data scope — 2026 only.** URBAN X attaches to ShipReX in `brisbane-2026.json` /
    `seed-brisbane-2026.ts` only. `brisbane-2024.json` and `brisbane-2025.json` stay
    `rex-software`-only.
 
@@ -62,7 +62,7 @@ SELECT id, company_slug, true, 0 FROM bands WHERE company_slug IS NOT NULL;
 
 - **A1** New table in both schema sources — `src/lib/schema.sql` + new migration (per
   `.claude/rules/database.md`). Migration `up` creates table/indexes + backfill + inserts
-  UrbanX company; `down` drops the table.
+  URBAN X company; `down` drops the table.
 - **A2** Backfill existing bands (see SQL above).
 - **A3** Keep the 1:1 FK (`schema.sql:450`, `migrations/1768022884123_*`) — **no change**.
 
@@ -93,10 +93,10 @@ SELECT id, company_slug, true, 0 FROM bands WHERE company_slug IS NOT NULL;
 ### D. Company-side reads
 
 - **D1** `companies.ts:17,20` (`getCompanies`), `getDistinctCompanies:60-70` — repoint the
-  `INNER JOIN bands` to `band_companies`; `COUNT(DISTINCT bc.band_id)`. Otherwise UrbanX
+  `INNER JOIN bands` to `band_companies`; `COUNT(DISTINCT bc.band_id)`. Otherwise URBAN X
   shows 0 bands and is hidden from `/companies`, marquee, and filter dropdowns.
 - **D2** `companies.ts:40-55` `getCompanyBands`, `companies/[slug]/page.tsx` — query via
-  the join table so UrbanX's page lists ShipReX.
+  the join table so URBAN X's page lists ShipReX.
 
 ### E. Types
 
@@ -141,17 +141,17 @@ SELECT id, company_slug, true, 0 FROM bands WHERE company_slug IS NOT NULL;
 - **H3** Descriptions generator (`generate-descriptions-local.ts:214`) — include all
   companies in AI context.
 - **H4** QR sheet (`generate-qr-sheet.ts`) — no company usage, **no change**.
-- **H5** Sitemap (`sitemap.ts`) — UrbanX auto-appears once it is a company row with a band.
+- **H5** Sitemap (`sitemap.ts`) — URBAN X auto-appears once it is a company row with a band.
 
 ### I. Seed data & tooling
 
-- **I1** Create the **UrbanX** company row (prerequisite) — done in the Phase 1 migration;
+- **I1** Create the **URBAN X** company row (prerequisite) — done in the Phase 1 migration;
   logo/icon set later via `set-company-logo.ts`.
 - **I2** Event JSON (`brisbane-2026.json:32-34`) — add `company_slugs[]`; ShipReX 2026 =
   `["rex-software","urbanx"]`, primary `rex-software`. 2024/2025 unchanged (decision 6).
 - **I3** `create-event.ts:48,173-208,246-247` — support `company_slugs[]`; validate each;
   insert band + join rows.
-- **I4** `seed-brisbane-2026.ts:137-142,205-247` — upsert UrbanX; write ShipReX join rows.
+- **I4** `seed-brisbane-2026.ts:137-142,205-247` — upsert URBAN X; write ShipReX join rows.
 - **I5** `rename-band-id.ts:38-39` — also copy `band_companies` rows for the new id.
 - **I6** `migrations/1776910239803_*` — historical, no edit; backfill (A2) covers it.
 
@@ -166,7 +166,7 @@ SELECT id, company_slug, true, 0 FROM bands WHERE company_slug IS NOT NULL;
 
 ## Phased rollout (each phase independently shippable)
 
-1. **Data foundation** — migration + `schema.sql` mirror + backfill (A); create UrbanX
+1. **Data foundation** — migration + `schema.sql` mirror + backfill (A); create URBAN X
    company (I1). No behavior change.
 2. **Reads + types** — `band_companies` aggregate in `db/*`, `Band.companies`, company-side
    counts (B, D, E). Backward compatible.
@@ -186,7 +186,7 @@ PR #192 (`feat/multi-company-bands`):
 - **Phase 2 — done (core).** `companies[]` aggregate on band reads + band page;
   company-side counts/filters via the join table (`Band.companies`). Song/video/
   photo reads (B3) and setlists API (B4) not yet plumbed.
-- **UrbanX asset — done.** White (inverted) logo + X-mark icon uploaded to Blob.
+- **URBAN X asset — done.** White (inverted) logo + X-mark icon uploaded to Blob.
 - **Phase 4 — mostly done.** `CompanyBadgeGroup` + `bandCompanyList()` helper.
   Renders all companies on: band page hero, event lineup badge, event
   company-logo strip, event-card dedup, and the scoring/winner surfaces

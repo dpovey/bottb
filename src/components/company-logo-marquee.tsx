@@ -22,7 +22,7 @@ interface CompanyLogoMarqueeProps {
 
 /**
  * Infinite scrolling marquee of company logos
- * - Logos are grayscale by default, full color on hover
+ * - Logos are muted by default and brighten on hover (see `.logo-muted`)
  * - Animation pauses on hover
  * - Respects prefers-reduced-motion
  * - Clicking a logo navigates to the company page
@@ -100,16 +100,13 @@ export async function CompanyLogoMarquee({
 }
 
 /**
- * Individual logo item with hover effects and tooltip
+ * Individual logo item with hover effects
  * Uses Next.js Image with proper dimensions to prevent layout shifts
  */
 function LogoItem({ company }: { company: CompanyWithLogo }) {
   return (
-    <Link
-      href={`/companies/${company.slug}`}
-      className="logo-wrapper relative shrink-0 group"
-    >
-      <div className="logo-item h-12 w-auto flex items-center justify-center px-4">
+    <Link href={`/companies/${company.slug}`} className="logo-wrapper shrink-0">
+      <div className="logo-item logo-muted h-12 w-auto flex items-center justify-center px-4">
         <Image
           src={company.logo_url}
           alt={`${company.name} logo`}
@@ -120,11 +117,6 @@ function LogoItem({ company }: { company: CompanyWithLogo }) {
           sizes={logoSizes.marquee}
         />
       </div>
-
-      {/* Tooltip with company name */}
-      <span className="logo-tooltip absolute top-full left-1/2 mt-3 px-3 py-1.5 bg-bg-elevated border border-white/10 rounded-sm text-xs text-white whitespace-nowrap z-10">
-        {company.name}
-      </span>
     </Link>
   )
 }

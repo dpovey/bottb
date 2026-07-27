@@ -409,7 +409,7 @@ export default async function AboutPage() {
             <img
               src="https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505"
               alt="Jumbo Interactive"
-              className="h-10 w-auto mx-auto opacity-60 group-hover:opacity-100 transition-opacity"
+              className="logo-muted h-10 w-auto mx-auto"
             />
           </Link>
         </section>

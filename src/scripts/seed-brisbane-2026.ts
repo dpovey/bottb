@@ -66,14 +66,14 @@ const COMPANY = {
 }
 
 // Companies introduced by this lineup that need a row (logo/icon set separately
-// via set-company-logo.ts / upload-local-logo.ts). UrbanX co-owns The ShipRex.
+// via set-company-logo.ts / upload-local-logo.ts). URBAN X co-owns The ShipRex.
 const EXTRA_COMPANIES = [
   {
     slug: 'urbanx',
-    name: 'UrbanX',
+    name: 'URBAN X',
     website: 'https://www.urbanx.io',
     description:
-      'UrbanX is an Australian proptech company in the real estate technology space.',
+      'URBAN X is an Australian proptech company in the real estate technology space.',
   },
 ]
 
@@ -161,7 +161,7 @@ const BANDS: SeedBand[] = [
     order: 4,
     contact_email: 'kirranorrie@gmail.com',
     description:
-      'ShipReX is the band you get when two great teams behind keeping real estate tech running decide to plug in and turn it up. We’re drawn from the crews behind Rex and UrbanX - by day we ship software and solve problems, by night we ship riffs and cause our own.\n\nThe setlist? Classified. What we will tell you: it’s loud, it’s a little unhinged, it lurches across genres and decades with zero shame, and it builds to a finish that’ll have the whole room singing. Trust us, it’s a vibe. You’ll just have to show up to find out!',
+      'ShipReX is the band you get when two great teams behind keeping real estate tech running decide to plug in and turn it up. We’re drawn from the crews behind Rex and URBAN X - by day we ship software and solve problems, by night we ship riffs and cause our own.\n\nThe setlist? Classified. What we will tell you: it’s loud, it’s a little unhinged, it lurches across genres and decades with zero shame, and it builds to a finish that’ll have the whole room singing. Trust us, it’s a vibe. You’ll just have to show up to find out!',
     logistics: {
       members_count: 10,
       backline:

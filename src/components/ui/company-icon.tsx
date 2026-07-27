@@ -58,7 +58,6 @@ export function CompanyIcon({
           sizeClasses[size],
           className
         )}
-        title={companyName}
       >
         <BuildingIcon className="w-3/4 h-3/4 text-text-dim" />
       </div>
@@ -69,7 +68,6 @@ export function CompanyIcon({
     <Image
       src={imageUrl}
       alt={`${companyName} logo`}
-      title={companyName}
       width={intrinsic.width}
       height={intrinsic.height}
       className={cn('object-contain rounded-sm', sizeClasses[size], className)}

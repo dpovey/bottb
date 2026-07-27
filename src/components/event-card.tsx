@@ -441,7 +441,6 @@ export function EventCard({
                         key={c.slug}
                         src={c.logoUrl}
                         alt={`${c.name} logo`}
-                        title={c.name}
                         width={120}
                         height={32}
                         className="h-8 w-auto max-w-[120px] object-contain"

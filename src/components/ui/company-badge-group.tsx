@@ -5,7 +5,7 @@ import { CompanyBadge, type CompanyBadgeProps } from './company-badge'
 export interface CompanyBadgeGroupProps {
   /**
    * The companies a band is made up of, primary-first. Renders one
-   * {@link CompanyBadge} each (e.g. "Rex Software" + "UrbanX"). Bands currently
+   * {@link CompanyBadge} each (e.g. "Rex Software" + "URBAN X"). Bands currently
    * have at most two companies, so no overflow/"+N more" handling is needed yet.
    */
   companies: BandCompany[]
@@ -19,7 +19,7 @@ export interface CompanyBadgeGroupProps {
 /**
  * Renders every company a band belongs to as a row of badges. Use this instead
  * of a single {@link CompanyBadge} wherever a band's company affiliation is
- * shown, so multi-company bands (e.g. ShipReX = Rex Software + UrbanX)
+ * shown, so multi-company bands (e.g. ShipReX = Rex Software + URBAN X)
  * display all of their companies. Renders nothing when the list is empty.
  */
 export function CompanyBadgeGroup({
