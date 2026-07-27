@@ -2,6 +2,7 @@ import {
   formatEventDate,
   formatEventDateLabel,
   getDatePartsInTimezone,
+  getEarlyBirdOffer,
   getEventCountdown,
 } from '../date-utils'
 
@@ -327,5 +328,123 @@ describe('getEventCountdown', () => {
     expect(getEventCountdown('not a date', TZ, NOW_MELB_START_OF_DAY)).toBe(
       null
     )
+  })
+})
+
+describe('getEarlyBirdOffer', () => {
+  // Mirrors the live Brisbane 2026 configuration: early bird closes at the end
+  // of 1 August, Brisbane time (UTC+10, no DST).
+  const TZ = 'Australia/Brisbane'
+  const ENDS_AT = '2026-08-01T23:59:59+10:00'
+  const info = { ends_at: ENDS_AT }
+
+  const at = (iso: string) => new Date(iso)
+
+  describe('when there is no live offer', () => {
+    it('returns null when info is missing entirely', () => {
+      expect(getEarlyBirdOffer(undefined, TZ, at('2026-07-27T00:00:00Z'))).toBe(
+        null
+      )
+      expect(getEarlyBirdOffer(null, TZ, at('2026-07-27T00:00:00Z'))).toBe(null)
+    })
+
+    it('returns null when ends_at is not set', () => {
+      expect(
+        getEarlyBirdOffer({ price: '$45' }, TZ, at('2026-07-27T00:00:00Z'))
+      ).toBe(null)
+    })
+
+    it('returns null for an unparseable ends_at', () => {
+      expect(
+        getEarlyBirdOffer(
+          { ends_at: 'not a date' },
+          TZ,
+          at('2026-07-27T00:00:00Z')
+        )
+      ).toBe(null)
+    })
+  })
+
+  describe('expiry', () => {
+    it('is live right up to the final second', () => {
+      // 23:59:58 Brisbane on 1 August — one second before the cutoff.
+      expect(getEarlyBirdOffer(info, TZ, at('2026-08-01T13:59:58Z'))).not.toBe(
+        null
+      )
+    })
+
+    it('expires exactly at the deadline instant', () => {
+      expect(getEarlyBirdOffer(info, TZ, at('2026-08-01T13:59:59Z'))).toBe(null)
+    })
+
+    it('stays expired afterwards', () => {
+      expect(getEarlyBirdOffer(info, TZ, at('2026-08-05T00:00:00Z'))).toBe(null)
+    })
+
+    it('honours the configured offset rather than reading it as UTC', () => {
+      // 2026-08-01 14:30Z is 00:30 on 2 August in Brisbane — past the cutoff.
+      // But it is still 1 August in UTC, so a naive implementation that
+      // ignored the +10:00 offset would wrongly keep the offer alive.
+      expect(getEarlyBirdOffer(info, TZ, at('2026-08-01T14:30:00Z'))).toBe(null)
+    })
+  })
+
+  describe('daysLeft', () => {
+    it('counts whole calendar days in the event timezone', () => {
+      // 27 July 09:00 Brisbane -> 1 August is 5 calendar days away.
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-26T23:00:00Z'))
+      expect(offer?.daysLeft).toBe(5)
+    })
+
+    it('is 0 on the final day, even hours before the cutoff', () => {
+      // 1 August 09:00 Brisbane — same calendar day as the deadline.
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-31T23:00:00Z'))
+      expect(offer?.daysLeft).toBe(0)
+    })
+
+    it('is 1 the day before', () => {
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-30T23:00:00Z'))
+      expect(offer?.daysLeft).toBe(1)
+    })
+
+    it('uses the event timezone for the day boundary, not UTC', () => {
+      // 2026-07-31 15:00Z is already 1 August in Brisbane (01:00), so the
+      // deadline is "today" (0). Under UTC it would still read as 1 day out.
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-31T15:00:00Z'))
+      expect(offer?.daysLeft).toBe(0)
+    })
+  })
+
+  describe('labels', () => {
+    it('formats the deadline in the event timezone', () => {
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-27T00:00:00Z'))
+      expect(offer?.endsLabel).toBe('1 August')
+      expect(offer?.endsLabelShort).toBe('1 Aug')
+    })
+
+    it('does not roll the label back a day for viewers behind the event', () => {
+      // The deadline instant is 13:59:59Z, which is still 1 August in Brisbane
+      // but would render as 31 July in, say, UTC-07:00. The label must follow
+      // the event's timezone so the advertised date matches the promise.
+      const offer = getEarlyBirdOffer(info, TZ, at('2026-07-27T00:00:00Z'))
+      expect(offer?.endsLabel).toBe('1 August')
+    })
+
+    it('falls back to UTC for an invalid timezone rather than throwing', () => {
+      const offer = getEarlyBirdOffer(
+        info,
+        'Not/AZone',
+        at('2026-07-27T00:00:00Z')
+      )
+      expect(offer?.endsLabel).toBe('1 August')
+    })
+  })
+
+  it('passes the configured price through, and omits it when unset', () => {
+    const now = at('2026-07-27T00:00:00Z')
+    expect(
+      getEarlyBirdOffer({ ends_at: ENDS_AT, price: '$45' }, TZ, now)?.price
+    ).toBe('$45')
+    expect(getEarlyBirdOffer(info, TZ, now)?.price).toBeUndefined()
   })
 })

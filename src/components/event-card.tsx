@@ -1,12 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatEventDateLabel } from '@/lib/date-utils'
+import { formatEventDateLabel, getEarlyBirdOffer } from '@/lib/date-utils'
 import {
   Badge,
   DateBadge,
   Button,
   CompanyBadgeGroup,
   CompanyIcon,
+  EarlyBirdBadge,
   EventCountdownBadge,
   TrackedTicketLink,
 } from '@/components/ui'
@@ -62,6 +63,7 @@ interface EventCardProps {
       date_tbc?: boolean
       date_display?: string
       lineup_locked?: boolean
+      early_bird?: { ends_at?: string; price?: string }
     }
     status?: string
   }
@@ -129,6 +131,13 @@ export function EventCard({
   // rather than soliciting participants.
   const lineupLocked = !!event.info?.lineup_locked
 
+  // Live early-bird offer, if the deadline hasn't passed. Only worth calling
+  // out where tickets are actually purchasable from the card.
+  const earlyBird =
+    !isPast && !isActive && event.info?.ticket_url
+      ? getEarlyBirdOffer(event.info.early_bird, event.timezone)
+      : null
+
   // Prefer heroPhoto over event.info.image_url
   const imageUrl = heroPhoto?.blob_url ?? event.info?.image_url
   const focalPoint = heroPhoto?.hero_focal_point
@@ -190,8 +199,10 @@ export function EventCard({
           />
         </div>
 
-        {/* Status/Winner Badge - Top Right */}
-        <div className="absolute top-4 right-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+        {/* Status/Winner Badge - Top Right. Stacks the early-bird deadline
+            under the event countdown when one is live — two different
+            deadlines, so they get two rows rather than competing for one. */}
+        <div className="absolute top-4 right-4 flex flex-col items-end gap-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
           {isActive ? (
             <span className="bg-accent/25 border border-accent/40 text-accent-light backdrop-blur-md [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] rounded-sm px-3 py-1 text-xs tracking-wider uppercase">
               🎸 Live Now
@@ -215,6 +226,7 @@ export function EventCard({
           ) : !isPast ? (
             <EventCountdownBadge date={event.date} timezone={event.timezone} />
           ) : null}
+          <EarlyBirdBadge offer={earlyBird} />
         </div>
 
         {/* Content - Bottom */}
@@ -360,7 +372,7 @@ export function EventCard({
             showYear
             tbc={isDateTbc}
           />
-          <div>
+          <div className="flex flex-col items-end gap-2">
             {isActive ? (
               <Badge variant="accent">Live Now</Badge>
             ) : isPast ? (
@@ -374,6 +386,7 @@ export function EventCard({
                 fallback={<Badge variant="info">{relativeDate}</Badge>}
               />
             )}
+            <EarlyBirdBadge offer={earlyBird} />
           </div>
         </div>
 

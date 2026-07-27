@@ -9,7 +9,11 @@ import {
   PHOTO_LABELS,
 } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
-import { formatEventDateLabel, getEventCountdown } from '@/lib/date-utils'
+import {
+  formatEventDateLabel,
+  getEarlyBirdOffer,
+  getEventCountdown,
+} from '@/lib/date-utils'
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
@@ -190,6 +194,11 @@ export default async function EventPage({
         countdownLabel={
           event.status === 'upcoming' && !event.info?.date_tbc
             ? getEventCountdown(event.date, event.timezone)
+            : null
+        }
+        earlyBird={
+          event.status === 'upcoming' && event.info?.ticket_url
+            ? getEarlyBirdOffer(event.info.early_bird, event.timezone)
             : null
         }
       />

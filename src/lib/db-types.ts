@@ -45,6 +45,17 @@ export interface Event {
      * ("Want to participate?") for an event that still has no bands attached.
      */
     lineup_locked?: boolean
+    /**
+     * Early-bird ticket pricing. `ends_at` is an ISO 8601 instant with an
+     * explicit offset (e.g. "2026-08-01T23:59:59+10:00"); the callout stops
+     * rendering the moment it passes, so the offer expires itself with no
+     * follow-up edit. `price` is optional — omit it to advertise the deadline
+     * alone. See `getEarlyBirdOffer` in `date-utils.ts`.
+     */
+    early_bird?: {
+      ends_at?: string
+      price?: string
+    }
     /** National Partner / title sponsor displayed as a "Powered by" badge on the event page */
     national_partner?: {
       name: string

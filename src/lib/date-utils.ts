@@ -109,32 +109,16 @@ function getOrdinalSuffix(day: number): string {
 }
 
 /**
- * Returns an urgency-focused countdown for an upcoming event, or null if
- * the event date has already passed.
+ * Whole calendar days from `from` to `to`, counted in `timezone`.
  *
- *   today    → "Tonight"
- *   1 day    → "Tomorrow"
- *   2-6 days → "{N} days left"
- *   1 week   → "1 week left"
- *   2+ weeks → "{N} weeks left"   (Math.floor of days / 7)
- *   past     → null
- *
- * Date math runs in the event's timezone using calendar-day boundaries —
- * an event "tomorrow" in Melbourne reads as "Tomorrow" for a viewer in
- * any timezone, not "Today" for someone several hours later in UTC.
+ * Both instants are collapsed to their calendar day in the given zone before
+ * subtracting, so "tomorrow" means the next date on the wall calendar in that
+ * city rather than "in the next 24 hours". Negative when `to` is in the past.
  */
-export function getEventCountdown(
-  dateString: string | Date,
-  timezone?: string,
-  now: Date = new Date()
-): string | null {
-  const eventDate =
-    typeof dateString === 'string' ? new Date(dateString) : dateString
-  if (isNaN(eventDate.getTime())) return null
-
-  // Build a formatter we can pull year/month/day parts from. Fall back to UTC
-  // if a caller passes an invalid IANA name — Intl.DateTimeFormat throws on
-  // bad timezones and we'd rather degrade than crash a render.
+function calendarDaysBetween(from: Date, to: Date, timezone?: string): number {
+  // Fall back to UTC if a caller passes an invalid IANA name —
+  // Intl.DateTimeFormat throws on bad timezones and we'd rather degrade than
+  // crash a render.
   let dayFmt: Intl.DateTimeFormat
   try {
     dayFmt = new Intl.DateTimeFormat('en-US', {
@@ -160,13 +144,37 @@ export function getEventCountdown(
     return new Date(`${year}-${month}-${day}T00:00:00Z`)
   }
 
-  const todayMidnightUtc = midnightUtcInTz(now)
-  const eventMidnightUtc = midnightUtcInTz(eventDate)
-
-  const diffDays = Math.round(
-    (eventMidnightUtc.getTime() - todayMidnightUtc.getTime()) /
+  return Math.round(
+    (midnightUtcInTz(to).getTime() - midnightUtcInTz(from).getTime()) /
       (1000 * 60 * 60 * 24)
   )
+}
+
+/**
+ * Returns an urgency-focused countdown for an upcoming event, or null if
+ * the event date has already passed.
+ *
+ *   today    → "Tonight"
+ *   1 day    → "Tomorrow"
+ *   2-6 days → "{N} days left"
+ *   1 week   → "1 week left"
+ *   2+ weeks → "{N} weeks left"   (Math.floor of days / 7)
+ *   past     → null
+ *
+ * Date math runs in the event's timezone using calendar-day boundaries —
+ * an event "tomorrow" in Melbourne reads as "Tomorrow" for a viewer in
+ * any timezone, not "Today" for someone several hours later in UTC.
+ */
+export function getEventCountdown(
+  dateString: string | Date,
+  timezone?: string,
+  now: Date = new Date()
+): string | null {
+  const eventDate =
+    typeof dateString === 'string' ? new Date(dateString) : dateString
+  if (isNaN(eventDate.getTime())) return null
+
+  const diffDays = calendarDaysBetween(now, eventDate, timezone)
 
   if (diffDays < 0) return null
   if (diffDays === 0) return 'Tonight'
@@ -174,6 +182,82 @@ export function getEventCountdown(
   if (diffDays < 7) return `${diffDays} days left`
   const weeks = Math.floor(diffDays / 7)
   return weeks === 1 ? '1 week left' : `${weeks} weeks left`
+}
+
+/**
+ * Early-bird ticket pricing carried on `event.info`. See `Event.info` in
+ * `db-types.ts` for the full contract.
+ */
+export interface EarlyBirdInfo {
+  /**
+   * ISO 8601 instant the offer closes. Always include an explicit UTC offset
+   * (e.g. `"2026-08-01T23:59:59+10:00"`) — the cutoff is a wall-clock promise
+   * made in the event's own city, and a bare timestamp would be read as UTC
+   * and expire hours early there.
+   */
+  ends_at?: string
+  /** Optional price to advertise alongside the deadline, e.g. `"$45"`. */
+  price?: string
+}
+
+export interface EarlyBirdOffer {
+  /** Deadline as a full date, e.g. "1 August". */
+  endsLabel: string
+  /** Deadline abbreviated for tight surfaces, e.g. "1 Aug". */
+  endsLabelShort: string
+  /** Whole calendar days until the cutoff in the event's timezone; 0 = today. */
+  daysLeft: number
+  /** Price to advertise, when one was configured. */
+  price?: string
+}
+
+/**
+ * Resolves an event's early-bird offer, or null when there isn't a live one —
+ * no `ends_at` configured, an unparseable one, or a deadline already passed.
+ *
+ * Expiry is an exact instant comparison against `ends_at`, so the offer stops
+ * being advertised the moment it closes. `daysLeft` is separately counted in
+ * calendar days in the event's timezone, so "ends tomorrow" tracks the wall
+ * calendar in that city for every viewer regardless of where they are.
+ *
+ * Callers render this server-side, so how promptly the banner disappears is
+ * bounded by the page's revalidate window (5 minutes on the home and events
+ * pages), the same as the event countdown badge alongside it.
+ */
+export function getEarlyBirdOffer(
+  info?: EarlyBirdInfo | null,
+  timezone?: string,
+  now: Date = new Date()
+): EarlyBirdOffer | null {
+  if (!info?.ends_at) return null
+
+  const endsAt = new Date(info.ends_at)
+  if (isNaN(endsAt.getTime())) return null
+  if (now.getTime() >= endsAt.getTime()) return null
+
+  const tz = timezone || 'UTC'
+  const label = (month: 'long' | 'short') => {
+    try {
+      return new Intl.DateTimeFormat('en-AU', {
+        day: 'numeric',
+        month,
+        timeZone: tz,
+      }).format(endsAt)
+    } catch {
+      return new Intl.DateTimeFormat('en-AU', {
+        day: 'numeric',
+        month,
+        timeZone: 'UTC',
+      }).format(endsAt)
+    }
+  }
+
+  return {
+    endsLabel: label('long'),
+    endsLabelShort: label('short'),
+    daysLeft: Math.max(0, calendarDaysBetween(now, endsAt, timezone)),
+    price: info.price,
+  }
 }
 
 /**

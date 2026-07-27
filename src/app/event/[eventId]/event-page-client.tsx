@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { formatEventDateLabel } from '@/lib/date-utils'
+import { formatEventDateLabel, type EarlyBirdOffer } from '@/lib/date-utils'
 import { WebLayout } from '@/components/layouts'
 import {
   Button,
@@ -10,6 +10,7 @@ import {
   DateBadge,
   BandThumbnail,
   CompanyBadgeGroup,
+  EarlyBirdBadge,
   NumberedIndicator,
   TicketCTA,
   SponsorBadge,
@@ -68,6 +69,13 @@ interface EventPageClientProps {
    * when the countdown is empty.
    */
   countdownLabel?: string | null
+  /**
+   * Live early-bird offer, or `null`/absent when there isn't one. Resolved on
+   * the server in `page.tsx` for the same reason as `countdownLabel` — the
+   * deadline is evaluated against `new Date()`, and re-running that during
+   * hydration risks a mismatch across the cutoff.
+   */
+  earlyBird?: EarlyBirdOffer | null
 }
 
 function getStatusBadge(status: string, hasWinner: boolean) {
@@ -106,6 +114,7 @@ export function EventPageClient({
   navEvents,
   overallWinner,
   countdownLabel,
+  earlyBird,
 }: EventPageClientProps) {
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
@@ -147,6 +156,7 @@ export function EventPageClient({
                 eventId={eventId}
                 eventName={event.name}
                 variant="compact"
+                earlyBird={earlyBird}
               />
             </div>
           </div>
@@ -181,6 +191,7 @@ export function EventPageClient({
                 ) : (
                   getStatusBadge(event.status, hasWinner)
                 )}
+                <EarlyBirdBadge offer={earlyBird} />
               </div>
               <h1 className="hero-text text-4xl lg:text-5xl font-semibold text-white mb-2">
                 {event.name}
@@ -455,6 +466,7 @@ export function EventPageClient({
               ticketUrl={eventInfo.ticket_url}
               eventId={eventId}
               eventName={event.name}
+              earlyBird={earlyBird}
             />
           </div>
         </section>
