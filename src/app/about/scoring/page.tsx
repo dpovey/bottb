@@ -99,12 +99,13 @@ const CATEGORY_GUIDES: Record<string, CategoryGuide> = {
     summary:
       'The audience’s own verdict, cast on their phones during the event.',
     lookFor: [
+      'Voting opens once the last band has finished, so everyone votes having seen every set',
+      'It stays open for roughly 15 minutes, then closes',
       'One vote per person, cast by scanning the QR codes displayed around the venue',
-      'Voters can change their mind at any time while voting is open — only the final vote counts',
-      'Voting closes shortly after the last band finishes',
+      'Voters can change their mind while the window is open — only the final vote counts',
       'Duplicate voting is filtered out, so ballot-stuffing does not help you',
     ],
-    tip: 'Remind the room to vote while you are on stage, and again after your set. The single biggest cause of lost crowd-vote points is supporters who enjoyed you but never opened the voting page.',
+    tip: 'The voting window is short and it opens after the final set — so tell the room, from the stage, to stick around and vote when it opens. The single biggest cause of lost crowd-vote points is supporters who loved your set but had left or stopped paying attention by the time voting went live.',
   },
 }
 
@@ -485,11 +486,11 @@ export default async function ScoringPage() {
               },
               {
                 title: 'Crowd voting opens',
-                body: 'QR codes around the venue link to the voting page. Anyone in the room can vote once, and can change their vote while voting stays open.',
+                body: 'Once the final band has played. QR codes around the venue link to the voting page, so every vote is cast by someone who has seen all of the bands.',
               },
               {
                 title: 'Voting closes',
-                body: 'Shortly after the last band finishes, so every band has been seen before the crowd vote is locked in.',
+                body: 'The window is short — around 15 minutes. Anyone in the room can vote once and can change their mind until it closes, after which the crowd vote is locked in.',
               },
               {
                 title: 'Scores are combined',

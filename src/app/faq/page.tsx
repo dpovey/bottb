@@ -83,12 +83,12 @@ const faqItems: {
       {
         question: 'How does crowd voting work?',
         answer:
-          'During the event, scan the QR code displayed at the venue or visit our website to cast your vote. You can vote for your favorite band once per event. Voting opens when the event starts and closes shortly after the last band performs.',
+          'Voting opens once the last band has finished playing, so everyone votes having seen every set, and it stays open for about 15 minutes. Scan the QR code displayed at the venue to cast your vote — one vote per person, per event. Stick around after the final set so you do not miss the window.',
       },
       {
         question: 'Can I change my vote?',
         answer:
-          'Yes! You can change your vote at any time while voting is open. Simply visit the voting page again and select a different band. Only your final vote will be counted.',
+          'Yes! You can change your vote at any time while the voting window is open. Simply visit the voting page again and select a different band. Only your final vote will be counted.',
       },
       {
         question: 'When are results announced?',
