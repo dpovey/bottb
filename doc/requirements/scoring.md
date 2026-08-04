@@ -2,20 +2,29 @@
 
 ![Results Page](../screenshots/results-page.png)
 
-## Point Distribution
+Point distribution is version-aware — see `doc/arch/scoring.md` for every
+version and `src/lib/scoring.ts` for the definitions themselves. The
+band-facing explanation of the current system lives at `/about/scoring`
+(`src/app/about/scoring/page.tsx`).
 
-| Category    | Max     | Source        |
-| ----------- | ------- | ------------- |
-| Song Choice | 20      | Judge average |
-| Performance | 30      | Judge average |
-| Crowd Vibe  | 30      | Judge average |
-| Crowd Vote  | 20      | Proportional  |
-| **Total**   | **100** |               |
+## Point Distribution (2026.2 — current default)
+
+| Category    | Max     | Source             |
+| ----------- | ------- | ------------------ |
+| Song Choice | 20      | Judge average      |
+| Performance | 20      | Judge average      |
+| Crowd Vibe  | 20      | Judge average      |
+| Visuals     | 20      | Judge average      |
+| Crowd Vote  | 20      | Relative to leader |
+| **Total**   | **100** |                    |
 
 ## Crowd Score Calculation
 
+The band with the most votes takes the full crowd-vote allocation; the rest
+are scored in proportion to that band.
+
 ```
-Band Score = (Band Votes / Total Votes) × 20
+Band Score = (Band Votes / Max Band Votes) × Crowd Vote Max
 ```
 
 ## Results Display
@@ -27,8 +36,8 @@ Band Score = (Band Votes / Total Votes) × 20
 
 ### Category Winners
 
-- Grid showing best in each category
-- Song Choice, Performance, Crowd Vibe, Crowd Favorite
+- Grid showing best in each category (categories vary by scoring version)
+- Song Choice, Performance, Crowd Vibe, Visuals, Crowd Favorite
 
 ### Full Results Table
 

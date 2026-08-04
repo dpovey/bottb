@@ -22,6 +22,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [
     { path: '', priority: 1.0, changeFrequency: 'daily' as const },
     { path: '/about', priority: 0.8, changeFrequency: 'monthly' as const },
+    {
+      path: '/about/scoring',
+      priority: 0.7,
+      changeFrequency: 'monthly' as const,
+    },
     { path: '/faq', priority: 0.8, changeFrequency: 'monthly' as const },
     { path: '/photos', priority: 0.9, changeFrequency: 'daily' as const },
     { path: '/videos', priority: 0.8, changeFrequency: 'weekly' as const },

@@ -273,6 +273,17 @@ export default async function AboutPage() {
               </p>
             </div>
           </div>
+          <div className="mt-6 bg-bg-surface rounded-xl p-6 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p className="text-text-muted">
+              Bands are scored out of 100 by a judging panel and the crowd.
+            </p>
+            <Link
+              href="/about/scoring"
+              className="text-accent hover:text-accent-light transition-colors whitespace-nowrap"
+            >
+              See how scoring works →
+            </Link>
+          </div>
         </section>
 
         {/* History */}

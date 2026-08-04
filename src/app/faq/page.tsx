@@ -21,8 +21,16 @@ export const metadata: Metadata = {
   },
 }
 
-// FAQ content - structured for both display and JSON-LD schema
-const faqItems = [
+// FAQ content - structured for both display and JSON-LD schema. `link` is
+// display-only; the JSON-LD answer stays plain text.
+const faqItems: {
+  category: string
+  questions: {
+    question: string
+    answer: string
+    link?: { href: string; label: string }
+  }[]
+}[] = [
   {
     category: 'About the Event',
     questions: [
@@ -64,7 +72,8 @@ const faqItems = [
       {
         question: 'How are bands scored?',
         answer:
-          'Bands are judged on three criteria by a panel of judges: Song Choice (20 points), Performance (30 points), and Crowd Vibe (30 points). The audience also votes for their favorite band, contributing 20 points. The band with the highest combined score wins.',
+          'Every set is scored out of 100 points. A panel of judges scores four categories worth 20 points each — Song Choice, Performance, Crowd Vibe and Visuals — and the crowd vote is worth the remaining 20. Judge scores are averaged across the panel, and the band with the highest combined total wins.',
+        link: { href: '/about/scoring', label: 'How scoring works in detail' },
       },
     ],
   },
@@ -166,6 +175,14 @@ export default function FAQPage() {
                       <p className="text-text-muted leading-relaxed">
                         {item.answer}
                       </p>
+                      {item.link && (
+                        <Link
+                          href={item.link.href}
+                          className="inline-block mt-3 text-accent hover:text-accent-light transition-colors"
+                        >
+                          {item.link.label} →
+                        </Link>
+                      )}
                     </div>
                   </details>
                 ))}
