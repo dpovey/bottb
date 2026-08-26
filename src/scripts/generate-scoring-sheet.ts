@@ -35,6 +35,7 @@ interface CliOptions {
   outDir: string
   htmlOnly: boolean
   pdfOnly: boolean
+  companyLabels: Record<string, string>
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -43,6 +44,7 @@ function parseArgs(argv: string[]): CliOptions {
   let outDir = 'scoring-sheets'
   let htmlOnly = false
   let pdfOnly = false
+  const companyLabels: Record<string, string> = {}
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i]
@@ -52,6 +54,9 @@ function parseArgs(argv: string[]): CliOptions {
       htmlOnly = true
     } else if (a === '--pdf-only') {
       pdfOnly = true
+    } else if (a === '--company-label') {
+      const [bandId, ...rest] = args[++i].split('=')
+      companyLabels[bandId] = rest.join('=')
     } else if (a === '--help' || a === '-h') {
       printHelp()
       process.exit(0)
@@ -68,7 +73,7 @@ function parseArgs(argv: string[]): CliOptions {
     process.exit(1)
   }
 
-  return { eventId: positional[0], outDir, htmlOnly, pdfOnly }
+  return { eventId: positional[0], outDir, htmlOnly, pdfOnly, companyLabels }
 }
 
 function printHelp(): void {
@@ -77,11 +82,13 @@ Generate a printable judge scoring sheet for an event.
 
 Usage:
   pnpm generate-scoring-sheet <eventId> [--out <dir>] [--html-only|--pdf-only]
+    [--company-label <bandId>=<label>]...
 
 Examples:
   pnpm generate-scoring-sheet melbourne-2026
   pnpm generate-scoring-sheet melbourne-2026 --out tmp/sheets
   pnpm generate-scoring-sheet melbourne-2026 --html-only
+  pnpm generate-scoring-sheet brisbane-2026 --company-label the-shiprex-brisbane-2026="Rex Software / URBAN X"
 `)
 }
 
@@ -205,7 +212,7 @@ function renderHtml(params: {
     <meta charset="utf-8" />
     <title>${eventTitle} — Judge Scoring Sheet</title>
     <style>
-      @page { size: A4 portrait; margin: 10mm; }
+      @page { size: A4 portrait; margin: 8mm; }
       * { box-sizing: border-box; }
       html, body {
         margin: 0; padding: 0;
@@ -251,7 +258,7 @@ function renderHtml(params: {
         font-size: 12pt; font-weight: 700; line-height: 1.15; margin-top: 1mm;
       }
       .company-name { font-size: 9pt; color: #555; margin-top: 0.5mm; }
-      .score-cell { text-align: center; height: 22mm; position: relative; }
+      .score-cell { text-align: center; height: 19mm; position: relative; }
       .score-box {
         display: inline-block; border: 1.5px solid #111;
         width: 18mm; height: 12mm; line-height: 12mm;
@@ -263,24 +270,17 @@ function renderHtml(params: {
       .total-cell { background: #f3f3f3; }
       .total-cell .score-box { border-width: 2px; width: 22mm; }
       .notes-row td {
-        border-top: none; padding: 2mm 3mm 4mm; font-size: 9pt;
+        border-top: none; padding: 1.5mm 3mm 2.5mm; font-size: 9pt;
       }
       .notes-row .notes-label { font-style: italic; color: #555; }
       .notes-row .lines {
-        margin-top: 1.5mm; border-top: 1px dotted #aaa; height: 4mm;
+        margin-top: 1.5mm; border-top: 1px dotted #aaa; height: 3.5mm;
       }
       .notes-row .lines + .lines { margin-top: 0; }
       footer {
         margin-top: 4mm; font-size: 8.5pt; color: #555;
         display: flex; justify-content: space-between; align-items: flex-end;
         border-top: 1px solid #ccc; padding-top: 2mm;
-      }
-      footer .signature {
-        display: flex; align-items: flex-end; gap: 3mm;
-      }
-      footer .signature .line {
-        display: inline-block; border-bottom: 1px solid #111;
-        width: 60mm; height: 5mm;
       }
       @media screen {
         body { background: #e5e5e5; padding: 12mm 0; }
@@ -307,7 +307,7 @@ function renderHtml(params: {
       <table>
         <thead>
           <tr>
-            <th style="width: 28%">Band</th>
+            <th style="width: 32%">Band</th>
             ${headerCells}
             <th class="center">Total<br />/${maxJudgePoints}</th>
           </tr>
@@ -319,7 +319,6 @@ function renderHtml(params: {
 
       <footer>
         <div>${footerNote}</div>
-        <div class="signature"><span>Signature</span><span class="line"></span></div>
       </footer>
     </div>
   </body>
@@ -384,7 +383,11 @@ async function main(): Promise<void> {
   const opts = parseArgs(process.argv)
 
   const event = await fetchEvent(opts.eventId)
-  const bands = await fetchBands(opts.eventId)
+  const bands = (await fetchBands(opts.eventId)).map((b) =>
+    opts.companyLabels[b.id]
+      ? { ...b, company_name: opts.companyLabels[b.id] }
+      : b
+  )
 
   if (bands.length === 0) {
     console.error(`❌ No bands found for event ${opts.eventId}`)
