@@ -265,6 +265,11 @@ export default async function HomePage() {
   const initialVideos = initialVideosData
   const initialShorts = initialShortsData
 
+  // Bands for the live event card (empty list renders as "Bands TBA")
+  const activeEventBands = activeEvent
+    ? await getBandsForEvent(activeEvent.id)
+    : []
+
   // Get upcoming events with bands and hero photos
   const upcomingEventsWithBands = await Promise.all(
     upcomingEvents.map(async (event) => {
@@ -470,7 +475,7 @@ export default async function HomePage() {
             <EventCard
               event={activeEvent}
               relativeDate="Live Now"
-              bands={[]} // Could fetch bands here if needed
+              bands={activeEventBands}
               variant="active"
             />
           </div>
