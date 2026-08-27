@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUpcomingEvents, getPastEvents, getEventById } from '@/lib/db'
+import { getEvents, getEventById } from '@/lib/db'
 import { sql } from '@/lib/sql'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
 
 async function handleGetEvents(_request: NextRequest) {
   try {
-    const [upcomingEvents, pastEvents] = await Promise.all([
-      getUpcomingEvents(),
-      getPastEvents(),
-    ])
-
-    // Combine all events and sort by date (newest first)
-    const allEvents = [...upcomingEvents, ...pastEvents].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    // All events, newest first (an event that has started but is still
+    // voting is neither "upcoming" nor "past", so don't build from those)
+    const allEvents = await getEvents()
 
     return NextResponse.json(allEvents)
   } catch (error) {
