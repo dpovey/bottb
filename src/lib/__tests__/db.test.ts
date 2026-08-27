@@ -177,7 +177,7 @@ describe('Database Functions', () => {
       expect(mockSql).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.stringMatching(
-            /SELECT \* FROM events\s+WHERE date < NOW\(\)\s+ORDER BY date DESC/
+            /SELECT \* FROM events\s+WHERE date < NOW\(\) AND status <> 'voting'\s+ORDER BY date DESC/
           ),
         ])
       )

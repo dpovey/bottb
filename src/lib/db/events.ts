@@ -24,10 +24,14 @@ export async function getUpcomingEvents() {
   return rows
 }
 
+/**
+ * Events whose date has passed, excluding any still in 'voting' — an event
+ * stays "live" (not "past") until voting closes, even after its start time.
+ */
 export async function getPastEvents() {
   const { rows } = await sql<Event>`
     SELECT * FROM events 
-    WHERE date < NOW() 
+    WHERE date < NOW() AND status <> 'voting'
     ORDER BY date DESC
   `
   return rows
@@ -74,7 +78,7 @@ export async function getPastEventsWithWinners(): Promise<
       AND fr.band_id IS NULL 
       AND e.info->>'winner_band_id' IS NULL
     LEFT JOIN companies c_name ON c_name.slug = b_name.company_slug
-    WHERE e.date < NOW()
+    WHERE e.date < NOW() AND e.status <> 'voting'
     ORDER BY e.date DESC
   `
   return rows
