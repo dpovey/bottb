@@ -64,7 +64,7 @@ const baseTitle: TitleContent = {
   eventDate: '23rd October 2025',
   eventVenue: 'Factory Theatre, Sydney',
   bottbLogo: null,
-  companyLogo: null,
+  companyLogos: [],
   bottbCorner: 'top-right',
 }
 
@@ -76,7 +76,7 @@ const baseCredits: CreditsContent = {
     { name: '', role: '' },
   ],
   bottbLogo: null,
-  companyLogo: null,
+  companyLogos: [],
   bottbCorner: 'top-right',
 }
 
@@ -113,9 +113,34 @@ describe('composeTitleOverlay', () => {
     composeTitleOverlay(ctx, {
       ...baseTitle,
       bottbLogo: fakeLogo,
-      companyLogo: fakeLogo,
+      companyLogos: [fakeLogo],
     })
     expect(calls.drawImage.length).toBe(2)
+  })
+
+  it('draws every company logo side by side for a multi-company band', () => {
+    const { ctx, calls } = createMockContext()
+    const wideLogo = {
+      naturalWidth: 600,
+      naturalHeight: 200,
+    } as HTMLImageElement
+    composeTitleOverlay(ctx, {
+      ...baseTitle,
+      bottbLogo: fakeLogo,
+      companyLogos: [fakeLogo, wideLogo],
+      bottbCorner: 'top-right',
+    })
+    // Bottb square + two company logos.
+    expect(calls.drawImage).toHaveLength(3)
+    const nums = (call: unknown[]) => call.slice(1).map(Number)
+    const [bx] = nums(calls.drawImage[0])
+    const [fx, fy, fw, fh] = nums(calls.drawImage[1])
+    const [sx, sy, , sh] = nums(calls.drawImage[2])
+    // Packed left-to-right from the left edge, not overlapping, same centre line.
+    expect(sx).toBeGreaterThanOrEqual(fx + fw)
+    expect(fy + fh / 2).toBeCloseTo(sy + sh / 2, 5)
+    // The whole row stays clear of the Bottb square on the right.
+    expect(sx).toBeLessThan(bx)
   })
 
   it('renders at a custom size', () => {
@@ -302,7 +327,7 @@ describe('safe areas', () => {
     composeTitleOverlay(ctx, {
       ...baseTitle,
       bottbLogo: fakeLogo,
-      companyLogo: fakeLogo,
+      companyLogos: [fakeLogo],
     })
     expect(calls.drawImage).toHaveLength(2)
     for (const [, x, y, w, h] of calls.drawImage as number[][]) {
@@ -378,7 +403,7 @@ describe('band logo on the title page', () => {
     composeTitleOverlay(ctx, {
       ...baseTitle,
       bottbLogo: fakeLogo,
-      companyLogo: fakeLogo,
+      companyLogos: [fakeLogo],
       bandLogo: fakeLogo,
     })
     expect(calls.drawImage).toHaveLength(3)

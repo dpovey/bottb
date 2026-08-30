@@ -51,11 +51,16 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/** The band's primary company logo (multi-company bands, or the legacy single company). */
-function bandLogoUrl(band: Band): string | undefined {
-  return (
-    band.companies?.find((c) => c.logo_url)?.logo_url ?? band.company_logo_url
-  )
+/**
+ * Every company logo behind the band, primary first (multi-company bands such
+ * as ShipReX = Rex Software + URBAN X), or the legacy single company logo.
+ */
+function bandLogoUrls(band: Band): string[] {
+  const urls = (band.companies ?? [])
+    .map((c) => c.logo_url)
+    .filter((u): u is string => Boolean(u))
+  if (urls.length > 0) return urls
+  return band.company_logo_url ? [band.company_logo_url] : []
 }
 
 function formatTime(seconds: number): string {
@@ -107,7 +112,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   const [showSafeZones, setShowSafeZones] = useState(true)
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
-  const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
+  const [companyLogos, setCompanyLogos] = useState<HTMLImageElement[]>([])
   const [logoError, setLogoError] = useState<string | null>(null)
   const [fontReady, setFontReady] = useState(false)
   const [pngSizeWarning, setPngSizeWarning] = useState<string | null>(null)
@@ -186,22 +191,23 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   // updates happen inside the async callbacks to avoid cascading renders.
   useEffect(() => {
     let cancelled = false
-    const logoUrl = selectedBand ? bandLogoUrl(selectedBand) : undefined
-    const pending = logoUrl
-      ? loadImage(
-          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(logoUrl)}`
-        )
-      : Promise.resolve(null)
+    const logoUrls = selectedBand ? bandLogoUrls(selectedBand) : []
 
-    pending
-      .then((img) => {
+    Promise.all(
+      logoUrls.map((url) =>
+        loadImage(
+          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(url)}`
+        )
+      )
+    )
+      .then((imgs) => {
         if (cancelled) return
-        setCompanyLogo(img)
+        setCompanyLogos(imgs)
         setLogoError(null)
       })
       .catch(() => {
         if (cancelled) return
-        setCompanyLogo(null)
+        setCompanyLogos([])
         setLogoError('Could not load this band logo.')
       })
 
@@ -231,7 +237,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
         song,
         version,
         bottbLogo,
-        companyLogo,
+        companyLogos,
         bottbCorner,
       })
     }
@@ -253,7 +259,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     song,
     version,
     bottbLogo,
-    companyLogo,
+    companyLogos,
     bottbCorner,
     igFocusX,
     igFocusY,
@@ -466,7 +472,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
       song,
       version,
       bottbLogo,
-      companyLogo,
+      companyLogos,
       bottbCorner,
     })
     canvas.toBlob(

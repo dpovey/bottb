@@ -8,7 +8,7 @@
  *   clean frame, no overlays — either filled (cropped) or fitted (letterboxed).
  */
 
-import { drawCover, fitContain, naturalSize, wrapLines } from '@/lib/canvas'
+import { drawCover, drawLogoRow, fitContain, wrapLines } from '@/lib/canvas'
 import { MIN_TYPE, safeInsets } from '../video-safe-area'
 
 export type LogoCorner = 'top-left' | 'top-right'
@@ -37,9 +37,13 @@ export interface ThumbnailContent {
   version?: string
   /** Square Bottb logo (black tile), already loaded. */
   bottbLogo: HTMLImageElement | null
-  /** Band / company logo, already loaded (may be wide or tall). */
-  companyLogo: HTMLImageElement | null
-  /** Which corner the Bottb square sits in; the company logo takes the other. */
+  /**
+   * Every company behind the band, already loaded (may be wide or tall).
+   * Multi-company bands (e.g. ShipReX = Rex Software + URBAN X) get all of
+   * them side by side; most bands have one.
+   */
+  companyLogos: HTMLImageElement[]
+  /** Which corner the Bottb square sits in; the company logos take the other. */
   bottbCorner: LogoCorner
 }
 
@@ -73,19 +77,18 @@ function drawAdornments(
     ctx.drawImage(content.bottbLogo, x, safe.top, bottbSize, bottbSize)
   }
 
-  if (content.companyLogo) {
-    const { w: nw, h: nh } = naturalSize(content.companyLogo)
-    const fitted = fitContain(
-      nw,
-      nh,
-      Math.round(w * 0.26),
-      Math.round(h * 0.14)
-    )
-    // Company logo takes the opposite corner, vertically centred on the square.
-    const x = bottbOnRight ? safe.x : w - safe.x - fitted.w
-    const y = centerY - fitted.h / 2
-    ctx.drawImage(content.companyLogo, x, y, fitted.w, fitted.h)
-  }
+  // Company logos take the opposite corner, vertically centred on the square.
+  // One logo gets the usual 26% of the width; a multi-company row may spread
+  // to 40% before it is shrunk.
+  const single = content.companyLogos.length === 1
+  drawLogoRow(ctx, content.companyLogos, {
+    x: bottbOnRight ? safe.x : w - safe.x,
+    align: bottbOnRight ? 'left' : 'right',
+    centerY,
+    maxW: Math.round(w * (single ? 0.26 : 0.4)),
+    maxH: Math.round(h * 0.14),
+    gap: Math.round(w * 0.02),
+  })
 
   // --- Text (artist + song) --------------------------------------------------
   const artist = content.artist.trim()

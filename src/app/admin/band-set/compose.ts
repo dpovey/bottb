@@ -11,7 +11,13 @@
  * - Credits page — company + Bottb logos and a centred list of band members.
  */
 
-import { drawCover, fitContain, naturalSize, wrapLines } from '@/lib/canvas'
+import {
+  drawCover,
+  drawLogoRow,
+  fitContain,
+  naturalSize,
+  wrapLines,
+} from '@/lib/canvas'
 import { OV_H, OV_W } from '../thumbnails/compose'
 import { MIN_TYPE, safeInsets } from '../video-safe-area'
 
@@ -28,9 +34,13 @@ export { OV_H, OV_W }
 export interface BrandLogos {
   /** Square Bottb logo (black tile), already loaded. */
   bottbLogo: HTMLImageElement | null
-  /** Band / company logo, already loaded (may be wide or tall). */
-  companyLogo: HTMLImageElement | null
-  /** Which corner the Bottb square sits in; the company logo takes the other. */
+  /**
+   * Every company behind the band, already loaded (may be wide or tall).
+   * Multi-company bands (e.g. ShipReX = Rex Software + URBAN X) get all of
+   * them side by side; most bands have one.
+   */
+  companyLogos: HTMLImageElement[]
+  /** Which corner the Bottb square sits in; the company logos take the other. */
   bottbCorner: LogoCorner
   /** National-partner "Powered by" logo (e.g. Jumbo Interactive), already loaded. */
   partnerLogo?: HTMLImageElement | null
@@ -86,7 +96,7 @@ function fitFont(
 const LOGO_H = 0.17
 
 /**
- * Draw the Bottb square in `bottbCorner` and the company logo in the
+ * Draw the Bottb square in `bottbCorner` and the company logos in the
  * opposite corner, vertically centred on the square. Inset by the shared
  * safe-area margins so neither logo hangs off the edge of a cropped or
  * overscanned frame.
@@ -95,7 +105,7 @@ function drawCornerLogos(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
-  { bottbLogo, companyLogo, bottbCorner }: BrandLogos
+  { bottbLogo, companyLogos, bottbCorner }: BrandLogos
 ): void {
   const safe = safeInsets(w, h)
   const bottbSize = Math.round(h * LOGO_H)
@@ -107,18 +117,17 @@ function drawCornerLogos(
     ctx.drawImage(bottbLogo, x, safe.top, bottbSize, bottbSize)
   }
 
-  if (companyLogo) {
-    const { w: nw, h: nh } = naturalSize(companyLogo)
-    const fitted = fitContain(
-      nw,
-      nh,
-      Math.round(w * 0.26),
-      Math.round(h * 0.14)
-    )
-    const x = bottbOnRight ? safe.x : w - safe.x - fitted.w
-    const y = centerY - fitted.h / 2
-    ctx.drawImage(companyLogo, x, y, fitted.w, fitted.h)
-  }
+  // Company logos take the opposite corner. One logo gets the usual 26% of
+  // the width; a multi-company row may spread to 40% before it is shrunk.
+  const single = companyLogos.length === 1
+  drawLogoRow(ctx, companyLogos, {
+    x: bottbOnRight ? safe.x : w - safe.x,
+    align: bottbOnRight ? 'left' : 'right',
+    centerY,
+    maxW: Math.round(w * (single ? 0.26 : 0.4)),
+    maxH: Math.round(h * 0.14),
+    gap: Math.round(w * 0.02),
+  })
 }
 
 /** Sponsor-row metrics, as fractions of the frame height. */

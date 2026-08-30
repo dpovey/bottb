@@ -53,7 +53,7 @@ const base: ThumbnailContent = {
   artist: 'The Coral Sea Riot',
   song: 'Everlong',
   bottbLogo: null,
-  companyLogo: null,
+  companyLogos: [],
   bottbCorner: 'top-right',
 }
 
@@ -90,7 +90,7 @@ describe('safe areas', () => {
     composeOverlay(ctx, {
       ...base,
       bottbLogo: fakeLogo,
-      companyLogo: fakeLogo,
+      companyLogos: [fakeLogo],
     })
     expect(calls.drawImage).toHaveLength(2)
     for (const [, x, y, w, h] of calls.drawImage) {

@@ -111,3 +111,50 @@ export function wrapLines(
   lines.push(current)
   return lines.slice(0, maxLines)
 }
+
+export interface LogoRowOptions {
+  /** Left edge of the row when `align` is 'left'; right edge when 'right'. */
+  x: number
+  centerY: number
+  align: 'left' | 'right'
+  /** Total width available for the whole row (logos + gaps). */
+  maxW: number
+  /** Tallest any single logo may be. */
+  maxH: number
+  /** Gap between logos, in px. */
+  gap: number
+}
+
+/**
+ * Draw several logos side by side (e.g. every company behind a multi-company
+ * band), each scaled to fit `maxH` tall, then shrunk together if the row would
+ * overflow `maxW`. Logos are vertically centred on `centerY` and packed from
+ * the `align` edge, so the first logo is always closest to that edge.
+ * Returns the width the row actually occupies.
+ */
+export function drawLogoRow(
+  ctx: CanvasRenderingContext2D,
+  logos: HTMLImageElement[],
+  { x, centerY, align, maxW, maxH, gap }: LogoRowOptions
+): number {
+  if (logos.length === 0) return 0
+  let sizes = logos.map((img) => {
+    const { w, h } = naturalSize(img)
+    return fitContain(w, h, maxW, maxH)
+  })
+  const totalGap = gap * (sizes.length - 1)
+  const rowW = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap
+  if (rowW > maxW) {
+    const scale = (maxW - totalGap) / (rowW - totalGap)
+    sizes = sizes.map((s) => ({ w: s.w * scale, h: s.h * scale }))
+  }
+  const finalW = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap
+
+  let cursor = align === 'left' ? x : x - finalW
+  logos.forEach((img, i) => {
+    const { w, h } = sizes[i]
+    ctx.drawImage(img, cursor, centerY - h / 2, w, h)
+    cursor += w + gap
+  })
+  return finalW
+}

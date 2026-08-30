@@ -69,11 +69,16 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}.${t}`
 }
 
-/** The band's primary company logo (multi-company bands, or the legacy single company). */
-function bandLogoUrl(band: Band): string | undefined {
-  return (
-    band.companies?.find((c) => c.logo_url)?.logo_url ?? band.company_logo_url
-  )
+/**
+ * Every company logo behind the band, primary first (multi-company bands such
+ * as ShipReX = Rex Software + URBAN X), or the legacy single company logo.
+ */
+function bandLogoUrls(band: Band): string[] {
+  const urls = (band.companies ?? [])
+    .map((c) => c.logo_url)
+    .filter((u): u is string => Boolean(u))
+  if (urls.length > 0) return urls
+  return band.company_logo_url ? [band.company_logo_url] : []
 }
 
 /** Drop a trailing "@ 6:30PM"-style time — the title card only needs the date. */
@@ -102,7 +107,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
-  const [companyLogo, setCompanyLogo] = useState<HTMLImageElement | null>(null)
+  const [companyLogos, setCompanyLogos] = useState<HTMLImageElement[]>([])
   // The band's own logo (band.info.logo_url), distinct from the company logo.
   const [bandLogo, setBandLogo] = useState<HTMLImageElement | null>(null)
   const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
@@ -214,22 +219,23 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   // Load the selected band's company logo through the same-origin proxy.
   useEffect(() => {
     let cancelled = false
-    const logoUrl = selectedBand ? bandLogoUrl(selectedBand) : undefined
-    const pending = logoUrl
-      ? loadImage(
-          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(logoUrl)}`
-        )
-      : Promise.resolve(null)
+    const logoUrls = selectedBand ? bandLogoUrls(selectedBand) : []
 
-    pending
-      .then((img) => {
+    Promise.all(
+      logoUrls.map((url) =>
+        loadImage(
+          `/api/admin/thumbnails/logo-proxy?url=${encodeURIComponent(url)}`
+        )
+      )
+    )
+      .then((imgs) => {
         if (cancelled) return
-        setCompanyLogo(img)
+        setCompanyLogos(imgs)
         setLogoError(null)
       })
       .catch(() => {
         if (cancelled) return
-        setCompanyLogo(null)
+        setCompanyLogos([])
         setLogoError('Could not load this band logo.')
       })
 
@@ -274,11 +280,11 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
         song: song.title,
         version: credit.version,
         bottbLogo,
-        companyLogo,
+        companyLogos,
         bottbCorner,
       }
     },
-    [bottbLogo, companyLogo, bottbCorner]
+    [bottbLogo, companyLogos, bottbCorner]
   )
 
   // Redraw the preview whenever any input changes.
@@ -293,7 +299,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     const sh = video?.videoHeight ?? 0
     const logos = {
       bottbLogo,
-      companyLogo,
+      companyLogos,
       bottbCorner,
       partnerLogo,
       youngcareLogo,
@@ -331,7 +337,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     currentSong,
     songContent,
     bottbLogo,
-    companyLogo,
+    companyLogos,
     bandLogo,
     partnerLogo,
     youngcareLogo,
@@ -463,7 +469,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     if (!ctx) return
     const logos = {
       bottbLogo,
-      companyLogo,
+      companyLogos,
       bottbCorner,
       partnerLogo,
       youngcareLogo,
