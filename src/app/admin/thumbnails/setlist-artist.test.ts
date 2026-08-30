@@ -30,7 +30,10 @@ function song(partial: Partial<SetlistSong>): SetlistSong {
 
 describe('songCredit', () => {
   it('bills the original artist, with no version to qualify it', () => {
-    expect(songCredit(song({}))).toEqual({ artist: 'Foo Fighters' })
+    expect(songCredit(song({}))).toEqual({
+      artist: 'Foo Fighters',
+      title: 'Everlong',
+    })
   })
 
   it('keeps both acts when covering someone else’s cover', () => {
@@ -40,8 +43,44 @@ describe('songCredit', () => {
     })
     expect(songCredit(s)).toEqual({
       artist: 'Sabrina Carpenter',
+      title: 'Everlong',
       version: 'Good Neighbours version',
     })
+  })
+
+  it('leads a transition with the song it goes into, mentioning the opener', () => {
+    const s = song({
+      song_type: 'transition',
+      title: 'Careless Whisper',
+      artist: 'George Michael',
+      transition_to_title: 'Uprising',
+      transition_to_artist: 'Muse',
+    })
+    expect(songCredit(s)).toEqual({
+      artist: 'Muse',
+      title: 'Uprising',
+      version: 'opening with Careless Whisper (George Michael)',
+    })
+  })
+
+  it('treats a transition with no target as a plain cover', () => {
+    const s = song({ song_type: 'transition', transition_to_title: '  ' })
+    expect(songCredit(s)).toEqual({ artist: 'Foo Fighters', title: 'Everlong' })
+  })
+
+  it('lists the other songs in a mashup or medley', () => {
+    const s = song({
+      song_type: 'mashup',
+      title: 'Cry Me a River',
+      artist: 'Justin Timberlake',
+      additional_songs: [
+        { title: 'Cry Me a River', artist: 'Julie London' },
+        { title: 'SexyBack', artist: '' },
+      ],
+    })
+    expect(songCredit(s).version).toBe(
+      'with Cry Me a River (Julie London) and SexyBack'
+    )
   })
 
   it('omits the version when cover_artist is blank', () => {
@@ -77,6 +116,18 @@ describe('findSongByTitle', () => {
 
   it('ignores case and surrounding whitespace', () => {
     expect(findSongByTitle(songs, '  everlong ')?.artist).toBe('Foo Fighters')
+  })
+
+  it('matches a transition on the song it goes into', () => {
+    const t = song({
+      song_type: 'transition',
+      title: 'Careless Whisper',
+      artist: 'George Michael',
+      transition_to_title: 'Uprising',
+      transition_to_artist: 'Muse',
+    })
+    expect(findSongByTitle([t], 'uprising')).toBe(t)
+    expect(findSongByTitle([t], 'Careless Whisper')).toBe(t)
   })
 
   it('does not match a partial title, so typing cannot clobber the artist', () => {

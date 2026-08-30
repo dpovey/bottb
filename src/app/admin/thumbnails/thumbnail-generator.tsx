@@ -345,6 +345,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     const match = findSongByTitle(bandSongs, title)
     if (!match) return
     const credit = songCredit(match)
+    setSong(credit.title)
     setArtist(credit.artist)
     setVersion(credit.version ?? '')
   }
@@ -573,7 +574,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
               onChange={(e) => handleSongChange(e.target.value)}
               placeholder="e.g. Stairway to Production"
               options={bandSongs.map((s) => ({
-                value: s.title,
+                value: songCredit(s).title,
                 label: songArtist(s),
               }))}
             />

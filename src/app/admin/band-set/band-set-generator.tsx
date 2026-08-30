@@ -277,7 +277,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       const credit = songCredit(song)
       return {
         artist: credit.artist,
-        song: song.title,
+        song: credit.title,
         version: credit.version,
         bottbLogo,
         companyLogos,
@@ -444,7 +444,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
         const blob = await renderSongOverlay(song)
         if (!blob) continue
         entries.push({
-          name: `${String(i + 1).padStart(2, '0')}-${slugify(song.title)}.png`,
+          name: `${String(i + 1).padStart(2, '0')}-${slugify(songCredit(song).title)}.png`,
           data: new Uint8Array(await blob.arrayBuffer()),
         })
       }
@@ -501,7 +501,10 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const downloadCurrentSong = async () => {
     if (!currentSong) return
     const blob = await renderSongOverlay(currentSong)
-    triggerDownload(blob, buildName(`${slugify(currentSong.title)}-overlay-4k`))
+    triggerDownload(
+      blob,
+      buildName(`${slugify(songCredit(currentSong).title)}-overlay-4k`)
+    )
   }
 
   const hasVideo = Boolean(scrubber.videoUrl)
@@ -668,7 +671,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                     >
                       {bandSongs.map((song, i) => (
                         <option key={song.id} value={i}>
-                          {i + 1}. {song.title} — {songCredit(song).artist}
+                          {i + 1}. {songCredit(song).title} —{' '}
+                          {songCredit(song).artist}
                         </option>
                       ))}
                     </Select>
@@ -676,7 +680,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
                   {currentSong && songCredit(currentSong).version && (
                     <p className="text-xs text-text-dim">
-                      Performing the {songCredit(currentSong).version}.
+                      Qualifier: {songCredit(currentSong).version}
                     </p>
                   )}
 
