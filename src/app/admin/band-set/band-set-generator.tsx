@@ -16,7 +16,7 @@ import type { SetlistSong } from '@/lib/db'
 import type { Band, Event } from '@/lib/db-types'
 import { createZipBlob, type ZipEntry } from '@/lib/zip'
 import { formatEventDateLabel } from '@/lib/date-utils'
-import { loadImage } from '@/lib/canvas'
+import { loadImage, trimTransparent, type LogoSource } from '@/lib/canvas'
 import {
   composeCreditsOverlay,
   composeCreditsPreview,
@@ -107,7 +107,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [bottbCorner, setBottbCorner] = useState<LogoCorner>('top-right')
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
-  const [companyLogos, setCompanyLogos] = useState<HTMLImageElement[]>([])
+  const [companyLogos, setCompanyLogos] = useState<LogoSource[]>([])
   // The band's own logo (band.info.logo_url), distinct from the company logo.
   const [bandLogo, setBandLogo] = useState<HTMLImageElement | null>(null)
   const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
@@ -230,7 +230,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     )
       .then((imgs) => {
         if (cancelled) return
-        setCompanyLogos(imgs)
+        // Trim baked-in transparent padding so side-by-side logos line up.
+        setCompanyLogos(imgs.map(trimTransparent))
         setLogoError(null)
       })
       .catch(() => {

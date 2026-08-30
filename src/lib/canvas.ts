@@ -72,12 +72,65 @@ export function fitContain(
   return { w: natW * scale, h: natH * scale }
 }
 
-/** Intrinsic size of an image, with a square fallback for dimensionless SVGs. */
-export function naturalSize(img: HTMLImageElement): { w: number; h: number } {
+/** An already-decoded image, or a canvas holding one (e.g. a trimmed logo). */
+export type LogoSource = HTMLImageElement | HTMLCanvasElement
+
+/** Intrinsic size of an image or canvas, with a square fallback for dimensionless SVGs. */
+export function naturalSize(img: LogoSource): { w: number; h: number } {
   // SVGs without intrinsic dimensions report 0 — fall back to a square.
-  const w = img.naturalWidth || img.width || 1
-  const h = img.naturalHeight || img.height || 1
+  // Canvases have no naturalWidth at all, so fall through to width/height.
+  const source = img as Partial<HTMLImageElement> & LogoSource
+  const w = source.naturalWidth || img.width || 1
+  const h = source.naturalHeight || img.height || 1
   return { w, h }
+}
+
+/**
+ * Crop away an image's fully-transparent padding, returning a canvas holding
+ * just the visible pixels. Logo files often bake in generous margins, which
+ * makes side-by-side logos look misaligned and unevenly sized. Returns the
+ * original image untouched when it can't be read (no 2D context, zero size,
+ * or a cross-origin taint) or when there is nothing to trim.
+ */
+export function trimTransparent(img: HTMLImageElement): LogoSource {
+  const { w, h } = naturalSize(img)
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return img
+    ctx.drawImage(img, 0, 0, w, h)
+    const data = ctx.getImageData(0, 0, w, h).data
+
+    let top = h
+    let bottom = -1
+    let left = w
+    let right = -1
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 8) {
+          if (y < top) top = y
+          if (y > bottom) bottom = y
+          if (x < left) left = x
+          if (x > right) right = x
+        }
+      }
+    }
+    if (bottom < 0) return img // fully transparent — nothing to trim to
+    if (top === 0 && left === 0 && bottom === h - 1 && right === w - 1) {
+      return img
+    }
+    const trimmed = document.createElement('canvas')
+    trimmed.width = right - left + 1
+    trimmed.height = bottom - top + 1
+    const tctx = trimmed.getContext('2d')
+    if (!tctx) return img
+    tctx.drawImage(canvas, -left, -top)
+    return trimmed
+  } catch {
+    return img // cross-origin taint, or canvas unavailable
+  }
 }
 
 /**
@@ -134,13 +187,22 @@ export interface LogoRowOptions {
  */
 export function drawLogoRow(
   ctx: CanvasRenderingContext2D,
-  logos: HTMLImageElement[],
+  logos: LogoSource[],
   { x, centerY, align, maxW, maxH, gap }: LogoRowOptions
 ): number {
   if (logos.length === 0) return 0
-  let sizes = logos.map((img) => {
+  // Equal-area sizing: height-fitting every logo makes a wide wordmark tower
+  // over a compact mark, so give each logo the same pixel area instead. The
+  // squarest logo gets the full `maxH` and wider ones come out shorter, which
+  // is much closer to how the logos read side by side.
+  const aspects = logos.map((img) => {
     const { w, h } = naturalSize(img)
-    return fitContain(w, h, maxW, maxH)
+    return w / h
+  })
+  const area = maxH * maxH * Math.min(...aspects)
+  let sizes = aspects.map((a) => {
+    const h = Math.min(maxH, Math.sqrt(area / a))
+    return fitContain(a, 1, maxW, h)
   })
   const totalGap = gap * (sizes.length - 1)
   const rowW = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap

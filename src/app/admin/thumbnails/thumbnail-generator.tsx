@@ -14,7 +14,12 @@ import {
 import { DownloadIcon } from '@/components/icons'
 import type { SetlistSong } from '@/lib/db'
 import type { Band, Event } from '@/lib/db-types'
-import { coverSlack, loadImage } from '@/lib/canvas'
+import {
+  coverSlack,
+  loadImage,
+  trimTransparent,
+  type LogoSource,
+} from '@/lib/canvas'
 import {
   composeInstagram,
   composeOverlay,
@@ -112,7 +117,7 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
   const [showSafeZones, setShowSafeZones] = useState(true)
 
   const [bottbLogo, setBottbLogo] = useState<HTMLImageElement | null>(null)
-  const [companyLogos, setCompanyLogos] = useState<HTMLImageElement[]>([])
+  const [companyLogos, setCompanyLogos] = useState<LogoSource[]>([])
   const [logoError, setLogoError] = useState<string | null>(null)
   const [fontReady, setFontReady] = useState(false)
   const [pngSizeWarning, setPngSizeWarning] = useState<string | null>(null)
@@ -202,7 +207,8 @@ export function ThumbnailGenerator({ events }: ThumbnailGeneratorProps) {
     )
       .then((imgs) => {
         if (cancelled) return
-        setCompanyLogos(imgs)
+        // Trim baked-in transparent padding so side-by-side logos line up.
+        setCompanyLogos(imgs.map(trimTransparent))
         setLogoError(null)
       })
       .catch(() => {

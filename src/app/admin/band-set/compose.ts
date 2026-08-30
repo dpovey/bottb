@@ -14,6 +14,7 @@
 import {
   drawCover,
   drawLogoRow,
+  type LogoSource,
   fitContain,
   naturalSize,
   wrapLines,
@@ -35,11 +36,12 @@ export interface BrandLogos {
   /** Square Bottb logo (black tile), already loaded. */
   bottbLogo: HTMLImageElement | null
   /**
-   * Every company behind the band, already loaded (may be wide or tall).
+   * Every company behind the band, already loaded (may be wide or tall),
+   * ideally trimmed of transparent padding ({@link trimTransparent}).
    * Multi-company bands (e.g. ShipReX = Rex Software + URBAN X) get all of
    * them side by side; most bands have one.
    */
-  companyLogos: HTMLImageElement[]
+  companyLogos: LogoSource[]
   /** Which corner the Bottb square sits in; the company logos take the other. */
   bottbCorner: LogoCorner
   /** National-partner "Powered by" logo (e.g. Jumbo Interactive), already loaded. */

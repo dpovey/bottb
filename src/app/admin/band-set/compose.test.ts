@@ -139,6 +139,10 @@ describe('composeTitleOverlay', () => {
     // Packed left-to-right from the left edge, not overlapping, same centre line.
     expect(sx).toBeGreaterThanOrEqual(fx + fw)
     expect(fy + fh / 2).toBeCloseTo(sy + sh / 2, 5)
+    // Equal-area sizing: the 3:1 wordmark renders shorter than the square
+    // mark rather than towering over it at the same height.
+    expect(sh).toBeLessThan(fh)
+    expect(sh).toBeCloseTo(fh / Math.sqrt(3), 0)
     // The whole row stays clear of the Bottb square on the right.
     expect(sx).toBeLessThan(bx)
   })

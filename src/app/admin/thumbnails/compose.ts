@@ -8,7 +8,13 @@
  *   clean frame, no overlays — either filled (cropped) or fitted (letterboxed).
  */
 
-import { drawCover, drawLogoRow, fitContain, wrapLines } from '@/lib/canvas'
+import {
+  drawCover,
+  drawLogoRow,
+  fitContain,
+  wrapLines,
+  type LogoSource,
+} from '@/lib/canvas'
 import { MIN_TYPE, safeInsets } from '../video-safe-area'
 
 export type LogoCorner = 'top-left' | 'top-right'
@@ -38,11 +44,12 @@ export interface ThumbnailContent {
   /** Square Bottb logo (black tile), already loaded. */
   bottbLogo: HTMLImageElement | null
   /**
-   * Every company behind the band, already loaded (may be wide or tall).
+   * Every company behind the band, already loaded (may be wide or tall),
+   * ideally trimmed of transparent padding ({@link trimTransparent}).
    * Multi-company bands (e.g. ShipReX = Rex Software + URBAN X) get all of
    * them side by side; most bands have one.
    */
-  companyLogos: HTMLImageElement[]
+  companyLogos: LogoSource[]
   /** Which corner the Bottb square sits in; the company logos take the other. */
   bottbCorner: LogoCorner
 }
