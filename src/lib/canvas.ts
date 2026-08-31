@@ -85,15 +85,25 @@ export function naturalSize(img: LogoSource): { w: number; h: number } {
   return { w, h }
 }
 
+/** Minimum long-edge resolution trimmed logos are rasterised at. */
+const RASTER_TARGET = 1600
+
 /**
  * Crop away an image's fully-transparent padding, returning a canvas holding
- * just the visible pixels. Logo files often bake in generous margins, which
+ * just the visible pixels, rasterised at least {@link RASTER_TARGET} across
+ * so later scaling is always downwards. Logo files often bake in generous margins, which
  * makes side-by-side logos look misaligned and unevenly sized. Returns the
  * original image untouched when it can't be read (no 2D context, zero size,
  * or a cross-origin taint) or when there is nothing to trim.
  */
 export function trimTransparent(img: HTMLImageElement): LogoSource {
-  const { w, h } = naturalSize(img)
+  const { w: natW, h: natH } = naturalSize(img)
+  // Rasterise small sources (above all SVGs, whose natural size can be tiny —
+  // Rex's is 76x34) big enough that the overlay only ever scales the result
+  // *down*. Drawing the natural-size bitmap and upscaling it later looks awful.
+  const scale = Math.max(1, RASTER_TARGET / Math.max(natW, natH))
+  const w = Math.round(natW * scale)
+  const h = Math.round(natH * scale)
   try {
     const canvas = document.createElement('canvas')
     canvas.width = w
@@ -185,23 +195,28 @@ export interface LogoRowOptions {
  * the `align` edge, so the first logo is always closest to that edge.
  * Returns the width the row actually occupies.
  */
+/** How strongly a logo's width counts against its height in a row; see below. */
+const WIDTH_PENALTY = 0.62
+
 export function drawLogoRow(
   ctx: CanvasRenderingContext2D,
   logos: LogoSource[],
   { x, centerY, align, maxW, maxH, gap }: LogoRowOptions
 ): number {
   if (logos.length === 0) return 0
-  // Equal-area sizing: height-fitting every logo makes a wide wordmark tower
-  // over a compact mark, so give each logo the same pixel area instead. The
-  // squarest logo gets the full `maxH` and wider ones come out shorter, which
-  // is much closer to how the logos read side by side.
+  // Height-fitting every logo makes a wide wordmark tower over a compact
+  // mark, so penalise width: each logo's height scales with
+  // (aspect ratio)^-WIDTH_PENALTY relative to the squarest logo, which keeps
+  // the full `maxH`. At 0.5 that is equal pixel area; a little past it
+  // compensates for wide all-caps wordmarks whose glyphs fill the whole box,
+  // tuned so URBAN X's caps sit at Rex's x-height.
   const aspects = logos.map((img) => {
     const { w, h } = naturalSize(img)
     return w / h
   })
-  const area = maxH * maxH * Math.min(...aspects)
+  const squarest = Math.min(...aspects)
   let sizes = aspects.map((a) => {
-    const h = Math.min(maxH, Math.sqrt(area / a))
+    const h = maxH * Math.pow(squarest / a, WIDTH_PENALTY)
     return fitContain(a, 1, maxW, h)
   })
   const totalGap = gap * (sizes.length - 1)
@@ -212,10 +227,16 @@ export function drawLogoRow(
   }
   const finalW = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap
 
+  // Bottom-align the row (the whole row stays visually centred on
+  // `centerY`): wordmarks keep their baselines near the bottom of their
+  // trimmed box, so this lines the text up far better than centring each
+  // logo, which floats a short wordmark high against a taller neighbour.
+  const rowH = Math.max(...sizes.map((s) => s.h))
+  const bottomY = centerY + rowH / 2
   let cursor = align === 'left' ? x : x - finalW
   logos.forEach((img, i) => {
     const { w, h } = sizes[i]
-    ctx.drawImage(img, cursor, centerY - h / 2, w, h)
+    ctx.drawImage(img, cursor, bottomY - h, w, h)
     cursor += w + gap
   })
   return finalW

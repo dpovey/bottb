@@ -136,13 +136,14 @@ describe('composeTitleOverlay', () => {
     const [bx] = nums(calls.drawImage[0])
     const [fx, fy, fw, fh] = nums(calls.drawImage[1])
     const [sx, sy, , sh] = nums(calls.drawImage[2])
-    // Packed left-to-right from the left edge, not overlapping, same centre line.
+    // Packed left-to-right from the left edge, not overlapping, and
+    // bottom-aligned so wordmark baselines line up.
     expect(sx).toBeGreaterThanOrEqual(fx + fw)
-    expect(fy + fh / 2).toBeCloseTo(sy + sh / 2, 5)
-    // Equal-area sizing: the 3:1 wordmark renders shorter than the square
-    // mark rather than towering over it at the same height.
+    expect(fy + fh).toBeCloseTo(sy + sh, 5)
+    // Width-penalised sizing: the 3:1 wordmark renders shorter than the
+    // square mark rather than towering over it at the same height.
     expect(sh).toBeLessThan(fh)
-    expect(sh).toBeCloseTo(fh / Math.sqrt(3), 0)
+    expect(sh).toBeCloseTo(fh * Math.pow(1 / 3, 0.62), 0)
     // The whole row stays clear of the Bottb square on the right.
     expect(sx).toBeLessThan(bx)
   })
