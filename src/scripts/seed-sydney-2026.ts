@@ -42,11 +42,19 @@ const DESCRIPTION =
 const JUMBO_LOGO =
   'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/companies/jumbo-interactive/logo.svg?v=1765880740505'
 
-/** New company for the 2026 Sydney lineup. */
+/** New company for the 2026 Sydney lineup — also a Sydney event sponsor. */
 const NEW_COMPANY = {
   slug: 'v2-ai',
   name: 'V2 AI',
   website: 'https://v2.ai',
+  description:
+    'V2 AI is an AI-native consultancy that helps enterprises across Asia ' +
+    'Pacific move from AI strategy to production — spanning AI strategy and ' +
+    'governance, AI literacy and enablement, build and assurance, and AI and ' +
+    'data security. Founded in Australia as V2 Digital, it works with ' +
+    'enterprises including Westpac, Woolworths and Allianz from offices in ' +
+    'Sydney, Melbourne, Brisbane, Perth and Singapore, and partners with AWS, ' +
+    'Databricks, Anthropic, Google Cloud and Microsoft.',
 }
 
 interface SeedBand {
@@ -83,11 +91,13 @@ async function main() {
 
   // 1. Upsert the new company (logo/icon set by upload-local-logo.ts).
   await sql`
-    INSERT INTO companies (slug, name, website)
-    VALUES (${NEW_COMPANY.slug}, ${NEW_COMPANY.name}, ${NEW_COMPANY.website})
+    INSERT INTO companies (slug, name, website, description)
+    VALUES (${NEW_COMPANY.slug}, ${NEW_COMPANY.name}, ${NEW_COMPANY.website},
+            ${NEW_COMPANY.description})
     ON CONFLICT (slug) DO UPDATE
       SET name = EXCLUDED.name,
-          website = COALESCE(companies.website, EXCLUDED.website)
+          website = COALESCE(companies.website, EXCLUDED.website),
+          description = EXCLUDED.description
   `
   console.log(`✅ Company upserted: ${NEW_COMPANY.name} (${NEW_COMPANY.slug})`)
 
@@ -103,6 +113,7 @@ async function main() {
         name: NEW_COMPANY.name,
         logo_url: '', // filled in below from the companies table
         link: `/companies/${NEW_COMPANY.slug}`,
+        label: 'Official Photo and Video Partner',
       },
     ],
   }
@@ -183,7 +194,14 @@ async function main() {
   }
 
   await triggerRevalidate({
-    paths: ['/', '/events', `/event/${EVENT_ID}`, '/companies'],
+    paths: [
+      '/',
+      '/events',
+      `/event/${EVENT_ID}`,
+      '/companies',
+      `/companies/${NEW_COMPANY.slug}`,
+      '/sponsors',
+    ],
     tags: ['nav-events'],
   })
 

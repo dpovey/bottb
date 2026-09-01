@@ -25,8 +25,9 @@ export const metadata: Metadata = {
 }
 
 export default async function SponsorsPage() {
-  const [jumbo, navEvents] = await Promise.all([
+  const [jumbo, v2ai, navEvents] = await Promise.all([
     getCompanyBySlug('jumbo-interactive'),
+    getCompanyBySlug('v2-ai'),
     getNavEvents(),
   ])
 
@@ -107,6 +108,82 @@ export default async function SponsorsPage() {
                   className="inline-flex items-center gap-2 text-accent hover:text-accent-light transition-colors"
                 >
                   Visit Jumbo Interactive
+                  <ExternalLinkIcon className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Event Partners */}
+        <section className="mb-20">
+          <div className="text-center mb-8">
+            <p className="text-xs tracking-[0.3em] uppercase text-text-muted mb-2">
+              Event Partners
+            </p>
+            <h2 className="font-semibold text-2xl sm:text-3xl">
+              Backing the 2026 Season
+            </h2>
+          </div>
+
+          <div className="bg-bg-elevated rounded-2xl p-8 md:p-10 border border-white/5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-6">
+              {v2ai?.logo_url ? (
+                <Image
+                  src={v2ai.logo_url}
+                  alt="V2 AI"
+                  width={200}
+                  height={60}
+                  className="h-10 sm:h-12 w-auto shrink-0"
+                />
+              ) : (
+                <span className="text-xl font-semibold text-white shrink-0">
+                  V2 AI
+                </span>
+              )}
+              <div>
+                <p className="text-xs tracking-[0.3em] uppercase text-accent mb-1">
+                  Official Photo and Video Partner
+                </p>
+                <h3 className="font-semibold text-xl">
+                  V2 AI &mdash;{' '}
+                  <Link
+                    href="/event/sydney-2026"
+                    className="text-text-muted hover:text-white transition-colors"
+                  >
+                    Sydney 2026
+                  </Link>
+                </h3>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-text-muted leading-relaxed">
+                {v2ai?.description ??
+                  'V2 AI is an AI-native consultancy helping enterprises across Asia Pacific move from AI strategy to production.'}
+              </p>
+              <p className="text-text-muted leading-relaxed">
+                As Official Photo and Video Partner for Sydney 2026, V2 AI is
+                putting the cameras in the room &mdash; backing the professional
+                photography and video that captures the night, and the footage
+                every band, company and sponsor gets to share afterwards.
+                They&apos;re also fielding a band of their own,{' '}
+                <Link
+                  href="/companies/v2-ai"
+                  className="text-accent hover:text-accent-light transition-colors"
+                >
+                  V2 Voyagers
+                </Link>
+                .
+              </p>
+              {v2ai?.website && (
+                <a
+                  href={v2ai.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-accent hover:text-accent-light transition-colors"
+                >
+                  Visit V2 AI
                   <ExternalLinkIcon className="w-4 h-4" />
                 </a>
               )}
