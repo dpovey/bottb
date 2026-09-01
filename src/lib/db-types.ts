@@ -62,6 +62,16 @@ export interface Event {
       logo_url: string
       link?: string
     }
+    /**
+     * Additional sponsors for this event, shown beside the National Partner as
+     * "Supported by" badges. Ordered as listed. `label` overrides the tagline.
+     */
+    sponsors?: {
+      name: string
+      logo_url: string
+      link?: string
+      label?: string
+    }[]
     [key: string]: unknown
   }
   created_at: string

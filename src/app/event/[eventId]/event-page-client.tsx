@@ -119,6 +119,9 @@ export function EventPageClient({
   const eventId = event.id
   const eventInfo = event.info as EventInfo | undefined
   const heroImages = photosToHeroImages(heroPhotos)
+  // National Partner and/or event sponsors, shown as badges on upcoming events.
+  const hasSponsors =
+    !!eventInfo?.national_partner || !!eventInfo?.sponsors?.length
 
   const breadcrumbs = [
     { label: 'Events', href: '/events' },
@@ -273,21 +276,33 @@ export function EventPageClient({
       {/* Action Section */}
       {(event.status === 'voting' ||
         event.status === 'finalized' ||
-        (event.status === 'upcoming' && eventInfo?.national_partner)) && (
+        (event.status === 'upcoming' && hasSponsors)) && (
         <section
           className={`border-b border-white/5 ${
             event.status === 'upcoming' ? 'py-4' : 'py-8'
           }`}
         >
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            {event.status === 'upcoming' && eventInfo?.national_partner ? (
-              <div className="flex justify-center">
-                <SponsorBadge
-                  name={eventInfo.national_partner.name}
-                  logoUrl={eventInfo.national_partner.logo_url}
-                  link={eventInfo.national_partner.link}
-                  variant="inline"
-                />
+            {event.status === 'upcoming' && hasSponsors ? (
+              <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-3">
+                {eventInfo?.national_partner && (
+                  <SponsorBadge
+                    name={eventInfo.national_partner.name}
+                    logoUrl={eventInfo.national_partner.logo_url}
+                    link={eventInfo.national_partner.link}
+                    variant="inline"
+                  />
+                )}
+                {eventInfo?.sponsors?.map((sponsor) => (
+                  <SponsorBadge
+                    key={sponsor.name}
+                    name={sponsor.name}
+                    logoUrl={sponsor.logo_url}
+                    link={sponsor.link}
+                    label={sponsor.label ?? 'Supported by'}
+                    variant="inline"
+                  />
+                ))}
               </div>
             ) : (
               <div className="flex flex-wrap gap-4 items-center">

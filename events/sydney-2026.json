@@ -1,13 +1,40 @@
 {
   "id": "sydney-2026",
   "name": "Sydney 2026",
-  "date": "2026-10-15T08:30:00Z",
+  "date": "2026-10-08T07:30:00Z",
   "timezone": "Australia/Sydney",
-  "location": "Venue to be confirmed",
-  "date_tbc": true,
-  "date_display": "October 2026",
+  "location": "The Manning Bar",
+  "ticket_url": "https://moshtix.com.au/v2/event/battle-of-the-tech-bands/198663",
   "is_active": false,
   "status": "upcoming",
   "scoring_version": "2026.2",
-  "bands": []
+  "bands": [
+    {
+      "name": "Bandlassian",
+      "company_slug": "atlassian",
+      "order": 1
+    },
+    {
+      "name": "Canvanauts",
+      "company_slug": "canva",
+      "order": 2
+    },
+    {
+      "name": "Amakazaam!",
+      "company_slug": "amazon",
+      "order": 3
+    },
+    {
+      "name": "V2 Voyagers",
+      "company_slug": "v2-ai",
+      "order": 4
+    },
+    {
+      "name": "ShipReX",
+      "company_slug": "rex-software",
+      "additional_companies": ["urbanx"],
+      "description": "Special guest performance (non-competing).",
+      "order": 5
+    }
+  ]
 }
