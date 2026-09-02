@@ -3,6 +3,7 @@ import {
   getEvents,
   getBandsForEvent,
   getPhotographers,
+  getVideographers,
   getCompanies,
   getIndexablePhotos,
   getAllSongs,
@@ -109,6 +110,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     } catch (error) {
       console.error('Error fetching photographers:', error)
+    }
+
+    // Get videographers
+    try {
+      const videographers = await getVideographers()
+      for (const videographer of videographers) {
+        sitemapEntries.push({
+          url: `${baseUrl}/videographer/${videographer.slug}`,
+          lastModified: new Date(videographer.created_at),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching videographers:', error)
     }
 
     // Get companies

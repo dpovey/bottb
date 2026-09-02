@@ -130,6 +130,12 @@ export interface Videographer {
   instagram: string | null
   email: string | null
   avatar_url: string | null
+  /**
+   * Credit for this person's work on an event — "Videographer" for camera and
+   * edit, "Audio Engineer" for the multitrack recording behind the videos.
+   * See `creditVerb` in `videographer-roles.ts`.
+   */
+  role: string
   created_at: string
 }
 

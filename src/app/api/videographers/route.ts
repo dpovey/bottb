@@ -13,6 +13,7 @@ import {
 } from '@/lib/api-protection'
 import { nameToSlug } from '@/lib/slug-utils'
 import { parseBody, videographerCreateSchema } from '@/lib/api-schemas'
+import { DEFAULT_VIDEOGRAPHER_ROLE } from '@/lib/videographer-roles'
 
 export const GET = withErrorHandling(
   'fetch videographers',
@@ -28,7 +29,7 @@ const handleCreateVideographer: ProtectedApiHandler = async (
   const parsed = await parseBody(request, videographerCreateSchema)
   if (!parsed.ok) return parsed.response
 
-  const { name, bio, location, website, instagram, email, avatar_url } =
+  const { name, bio, location, website, instagram, email, avatar_url, role } =
     parsed.data
   const slug = parsed.data.slug || nameToSlug(name)
 
@@ -41,8 +42,8 @@ const handleCreateVideographer: ProtectedApiHandler = async (
   }
 
   const { rows } = await sql`
-    INSERT INTO videographers (slug, name, bio, location, website, instagram, email, avatar_url)
-    VALUES (${slug}, ${name}, ${bio || null}, ${location || null}, ${website || null}, ${instagram || null}, ${email || null}, ${avatar_url || null})
+    INSERT INTO videographers (slug, name, bio, location, website, instagram, email, avatar_url, role)
+    VALUES (${slug}, ${name}, ${bio || null}, ${location || null}, ${website || null}, ${instagram || null}, ${email || null}, ${avatar_url || null}, ${role || DEFAULT_VIDEOGRAPHER_ROLE})
     RETURNING *
   `
 

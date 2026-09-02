@@ -37,6 +37,7 @@ interface VideographerUpdateBody {
   instagram?: string | null
   email?: string | null
   avatar_url?: string | null
+  role?: string
   event_ids?: string[]
 }
 
@@ -63,7 +64,8 @@ const handleUpdateVideographer: ProtectedApiHandler = async (
     }
 
     const body: VideographerUpdateBody = await request.json()
-    const { name, bio, location, website, instagram, email, avatar_url } = body
+    const { name, bio, location, website, instagram, email, avatar_url, role } =
+      body
 
     const { rows } = await sql`
       UPDATE videographers SET
@@ -73,7 +75,8 @@ const handleUpdateVideographer: ProtectedApiHandler = async (
         website = ${website === undefined ? existing.website : website},
         instagram = ${instagram === undefined ? existing.instagram : instagram},
         email = ${email === undefined ? existing.email : email},
-        avatar_url = ${avatar_url === undefined ? existing.avatar_url : avatar_url}
+        avatar_url = ${avatar_url === undefined ? existing.avatar_url : avatar_url},
+        role = COALESCE(${role || null}, role)
       WHERE slug = ${slug}
       RETURNING *
     `

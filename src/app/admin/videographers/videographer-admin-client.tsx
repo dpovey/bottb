@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { VideographerWithStats } from '@/lib/db-types'
 import { nameToSlug } from '@/lib/slug-utils'
 import {
+  DEFAULT_VIDEOGRAPHER_ROLE,
+  VIDEOGRAPHER_ROLES,
+  creditVerb,
+} from '@/lib/videographer-roles'
+import {
   EditIcon,
   DeleteIcon,
   CheckIcon,
@@ -17,6 +22,7 @@ import {
   ConfirmModal,
   ErrorBanner,
   Input,
+  Select,
   Textarea,
   VinylSpinner,
 } from '@/components/ui'
@@ -77,6 +83,7 @@ export function VideographerAdminClient({
   const [newWebsite, setNewWebsite] = useState('')
   const [newInstagram, setNewInstagram] = useState('')
   const [newEmail, setNewEmail] = useState('')
+  const [newRole, setNewRole] = useState<string>(DEFAULT_VIDEOGRAPHER_ROLE)
   const [newEventIds, setNewEventIds] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -107,6 +114,7 @@ export function VideographerAdminClient({
           website: newWebsite || null,
           instagram: newInstagram || null,
           email: newEmail || null,
+          role: newRole,
           event_ids: newEventIds,
         }),
       })
@@ -141,6 +149,7 @@ export function VideographerAdminClient({
       website?: string | null
       instagram?: string | null
       email?: string | null
+      role?: string
       event_ids?: string[]
     }
   ) => {
@@ -219,6 +228,7 @@ export function VideographerAdminClient({
     setNewWebsite('')
     setNewInstagram('')
     setNewEmail('')
+    setNewRole(DEFAULT_VIDEOGRAPHER_ROLE)
     setNewEventIds([])
     setError(null)
   }
@@ -327,9 +337,29 @@ export function VideographerAdminClient({
                 />
               </div>
 
+              <div>
+                <label
+                  className="block text-sm font-medium text-gray-300 mb-2"
+                  htmlFor="new-videographer-role"
+                >
+                  Role
+                </label>
+                <Select
+                  id="new-videographer-role"
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                >
+                  {VIDEOGRAPHER_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Events filmed
+                  Events covered
                 </label>
                 <EventPicker
                   events={events}
@@ -419,6 +449,7 @@ interface VideographerRowProps {
       website?: string | null
       instagram?: string | null
       email?: string | null
+      role?: string
       event_ids?: string[]
     }
   ) => Promise<boolean>
@@ -441,6 +472,9 @@ function VideographerRow({
     videographer.instagram || ''
   )
   const [editEmail, setEditEmail] = useState(videographer.email || '')
+  const [editRole, setEditRole] = useState(
+    videographer.role || DEFAULT_VIDEOGRAPHER_ROLE
+  )
   const [editEventIds, setEditEventIds] = useState<string[]>(assignedEventIds)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -458,6 +492,7 @@ function VideographerRow({
       website: editWebsite || null,
       instagram: editInstagram || null,
       email: editEmail || null,
+      role: editRole,
       event_ids: editEventIds,
     })
     if (success) {
@@ -474,6 +509,7 @@ function VideographerRow({
     setEditWebsite(videographer.website || '')
     setEditInstagram(videographer.instagram || '')
     setEditEmail(videographer.email || '')
+    setEditRole(videographer.role || DEFAULT_VIDEOGRAPHER_ROLE)
     setEditEventIds(assignedEventIds)
   }
 
@@ -481,7 +517,7 @@ function VideographerRow({
     <div className="p-4 hover:bg-white/5">
       {isEditing ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Input
               size="sm"
               value={editName}
@@ -494,6 +530,18 @@ function VideographerRow({
               onChange={(e) => setEditLocation(e.target.value)}
               placeholder="Location"
             />
+            <Select
+              size="sm"
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value)}
+              aria-label="Role"
+            >
+              {VIDEOGRAPHER_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </Select>
           </div>
           <Textarea
             size="sm"
@@ -526,7 +574,7 @@ function VideographerRow({
           </div>
           <div>
             <p className="text-xs font-medium text-gray-400 mb-2">
-              Events filmed
+              Events covered
             </p>
             <EventPicker
               events={events}
@@ -572,7 +620,8 @@ function VideographerRow({
           <div className="flex-1 min-w-0">
             <h3 className="font-medium text-white">{videographer.name}</h3>
             <p className="text-sm text-gray-400">
-              {videographer.slug}
+              {videographer.role}
+              {` • ${videographer.slug}`}
               {videographer.location && ` • ${videographer.location}`}
             </p>
             {videographer.bio && (
@@ -587,7 +636,9 @@ function VideographerRow({
             <div className="text-lg font-semibold text-white">
               {videographer.event_count}
             </div>
-            <div className="text-xs text-gray-400">events</div>
+            <div className="text-xs text-gray-400">
+              events {creditVerb(videographer.role)}
+            </div>
           </div>
 
           {/* Links */}

@@ -515,6 +515,7 @@ CREATE TABLE IF NOT EXISTS videographers (
     instagram text,
     email text,
     avatar_url text,
+    role character varying(60) DEFAULT 'Videographer'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 ALTER TABLE ONLY videographers ADD CONSTRAINT videographers_pkey PRIMARY KEY (slug);

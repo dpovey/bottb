@@ -14,6 +14,7 @@ import {
   ChevronRightIcon,
 } from '@/components/icons'
 import { getVideographerBySlug, getVideographerEvents } from '@/lib/db'
+import { creditVerb } from '@/lib/videographer-roles'
 import type { Event } from '@/lib/db-types'
 import { getBaseUrl } from '@/lib/seo'
 
@@ -83,7 +84,7 @@ export default async function VideographerPage({ params }: Props) {
           {heroImage && (
             <Image
               src={heroImage}
-              alt={`Filmed by ${videographer.name}`}
+              alt={`${videographer.role}: ${videographer.name}`}
               fill
               className="object-cover opacity-60"
               sizes="100vw"
@@ -120,6 +121,10 @@ export default async function VideographerPage({ params }: Props) {
                 {videographer.name}
               </h1>
 
+              <p className="text-accent text-sm tracking-[0.2em] uppercase mb-3">
+                {videographer.role}
+              </p>
+
               {videographer.location && (
                 <p className="text-text-muted text-lg mb-6 flex items-center gap-2">
                   <MapPinIcon className="w-5 h-5" />
@@ -133,7 +138,8 @@ export default async function VideographerPage({ params }: Props) {
                     {videographer.event_count}
                   </div>
                   <div className="text-xs tracking-widest uppercase text-text-dim">
-                    {videographer.event_count === 1 ? 'Event' : 'Events'} filmed
+                    {videographer.event_count === 1 ? 'Event' : 'Events'}{' '}
+                    {creditVerb(videographer.role)}
                   </div>
                 </div>
               </div>
@@ -157,7 +163,9 @@ export default async function VideographerPage({ params }: Props) {
       {events.length > 0 && (
         <section className="py-12 bg-bg">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-semibold mb-6">Events filmed</h2>
+            <h2 className="text-2xl font-semibold mb-6">
+              Events {creditVerb(videographer.role)}
+            </h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => {
                 const img = eventImage(event)

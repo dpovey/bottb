@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres'
 import { config } from 'dotenv'
+import { triggerRevalidate } from '../lib/revalidate-client'
 
 // Load environment variables
 config({ path: '.env.local' })
@@ -24,7 +25,9 @@ interface VideographerSeed {
   instagram: string | null
   email: string | null
   avatar_url: string | null
-  /** Event ids this videographer filmed */
+  /** Credit shown on the crew pages — see src/lib/videographer-roles.ts */
+  role: 'Videographer' | 'Audio Engineer'
+  /** Event ids this person was credited on */
   eventIds: string[]
 }
 
@@ -40,6 +43,7 @@ const videographers: VideographerSeed[] = [
     // Reuse Jacob's photographer avatar (same person)
     avatar_url:
       'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/photographers/jacob-briant/avatar.jpg',
+    role: 'Videographer',
     eventIds: ['brisbane-2025'],
   },
   {
@@ -53,7 +57,44 @@ const videographers: VideographerSeed[] = [
     // Re-hosted from Instagram via upload-videographer-avatars.ts
     avatar_url:
       'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/videographers/ramsay-waterhouse/avatar.jpg',
+    role: 'Videographer',
     eventIds: ['melbourne-2026'],
+  },
+  {
+    slug: 'aaron-griffiths',
+    name: 'Aaron Griffiths',
+    bio: 'Brisbane filmmaker behind Like That Creative, where he shoots music videos, documentaries and artist content for the local scene — “However you want it, let’s make it ‘Like That’”. Aaron filmed Battle of the Tech Bands Brisbane 2026 and cut the reels from the night.',
+    location: 'Brisbane, Australia',
+    website: 'https://linktr.ee/likethatcreative',
+    instagram: 'https://www.instagram.com/quirkylikethat',
+    email: null,
+    avatar_url: null,
+    role: 'Videographer',
+    eventIds: ['brisbane-2026'],
+  },
+  {
+    slug: 'kurt-boldy',
+    name: 'Kurt Boldy',
+    bio: 'Founder of Brisbane production agency Nudge, where he makes cinematic property and brand films across South East Queensland with a stated allergy to the cookie-cutter. Kurt filmed Battle of the Tech Bands Brisbane 2026 and edited reels from the night.',
+    location: 'Brisbane, Australia',
+    website: 'https://www.nudge.productions',
+    instagram: 'https://www.instagram.com/kurtboldy',
+    email: null,
+    avatar_url: null,
+    role: 'Videographer',
+    eventIds: ['brisbane-2026'],
+  },
+  {
+    slug: 'nick-forrester',
+    name: 'Nick Forrester',
+    bio: 'Brisbane recording engineer, known to most as Forry. Nick captured the multitrack audio at Battle of the Tech Bands Brisbane 2026 — every band recorded live off the desk, giving the performance videos and the final mixes their sound.',
+    location: 'Brisbane, Australia',
+    website: null,
+    instagram: 'https://www.instagram.com/forrester_recordings',
+    email: null,
+    avatar_url: null,
+    role: 'Audio Engineer',
+    eventIds: ['brisbane-2026'],
   },
 ]
 
@@ -72,6 +113,7 @@ async function seed() {
         await sql`
           UPDATE videographers SET
             name = ${v.name},
+            role = ${v.role},
             bio = ${v.bio},
             location = ${v.location},
             website = ${v.website},
@@ -83,8 +125,8 @@ async function seed() {
         console.log(`   ↻ Updated ${v.name}`)
       } else {
         await sql`
-          INSERT INTO videographers (slug, name, bio, location, website, instagram, email, avatar_url)
-          VALUES (${v.slug}, ${v.name}, ${v.bio}, ${v.location}, ${v.website}, ${v.instagram}, ${v.email}, ${v.avatar_url})
+          INSERT INTO videographers (slug, name, bio, location, website, instagram, email, avatar_url, role)
+          VALUES (${v.slug}, ${v.name}, ${v.bio}, ${v.location}, ${v.website}, ${v.instagram}, ${v.email}, ${v.avatar_url}, ${v.role})
         `
         console.log(`   ✓ Added ${v.name}`)
       }
@@ -114,6 +156,13 @@ async function seed() {
         }
       }
     }
+
+    await triggerRevalidate({
+      paths: [
+        '/videographers',
+        ...videographers.map((v) => `/videographer/${v.slug}`),
+      ],
+    })
 
     console.log('\n✨ Seed completed successfully!')
     console.log(`   ${videographers.length} videographers processed.`)

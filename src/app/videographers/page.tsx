@@ -5,19 +5,20 @@ import { PublicLayout } from '@/components/layouts'
 import { Card } from '@/components/ui'
 import { InstagramIcon, GlobeIcon, VideoIcon } from '@/components/icons'
 import { getVideographers } from '@/lib/db'
+import { creditVerb } from '@/lib/videographer-roles'
 import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Videographers | Battle of the Tech Bands',
   description:
-    'Meet the videographers who capture the energy and vibe of Battle of the Tech Bands events on film.',
+    'Meet the videographers and audio engineers who capture Battle of the Tech Bands events on film and in sound.',
   alternates: {
     canonical: `${getBaseUrl()}/videographers`,
   },
   openGraph: {
     title: 'Videographers | Battle of the Tech Bands',
     description:
-      'Meet the videographers who capture the energy and vibe of Battle of the Tech Bands events on film.',
+      'Meet the videographers and audio engineers who capture Battle of the Tech Bands events on film and in sound.',
     type: 'website',
     images: [DEFAULT_OG_IMAGE],
   },
@@ -32,6 +33,7 @@ interface Videographer {
   instagram: string | null
   email: string | null
   avatar_url: string | null
+  role: string
   event_count: number
 }
 
@@ -49,7 +51,8 @@ export default async function VideographersPage() {
           <h1 className="font-semibold text-4xl mb-3">Videographers</h1>
           <p className="text-text-muted text-lg max-w-2xl">
             Meet the videographers who capture the energy and vibe of Battle of
-            the Tech Bands events on film.
+            the Tech Bands events on film &mdash; and the engineers who record
+            the sound behind them.
           </p>
         </div>
 
@@ -105,6 +108,9 @@ function VideographerCard({ videographer }: { videographer: Videographer }) {
               <h3 className="text-xl font-semibold text-white truncate group-hover:text-accent transition-colors">
                 {videographer.name}
               </h3>
+              <p className="text-accent text-xs tracking-widest uppercase mt-0.5">
+                {videographer.role}
+              </p>
               {videographer.location && (
                 <p className="text-text-dim text-sm">{videographer.location}</p>
               )}
@@ -122,7 +128,8 @@ function VideographerCard({ videographer }: { videographer: Videographer }) {
           <div className="flex items-center justify-between">
             <span className="text-text-dim text-sm">
               {videographer.event_count}{' '}
-              {videographer.event_count === 1 ? 'event' : 'events'} filmed
+              {videographer.event_count === 1 ? 'event' : 'events'}{' '}
+              {creditVerb(videographer.role)}
             </span>
 
             <div className="flex items-center gap-3">

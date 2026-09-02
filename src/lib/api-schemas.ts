@@ -104,6 +104,8 @@ export const videographerCreateSchema = z.object({
   instagram: optionalText(60),
   email: optionalText(120),
   avatar_url: optionalUrl,
+  /** Credit shown on the crew pages, e.g. "Videographer", "Audio Engineer" */
+  role: optionalText(60),
   /** Event ids this videographer filmed (whole-event attribution) */
   event_ids: z.array(z.string().trim().max(64)).optional(),
 })
