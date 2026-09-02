@@ -63,36 +63,42 @@ const videographers: VideographerSeed[] = [
   {
     slug: 'aaron-griffiths',
     name: 'Aaron Griffiths',
-    bio: 'Brisbane filmmaker behind Like That Creative, where he shoots music videos, documentaries and artist content for the local scene — “However you want it, let’s make it ‘Like That’”. Aaron filmed Battle of the Tech Bands Brisbane 2026 and cut the reels from the night.',
+    bio: 'Brisbane filmmaker behind Like That Creative, where he shoots music videos, documentaries and artist content for the local scene — “However you want it, let’s make it ‘Like That’”. Aaron filmed Battle of the Tech Bands Brisbane 2026.',
     location: 'Brisbane, Australia',
     website: 'https://linktr.ee/likethatcreative',
     instagram: 'https://www.instagram.com/quirkylikethat',
     email: null,
-    avatar_url: null,
+    // Instagram profile picture, re-hosted via upload-videographer-avatars.ts
+    avatar_url:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/videographers/aaron-griffiths/avatar.jpg?v=1788349140566',
     role: 'Videographer',
     eventIds: ['brisbane-2026'],
   },
   {
     slug: 'kurt-boldy',
     name: 'Kurt Boldy',
-    bio: 'Founder of Brisbane production agency Nudge, where he makes cinematic property and brand films across South East Queensland with a stated allergy to the cookie-cutter. Kurt filmed Battle of the Tech Bands Brisbane 2026 and edited reels from the night.',
+    bio: 'Founder of Brisbane production agency Nudge, where he makes cinematic property and brand films across South East Queensland with a stated allergy to the cookie-cutter. Kurt filmed Battle of the Tech Bands Brisbane 2026.',
     location: 'Brisbane, Australia',
     website: 'https://www.nudge.productions',
     instagram: 'https://www.instagram.com/kurtboldy',
     email: null,
-    avatar_url: null,
+    // Instagram profile picture, re-hosted via upload-videographer-avatars.ts
+    avatar_url:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/videographers/kurt-boldy/avatar.jpg?v=1788349142133',
     role: 'Videographer',
     eventIds: ['brisbane-2026'],
   },
   {
     slug: 'nick-forrester',
     name: 'Nick Forrester',
-    bio: 'Brisbane recording engineer, known to most as Forry. Nick captured the multitrack audio at Battle of the Tech Bands Brisbane 2026 — every band recorded live off the desk, giving the performance videos and the final mixes their sound.',
+    bio: 'Brisbane recording engineer, known to most as Forry. Nick captured the multitrack audio at Battle of the Tech Bands Brisbane 2026, recording every band from the live mics on stage — the source for the performance videos and the final mixes.',
     location: 'Brisbane, Australia',
     website: null,
     instagram: 'https://www.instagram.com/forrester_recordings',
     email: null,
-    avatar_url: null,
+    // Instagram profile picture, re-hosted via upload-videographer-avatars.ts
+    avatar_url:
+      'https://0qipqwe5exqqyona.public.blob.vercel-storage.com/videographers/nick-forrester/avatar.jpg?v=1788349143570',
     role: 'Audio Engineer',
     eventIds: ['brisbane-2026'],
   },

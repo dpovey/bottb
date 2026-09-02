@@ -1,15 +1,23 @@
 /**
- * Script: Upload videographer avatars from Instagram CDN to Vercel Blob
+ * Script: Upload videographer avatars to Vercel Blob
  *
- * Instagram CDN URLs are signed and expire, so we download the profile
- * picture and store it permanently in Vercel Blob, then update the database.
+ * Two ways in:
  *
- * Usage: pnpm tsx src/scripts/upload-videographer-avatars.ts
+ *   pnpm tsx src/scripts/upload-videographer-avatars.ts
+ *     Re-hosts the hardcoded Instagram CDN URLs below. Those URLs are signed
+ *     and expire, so paste fresh ones before running.
+ *
+ *   pnpm tsx src/scripts/upload-videographer-avatars.ts <slug> <file> [...]
+ *     Uploads local image files — the practical route when Instagram won't
+ *     serve its CDN URLs to a script. Each file is normalised to a square
+ *     300px JPEG before upload.
  */
 
 import { put } from '@vercel/blob'
 import { sql } from '@vercel/postgres'
 import { config } from 'dotenv'
+import { readFile } from 'fs/promises'
+import sharp from 'sharp'
 
 // Load environment variables
 config({ path: '.env.local' })
@@ -65,11 +73,49 @@ async function uploadToBlob(
   const blob = await put(filename, imageBuffer, {
     access: 'public',
     addRandomSuffix: false, // Stable URL
+    allowOverwrite: true,
     cacheControlMaxAge: 31536000, // 1 year
     contentType: 'image/jpeg',
   })
 
-  return blob.url
+  // Stable path + a year of cache means a re-upload needs a cache-buster to
+  // actually show up.
+  return `${blob.url}?v=${Date.now()}`
+}
+
+/** Square, 300px, JPEG — the shape every avatar slot on the site expects. */
+async function normaliseAvatar(filePath: string): Promise<Buffer> {
+  const input = await readFile(filePath)
+  return sharp(input)
+    .resize(300, 300, { fit: 'cover' })
+    .jpeg({ quality: 88 })
+    .toBuffer()
+}
+
+async function uploadLocalFiles(pairs: [string, string][]): Promise<number> {
+  let failures = 0
+
+  for (const [slug, filePath] of pairs) {
+    console.log(`🎥 Processing ${slug} from ${filePath}...`)
+    try {
+      const imageBuffer = await normaliseAvatar(filePath)
+      console.log(
+        `   ✓ Resized to ${(imageBuffer.length / 1024).toFixed(1)} KB`
+      )
+
+      const blobUrl = await uploadToBlob(slug, imageBuffer)
+      console.log(`   ✓ Uploaded to: ${blobUrl}`)
+
+      await updateDatabase(slug, blobUrl)
+      console.log(`   ✅ Database updated\n`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`   ❌ Failed: ${message}\n`)
+      failures += 1
+    }
+  }
+
+  return failures
 }
 
 async function updateDatabase(slug: string, avatarUrl: string): Promise<void> {
@@ -84,6 +130,22 @@ async function updateDatabase(slug: string, avatarUrl: string): Promise<void> {
 
 async function main() {
   console.log('🚀 Starting videographer avatar upload...\n')
+
+  // Local-file mode: <slug> <file> pairs on the command line.
+  const args = process.argv.slice(2)
+  if (args.length > 0) {
+    if (args.length % 2 !== 0) {
+      console.error('Usage: upload-videographer-avatars.ts <slug> <file> [...]')
+      process.exit(1)
+    }
+    const pairs: [string, string][] = []
+    for (let i = 0; i < args.length; i += 2) {
+      pairs.push([args[i], args[i + 1]])
+    }
+    const failed = await uploadLocalFiles(pairs)
+    console.log('✨ Done!')
+    process.exit(failed > 0 ? 1 : 0)
+  }
 
   let failures = 0
 
