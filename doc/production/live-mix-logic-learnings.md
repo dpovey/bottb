@@ -432,3 +432,39 @@ apart from a per-group Unix timestamp at bytes 136-139, so comparing the groups 
 proves nothing either way - a shared round-robin chain would look exactly like this, and so
 would round robin being off. Deciding it needs an A/B against a saved copy with the setting
 off. Don't infer a binary field from a single sample of the file.
+
+### Logic at 90%+ CPU doing nothing: stale MCP servers (2026-09-04)
+
+Symptom: Logic pegged near 100% CPU with **zero windows open**, and every
+`logic_system.health` call timing out at 25 s. It reads exactly like a hang. It is not.
+
+`sample <pid>` showed the main thread parked in `nextEventMatchingMask` - an idle event
+loop - but constantly interrupted by accessibility traffic:
+
+```
+_XCopyAttributeValue -> _AXXMIGCopyAttributeValue -> CopyAttributeValue
+  -> -[NSApplication accessibilityWindowsAttribute] -> run_query (SkyLight)
+```
+
+**Every Claude session spawns its own `LogicProMCP`, and it does not exit when that session
+ends.** Two were running: one from the live session, and an orphan from a session opened
+three days earlier, each polling Logic's AX tree continuously at ~15% CPU of their own. The
+orphan had been doing this for 2 days 19 hours.
+
+```bash
+ps -eo pid,ppid,etime,command | grep LogicProMCP    # ppid tells you which claude owns each
+kill <orphan pid>                                    # helper process, respawns on demand
+```
+
+Killing the orphan took Logic from 97% to 37%. **Check this before diagnosing anything else
+as a Logic problem** - a slow, unresponsive Logic with no obvious cause is more likely to be
+accumulated MCP servers than a fault in the project.
+
+Two measurement traps this exposed:
+
+- **`ps -o pcpu` is a decaying lifetime average, not instantaneous.** It still read 75% when
+  `top -l 2` showed 37%. Use `top` for a live number.
+- **"0 windows" from System Events does not mean the app is wedged.** Confirm the session is
+  actually unlocked (`osascript ... first process whose frontmost is true` - if it returns
+  `loginwindow`, AX automation cannot work at all) before concluding anything from an empty
+  window list.
