@@ -493,10 +493,13 @@ layers sit. **Interpolate between anchors; never fit.**
 
 Confirmed anchors (raw value -> dB, read off the UI):
 
-    0.27556 -> -23.7      0.32444 -> -18.0      0.37333 -> -15.8      0.60000 -> -6.0
+    0.27556 -> -23.7   0.32444 -> -18.0   0.37333 -> -15.8
+    0.60000 ->  -6.0   0.75789 ->   0.0   0.78421 -> +1.0
 
-Inferred, not confirmed: `0.75789 -> 0.0`. Every reverb return and the Stereo Out sit at
-exactly that value, which is what unity should look like.
+`0.75789 -> 0.0` was inferred (every reverb return and the Stereo Out sit there) and is now
+confirmed by consistency: the +1.0 and -6.0 anchors give 0.02632 travel per dB across the top,
+and 0.75789 is exactly one of those below +1.0. **The taper is linear from about -6 dB up and
+only bends below it**, so readings in the upper half are trustworthy and the low ones are not.
 
 Getting a new anchor costs one question to whoever is at the machine. Ask for one whenever a
 fader matters, rather than trusting an interpolation more than two anchors away - and treat
