@@ -41,14 +41,24 @@ Specifically:
    `TrackExportFileTypeIndex`, `TrackExportBitsSampleIndex` — so most of the dialog-poking can
    be replaced by setting preferences offline. **[verified, §6.3]**
 
+   Hands-on testing since has made this phase both **more necessary and better specified**.
+   More necessary, because an export can finish clean and still be garbage: a 12-minute render
+   produced a correct-length, correct-format, size-stable 556 MB file containing **only the two
+   soloed channels**, with nothing in the response or the metadata to say so (§6.5). Better
+   specified, because the manual workaround — ignore the MCP's error, watch the file for size
+   stability — has now succeeded on three long bounces, so Phase 2 automates a known-good
+   procedure rather than inventing one.
+
 3. **Do not rebuild mixer writes.** Faders, pans, mutes, solos, renames, markers and slot-0
    inserts already work through the MCP's MCU path. Reimplementing MCU-over-CoreMIDI to get
    back to parity would be days of work for zero new capability. (Mixer *reads* are a
-   different matter — see §6.5, where the MCP's two inventory surfaces disagree with each
+   different matter — see §6.2, where the MCP's two inventory surfaces disagree with each
    other.)
 
-4. **Do contribute upstream, but only two small bug reports** (the 25-second poll and the
-   copy-before-complete race). The project is MIT-licensed with a public repo, but ships as a
+4. **Do contribute upstream — five concrete bugs, all small.** Hands-on testing grew this list
+   from two to five (§8); the export path is more broken than a code reading alone suggested,
+   and the most important one is that the helper looks for the finished file in the wrong
+   directory under the wrong name. The project is MIT-licensed with a public repo, but ships as a
    42 MB prebuilt Swift binary via a Homebrew tap; a fix means building from source and
    waiting on a maintainer. Not the critical path. **[verified, §8]**
 
@@ -162,6 +172,30 @@ ran.
 
 It cannot do *File > Export > All Tracks as Audio Files* at all — a different menu item and a
 different dialog, which the helper has no code for.
+
+**Confirmed in practice, three times.** `bounce_fired: true` together with
+`artifact_not_produced_in_staging` has now been observed on three long bounces that were all
+running perfectly. **[verified hands-on]**
+
+**And there is a second, independent root cause underneath the timeout.** The observed staging
+path is **`/private/tmp/<Project Name>.wav`**. The helper globs
+`~/Downloads/<name>--lpmcp-<uuid8>.*`. Two things are therefore wrong at once:
+
+- **Wrong directory.** The file lands in `/tmp`, which is exactly what the
+  `defaultBouncePath = /tmp` preference found in §6.3 specifies. The helper's sidebar click at
+  `(x + 86, y + 184)` — meant to select Downloads — is not taking effect.
+- **Wrong filename.** The file is named after the *project*, not the
+  `<name>--lpmcp-<uuid8>` staging name the helper types into the Save As field. So the
+  click-select-all-delete-type sequence at `(x + 0.591·w, y + 54)` is not taking effect
+  either.
+
+In other words the save panel is falling through to Logic's own defaults for both destination
+and name, and the helper is then looking for a file that was never going to exist under that
+name in that folder. **Even with an unlimited timeout the current code would still fail.**
+**[inference from two verified observations — the staging path and the shipped source; the
+precise reason the clicks miss is UNTESTED]** This considerably strengthens the case in §10
+that hardcoded pixel offsets are the most fragile thing in the system: they are already
+missing on this machine, silently, and the resulting error message points at the wrong thing.
 
 ### 3.3 Statefulness
 
@@ -471,7 +505,9 @@ Reliability is my judgement of what happens on the tenth run, unattended, with L
 |---|---|---|---|---|
 | **Export All Tracks as Audio Files** | Menu via CGEvent + prefs + AXObserver | Yes | Medium | Menu item exists; no scriptable verb anywhere. §6.3–6.4 |
 | **Bounce project / section** | Same, plus prefs for format | Yes | Medium-high | MCP already 80 % there; fix the poll |
-| **Reliable completion detection** | `AXObserver` on progress window + file-stability | Yes | High | The one place AX is clearly right |
+| **Reliable completion detection** | `AXObserver` on progress window + file-stability | Yes | High | The one place AX is clearly right. Manual version validated ×3 |
+| **Knowing an export is *correct*** | Loudness check against expected range | Yes | High | **Structural checks all pass on a soloed bounce — §6.5** |
+| **Export preflight (focus, solo)** | `AXRaise` + one mixer read | Yes | High | Both failures observed; §6.5–6.6. Detect and refuse, never auto-fix |
 | **Read track/channel names + order** | **Offline `ProjectData`** | **Yes — done** | **High** | §5.3, verified on two projects |
 | **Read bus/send routing** | Offline `ProjectData` | Probably | Medium | Bus objects visible by name; routing fields unmapped **[UNTESTED]** |
 | **Read insert chains per channel** | Offline `ProjectData` | Probably | Medium | `OCuA`→`UCuA` adjacency clear; slot indices unmapped |
@@ -484,8 +520,8 @@ Reliability is my judgement of what happens on the tenth run, unattended, with L
 | **Read markers** | Offline `qSvE` + `qSxT` | Probably | Medium | Published method; names are RTF in a linked chunk **[UNTESTED here]** |
 | **Read SMPTE offset ("Plays at SMPTE")** | Offline `gnoS` | Probably | Unknown | Not located. **[UNTESTED]** |
 | **Read region positions** | Offline `gRuA` | Probably | Medium | Names verified; position fields unmapped |
-| **Identify which plugin is in which slot** | **Offline `UCuA`** | Probably | Medium | **MCP is unreliable here — see §6.5** |
-| **Set plugin parameters** | MCU V-pots / write a `.pst` | Partly | Low / medium | MCP reaches Compressor threshold only; and see §6.5 |
+| **Identify which plugin is in which slot** | **Offline `UCuA`** | Probably | Medium | **MCP is unreliable here — see §6.2** |
+| **Set plugin parameters** | MCU V-pots / write a `.pst` | Partly | Low / medium | MCP reaches Compressor threshold only; and see §6.2 |
 | **Bypass / enable a plugin** | AX click, or MCU | Yes | Low-medium | Small, focused, verifiable — a fair candidate |
 | **Set channel format mono/stereo** | AX click on the format button | Yes | Low | MCP can't. One click by hand. **Leave it manual** |
 | **Rename / reorder / mute / solo** | MCU (MCP has it) | Yes | Medium-high | Don't rebuild |
@@ -493,7 +529,7 @@ Reliability is my judgement of what happens on the tenth run, unattended, with L
 | **Import audio / place regions** | FCPXML import (`make_fcpxml.py`) | Yes | Medium | Already solved outside the MCP |
 | **Anything writing `ProjectData`** | — | Technically yes | **Unacceptable** | See §9 |
 
-### 6.5 The MCP's two inventory surfaces disagree with each other
+### 6.2 The MCP's two inventory surfaces disagree with each other
 
 **[verified hands-on]** On the same channel (Hi-Hats), `get_inventory` reports **six occupied
 insert slots** while `logic://mixer` reports **four plugins**. Only `logic://mixer` returns
@@ -548,7 +584,8 @@ pick up a change is **[UNTESTED]**.
 
 ### 6.4 Completion detection that actually works
 
-Three signals, in increasing order of trustworthiness. Use all three.
+Four signals, in increasing order of trustworthiness. Use all four — and note that §6.5 shows
+the first three can *all* pass on a file that is garbage.
 
 1. **File stability, not file existence.** Wait for the expected output to appear, *then* for
    its size and mtime to hold steady for N seconds. The learnings log already records the
@@ -564,8 +601,83 @@ Three signals, in increasing order of trustworthiness. Use all three.
 3. **No fixed timeout.** Budget by material: a 28-minute set bounced offline is minutes of
    wall clock. Any cap should be derived from project length, with a floor of several minutes,
    and should report "still running" rather than "failed".
+4. **A content check.** Integrated loudness against an expected range. This is the only signal
+   in the list that can tell a correct bounce from the failure in §6.5, and it is the reason
+   the list has four entries instead of three.
 
-And do not copy or analyse the file until all of the above agree.
+And do not copy, rename or report the file until all four agree.
+
+**The manual version of this is already validated.** Ignoring the MCP's error and watching the
+file at `/private/tmp/<Project Name>.wav` for size stability has now worked reliably on three
+long bounces. **[verified hands-on]** That is signals 1 and 3 done by hand, end to end, on real
+material — which is the strongest evidence in this document that Phase 2 is buildable, because
+the algorithm has already been executed successfully by a human. The tool's job is to add
+signals 2 and 4 and stop requiring someone to sit there.
+
+### 6.5 An export can be complete, well-formed, and wrong
+
+**[verified hands-on]** This is the most dangerous finding in the document and the one Phase 2
+must be designed around from the start.
+
+**A bounce respects solo.** A full 12-minute render produced a file that was:
+
+- the correct length,
+- the correct format,
+- the correct sample rate,
+- 556 MB, size-stable,
+
+and contained **only the two soloed channels**. Nothing in the tool response flagged it.
+Nothing in the file metadata flagged it. Every structural check passed.
+
+The tell was **loudness: −43.6 LUFS against −20.0 for the real mix.** A ~24 LU gap — not
+subtle, but invisible to anything that only looks at existence, size, duration and format.
+
+Three design consequences:
+
+1. **§6.4's first three signals are insufficient, and I had them wrong.** The original draft of
+   this document proposed file-stability plus an `AXObserver` edge plus a generous timeout and
+   called that "completion detection that actually works". It would have declared this bounce a
+   success. **Verification of an export is not complete without a content check.** Signal 4
+   above exists because of this.
+2. **`logic-cli export` needs a preflight that reads solo and mute state** from the mixer and
+   **refuses** — or at minimum warns very loudly — when anything is soloed. Cheap: this is
+   exactly the kind of state the offline reader will already be parsing, though for a
+   *preflight* it must come from the live session, not the last save (see the caveat below).
+3. **Refuse, do not remediate.** `logic_tracks.solo` routes through MCU, and with MCU
+   unregistered it returns `channels_exhausted` with no key-command fallback — so the tool can
+   *detect* a stray solo but cannot *clear* it. **[verified hands-on]** Attempting to clear it
+   and silently failing would be worse than refusing, because it would produce the same
+   garbage file with an added claim that the problem was handled.
+
+There is a real wrinkle in (2) worth stating plainly: **solo state is live-session state, and
+the offline reader by definition sees only the last save.** A user who solos a channel and
+bounces without saving is invisible to a `ProjectData` parse. So the preflight has to read solo
+from the live session — MCU or a narrow AX query — which means Phase 2 cannot be purely
+offline. That is acceptable (it is one small read, not a tree walk), but it should be a
+deliberate choice rather than a discovery made later.
+
+The generalisation worth carrying beyond this one bug: **for any long unattended operation, ask
+what a plausible wrong result would look like, and check for that specifically.** Structural
+checks confirm the operation ran; only a content check confirms it ran on the right thing. This
+is the same lesson the mix-scan work already learned twice — *"use an absolute threshold
+whenever 'did X respond to Y' is the question"*, and the snare-bleed correction — arriving now
+in the export path.
+
+### 6.6 The Arrange window must be frontmost
+
+**[verified hands-on]** With the Mixer window on top, `export_run` returns
+`bounce_dialog_did_not_appear` with `bounce_fired: false`. The Bounce dialog simply does not
+open. The fix is one `AXRaise` on the first window whose name does not contain "Mixer", then
+retry — which worked first time.
+
+`logic-cli export` should do this **unconditionally** before triggering anything. It costs one
+AX call, it is idempotent, and the failure it prevents is otherwise completely opaque — the
+error names the dialog, not the focus.
+
+This is also a datum for open question 3: a KeyCommands-triggered export would presumably hit
+the same window-focus constraint, so whichever command ID turns out to be *Export All Tracks as
+Audio Files*, **the raise still has to happen first**. Finding the ID does not remove the need
+for a focus preflight.
 
 ---
 
@@ -604,6 +716,29 @@ Three hard rules:
    recursively; use `AXUIElementCopyMultipleAttributeValues` for anything multi-field; set
    `AXUIElementSetMessagingTimeout` explicitly.
 
+**The export preflight, in order.** Every step here exists because of an observed failure, not
+a hypothetical one:
+
+```
+1. AXRaise the first window whose name lacks "Mixer"      # §6.6 — else the dialog never opens
+2. read solo + mute state from the live session           # §6.5 — refuse if anything soloed
+3. resolve the real staging path from defaultBouncePath   # §3.2 — /tmp, not ~/Downloads
+4. set format/depth via prefs (if question 1 says yes)    # §6.3
+5. trigger, then hand off to `watch`
+6. post-export: loudness against an expected range        # §6.5 — the only garbage detector
+```
+
+Steps 1 and 3 are unconditional and nearly free. Step 2 is the one that forces `export` to
+touch the live session rather than the last save, and it should be a single narrow read, never
+a tree walk. Step 6 is what separates "the bounce finished" from "the bounce is usable" — see
+§6.5 for the 556 MB file that passed every other check.
+
+**Refuse rather than remediate.** When the preflight finds a stray solo, stop and say so. The
+tool cannot clear it (`logic_tracks.solo` returns `channels_exhausted` without MCU registered),
+and a remediation that silently fails is worse than no remediation, because it produces the
+same bad file plus a false claim that the problem was handled. This is the general rule for
+the whole tool: **refuse loudly in preference to acting unreliably.**
+
 **Version guarding.** `ProjectInformation.plist` carries `LastSavedFrom: "Logic Pro 12.2 (6644)"`.
 Record the build the offsets were calibrated against and **refuse to parse, loudly, when the
 build differs** — with a `--force` for the operator who wants to find out. Silent
@@ -631,15 +766,27 @@ helpers ship in plaintext in `share/logic-pro-mcp/`. **[verified]**
 
 **What is worth sending upstream** — two concrete, self-contained bugs in `logic_bounce.py`:
 
-1. The 25-second completion poll, which false-fails every long bounce.
+1. The 25-second completion poll, which false-fails every long bounce. **Now observed three
+   times in practice**, so the report can carry evidence rather than a code reading.
 2. Copying the staged artifact as soon as it appears, with no wait for the write to complete —
    a silent-truncation risk that reports success.
+3. **The helper looks for the artifact in the wrong place under the wrong name** (§3.2). It
+   globs `~/Downloads/<name>--lpmcp-<uuid8>.*`; the file actually lands at
+   `/private/tmp/<Project Name>.wav`, i.e. at `defaultBouncePath` under Logic's own default
+   name, because the sidebar click and the Save As typing are both missing. This is arguably
+   the *primary* bug — fixing the timeout alone would not make the current code work.
+4. **`export_run` fails opaquely when the Mixer window is frontmost** (§6.6), reporting
+   `bounce_dialog_did_not_appear`. A one-line `AXRaise` before triggering fixes it.
+5. **No guard against bouncing with channels soloed** (§6.5). Given the server already reads
+   mixer state, a preflight warning would cost little and prevents a whole class of
+   plausible-looking wrong output.
 
-Both are in the shipped Python, both are a few lines, and both are worth reporting whatever
-else gets built. Two further notes worth raising as issues even if nobody fixes them soon:
+All five are small and self-contained, and all are worth reporting whatever else gets built.
+Bugs 1, 3, 4 and 5 now have hands-on reproductions behind them rather than only a code
+reading. Two further notes worth raising as issues even if nobody fixes them soon:
 `logic_ui_jxa.py`'s depth-6 recursive JXA tree walk is what pegs Logic's main thread and the
 server should not outlive its client; and `get_inventory` disagreeing with `logic://mixer`
-about the same channel's insert count (§6.5) is a correctness bug, not a cosmetic one.
+about the same channel's insert count (§6.2) is a correctness bug, not a cosmetic one.
 
 **Why upstream isn't the plan.** Turnaround depends on a maintainer; the parts we most need
 (All Tracks export, insert chains past slot 0, sends, strip format, fader dB) are *new
@@ -659,7 +806,11 @@ belongs in an MCP server at all. Do both: file the bugs, build the reader.
 - **Any continuous AX poll**, at any interval, for any reason.
 - **Fitting a curve to the fader taper.** Interpolate between anchors or return unknown. Two
   people have now fitted lines to it and both were wrong, the second by 3.7 dB (§5.6).
-- **Writing plugin parameters through the MCP by slot index** until §6.5 is resolved.
+- **Writing plugin parameters through the MCP by slot index** until §6.2 is resolved.
+- **Auto-clearing a stray solo before an export.** Detect and refuse. The MCU path can't clear
+  it reliably, and a silent failure here produces a plausible-looking wrong file (§6.5).
+- **Reporting an export as successful on structural checks alone.** No content check, no
+  success claim.
 - **Channel strip mono/stereo format.** One click, and the MCP already can't reach it.
 - **Track icons, summing stacks, screensets, plugin GUI layout.** Fast by hand, brittle to
   automate, low value.
@@ -697,17 +848,28 @@ that re-verifies known values against a fixture project.
 
 ---
 
-## 11. Open questions — all untested, all cheap to settle
+## 11. Open questions — most untested, most cheap to settle
 
-Ordered by value-per-minute.
+Ordered by value-per-minute. Question 1 has since picked up partial evidence; the
+rest are open.
 
 1. **Do `defaults write com.apple.logic10 BounceFileType/BounceBitSize/TrackExportFileTypeIndex`
    actually take effect?** Test with Logic quit, relaunch, open the dialog, look. If yes, most
    of the export fragility disappears. *Highest value question in this document.*
+
+   **Partial evidence in favour, arrived at sideways.** The observed staging path for a bounce
+   is `/private/tmp/<Project Name>.wav`, and the preference `defaultBouncePath` reads `/tmp`.
+   Logic is demonstrably *honouring* that key. **[verified hands-on + verified]** That is not
+   proof that *writing* the key takes effect — the value may have been set through the UI long
+   ago — but it moves the question from "does Logic use these preferences at all" (yes) to
+   "does it re-read them after an external write" (still open, question 2).
 2. **Does Logic re-read those prefs while running?** Almost certainly not, but worth knowing —
    it decides whether `export` must quit and relaunch Logic or can work in-session.
 3. **Which `KeyCommands` numeric ID is "Export All Tracks as Audio Files"?** Assign it by hand
-   once, diff the plist. Gives a keystroke-triggerable export with no menu walking.
+   once, diff the plist. Gives a keystroke-triggerable export with no menu walking. **Note it
+   does not remove the focus preflight** — a keystroke route would hit the same
+   Arrange-window-frontmost constraint as the menu route (§6.6), so the `AXRaise` happens
+   first either way.
 4. **Does the bounce progress window emit a usable `AXObserver` edge?** Register
    window-created/destroyed on Logic's app element, fire a short bounce, log what arrives.
    Settles §6.4 signal 2.
@@ -719,17 +881,24 @@ Ordered by value-per-minute.
 6. **Is `OCuA +0x7d` pan?** Values cluster on 64 across 310 records, which is Logic's pan
    centre. One hand-set pan, one save, one diff confirms or kills it. Cheapest open question
    here, and it would be the first *value* field located.
-7. **`OCuA` → `UCuA` slot mapping**, and reconciling it against the §6.5 disagreement. Insert a
+7. **`OCuA` → `UCuA` slot mapping**, and reconciling it against the §6.2 disagreement. Insert a
    distinctive plugin in a known slot, save, diff. `lpx-toolkit`'s author didn't solve this;
    budget accordingly.
 8. **What is the `ivnE +0x1a2…+0x1ab` run?** It is the only other thing that changed between
    the two Epsilon alternatives. Unidentified.
-9. **Does a generic OSC control surface actually exist in Setup › New?** Thirty seconds to
-   look. If yes, §4 changes materially and much of §7 should be reconsidered.
-10. **Does `karT` record order match Logic's visible track order?** `lpx-toolkit` says no.
+9. **Why do the MCP's save-panel clicks miss?** The staging evidence in §3.2 says both the
+   sidebar click and the Save As typing are failing silently — the file lands at
+   `defaultBouncePath` under the project name, not at `~/Downloads` under the generated staging
+   name. Is the panel geometry different from the "calibrated" frame, is the click landing
+   before the panel is interactive, or is focus elsewhere? Worth ten minutes because it decides
+   whether `logic-cli export` can reuse *any* of the coordinate approach or must locate fields
+   through AX. Also the difference between a good upstream bug report and a vague one.
+10. **Does a generic OSC control surface actually exist in Setup › New?** Thirty seconds to
+    look. If yes, §4 changes materially and much of §7 should be reconsidered.
+11. **Does `karT` record order match Logic's visible track order?** `lpx-toolkit` says no.
     Verify before any tool reports "track 7".
-11. **Where is "Plays at SMPTE" stored?** Probably in `gnoS`. Set it to a known TC, save, diff.
-12. **Do the MCP's `_1` rename and the copy-on-appear race actually corrupt a long bounce?**
+12. **Where is "Plays at SMPTE" stored?** Probably in `gnoS`. Set it to a known TC, save, diff.
+13. **Do the MCP's `_1` rename and the copy-on-appear race actually corrupt a long bounce?**
     Worth reproducing once so the upstream bug report carries evidence.
 
 ---
@@ -745,14 +914,21 @@ below.
 `MetaData.plist` + the `ProjectData` chunk walk. Ships: alternatives with names and active
 index, real sample rate, tempo/signature/key, the full mixer channel list in order (buses and
 outputs included), region and audio-file inventory, and the plugin-instance inventory by name —
-which per §6.5 is a *correctness* improvement on the MCP, not just a convenience. Build guard
+which per §6.2 is a *correctness* improvement on the MCP, not just a convenience. Build guard
 on `LastSavedFrom`. **This is worth doing even if nothing else on this list ever gets built.**
 
 **Phase 2 — `logic-cli export` + `watch` (one to two days, gated on question 1).** Set format
-and depth via prefs; trigger the menu item; hand off to event-driven completion detection with
-file-stability confirmation and no fixed timeout. Covers both *All Tracks as Audio Files* and
-stereo bounce. If question 1 comes back negative, this phase gets meaningfully harder and
-should be re-scoped before starting, not pushed through.
+and depth via prefs; run the preflight in §7 (raise the Arrange window, refuse on stray solo,
+resolve the real staging path); trigger; hand off to event-driven completion detection with
+file-stability confirmation, no fixed timeout, and a loudness sanity check. Covers both *All
+Tracks as Audio Files* and stereo bounce. If question 1 comes back negative, this phase gets
+meaningfully harder and should be re-scoped before starting, not pushed through.
+
+**The core of this phase has already been validated by hand.** Ignoring the MCP's spurious
+error and watching `/private/tmp/<Project Name>.wav` for size stability has worked on three
+long bounces. **[verified hands-on]** Phase 2 is therefore not speculative engineering — it is
+automating a procedure that is already known to work, and adding the two checks (window focus,
+content sanity) that the manual procedure discovered the hard way.
 
 **Phase 3 — values: pan, then faders (open-ended, start with the cheap one).** Do question 6
 (pan at `+0x7d`) first — it is one experiment and would be the first confirmed value field. Only
@@ -784,7 +960,11 @@ The case *for* survives that scrutiny, and got stronger during the investigation
 - **Two capabilities turn out to have no alternative implementation.** Fader dB is not
   published by AX at any level, and plugin slot identification is inconsistent between the
   MCP's own two surfaces. Those are gaps, not preferences.
-- **The export gap is real, recurring, and its root cause is a 25-second constant.**
+- **The export gap is real, recurring, and larger than a 25-second constant.** Hands-on
+  testing found the helper searching the wrong directory under the wrong filename, an opaque
+  failure whenever the Mixer window is frontmost, and — worst — a 12-minute render that passed
+  every structural check while containing only the soloed channels. That last one is not a
+  convenience problem. It is the kind of failure that ships.
 - **The lifecycle fix is nearly free** and independent of everything else.
 
 So: build the reader, fix the export, kill the orphans, file the upstream bugs, and leave the
