@@ -469,22 +469,35 @@ Two measurement traps this exposed:
   `loginwindow`, AX automation cannot work at all) before concluding anything from an empty
   window list.
 
-### Fader value -> dB calibration, corrected (2026-09-04)
+### Fader value -> dB: it is a taper, do not fit a line (2026-09-04)
 
-The MCP reports fader positions as a 0..1 float. The earlier note in this file used
+The MCP reports fader position as a 0..1 float and **does not expose the dB text**. I checked:
+walking every AXSlider in Logic's main window for an AXValueDescription returns nothing. The
+"-15.8 dB" you can read on screen is drawn, not published. So the number has to come from a
+human reading the UI, or from a calibration table.
 
-    value ~= 0.758 + 0.026 * dB
+Two formulas in earlier versions of this file were wrong. `0.758 + 0.026 * dB` is right near
+unity and ~1 dB out at -16. Refitting it as a line on two points (`0.7388 + 0.02313 * dB`)
+was **also** wrong, by 3.7 dB at -23.7 - because the fader is a taper, not a line. Travel per
+dB, measured from four UI readings:
 
-Checked against two faders read off the Logic UI (Hi-Hats -15.8 dB at 0.37333, OH -6.0 dB
-at 0.60000), that slope is too steep. Refit:
+| segment | travel per dB |
+|---|---|
+| 0 to -6 | 0.0263 |
+| -6 to -15.8 | 0.0231 |
+| -15.8 to -18 | 0.0222 |
+| -18 to -23.7 | **0.0086** |
 
-    value ~= 0.7388 + 0.02313 * dB          dB ~= (value - 0.7388) / 0.02313
+It collapses below about -18 dB, which is exactly where drum spot mics, room mics and sampler
+layers sit. **Interpolate between anchors; never fit.**
 
-The error is small near unity and grows going down - about **1 dB out at -16**, which is
-exactly where drum spot mics and room channels sit, so it matters for the channels most
-likely to be under discussion.
+Confirmed anchors (raw value -> dB, read off the UI):
 
-**Two points cannot fit a taper.** Logic's fader law is not linear in dB, and this is a
-straight-line fit over -6..-16. Treat readings above 0 dB or below -20 dB as unverified,
-and confirm against the UI before acting on them. The general lesson from this project
-applies: a two-sample fit is a hypothesis, not a calibration.
+    0.27556 -> -23.7      0.32444 -> -18.0      0.37333 -> -15.8      0.60000 -> -6.0
+
+Inferred, not confirmed: `0.75789 -> 0.0`. Every reverb return and the Stereo Out sit at
+exactly that value, which is what unity should look like.
+
+Getting a new anchor costs one question to whoever is at the machine. Ask for one whenever a
+fader matters, rather than trusting an interpolation more than two anchors away - and treat
+anything outside the anchor range as unknown, not as extrapolated.
