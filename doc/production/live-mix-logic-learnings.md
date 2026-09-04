@@ -468,3 +468,23 @@ Two measurement traps this exposed:
   actually unlocked (`osascript ... first process whose frontmost is true` - if it returns
   `loginwindow`, AX automation cannot work at all) before concluding anything from an empty
   window list.
+
+### Fader value -> dB calibration, corrected (2026-09-04)
+
+The MCP reports fader positions as a 0..1 float. The earlier note in this file used
+
+    value ~= 0.758 + 0.026 * dB
+
+Checked against two faders read off the Logic UI (Hi-Hats -15.8 dB at 0.37333, OH -6.0 dB
+at 0.60000), that slope is too steep. Refit:
+
+    value ~= 0.7388 + 0.02313 * dB          dB ~= (value - 0.7388) / 0.02313
+
+The error is small near unity and grows going down - about **1 dB out at -16**, which is
+exactly where drum spot mics and room channels sit, so it matters for the channels most
+likely to be under discussion.
+
+**Two points cannot fit a taper.** Logic's fader law is not linear in dB, and this is a
+straight-line fit over -6..-16. Treat readings above 0 dB or below -20 dB as unverified,
+and confirm against the UI before acting on them. The general lesson from this project
+applies: a two-sample fit is a hypothesis, not a calibration.
