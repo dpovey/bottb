@@ -504,3 +504,40 @@ only bends below it**, so readings in the upper half are trustworthy and the low
 Getting a new anchor costs one question to whoever is at the machine. Ask for one whenever a
 fader matters, rather than trusting an interpolation more than two anchors away - and treat
 anything outside the anchor range as unknown, not as extrapolated.
+
+### Bouncing through the MCP: three failure modes, all silent (2026-09-04)
+
+**1. Clear every solo and mute first.** A bounce respects them, and the export driver reports
+success-shaped output either way. A run left with Snare Bottom and Hi-Hats soloed produced a
+full-length, correct-format, correct-sample-rate 556 MB file containing only those two
+channels. Nothing in the file or the tool response flags it. It cost a 12-minute render.
+
+**The tell is in the measurement, so measure before believing.** That bounce read
+**-43.6 LUFS with true peak -17.3 dBFS**, against -20.0 / -1.6 for the real mix, plus
++18 dB of "air" and a rumble band 53 dB down. A loudness reading far from the previous
+bounce means the wrong thing rendered - check solo state before re-cutting anything.
+
+`logic_tracks.solo` cannot fix this remotely: it routes through MCU, and with MCU
+unregistered it fails `channels_exhausted` with no key-command fallback. Ask the operator.
+
+**2. The Arrange window must be frontmost.** With the Mixer window on top, `export_run`
+returns `bounce_dialog_did_not_appear` with `bounce_fired: false` - the command goes to the
+Mixer and nothing opens. Raise the Arrange window first:
+
+```applescript
+tell application "System Events" to tell process "Logic Pro"
+  perform action "AXRaise" of (first window whose name does not contain "Mixer")
+end tell
+```
+
+**3. `artifact_not_produced_in_staging` with `bounce_fired: true` is a LIE - the bounce is
+running fine.** The MCP's `logic_bounce.py` polls for the output file for a hardcoded 25
+seconds and then declares failure. Any bounce longer than that always "fails". Ignore it and
+watch the staging path yourself:
+
+    /private/tmp/<Project Name>.wav
+
+Wait for the size to stop changing across several polls before touching the file - the helper
+also copies the staged file the moment it *appears*, with no wait for the write to finish,
+which is a silent-truncation path that reports success. Do not trust its output; watch the
+file.
