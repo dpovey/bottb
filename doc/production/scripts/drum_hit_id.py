@@ -46,12 +46,19 @@ Three rules this encodes, each of which cost a wrong finding on BOTTB Brisbane 2
 
 Measured on Epsonics (Brisbane 2026), song 6 chorus, as a sanity reference:
 
-    mic          direct dB   pre-hit dB   separation
-    Kick In          -23.8       -54.6       +30.8
-    Snare Top        -23.2       -55.8       +32.5
-    Hi-Hats          -26.3       -41.3       +15.0
-    Floor Tom        -26.7       -40.3       +13.7
-    Tom 1            -42.1       -51.5        +9.4
+    mic          direct dB   pre-hit dB   separation   slip safe?
+    Snare Top        -23.2       -55.9        +32.7       yes, +-0.20 dB
+    Kick In          -23.7       -54.6        +30.9       yes, +-0.24 dB
+    Kick Out         -24.7       -55.5        +30.8       yes, +-0.25 dB
+    OH               -26.4       -42.1        +15.8       marginal
+    Hi-Hats          -26.8       -41.0        +14.2       marginal
+    Floor Tom        -26.7       -40.2        +13.5       marginal
+    Tom 1            -42.2       -50.6         +8.4       no
+    Tom 2            -40.7       -46.4         +5.6       no
+    Room             -30.5       -31.9         +1.4       no
+
+Reproduce with:
+    drum_hit_id.py separation "01_Media/Epsonics" --start 1711 --end 1736
 
 Separation decides whether a close mic can be slip-edited. Moving a region whose
 bleed sits X dB below its direct signal combs that bleed against the same source
