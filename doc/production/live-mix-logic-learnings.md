@@ -576,3 +576,50 @@ disconnect the MCP first, since its accessibility poller pulls focus out of text
 **Rule: read the offset back out of the project and check it against the pre-flight table, at
 project creation and again before the first delivery bounce.** Measuring a TC once and writing
 it in a doc does not mean the project contains it.
+
+### Smart Tempo wrote a 485-event map, and the autosave is where to look (2026-09-05)
+
+Sequel to the "Plays at SMPTE" entry above, same session. Enabling Flex Pitch on Vox 4 to fix
+a few wrong notes wrote **485 tempo events, 42.5–176.0 bpm**, over a project that is supposed
+to be constant 120. The map starts at tick 490439 (≈ bar 119, ≈ 236 s), which is where the
+first song's audio begins — Smart Tempo analysed the material and conformed to it. Combined
+with SMPTE-locked regions and a "Plays at SMPTE" change, the arrangement ended up with the
+audio at ~bar 1025 and the automation left behind at bars 1–1025.
+
+**The saved project was never damaged.** `ProjectData` had not been written since the previous
+evening; the entire broken state lived in Logic's memory and in the autosave. Recovery was
+"close without saving, reopen, decline the autosave" — cost: only the unsaved work since the
+last ⌘S. Check `ProjectData`'s mtime before assuming a project is lost:
+
+    ls -la "<Project>.logicx/Alternatives/*/ProjectData"          # last real save
+    ls -la "<Project>.logicx/Alternatives/*/Autosave/"            # the damaged state
+
+**Reading the autosave.** `Alternatives/NNN/Autosave/<ISO>.songData` is not a `ProjectData`
+container — it is a 16-byte header (`u32 0x4000`, `u32 0x01000000`, `u32 inflated_size`,
+`u32 0`) followed by a zlib stream that inflates to a standard `ProjectData`:
+
+```bash
+python3 -c "import zlib,sys;open(sys.argv[2],'wb').write(zlib.decompress(open(sys.argv[1],'rb').read()[16:]))" in.songData out.ProjectData
+```
+
+That makes the _broken_ state inspectable offline with `logic-cli`, which is usually the only
+copy of it that exists.
+
+**Copy the project state out before attempting any recovery.** The bundle is mostly `Media/`;
+`Alternatives/` + `Resources/` was 21 MB against 7.7 GB and holds every snapshot and backup:
+
+    cp -Rp "<Project>.logicx/Alternatives" "<Project>.logicx/Resources" /some/scratch/
+
+**Two method notes, both of which nearly produced wrong advice here:**
+
+- **A diff between two saves is not a diff between good and broken.** The 18:15→18:42 delta
+  (regions 26→63, +82 KB of `qSvE`) read as corruption and was in fact a deliberate drum
+  timing pass — per-track it was Kick In 2→15, Snare Top 2→14, Hi-Hats 2→14 and _nothing else
+  changed_, which is the signature of intentional editing, not of a global conform. Acting on
+  the first reading would have discarded that pass. Check the change's _shape_, per track,
+  before calling it damage.
+- **A parser that only ever sees clean files has no positive control.** Every ProjectData on
+  this machine read as "1 event, 120.0000" — consistent with a correct decoder and equally
+  consistent with one that reads a nominal field and stops. It was only confirmed once the
+  inflated autosave gave it a file that genuinely contains a map and it returned 485 events.
+  Do not trust a detector until it has said yes to something.
