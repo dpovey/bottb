@@ -307,11 +307,11 @@ preamp is ~8–10 dB hot (its bleed floor sits at −43…−46 dBFS against −
 
 [principle] Starting point for "one instrument" voicing, verse blocks:
 
-| voice       | level vs lead                                                             | why                                                                                                                    |
-| ----------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Vox 2 lead  | 0                                                                         | reference; the melody must be the line the ear follows                                                                 |
-| Vox 3 high  | −1.5 dB                                                                   | high parts are perceptually louder and more localisable; a sixth above the melody at equal level takes over the tune   |
-| Vox 4 lower | −2.5 dB if she is doubling the melody; −1.5 dB if it is a true lower part | a near-unison double at equal level thickens and detunes the lead; a real third below can sit level with the high part |
+| voice       | level vs lead                                 | why                                                                                                                  |
+| ----------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Vox 2 lead  | 0                                             | reference; the melody must be the line the ear follows                                                               |
+| Vox 3 high  | −1.5 dB                                       | high parts are perceptually louder and more localisable; a sixth above the melody at equal level takes over the tune |
+| Vox 4 lower | see the correction below — this row was wrong |                                                                                                                      |
 
 Which line should dominate: the **lead**, then the lower part, then the high part. In a
 chord the ear pins the top voice anyway; keeping it slightly under stops the stack tipping
@@ -321,6 +321,48 @@ Vox 4 doubling the melody near-unison): −6 dB, no pitch correction on the doub
 (correcting two unison mics to the same grid produces chorusing against the uncorrected bleed
 copies), or mute them if the double is not wanted. Song 2: Vox 3 is the lead — give it the
 lead chain and centre it.
+
+### 8.1 Correction: a double is not a harmony part (2026-09-05)
+
+The Vox 4 row above was written on the assumption that she sings a distinct lower harmony.
+She does not. Once her verse notes were Flex-Pitched she became a **unison double of the
+lead**, and the balance rule for a double is the opposite of the rule for a harmony.
+
+Measured in Vox 4's own core band (250–800 Hz) over the 139 s she is actually singing in
+The Chain, against everything else in the mix:
+
+| stem       | level vs Vox 4 |
+| ---------- | -------------- |
+| **Vox 3**  | **+5.0 dB**    |
+| Vox 2 Lead | +2.4           |
+| Guitar     | +0.2           |
+| Snare      | −0.6           |
+| Bass       | −1.0           |
+| OH         | −5.6           |
+| Keys       | −9.0           |
+
+**Vox 3 is what buries her, not the band.** Putting Vox 4 a decibel under Vox 3, as the table
+above says, means the high part covers the double completely in the same frequency range.
+The panning compounded it: both sat on the same side, Vox 3 at +3.1 and Vox 4 at +4.2.
+
+Revised, for a voice that is doubling the lead rather than harmonising:
+
+- **Level:** bring the double up 2–3 dB _relative to the high harmony_, not down.
+- **Pan:** separate the two backing voices to opposite sides. This is how double-tracked
+  vocals have always been made audible, and it costs nothing in tuning or tone.
+- **EQ:** the "identical preset on both backing voices" rule in § 5.3 still holds where they
+  sing harmony together, but where one is doubling the lead she wants _differentiation from
+  the lead_ instead. Work with her natural difference — Vox 4's spectral centroid is 540 Hz
+  against the lead's 969 — rather than manufacturing one.
+- **Do not detune.** Her pitch already sits within 40 cents of the lead only about a quarter
+  of the time and runs 50–150 cents off it for nearly half. Adding more reads as out of tune,
+  not as width.
+
+**The general rule:** decide whether each backing voice is _harmonising_ or _doubling_ before
+setting any of it, and re-check per song. Harmonies are made audible by pitch and want fusion;
+doubles are made audible by position and texture. The same singer can do both in one set —
+Vox 4 doubles in songs 3 and 6 and sings a distinct part elsewhere — so this is a per-song
+decision, not a channel setting.
 
 ## 9. Measurement procedure (re-runnable)
 
