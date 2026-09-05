@@ -66,6 +66,22 @@ Reuse instead of rebuilding:
   Gtr, Acoustic, Keys, Erhu/extra, Vox Lead, Vox Backing, MIDRANGE bus, Crowd, Stereo Out).
   In the new project, Setting › load. That brings Gain/EQ/gate/comp/de-esser/saturation/
   Sample Delay chains in one click per strip.
+
+  > **⚠ As of 2026-09-06 these do not exist.** `~/Music/Audio Music Apps/Channel Strip
+Settings/{Track,Bus,Master,Instrument}/` are all **empty**, and
+  > `~/Music/Audio Music Apps/Project Templates/` is empty too. The saving step above was
+  > never done, or the files were lost. **Do the saving pass before starting a new band**,
+  > and save from **Epsonics** rather than ShipRex — it is the more developed project
+  > (Drums / MIDRANGE / GTRS / VOX / Backing stacks, Aux 5 Vocal Reverb, Aux 6 Room Verb,
+  > Neutron Unmask on MIDRANGE keyed from VOX, the vocal chains from
+  > `vocal-harmony-blend.md`). Check the folders are non-empty before planning around them.
+  >
+  > The alternative — duplicating a band's `.logicx`, deleting the regions and importing new
+  > media — is faster for one band but inherits **every** setting of the source project,
+  > including `Plays at SMPTE`. That is exactly how Epsonics acquired The ShipRex's offset
+  > and lost a day. If you take that route, **reset and re-measure Plays at SMPTE as step 1**,
+  > not as a later check.
+
 - **Ozone preset "BOTTB ShipRex"** on Stereo Out; **Loudness Meter/Insight** after it.
 - **Snare Bottom**: rebuild the trigger (Replace or Double Drum Track) per band; load the
   saved Quick Sampler setting.
