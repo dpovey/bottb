@@ -10,6 +10,18 @@ numpy + scipy (`python3 -m venv venv && venv/bin/pip install numpy scipy librosa
   Invert); optionally Sample Delay the close mics by |lag| to align to OH, revert if the kit
   sounds smaller. Expects the BOTTB desk file names (01_Kck IN.wav … 21&22_Room.wav); edit the
   `tracks` dict for other layouts.
+- `drum_hit_id.py identify|separation|delay <stems folder> --start S --end E` — per-hit drum
+  work on bleed-heavy live kits. `identify` says which drum was struck, by which mic leads
+  after each mic's own pre-hit floor is subtracted (and it groups Kick In+Out as one drum, so
+  two mics on one source don't tie). `separation` reports how far each mic's bleed sits below
+  its direct hit and converts that to the comb ripple you'd get by slip-editing it — Epsonics
+  measured kick 31 dB and snare 33 dB (safe to slip, ±0.2 dB ripple) against toms 6–8 dB (not
+  safe, ±3 dB). `delay` gives inter-channel arrival delay, phase-whitened, with the search
+  bounded by geometry. Three rules are in its docstring, each of which cost a retracted
+  finding: subtract a pre-hit window before comparing mics; a correlation peak pinned to its
+  search boundary is not a measurement; and plain cross-correlation on a low-frequency source
+  cycle-slips by whole periods of its fundamental (a 60 Hz kick did this at 780 samples to two
+  sessions on the same day) so use GCC-PHAT with a geometry-bounded max lag.
 - Stem loudness/peak table: see the ffmpeg one-liners in `../live-mix-logic-learnings.md`.
 - `find_start.py` — cross-correlates a stem (default: the OH file) against the Zoom TrLR
   recordings at 4 kHz to find the stem's show timecode; two probes 10 min apart must agree.
