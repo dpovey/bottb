@@ -394,28 +394,28 @@ sources as +-7 Hz at best - that is the spread I got just from changing the anal
 Logic's `.exs` files are a flat chunk list, no container. Each chunk is an 84-byte header
 followed by `size` bytes of body:
 
-| offset | field |
-|---|---|
-| 0 | uint32 signature |
-| 4 | uint32 body size |
-| 8 | uint32 id |
-| 12 | uint32 flags |
-| 16 | char[4] magic `TBOS` |
-| 20 | char[64] name |
+| offset | field                |
+| ------ | -------------------- |
+| 0      | uint32 signature     |
+| 4      | uint32 body size     |
+| 8      | uint32 id            |
+| 12     | uint32 flags         |
+| 16     | char[4] magic `TBOS` |
+| 20     | char[64] name        |
 
 Signatures seen: `0x00000101` header, `0x01000101` zone, `0x02000101` group,
 `0x03000101` sample, `0x04000101` params, `0x0a/0x0b000101` other.
 
 Zone body fields, verified against hand-set values in the UI:
 
-| byte | field |
-|---|---|
-| 1 | root key (38 = D1) |
-| 6, 7 | key range low / high |
-| 9, 10 | velocity range low / high |
-| 16-23, 24-31 | sample length in frames |
-| 88 | group index (0-based) |
-| 92 | zone order |
+| byte         | field                     |
+| ------------ | ------------------------- |
+| 1            | root key (38 = D1)        |
+| 6, 7         | key range low / high      |
+| 9, 10        | velocity range low / high |
+| 16-23, 24-31 | sample length in frames   |
+| 88           | group index (0-based)     |
+| 92           | zone order                |
 
 Sample chunks carry the **absolute** volume path plus the filename as plain strings, so an
 instrument built from `01_Media/_samples/` is portable across bands but **not** across
@@ -481,12 +481,12 @@ unity and ~1 dB out at -16. Refitting it as a line on two points (`0.7388 + 0.02
 was **also** wrong, by 3.7 dB at -23.7 - because the fader is a taper, not a line. Travel per
 dB, measured from four UI readings:
 
-| segment | travel per dB |
-|---|---|
-| 0 to -6 | 0.0263 |
-| -6 to -15.8 | 0.0231 |
-| -15.8 to -18 | 0.0222 |
-| -18 to -23.7 | **0.0086** |
+| segment      | travel per dB |
+| ------------ | ------------- |
+| 0 to -6      | 0.0263        |
+| -6 to -15.8  | 0.0231        |
+| -15.8 to -18 | 0.0222        |
+| -18 to -23.7 | **0.0086**    |
 
 It collapses below about -18 dB, which is exactly where drum spot mics, room mics and sampler
 layers sit. **Interpolate between anchors; never fit.**
@@ -538,6 +538,41 @@ watch the staging path yourself:
     /private/tmp/<Project Name>.wav
 
 Wait for the size to stop changing across several polls before touching the file - the helper
-also copies the staged file the moment it *appears*, with no wait for the write to finish,
+also copies the staged file the moment it _appears_, with no wait for the write to finish,
 which is a silent-truncation path that reports success. Do not trust its output; watch the
 file.
+
+### A project can silently inherit another band's "Plays at SMPTE" (2026-09-05)
+
+The Epsonics project had bar 1 playing at **01:31:35:12**. The measured, picture-true file
+start for that band is **00:47:02:11** — 44.5 minutes out. The wrong value sits within two
+seconds of The ShipRex's file start (01:31:37:08), so it almost certainly came in with a
+project or template copied from that band.
+
+**Nothing about mixing reveals this.** Bars, regions, automation, edits and the audio itself
+are all unaffected; the only symptom is the ruler, which nobody reads while balancing. It
+surfaces at delivery, where every place-at TC in DELIVERY-NOTES is derived from it, i.e. after
+the mixing is done.
+
+Verifying it is cheap and unambiguous. Cross-correlate the band's lead-vocal stem against the
+picture-true reference at three probes ten minutes apart, for each candidate TC:
+
+| candidate bar-1 SMPTE              | lag at 3 probes        | correlation   |
+| ---------------------------------- | ---------------------- | ------------- |
+| 00:47:02:11 — measured, correct    | −1.1, −0.3, +2.9 ms    | 0.32–0.59     |
+| 01:31:35:12 — what the project had | −1745, −161, −1995 ms  | **0.02–0.03** |
+| 00:47:03:17 — old Zoom anchor      | −1252, −1251, −1248 ms | 0.32–0.57     |
+
+The right answer agrees to a few ms across probes with a real correlation. A wrong TC gives
+correlations at the **noise floor** and lags that disagree by seconds. A _consistent_ lag with
+a _good_ correlation (the third row) means the TC is real but offset — that is the Zoom-anchor
+error, fixable by subtracting the lag. Read both numbers, not just the lag.
+
+Fixing it is free and safe at any point: type the correct TC into _File › Project Settings ›
+Synchronization › General_, row "Bar Position 1 1 1 1 plays at SMPTE". Nothing moves. Do it
+per **Project Alternative** — settings do not reliably propagate across alternatives — and
+disconnect the MCP first, since its accessibility poller pulls focus out of text fields.
+
+**Rule: read the offset back out of the project and check it against the pre-flight table, at
+project creation and again before the first delivery bounce.** Measuring a TC once and writing
+it in a doc does not mean the project contains it.
