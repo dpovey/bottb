@@ -623,3 +623,51 @@ copy of it that exists.
   consistent with one that reads a nominal field and stops. It was only confirmed once the
   inflated autosave gave it a file that genuinely contains a map and it returned 485 events.
   Do not trust a detector until it has said yes to something.
+
+### Choosing the timekeeper stem for a tempo map (2026-09-06)
+
+Building a tempo map means picking one track to analyse. Pointing it at the drum bus or a
+mixed source confuses the analysis; one track works better. Choosing _which_ track is not
+obvious and getting it wrong is the main source of bad tempo maps.
+
+**Epsonics, measured per song:**
+
+| song          | tempo        | use                     | why                                                      |
+| ------------- | ------------ | ----------------------- | -------------------------------------------------------- |
+| 1 (241–500)   | 178          | Hi-Hats                 | all five stems agree                                     |
+| 2 (540–762)   | 132.5        | Hi-Hats or OH           | snare reads the half                                     |
+| 3 (804–1075)  | 117.5        | Hi-Hats                 | drifts up ~2 bpm across the song                         |
+| 4 (1106–1344) | 114.8        | Hi-Hats **+ Snare**     | three passages, 74 s of 238, have no hats                |
+| 5 (1366–1593) | 132.5        | **Snare Top**, not kick | kick IBI cv 0.059 vs OH 0.040, worst source in that song |
+| 6 (1606–1961) | 76 half-time | **Kick In**             | there is no hi-hat part in this song at all              |
+
+**Hi-hats are the best default** (continuous eighths give the densest, most regular onset
+train), **overheads are the safest** (the whole kit, so they never drop out), and **never use
+the kick alone** — on song 6 it disagreed with itself by 70 bpm between the two halves.
+
+**Rank by presence, then density, then regularity — in that order.** Ranking by regularity
+alone, which is the obvious approach, fails twice:
+
+- **A stem that is not playing still beat-tracks confidently, from bleed.** Song 6's hat mic
+  produced a plausible tempo with a plausible variance while there is no hat part in the song.
+- **Regularity rewards the wrong octave**, because halving a tempo halves the inter-beat
+  variance. It picked Snare Top for song 2 at 65.9 bpm, exactly half the 132.5 that every
+  other stem reported.
+
+**The presence test that fixes the first failure:** compare the close mic against the
+overheads _in the source's own band_ — hats above 7 kHz. On Epsonics that reads +9 to +14 dB
+in the five songs where the hats are played and **+0.4 dB** in song 6 where they are not.
+The threshold must be relative to that channel's own spread across sections, never absolute:
+the same measurement on post-plugin exports shifts by ~20 dB while the separations hold to
+within 0.3 dB.
+
+**Autocorrelation cannot resolve the octave.** Two independent tools got song 1 and song 6
+wrong in _opposite_ directions on the same material — one reported 89 and 152, the other 89.1
+and 154.3, and the truth is 178 and 76. Only listening settled both. Any tool reporting a
+tempo should report the octave candidates and their relative strengths, not a single number.
+
+**Two related traps that cost retractions the same week:** a fixed beat grid on a live band
+produces confident nonsense (a grid flipped between 162 and 99 bpm depending on which snare
+hits the detector caught, and every "off grid" flag it produced was an artefact), and plain
+cross-correlation on a low-frequency source cycle-slips by whole periods of its fundamental.
+See `scripts/drum_hit_id.py` for both rules and the worked examples.
