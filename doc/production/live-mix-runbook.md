@@ -33,7 +33,21 @@ each further song ~45 min, delivery/QA ~10 min per song.
    `BOTTB_reference_48k.wav` (lead-vocal stem, 3 probes; negative lag = stems late). Never
    use a Zoom-derived TC directly — picture blocks carried offsets up to 1.3 s.
 8. **Song boundaries**: per-second RMS of the desk feed → provisional song list with bars
-   (agent), to be nudged by ear.
+   (agent), to be nudged by ear. Three things that make this go wrong, all seen on this event:
+   - **A count that disagrees with the setlist usually means a tape intro, not a segue.**
+     Recorded intros never hit the desk, so they are absent from the stems: Epsonics opens on
+     a recorded Severance theme at 00:49:41:06 and Jumbo on a recorded theme at 02:11:59.
+     Look for those before concluding two songs ran together.
+   - **A song that opens quietly cannot be found by level at all.** The Chain begins on a
+     dobro figure that sits _below_ the applause preceding it, so every level method returns
+     nothing or a result pinned to its own search window. Find those by ear or by pitch.
+   - **Trailing fragments are usually the previous song's tail**, not a short extra song.
+     Epsonics' provisional list had seven; there are six.
+
+   The **confirmed, Dean-checked table for all 30 songs across the five sets** now lives in
+   `video-post-learnings.md` → "Song starts, title cards and chapters (final, 2026-09-06)".
+   Use that in preference to anything derived here.
+
 9. Deliverables so far: trim table, polarity/delay table, song table, TC. Put them at the
    top of the band's `03_Delivery/<Band>/DELIVERY-NOTES.md`.
 
