@@ -11,7 +11,9 @@ export default async function PhotographerAdminPage() {
     redirect('/admin/login')
   }
 
-  const photographers = await getPhotographers()
+  // Admins need the true totals: photo_count gates the delete button, so a
+  // photographer whose photos are all still private must not look empty.
+  const photographers = await getPhotographers({ includePrivate: true })
 
   return (
     <AdminLayout

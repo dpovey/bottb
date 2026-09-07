@@ -5,12 +5,24 @@ import type { Photo, PhotographerWithStats } from '../db-types'
 // Photographer Functions
 // ============================================================
 
+export interface GetPhotographersOptions {
+  /**
+   * Include private (admin-only) photos in `photo_count`. Defaults to false so
+   * public pages never advertise photos that have not been released yet. Only
+   * admin contexts should pass true.
+   */
+  includePrivate?: boolean
+}
+
 /**
  * Get all photographers with photo counts
  */
-export async function getPhotographers(): Promise<PhotographerWithStats[]> {
+export async function getPhotographers(
+  options?: GetPhotographersOptions
+): Promise<PhotographerWithStats[]> {
+  const incPrivate = options?.includePrivate ? 'true' : 'false'
   const { rows } = await sql<PhotographerWithStats>`
-    SELECT 
+    SELECT
       p.*,
       COALESCE(pc.photo_count, 0)::int as photo_count
     FROM photographers p
@@ -18,6 +30,7 @@ export async function getPhotographers(): Promise<PhotographerWithStats[]> {
       SELECT photographer as name, COUNT(*)::int as photo_count
       FROM photos
       WHERE photographer IS NOT NULL
+        AND (${incPrivate}::boolean = true OR visibility = 'public')
       GROUP BY photographer
     ) pc ON p.name = pc.name
     ORDER BY p.name ASC
@@ -29,10 +42,12 @@ export async function getPhotographers(): Promise<PhotographerWithStats[]> {
  * Get a single photographer by slug
  */
 export async function getPhotographerBySlug(
-  slug: string
+  slug: string,
+  options?: GetPhotographersOptions
 ): Promise<PhotographerWithStats | null> {
+  const incPrivate = options?.includePrivate ? 'true' : 'false'
   const { rows } = await sql<PhotographerWithStats>`
-    SELECT 
+    SELECT
       p.*,
       COALESCE(pc.photo_count, 0)::int as photo_count
     FROM photographers p
@@ -40,6 +55,7 @@ export async function getPhotographerBySlug(
       SELECT photographer as name, COUNT(*)::int as photo_count
       FROM photos
       WHERE photographer IS NOT NULL
+        AND (${incPrivate}::boolean = true OR visibility = 'public')
       GROUP BY photographer
     ) pc ON p.name = pc.name
     WHERE p.slug = ${slug}
@@ -48,7 +64,9 @@ export async function getPhotographerBySlug(
 }
 
 /**
- * Get hero photo for a photographer (by name match and label)
+ * Get hero photo for a photographer (by name match and label).
+ * Only public photos are eligible - this is rendered on the public
+ * photographer page.
  */
 export async function getPhotographerHeroPhoto(
   photographerName: string
@@ -61,6 +79,7 @@ export async function getPhotographerHeroPhoto(
     LEFT JOIN bands b ON p.band_id = b.id
     WHERE p.photographer = ${photographerName}
       AND 'photographer_hero' = ANY(p.labels)
+      AND p.visibility = 'public'
     ORDER BY p.uploaded_at DESC
     LIMIT 1
   `
@@ -68,7 +87,9 @@ export async function getPhotographerHeroPhoto(
 }
 
 /**
- * Get a random photo from a photographer (fallback for hero)
+ * Get a random photo from a photographer (fallback for hero).
+ * Only public photos are eligible - this is rendered on the public
+ * photographer page.
  */
 export async function getPhotographerRandomPhoto(
   photographerName: string
@@ -80,6 +101,7 @@ export async function getPhotographerRandomPhoto(
     LEFT JOIN events e ON p.event_id = e.id
     LEFT JOIN bands b ON p.band_id = b.id
     WHERE p.photographer = ${photographerName}
+      AND p.visibility = 'public'
     ORDER BY RANDOM()
     LIMIT 1
   `

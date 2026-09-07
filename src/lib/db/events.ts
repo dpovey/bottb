@@ -145,8 +145,8 @@ export async function getBandScores(eventId: string) {
         FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
         WHERE bc.band_id = b.id
       ), '[]'::json) as companies,
-      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
-      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point,
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) AND visibility = 'public' LIMIT 1) as hero_thumbnail_url,
+      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) AND visibility = 'public' LIMIT 1) as hero_focal_point,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.song_choice END) as avg_song_choice,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.performance END) as avg_performance,
       AVG(CASE WHEN v.voter_type = 'judge' THEN v.crowd_vibe END) as avg_crowd_vibe,

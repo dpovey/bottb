@@ -57,7 +57,7 @@ export async function getCompanyBands(
         FROM band_companies bc2 JOIN companies c2 ON c2.slug = bc2.company_slug
         WHERE bc2.band_id = b.id
       ), '[]'::json) as companies,
-      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) AND visibility = 'public' LIMIT 1) as hero_thumbnail_url
     FROM bands b
     JOIN events e ON b.event_id = e.id
     JOIN band_companies bc ON bc.band_id = b.id AND bc.company_slug = ${companySlug}
