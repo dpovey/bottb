@@ -35,6 +35,13 @@ import {
 import { connect, type TransportInfo } from './transport'
 import { interpretBrisbaneLog, type PlannedPost } from './backfill/brisbane-log'
 import {
+  buildHarvestPlan,
+  HARVEST_PLATFORMS,
+  type HarvestPlan,
+  type HarvestPlatform,
+} from './harvest'
+import { toEventRef } from './harvest/match'
+import {
   COLLAB_POLICIES,
   EVENT_PARTY_ROLES,
   HANDLE_STATUSES,
@@ -96,6 +103,11 @@ const USAGE = `bottb - Battle of the Tech Bands operations CLI
 
   backfill brisbane-2026-log [--file] [--apply --yes]
                                         DRY RUN unless BOTH --apply and --yes
+
+  harvest [--platform facebook|instagram|youtube] [--limit N] [--apply --yes]
+                                        Read the full published history off the
+                                        platforms into the post ledger.
+                                        DRY RUN unless BOTH --apply and --yes.
 
 Global: --json  --quiet  --help
 `
@@ -800,6 +812,160 @@ function renderBackfill(
 }
 
 // ---------------------------------------------------------------------------
+// harvest
+// ---------------------------------------------------------------------------
+
+const CONFIDENCE_ORDER = ['high', 'medium', 'low', 'none'] as const
+
+async function cmdHarvest(values: Options, transport: TransportInfo) {
+  const apply = values.apply === true && values.yes === true
+  if (values.apply === true && values.yes !== true) {
+    throw new CliError(
+      'confirmation_required',
+      '--apply also needs --yes. This writes to whatever DATABASE_URL points at, which is production.'
+    )
+  }
+
+  const only = oneOf(values, 'platform', HARVEST_PLATFORMS)
+  const platforms: readonly HarvestPlatform[] = only
+    ? [only]
+    : HARVEST_PLATFORMS
+
+  // Match against the database, not against a hardcoded list. Band ids are
+  // frozen at creation and drift from the current name (the Brisbane 2026
+  // ShipReX is still `the-shiprex-brisbane-2026`), so the id has to come
+  // from the row rather than from a slug rule.
+  const { rows: eventRows } = await sqlQuery<{ id: string; date: string }>(
+    'SELECT id, date FROM events ORDER BY date'
+  )
+  const { rows: bands } = await sqlQuery<{
+    id: string
+    name: string
+    event_id: string
+    company_slug: string | null
+  }>('SELECT id, name, event_id, company_slug FROM bands')
+  const { rows: companies } = await sqlQuery<{ slug: string; name: string }>(
+    'SELECT slug, name FROM companies'
+  )
+  const ctx = { events: eventRows.map(toEventRef), bands, companies }
+
+  const plan = await buildHarvestPlan(platforms, ctx, (m) => log(m))
+
+  if (isJson()) {
+    emitJson('harvest', plan, {
+      transport: transport.transport,
+      count: plan.posts.length,
+      dryRun: !apply,
+    })
+    if (!apply) return
+  } else {
+    renderHarvest(plan, apply)
+    if (!apply) return
+  }
+
+  // Idempotent: every row has a platform-native external_id, so recordPost
+  // upserts on (platform, external_id).
+  let written = 0
+  for (const p of plan.posts) {
+    await recordPost({
+      platform: p.platform,
+      external_id: p.external_id,
+      permalink: p.permalink,
+      status: p.status,
+      content_type: p.content_type,
+      event_id: p.event_id,
+      band_id: p.band_id,
+      title: p.title,
+      caption: p.caption,
+      media_url: p.media_url,
+      posted_at: p.posted_at,
+      posted_at_estimated: false,
+      posted_tz: p.posted_tz,
+      source: p.source,
+      metadata: {
+        ...p.metadata,
+        match: {
+          event_confidence: p.match.eventConfidence,
+          band_confidence: p.match.bandConfidence,
+        },
+        harvested_at: new Date().toISOString(),
+      },
+    })
+    written++
+  }
+  log(`wrote ${written} posts`)
+  if (!isJson()) out(`Applied. ${written} posts written or refreshed.`)
+}
+
+function renderHarvest(plan: HarvestPlan, apply: boolean) {
+  const byPlatform = new Map<string, number>()
+  for (const p of plan.posts) {
+    byPlatform.set(p.platform, (byPlatform.get(p.platform) ?? 0) + 1)
+  }
+  out('Harvested')
+  out(
+    table(
+      ['platform', 'rows'],
+      [...byPlatform].map(([k, v]) => [k, String(v)])
+    )
+  )
+
+  const events = new Map<string, Map<string, number>>()
+  for (const p of plan.posts) {
+    const key = p.event_id ?? '(unmatched)'
+    const row = events.get(key) ?? new Map<string, number>()
+    row.set(p.platform, (row.get(p.platform) ?? 0) + 1)
+    events.set(key, row)
+  }
+  out('')
+  out('By event')
+  out(
+    table(
+      ['event', 'facebook', 'instagram', 'youtube', 'total'],
+      [...events]
+        .sort()
+        .map(([id, row]) => [
+          id,
+          String(row.get('facebook') ?? 0),
+          String(row.get('instagram') ?? 0),
+          String(row.get('youtube') ?? 0),
+          String([...row.values()].reduce((a, b) => a + b, 0)),
+        ])
+    )
+  )
+
+  out('')
+  out('Event-match confidence')
+  out(
+    table(
+      ['confidence', 'posts'],
+      CONFIDENCE_ORDER.map((c) => [
+        c,
+        String(plan.posts.filter((p) => p.match.eventConfidence === c).length),
+      ])
+    )
+  )
+  out('')
+  out(
+    `Bands assigned: ${plan.posts.filter((p) => p.band_id).length} of ${plan.posts.length}.`
+  )
+
+  const section = (title: string, items: string[]) => {
+    if (items.length === 0) return
+    out('')
+    out(title)
+    for (const i of items) out(`  - ${i}`)
+  }
+  section('Worth knowing:', plan.warnings)
+  section('Not harvested, and why:', plan.gaps)
+
+  if (!apply) {
+    out('')
+    out('To write these: bottb harvest --apply --yes')
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Dispatch
 // ---------------------------------------------------------------------------
 
@@ -905,6 +1071,8 @@ async function main() {
         return cmdBackfill(values, transport)
       }
       break
+    case 'harvest':
+      return cmdHarvest(values, transport)
   }
 
   throw new CliError('unknown_command', `unknown command: ${command}`)
