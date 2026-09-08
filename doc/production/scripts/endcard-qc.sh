@@ -32,7 +32,18 @@ for t in 60 150 240 250 280 293 296 298; do
   n=$(echo "$out" | grep -o 'n_samples: [0-9]*' | tail -1 | cut -d' ' -f2)
   m=$(echo "$out" | grep -o 'mean_volume: [-0-9.]*' | tail -1 | cut -d' ' -f2)
   printf "  t=%-6s n_samples=%-8s mean=%s dB\n" "$t" "${n:-0}" "${m:-none}"
-  [ "${n:-0}" -gt 0 ] || fail=1
+  # n_samples>0 alone is NOT enough: a digitally silent region decodes samples
+  # that are all zero and would pass. Also require the level to be above -80 dB,
+  # except inside the deliberate fade at the end.
+  if [ "${n:-0}" -le 0 ]; then fail=1; continue; fi
+  case "$t" in
+    296|298|298.9) ;;   # inside the end-card fade, low level is correct
+    *) python3 -c "
+import sys
+m='${m:-}'
+if not m: sys.exit(1)
+sys.exit(0 if float(m) > -80.0 else 1)" || { echo '    ^ SILENT (mean <= -80 dB) outside the fade'; fail=1; } ;;
+  esac
 done
 [ $fail -eq 0 ] || { echo "FAIL: silent region found"; exit 1; }
 

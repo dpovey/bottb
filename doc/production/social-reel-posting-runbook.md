@@ -156,9 +156,13 @@ there* after any non-typing action (a screenshot, a key press). So a later `type
 text in the middle of the sentence, and a `BackSpace` eats the chip instead of the character you
 meant. This is what produced "Rex Software Limited are your..." mid-post.
 
-**Just type the whole caption in ONE `type` action with plain company names.** It is one call, it
-cannot go wrong, and it matches every LinkedIn post shipped before. Only reach for a mention if a
-single one is genuinely worth it, and then make it the LAST thing typed.
+**SUPERSEDED — do not follow this.** An earlier version of this section said "type the whole caption
+in ONE `type` action with plain company names". That was a workaround written before the caret
+behaviour was understood, and following it on 8 Sep shipped a LinkedIn post with the major sponsor
+in plain text. **The mandatory method is in "HARD RULE — LinkedIn mentions are mandatory" above:**
+build the caption forward, chip by chip, typing the remainder immediately after taking each chip.
+A proven fix supersedes the workaround it replaced; if these two sections ever disagree again, the
+hard rule wins.
 
 Other composer facts, verified:
 - The file input does not exist until the media button is clicked, and clicking it opens a **native
@@ -475,10 +479,14 @@ Every failure this week came from reporting success without checking. Non-negoti
   at 8 points across the whole file including the 240-299 s window a bad export silently dropped,
   and a tail contact sheet for a human to confirm the overlay.
 
-**Both gates were negative-tested on 7 Sep 2026** (a gate nobody has seen fire is not a gate):
-a 10 s video muxed with 4 s of audio → "FAIL: audio/video length mismatch", exit 1; a file with no
-audio in the checked window → "FAIL: silent region found", exit 1. Re-run those two synthetic cases
-if you ever change the checks.
+**The gates are negative-tested — a gate nobody has seen fire is not a gate.** Three synthetic cases,
+all exit 1: a 10 s video muxed with 4 s of audio ("audio/video length mismatch"); a file with no
+audio in the checked window ("silent region found"); and a file that is **digitally silent** —
+samples present but all zero. That third case was added 8 Sep after the first version of this check
+was found to pass it: `n_samples > 0` is not enough on its own, because a silent stream still
+decodes samples. The check now also requires `mean_volume > -80 dB`, exempting the deliberate fade
+at the end. Positive control: the real treated master passes (exit 0) with -14.2 dB at 60 s and the
+fade intact. Re-run all four cases if you change the checks.
 
 Keep these in the repo, not the session scratchpad: `/private/tmp` was wiped by the 13:36 reboot on
 7 Sep and took the originals with it.
