@@ -22,7 +22,15 @@
  *   ffmpeg -ss <t> -i <clip> -frames:v 1 -q:v 2 still.jpg
  * YouTube caps thumbnails at 2 MB — this shrinks JPEG quality until it fits.
  */
-import { composeYouTube, trimTransparent, createCanvas, loadImage, YT_W, YT_H, REPO } from './compose.mjs'
+import {
+  composeYouTube,
+  trimTransparent,
+  createCanvas,
+  loadImage,
+  YT_W,
+  YT_H,
+  REPO,
+} from './compose.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -31,21 +39,27 @@ const opt = (name, fallback) => {
   const i = argv.indexOf(`--${name}`)
   return i === -1 ? fallback : argv[i + 1]
 }
-const many = (name) => argv.flatMap((a, i) => (a === `--${name}` ? [argv[i + 1]] : []))
+const many = (name) =>
+  argv.flatMap((a, i) => (a === `--${name}` ? [argv[i + 1]] : []))
 
 const artist = opt('artist')
 const song = opt('song')
 const outDir = opt('out')
 const labels = many('label')
 if (!artist || !song || !outDir || labels.length === 0) {
-  console.error('usage: render.mjs --artist X --song Y --out DIR --label name:still.jpg [...]')
+  console.error(
+    'usage: render.mjs --artist X --song Y --out DIR --label name:still.jpg [...]'
+  )
   process.exit(1)
 }
-const [focusX, focusY] = (opt('focus', '0.5,0.5')).split(',').map(Number)
+const [focusX, focusY] = opt('focus', '0.5,0.5').split(',').map(Number)
 
-const bottb = await loadImage(opt('bottb', path.join(REPO, 'public/images/logos/bottb-square-black.png')))
+const bottb = await loadImage(
+  opt('bottb', path.join(REPO, 'public/images/logos/bottb-square-black.png'))
+)
 const companies = []
-for (const p of many('company')) companies.push(trimTransparent(await loadImage(p)))
+for (const p of many('company'))
+  companies.push(trimTransparent(await loadImage(p)))
 
 const content = {
   artist,
@@ -64,11 +78,22 @@ for (const spec of labels) {
   const still = spec.slice(idx + 1)
   const img = await loadImage(still)
   const canvas = createCanvas(YT_W, YT_H)
-  composeYouTube(canvas.getContext('2d'), img, img.width, img.height, content, focusX, focusY)
+  composeYouTube(
+    canvas.getContext('2d'),
+    img,
+    img.width,
+    img.height,
+    content,
+    focusX,
+    focusY
+  )
   let q = 92
   let buf = canvas.toBuffer('image/jpeg', q)
-  while (buf.length > MAX && q > 40) buf = canvas.toBuffer('image/jpeg', (q -= 6))
+  while (buf.length > MAX && q > 40)
+    buf = canvas.toBuffer('image/jpeg', (q -= 6))
   const out = path.join(outDir, `${label}.jpg`)
   fs.writeFileSync(out, buf)
-  console.log(`${out}  ${(buf.length / 1024).toFixed(0)} KB  (from ${img.width}x${img.height})`)
+  console.log(
+    `${out}  ${(buf.length / 1024).toFixed(0)} KB  (from ${img.width}x${img.height})`
+  )
 }

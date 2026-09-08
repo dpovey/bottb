@@ -98,7 +98,7 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      don't panic and don't double-post. **Getting permalinks: never map video ids from the Studio
      list's anchors or profile-grid tile order — both burned us with swapped links.** The reliable
      check is TikTok's oEmbed (no login needed): `curl
-     "https://www.tiktok.com/oembed?url=https://www.tiktok.com/@bottb0/video/<id>"` returns the
+"https://www.tiktok.com/oembed?url=https://www.tiktok.com/@bottb0/video/<id>"` returns the
      caption for published videos (400 while still scheduled) — match the caption before sharing a
      link. Scheduled posts have pre-assigned ids that appear in page HTML before publish, which is
      why an unverified link can point at a not-yet-public post. Web sessions also log out
@@ -151,8 +151,8 @@ cast ints (`$5::int`). Ready-made script: session scratchpad `insert-video-http.
 
 ### LinkedIn composer — the caret trap (learned the hard way, 7 Sep 2026)
 
-Inserting a mention chip moves the caret to **immediately after the chip**, and it *snaps back
-there* after any non-typing action (a screenshot, a key press). So a later `type` call lands its
+Inserting a mention chip moves the caret to **immediately after the chip**, and it _snaps back
+there_ after any non-typing action (a screenshot, a key press). So a later `type` call lands its
 text in the middle of the sentence, and a `BackSpace` eats the chip instead of the character you
 meant. This is what produced "Rex Software Limited are your..." mid-post.
 
@@ -165,6 +165,7 @@ A proven fix supersedes the workaround it replaced; if these two sections ever d
 hard rule wins.
 
 Other composer facts, verified:
+
 - The file input does not exist until the media button is clicked, and clicking it opens a **native
   file dialog that blocks CDP entirely**. Patch it out first:
   `HTMLInputElement.prototype.click` → capture `this` and return, for `type === 'file'`.
@@ -179,8 +180,7 @@ Other composer facts, verified:
 ### TikTok photo posts
 
 TikTok Studio has a **Photos** tab beside Videos (`/tiktokstudio/upload?tab=photo`). Same
-`file_upload` route; the first image becomes the Cover. Title is capped at 90 chars, description
-4000. Typing `#tag` opens a suggestion dropdown — **never press Enter**, click a neutral area to
+`file_upload` route; the first image becomes the Cover. Title is capped at 90 chars, description 4000. Typing `#tag` opens a suggestion dropdown — **never press Enter**, click a neutral area to
 dismiss it, or you will insert the wrong tag. Set Location to The Triffid. Posting redirects to
 `/tiktokstudio/content`; get the permalink from that list, then **confirm it with oEmbed**
 (`https://www.tiktok.com/oembed?url=...`) before sending it to anyone — list order has mismatched
@@ -216,6 +216,7 @@ typeahead (`Jumbo Interactive Limited` works, `Jumbo Interactive` does not; `Rex
 `Rex` returns people).
 
 **The technique that works** (proven 7 Sep, and the caret rule that explains it):
+
 1. Type the caption up to and including `@Full Company Name`.
 2. Down, then Return, to take the chip.
 3. Type the remainder.
@@ -232,25 +233,25 @@ number of mentions you intended, and the text must contain no stray `@`.
 
 ## Handles / tags (verified Aug 2026)
 
-| Who                         | LinkedIn page                        | Instagram                  | Facebook             | Notes                                            |
-| --------------------------- | ------------------------------------ | -------------------------- | -------------------- | ------------------------------------------------ |
-| BotTB                       | battle-of-the-tech-bands             | @battleofthetechbands      | page 207312765803305 | TikTok @bottb0, YouTube @battleofthetechbands    |
-| Jumbo Interactive (sponsor) | jumbo-interactive-limited            | — none                     | /JumboInteractive    | name-only on IG/TikTok                           |
-| Youngcare                   | youngcareoz                          | @youngcareoz               | /YoungcareOz         | YouTube @YoungcareOz; no TikTok → use #youngcare |
-| Rex Software                | rex-software                         | @rex_software              | /rexsoftware         |                                                  |
-| URBAN X                     | urbanx                               | @urbanx.io                 | /URBANX.IO           |                                                  |
-| Epsilon                     | epsilon                              | @epsilonmarketing (global) | /EpsilonMarketing    |                                                  |
-| Suncorp                     | suncorp ("Suncorp Group")            | @suncorp                   | /suncorpAUNZ         | /SunCorp is someone else                         |
-| For The Record              | ftr-limited ("For The Record (FTR)") | — none                     | — none found         | LinkedIn only                                    |
-| The Triffid                 | —                                    | @thetriffid                | /thetriffid          | TikTok location yes; **do NOT use as IG collaborator — they never accept invites** |
+| Who                         | LinkedIn page                        | Instagram                  | Facebook             | Notes                                                                                      |
+| --------------------------- | ------------------------------------ | -------------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| BotTB                       | battle-of-the-tech-bands             | @battleofthetechbands      | page 207312765803305 | TikTok @bottb0, YouTube @battleofthetechbands                                              |
+| Jumbo Interactive (sponsor) | jumbo-interactive-limited            | — none                     | /JumboInteractive    | name-only on IG/TikTok                                                                     |
+| Youngcare                   | youngcareoz                          | @youngcareoz               | /YoungcareOz         | YouTube @YoungcareOz; no TikTok → use #youngcare                                           |
+| Rex Software                | rex-software                         | @rex_software              | /rexsoftware         |                                                                                            |
+| URBAN X                     | urbanx                               | @urbanx.io                 | /URBANX.IO           |                                                                                            |
+| Epsilon                     | epsilon                              | @epsilonmarketing (global) | /EpsilonMarketing    |                                                                                            |
+| Suncorp                     | suncorp ("Suncorp Group")            | @suncorp                   | /suncorpAUNZ         | /SunCorp is someone else                                                                   |
+| For The Record              | ftr-limited ("For The Record (FTR)") | — none                     | — none found         | LinkedIn only                                                                              |
+| The Triffid                 | —                                    | @thetriffid                | /thetriffid          | TikTok location yes; **do NOT use as IG collaborator — they never accept invites**         |
 | Amy Corrie (photographer)   | —                                    | @amyjuliaaaaa              | —                    | Brisbane 2026 stills. Credit "Photos by Amy Corrie"; IG collaborator (Dean approved 7 Sep) |
-| Aaron Griffiths (video)     | —                                    | @quirkylikethat            | —                    | Videographer — video posts only, never photo posts |
-| Kurt Boldy (video)          | —                                    | @kurtboldy                 | —                    | Videographer — video posts only, never photo posts |
+| Aaron Griffiths (video)     | —                                    | @quirkylikethat            | —                    | Videographer — video posts only, never photo posts                                         |
+| Kurt Boldy (video)          | —                                    | @kurtboldy                 | —                    | Videographer — video posts only, never photo posts                                         |
 
 **LinkedIn mentions: use the company's FULL registered name.** The typeahead matches on the name as
 LinkedIn holds it, so a partial name silently returns nothing:
 
-- `@Rex Software` resolves. `@Rex` alone returns *people*, not the company — too short.
+- `@Rex Software` resolves. `@Rex` alone returns _people_, not the company — too short.
 - `@Jumbo Interactive Limited` resolves (Dean, 7 Sep). `@Jumbo Interactive` did not — the "Limited"
   is required.
 - `@URBAN X` did not resolve for me, but see the caveat below; try `URBANX` / the full registered
@@ -372,7 +373,7 @@ prepared by the `cut-recipe-colour-correction` session under
   **Facebook** side via the API. Each folder therefore needs the final caption as a plain `.txt`
   Dean can paste, not just a JSON field.
 - **IG collaborators do not survive scheduling.** Business Suite has Tag People -> Invite
-  Collaborator, but it is reported not to carry on a *scheduled* post — the invite has to be added
+  Collaborator, but it is reported not to carry on a _scheduled_ post — the invite has to be added
   after it publishes (open post -> Edit -> Invite collaborator). Verify on the first post before
   queuing the rest. (Reported, not yet confirmed by us.)
 - **Credit the photographer** the way videos credit the videographers: "Photos by Amy Corrie",
@@ -461,6 +462,7 @@ Delete throwaway blobs with `del(url, {token})` — they are public until you do
 ## Verify, don't assume
 
 Every failure this week came from reporting success without checking. Non-negotiable checks:
+
 - **DB writes**: re-select the row. A "success" that never connected was reported as done once —
   the insert had silently failed and had to be redone days later.
 - **Permalinks**: confirm the post text/caption matches the link (LinkedIn: fetch the activity URL
@@ -498,37 +500,37 @@ breaks or a rule changes; the sections above are the distilled rules, this is th
 
 ### 7 Sep 2026 — Epsonics "The Chain" full video
 
-| # | What happened | Why it mattered | What changed |
-|---|---|---|---|
-| 1 | First treated masters had visible flicker | Would have shipped to 5 platforms | Video held; peer session root-caused it to the venue's 3LCD projector backdrop (30 Hz against 25p, aliasing to an exact 5-frame cycle) |
-| 2 | End card **replaced** the picture instead of overlaying it | Dean caught it before I did | Additive-blend recipe (`blend=all_mode=addition` over a faded base); tail contact sheet is now a required check |
-| 3 | Replacement 1080p had **no audio for its last 56 s** (audio stream 243.285 s vs video 299.000 s) | Would have shipped a silent big finish to LinkedIn, TikTok, FB and IG | Audio gate added to the re-run script: stream duration compared to video AND a decoded tail check. Container metadata alone is not enough — but here metadata was the first clue and decoding confirmed it |
-| 4 | Two tracked background encodes were killed mid-run | Silent partial files (`moov atom not found`) | **Root cause found later: the machine froze and rebooted at ~13:36.** A mix-assist session ran `pytest -n auto` — 12 workers x 2.1 GB against 24 GB of RAM — and swap-thrashed the Mac to a standstill, twice. Not a harness kill, which is what I wrongly wrote here first. Long encodes still run detached (`nohup ffmpeg ... & disown`) since that also survives a session restart, and see the memory rule in `~/.claude/CLAUDE.md` before running anything parallel |
-| 5 | Blob upload script copied into the scratchpad died instantly with `ERR_MODULE_NOT_FOUND` | Invisible because the job was detached; the plan assumed the upload had happened | `doc/production/scripts/blob-upload.mjs` must run with the **repo root as cwd**. Always read the log for `BLOB_URL` before proceeding |
-| 7 | `/private/tmp` scratchpad was wiped by the reboot, losing the built LinkedIn assets | Rebuild artefacts that took real work into a **durable** path (here `social/<post>/linkedin/`), not the session scratchpad; copy to the scratchpad only at the moment `file_upload` needs it |
-| 6 | The grade changed *after* I had treated and installed a 4K master | The file at the canonical path was silently the wrong one | Superseded files get renamed (`SUPERSEDED_oldgrade_*`, `OLD_flickery_*`), never deleted, and **the canonical path is left empty** so nothing can be dragged into a post by accident |
+| #   | What happened                                                                                    | Why it mattered                                                                                                                                                                              | What changed                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | First treated masters had visible flicker                                                        | Would have shipped to 5 platforms                                                                                                                                                            | Video held; peer session root-caused it to the venue's 3LCD projector backdrop (30 Hz against 25p, aliasing to an exact 5-frame cycle)                                                                                                                                                                                                                                                                                                                                   |
+| 2   | End card **replaced** the picture instead of overlaying it                                       | Dean caught it before I did                                                                                                                                                                  | Additive-blend recipe (`blend=all_mode=addition` over a faded base); tail contact sheet is now a required check                                                                                                                                                                                                                                                                                                                                                          |
+| 3   | Replacement 1080p had **no audio for its last 56 s** (audio stream 243.285 s vs video 299.000 s) | Would have shipped a silent big finish to LinkedIn, TikTok, FB and IG                                                                                                                        | Audio gate added to the re-run script: stream duration compared to video AND a decoded tail check. Container metadata alone is not enough — but here metadata was the first clue and decoding confirmed it                                                                                                                                                                                                                                                               |
+| 4   | Two tracked background encodes were killed mid-run                                               | Silent partial files (`moov atom not found`)                                                                                                                                                 | **Root cause found later: the machine froze and rebooted at ~13:36.** A mix-assist session ran `pytest -n auto` — 12 workers x 2.1 GB against 24 GB of RAM — and swap-thrashed the Mac to a standstill, twice. Not a harness kill, which is what I wrongly wrote here first. Long encodes still run detached (`nohup ffmpeg ... & disown`) since that also survives a session restart, and see the memory rule in `~/.claude/CLAUDE.md` before running anything parallel |
+| 5   | Blob upload script copied into the scratchpad died instantly with `ERR_MODULE_NOT_FOUND`         | Invisible because the job was detached; the plan assumed the upload had happened                                                                                                             | `doc/production/scripts/blob-upload.mjs` must run with the **repo root as cwd**. Always read the log for `BLOB_URL` before proceeding                                                                                                                                                                                                                                                                                                                                    |
+| 7   | `/private/tmp` scratchpad was wiped by the reboot, losing the built LinkedIn assets              | Rebuild artefacts that took real work into a **durable** path (here `social/<post>/linkedin/`), not the session scratchpad; copy to the scratchpad only at the moment `file_upload` needs it |
+| 6   | The grade changed _after_ I had treated and installed a 4K master                                | The file at the canonical path was silently the wrong one                                                                                                                                    | Superseded files get renamed (`SUPERSEDED_oldgrade_*`, `OLD_flickery_*`), never deleted, and **the canonical path is left empty** so nothing can be dragged into a post by accident                                                                                                                                                                                                                                                                                      |
 
 Net effect: nothing shipped. Every one of these was caught by a check that takes minutes, which is
 the argument for moving a burst rather than compressing the checks.
 
 ### 7 Sep 2026 — Amy Corrie photo posts
 
-| # | What happened | What changed |
-|---|---|---|
-| 1 | I told Dean and the picker session that **stills have no website path**. Wrong — the site has a full photo pipeline (tables, gallery, admin, docs) | Corrected in the photo-posts section above. Check the schema before declaring a capability absent |
-| 2 | Picker preview showed black bars beside each thumbnail | Cosmetic (container pillarboxing a correct crop), proven with cropdetect over all 48 exports. Verify the output, don't argue about the preview |
-| 3 | `social-photos.mjs` printed a permalink built from the page id | That URL 404s: the id in a post URL is not the page id. The script now reads `permalink_url` back from the API, which also confirms `is_published` |
-| 4 | ShipReX `post.json` scheduled 13:00 with the folders delivered at 12:50 | Nothing was approved or written yet. Treat peer-supplied times as suggestions; the burst time is Dean's call |
-| 5 | Draft caption opened by announcing the win and signed off "Congratulations from all of us at @battleofthetechbands" | We *are* BotTB. Never self-mention or congratulate from the brand account; lead with a detail from the room instead |
+| #   | What happened                                                                                                                                      | What changed                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | I told Dean and the picker session that **stills have no website path**. Wrong — the site has a full photo pipeline (tables, gallery, admin, docs) | Corrected in the photo-posts section above. Check the schema before declaring a capability absent                                                  |
+| 2   | Picker preview showed black bars beside each thumbnail                                                                                             | Cosmetic (container pillarboxing a correct crop), proven with cropdetect over all 48 exports. Verify the output, don't argue about the preview     |
+| 3   | `social-photos.mjs` printed a permalink built from the page id                                                                                     | That URL 404s: the id in a post URL is not the page id. The script now reads `permalink_url` back from the API, which also confirms `is_published` |
+| 4   | ShipReX `post.json` scheduled 13:00 with the folders delivered at 12:50                                                                            | Nothing was approved or written yet. Treat peer-supplied times as suggestions; the burst time is Dean's call                                       |
+| 5   | Draft caption opened by announcing the win and signed off "Congratulations from all of us at @battleofthetechbands"                                | We _are_ BotTB. Never self-mention or congratulate from the brand account; lead with a detail from the room instead                                |
 
 ### 8 Sep 2026 — Amy Corrie photo run
 
-| # | What happened | Why it mattered | What changed |
-|---|---|---|---|
-| 1 | **The five photo posts were never scheduled.** I prepared captions, crops and LinkedIn assets on 7 Sep and stopped there. Epsonics was due 09:00 and had not gone out when Dean asked at 09:55 | A whole day's post silently missed. Nobody would have noticed until Dean asked | Facebook is now scheduled **natively** for all four remaining posts, so they fire even if this session dies (it died twice on 7 Sep). Never rely on a session-only cron for a multi-day schedule: IG has no scheduling API, so only IG/LinkedIn/TikTok need a live session, and that limitation must be stated to Dean rather than left implicit |
-| 2 | I posted the Epsonics LinkedIn caption with **plain-text company names**, no mentions, despite having proven the mention technique the day before | Jumbo Interactive is the major sponsor and got no credit. Dean had to edit the post himself | See the HARD RULE section above. Root cause was mine: I reverted to the older "type it all in one block" workaround because it felt safer, after already learning the correct method. A proven fix supersedes the workaround it replaced |
-| 3 | A stale scheduled FB post would have **republished The Chain on Sat 12 Sep using the old flickery file** | A duplicate post with a known-bad video | Deleted with Dean's approval. Lesson: when a post is held and pushed to a later date, it stays on the schedule after the real post ships — always re-check `/{page}/scheduled_posts` after a held item is finally published |
-| 4 | The FB handle-swap turned a standalone `@epsilonmarketing` line into a one-word paragraph reading "Epsilon" | Ugly orphan line, caught only by the `--dry` run | **Always `--dry` first** and read the rendered caption for both platforms. Never leave a bare @handle on its own line — fold the company into a sentence |
+| #   | What happened                                                                                                                                                                                  | Why it mattered                                                                             | What changed                                                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **The five photo posts were never scheduled.** I prepared captions, crops and LinkedIn assets on 7 Sep and stopped there. Epsonics was due 09:00 and had not gone out when Dean asked at 09:55 | A whole day's post silently missed. Nobody would have noticed until Dean asked              | Facebook is now scheduled **natively** for all four remaining posts, so they fire even if this session dies (it died twice on 7 Sep). Never rely on a session-only cron for a multi-day schedule: IG has no scheduling API, so only IG/LinkedIn/TikTok need a live session, and that limitation must be stated to Dean rather than left implicit |
+| 2   | I posted the Epsonics LinkedIn caption with **plain-text company names**, no mentions, despite having proven the mention technique the day before                                              | Jumbo Interactive is the major sponsor and got no credit. Dean had to edit the post himself | See the HARD RULE section above. Root cause was mine: I reverted to the older "type it all in one block" workaround because it felt safer, after already learning the correct method. A proven fix supersedes the workaround it replaced                                                                                                         |
+| 3   | A stale scheduled FB post would have **republished The Chain on Sat 12 Sep using the old flickery file**                                                                                       | A duplicate post with a known-bad video                                                     | Deleted with Dean's approval. Lesson: when a post is held and pushed to a later date, it stays on the schedule after the real post ships — always re-check `/{page}/scheduled_posts` after a held item is finally published                                                                                                                      |
+| 4   | The FB handle-swap turned a standalone `@epsilonmarketing` line into a one-word paragraph reading "Epsilon"                                                                                    | Ugly orphan line, caught only by the `--dry` run                                            | **Always `--dry` first** and read the rendered caption for both platforms. Never leave a bare @handle on its own line — fold the company into a sentence                                                                                                                                                                                         |
 
 ## Improvements for next time
 

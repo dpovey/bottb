@@ -34,11 +34,11 @@ public_profile
 
 Proved by calling, not by inference:
 
-| Call | Result |
-|---|---|
-| `GET /2138258163708684/video_insights` | `403 (#200) read_insights permission missing` |
+| Call                                                     | Result                                                           |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| `GET /2138258163708684/video_insights`                   | `403 (#200) read_insights permission missing`                    |
 | `GET /18127126216753732/insights?metric=reach,likes,...` | `400 (#10) Application does not have permission for this action` |
-| `GET /{page}/insights?metric=page_impressions` | `400 (#100) The value must be a valid insights metric` |
+| `GET /{page}/insights?metric=page_impressions`           | `400 (#100) The value must be a valid insights metric`           |
 
 So **no reach, no impressions, no watch-time, no follows-from-post, no profile visits** — not for
 Facebook, not for Instagram, not now and not retrospectively. Any collection design that assumes
@@ -47,23 +47,23 @@ insights is dead on arrival until the token is re-minted.
 A second, quieter permission problem showed up while enumerating. Field-by-field bisection of
 `/{page}/published_posts`:
 
-| Field | Works? |
-|---|---|
-| `id, created_time, message, permalink_url` | yes |
-| `status_type`, `is_published`, `full_picture`, `promotable_id` | yes |
-| `attachments{media_type,type,title,url}` | yes |
-| `shares` | yes |
-| `likes.summary(true)` | **no** — "requires pages_read_engagement or Page Public Content Access" |
-| `comments.summary(true)` | **no** — "requires pages_read_user_content or PPCA" |
-| `reactions.summary(true)` | **no** — same |
+| Field                                                          | Works?                                                                  |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `id, created_time, message, permalink_url`                     | yes                                                                     |
+| `status_type`, `is_published`, `full_picture`, `promotable_id` | yes                                                                     |
+| `attachments{media_type,type,title,url}`                       | yes                                                                     |
+| `shares`                                                       | yes                                                                     |
+| `likes.summary(true)`                                          | **no** — "requires pages_read_engagement or Page Public Content Access" |
+| `comments.summary(true)`                                       | **no** — "requires pages_read_user_content or PPCA"                     |
+| `reactions.summary(true)`                                      | **no** — same                                                           |
 
-`pages_read_engagement` *is* in the token's scope list, yet the API rejects the like summary. The
+`pages_read_engagement` _is_ in the token's scope list, yet the API rejects the like summary. The
 likely explanation is that the app has not passed App Review for that permission, so the granular
 grant is inert outside a dev/admin context. This should be treated as a known unknown, not a bug in
 the call. Likewise `/{page}/feed` is refused (it includes visitor posts, which need PPCA) whereas
 `/{page}/published_posts` succeeds.
 
-**What Facebook engagement *is* available without any new permission:**
+**What Facebook engagement _is_ available without any new permission:**
 
 - `shares.count` on posts (present on 37 of 177 posts — absent means zero shares).
 - **`views` on the `/videos` edge** — this one is the find. `GET /{page}/videos?fields=views`
@@ -208,20 +208,20 @@ and is the only platform where genuine time-series analytics are within reach.
 The table holds **65** rows; the channel has **77**. Every row in the table exists on the channel
 (no orphans). **12 videos exist on YouTube that are not in the table:**
 
-| Published | Id | Title |
-|---|---|---|
-| 2025-10-13 | `-zj74_dQT4k` | Jumbo Band – Brisbane BoTTB 2025 |
-| 2026-07-10 | `UpUrKQqSYZI` | Lenny Kravitz – Are You Gonna Go My Way – Mentorloop – Melbourne 2026 |
-| 2026-07-18 | `Ux7eaYzKQfE` | Fully Seek from SEEK (Full Set) – Melbourne 2026 |
-| 2026-07-26 | `sInXTpMAtR8` | "Hot Property" from REA Group (Full Set) – Melbourne 2026 |
-| 2026-07-27 | `OUJkTjq8ySg` | "Loop, There it is" from Mentorloop (Full Set) – Melbourne 2026 |
+| Published  | Id            | Title                                                                                |
+| ---------- | ------------- | ------------------------------------------------------------------------------------ |
+| 2025-10-13 | `-zj74_dQT4k` | Jumbo Band – Brisbane BoTTB 2025                                                     |
+| 2026-07-10 | `UpUrKQqSYZI` | Lenny Kravitz – Are You Gonna Go My Way – Mentorloop – Melbourne 2026                |
+| 2026-07-18 | `Ux7eaYzKQfE` | Fully Seek from SEEK (Full Set) – Melbourne 2026                                     |
+| 2026-07-26 | `sInXTpMAtR8` | "Hot Property" from REA Group (Full Set) – Melbourne 2026                            |
+| 2026-07-27 | `OUJkTjq8ySg` | "Loop, There it is" from Mentorloop (Full Set) – Melbourne 2026                      |
 | 2026-08-02 | `oQUjdvea7Lw` | "Continuously Groovin'" from Open Universities Australia (Full Set) – Melbourne 2026 |
-| 2026-08-10 | `IYZ6fDuhYuo` | Suncorp – Brisbane 2026 |
-| 2026-08-10 | `XsZiXBhj2TY` | Jumbo – Brisbane 2026 |
-| 2026-08-12 | `2t0zoh-ZJO4` | "Jumbo Band" from Jumbo Interactive (Full Set) – Melbourne 2026 |
-| 2026-08-12 | `YYG9Vwmk3sM` | Epsilon – Brisbane 2026 |
-| 2026-08-14 | `IOCbvBxkPP0` | Brisbane 2026 – For the Record (FTR) |
-| 2026-08-20 | `l0cV7dmtY2Y` | ShipReX – Brisbane 2026 |
+| 2026-08-10 | `IYZ6fDuhYuo` | Suncorp – Brisbane 2026                                                              |
+| 2026-08-10 | `XsZiXBhj2TY` | Jumbo – Brisbane 2026                                                                |
+| 2026-08-12 | `2t0zoh-ZJO4` | "Jumbo Band" from Jumbo Interactive (Full Set) – Melbourne 2026                      |
+| 2026-08-12 | `YYG9Vwmk3sM` | Epsilon – Brisbane 2026                                                              |
+| 2026-08-14 | `IOCbvBxkPP0` | Brisbane 2026 – For the Record (FTR)                                                 |
+| 2026-08-20 | `l0cV7dmtY2Y` | ShipReX – Brisbane 2026                                                              |
 
 Most are full-set videos and Brisbane 2026 band videos that were published but never registered on
 the site. That is a content gap worth fixing independently of any metrics work — these videos are
@@ -252,16 +252,16 @@ clicks, reactions, comments, reposts, engagement rate and — importantly — th
 Two things I could not verify without page-admin access and should be tested rather than assumed:
 
 1. **Does the date-range picker reach back past 12 months?** LinkedIn's UI has historically capped a
-   single export at a 12-month window. My belief is that the cap is *per export*, not an absolute
+   single export at a 12-month window. My belief is that the cap is _per export_, not an absolute
    retention limit, so consecutive 12-month exports (Sep 2024–Sep 2025, then Sep 2023–Sep 2024)
-   should reach back to page creation. **Confidence: medium.** *Test:* open the export dialog, set
+   should reach back to page creation. **Confidence: medium.** _Test:_ open the export dialog, set
    the range to 2024-09-01 → 2025-08-31, and see whether it (a) is accepted and (b) returns rows.
    Ten minutes, no code.
 2. **Does the export include post time-of-day, or only the date?** If it is date-only, LinkedIn
    contributes nothing to the posting-time question and only to the "what content works" question.
-   **Confidence: low.** *Test:* open the exported file and look at the timestamp column.
+   **Confidence: low.** _Test:_ open the exported file and look at the timestamp column.
 
-If both tests pass, LinkedIn is the *best* dataset of the five, because the export contains real
+If both tests pass, LinkedIn is the _best_ dataset of the five, because the export contains real
 impressions — the metric Meta is withholding.
 
 ### 2.5 TikTok (@bottb0)
@@ -274,27 +274,28 @@ lists an account's videos. `oEmbed` works but only per-known-URL and returns tit
 thumbnail — no view count, no publish time.
 
 Two partial routes, both manual:
+
 - **TikTok Studio → Analytics → Content** shows per-video views/likes/comments/shares, but the
   analytics window is capped (60 days for most views) and there is no bulk export of post-level
   history.
 - **"Download your data"** (Settings → Account → Download your data) produces a JSON archive
-  including a posted-video list with timestamps. This *would* give publish times back to account
+  including a posted-video list with timestamps. This _would_ give publish times back to account
   creation. **Confidence: medium** that it includes per-video view counts; it certainly includes
-  timestamps. *Test:* request the archive, wait for the email, inspect `Video/Videos.txt` or the
+  timestamps. _Test:_ request the archive, wait for the email, inspect `Video/Videos.txt` or the
   JSON equivalent.
 
 Given the small number of TikTok posts, TikTok is not worth engineering effort. Deprioritise.
 
 ### 2.6 Summary table
 
-| Platform | Enumerable? | How far back | Posts recoverable | Outcome metric available now | Cost | Confidence |
-|---|---|---|---|---|---|---|
-| Facebook posts | Yes, `/published_posts` | 2024-01-25 | **177** | `shares` only | 2 calls | Certain |
-| Facebook videos | Yes, `/videos` | 2024-06-06 | **102** (subset of above) | **`views`** ✅ | 2 calls | Certain |
-| Instagram | Yes, `/media` | 2023-08-24 | **179** | `like_count`, `comments_count` ✅ | 2 calls | Certain |
-| YouTube | Yes, uploads playlist | 2025-09-15 | **77** | `viewCount`, `likeCount`, `commentCount` ✅ | 5 quota units | Certain |
-| LinkedIn | No API; manual export | unknown, likely page creation | unknown, est. 100–150 | impressions, clicks, reactions (if export works) | manual, ~30 min | Medium |
-| TikTok | No | — | unknown, est. 30–60 | none automated | manual, days | Low |
+| Platform        | Enumerable?             | How far back                  | Posts recoverable         | Outcome metric available now                     | Cost            | Confidence |
+| --------------- | ----------------------- | ----------------------------- | ------------------------- | ------------------------------------------------ | --------------- | ---------- |
+| Facebook posts  | Yes, `/published_posts` | 2024-01-25                    | **177**                   | `shares` only                                    | 2 calls         | Certain    |
+| Facebook videos | Yes, `/videos`          | 2024-06-06                    | **102** (subset of above) | **`views`** ✅                                   | 2 calls         | Certain    |
+| Instagram       | Yes, `/media`           | 2023-08-24                    | **179**                   | `like_count`, `comments_count` ✅                | 2 calls         | Certain    |
+| YouTube         | Yes, uploads playlist   | 2025-09-15                    | **77**                    | `viewCount`, `likeCount`, `commentCount` ✅      | 5 quota units   | Certain    |
+| LinkedIn        | No API; manual export   | unknown, likely page creation | unknown, est. 100–150     | impressions, clicks, reactions (if export works) | manual, ~30 min | Medium     |
+| TikTok          | No                      | —                             | unknown, est. 30–60       | none automated                                   | manual, days    | Low        |
 
 **Automatable dataset today: 177 + 179 + 77 = 433 posts across three platforms**, of which 358
 (FB videos, IG, YT) carry a usable engagement outcome. Add LinkedIn and the ceiling is roughly
@@ -325,11 +326,11 @@ YouTube (n=77)     spread over 16 distinct hours
 
 Per year, Instagram:
 
-| Year | n | distinct hours | σ (hours) | most common |
-|---|---|---|---|---|
-| 2024 | 26 | 9 | 2.33 | 17:00 (×8), 18:00 (×6) |
-| 2025 | 91 | 16 | 5.20 | 07:00 (×15), 17:00 (×13) |
-| 2026 | 61 | 14 | 4.48 | 08:00 (×16), 18:00 (×9) |
+| Year | n   | distinct hours | σ (hours) | most common              |
+| ---- | --- | -------------- | --------- | ------------------------ |
+| 2024 | 26  | 9              | 2.33      | 17:00 (×8), 18:00 (×6)   |
+| 2025 | 91  | 16             | 5.20      | 07:00 (×15), 17:00 (×13) |
+| 2026 | 61  | 14             | 4.48      | 08:00 (×16), 18:00 (×9)  |
 
 Facebook is the same shape: 2024 tightly clustered around the evening, 2025 wide open across 18
 hours, 2026 bimodal at 08:00 and 18:00. Day-of-week is also well spread (Mon 33, Tue 30, Thu 28,
@@ -342,26 +343,26 @@ answerable.
 
 Instagram Reels, 2025 onward, n=76:
 
-| Slot (AEST) | n | median likes |
-|---|---|---|
-| 06–08 | 23 | 12 |
-| 09–11 | 12 | 12 |
-| 12–14 | 7 | 12 |
-| 15–17 | 11 | 14 |
-| **18–20** | **19** | **20** |
-| 21–23 | 3 | 13 |
+| Slot (AEST) | n      | median likes |
+| ----------- | ------ | ------------ |
+| 06–08       | 23     | 12           |
+| 09–11       | 12     | 12           |
+| 12–14       | 7      | 12           |
+| 15–17       | 11     | 14           |
+| **18–20**   | **19** | **20**       |
+| 21–23       | 3      | 13           |
 
 Facebook videos, all 102, median views:
 
-| Slot (AEST) | n | median views |
-|---|---|---|
-| 03–05 | 4 | 64 |
-| **06–08** | **27** | **204** |
-| 09–11 | 16 | 170 |
-| 12–14 | 11 | 51 |
-| 15–17 | 22 | 140 |
-| 18–20 | 15 | 51 |
-| 21–23 | 7 | 64 |
+| Slot (AEST) | n      | median views |
+| ----------- | ------ | ------------ |
+| 03–05       | 4      | 64           |
+| **06–08**   | **27** | **204**      |
+| 09–11       | 16     | 170          |
+| 12–14       | 11     | 51           |
+| 15–17       | 22     | 140          |
+| 18–20       | 15     | 51           |
+| 21–23       | 7      | 64           |
 
 Instagram evening posts get roughly 1.6× the likes of morning posts; Facebook video points the
 other way, favouring the morning. Both are interesting and **neither should be believed yet**, for
@@ -411,16 +412,16 @@ Project (environment) id **268555**, US cloud.
 `POSTHOG_PERSONAL_API_KEY` exists but is scoped to no read permissions at all. Every read endpoint
 probed returned 403 with the missing scope named:
 
-| Endpoint | Missing scope |
-|---|---|
-| `POST /api/projects/268555/query/` (HogQL) | `query:read` |
-| `GET /api/projects/268555/` | `project:read` |
-| `.../event_definitions/` | `event_definition:read` |
-| `.../property_definitions/` | `property_definition:read` |
-| `.../insights/` | `insight:read` |
-| `.../dashboards/` | `dashboard:read` |
-| `.../session_recordings/` | `session_recording:read` |
-| `.../feature_flags/` | `feature_flag:read` |
+| Endpoint                                   | Missing scope              |
+| ------------------------------------------ | -------------------------- |
+| `POST /api/projects/268555/query/` (HogQL) | `query:read`               |
+| `GET /api/projects/268555/`                | `project:read`             |
+| `.../event_definitions/`                   | `event_definition:read`    |
+| `.../property_definitions/`                | `property_definition:read` |
+| `.../insights/`                            | `insight:read`             |
+| `.../dashboards/`                          | `dashboard:read`           |
+| `.../session_recordings/`                  | `session_recording:read`   |
+| `.../feature_flags/`                       | `feature_flag:read`        |
 
 It is also project-scoped (`/api/organizations/@current/` refuses with "API keys with scoped
 projects are only supported on project-based endpoints"), so it cannot even enumerate the org.
@@ -450,15 +451,15 @@ was installed should carry a referring domain — which will separate `l.instagr
 Two unknowns:
 
 - **Retention.** PostHog's free tier retains events for 1 year; paid plans retain 7. Which applies
-  here is not determinable from the API without `project:read`. *Test:* once `query:read` is
+  here is not determinable from the API without `project:read`. _Test:_ once `query:read` is
   granted, run `select min(timestamp), max(timestamp), count() from events` — one query answers
   retention, install date and total volume at once.
 - **Install date.** Not recoverable from the repo alone; the same query answers it.
 
 ### The real limitation: referrer tells you the platform, not the post
 
-`$referring_domain = 'l.instagram.com'` says a visit came from Instagram. It does not say *which
-post*, and it does not distinguish the link-in-bio from a story sticker from a caption link. Since
+`$referring_domain = 'l.instagram.com'` says a visit came from Instagram. It does not say _which
+post_, and it does not distinguish the link-in-bio from a story sticker from a caption link. Since
 BotTB posts several pieces of content per day during an event week, referrer alone cannot attribute
 a traffic spike to a specific post — which is exactly the attribution needed to answer "which post
 worked".

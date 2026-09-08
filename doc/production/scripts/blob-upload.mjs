@@ -12,14 +12,29 @@ import path from 'path'
 import { put } from '@vercel/blob'
 
 const env = Object.fromEntries(
-  fs.readFileSync('.env.local', 'utf8').split('\n')
+  fs
+    .readFileSync('.env.local', 'utf8')
+    .split('\n')
     .filter((l) => l.includes('=') && !l.startsWith('#'))
-    .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^"|"$/g, '')] })
+    .map((l) => {
+      const i = l.indexOf('=')
+      return [
+        l.slice(0, i).trim(),
+        l
+          .slice(i + 1)
+          .trim()
+          .replace(/^"|"$/g, ''),
+      ]
+    })
 )
 
 const file = process.argv[2]
-if (!file) { console.error('usage: blob-upload.mjs <file> [blob-path]'); process.exit(1) }
-const blobPath = process.argv[3] || `social/brisbane-2026/${path.basename(file)}`
+if (!file) {
+  console.error('usage: blob-upload.mjs <file> [blob-path]')
+  process.exit(1)
+}
+const blobPath =
+  process.argv[3] || `social/brisbane-2026/${path.basename(file)}`
 const size = fs.statSync(file).size
 console.log(`uploading ${file} (${(size / 1e9).toFixed(2)} GB) -> ${blobPath}`)
 const started = Date.now()

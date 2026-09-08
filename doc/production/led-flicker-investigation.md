@@ -18,23 +18,23 @@ Method: decoded short segments (4–20 s) from the half-res proxies (full-res or
 
 ### Temporal signature (the load-bearing fact)
 
-| Segment (proxy frame) | Y peak | Y mod (hp-rms % of screen level) | 5 Hz amp p95 (8-bit) | U / V mod % | banding metric |
-|---|---|---|---|---|---|
-| B C8817 @ 39100 (The Chain) | 5.00 Hz | 4.3% | 2.9 | 1.4 / 1.2 | 0.30 |
-| B C8817 @ 43700 | 5 Hz + content | 8.6% | 2.7 | 6.1 / 4.7 | 0.48 |
-| B C8816 @ 30000 (earlier set) | 5 Hz + content | 10.8% | 3.1 | 2.6 / 3.3 | 0.97 |
-| B C8820 @ 20000 (later set) | 5 Hz + content | 12.4% | 3.1 | 9.6 / 3.5 | 0.76 |
-| B C8821 @ 25000 | 5 Hz + content | 11.7% | 1.8 | 2.6 / 2.3 | 0.42 |
-| C 4162 @ 39250 (The Chain) | 5.00 Hz | 4.6% | 2.5 | 2.0 / 2.0 | 0.22 |
-| C 4162 @ 41100 (close-up cut 528) | 5.00 Hz | 9.6% | 3.2 | 3.1 / 2.3 | 0.17 |
-| C 4161 @ 30000 | 5.00 Hz | 7.2% | 2.5 | 2.0 / 3.8 | 0.52 |
-| C 4164 @ 20000 | 5 Hz + content | 11.2% | 2.8 | 7.1 / 3.8 | 0.72 |
-| C 4165 @ 25000 | 5.00 Hz | 13.4% | 2.7 | 1.5 / 2.3 | 0.58 |
-| D C3778 @ 39500 (The Chain) | 5.00 Hz | 2.7% | 2.1 | 1.2 / 1.3 | 0.36 |
-| D C3778 @ 43500 | 5 Hz + content | 5.5% | 1.6 | 2.9 / 2.8 | 0.36 |
-| D C3777 @ 30000 | 5.01 Hz | 4.1% | 2.9 | 2.3 / 4.9 | 0.58 |
-| D C3781 @ 20000 | 5 Hz + content | 3.8% | 1.3 | 3.6 / 2.6 | 0.18 |
-| D C3782 @ 25000 | 5.00 Hz | 4.9% | 3.9 | 4.2 / 2.0 | 0.16 |
+| Segment (proxy frame)             | Y peak         | Y mod (hp-rms % of screen level) | 5 Hz amp p95 (8-bit) | U / V mod % | banding metric |
+| --------------------------------- | -------------- | -------------------------------- | -------------------- | ----------- | -------------- |
+| B C8817 @ 39100 (The Chain)       | 5.00 Hz        | 4.3%                             | 2.9                  | 1.4 / 1.2   | 0.30           |
+| B C8817 @ 43700                   | 5 Hz + content | 8.6%                             | 2.7                  | 6.1 / 4.7   | 0.48           |
+| B C8816 @ 30000 (earlier set)     | 5 Hz + content | 10.8%                            | 3.1                  | 2.6 / 3.3   | 0.97           |
+| B C8820 @ 20000 (later set)       | 5 Hz + content | 12.4%                            | 3.1                  | 9.6 / 3.5   | 0.76           |
+| B C8821 @ 25000                   | 5 Hz + content | 11.7%                            | 1.8                  | 2.6 / 2.3   | 0.42           |
+| C 4162 @ 39250 (The Chain)        | 5.00 Hz        | 4.6%                             | 2.5                  | 2.0 / 2.0   | 0.22           |
+| C 4162 @ 41100 (close-up cut 528) | 5.00 Hz        | 9.6%                             | 3.2                  | 3.1 / 2.3   | 0.17           |
+| C 4161 @ 30000                    | 5.00 Hz        | 7.2%                             | 2.5                  | 2.0 / 3.8   | 0.52           |
+| C 4164 @ 20000                    | 5 Hz + content | 11.2%                            | 2.8                  | 7.1 / 3.8   | 0.72           |
+| C 4165 @ 25000                    | 5.00 Hz        | 13.4%                            | 2.7                  | 1.5 / 2.3   | 0.58           |
+| D C3778 @ 39500 (The Chain)       | 5.00 Hz        | 2.7%                             | 2.1                  | 1.2 / 1.3   | 0.36           |
+| D C3778 @ 43500                   | 5 Hz + content | 5.5%                             | 1.6                  | 2.9 / 2.8   | 0.36           |
+| D C3777 @ 30000                   | 5.01 Hz        | 4.1%                             | 2.9                  | 2.3 / 4.9   | 0.58           |
+| D C3781 @ 20000                   | 5 Hz + content | 3.8%                             | 1.3                  | 3.6 / 2.6   | 0.18           |
+| D C3782 @ 25000                   | 5.00 Hz        | 4.9%                             | 3.9                  | 4.2 / 2.0   | 0.16           |
 
 ("5 Hz + content" = the 5 Hz spike is present but broadband screen-content motion carries more total energy in that segment; the coherent 5 Hz amplitude column is the flicker itself.)
 
@@ -46,7 +46,7 @@ Method: decoded short segments (4–20 s) from the half-res proxies (full-res or
 ### Spatial signature (why it looked like moiré)
 
 - **Rolling bands, not a global pulse.** The 5 Hz phase advances with row: CAM D (A7 IV, slowest readout) shows clean rolling bands, wavelength ≈ 166 UHD rows, rolling ≈ 33 UHD rows/frame — i.e. exactly 1/5 wavelength per frame, consistent with the 5-frame cycle. CAM B/C (A7S III, faster readout) show broader bands (≈ 350–500 UHD rows on the CAM C full-res check) with patchier phase.
-- **Sawtooth microstructure.** The full-res 5 Hz amplitude map on CAM C shows the band edges as a sharp triangular zigzag lattice (~25–30 px pitch at UHD). This *is* the "moiré-like pattern": it is the spatial texture of the flicker field itself. When Deflicker removes the flicker only partially, this lattice is what remains half-visible and reads as moiré. It is not a scaling/resampling artifact, and it disappears when the temporal cycle is fully cancelled (verified in the prototype — see §3).
+- **Sawtooth microstructure.** The full-res 5 Hz amplitude map on CAM C shows the band edges as a sharp triangular zigzag lattice (~25–30 px pitch at UHD). This _is_ the "moiré-like pattern": it is the spatial texture of the flicker field itself. When Deflicker removes the flicker only partially, this lattice is what remains half-visible and reads as moiré. It is not a scaling/resampling artifact, and it disappears when the temporal cycle is fully cancelled (verified in the prototype — see §3).
 
 ## 2. Physical cause chain (with confidence)
 
@@ -54,20 +54,20 @@ Method: decoded short segments (4–20 s) from the half-res proxies (full-res or
 2. **High confidence:** Rolling shutter converts the temporal ripple into rolling bands; the different band spacing on the A7 IV (slow readout) vs the A7S IIIs (fast readout) is consistent with this.
 3. **Moderate confidence:** The fine multi-band structure and its ~166-row spacing on CAM D imply a strong optical component in the few-hundred-Hz range (consistent with 3LCD sub-field panel drive, e.g. ~480 Hz = 16 × 30 Hz, which also aliases to 5 Hz). The exact internal drive frequency can't be pinned from the footage and doesn't matter for treatment.
 4. **Low confidence (cosmetic only):** the sawtooth x-structure is plausibly the LCD inversion pattern or screen surface texture; treatment-irrelevant.
-5. **Shutter:** 1/50 s integrates 0.6 of a 30 Hz cycle (non-integer) → residual ripple survives integration. *Prevention note for next time: at 25p in front of a 60 Hz projector, shoot 1/30 s shutter (integrates exactly one cycle → no bands), or have the projector/laptop output 50 Hz.*
+5. **Shutter:** 1/50 s integrates 0.6 of a 30 Hz cycle (non-integer) → residual ripple survives integration. _Prevention note for next time: at 25p in front of a 60 Hz projector, shoot 1/30 s shutter (integrates exactly one cycle → no bands), or have the projector/laptop output 50 Hz._
 
 ## 3. Offline removal prototype (numpy, on the actual worst segments)
 
 Tested on CAM C close-up (4162 @ 41080, the cut-528 framing) and CAM D wide (C3778 @ 39450), screen crops, proxies:
 
-| Method | 5 Hz amp p95 reduction | 10 Hz reduction | banding metric | detail change |
-|---|---|---|---|---|
-| **5-frame mean (= 1 full cycle)** | **96% (C) / 98% (D)** | 98% / 99% | 0.17→0.07 / 0.54→0.03 | −28% / −33% Laplacian* |
-| 7-frame mean (= Deflicker default window) | 77% / 77% | 91% | 0.17→0.07 / 0.54→0.08 | similar loss, worse result |
-| 5-frame median | 70% / 90% | 83% / 93% | 0.17→0.11 / 0.54→0.07 | −4% / −8% (gentlest) |
-| Sliding 5+10 Hz notch | 95% / 98% | 97% | 0.17→0.09 / 0.54→0.05 | −13% / −17% |
+| Method                                    | 5 Hz amp p95 reduction | 10 Hz reduction | banding metric        | detail change              |
+| ----------------------------------------- | ---------------------- | --------------- | --------------------- | -------------------------- |
+| **5-frame mean (= 1 full cycle)**         | **96% (C) / 98% (D)**  | 98% / 99%       | 0.17→0.07 / 0.54→0.03 | −28% / −33% Laplacian\*    |
+| 7-frame mean (= Deflicker default window) | 77% / 77%              | 91%             | 0.17→0.07 / 0.54→0.08 | similar loss, worse result |
+| 5-frame median                            | 70% / 90%              | 83% / 93%       | 0.17→0.11 / 0.54→0.07 | −4% / −8% (gentlest)       |
+| Sliding 5+10 Hz notch                     | 95% / 98%              | 97%             | 0.17→0.09 / 0.54→0.05 | −13% / −17%                |
 
-\* The Laplacian "detail loss" on the screen crop is mostly *removal of the band lattice itself plus sensor noise*, not content smear: the same 5-frame mean on a static off-screen wall region loses only 2%. Screen-content motion does smear slightly under a plain mean — which is exactly what Resolve's motion estimation compensates for.
+\* The Laplacian "detail loss" on the screen crop is mostly _removal of the band lattice itself plus sensor noise_, not content smear: the same 5-frame mean on a static off-screen wall region loses only 2%. Screen-content motion does smear slightly under a plain mean — which is exactly what Resolve's motion estimation compensates for.
 
 Conclusions:
 
@@ -83,7 +83,7 @@ Notes first: Resolve's Deflicker OFX has **no Frequency/Time Cycle parameter** (
 For **each of CAM B, C, D group Pre-Clip** (keep the existing Fluoro Light node — it's doing its job on the corner lights):
 
 1. Add a new node **after** the existing Fluoro node.
-2. **Power Window** on that node covering the screen, drawn generously with a soft edge (~10%). On CAM D include the back-wall spill area around the screen — the flicker is in the *light*, not just the screen surface. Static cameras: no tracking needed; verify framing didn't shift between clips with a quick scrub.
+2. **Power Window** on that node covering the screen, drawn generously with a soft edge (~10%). On CAM D include the back-wall spill area around the screen — the flicker is in the _light_, not just the screen surface. Static cameras: no tracking needed; verify framing didn't shift between clips with a quick scrub.
 3. **OFX → Deflicker** on that node:
    - Deflicker Setting: **Advanced Controls**
    - Temporal NR → **Frames Either Side: 2** (5-frame window = one full flicker cycle — this is the whole trick)
@@ -111,4 +111,4 @@ For **each of CAM B, C, D group Pre-Clip** (keep the existing Fluoro Light node 
 
 ---
 
-*Analysis artefacts (scripts, spectra, amplitude/phase maps) were produced in the session scratchpad; the method is reproducible from the descriptions above: per-pixel temporal high-pass → FFT/5 Hz demodulation on proxy screen crops.*
+_Analysis artefacts (scripts, spectra, amplitude/phase maps) were produced in the session scratchpad; the method is reproducible from the descriptions above: per-pixel temporal high-pass → FFT/5 Hz demodulation on proxy screen crops._

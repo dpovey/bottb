@@ -16,7 +16,7 @@ as either **[verified]** (I ran it on this machine, on real project files, and s
 Specifically:
 
 1. **Build `logic-cli read` — an offline reader of the `.logicx` bundle.** This is the
-   surprise of the investigation. Logic's `ProjectData` is *not* the opaque wall the
+   surprise of the investigation. Logic's `ProjectData` is _not_ the opaque wall the
    learnings log assumes ("undocumented binary — never edit it"). It is a flat, walkable
    chunk list. I walked two real BOTTB projects end-to-end and pulled the complete mixer
    channel list in project order — including buses and the Stereo Out — in about 25 lines of
@@ -36,7 +36,7 @@ Specifically:
    in its own shipped source: it polls for the output file for **25 seconds** and then gives
    up, and it copies the file the moment it appears rather than waiting for the write to
    finish. **[verified, §4]** Both are fixable in an afternoon. I also found that every bounce
-   and every *All Tracks as Audio Files* setting lives in `com.apple.logic10.plist` as plain,
+   and every _All Tracks as Audio Files_ setting lives in `com.apple.logic10.plist` as plain,
    readable keys — `BounceFileType`, `BounceBitSize`, `BounceOffline`, `defaultBouncePath`,
    `TrackExportFileTypeIndex`, `TrackExportBitsSampleIndex` — so most of the dialog-poking can
    be replaced by setting preferences offline. **[verified, §6.3]**
@@ -51,7 +51,7 @@ Specifically:
 
 3. **Do not rebuild mixer writes.** Faders, pans, mutes, solos, renames, markers and slot-0
    inserts already work through the MCP's MCU path. Reimplementing MCU-over-CoreMIDI to get
-   back to parity would be days of work for zero new capability. (Mixer *reads* are a
+   back to parity would be days of work for zero new capability. (Mixer _reads_ are a
    different matter — see §6.2, where the MCP's two inventory surfaces disagree with each
    other.)
 
@@ -63,7 +63,7 @@ Specifically:
    waiting on a maintainer. Not the critical path. **[verified, §8]**
 
 5. **Fix the process-lifecycle problem with a wrapper, not a rewrite.** The MCP's CPU
-   starvation is a *lifecycle* bug, not an architecture problem you can only escape by
+   starvation is a _lifecycle_ bug, not an architecture problem you can only escape by
    rewriting. A `pkill` in a session-end hook solves 90 % of it today.
 
 **What not to build:** a long-lived `logic-cli serve`, an MCP surface of its own, a general
@@ -71,7 +71,7 @@ mixer-write API, or anything that writes into `ProjectData`.
 
 **Honest bottom line on effort.** Phase 1 is roughly a day and is worth it on its own merits.
 Phase 2 is one to two days and removes the single biggest daily friction. Phase 3 (fader/pan
-byte offsets) is genuinely open-ended — §5.6 records real progress *and* a real dead end, and
+byte offsets) is genuinely open-ended — §5.6 records real progress _and_ a real dead end, and
 should be read before anyone commits to it. Everything beyond that has a poor ratio and should
 stay in the MCP or stay manual.
 
@@ -92,7 +92,7 @@ carried on rendering with no visible effect.
 The datum: **while Logic is rendering a long bounce it does not service AppleEvents inside
 120 seconds.** That is a single observation, not a controlled test, but it is consistent with
 everything else here — AppleScript, System Events AX and direct AX all ultimately queue work
-onto Logic's main thread, so *every* live control channel except CoreMIDI degrades or stalls
+onto Logic's main thread, so _every_ live control channel except CoreMIDI degrades or stalls
 exactly when a render is running. Offline file reading is the only channel that doesn't.
 
 ---
@@ -115,7 +115,7 @@ depth-6 walk is thousands of round trips.
 Two things follow, and it matters which is which:
 
 - **The per-query cost is inherent to AX**, whoever writes the client. Every
-  `AXUIElementCopyAttributeValue` is serviced *inside the target process*. Apple's own
+  `AXUIElementCopyAttributeValue` is serviced _inside the target process_. Apple's own
   `AXUIElementSetMessagingTimeout` exists precisely because these are IPC requests that can
   hang. **[cited — Apple `AXUIElement.h`; medium confidence on the "main thread" specific]**
 - **The continuous polling is not inherent.** It is a design choice of this server, made
@@ -129,9 +129,9 @@ Two things follow, and it matters which is which:
 `AXObserverCreate` / `AXObserverAddNotification` / `AXObserverGetRunLoopSource` let you
 subscribe to `kAXValueChangedNotification`, `kAXWindowCreatedNotification`,
 `kAXUIElementDestroyedNotification`, `kAXFocusedUIElementChangedNotification` and friends;
-callbacks then arrive on *your* run loop when the target pushes them. **[cited]** But:
+callbacks then arrive on _your_ run loop when the target pushes them. **[cited]** But:
 
-- The notification tells you *that* something changed, not the new value — reading it is still
+- The notification tells you _that_ something changed, not the new value — reading it is still
   a synchronous round trip, just triggered by a change instead of a timer.
 - Subscription is per-element per-notification, so watching 37 faders means 37 registration
   round trips up front.
@@ -145,8 +145,8 @@ the wrong thing to build a mixer-state cache on.
 
 **And the structural point stands: a CLI that runs, acts and exits cannot orphan.** A
 long-lived server can, and this one does. That is a genuine architectural advantage of the CLI
-shape — but it is worth being precise that it fixes the *accumulation*, not the *per-query
-cost*. A CLI that did the same depth-6 walk would hurt Logic just as much for the seconds it
+shape — but it is worth being precise that it fixes the _accumulation_, not the _per-query
+cost_. A CLI that did the same depth-6 walk would hurt Logic just as much for the seconds it
 ran.
 
 ### 3.2 Export is underpowered — and the reason is in their source
@@ -164,13 +164,13 @@ ran.
   total. A 28-minute set bounced offline will not have produced a file in the staging folder
   in 25 s, and the helper returns `artifact_not_produced_in_staging` — which is exactly the
   false failure recorded in the brief.
-- Worse: as soon as the file *appears* it is copied with `shutil.copyfileobj` and the source
+- Worse: as soon as the file _appears_ it is copied with `shutil.copyfileobj` and the source
   unlinked. Nothing waits for the write to finish. **A long bounce that does appear inside 25 s
   will be copied while still being written**, yielding a truncated file that reports success.
   I have not observed this happen, but the code path is unambiguous. **[verified by reading;
   UNTESTED in the wild]**
 
-It cannot do *File > Export > All Tracks as Audio Files* at all — a different menu item and a
+It cannot do _File > Export > All Tracks as Audio Files_ at all — a different menu item and a
 different dialog, which the helper has no code for.
 
 **Confirmed in practice, three times.** `bounce_fired: true` together with
@@ -184,7 +184,7 @@ path is **`/private/tmp/<Project Name>.wav`**. The helper globs
 - **Wrong directory.** The file lands in `/tmp`, which is exactly what the
   `defaultBouncePath = /tmp` preference found in §6.3 specifies. The helper's sidebar click at
   `(x + 86, y + 184)` — meant to select Downloads — is not taking effect.
-- **Wrong filename.** The file is named after the *project*, not the
+- **Wrong filename.** The file is named after the _project_, not the
   `<name>--lpmcp-<uuid8>` staging name the helper types into the Save As field. So the
   click-select-all-delete-type sequence at `(x + 0.591·w, y + 54)` is not taking effect
   either.
@@ -209,18 +209,18 @@ the last save.
 
 ## 4. Control channels
 
-| Channel | Reaches | Cost to Logic | Verdict |
-|---|---|---|---|
-| **Offline `.logicx` parsing** | Track/channel names & order, insert chains, regions, audio file refs, tempo, markers, alternatives, sample rate | **Zero** | **Best available. Underused.** Read-only, last-save-accurate |
-| **Logic prefs plist** | Every bounce/export setting; key command bindings | Zero to read | **High value, needs a write test** |
-| **CoreMIDI / MCU** | Faders, pans, mutes, solos, transport, V-pot params, bank of 8 | Low — survives a render | Already covered by the MCP |
-| **AX via `AXObserver`** | Dialog/window lifecycle events | Low if event-driven | **Right tool for bounce completion** |
-| **AX by polling / System Events JXA** | Anything on screen — *but not fader dB* | **High — this is the 97 % CPU** | Use sparingly, never in a loop |
-| **CGEvent synthetic input** | Menus, save panels, typing | Low, but blind | Necessary evil for export |
-| **AppleScript dictionary** | `open`, `quit`, `renderpreview`. That's it | n/a | **Dead end** |
-| **Scripter** | MIDI within its own channel strip | n/a | **Dead end for host control** |
-| **Logic Remote** | Unknown | n/a | **Dead end** — transport reverse-engineered, command layer not |
-| **OSC** | TouchOSC's fixed namespace only | n/a | **The learnings log is wrong here** |
+| Channel                               | Reaches                                                                                                         | Cost to Logic                   | Verdict                                                        |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------- |
+| **Offline `.logicx` parsing**         | Track/channel names & order, insert chains, regions, audio file refs, tempo, markers, alternatives, sample rate | **Zero**                        | **Best available. Underused.** Read-only, last-save-accurate   |
+| **Logic prefs plist**                 | Every bounce/export setting; key command bindings                                                               | Zero to read                    | **High value, needs a write test**                             |
+| **CoreMIDI / MCU**                    | Faders, pans, mutes, solos, transport, V-pot params, bank of 8                                                  | Low — survives a render         | Already covered by the MCP                                     |
+| **AX via `AXObserver`**               | Dialog/window lifecycle events                                                                                  | Low if event-driven             | **Right tool for bounce completion**                           |
+| **AX by polling / System Events JXA** | Anything on screen — _but not fader dB_                                                                         | **High — this is the 97 % CPU** | Use sparingly, never in a loop                                 |
+| **CGEvent synthetic input**           | Menus, save panels, typing                                                                                      | Low, but blind                  | Necessary evil for export                                      |
+| **AppleScript dictionary**            | `open`, `quit`, `renderpreview`. That's it                                                                      | n/a                             | **Dead end**                                                   |
+| **Scripter**                          | MIDI within its own channel strip                                                                               | n/a                             | **Dead end for host control**                                  |
+| **Logic Remote**                      | Unknown                                                                                                         | n/a                             | **Dead end** — transport reverse-engineered, command layer not |
+| **OSC**                               | TouchOSC's fixed namespace only                                                                                 | n/a                             | **The learnings log is wrong here**                            |
 
 Detail on the ones where the answer is not obvious:
 
@@ -232,7 +232,7 @@ verb, `renderpreview`. **[verified — bundle inspection; cited — Apple Develo
 "just AppleScript it" has not looked.
 
 **OSC — correcting a note in the learnings log.** `live-mix-logic-learnings.md` lists "OSC
-control surface (Control Surfaces › Setup › New › OSC)" as the *best* scripting option, with
+control surface (Control Surfaces › Setup › New › OSC)" as the _best_ scripting option, with
 "faders, pans, sends, mutes, transport, markers, selected-strip plugin params; ~20 lines of
 `python-osc`". I can find no evidence a generic, user-addressable OSC surface type exists.
 What does exist in `Logic Pro.app/Contents/PlugIns/MIDI Device Plug-ins/` is
@@ -250,22 +250,22 @@ rings; scribble strips are 7 characters per channel over SysEx `F0 00 00 66 14 1
 poly aftertouch; buttons are note on/off. Bank size is 8 and **there is no addressing by
 name** — the host decides which 8 tracks are under the strips. **[cited]** This is why the
 MCP's fader readback is quantised into detents and why track indices shift under it. Nothing a
-rewrite would fix; it is the protocol. Note also that MCU carries fader *position*, never dB —
+rewrite would fix; it is the protocol. Note also that MCU carries fader _position_, never dB —
 the dB text lives only in Logic's own drawing code.
 
 **Key commands.** The `.logikcs` files are XML plists wrapping an opaque
-`LogicBinaryPreferences` blob — not editable. **[verified]** But the *live* bindings are in
+`LogicBinaryPreferences` blob — not editable. **[verified]** But the _live_ bindings are in
 `~/Library/Preferences/com.apple.logic10.plist` under `KeyCommands`, and that is a **plain,
 readable dict of 870 entries**, `"<commandId>" → {Modifier, Flags, Key, CharCode}`.
 **[verified]** Modifier is a 4-bit field (observed values compose from 1, 4, 8, 32).
 
-That is a more useful finding than it first looks: it means a CLI could *bind a key command by
-writing a preference*, rather than by driving the Key Commands window. The catch is that
+That is a more useful finding than it first looks: it means a CLI could _bind a key command by
+writing a preference_, rather than by driving the Key Commands window. The catch is that
 command IDs are numeric and unpublished — `KeyCommandShortNames` names only 33 of them. You'd
 recover the ID for "Export All Tracks as Audio Files" by diffing the plist before and after
 assigning it by hand once. Cheap experiment, big payoff. **[UNTESTED]** Note this also
 contradicts the MCP's own installer script, which asserts "Logic Pro 12.2+ no longer accepts
-plist-based Key Commands Import" — true of the *import menu*, apparently not true of the
+plist-based Key Commands Import" — true of the _import menu_, apparently not true of the
 underlying preference.
 
 ---
@@ -280,6 +280,7 @@ Inside the bundle, several files are ordinary plists, no reverse engineering req
 **[verified on `ShipReX - Full Set.logicx` and `Epsilon - Whole Set.logicx`]**:
 
 `Resources/ProjectInformation.plist`
+
 ```
 ActiveVariant   => 0
 LastSavedFrom   => "Logic Pro 12.2 (6644)"
@@ -287,21 +288,24 @@ VariantNames    => { 0: "0 - Master", 1: "1 - Careless Whisper - Uprising",
                      2: "2 - Espresso", 3: "3 - Dumb Things",
                      4: "4 - Everlong", 5: "5 - Covered in Chrome" }
 ```
+
 That is the entire **Project Alternatives** list plus which one is active — the backbone of the
 per-song workflow — for free.
 
 `Alternatives/NNN/MetaData.plist`
+
 ```
 SampleRate 48000 · BeatsPerMinute 120 · NumberOfTracks 25 · isTimeCodeBased false
 FrameRateIndex 1 · SongSignature 4/4 · SongKey C
 AudioFiles[20] · UnusedAudioFiles[11] · QuicksamplerFiles[1]
 ```
+
 Note `SampleRate 48000`. The MCP reports `sampleRate: 44100` for this project — the learnings
 log already flags that field as a placeholder. **The plist has the real value.** One line of
 Python replaces a known-wrong field.
 
 Also present per alternative: `DisplayState.plist` (window/editor layout — screensets, list
-column widths, mixer scroll position; *not* markers), `DisplayStateArchive` (NSKeyedArchiver),
+column widths, mixer scroll position; _not_ markers), `DisplayStateArchive` (NSKeyedArchiver),
 `WindowImage.jpg` (a saved screenshot of the arrange window — a free visual sanity check
 without touching Logic), and `Project File Backups/00…04` (five prior saves — a ready-made
 corpus for diff-based reverse engineering).
@@ -312,7 +316,7 @@ Prior art exists and is good. **[cited]**
 
 - **[jonkubis/LogicProFormatWriter](https://github.com/jonkubis/LogicProFormatWriter)** (Python,
   MIT) — a 1051-line byte-level spec `PROJECTDATA_FORMAT.md`, reverse-engineered against Logic
-  11.2.2 by differential analysis, with claims tagged "Logic-validated". Reads *and writes*.
+  11.2.2 by differential analysis, with claims tagged "Logic-validated". Reads _and writes_.
 - **[CraigStuntz/LogicFiles](https://github.com/CraigStuntz/LogicFiles)** (Swift, MIT) — full
   byte-level specs for `.cst`, `.pst`, `.patch`, `.aupreset`, plus the `.logicx` layout;
   fuzz-tested, round-trip tests.
@@ -332,10 +336,10 @@ Records start at `0x18`; each is a reversed-FourCC tag, `uint32 payload_size @ +
 Walking that rule over two independent projects consumed each file **exactly to EOF with no
 resync** **[verified]**:
 
-| Project | Bytes | Records | Ends at |
-|---|---|---|---|
-| `ShipReX - Full Set` alt 000 | 1,303,051 | 951 | `0x13e20b` = EOF |
-| `Epsilon - Whole Set` alt 001 | 1,013,928 | 845 | `0xf78a8` = EOF |
+| Project                       | Bytes     | Records | Ends at          |
+| ----------------------------- | --------- | ------- | ---------------- |
+| `ShipReX - Full Set` alt 000  | 1,303,051 | 951     | `0x13e20b` = EOF |
+| `Epsilon - Whole Set` alt 001 | 1,013,928 | 845     | `0xf78a8` = EOF  |
 
 Tag census for ShipRex:
 
@@ -403,17 +407,17 @@ longer than the head.
 
 `.exs` was one chunk type family, 84-byte headers, and a handful of fields verified against
 hand-set UI values. `ProjectData` is ~20 chunk types and ~950 records, but the container is
-*easier* (a clean size-chained walk with no offset table to corrupt), there is a published
+_easier_ (a clean size-chained walk with no offset table to corrupt), there is a published
 spec to start from, and the project ships five timestamped saves per alternative plus several
 alternatives of the same project — an unusually rich diff corpus.
 
 The method that worked for `.exs` transfers directly: change one thing in the UI, save, diff
 the bytes, confirm. The `.exs` write-up in the learnings log also carries the right warning —
-*"Don't infer a binary field from a single sample of the file"* — which applies with more
+_"Don't infer a binary field from a single sample of the file"_ — which applies with more
 force here, in two distinct ways now documented in §5.6.
 
 **Legal note.** Logic's EULA clause G prohibits reverse engineering "the Apple Software"; the
-community disagrees about whether analysing a *data file it writes* is covered, and there is no
+community disagrees about whether analysing a _data file it writes_ is covered, and there is no
 resolution either way. The three repos above proceed anyway under MIT/GPL. Flagging it as
 unresolved risk, not settled fact, and noting that the read-only half of this proposal carries
 much less of whatever risk exists than a writer would. **[cited]**
@@ -468,7 +472,7 @@ have "found the fader" and been confidently wrong.
 **The one real lead — `OCuA +0x7d` is a strong pan candidate.** Across the 310 `OCuA` records
 it takes values 34, 44, 54, 63, 64, 74, 79, 84 — a spread tightly clustered on **64**, which is
 exactly Logic's pan centre on its ±64 scale (the learnings log already records that Logic's
-±64 pan maps to −1…+1 over MCU). It is *identical* between the two alternatives, consistent
+±64 pan maps to −1…+1 over MCU). It is _identical_ between the two alternatives, consistent
 with pans not having been changed between them. **[UNTESTED against a known per-channel pan]** —
 one hand-set pan, one save, one diff would confirm or kill it in minutes.
 
@@ -476,7 +480,7 @@ one hand-set pan, one save, one diff would confirm or kill it in minutes.
 `+0x1a2 … +0x1ab`. Unidentified. **[UNTESTED]**
 
 **Correcting the scoping.** It was suggested that having six channels at known dB values in
-one saved project makes this question *cheaper* than a set-save-diff cycle per point — six
+one saved project makes this question _cheaper_ than a set-save-diff cycle per point — six
 simultaneous knowns instead of one. That is true for **calibrating** the field once found, and
 it is a real saving. It does not help **locate** it: the scan for both plausible encodings came
 back empty, and the diff's loudest signal is a flag. The set-save-diff cycle is still needed
@@ -490,8 +494,8 @@ The fader law itself was fitted twice from too few points and was wrong both tim
 (`0.7388 + 0.02313·dB`) was **3.7 dB out at −23.7**. The fader is a taper, not a line — travel
 per dB runs 0.0263 from −6 up, then 0.0231, 0.0222, and **collapses to 0.0086 below −18 dB**,
 which is exactly where drum spot mics, room mics and sampler layers sit. **Interpolate between
-anchors; never fit.** **[verified hands-on]** The `.exs` warning was about inferring a *byte
-field* from one sample; this is the same error applied to a *value scale*, and it cost more.
+anchors; never fit.** **[verified hands-on]** The `.exs` warning was about inferring a _byte
+field_ from one sample; this is the same error applied to a _value scale_, and it cost more.
 Any `logic-cli` that reports dB must ship the anchor table, interpolate, and return "unknown"
 outside the anchor range rather than extrapolating.
 
@@ -501,33 +505,33 @@ outside the anchor range rather than extrapolating.
 
 Reliability is my judgement of what happens on the tenth run, unattended, with Logic busy.
 
-| Operation | Best channel | Feasible? | Reliability | Notes |
-|---|---|---|---|---|
-| **Export All Tracks as Audio Files** | Menu via CGEvent + prefs + AXObserver | Yes | Medium | Menu item exists; no scriptable verb anywhere. §6.3–6.4 |
-| **Bounce project / section** | Same, plus prefs for format | Yes | Medium-high | MCP already 80 % there; fix the poll |
-| **Reliable completion detection** | `AXObserver` on progress window + file-stability | Yes | High | The one place AX is clearly right. Manual version validated ×3 |
-| **Knowing an export is *correct*** | Loudness check against expected range | Yes | High | **Structural checks all pass on a soloed bounce — §6.5** |
-| **Export preflight (focus, solo)** | `AXRaise` + one mixer read | Yes | High | Both failures observed; §6.5–6.6. Detect and refuse, never auto-fix |
-| **Read track/channel names + order** | **Offline `ProjectData`** | **Yes — done** | **High** | §5.3, verified on two projects |
-| **Read bus/send routing** | Offline `ProjectData` | Probably | Medium | Bus objects visible by name; routing fields unmapped **[UNTESTED]** |
-| **Read insert chains per channel** | Offline `ProjectData` | Probably | Medium | `OCuA`→`UCuA` adjacency clear; slot indices unmapped |
-| **Read fader dB** | **Offline only — no other route exists** | Unresolved | — | AX publishes no dB at all. Storage not yet located (§5.6) |
-| **Read fader raw position** | MCU readback (MCP has it) | Yes | Medium | Detented; needs the anchor table to become dB, never a fit |
-| **Read pan** | Offline `OCuA +0x7d` (candidate) | Probably | Unknown | Strong candidate, one experiment from confirmed (§5.6) |
-| **Read sample rate** | **`MetaData.plist`** | **Yes — done** | **High** | Fixes a known-wrong MCP field |
-| **Read project alternatives** | **`ProjectInformation.plist`** | **Yes — done** | **High** | Names + active index |
-| **Read tempo / signature / key** | `MetaData.plist` (+ `ProjectData` for the map) | Yes | High / medium | Single tempo free; tempo *map* needs the `qSvE` walk |
-| **Read markers** | Offline `qSvE` + `qSxT` | Probably | Medium | Published method; names are RTF in a linked chunk **[UNTESTED here]** |
-| **Read SMPTE offset ("Plays at SMPTE")** | Offline `gnoS` | Probably | Unknown | Not located. **[UNTESTED]** |
-| **Read region positions** | Offline `gRuA` | Probably | Medium | Names verified; position fields unmapped |
-| **Identify which plugin is in which slot** | **Offline `UCuA`** | Probably | Medium | **MCP is unreliable here — see §6.2** |
-| **Set plugin parameters** | MCU V-pots / write a `.pst` | Partly | Low / medium | MCP reaches Compressor threshold only; and see §6.2 |
-| **Bypass / enable a plugin** | AX click, or MCU | Yes | Low-medium | Small, focused, verifiable — a fair candidate |
-| **Set channel format mono/stereo** | AX click on the format button | Yes | Low | MCP can't. One click by hand. **Leave it manual** |
-| **Rename / reorder / mute / solo** | MCU (MCP has it) | Yes | Medium-high | Don't rebuild |
-| **Save / Save As / new alternative** | ⌘S via CGEvent; alternatives via menu | Yes | Medium | ⌘S is safe; Save As means a save panel again |
-| **Import audio / place regions** | FCPXML import (`make_fcpxml.py`) | Yes | Medium | Already solved outside the MCP |
-| **Anything writing `ProjectData`** | — | Technically yes | **Unacceptable** | See §9 |
+| Operation                                  | Best channel                                     | Feasible?       | Reliability      | Notes                                                                 |
+| ------------------------------------------ | ------------------------------------------------ | --------------- | ---------------- | --------------------------------------------------------------------- |
+| **Export All Tracks as Audio Files**       | Menu via CGEvent + prefs + AXObserver            | Yes             | Medium           | Menu item exists; no scriptable verb anywhere. §6.3–6.4               |
+| **Bounce project / section**               | Same, plus prefs for format                      | Yes             | Medium-high      | MCP already 80 % there; fix the poll                                  |
+| **Reliable completion detection**          | `AXObserver` on progress window + file-stability | Yes             | High             | The one place AX is clearly right. Manual version validated ×3        |
+| **Knowing an export is _correct_**         | Loudness check against expected range            | Yes             | High             | **Structural checks all pass on a soloed bounce — §6.5**              |
+| **Export preflight (focus, solo)**         | `AXRaise` + one mixer read                       | Yes             | High             | Both failures observed; §6.5–6.6. Detect and refuse, never auto-fix   |
+| **Read track/channel names + order**       | **Offline `ProjectData`**                        | **Yes — done**  | **High**         | §5.3, verified on two projects                                        |
+| **Read bus/send routing**                  | Offline `ProjectData`                            | Probably        | Medium           | Bus objects visible by name; routing fields unmapped **[UNTESTED]**   |
+| **Read insert chains per channel**         | Offline `ProjectData`                            | Probably        | Medium           | `OCuA`→`UCuA` adjacency clear; slot indices unmapped                  |
+| **Read fader dB**                          | **Offline only — no other route exists**         | Unresolved      | —                | AX publishes no dB at all. Storage not yet located (§5.6)             |
+| **Read fader raw position**                | MCU readback (MCP has it)                        | Yes             | Medium           | Detented; needs the anchor table to become dB, never a fit            |
+| **Read pan**                               | Offline `OCuA +0x7d` (candidate)                 | Probably        | Unknown          | Strong candidate, one experiment from confirmed (§5.6)                |
+| **Read sample rate**                       | **`MetaData.plist`**                             | **Yes — done**  | **High**         | Fixes a known-wrong MCP field                                         |
+| **Read project alternatives**              | **`ProjectInformation.plist`**                   | **Yes — done**  | **High**         | Names + active index                                                  |
+| **Read tempo / signature / key**           | `MetaData.plist` (+ `ProjectData` for the map)   | Yes             | High / medium    | Single tempo free; tempo _map_ needs the `qSvE` walk                  |
+| **Read markers**                           | Offline `qSvE` + `qSxT`                          | Probably        | Medium           | Published method; names are RTF in a linked chunk **[UNTESTED here]** |
+| **Read SMPTE offset ("Plays at SMPTE")**   | Offline `gnoS`                                   | Probably        | Unknown          | Not located. **[UNTESTED]**                                           |
+| **Read region positions**                  | Offline `gRuA`                                   | Probably        | Medium           | Names verified; position fields unmapped                              |
+| **Identify which plugin is in which slot** | **Offline `UCuA`**                               | Probably        | Medium           | **MCP is unreliable here — see §6.2**                                 |
+| **Set plugin parameters**                  | MCU V-pots / write a `.pst`                      | Partly          | Low / medium     | MCP reaches Compressor threshold only; and see §6.2                   |
+| **Bypass / enable a plugin**               | AX click, or MCU                                 | Yes             | Low-medium       | Small, focused, verifiable — a fair candidate                         |
+| **Set channel format mono/stereo**         | AX click on the format button                    | Yes             | Low              | MCP can't. One click by hand. **Leave it manual**                     |
+| **Rename / reorder / mute / solo**         | MCU (MCP has it)                                 | Yes             | Medium-high      | Don't rebuild                                                         |
+| **Save / Save As / new alternative**       | ⌘S via CGEvent; alternatives via menu            | Yes             | Medium           | ⌘S is safe; Save As means a save panel again                          |
+| **Import audio / place regions**           | FCPXML import (`make_fcpxml.py`)                 | Yes             | Medium           | Already solved outside the MCP                                        |
+| **Anything writing `ProjectData`**         | —                                                | Technically yes | **Unacceptable** | See §9                                                                |
 
 ### 6.2 The MCP's two inventory surfaces disagree with each other
 
@@ -545,7 +549,7 @@ Two consequences, and both matter more than they first look:
    wrong parameter change makes a sound rather than an obviously wrong label.
 2. **Plugin identification is a genuine capability gap, not a convenience gap.** The offline
    `UCuA` records carry plugin display names directly and in file order (§5.3), and the
-   learnings log already notes the MCP's `get_inventory` lists inserts *bottom-up*, needing
+   learnings log already notes the MCP's `get_inventory` lists inserts _bottom-up_, needing
    reversal before you can reason about chain order. An offline reader has no bank limit, no
    null IDs, no ordering surprise, and no disagreement with itself.
 
@@ -568,7 +572,7 @@ BTIP_NormalizeMode 2  BTIP_AsAdditionalTracks  BTIP_IncludeAutomation
 ExportAACBitRate 128  ExportAACSampleRate 0  ExportM4AAppleLossless False
 ```
 
-`TrackExport*` are the *All Tracks as Audio Files* settings. `BTIP_*`/`BRIP_*` are Bounce Track
+`TrackExport*` are the _All Tracks as Audio Files_ settings. `BTIP_*`/`BRIP_*` are Bounce Track
 / Region In Place. `NSWindow Frame Bounce` even gives the dialog's saved geometry, which is a
 far better source for click coordinates than the MCP's hardcoded fractions.
 
@@ -577,7 +581,7 @@ plus one menu keystroke.** That would remove the majority of the brittle pixel-p
 step. It is the highest-leverage untested question in this document.
 
 The caveat is real: the plist's mtime was **10:28 while Logic had been running since 09:17**,
-so Logic flushes preferences *while running*, not only at quit. **[verified]** So a naive
+so Logic flushes preferences _while running_, not only at quit. **[verified]** So a naive
 `defaults write` mid-session will very likely be clobbered, and Logic may not re-read it
 anyway. The safe pattern is to write with Logic quit; whether a running Logic can be made to
 pick up a change is **[UNTESTED]**.
@@ -585,14 +589,14 @@ pick up a change is **[UNTESTED]**.
 ### 6.4 Completion detection that actually works
 
 Four signals, in increasing order of trustworthiness. Use all four — and note that §6.5 shows
-the first three can *all* pass on a file that is garbage.
+the first three can _all_ pass on a file that is garbage.
 
-1. **File stability, not file existence.** Wait for the expected output to appear, *then* for
+1. **File stability, not file existence.** Wait for the expected output to appear, _then_ for
    its size and mtime to hold steady for N seconds. The learnings log already records the
-   related trap: *"Logic appends `_1` to exported stem names when the export finishes, which
+   related trap: _"Logic appends `_1` to exported stem names when the export finishes, which
    pulls files out from under a running analysis — wait for the rename, not just for the size
-   to stop growing."* **[verified, from our own log]** So for a multi-file export the terminal
-   event is the *rename*, not the size plateau.
+   to stop growing."_ **[verified, from our own log]** So for a multi-file export the terminal
+   event is the _rename_, not the size plateau.
 2. **`AXObserver` on the progress window.** Register
    `kAXWindowCreatedNotification` + `kAXUIElementDestroyedNotification` on Logic's application
    element before firing the export, and treat destruction of the progress sheet as the
@@ -642,10 +646,10 @@ Three design consequences:
 2. **`logic-cli export` needs a preflight that reads solo and mute state** from the mixer and
    **refuses** — or at minimum warns very loudly — when anything is soloed. Cheap: this is
    exactly the kind of state the offline reader will already be parsing, though for a
-   *preflight* it must come from the live session, not the last save (see the caveat below).
+   _preflight_ it must come from the live session, not the last save (see the caveat below).
 3. **Refuse, do not remediate.** `logic_tracks.solo` routes through MCU, and with MCU
    unregistered it returns `channels_exhausted` with no key-command fallback — so the tool can
-   *detect* a stray solo but cannot *clear* it. **[verified hands-on]** Attempting to clear it
+   _detect_ a stray solo but cannot _clear_ it. **[verified hands-on]** Attempting to clear it
    and silently failing would be worse than refusing, because it would produce the same
    garbage file with an added claim that the problem was handled.
 
@@ -659,8 +663,8 @@ deliberate choice rather than a discovery made later.
 The generalisation worth carrying beyond this one bug: **for any long unattended operation, ask
 what a plausible wrong result would look like, and check for that specifically.** Structural
 checks confirm the operation ran; only a content check confirms it ran on the right thing. This
-is the same lesson the mix-scan work already learned twice — *"use an absolute threshold
-whenever 'did X respond to Y' is the question"*, and the snare-bleed correction — arriving now
+is the same lesson the mix-scan work already learned twice — _"use an absolute threshold
+whenever 'did X respond to Y' is the question"_, and the snare-bleed correction — arriving now
 in the export path.
 
 ### 6.6 The Arrange window must be frontmost
@@ -675,8 +679,8 @@ AX call, it is idempotent, and the failure it prevents is otherwise completely o
 error names the dialog, not the focus.
 
 This is also a datum for open question 3: a KeyCommands-triggered export would presumably hit
-the same window-focus constraint, so whichever command ID turns out to be *Export All Tracks as
-Audio Files*, **the raise still has to happen first**. Finding the ID does not remove the need
+the same window-focus constraint, so whichever command ID turns out to be _Export All Tracks as
+Audio Files_, **the raise still has to happen first**. Finding the ID does not remove the need
 for a focus preflight.
 
 ---
@@ -750,7 +754,7 @@ anchor table (§5.6) and returns `null` outside its range. No fitted curve, ever
 **Orphan hygiene, independent of any of this.** `logic-cli doctor` should report stray
 `LogicProMCP` processes with their elapsed time and parent, and offer to kill them. And a
 `SessionEnd` hook that runs `pkill -f LogicProMCP` would have prevented the whole incident.
-That is a five-minute fix available *today*, with or without this tool.
+That is a five-minute fix available _today_, with or without this tool.
 
 ---
 
@@ -774,7 +778,7 @@ helpers ship in plaintext in `share/logic-pro-mcp/`. **[verified]**
    globs `~/Downloads/<name>--lpmcp-<uuid8>.*`; the file actually lands at
    `/private/tmp/<Project Name>.wav`, i.e. at `defaultBouncePath` under Logic's own default
    name, because the sidebar click and the Save As typing are both missing. This is arguably
-   the *primary* bug — fixing the timeout alone would not make the current code work.
+   the _primary_ bug — fixing the timeout alone would not make the current code work.
 4. **`export_run` fails opaquely when the Mixer window is frontmost** (§6.6), reporting
    `bounce_dialog_did_not_appear`. A one-line `AXRaise` before triggering fixes it.
 5. **No guard against bouncing with channels soloed** (§6.5). Given the server already reads
@@ -789,8 +793,8 @@ server should not outlive its client; and `get_inventory` disagreeing with `logi
 about the same channel's insert count (§6.2) is a correctness bug, not a cosmetic one.
 
 **Why upstream isn't the plan.** Turnaround depends on a maintainer; the parts we most need
-(All Tracks export, insert chains past slot 0, sends, strip format, fader dB) are *new
-features* in someone else's roadmap, not bug fixes; and none of the offline-parsing value
+(All Tracks export, insert chains past slot 0, sends, strip format, fader dB) are _new
+features_ in someone else's roadmap, not bug fixes; and none of the offline-parsing value
 belongs in an MCP server at all. Do both: file the bugs, build the reader.
 
 ---
@@ -830,8 +834,8 @@ Ranked by fragility, worst first:
    dialog relayout, and gives no error — it clicks the wrong thing. `NSWindow Frame Bounce`
    from prefs is a better anchor; AX-located fields better still where they're exposed.
 2. **Record field offsets in `ProjectData`.** Already demonstrated: the 11.2.2 spec's track
-   name at payload `+0x34` does not hold on 12.2. Chunk *tags* and the size-chained walk look
-   stable across that gap; *offsets within* payloads do not. Guard on `LastSavedFrom`.
+   name at payload `+0x34` does not hold on 12.2. Chunk _tags_ and the size-chained walk look
+   stable across that gap; _offsets within_ payloads do not. Guard on `LastSavedFrom`.
 3. **The fader anchor table.** Tied to Logic's taper, which is unlikely to change but is
    unversioned and unpublished. Re-check one anchor after any upgrade.
 4. **Preference key names.** Historically stable across Logic X's life, but unversioned and
@@ -855,14 +859,15 @@ rest are open.
 
 1. **Do `defaults write com.apple.logic10 BounceFileType/BounceBitSize/TrackExportFileTypeIndex`
    actually take effect?** Test with Logic quit, relaunch, open the dialog, look. If yes, most
-   of the export fragility disappears. *Highest value question in this document.*
+   of the export fragility disappears. _Highest value question in this document._
 
    **Partial evidence in favour, arrived at sideways.** The observed staging path for a bounce
    is `/private/tmp/<Project Name>.wav`, and the preference `defaultBouncePath` reads `/tmp`.
-   Logic is demonstrably *honouring* that key. **[verified hands-on + verified]** That is not
-   proof that *writing* the key takes effect — the value may have been set through the UI long
+   Logic is demonstrably _honouring_ that key. **[verified hands-on + verified]** That is not
+   proof that _writing_ the key takes effect — the value may have been set through the UI long
    ago — but it moves the question from "does Logic use these preferences at all" (yes) to
    "does it re-read them after an external write" (still open, question 2).
+
 2. **Does Logic re-read those prefs while running?** Almost certainly not, but worth knowing —
    it decides whether `export` must quit and relaunch Logic or can work in-session.
 3. **Which `KeyCommands` numeric ID is "Export All Tracks as Audio Files"?** Assign it by hand
@@ -875,12 +880,12 @@ rest are open.
    Settles §6.4 signal 2.
 5. **Where is the fader stored in `OCuA`?** **Re-scoped by §5.6, and harder than it looked.**
    Two encodings are eliminated (dB float, 0..1 raw) and the alternative-diff route is
-   poisoned by a project-wide boolean at `+0x7e`. Needs one *controlled* change: move exactly
+   poisoned by a project-wide boolean at `+0x7e`. Needs one _controlled_ change: move exactly
    one fader by a known amount, save to a new alternative, diff that one `OCuA` record. The six
    confirmed anchors then calibrate the scale in a single pass rather than six.
 6. **Is `OCuA +0x7d` pan?** Values cluster on 64 across 310 records, which is Logic's pan
    centre. One hand-set pan, one save, one diff confirms or kills it. Cheapest open question
-   here, and it would be the first *value* field located.
+   here, and it would be the first _value_ field located.
 7. **`OCuA` → `UCuA` slot mapping**, and reconciling it against the §6.2 disagreement. Insert a
    distinctive plugin in a known slot, save, diff. `lpx-toolkit`'s author didn't solve this;
    budget accordingly.
@@ -891,7 +896,7 @@ rest are open.
    `defaultBouncePath` under the project name, not at `~/Downloads` under the generated staging
    name. Is the panel geometry different from the "calibrated" frame, is the click landing
    before the panel is interactive, or is focus elsewhere? Worth ten minutes because it decides
-   whether `logic-cli export` can reuse *any* of the coordinate approach or must locate fields
+   whether `logic-cli export` can reuse _any_ of the coordinate approach or must locate fields
    through AX. Also the difference between a good upstream bug report and a vague one.
 10. **Does a generic OSC control surface actually exist in Setup › New?** Thirty seconds to
     look. If yes, §4 changes materially and much of §7 should be reconsidered.
@@ -914,14 +919,14 @@ below.
 `MetaData.plist` + the `ProjectData` chunk walk. Ships: alternatives with names and active
 index, real sample rate, tempo/signature/key, the full mixer channel list in order (buses and
 outputs included), region and audio-file inventory, and the plugin-instance inventory by name —
-which per §6.2 is a *correctness* improvement on the MCP, not just a convenience. Build guard
+which per §6.2 is a _correctness_ improvement on the MCP, not just a convenience. Build guard
 on `LastSavedFrom`. **This is worth doing even if nothing else on this list ever gets built.**
 
 **Phase 2 — `logic-cli export` + `watch` (one to two days, gated on question 1).** Set format
 and depth via prefs; run the preflight in §7 (raise the Arrange window, refuse on stray solo,
 resolve the real staging path); trigger; hand off to event-driven completion detection with
-file-stability confirmation, no fixed timeout, and a loudness sanity check. Covers both *All
-Tracks as Audio Files* and stereo bounce. If question 1 comes back negative, this phase gets
+file-stability confirmation, no fixed timeout, and a loudness sanity check. Covers both _All
+Tracks as Audio Files_ and stereo bounce. If question 1 comes back negative, this phase gets
 meaningfully harder and should be re-scoped before starting, not pushed through.
 
 **The core of this phase has already been validated by hand.** Ignoring the MCP's spurious
@@ -942,7 +947,7 @@ keep; §5.6 is honest that this phase can overrun.**
 
 ## 13. The critical read
 
-The case *against* building anything:
+The case _against_ building anything:
 
 - The MCP plus the ad-hoc Python already covers most of the daily need. Mixer writes work.
   Region placement is solved by `make_fcpxml.py`. Analysis is solved by the `scripts/` suite.
@@ -953,7 +958,7 @@ The case *against* building anything:
   configuration is not.** Stem export for five bands × six alternatives crosses that line
   easily. Setting a channel to mono does not.
 
-The case *for* survives that scrutiny, and got stronger during the investigation:
+The case _for_ survives that scrutiny, and got stronger during the investigation:
 
 - **The offline reader is not GUI automation at all.** It has none of the brittleness the
   argument above is about. Same category of work as `build_exs.py`, which paid off.
@@ -1000,16 +1005,16 @@ assert off == len(d)                              # consumed exactly
 Names are `uint16` length-prefixed ASCII, NUL-terminated, at fixed offsets **for Logic 12.2**
 (re-verify on any other build):
 
-| Chunk | Offset | Contents | Confidence |
-|---|---|---|---|
-| `ivnE` | `+0xC4` | mixer/environment object name (channels, buses, outputs) | verified, 2 projects |
-| `gRuA` | `+0x70` | audio region name | verified |
-| `qeSM` | `+0x36` | sequence name (the project name lives here) | verified |
-| `UCuA` | `+0x9C` | plug-in display name | verified, not universal |
-| `lFuA` | — | audio filename as UTF-16LE, findable by regex | verified |
-| `OCuA` | `+0x7D` | **pan?** — clusters on 64 across 310 records | **candidate, untested** |
-| `OCuA` | `+0x7E` | boolean flag, values {0,2} — **not the fader** | verified negative |
-| `ivnE` | `+0x1A2…+0x1AB` | changes between alternatives; unidentified | unknown |
+| Chunk  | Offset          | Contents                                                 | Confidence              |
+| ------ | --------------- | -------------------------------------------------------- | ----------------------- |
+| `ivnE` | `+0xC4`         | mixer/environment object name (channels, buses, outputs) | verified, 2 projects    |
+| `gRuA` | `+0x70`         | audio region name                                        | verified                |
+| `qeSM` | `+0x36`         | sequence name (the project name lives here)              | verified                |
+| `UCuA` | `+0x9C`         | plug-in display name                                     | verified, not universal |
+| `lFuA` | —               | audio filename as UTF-16LE, findable by regex            | verified                |
+| `OCuA` | `+0x7D`         | **pan?** — clusters on 64 across 310 records             | **candidate, untested** |
+| `OCuA` | `+0x7E`         | boolean flag, values {0,2} — **not the fader**           | verified negative       |
+| `ivnE` | `+0x1A2…+0x1AB` | changes between alternatives; unidentified               | unknown                 |
 
 Embedded `bplist00` blobs: locate by searching for the magic, then find the extent by scanning
 candidate lengths `L` for a self-consistent 32-byte trailer

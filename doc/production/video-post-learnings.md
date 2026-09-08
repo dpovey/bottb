@@ -225,6 +225,7 @@ this is the authoritative song-start table (show TC, 25 fps):
   Sultans of Swing 03:10:31:00 · Paint It Black 03:16:34:00; house music resumes 03:20:43.
 
 Lessons that got us there:
+
 - **Setlist count vs measured slots never matched at first** — every mismatch was explained by
   non-song audio: recorded walk-on tapes (Epsonics Severance, Jumbo theme), event opening
   (10 min before OTR), outro jams and house music. Always reconcile counts against the bottb
@@ -243,13 +244,17 @@ Lessons that got us there:
   band's 02_Production/<Band>/Overlays/.
 
 ## End card asset gotcha (2026-09-07)
+
 `TitleCards/EndCard_2x.mov` (and EndCard.mov): the alpha channel is FULLY OPAQUE — the in/out fades are baked into RGB, not alpha (unlike the 30 song cards, whose ffmpeg fades used alpha=1). Any compositing must use **Additive blend** (white-on-black logo over picture), as on the timeline; a normal over-blend replaces the programme. Caught by Social Posting QC on The Chain full-length outro.
 
 ## API cannot enable group-graph nodes (2026-09-07, caught in release QC)
+
 `ColorGroup.GetPreClipNodeGraph().SetNodeEnabled(i, True)` returns True for every node but has NO effect on the rendered output (verified: release flicker amplitude ≈ deflicker-bypassed measure render on CAM C; also suspicious that every group reported exactly 2 nodes). Treat group-graph SetNodeEnabled as a silent no-op. Deflicker bypass/enable is MANUAL ONLY (Open in Timeline → group Pre-Clip → Cmd-D), and any render that depends on Deflicker must be verified in the output (per-frame mean-luma residual on a known flicker range) before shipping.
 
 ## Render jobs bind to the multicam when its Open-in-Timeline view is active (2026-09-07, caught by Dean)
+
 While a multicam's Open in Timeline view is open, `AddRenderJob` binds the job to "BOTTB Multicam" even though `GetCurrentTimeline()` still REPORTS the master timeline — the name assert passes on bad data. Detection: every entry in `GetRenderJobList()` carries a truthful `TimelineName` field. Rule: after queueing, verify `TimelineName == "BOTTB Brisbane 2026"` on every job BEFORE `StartRendering`; abort and fix the UI context (switch timeline away/back + OpenPage("edit")) if not.
 
 ## Render QC: check the AUDIO STREAM, not the container (2026-09-07)
+
 A Resolve render completed (JobStatus Complete, video 7475 frames, correct container duration) with the AAC stream ending 56 s early (243.3 s of 299.0). Window-sampled correlation QC passed because the sampled window preceded the dropout. Mandatory render QC since: (1) ffprobe audio stream duration must match video duration within 0.2 s; (2) decode the last 5 s of audio and require nonzero samples (volumedetect); (3) the existing checks (flicker metric where relevant, content NCC, windowed audio correlation, bitrate, JobStatus).
