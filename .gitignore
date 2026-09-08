@@ -69,3 +69,11 @@ photo-intelligence-output/
 
 # Standalone HTML at root (one-off demos, not part of build)
 /*.html
+
+# python tooling (doc/production/scripts)
+doc/production/scripts/venv/
+__pycache__/
+*.pyc
+
+# stray ffmpeg two-pass logs
+ffmpeg2pass-*.log*

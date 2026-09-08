@@ -253,6 +253,10 @@ ffmpeg -nostats -hide_banner -i "$f" -af "pan=mono|c0=c0,astats=measure_overall=
   slots enumerate), sends, cycle locators, strip mono/stereo format, plugin params other than
   **Compressor threshold** (Gain dB and Channel EQ are insert-only in its catalog),
   goto_position readback unless the LCD is in SMPTE mode.
+- **The MCP fader path is exact from 0 to −12 dB and unreliable above 0 dB** (2026-09-07, Jumbo):
+  requests of +5.5 / +5.8 landed at +1.9 / +3.9 on Logic's display while the AX read-back put
+  five different requests on one detent. Keep MCP-set faders ≤ 0 dB (shift the balance down and
+  use stack/master faders for level); type anything above 0 by hand.
 - Fader readback is 0–1 with ~10-raw-unit detents (≈2 dB). Calibrated against Logic's
   display: **value ≈ 0.758 + 0.026 × dB** — 0.758 = 0 dB, 0.705 = −2 (checked), 0.446 = −12
   (checked); linear at least over 0…−12 dB. 0.68 ≈ −3, 0.60 ≈ −6, 0.53 ≈ −8.5, 0.41 ≈ −13.5.

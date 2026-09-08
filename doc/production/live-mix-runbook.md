@@ -115,6 +115,10 @@ Then adjust per band:
 7. Save Channel Strip Settings again if anything improved.
 
 Keep the MCP disconnected while you type in Logic (its poller steals text-field focus).
+**Since 2026-09-07 the `logic-pro` MCP is registered only in the `logic-cli` project**
+(`~/src/personal/logic-cli/.mcp.json`), not at user scope: only a session started there spawns a
+server, and every other session asks that session for anything that touches Logic. One server,
+ever — seven were live after a crash-recovery and two segfaulted Logic on 4 Sep.
 Re-check for orphans here too: `ps -eo pid,ppid,etime,command | grep [L]ogicProMCP` — one
 server per live `claude`; anything older than the current session is an orphan, kill it (the
 `SessionEnd` hook reaps them on exit, not mid-session). A slow Logic with no obvious cause is
@@ -244,6 +248,14 @@ The old provisional numbers, kept so nobody re-derives them: 241 / 530 / 820 / 1
 ---
 
 ## Jumbo pre-flight (measured 2026-09-06, offline — WP-J0)
+
+> **Song table superseded the same day:** use the Dean-confirmed six-song table in
+> `video-post-learnings.md` ("Song starts, title cards and chapters (final, 2026-09-06)") —
+> Bring Me to Life 02:12:56:00 · Beer 02:17:35:06 · Never Had So Much Fun 02:22:09:06 ·
+> Chelsea Dagger 02:24:07:06 · Say It Ain't So 02:28:42:06 · Take the Power Back 02:32:59:06.
+> The 02:11:59 keys-only passage is the recorded walk-on theme (Keys channel = playback);
+> 02:37:39 is an outro jam. Bars @120 from file start 7369.229 s: 304.4 · 444.0 · 581.0 ·
+> 640.0 · 777.5 · 906.0.
 
 Nothing below touched Logic. Full working, per-probe numbers and the commands are in
 `03_Delivery/Jumbo/DELIVERY-NOTES.md`.
