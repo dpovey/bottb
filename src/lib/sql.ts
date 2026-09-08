@@ -15,10 +15,19 @@ type SqlTaggedTemplate = {
   ): Promise<QueryResult<T>>
 }
 
-// Check if we're connecting to a local database - checked at RUNTIME, not module load
+/**
+ * Should we go through `pg` over a TCP socket instead of @vercel/postgres?
+ *
+ * Normally only for a local database. `BOTTB_SQL_FORCE_PG` is the escape
+ * hatch the `bottb` CLI uses when the @vercel/postgres WebSocket transport
+ * fails against a remote database: it falls back to raw `pg` on 5432 and says
+ * so out loud, rather than degrading silently. Checked at RUNTIME, not at
+ * module load, so the CLI can set it after inspecting the failure.
+ */
 function isLocalDb(): boolean {
+  if (typeof process === 'undefined') return false
+  if (process.env.BOTTB_SQL_FORCE_PG === '1') return true
   return (
-    typeof process !== 'undefined' &&
     (process.env.POSTGRES_URL?.includes('localhost') ||
       process.env.POSTGRES_URL?.includes('127.0.0.1')) === true
   )

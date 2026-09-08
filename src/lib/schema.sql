@@ -529,3 +529,213 @@ ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_pkey PRI
 CREATE INDEX IF NOT EXISTS idx_event_videographers_slug ON event_videographers(videographer_slug);
 ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY event_videographers ADD CONSTRAINT event_videographers_videographer_slug_fkey FOREIGN KEY (videographer_slug) REFERENCES videographers(slug) ON DELETE CASCADE;
+
+-- ---------------------------------------------------------------------------
+-- Social parties and handles
+--
+-- Social accounts are shared nationally (one Facebook page, one Instagram,
+-- one TikTok, one YouTube channel across every city), so handles are neither
+-- per-event nor per-city. They are also not a companies concern: sponsors,
+-- charities, venues, photographers and videographers all need the same
+-- per-platform information and only some of them are companies.
+--
+-- social_handles.status distinguishes:
+--   'active'  - they have an account and this is it
+--   'none'    - somebody looked and they genuinely have no account here
+--   'unknown' - somebody looked and could not tell
+--   (no row)  - nobody has ever checked
+--
+-- mention_name holds the full name a platform's typeahead needs. LinkedIn
+-- matches on the name as LinkedIn holds it: "Jumbo Interactive Limited"
+-- resolves, "Jumbo Interactive" silently returns nothing.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS social_parties (
+    slug character varying(255) NOT NULL,
+    kind character varying(20) NOT NULL,
+    name character varying(255) NOT NULL,
+    company_slug character varying(255),
+    photographer_slug character varying(255),
+    videographer_slug character varying(255),
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT social_parties_kind_check CHECK (kind::text = ANY (ARRAY['self','company','charity','venue','sponsor','partner','photographer','videographer','person']::text[]))
+);
+ALTER TABLE ONLY social_parties ADD CONSTRAINT social_parties_pkey PRIMARY KEY (slug);
+ALTER TABLE ONLY social_parties ADD CONSTRAINT social_parties_company_slug_fkey FOREIGN KEY (company_slug) REFERENCES companies(slug) ON DELETE SET NULL;
+ALTER TABLE ONLY social_parties ADD CONSTRAINT social_parties_photographer_slug_fkey FOREIGN KEY (photographer_slug) REFERENCES photographers(slug) ON DELETE SET NULL;
+ALTER TABLE ONLY social_parties ADD CONSTRAINT social_parties_videographer_slug_fkey FOREIGN KEY (videographer_slug) REFERENCES videographers(slug) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS social_parties_kind_index ON social_parties(kind);
+CREATE INDEX IF NOT EXISTS social_parties_company_slug_index ON social_parties(company_slug);
+
+CREATE TABLE IF NOT EXISTS social_handles (
+    party_slug character varying(255) NOT NULL,
+    platform character varying(20) NOT NULL,
+    status character varying(10) DEFAULT 'unknown'::character varying NOT NULL,
+    handle character varying(255),
+    mention_name character varying(255),
+    url text,
+    external_id character varying(64),
+    collab_policy character varying(10) DEFAULT 'unknown'::character varying NOT NULL,
+    verified_at timestamp with time zone,
+    verified_by character varying(255),
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT social_handles_platform_check CHECK (platform::text = ANY (ARRAY['facebook','instagram','linkedin','tiktok','youtube','threads']::text[])),
+    CONSTRAINT social_handles_status_check CHECK (status::text = ANY (ARRAY['active','none','unknown']::text[])),
+    CONSTRAINT social_handles_collab_policy_check CHECK (collab_policy::text = ANY (ARRAY['yes','never','unknown','n/a']::text[])),
+    CONSTRAINT social_handles_active_has_identity_check CHECK (status::text <> 'active' OR handle IS NOT NULL OR mention_name IS NOT NULL OR external_id IS NOT NULL)
+);
+ALTER TABLE ONLY social_handles ADD CONSTRAINT social_handles_pkey PRIMARY KEY (party_slug, platform);
+ALTER TABLE ONLY social_handles ADD CONSTRAINT social_handles_party_slug_fkey FOREIGN KEY (party_slug) REFERENCES social_parties(slug) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS social_handles_platform_index ON social_handles(platform);
+
+-- Who is credited on a given event's posts. `kind` is what a party
+-- intrinsically is; `role` is what it did at this event. Jumbo Interactive is
+-- a company (kind) that was both national sponsor and a band's company (two
+-- roles) at Brisbane 2026.
+CREATE TABLE IF NOT EXISTS event_parties (
+    event_id character varying(255) NOT NULL,
+    party_slug character varying(255) NOT NULL,
+    role character varying(40) NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT event_parties_role_check CHECK (role::text = ANY (ARRAY['host','national-sponsor','sponsor','charity','venue','band-company','photographer','videographer','partner','crew','judge']::text[]))
+);
+ALTER TABLE ONLY event_parties ADD CONSTRAINT event_parties_pkey PRIMARY KEY (event_id, party_slug, role);
+ALTER TABLE ONLY event_parties ADD CONSTRAINT event_parties_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY event_parties ADD CONSTRAINT event_parties_party_slug_fkey FOREIGN KEY (party_slug) REFERENCES social_parties(slug) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS event_parties_party_slug_index ON event_parties(party_slug);
+
+-- Flat, one-row-per-party view of the handles, so simple lookups stay simple.
+CREATE OR REPLACE VIEW party_handles AS
+SELECT
+  p.slug AS party_slug,
+  p.kind,
+  p.name,
+  p.company_slug,
+  p.photographer_slug,
+  p.videographer_slug,
+  MAX(h.status) FILTER (WHERE h.platform = 'linkedin') AS linkedin_status,
+  MAX(h.handle) FILTER (WHERE h.platform = 'linkedin') AS linkedin_handle,
+  MAX(h.mention_name) FILTER (WHERE h.platform = 'linkedin') AS linkedin_mention_name,
+  MAX(h.url) FILTER (WHERE h.platform = 'linkedin') AS linkedin_url,
+  MAX(h.collab_policy) FILTER (WHERE h.platform = 'linkedin') AS linkedin_collab_policy,
+  MAX(h.status) FILTER (WHERE h.platform = 'facebook') AS facebook_status,
+  MAX(h.handle) FILTER (WHERE h.platform = 'facebook') AS facebook_handle,
+  MAX(h.mention_name) FILTER (WHERE h.platform = 'facebook') AS facebook_mention_name,
+  MAX(h.url) FILTER (WHERE h.platform = 'facebook') AS facebook_url,
+  MAX(h.collab_policy) FILTER (WHERE h.platform = 'facebook') AS facebook_collab_policy,
+  MAX(h.status) FILTER (WHERE h.platform = 'instagram') AS instagram_status,
+  MAX(h.handle) FILTER (WHERE h.platform = 'instagram') AS instagram_handle,
+  MAX(h.mention_name) FILTER (WHERE h.platform = 'instagram') AS instagram_mention_name,
+  MAX(h.url) FILTER (WHERE h.platform = 'instagram') AS instagram_url,
+  MAX(h.collab_policy) FILTER (WHERE h.platform = 'instagram') AS instagram_collab_policy,
+  MAX(h.status) FILTER (WHERE h.platform = 'tiktok') AS tiktok_status,
+  MAX(h.handle) FILTER (WHERE h.platform = 'tiktok') AS tiktok_handle,
+  MAX(h.mention_name) FILTER (WHERE h.platform = 'tiktok') AS tiktok_mention_name,
+  MAX(h.url) FILTER (WHERE h.platform = 'tiktok') AS tiktok_url,
+  MAX(h.collab_policy) FILTER (WHERE h.platform = 'tiktok') AS tiktok_collab_policy,
+  MAX(h.status) FILTER (WHERE h.platform = 'youtube') AS youtube_status,
+  MAX(h.handle) FILTER (WHERE h.platform = 'youtube') AS youtube_handle,
+  MAX(h.mention_name) FILTER (WHERE h.platform = 'youtube') AS youtube_mention_name,
+  MAX(h.url) FILTER (WHERE h.platform = 'youtube') AS youtube_url,
+  MAX(h.collab_policy) FILTER (WHERE h.platform = 'youtube') AS youtube_collab_policy
+FROM social_parties p
+LEFT JOIN social_handles h ON h.party_slug = p.slug
+GROUP BY p.slug, p.kind, p.name, p.company_slug, p.photographer_slug, p.videographer_slug;
+
+-- The column ergonomics, keyed by company.
+-- ph.* already carries company_slug, so selecting c.slug under the same name
+-- would make CREATE VIEW fail on a duplicate column.
+CREATE OR REPLACE VIEW company_handles AS
+SELECT
+  c.name AS company_name,
+  ph.*
+FROM companies c
+JOIN party_handles ph ON ph.company_slug = c.slug;
+
+-- ---------------------------------------------------------------------------
+-- posts: one row per publication per platform.
+--
+-- Distinct from social_posts/social_post_results, which are the admin UI's
+-- queue (a submitted job and its per-platform attempts). `posts` records what
+-- is actually live on a platform, however it got there - Graph API, a browser
+-- drag, a native platform scheduler, or a human.
+--
+-- posted_at_estimated says whether posted_at was read back from the platform
+-- or inferred from a schedule. Those are different kinds of fact.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS posts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_key character varying(255),
+    platform character varying(20) NOT NULL,
+    external_id character varying(128),
+    permalink text,
+    status character varying(20) DEFAULT 'scheduled'::character varying NOT NULL,
+    content_type character varying(20),
+    event_id character varying(255),
+    band_id character varying(255),
+    video_id uuid,
+    photo_ids uuid[],
+    title text,
+    caption text,
+    collaborators text[],
+    mentions text[],
+    media_url text,
+    scheduled_for timestamp with time zone,
+    posted_at timestamp with time zone,
+    posted_at_estimated boolean DEFAULT false NOT NULL,
+    posted_tz character varying(64),
+    posted_via character varying(20),
+    permalink_verified_at timestamp with time zone,
+    -- UTM tagging so social reach joins to website analytics in PostHog.
+    -- utm_campaign is the event slug (joins to events.id); utm_source is the
+    -- platform; utm_medium distinguishes LINK PLACEMENT ('social',
+    -- 'social_bio', 'social_story') because Instagram captions are not
+    -- clickable; utm_content is a per-post slug and is what makes a specific
+    -- post attributable. Historical posts have none - leave them null.
+    utm_campaign character varying(120),
+    utm_source character varying(60),
+    utm_medium character varying(60),
+    utm_content character varying(120),
+    source character varying(64),
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    notes text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT posts_platform_check CHECK (platform::text = ANY (ARRAY['facebook','instagram','linkedin','tiktok','youtube','threads']::text[])),
+    CONSTRAINT posts_status_check CHECK (status::text = ANY (ARRAY['scheduled','published','withdrawn','deleted','failed']::text[])),
+    CONSTRAINT posts_content_type_check CHECK (content_type IS NULL OR content_type::text = ANY (ARRAY['reel','short','video','photo','carousel','story','text','link']::text[])),
+    -- Deliberately NOT constrained: a published post with a null posted_at.
+    -- "It is live and nobody wrote down when" is a real state, and forcing a
+    -- time would only make somebody invent one. posted_at_estimated carries
+    -- the distinction that matters.
+    CONSTRAINT posts_posted_via_check CHECK (posted_via IS NULL OR posted_via::text = ANY (ARRAY['api','browser','manual','native_schedule']::text[]))
+);
+ALTER TABLE ONLY posts ADD CONSTRAINT posts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY posts ADD CONSTRAINT posts_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL;
+ALTER TABLE ONLY posts ADD CONSTRAINT posts_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE SET NULL;
+ALTER TABLE ONLY posts ADD CONSTRAINT posts_video_id_fkey FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE SET NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS posts_platform_external_id_key ON posts(platform, external_id) WHERE external_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS posts_permalink_key ON posts(permalink) WHERE permalink IS NOT NULL;
+CREATE INDEX IF NOT EXISTS posts_group_key_index ON posts(group_key);
+CREATE INDEX IF NOT EXISTS posts_event_id_index ON posts(event_id);
+CREATE INDEX IF NOT EXISTS posts_band_id_index ON posts(band_id);
+CREATE INDEX IF NOT EXISTS posts_status_index ON posts(status);
+CREATE INDEX IF NOT EXISTS posts_platform_posted_at_idx ON posts(platform, posted_at);
+CREATE INDEX IF NOT EXISTS posts_utm_campaign_index ON posts(utm_campaign);
+CREATE UNIQUE INDEX IF NOT EXISTS posts_utm_content_key ON posts(utm_campaign, utm_content) WHERE utm_content IS NOT NULL;
+
+CREATE OR REPLACE FUNCTION posts_set_updated_at() RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS posts_updated_at ON posts;
+CREATE TRIGGER posts_updated_at BEFORE UPDATE ON posts
+FOR EACH ROW EXECUTE FUNCTION posts_set_updated_at();

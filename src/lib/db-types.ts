@@ -427,3 +427,215 @@ export interface MerchOrder {
   fulfilled_at: string | null
   created_at: string
 }
+
+// ============================================================
+// Social parties, handles and the post ledger
+// ============================================================
+
+/** Platforms we hold handles for and publish to. */
+export const SOCIAL_PLATFORMS = [
+  'facebook',
+  'instagram',
+  'linkedin',
+  'tiktok',
+  'youtube',
+  'threads',
+] as const
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number]
+
+/** Platforms exposed as columns by the `party_handles` / `company_handles` views. */
+export const VIEW_PLATFORMS = [
+  'linkedin',
+  'facebook',
+  'instagram',
+  'tiktok',
+  'youtube',
+] as const
+export type ViewPlatform = (typeof VIEW_PLATFORMS)[number]
+
+/**
+ * What a party intrinsically is. What it *did* at a particular event is an
+ * `EventPartyRole`, not a kind: Jumbo Interactive is a company that was both
+ * national sponsor and a band's company at Brisbane 2026.
+ */
+export const PARTY_KINDS = [
+  'self',
+  'company',
+  'charity',
+  'venue',
+  'sponsor',
+  'partner',
+  'photographer',
+  'videographer',
+  'person',
+] as const
+export type PartyKind = (typeof PARTY_KINDS)[number]
+
+export const EVENT_PARTY_ROLES = [
+  'host',
+  'national-sponsor',
+  'sponsor',
+  'charity',
+  'venue',
+  'band-company',
+  'photographer',
+  'videographer',
+  'partner',
+  'crew',
+  'judge',
+] as const
+export type EventPartyRole = (typeof EVENT_PARTY_ROLES)[number]
+
+/**
+ * 'active'  - they have an account and this is it
+ * 'none'    - somebody looked and they genuinely have no account here
+ * 'unknown' - somebody looked and could not tell
+ *
+ * The absence of a row means nobody has ever checked. That is a different
+ * thing from 'unknown', and the difference is the reason this table exists.
+ */
+export const HANDLE_STATUSES = ['active', 'none', 'unknown'] as const
+export type HandleStatus = (typeof HANDLE_STATUSES)[number]
+
+/** Whether the party accepts Instagram-style collaborator invites. */
+export const COLLAB_POLICIES = ['yes', 'never', 'unknown', 'n/a'] as const
+export type CollabPolicy = (typeof COLLAB_POLICIES)[number]
+
+export interface SocialParty {
+  slug: string
+  kind: PartyKind
+  name: string
+  company_slug: string | null
+  photographer_slug: string | null
+  videographer_slug: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SocialHandle {
+  party_slug: string
+  platform: SocialPlatform
+  status: HandleStatus
+  handle: string | null
+  /**
+   * The full name a platform's typeahead needs, which is not always the
+   * handle or the trading name. LinkedIn matches on the name as LinkedIn
+   * holds it: "Jumbo Interactive Limited" resolves, "Jumbo Interactive"
+   * silently returns nothing.
+   */
+  mention_name: string | null
+  url: string | null
+  external_id: string | null
+  collab_policy: CollabPolicy
+  verified_at: string | null
+  verified_by: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface EventParty {
+  event_id: string
+  party_slug: string
+  role: EventPartyRole
+  notes: string | null
+  created_at: string
+}
+
+/** A party joined to its handles, as the CLI renders it. */
+export interface PartyWithHandles extends SocialParty {
+  handles: SocialHandle[]
+  roles?: EventPartyRole[]
+}
+
+export const POST_STATUSES = [
+  'scheduled',
+  'published',
+  'withdrawn',
+  'deleted',
+  'failed',
+] as const
+export type PostStatus = (typeof POST_STATUSES)[number]
+
+export const POST_CONTENT_TYPES = [
+  'reel',
+  'short',
+  'video',
+  'photo',
+  'carousel',
+  'story',
+  'text',
+  'link',
+] as const
+export type PostContentType = (typeof POST_CONTENT_TYPES)[number]
+
+export const POSTED_VIA = [
+  'api',
+  'browser',
+  'manual',
+  'native_schedule',
+] as const
+export type PostedVia = (typeof POSTED_VIA)[number]
+
+/**
+ * One publication, on one platform. Distinct from `social_posts`, which is
+ * the admin UI's queue of submitted jobs.
+ */
+export interface Post {
+  id: string
+  /** Ties a cross-platform burst together. One reel across five platforms. */
+  group_key: string | null
+  platform: SocialPlatform
+  external_id: string | null
+  permalink: string | null
+  status: PostStatus
+  content_type: PostContentType | null
+  event_id: string | null
+  band_id: string | null
+  video_id: string | null
+  photo_ids: string[] | null
+  title: string | null
+  caption: string | null
+  collaborators: string[] | null
+  mentions: string[] | null
+  media_url: string | null
+  scheduled_for: string | null
+  posted_at: string | null
+  /**
+   * True when posted_at was inferred (from a schedule, a log entry's own
+   * timestamp, a guess) rather than read back from the platform. A time we
+   * read back and a time we inferred are different kinds of fact.
+   */
+  posted_at_estimated: boolean
+  posted_tz: string | null
+  posted_via: PostedVia | null
+  permalink_verified_at: string | null
+  /**
+   * UTM tagging, so social reach joins to website analytics in PostHog.
+   * `utm_campaign` is the event slug and joins to `events.id`; `utm_source`
+   * is the platform; `utm_medium` distinguishes the link PLACEMENT
+   * ('social', 'social_bio', 'social_story') because Instagram captions are
+   * not clickable; `utm_content` is the per-post slug that makes one post
+   * attributable when three a day come from the same platform.
+   *
+   * Historical posts genuinely have none. Null means none, not "unknown".
+   */
+  utm_campaign: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_content: string | null
+  source: string | null
+  metadata: Record<string, unknown>
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * Link placements. Instagram captions are not clickable, so IG traffic
+ * arrives through a bio link or a story sticker; folding those into a plain
+ * 'social' throws away the only signal Instagram gives you.
+ */
+export const UTM_MEDIUMS = ['social', 'social_bio', 'social_story'] as const
+export type UtmMedium = (typeof UTM_MEDIUMS)[number]
