@@ -16,6 +16,7 @@ import {
   getVideos,
   PHOTO_LABELS,
 } from '@/lib/db'
+import { LONG_FORM_VIDEO_TYPES } from '@/lib/db-types'
 import { getNavEvents } from '@/lib/nav-data'
 import { PublicLayout } from '@/components/layouts'
 import { EventCard } from '@/components/event-card'
@@ -225,8 +226,9 @@ export default async function HomePage() {
     getPhotosByLabel(PHOTO_LABELS.GLOBAL_HERO),
     // Fetch initial photos for PhotoStrip (random order, 50 photos)
     getPhotos({ limit: 50, orderBy: 'random' }),
-    // Fetch initial videos for VideoStrip (20 full-length videos only, not shorts)
-    getVideos({ limit: 20, videoType: 'video' }),
+    // Fetch initial videos for VideoStrip (20 long-form videos - single songs
+    // and full sets - not shorts)
+    getVideos({ limit: 20, videoType: LONG_FORM_VIDEO_TYPES }),
     // Fetch shorts for Highlights section
     getVideos({ limit: 12, videoType: 'short' }),
     // Get photo count for pagination

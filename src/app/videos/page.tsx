@@ -4,6 +4,7 @@ import { VideosContent } from './videos-content'
 import { getNavEvents, getCachedFilterOptions } from '@/lib/nav-data'
 import { VideoObjectJsonLd } from '@/components/seo'
 import { getVideos } from '@/lib/db'
+import { LONG_FORM_VIDEO_TYPES } from '@/lib/db-types'
 
 export const metadata: Metadata = {
   title: 'Videos | Battle of the Tech Bands',
@@ -47,7 +48,7 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
     getVideos({
       eventId: initialEventId || undefined,
       companySlug: initialCompanySlug || undefined,
-      videoType: 'video',
+      videoType: LONG_FORM_VIDEO_TYPES,
       limit: 100,
     }),
     getVideos({

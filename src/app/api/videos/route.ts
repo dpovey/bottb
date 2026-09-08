@@ -5,10 +5,12 @@ import {
   createVideo,
   getVideoById,
   getVideoByYoutubeId,
+  isVideoType,
 } from '@/lib/db'
 import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
 import { withPublicRateLimit } from '@/lib/api-protection'
 import { fetchYouTubeVideoMetadata } from '@/lib/youtube-api'
+import { classifyLongForm } from '@/lib/video-classification'
 
 /**
  * GET /api/videos
@@ -21,11 +23,15 @@ export const GET = withPublicRateLimit(async function GET(
     const searchParams = request.nextUrl.searchParams
     const eventId = searchParams.get('event') || undefined
     const companySlug = searchParams.get('company') || undefined
+    // `type` accepts a single type or a comma-separated list, so a caller can
+    // ask for long-form content with `type=video,full_set`. Unknown values are
+    // dropped; a list of only unknown values falls back to no filter, matching
+    // the previous behaviour for a bad `type`.
     const videoTypeParam = searchParams.get('type')
-    const videoType =
-      videoTypeParam === 'video' || videoTypeParam === 'short'
-        ? videoTypeParam
-        : undefined
+    const requestedTypes = (videoTypeParam?.split(',') ?? [])
+      .map((t) => t.trim())
+      .filter(isVideoType)
+    const videoType = requestedTypes.length > 0 ? requestedTypes : undefined
     const page = parseInt(searchParams.get('page') || '1', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
     const offset = (page - 1) * limit
@@ -120,16 +126,19 @@ const postHandler: ProtectedApiHandler = async (request) => {
       )
     }
 
-    // Auto-detect video type from URL if not explicitly provided
-    const detectedType =
-      videoType === 'video' || videoType === 'short'
-        ? videoType
-        : isYoutubeShort(youtubeUrl)
-          ? 'short'
-          : 'video'
-
     // Fetch metadata from YouTube API (optional - will use fallbacks if unavailable)
     const metadata = await fetchYouTubeVideoMetadata(youtubeVideoId)
+
+    // Auto-detect video type if not explicitly provided: a /shorts/ URL is a
+    // Short, otherwise the title and duration decide song vs full set.
+    const detectedType = isVideoType(videoType)
+      ? videoType
+      : isYoutubeShort(youtubeUrl)
+        ? 'short'
+        : classifyLongForm(
+            title || metadata?.title || '',
+            metadata?.durationSeconds ?? null
+          )
 
     // Use metadata if available, otherwise fall back to defaults
     // YouTube thumbnails: hq720.jpg is more reliable and provides good quality (1280x720)

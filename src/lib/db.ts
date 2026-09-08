@@ -23,7 +23,13 @@ export type {
   MerchShippingAddress,
 } from './db-types'
 
-export { PHOTO_LABELS, PHOTO_VISIBILITY } from './db-types'
+export {
+  PHOTO_LABELS,
+  PHOTO_VISIBILITY,
+  VIDEO_TYPES,
+  LONG_FORM_VIDEO_TYPES,
+  isVideoType,
+} from './db-types'
 
 // Re-export functions and types from focused modules
 export * from './db/events'

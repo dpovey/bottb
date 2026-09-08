@@ -1,5 +1,5 @@
 import { sql } from '../sql'
-import type { Video } from '../db-types'
+import type { Video, VideoType } from '../db-types'
 
 // ============================================================
 // Video Functions
@@ -9,9 +9,29 @@ export interface GetVideosOptions {
   eventId?: string
   bandId?: string // For internal use (band detail page)
   companySlug?: string
-  videoType?: 'video' | 'short' // Filter by video type
+  /**
+   * Filter by video type. Pass an array to match any of several types —
+   * `['video', 'full_set']` is "long-form", i.e. everything that is not a
+   * Short. An empty array matches nothing.
+   */
+  videoType?: VideoType | readonly VideoType[]
   limit?: number
   offset?: number
+}
+
+/**
+ * Collapse the videoType filter to a comma-separated string for
+ * `string_to_array`, or null for "no filter".
+ *
+ * An empty array is a real filter that matches nothing, so it becomes the
+ * empty string rather than null — otherwise asking for no types would return
+ * every video.
+ */
+function videoTypeFilter(
+  videoType: VideoType | readonly VideoType[] | undefined
+): string | null {
+  if (videoType === undefined) return null
+  return typeof videoType === 'string' ? videoType : videoType.join(',')
 }
 
 /**
@@ -28,6 +48,7 @@ export async function getVideos(
     limit = 50,
     offset = 0,
   } = options
+  const typeFilter = videoTypeFilter(videoType)
 
   try {
     const { rows } = await sql<Video>`
@@ -45,7 +66,7 @@ export async function getVideos(
         (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
         AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
-        AND (${videoType || null}::text IS NULL OR v.video_type = ${videoType || null})
+        AND (${typeFilter}::text IS NULL OR v.video_type = ANY(string_to_array(${typeFilter}::text, ',')))
       ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC, v.sort_order ASC
       LIMIT ${limit} OFFSET ${offset}
     `
@@ -115,6 +136,7 @@ export async function getVideoCount(
   options: Omit<GetVideosOptions, 'limit' | 'offset'> = {}
 ): Promise<number> {
   const { eventId, bandId, companySlug, videoType } = options
+  const typeFilter = videoTypeFilter(videoType)
 
   try {
     const { rows } = await sql<{ count: string }>`
@@ -125,7 +147,7 @@ export async function getVideoCount(
         (${eventId || null}::text IS NULL OR v.event_id = ${eventId || null})
         AND (${bandId || null}::text IS NULL OR v.band_id = ${bandId || null})
         AND (${companySlug || null}::text IS NULL OR b.company_slug = ${companySlug || null})
-        AND (${videoType || null}::text IS NULL OR v.video_type = ${videoType || null})
+        AND (${typeFilter}::text IS NULL OR v.video_type = ANY(string_to_array(${typeFilter}::text, ',')))
     `
     return parseInt(rows[0]?.count || '0', 10)
   } catch (error) {

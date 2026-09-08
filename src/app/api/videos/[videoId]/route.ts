@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getVideoById, updateVideo, deleteVideo } from '@/lib/db'
+import { getVideoById, updateVideo, deleteVideo, isVideoType } from '@/lib/db'
 import { withAdminAuth, ProtectedApiHandler } from '@/lib/api-protection'
 
 interface RouteContext {
@@ -49,8 +49,7 @@ const patchHandler: ProtectedApiHandler = async (request, context) => {
       event_id: eventId,
       band_id: bandId,
       sort_order: sortOrder,
-      video_type:
-        videoType === 'video' || videoType === 'short' ? videoType : undefined,
+      video_type: isVideoType(videoType) ? videoType : undefined,
     })
 
     // Fetch the video with joined fields (event_name, band_name, etc.)

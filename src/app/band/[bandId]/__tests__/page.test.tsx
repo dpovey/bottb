@@ -677,4 +677,127 @@ describe('BandPage', () => {
       expect(screen.queryByText('Next')).not.toBeInTheDocument()
     })
   })
+
+  describe('video sections', () => {
+    const bandData = [
+      {
+        id: 'band-1',
+        event_id: 'event-1',
+        name: 'Test Band',
+        order: 1,
+        created_at: '2024-01-01T00:00:00Z',
+        event_name: 'Test Event',
+        date: '2024-12-25T18:30:00Z',
+        location: 'Test Venue',
+        timezone: 'America/New_York',
+        status: 'finalized',
+        event_info: { scoring_version: '2025.1' },
+      },
+    ]
+
+    const makeVideo = (
+      id: string,
+      video_type: string,
+      title: string,
+      duration_seconds: number
+    ) => ({
+      id,
+      youtube_video_id: `yt-${id}`,
+      title,
+      event_id: 'event-1',
+      band_id: 'band-1',
+      duration_seconds,
+      thumbnail_url: null,
+      published_at: '2026-01-01T00:00:00Z',
+      sort_order: 0,
+      created_at: '2026-01-01T00:00:00Z',
+      video_type,
+    })
+
+    // Serve each getVideos call the rows matching the videoType it asked for.
+    const serveVideosByType = (
+      byType: Record<string, ReturnType<typeof makeVideo>[]>
+    ) => {
+      mockGetVideos.mockImplementation(
+        async ({ videoType }: { videoType?: string }) =>
+          byType[videoType ?? ''] ?? []
+      )
+    }
+
+    beforeEach(() => {
+      mockSql.mockResolvedValue(createMockQueryResult(bandData))
+      mockGetBandScores.mockResolvedValue([])
+    })
+
+    it('queries full sets separately from single-song videos and shorts', async () => {
+      serveVideosByType({})
+
+      render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+      const requestedTypes = mockGetVideos.mock.calls.map(
+        (call) => call[0].videoType
+      )
+      expect(requestedTypes).toContain('full_set')
+      expect(requestedTypes).toContain('video')
+      expect(requestedTypes).toContain('short')
+    })
+
+    it('renders a Full Set section above the other videos', async () => {
+      serveVideosByType({
+        full_set: [makeVideo('fs1', 'full_set', 'Test Band (Full Set)', 1636)],
+        video: [makeVideo('v1', 'video', 'Test Band - Go Your Own Way', 240)],
+      })
+
+      render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+      const fullSetHeading = screen.getByRole('heading', { name: 'Full Set' })
+      const songsHeading = screen.getByRole('heading', { name: 'Songs' })
+      expect(fullSetHeading).toBeInTheDocument()
+      // The full set has to read as the headline, so it comes first.
+      expect(
+        fullSetHeading.compareDocumentPosition(songsHeading) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy()
+    })
+
+    it('pluralises the heading when a band has more than one full set', async () => {
+      serveVideosByType({
+        full_set: [
+          makeVideo('fs1', 'full_set', 'Test Band (Full Set)', 1636),
+          makeVideo('fs2', 'full_set', 'Test Band 2025 (Full Set)', 1531),
+        ],
+      })
+
+      render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+      expect(
+        screen.getByRole('heading', { name: 'Full Sets' })
+      ).toBeInTheDocument()
+    })
+
+    it('keeps the generic "Videos" heading when there is no full set', async () => {
+      serveVideosByType({
+        video: [makeVideo('v1', 'video', 'Test Band - Go Your Own Way', 240)],
+      })
+
+      render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+      expect(
+        screen.getByRole('heading', { name: 'Videos' })
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('heading', { name: 'Full Set' })
+      ).not.toBeInTheDocument()
+    })
+
+    it('renders no full set section when the band has none', async () => {
+      serveVideosByType({})
+
+      render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+      expect(
+        screen.queryByRole('heading', { name: /full set/i })
+      ).not.toBeInTheDocument()
+    })
+  })
 })

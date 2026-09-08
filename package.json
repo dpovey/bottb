@@ -16,6 +16,7 @@
     "analyze:ci": "next experimental-analyze --output",
     "lighthouse": "dotenv -e .env.local -- sh -c 'lighthouse http://localhost:${PORT:-3030} --output=json --output=html --output-path=./lighthouse-report --chrome-flags=\"--headless=new\" --preset=desktop'",
     "start": "next start",
+    "bottb": "dotenv -e .env.local -- tsx src/cli/bottb.ts",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "typecheck": "tsc --noEmit",
     "test": "vitest --run",

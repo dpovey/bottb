@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS videos (
     sort_order integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
     video_type character varying(20) DEFAULT 'video'::character varying NOT NULL,
-    CONSTRAINT videos_video_type_check CHECK (((video_type)::text = ANY ((ARRAY['video'::character varying, 'short'::character varying])::text[])))
+    CONSTRAINT videos_video_type_check CHECK (((video_type)::text = ANY ((ARRAY['video'::character varying, 'short'::character varying, 'full_set'::character varying])::text[])))
 );
 
 -- Setlist songs table

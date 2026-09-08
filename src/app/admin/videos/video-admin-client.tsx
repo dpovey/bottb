@@ -17,7 +17,7 @@ import {
 import { YouTubeScanner } from './youtube-scanner'
 import { VideoShareButton } from './video-social-post'
 
-type TypeFilter = 'all' | 'video' | 'short'
+type TypeFilter = 'all' | VideoType
 
 interface VideoAdminClientProps {
   initialVideos: Video[]
@@ -145,10 +145,12 @@ export function VideoAdminClient({
   // Count videos by type
   const videoCount = videos.filter((v) => v.video_type === 'video').length
   const shortCount = videos.filter((v) => v.video_type === 'short').length
+  const fullSetCount = videos.filter((v) => v.video_type === 'full_set').length
 
   // Tabs configuration
   const tabs: Tab[] = [
     { id: 'all', label: 'All', count: videos.length },
+    { id: 'full_set', label: 'Full Sets', count: fullSetCount },
     { id: 'video', label: 'Videos', count: videoCount },
     { id: 'short', label: 'Shorts', count: shortCount },
   ]
@@ -343,6 +345,13 @@ export function VideoAdminClient({
                   onChange={() => setSelectedVideoType('video')}
                 />
                 <Radio
+                  label="Full Set"
+                  name="videoType"
+                  value="full_set"
+                  checked={selectedVideoType === 'full_set'}
+                  onChange={() => setSelectedVideoType('full_set')}
+                />
+                <Radio
                   label="YouTube Short"
                   name="videoType"
                   value="short"
@@ -350,6 +359,12 @@ export function VideoAdminClient({
                   onChange={() => setSelectedVideoType('short')}
                 />
               </div>
+              {selectedVideoType === 'full_set' && (
+                <p className="mt-1 text-xs text-gray-400">
+                  A band&apos;s complete performance, shown as the headline
+                  video on the band page
+                </p>
+              )}
               {selectedVideoType === 'short' && (
                 <p className="mt-1 text-xs text-gray-400">
                   Shorts are vertical videos (9:16 aspect ratio)
@@ -471,7 +486,13 @@ export function VideoAdminClient({
             <p className="text-gray-300 text-lg">
               {videos.length === 0
                 ? 'No videos found'
-                : `No ${typeFilter === 'short' ? 'shorts' : 'videos'} found`}
+                : `No ${
+                    typeFilter === 'short'
+                      ? 'shorts'
+                      : typeFilter === 'full_set'
+                        ? 'full sets'
+                        : 'videos'
+                  } found`}
             </p>
             <p className="text-gray-400 text-sm mt-2">
               {videos.length === 0
@@ -641,6 +662,7 @@ function VideoRow({
                 onChange={(e) => setEditVideoType(e.target.value as VideoType)}
               >
                 <option value="video">Video</option>
+                <option value="full_set">Full Set</option>
                 <option value="short">Short</option>
               </Select>
 

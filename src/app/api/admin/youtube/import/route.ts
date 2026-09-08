@@ -18,6 +18,7 @@ import {
 import { parseBody, youtubeImportSchema } from '@/lib/api-schemas'
 import { fetchYouTubeVideoMetadata } from '@/lib/youtube-api'
 import { createVideo, getVideoByYoutubeId } from '@/lib/db'
+import { classifyLongForm } from '@/lib/video-classification'
 
 interface ImportResult {
   videoId: string
@@ -63,7 +64,12 @@ const handleImportVideos: ProtectedApiHandler = async (
         thumbnail_url: metadata?.thumbnailUrl || null,
         published_at: metadata?.publishedAt || null,
         sort_order: 0,
-        video_type: isShort ? 'short' : 'video',
+        video_type: isShort
+          ? 'short'
+          : classifyLongForm(
+              title || metadata?.title || '',
+              metadata?.durationSeconds ?? null
+            ),
       })
 
       results.push({

@@ -10,8 +10,8 @@ interface VideoStripProps {
   eventId?: string
   /** Filter by band ID */
   bandId?: string
-  /** Filter by video type */
-  videoType?: VideoType
+  /** Filter by video type. An array matches any of the given types. */
+  videoType?: VideoType | readonly VideoType[]
   /** Custom title for the section */
   title?: string
   /** Custom class for the container */
@@ -42,6 +42,14 @@ export function VideoStrip({
   const [videos, setVideos] = useState<Video[]>(initialVideos || [])
   const [loading, setLoading] = useState(!initialVideos)
 
+  // Stable dependency: an inline array prop is a new reference every render.
+  const videoTypeParam =
+    videoType === undefined
+      ? undefined
+      : typeof videoType === 'string'
+        ? videoType
+        : videoType.join(',')
+
   useEffect(() => {
     if (initialVideos) {
       // Already have initial videos from server, skip fetch
@@ -54,7 +62,7 @@ export function VideoStrip({
         const params = new URLSearchParams()
         if (eventId) params.set('event', eventId)
         if (bandId) params.set('band', bandId)
-        if (videoType) params.set('type', videoType)
+        if (videoTypeParam) params.set('type', videoTypeParam)
         params.set('limit', limit.toString())
 
         const res = await fetch(`/api/videos?${params.toString()}`)
@@ -74,7 +82,7 @@ export function VideoStrip({
     }
 
     fetchVideos()
-  }, [eventId, bandId, videoType, limit, initialVideos])
+  }, [eventId, bandId, videoTypeParam, limit, initialVideos])
 
   // Don't render anything if there are no videos
   if (!loading && videos.length === 0) {

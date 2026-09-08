@@ -8,6 +8,7 @@ import {
   getFinalizedResults,
   PHOTO_LABELS,
 } from '@/lib/db'
+import { LONG_FORM_VIDEO_TYPES } from '@/lib/db-types'
 import { getNavEvents } from '@/lib/nav-data'
 import {
   formatEventDateLabel,
@@ -119,7 +120,9 @@ export default async function EventPage({
       getEventById(eventId),
       getBandsForEvent(eventId),
       getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
-      getVideos({ eventId, videoType: 'video' }),
+      // Long-form: single-song videos and full sets share the event page's
+      // Videos carousel, as they did before full sets had their own type.
+      getVideos({ eventId, videoType: LONG_FORM_VIDEO_TYPES }),
       getVideos({ eventId, videoType: 'short' }),
       getNavEvents(),
     ])

@@ -154,7 +154,8 @@ export function VideosContent({
       const params = new URLSearchParams()
       if (selectedEventId) params.set('event', selectedEventId)
       if (selectedCompanySlug) params.set('company', selectedCompanySlug)
-      params.set('type', 'video')
+      // Long-form tab: single songs and full sets, matching the SSR fetch
+      params.set('type', 'video,full_set')
       params.set('limit', '100')
 
       const res = await fetch(`/api/videos?${params.toString()}`)

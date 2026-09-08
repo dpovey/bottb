@@ -248,7 +248,38 @@ export interface FinalizedResult {
   finalized_at: string
 }
 
-export type VideoType = 'video' | 'short'
+/**
+ * What kind of video this is.
+ *
+ * - `short` — vertical YouTube Short, typically 15-150 s
+ * - `video` — a single song from a set, typically 2-6 min
+ * - `full_set` — a band's complete performance, 20 min and up
+ *
+ * These are mutually exclusive. Callers that mean "long-form, whatever the
+ * length" must ask for both `video` and `full_set`; asking for `video` alone
+ * now means "single song".
+ */
+export type VideoType = 'video' | 'short' | 'full_set'
+
+export const VIDEO_TYPES: readonly VideoType[] = [
+  'video',
+  'short',
+  'full_set',
+] as const
+
+/** Video types that represent long-form (non-Short) content. */
+export const LONG_FORM_VIDEO_TYPES: readonly VideoType[] = [
+  'video',
+  'full_set',
+] as const
+
+/** Narrow an untrusted value (request body, query string) to a VideoType. */
+export function isVideoType(value: unknown): value is VideoType {
+  return (
+    typeof value === 'string' &&
+    (VIDEO_TYPES as readonly string[]).includes(value)
+  )
+}
 
 export interface Video {
   id: string

@@ -523,8 +523,11 @@ export default async function BandPage({
       ? allBands[currentBandIndex + 1]
       : null
 
-  // Fetch videos and shorts for this band
-  const [videos, shorts] = await Promise.all([
+  // Fetch videos for this band, split by type. Full sets are fetched
+  // separately so the complete performance can headline the page instead of
+  // sitting anonymously among the single-song cuts.
+  const [fullSets, videos, shorts] = await Promise.all([
+    getVideos({ bandId, videoType: 'full_set' }),
     getVideos({ bandId, videoType: 'video' }),
     getVideos({ bandId, videoType: 'short' }),
   ])
@@ -1018,6 +1021,20 @@ export default async function BandPage({
         </section>
       )}
 
+      {/* Full Set Section - the complete performance, the headline video */}
+      {fullSets.length > 0 && (
+        <section className="py-12 border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <VideoCarousel
+              videos={fullSets}
+              title={fullSets.length > 1 ? 'Full Sets' : 'Full Set'}
+              showBandInfo={false}
+              location="band_page_full_set"
+            />
+          </div>
+        </section>
+      )}
+
       {/* Photos Section - filter by company + event */}
       <PhotoStrip
         eventId={eventId}
@@ -1030,7 +1047,7 @@ export default async function BandPage({
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
             <VideoCarousel
               videos={videos}
-              title="Videos"
+              title={fullSets.length > 0 ? 'Songs' : 'Videos'}
               showBandInfo={false}
               location="band_page"
             />
