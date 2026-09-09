@@ -71,20 +71,34 @@ export async function recordPost(input: PostInput): Promise<Post> {
   const values = fields.map((f) => serialise(f, input[f]))
   const placeholders = fields.map((_, i) => `$${i + 1}`)
 
-  // Without an external_id there is nothing to conflict on, so this is a
-  // plain insert and a duplicate run would create a duplicate row.
-  const conflict = input.external_id
-    ? `ON CONFLICT (platform, external_id) WHERE external_id IS NOT NULL
-       DO UPDATE SET ${fields
-         .filter((f) => f !== 'platform' && f !== 'external_id')
-         .map((f) => `${f} = EXCLUDED.${f}`)
-         .join(', ')}`
-    : ''
+  // There are TWO unique indexes on posts — (platform, external_id) and
+  // permalink — and ON CONFLICT can only name one of them. A row can collide
+  // on permalink while having a different external_id: the harvest reads a
+  // Facebook video id off /videos, the schedule log recorded the feed post id
+  // for the same post. So resolve an existing row first rather than relying on
+  // a single conflict target, which raised a raw duplicate-key error and
+  // aborted the backfill partway through.
+  const existing =
+    (input.external_id
+      ? await getPostByExternalId(input.platform, input.external_id)
+      : null) ??
+    (input.permalink ? await getPostByPermalink(input.permalink) : null)
+
+  if (existing) {
+    const patch = Object.fromEntries(
+      fields
+        .filter((f) => f !== 'platform')
+        // Never let a merge blank out a permalink or id we already hold.
+        .filter((f) => input[f] !== null || existing[f] == null)
+        .map((f) => [f, input[f]])
+    ) as Partial<Pick<Post, PostWritableField>>
+    const updated = await updatePost(existing.id, patch)
+    if (updated) return updated
+  }
 
   const text = `
     INSERT INTO posts (${fields.join(', ')})
     VALUES (${placeholders.join(', ')})
-    ${conflict}
     RETURNING *
   `
   const { rows } = await sqlQuery<Post>(text, values)
@@ -126,6 +140,21 @@ export async function getPostByExternalId(
   const { rows } = await sqlQuery<Post>(
     'SELECT * FROM posts WHERE platform = $1 AND external_id = $2',
     [platform, externalId]
+  )
+  return rows[0] ?? null
+}
+
+/**
+ * The second unique key on posts. Two sources can describe the same
+ * publication with different external ids but the same permalink, so
+ * {@link recordPost} resolves on this before inserting.
+ */
+export async function getPostByPermalink(
+  permalink: string
+): Promise<Post | null> {
+  const { rows } = await sqlQuery<Post>(
+    'SELECT * FROM posts WHERE permalink = $1',
+    [permalink]
   )
   return rows[0] ?? null
 }
