@@ -68,8 +68,8 @@ export async function getBandsForEvent(eventId: string) {
         FROM band_companies bc JOIN companies c2 ON c2.slug = bc.company_slug
         WHERE bc.band_id = b.id
       ), '[]'::json) as companies,
-      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url,
-      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_focal_point
+      (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) AND visibility = 'public' LIMIT 1) as hero_thumbnail_url,
+      (SELECT hero_focal_point FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) AND visibility = 'public' LIMIT 1) as hero_focal_point
     FROM bands b
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.event_id = ${eventId}
