@@ -145,6 +145,42 @@ const PHOTO_GROUPS: Record<string, { group: string; band: string | null }> = {
     band: 'off-the-record-brisbane-2026',
   },
   audience: { group: 'brisbane-2026-photos-audience', band: null },
+  shiprex: {
+    group: 'brisbane-2026-photos-shiprex',
+    band: 'the-shiprex-brisbane-2026',
+  },
+  epsonics: {
+    group: 'brisbane-2026-photos-epsonics',
+    band: 'epsonics-brisbane-2026',
+  },
+}
+
+/**
+ * Which photo post an entry is about, read from its `item` text.
+ *
+ * The action name cannot carry this. Both Epsonics and, later, Jumbo Band and
+ * Total Loss were logged as "published_all_four_platforms", so keying the
+ * group off the action silently filed three different bands' publications
+ * under whichever band happened to be hardcoded. The band name is in `item`;
+ * use it, and keep the action's original band only as a fallback.
+ */
+const PHOTO_ITEM_PATTERNS: [RegExp, string][] = [
+  [/jumbo\s*band/i, 'jumbo-band'],
+  [/total\s*loss/i, 'total-loss'],
+  [/off\s*the\s*record/i, 'off-the-record'],
+  [/shiprex/i, 'shiprex'],
+  [/epsonics/i, 'epsonics'],
+  [/audience/i, 'audience'],
+]
+
+function photoTargetFromItem(
+  item: unknown,
+  fallbackSlug: string
+): { group: string; band: string | null } {
+  const text = typeof item === 'string' ? item : ''
+  const slug =
+    PHOTO_ITEM_PATTERNS.find(([re]) => re.test(text))?.[1] ?? fallbackSlug
+  return PHOTO_GROUPS[slug]
 }
 
 // ---------------------------------------------------------------------------
@@ -362,7 +398,16 @@ function merge(
     // entries are written AFTER the fact, so a later line's own timestamp is
     // further from the truth than the first one that mentioned the post.
   }
-  if (patch.postedVia) post.posted_via = patch.postedVia
+  // A Facebook post scheduled natively still published natively - nobody was
+  // at a browser at 09:00. The later "we published it" entry describes the
+  // burst as a whole and says 'browser' for every platform in it, which would
+  // otherwise erase the one fact these posts exist to prove: that Facebook
+  // fired on its own while Instagram, LinkedIn and TikTok needed a live
+  // session. Never downgrade a native schedule.
+  if (patch.postedVia) {
+    if (post.posted_via !== 'native_schedule' || patch.postedVia !== 'browser')
+      post.posted_via = patch.postedVia
+  }
   if (patch.metadata) post.metadata = { ...post.metadata, ...patch.metadata }
   if (patch.note) {
     post.notes = post.notes ? `${post.notes}\n${patch.note}` : patch.note
@@ -847,24 +892,14 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
   const ts = typeof e.ts === 'string' ? e.ts : null
 
   switch (action) {
-    case 'published_all_platforms':
-      return handlePhotoPost(
-        ctx,
-        e,
-        line,
-        'brisbane-2026-photos-shiprex',
-        FULLVIDEO.band,
-        ts
-      )
-    case 'published_all_four_platforms':
-      return handlePhotoPost(
-        ctx,
-        e,
-        line,
-        'brisbane-2026-photos-epsonics',
-        'epsonics-brisbane-2026',
-        ts
-      )
+    case 'published_all_platforms': {
+      const target = photoTargetFromItem(e.item, 'shiprex')
+      return handlePhotoPost(ctx, e, line, target.group, target.band, ts)
+    }
+    case 'published_all_four_platforms': {
+      const target = photoTargetFromItem(e.item, 'epsonics')
+      return handlePhotoPost(ctx, e, line, target.group, target.band, ts)
+    }
     case 'published_youtube_plus_scheduled_social':
     case 'linkedin_and_tiktok_published':
     case 'ALL_PLATFORMS_LIVE':
@@ -912,12 +947,20 @@ function handlePhotoPost(
   for (const [field, platform] of PHOTO_PLATFORMS) {
     const v = e[field]
     if (!isUrl(v)) continue
+    // These fields are written by hand and usually carry a note after the
+    // URL - the time read back off the platform, the collaborators, why it
+    // was late. permalink is a unique key, so the annotation must come off
+    // it; keep the text as the note rather than discarding it.
+    const { url, annotation } = splitAnnotation(v)
+    const notes = [typeof e.notes === 'string' ? e.notes : '', annotation]
+      .filter(Boolean)
+      .join(' — ')
     merge(ctx, group, platform, line, {
       band,
       title: String(e.item ?? ''),
       contentType: platform === 'tiktok' ? 'video' : 'carousel',
-      externalId: externalIdFromUrl(platform, v),
-      permalink: v.replace(/\/$/, ''),
+      externalId: externalIdFromUrl(platform, url),
+      permalink: url.replace(/\/$/, ''),
       status: 'published',
       // The entry's own timestamp is when it was WRITTEN, not when the post
       // went out. Close, but inferred. Line 43 exists because this gap once
@@ -926,7 +969,7 @@ function handlePhotoPost(
       postedAtEstimated: true,
       postedVia: platform === 'instagram' ? 'api' : 'browser',
       collaborators: platform === 'instagram' ? collaborators : undefined,
-      note: typeof e.notes === 'string' ? e.notes : undefined,
+      note: notes || undefined,
     })
   }
 }

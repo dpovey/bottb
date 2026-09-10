@@ -258,3 +258,9 @@ While a multicam's Open in Timeline view is open, `AddRenderJob` binds the job t
 ## Render QC: check the AUDIO STREAM, not the container (2026-09-07)
 
 A Resolve render completed (JobStatus Complete, video 7475 frames, correct container duration) with the AAC stream ending 56 s early (243.3 s of 299.0). Window-sampled correlation QC passed because the sampled window preceded the dropout. Mandatory render QC since: (1) ffprobe audio stream duration must match video duration within 0.2 s; (2) decode the last 5 s of audio and require nonzero samples (volumedetect); (3) the existing checks (flicker metric where relevant, content NCC, windowed audio correlation, bitrate, JobStatus).
+
+## Audio placement caveats from logic-cli TC re-check (2026-09-09; corrected same day)
+
+- Anchors must NEVER be transferred between sets: the rebuilt picture reference's OTR region sits ~1.30 s off its Epsonics region. Cross-set alignment searches need a ≥ ±5 s window before "no result" means anything.
+- Intra-set discontinuities initially reported for Total Loss (97 ms) and OTR (~40 ms) were RETRACTED — measurement artefacts from wide-window probes. Both sets are continuous: one anchor per band is fine. Total Loss drifts smoothly ~4 ppm, every song within ~3 ms of anchor 02:44:28:17; OTR anchor −5.125 s confirmed to 3 ms.
+- All Dean-confirmed song starts were measured locally per song and stand.

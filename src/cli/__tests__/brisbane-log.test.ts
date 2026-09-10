@@ -306,7 +306,12 @@ describe('withdrawals and deletions', () => {
 })
 
 describe('the natively scheduled Facebook photo posts', () => {
-  it('records all four as scheduled, with their times', () => {
+  // A post is scheduled first and published later, so status here tracks how
+  // far through that the log has got - it is not fixed. The schedule itself
+  // is: the time and the native_schedule marker must survive publication,
+  // because they are the evidence the post fired on its own rather than
+  // being posted by hand.
+  it('records all four schedules, with their times', () => {
     const expected: [string, string][] = [
       ['brisbane-2026-photos-jumbo-band', '2026-09-09T09:00:00+10:00'],
       ['brisbane-2026-photos-total-loss', '2026-09-10T09:00:00+10:00'],
@@ -315,9 +320,24 @@ describe('the natively scheduled Facebook photo posts', () => {
     ]
     for (const [group, when] of expected) {
       const p = find(group, 'facebook')
-      expect(p?.status).toBe('scheduled')
-      expect(p?.scheduled_for).toBe(when)
-      expect(p?.posted_via).toBe('native_schedule')
+      expect(p?.scheduled_for, group).toBe(when)
+      expect(p?.posted_via, group).toBe('native_schedule')
+      expect(['scheduled', 'published']).toContain(p?.status)
+    }
+  })
+
+  it('files each publication under its own band, not the action default', () => {
+    // Epsonics, Jumbo Band and Total Loss all logged the same action name.
+    // Reading the group off the action filed all three under Epsonics.
+    const published: [string, string][] = [
+      ['brisbane-2026-photos-jumbo-band', 'jumbo-band-brisbane-2026'],
+      ['brisbane-2026-photos-total-loss', 'total-loss-brisbane-2026'],
+      ['brisbane-2026-photos-epsonics', 'epsonics-brisbane-2026'],
+      ['brisbane-2026-photos-shiprex', 'the-shiprex-brisbane-2026'],
+    ]
+    for (const [group, band] of published) {
+      const p = find(group, 'facebook')
+      expect(p?.band_id, group).toBe(band)
     }
   })
 
