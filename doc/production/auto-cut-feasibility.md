@@ -476,3 +476,60 @@ problem with the same blind spot.
   9:16 timeline; set in/out before reviewing or rendering.
 - The End Card runs 01:57:53:09–01:58:03:04. A "last 60 seconds" window silently spends ~12 s on
   the outro card — check V2 before choosing a reel window.
+
+## Vertical reels and seamless loops (2026-09-11/12)
+
+### The loop is a rotation, not a join
+
+To make a reel that plays twice, do not try to make its end meet its beginning.
+Take a continuous section `[start … T … end]` and output `[T…end] + [start…T]`.
+The join at the **file boundary**, which is where the platform loops, is then
+`T → T` — original continuous performance, so it is seamless by construction.
+The discontinuity moves to the middle of the reel, where a cut is expected
+anyway and can be hidden on a shot change and a downbeat.
+
+It needs no re-cutting: render the section once, then split and concatenate
+with ffmpeg. That matters because **there is no set-multicam-angle API**, so a
+rebuilt timeline cannot reproduce the angle decisions — anything that would
+require re-cutting a multicam range has to be done by duplicating the timeline
+instead.
+
+### Seamless loop and big finale are mutually exclusive
+
+Measured on Covered in Chrome: per-second RMS holds at −21/−22 dB for 47 s then
+drops to −25/−26/−27 — the song _ends_ inside any "last 60 seconds" window, and
+the End Card runs 01:57:53:09–01:58:03:04 on top of that. Rotating a section
+that contains the ending puts the final chord in the middle of the reel. So:
+keep the finish and accept a hard loop, or rotate constant-energy material from
+before the ending and lose the resolution. Pick one deliberately.
+
+### Tempo: measure off a close mic, never the desk feed
+
+Onset autocorrelation on `BOTTB_reference_48k.wav` (the FOH desk feed) is
+worthless on this material — every candidate tempo from 107.75 to 108.75 BPM
+scored an identical **0.091**, a flat peak, i.e. no periodicity found. The same
+method on `01 Kick In.wav` from the band's stems, band-limited 35–160 Hz with
+peak picking and a circular phase fit, gives **R = 0.474** and a usable grid.
+
+Covered in Chrome finale, for the record: 16th pulse **0.18714 s**, quarter
+**0.74856 s = 80.15 BPM** (160.3 double-time), **bar 2.99424 s = 74.856
+frames**, first downbeat at **01:57:03:15**. Stems start picture-true at
+5497.340 s, so the offset into the kick file is `show_seconds − 5497.340`.
+
+Two practical notes. Bars are not whole frames (74.856), so a 15-bar loop is
+1122.84 frames and rounding to 1123 leaves ~6 ms of error at the seam. And
+because the loop length is a whole number of bars, the _internal_ join is
+bar-aligned too — rhythmically correct, even though the musical content jumps.
+
+**Status: designed and measured, not yet rendered.** The `ShipRex CIC finale
+9x16` timeline exists and is reframed; the `CIC_loop_src` render was cancelled
+before it ran, so the rotation has never been made or watched.
+
+### Reviewing a sheet on a phone
+
+`cut_recipe.html` references `preview/*.jpg` relatively, so it is useless when
+sent on its own. Inline the thumbnails as base64 data URIs (158 files, 3.7 MB →
+a 5.0 MB self-contained page, well inside the 16 MB artifact limit) and publish
+it as an artifact. The sheet's own filter bar — "all remedies", "all changes" —
+then works on the phone, which is how you look at only the rows a change
+touched.
