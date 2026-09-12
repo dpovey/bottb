@@ -25,6 +25,11 @@ interface PhotoCardProps {
   cluster?: PhotoClusterData
   /** Callback when cycling through cluster photos */
   onCyclePhoto?: (newIndex: number) => void
+  /**
+   * Explicit pixel size, set by the justified layout. When omitted the card
+   * falls back to a square tile sized by its grid cell.
+   */
+  size?: { width: number; height: number }
 }
 
 export function PhotoCard({
@@ -33,6 +38,7 @@ export function PhotoCard({
   showCompanyLogo = true,
   cluster,
   onCyclePhoto,
+  size,
 }: PhotoCardProps) {
   // Local state for crossfade animation
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -64,7 +70,10 @@ export function PhotoCard({
 
   return (
     <div
-      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
+      className={`group relative cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] ${
+        size ? 'shrink-0' : 'aspect-square'
+      }`}
+      style={size ? { width: size.width, height: size.height } : undefined}
       onClick={onClick}
     >
       {/* Thumbnail with focal point positioning via PhotoImage */}
@@ -74,7 +83,11 @@ export function PhotoCard({
         className={`absolute inset-0 w-full h-full transition-all duration-500 motion-safe:group-hover:scale-110 ${
           isTransitioning ? 'opacity-70' : 'opacity-100'
         }`}
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        sizes={
+          size
+            ? `${size.width}px`
+            : '(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
+        }
       />
 
       {/* Top-left badges - stacked so they never overlap */}

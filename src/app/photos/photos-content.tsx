@@ -6,6 +6,7 @@ import { Event, PhotoWithCluster } from '@/lib/db'
 import {
   PhotoGrid,
   type GridSize,
+  type GridLayout,
   type ClusterMap,
 } from '@/components/photos/photo-grid'
 import { PhotoFilters } from '@/components/photos/photo-filters'
@@ -97,6 +98,7 @@ export function PhotosContent({
   const [loadingMore, setLoadingMore] = useState(false)
   const [totalCount, setTotalCount] = useState(0)
   const [gridSize, setGridSize] = useState<GridSize>('md')
+  const [gridLayout, setGridLayout] = useState<GridLayout>('justified')
   const [showCompanyLogos, setShowCompanyLogos] = useState(true)
   // Map of representative photo ID to cluster data (photos + current display index)
   const [clusterMap, setClusterMap] = useState<ClusterMap>(new Map())
@@ -490,6 +492,54 @@ export function PhotosContent({
               icon={<ScenesIcon size={18} />}
             />
 
+            {/* Layout selector - uncropped rows vs uniform squares */}
+            <div className="flex items-center bg-bg-elevated rounded-full p-1">
+              <button
+                onClick={() => setGridLayout('justified')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  gridLayout === 'justified'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
+                }`}
+                title="Show photos at their full shape"
+                aria-pressed={gridLayout === 'justified'}
+                aria-label="Show photos at their full shape"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <rect x="1" y="2" width="5" height="5" rx="0.5" />
+                  <rect x="7" y="2" width="8" height="5" rx="0.5" />
+                  <rect x="1" y="8" width="8" height="6" rx="0.5" />
+                  <rect x="10" y="8" width="5" height="6" rx="0.5" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setGridLayout('square')}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  gridLayout === 'square'
+                    ? 'bg-accent text-white'
+                    : 'text-text-muted hover:text-white'
+                }`}
+                title="Crop photos to squares"
+                aria-pressed={gridLayout === 'square'}
+                aria-label="Crop photos to squares"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <rect x="1" y="1" width="6" height="6" rx="0.5" />
+                  <rect x="9" y="1" width="6" height="6" rx="0.5" />
+                  <rect x="1" y="9" width="6" height="6" rx="0.5" />
+                  <rect x="9" y="9" width="6" height="6" rx="0.5" />
+                </svg>
+              </button>
+            </div>
+
             {/* Size selector */}
             <div className="flex items-center bg-bg-elevated rounded-full p-1">
               <button
@@ -499,7 +549,7 @@ export function PhotosContent({
                     ? 'bg-accent text-white'
                     : 'text-text-muted hover:text-white'
                 }`}
-                title="Extra large thumbnails (1 per row on mobile)"
+                title="Extra large thumbnails"
               >
                 <svg
                   className="w-4 h-4"
@@ -638,6 +688,7 @@ export function PhotosContent({
             onPhotoClick={handlePhotoClick}
             loading={loading}
             size={gridSize}
+            layout={gridLayout}
             showCompanyLogos={showCompanyLogos}
             clusterMap={groupDuplicates || groupScenes ? clusterMap : undefined}
             onCycleClusterPhoto={handleCycleClusterPhoto}

@@ -140,10 +140,10 @@ describe('PhotosContent - Navigation to Slideshow', () => {
       push: mockPush,
       replace: vi.fn(),
     })
-    // No URL params - shuffle should default to 'true'
+    // Shuffle enabled via the URL, as the shuffle button leaves it
     ;(useSearchParams as ReturnType<typeof vi.fn>).mockReturnValue({
-      get: vi.fn(() => null),
-      has: vi.fn(() => false),
+      get: vi.fn((key: string) => (key === 'shuffle' ? 'seed123' : null)),
+      has: vi.fn((key: string) => key === 'shuffle'),
     })
 
     // Mock API to return photos and clusters
@@ -202,28 +202,24 @@ describe('PhotosContent - Navigation to Slideshow', () => {
       ).toBeInTheDocument()
     })
 
-    // Wait for photos to load
+    // Wait for photos to load. Queried by the thumbnail image rather than by a
+    // grid class, so this holds for both the justified and square layouts.
     await waitFor(() => {
-      // Look for the photo grid item
-      const photoGrid = container.querySelector('[class*="grid"]')
-      expect(photoGrid).toBeInTheDocument()
+      expect(container.querySelector('img.object-cover')).toBeTruthy()
     })
 
-    // Click on the first photo thumbnail
-    const photoButtons = container.querySelectorAll(
-      'button[class*="overflow-hidden"]'
-    )
-    if (photoButtons.length > 0) {
-      photoButtons[0].dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    // Click on the first photo card (the thumbnail's clickable wrapper)
+    const photoCard = container.querySelector('img.object-cover')?.parentElement
+    expect(photoCard).toBeTruthy()
+    photoCard!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 
-      // Verify router.push was called with shuffle parameter
-      await waitFor(() => {
-        expect(mockPush).toHaveBeenCalled()
-        const pushedUrl = mockPush.mock.calls[0][0]
-        // URL should include shuffle parameter (default 'true')
-        expect(pushedUrl).toMatch(/shuffle=/)
-      })
-    }
+    // Verify router.push was called with shuffle parameter
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalled()
+      const pushedUrl = mockPush.mock.calls[0][0]
+      // The photo page must carry the shuffle seed so it keeps the same order
+      expect(pushedUrl).toMatch(/shuffle=seed123/)
+    })
   })
 
   it('should render gallery without slideshow modal', async () => {
