@@ -900,6 +900,18 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
       const target = photoTargetFromItem(e.item, 'epsonics')
       return handlePhotoPost(ctx, e, line, target.group, target.band, ts)
     }
+    // The gallery roundup: one cover image from each band's photo post, sent
+    // out to drive traffic to the site. It belongs to no band, so it gets its
+    // own group rather than being filed under whichever band led the carousel.
+    case 'published_roundup_post':
+      return handlePhotoPost(
+        ctx,
+        e,
+        line,
+        'brisbane-2026-photos-roundup',
+        null,
+        ts
+      )
     case 'published_youtube_plus_scheduled_social':
     case 'linkedin_and_tiktok_published':
     case 'ALL_PLATFORMS_LIVE':
