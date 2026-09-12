@@ -65,7 +65,11 @@ _Keys_ stem in 200–2000 Hz (±1 sample expected); never against a pitch-correc
 
 ## Placing a mix on the Resolve timeline (scripted, works)
 
-Resolve Studio's Python API (External scripting must be enabled in Resolve prefs):
+Since Resolve **21.1** the easier route is the Blackmagic MCP server (`claude mcp add --scope
+user davinci-resolve "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Applications/ResolveMCP"`)
+— `run_script` pre-injects `resolve` and `project`, so the body below works with no bootstrap.
+See `../video-post-learnings.md` for the tool list and the stale-process gotcha. The raw
+bootstrap below still works and is what to use from a plain shell or a cron job:
 
 ```bash
 export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"

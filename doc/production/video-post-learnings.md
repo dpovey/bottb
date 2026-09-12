@@ -247,9 +247,35 @@ Lessons that got us there:
 
 `TitleCards/EndCard_2x.mov` (and EndCard.mov): the alpha channel is FULLY OPAQUE — the in/out fades are baked into RGB, not alpha (unlike the 30 song cards, whose ffmpeg fades used alpha=1). Any compositing must use **Additive blend** (white-on-black logo over picture), as on the timeline; a normal over-blend replaces the programme. Caught by Social Posting QC on The Chain full-length outro.
 
-## API cannot enable group-graph nodes (2026-09-07, caught in release QC)
+## ~~API cannot enable group-graph nodes~~ — FIXED IN 21.1 (2026-09-07, retested 2026-09-11)
 
-`ColorGroup.GetPreClipNodeGraph().SetNodeEnabled(i, True)` returns True for every node but has NO effect on the rendered output (verified: release flicker amplitude ≈ deflicker-bypassed measure render on CAM C; also suspicious that every group reported exactly 2 nodes). Treat group-graph SetNodeEnabled as a silent no-op. Deflicker bypass/enable is MANUAL ONLY (Open in Timeline → group Pre-Clip → Cmd-D), and any render that depends on Deflicker must be verified in the output (per-frame mean-luma residual on a known flicker range) before shipping.
+**Superseded. On 21.1 `SetNodeEnabled` on a group graph WORKS.** Verified by setting CAM A's
+pre-clip node 2 ("Deflicker", `OFX: Deflicker`) to enabled and having Dean confirm the flip in the
+UI, then restoring it to bypassed. So Deflicker bypass-while-cutting and enable-at-finish are now
+scriptable across all four groups in one call.
+
+The whole group-graph introspection layer looks fixed, not just this call: `GetNumNodes` now
+returns real, differing counts (CAM A pre 2, CAM B/C pre 3 — not the "exactly 2 everywhere" that
+was the giveaway in 21.0.4), and **`GetToolsInNode` returns the actual contents** — e.g. CAM B
+pre-clip is `["Primary Balance"]`, `["OFX: Deflicker"]`, `["OFX: Noise Reduction", "Power
+Windows"]`. Grade structure can now be audited programmatically, which is worth doing in release
+QC.
+
+**Still true, and still the trap:** there is **no `GetNodeEnabled`**. You can set state, you can
+never read it back. So: set it explicitly before every render rather than assuming, and never
+toggle a node whose original state you did not record — you cannot restore what you cannot read.
+
+Original 21.0.4 finding, kept for context: `SetNodeEnabled(i, True)` returned True for every node
+but had no effect on rendered output (release flicker amplitude ≈ deflicker-bypassed measure
+render on CAM C).
+
+**Method note.** The first attempt to retest this used `GetCurrentClipThumbnailImage` to compare
+pixels before and after the toggle. It showed no change and looked like a clean confirmation of
+the no-op — it was wrong. **`GetCurrentClipThumbnailImage` returns a per-clip poster frame, not
+the current frame**: moving the playhead a full second within one clip gives a byte-identical
+image, while moving between clips gives different ones. It cannot detect a grade change on the
+same clip and is useless for this kind of verification. Use `GrabStill` + `ExportStills`, a
+measure render, or a human looking at the node graph.
 
 ## Render jobs bind to the multicam when its Open-in-Timeline view is active (2026-09-07, caught by Dean)
 
@@ -264,3 +290,188 @@ A Resolve render completed (JobStatus Complete, video 7475 frames, correct conta
 - Anchors must NEVER be transferred between sets: the rebuilt picture reference's OTR region sits ~1.30 s off its Epsonics region. Cross-set alignment searches need a ≥ ±5 s window before "no result" means anything.
 - Intra-set discontinuities initially reported for Total Loss (97 ms) and OTR (~40 ms) were RETRACTED — measurement artefacts from wide-window probes. Both sets are continuous: one anchor per band is fine. Total Loss drifts smoothly ~4 ppm, every song within ~3 ms of anchor 02:44:28:17; OTR anchor −5.125 s confirmed to 3 ms.
 - All Dean-confirmed song starts were measured locally per song and stand.
+
+## Resolve 21.1 + the Blackmagic MCP server (2026-09-11)
+
+Resolve Studio **21.1** ships its own MCP server — this is first-party Blackmagic, not a
+community bridge. Two pieces inside the app bundle:
+
+- `Contents/Applications/ResolveMCP` — the real server, speaks MCP over stdio.
+- `Contents/Resources/DaVinciResolve.mcpb` — a Claude Desktop extension that is only a thin
+  node wrapper around that binary (lazy-spawns it, kills it after 5 min idle).
+
+For Claude Code, register the binary directly — the wrapper buys nothing here:
+
+```bash
+claude mcp add --scope user davinci-resolve \
+  "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Applications/ResolveMCP"
+```
+
+14 tools: `run_script` / `run_script_unsafe` (sandboxed Python 3.14 with `resolve` and
+`project` pre-injected; the plain one blocks `os`/`sys`/`pathlib`/network/subprocess, the
+unsafe one is the one to use for ffmpeg or reading media), `get_scripting_api` /
+`search_scripting_api` / `get_scripting_docs` / `get_whats_new` (the server serves the 21.1
+`.pyi` stubs and docs itself, so no more guessing at API names), `launch_resolve`,
+`get_resolve_status`, plus LUT/DCTL authoring (`update_dctl` compiles before writing,
+`generate_lut` evaluates a Python transform over the lattice) writing into `…/LUT/MCP/`.
+
+This replaces the `RESOLVE_SCRIPT_API` / `RESOLVE_SCRIPT_LIB` / `PYTHONPATH` bootstrap in
+`scripts/TOOLBOX.md` for interactive work. Studio only; _External scripting using_ must still
+be Local (`System.Scripting.Mode = 1` in `Preferences/…/config.dat`).
+
+**Gotcha that cost the setup 20 minutes:** installing 21.1 while 21.0.4 is _running_ leaves the
+old process up, and the 21.1 `ResolveMCP` binary then **hangs** on the init handshake rather
+than reporting a mismatch — Claude Code just times out at 30 s. `--dump-tools` still works
+(it never connects), which makes it look healthy. Check the running build in
+`logs/davinci_resolve.log` (`DVIP release/…`), not the version on disk; relaunch Resolve.
+
+### 21.1 API additions that retire workarounds documented above
+
+- **Multicam is scriptable at last**: `MediaPool.CreateMulticamClip`,
+  `TimelineItem.FlattenMulticam`, `PerformMulticamSmartSwitch`, `Timeline.AutoAlignClips`.
+  The "Can't: create or switch multicams" line above is now false for 21.1. (The measured
+  cross-correlation sync is still the right call on this material — Resolve's own sound sync
+  is what dropped 12 of 33 clips — but the _build_ no longer needs the 4-track-timeline →
+  _Convert Timelines to Multicam Clips_ dance.)
+- **`TimelineItem.SetFades({FadeIn, FadeOut})`** — clip fades ARE settable now. The title-card
+  pipeline's baked-in-alpha fades (ffmpeg `fade=alpha=1`) were a workaround for this and are
+  no longer necessary for new cards. Note this does NOT retroactively fix
+  `EndCard_2x.mov`, whose fades are baked into RGB (still needs Additive blend).
+- `TimelineItem.AddTransition`, `Get/SetProperty` for native audio properties and enabled
+  states, `Timeline.NormalizeAudioLevel`, `MediaPoolItem.GetTranscription`,
+  `MediaPoolItem.SetAudioMapping`, project-settings / render / keyboard presets.
+- Still unverified against 21.1 and assumed to still bite until retested: group-graph
+  `SetNodeEnabled` being a silent no-op, render jobs binding to an open multicam view, and
+  Dynamic Zoom being invisible to `ZoomX/ZoomY`.
+
+## The 21.1 multicam flow moved — and has a gate (2026-09-11)
+
+Two changes broke the 21.0 muscle memory:
+
+1. **`Timeline > Multicam Editing` must be enabled first.** It is a toggle in the Timeline
+   menu and it is OFF by default. Until it is on, the Multicam Viewer is simply absent from
+   the UI — no error, no greyed-out control, nothing to click. This is the actual gate, and
+   it is **not in the manual anywhere** (grep of the 21.1 manual finds no mention of the menu
+   item; chapter 49 never refers to it).
+2. **The Multicam Viewer is now a 2×2 grid button on the _Timeline_ viewer** (bottom-left,
+   just right of the Transform-mode dropdown), not an entry in the Source Viewer mode
+   dropdown. In 21.1 that dropdown reads Source / Offline / Audio Track / Annotations /
+   **Immersive** — "Multicam" is gone from it and Apple Immersive Video took the slot.
+
+Chapter 49 of the 21.1 manual is stale on both counts: it still says "Choose Multicam Mode at
+the bottom of the source viewer". The only hint in the whole document is one line in the
+keyboard-shortcut section — "These work in both the source viewer and the Multicam Mode in the
+timeline viewer". Don't trust the manual's multicam UI prose on 21.1; trust the menu.
+
+Routes that work regardless of any of the above, and are worth preferring for one-off angle
+fixes: right-click a timeline clip → **Switch Multicam Clip Angle**; `Edit > Multicam`
+submenu; Cmd-Shift-Left/Right for previous/next angle; 1–9 to cut-and-switch, Option-1–9 to
+switch without adding a cut.
+
+Note for this project specifically: only 1141 of the 1329 V1 items are still genuine multicam
+items. The other 186 are the Render-in-Place ProRes clips, and they will never offer multicam
+switching — that is expected, not a symptom.
+
+## Multicam SmartSwitch evaluated — not for bands (2026-09-11)
+
+Resolve 21.1's AI Multicam SmartSwitch was tested on a 4:35 pilot (Jumbo / Chelsea Dagger). It
+cuts for **active speaker and lip movement**, so on a band it lives wherever the singer's mouth
+is: 46% CAM B, 13% CAM C, **2% CAM D** against Dean's wide-led 52% CAM D — and it used the two
+static side cameras that Dean did not use at all in that song. Not a tuning problem; the
+objective is different. Also: `switchOnVideoOnly` is rejected on a source-audio multicam,
+`run_script` times out at 10 s while the analysis keeps running, and analysis ran at 5 fps
+(~20 min for 4:35, so ~2 h for the Jumbo set, ~16 h for the show).
+
+Proxies do **not** accelerate analysis — proxy handling is documented purely as a playback
+optimisation, with no link to analysis anywhere in the manual.
+
+Full write-up, plus the feasibility study for a music-aware assisted rough cut and the
+literature, is in `auto-cut-feasibility.md`.
+
+## Playbook audit against the 21.1 API (2026-09-11)
+
+Re-tested the "Can't" list above against the live 21.1 API rather than the changelog.
+
+| Was "can't"                                   | 21.1                                                                                                                                                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Create / switch multicams                     | **Now possible** — `CreateMulticamClip`, `FlattenMulticam`, `PerformMulticamSmartSwitch`, `AutoAlignClips`                                                                                                   |
+| See inside a multicam                         | Still no timeline object, but group graphs are now introspectable (above)                                                                                                                                    |
+| **Add colour nodes**                          | **Still not possible** — `Graph` has no `AddNode` of any kind                                                                                                                                                |
+| **Add OpenFX (Deflicker, Film Look Creator)** | **Still not possible.** `InsertOFXGeneratorIntoTimeline` inserts a generator _clip_, not an effect on a node. Fusion comps are scriptable (`AddFusionComp`) but that is the Fusion page, not Colour-page OFX |
+| Generate proxies / optimized media            | Still can't trigger generation — but `LinkProxyMedia` / `UnlinkProxyMedia` / `LinkFullResolutionMedia` let you attach externally generated proxies (Blackmagic Proxy Generator or ffmpeg, then Link)         |
+| Set proxy format / location                   | **Partly** — `perfProxyMediaMode`, `perfProxyResolutionRatio`, `perfOptimisedCodec`, `perfOptimizedResolutionRatio` all read/write. Generation _location_ still not exposed                                  |
+| Read node enable/bypass state                 | **Still not possible** — no `GetNodeEnabled`                                                                                                                                                                 |
+| Select items in the UI                        | **Partly** — `MediaPool.SetSelectedClip` exists; still no setter for timeline items                                                                                                                          |
+| Clip fades                                    | **Now possible** — `TimelineItem.SetFades({FadeIn, FadeOut})`                                                                                                                                                |
+| Dynamic Zoom on/off                           | **Now possible** — `DynamicZoomEnabled`. Start/end rectangles still inaccessible, and there is no general sizing-keyframe API, so camera _moves_ remain manual                                               |
+| Per-timeline resolution                       | **Possible** — `SetSetting("useCustomSettings","1")` + `timelineResolutionWidth/Height`, reverts cleanly. This is what makes scripted 9:16 reels work                                                        |
+
+Also new and useful: `Timeline.GetSelectedClips`, `TimelineItem.GetType`, `AddTransition`,
+`MediaPoolItem.GetTranscription`, `SetAudioMapping`, `Timeline.NormalizeAudioLevel`.
+
+### Settings found drifted from the documented setup (2026-09-11)
+
+- **`perfCacheClipsLocation` = `/Users/deapovey/Movies/CacheClip`** — back on the **boot disk**,
+  not the Extreme SSD as this document describes. Boot volume was at 21 GB free when found. This
+  is the configuration behind the 2.6 GB-free incident.
+- **`perfOptimisedMediaOn` = 1, `perfOptimisedCodec` = `apch` (ProRes 422 HQ),
+  `perfOptimizedResolutionRatio` = `auto`** — exactly the combination this document says never to
+  use. The setting is on; whether media has actually been generated is not visible from the API.
+
+Both are now scriptable, so they can be asserted before any cache/generate job rather than
+checked by memory.
+
+## `StartRendering()` with no arguments starts EVERYONE'S jobs (2026-09-12, caught by Dean)
+
+`Project.StartRendering()` with no arguments starts **every pending job in the render queue**,
+not just the one you queued. Always pass the job id: `StartRendering([jid])`.
+
+Cost of learning this: it kicked off `BOTTB_Epsonics_TheChain_4K_YT.mp4`, a queued YouTube
+deliverable nobody had asked to run. Stopped at 62%, leaving a truncated 187.6 s file where
+298.96 s was expected, at the deliverable path, **overwriting** what was there. The render queue
+on this project is used as a to-do list, so other people's Ready jobs are routinely sitting in
+it — this will happen again to anyone who forgets.
+
+**The existing rule is not sufficient.** Verifying `TimelineName` on your own job guards against
+the open-multicam binding bug (above); it says nothing about what else is in the queue. Both
+checks are needed:
+
+1. `GetRenderJobList()` → refuse to start if there are **`Ready` jobs that are not yours**,
+   or pass only your own job id.
+2. `TimelineName` correct on your job.
+3. After any cancel, treat the output as poisoned: `JobStatus == Complete` **and** expected
+   duration **and** the audio-stream checks before anything consumes it. Delete truncated
+   output rather than leaving it at a deliverable path.
+
+Note also that `StopRendering()` marks _all_ jobs `Cancelled`, including ones that had previously
+reported `Complete` — job status after a stop is not a reliable record of what actually
+succeeded. Check the files on disk (`ffprobe` duration) instead.
+
+## Jumbo audio anchor + BMTL placement (2026-09-12; plateau theory retracted same day)
+
+Jumbo multitrack file-start = show TC **02:02:49:06** (7369.229 s) against the rebuilt picture-true reference. The reported ~19 ms two-plateau step within the set was RETRACTED (wide-window near-tie measurement, marked unproven by the 2026-09-09 mix-build correction) — do not use it to predict per-song offsets.
+What stands empirically: BMTL's delivered mix needed **+56.5 ms** vs the naive mapping (picture-verified); the corrected file `Jumbo - Bring Me to Life_v2.wav` places at **show 7979.320 s = 02:12:59:08 = frame 199483**, verified to +0.12 ms mean residual. Rule for the rest of the set: **every Jumbo song mix gets its own picture check on delivery** (120 s probes, ±15 ms window, judge by cross-probe consistency) — no predicted anchors. Working: 03_Delivery/Jumbo/DELIVERY-NOTES.md.
+
+## Timeline node graph is scriptable in 21.1 — measurement renders are now automatic (2026-09-12)
+
+`Timeline.GetNodeGraph()` returns the timeline-level graph and `SetNodeEnabled` works on it.
+On this project node 1 is `["OFX: Film Look Creator", "Primary Balance"]` and node 2 is the
+black anchor `["Primary Balance"]`. So the cut-recipe measurement render's setup — bypass the
+look and the black anchor, keep Group Pre-Clip — no longer needs a human.
+
+Verified on pixels rather than on the return value: bypassing changed **97.9 % of pixels**
+(mean |Δ| 9.7/255, R +9.3 / G −3.4 — the FLC's shaping), and restoring afterwards reproduced the
+same frame **byte-identically** (mean |Δ| 0.0000, max 0). Given `SetNodeEnabled` returned `True`
+while doing nothing in 21.0.4, and there is still **no `GetNodeEnabled`**, the rule stands:
+**set state explicitly, verify on a grabbed still, and never toggle a node whose original state
+you did not record.** Dean confirmed "FLC enabled as is the primary balance" before the run;
+without that there would have been nothing to restore to.
+
+Measurement render timing, for planning: **291.76 s of 1080p H.264 took 47 seconds** with the
+look bypassed. A deliverable of the same length takes ~25 minutes — the Film Look Creator is the
+expensive part. Do not budget one from the other (I predicted 20–25 min and was out by 30×).
+
+Related gotchas found the same day, both in `../../../gigstills/docs/cut-recipe.md`:
+`GetSourceStartFrame()` returns the timeline frame on multicam items (so `source_clip` cannot be
+derived), and gigstills' `_is_transition()` silently drops any row whose `media_type` and
+`source_clip` are both null.
