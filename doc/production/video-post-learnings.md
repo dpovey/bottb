@@ -475,3 +475,102 @@ Related gotchas found the same day, both in `../../../gigstills/docs/cut-recipe.
 `GetSourceStartFrame()` returns the timeline frame on multicam items (so `source_clip` cannot be
 derived), and gigstills' `_is_transition()` silently drops any row whose `media_type` and
 `source_clip` are both null.
+
+## Render in Place and Super Scale on 21.1 (2026-09-13, Jumbo / Bring Me to Life)
+
+### A requested `VideoQuality` silently did not take (cause NOT yet proven)
+
+Asked for `"VideoQuality": 120000` (120 Mb/s) on a 4K H.264 job; the file came out at
+**46.7 Mb/s**. No error, no warning, and the job dict exposes no quality field to read back.
+
+**Leading hypothesis, UNVERIFIED:** the settings were applied and _then_
+`SetCurrentRenderFormatAndCodec` was called, and changing the codec resets codec-specific
+quality parameters — which would make the fix "codec first, then settings". Plausible, since
+the Deliver page UI resets its quality controls when the codec changes, but it has **not been
+tested**. Other explanations are open: the key may be ignored for this format, clamped to an
+encoder ceiling, or need a companion rate-control field. Queue a 100-frame render each way
+and compare the achieved `bit_rate` before trusting either.
+
+This is the mirror of the 2026-09-05 units bug (asked 120, got 506 Mb/s). Different causes,
+same symptom: a file that looks finished and is nowhere near the requested rate.
+**Always `ffprobe` the achieved `bit_rate`; never trust the setting.** 46.7 Mb/s happened to
+be a fine delivery rate (YouTube recommends 35–45 for 4K25) so this one was kept, but it was
+luck, not intent.
+
+Also: `MarkOut` is inclusive, so the render carries **one frame more** than `out - in`
+(5768 requested, 5769 delivered). Consistent across every job; QC on `out - in + 1`.
+
+### Render in Place is not scriptable at all
+
+There is no Render in Place API in 21.1 — nothing exposes it. It is UI-only, so the scripted
+part of the workflow ends at _marking_ the clips and resumes afterwards.
+
+### Super Scale: multicam no, source clips yes, and pass an int
+
+- `SetClipProperty("Super Scale", 2)` on the **multicam** pool item returns `False` and does
+  nothing. Confirmed by test on 21.1, not inherited from the old note.
+- On a **camera source clip** it works — but only with an **integer**. `"2"` as a string
+  returns `False` and silently leaves the value alone.
+- So the workflow is: find the source clips feeding the set, set Super Scale on those, do the
+  RiP, set them back to 1. The four clips feeding Jumbo (set 4) are
+  `C5697.MP4` (CAM A), `20260827_C8820.MP4` (CAM B),
+  `kurtA7S320260827_4164.MP4` (CAM C), `C3781.MP4` (CAM D) — found by querying
+  `Sm2TiItem` in `Project.db` for `.MP4` names whose Start/Duration span the song. That query
+  is the reliable way to map show time to source clip; the item names on the timeline only
+  give the angle.
+
+### Detector rule, corrected
+
+Use **`DynamicZoomEnabled`** (new in 21.1) rather than inferring from `DynamicZoomEase != 0`.
+On this song **all 22** zoomed cuts were Dynamic Zoom with `ZoomX` 1.0 — a static-zoom
+detector finds none of them. Rule: `DynamicZoomEnabled == True OR ZoomX >= 1.3`.
+
+Clip colours: the documented orange/red convention was never actually used. Beige and Navy
+are the gigstills shot recommendations. **Orange** is now the Render-in-Place marker; there is
+no way to split 1.3–2.4× from ≥2.5× on a dynamic zoom, because the API cannot read the DZ
+rectangles, so everything gets one colour.
+
+### RiP'd clips leave the colour group — check before you rely on a group change
+
+After Render in Place the clip is a plain `Video` item and **group changes no longer reach
+it**. Measured, with a control: toggling every CAM C group pre-clip node changed **0.000** on
+a RiP'd clip and **7.593 mean / 88.6 % of pixels** on a multicam one in the same song.
+
+So whatever was live at RiP time is baked in permanently. **Enable Deflicker and Temporal NR
+_before_ the RiP pass, not after** — on this song CAM A's Deflicker was bypassed when the RiP
+ran, so one of the 22 clips is baked without it. (`GetColorGroup()` is no help: it returns
+`None` for multicam items too, so it cannot distinguish "left the group" from "never visible".)
+
+### Check timeline resolution equals delivery resolution before any RiP
+
+Render in Place bakes at **timeline** resolution. Lowering the timeline resolution to grade
+faster is a documented trick in this very file — do that, forget it, and the RiP writes
+1080 media into a 4K delivery and throws away the Super Scale with it. Verify
+`timelineResolutionWidth/Height` against the delivery spec first. It was 3840×2160 on this
+pass, matching delivery, so nothing was lost.
+
+### Editing-mode policy: bypass the expensive nodes, keep the look (Dean, 2026-09-13)
+
+When handing the timeline back for cutting, bypass **only** the genuinely expensive nodes and
+leave the look running:
+
+| bypass while editing              | leave ON                              |
+| --------------------------------- | ------------------------------------- |
+| CAM A Deflicker                   | timeline **Film Look Creator**        |
+| CAM B Deflicker + Noise Reduction | timeline black-anchor Primary Balance |
+| CAM C Deflicker + Noise Reduction | all group node 1 camera corrections   |
+| CAM D Noise Reduction             |                                       |
+
+Film Look Creator is cheap enough on this machine — the earlier note pairing it with Deflicker
+as a thing to bypass while cutting is wrong, and it costs the editor the actual look for
+nothing. Temporal NR and Deflicker are the expensive ones.
+
+**Before any render, all of the above go back ON.** There is still no `GetNodeEnabled`, so
+nothing can read the state back — it has to be set explicitly and verified on a grabbed still.
+The seven nodes are: timeline Film Look Creator; CAM A Deflicker; CAM B Deflicker + NR;
+CAM C Deflicker + NR; CAM D NR.
+
+One gotcha found doing this: **CAM A's Deflicker node also carries a Primary Offset**
+(`GetToolsInNode` returns `["OFX: Deflicker", "Primary Offset"]`), so bypassing it drops that
+correction too and CAM A will not look graded-correct while cutting. Harmless for editing,
+confusing if unexpected.
