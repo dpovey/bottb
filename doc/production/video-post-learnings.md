@@ -574,3 +574,33 @@ One gotcha found doing this: **CAM A's Deflicker node also carries a Primary Off
 (`GetToolsInNode` returns `["OFX: Deflicker", "Primary Offset"]`), so bypassing it drops that
 correction too and CAM A will not look graded-correct while cutting. Harmless for editing,
 confusing if unexpected.
+
+## Per-song delivery gotchas found on Bring Me to Life (2026-09-13)
+
+Three things that cost time on the first Jumbo song and will recur on the other five.
+
+**`endcard-treat.sh` was hardcoded to The Chain.** `EXPECT=299.0`, `FADE_START=295.152` and
+decoded-audio probes at t=240/280/295 — every one of those past the end of a 230 s song, so it
+refused to run at all. Now derives the fade from the card's own measured duration and scales
+the probes to the song (0.80 / 0.94 / 0.985 of length); `--expect` is optional, and omitting it
+drops to an audio-vs-video check which the script says out loud. Usage:
+
+```
+endcard-treat.sh <src.mp4> <out.mp4> [--4k] [--expect S] [--fade-start S] [--fade-dur S]
+```
+
+**zsh does not word-split an unquoted scalar.** `for t in $PROBES` iterated _once_ over the
+whole string, and the script reported **"no audio decoded — silent tail" on a perfectly good
+master**. The fix is an array (`PROBES=(...)`, `for t in "${PROBES[@]}"`). Worth knowing
+because the failure mode points at Resolve when the bug is in the QC script: **if a
+tail/silence check fails on a file you have reason to trust, check the checker first.** Failing
+closed was right; failing closed for the wrong reason costs an afternoon in the wrong app.
+
+**YouTube caps thumbnails at 2 MB.** A 2.71 MB PNG is rejected on upload. JPEG q92 at
+1920×1080 came out at 0.36 MB with no visible artefacts on logo or type. Export thumbnails as
+JPEG, not PNG.
+
+**Card placement that worked:** start at `video_length − card_duration` so the card's last
+frame lands exactly on the last frame of picture. On this song that put it 2.1 s after the
+music stops, sitting over the crowd tail — which is why the render out-point is chosen to leave
+a few seconds of tail after the last note rather than cutting on it.
