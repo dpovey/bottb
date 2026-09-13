@@ -922,13 +922,21 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
       return handlePostedAtCorrection(ctx, e, line)
     case 'youtube_thumbnail_selected':
     case 'qc_fail_replacement_1080p':
-    case 'endcard_4k_v3_installed':
-    case 'endcard_v4_installed_new_grade':
       ctx.ignored.push(
         `line ${line}: production/QC step (${action}), not a publication`
       )
       return
     default:
+      // Every end-card action is a production step, not a publication. They
+      // were once listed one by one, which meant each new song's variant
+      // ("endcard_installed", "endcard_4k_v3_installed", ...) failed the
+      // "understands every line" test until someone added another case.
+      if (action.startsWith('endcard')) {
+        ctx.ignored.push(
+          `line ${line}: production/QC step (${action}), not a publication`
+        )
+        return
+      }
       ctx.unhandled.push(`line ${line}: unknown action "${action}"`)
   }
 }

@@ -19,31 +19,61 @@
 # Resolve and Logic (see ~/.claude/CLAUDE.md).
 set -e
 
-SRC="$1"; OUT="$2"; MODE="${3:-}"
+SRC="$1"; OUT="$2"; shift 2 2>/dev/null || true
 CARD="/Volumes/BOTTB/TitleCards/EndCard_2x.mov"
-FADE_START=295.152      # recalculate if the song length changes
-FADE_DUR=3.92
-EXPECT=299.0
 TOL=0.5
+MODE=""
+EXPECT=""       # optional: the length you believe the song is, for the truncation gate
+FADE_START=""   # default: end of video minus the card's own length
+FADE_DUR=""     # default: the card's measured duration
 
-[ -n "$SRC" ] && [ -n "$OUT" ] || { echo "usage: endcard-treat.sh <source.mp4> <output.mp4> [--4k]"; exit 1; }
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --4k) MODE="--4k"; shift ;;
+    --expect) EXPECT="$2"; shift 2 ;;
+    --fade-start) FADE_START="$2"; shift 2 ;;
+    --fade-dur) FADE_DUR="$2"; shift 2 ;;
+    *) echo "unknown option $1"; exit 1 ;;
+  esac
+done
+
+[ -n "$SRC" ] && [ -n "$OUT" ] || {
+  echo "usage: endcard-treat.sh <source.mp4> <output.mp4> [--4k] [--expect S] [--fade-start S] [--fade-dur S]"
+  exit 1; }
 [ -f "$SRC" ] || { echo "STOP: no such source $SRC"; exit 1; }
 [ -f "$CARD" ] || { echo "STOP: end card not found at $CARD"; exit 1; }
 
 dur () { ffprobe -v error -select_streams "$1":0 -show_entries stream=duration -of csv=p=0 "$2"; }
 
 V=$(dur v "$SRC"); A=$(dur a "$SRC")
+
+# The card's own length sets the fade, so a card of a different length still
+# lands its last frame on the last frame of the picture.
+[ -n "$FADE_DUR" ] || FADE_DUR=$(dur v "$CARD")
+[ -n "$FADE_START" ] || FADE_START=$(python3 -c "print(round(float('$V')-float('$FADE_DUR'),3))")
+
 echo "source: video=${V}s audio=${A}s"
+echo "card:   ${CARD} (${FADE_DUR}s), fade starts ${FADE_START}s"
 python3 -c "
 import sys
 v,a=float('$V'),float('$A')
-if abs(v-$EXPECT)>$TOL: sys.exit('STOP: video %.3fs, expected ~%.1fs' % (v,$EXPECT))
-if abs(a-$EXPECT)>$TOL: sys.exit('STOP: audio %.3fs vs video %.3fs — TRUNCATED EXPORT, do not ship' % (a,v))
-if abs(a-v)>$TOL: sys.exit('STOP: audio/video length mismatch %.3f vs %.3f' % (a,v))
+e='$EXPECT'
+if e:
+    if abs(v-float(e))>$TOL: sys.exit('STOP: video %.3fs, expected ~%.1fs' % (v,float(e)))
+    if abs(a-float(e))>$TOL: sys.exit('STOP: audio %.3fs vs expected %.1fs — TRUNCATED EXPORT, do not ship' % (a,float(e)))
+else:
+    print('note: no --expect given, so the length gate is audio-vs-video only')
+if abs(a-v)>$TOL: sys.exit('STOP: audio/video length mismatch %.3f vs %.3f — TRUNCATED EXPORT, do not ship' % (a,v))
 print('duration gates passed')"
 
-# Decoded tail: metadata can lie, a decoder cannot.
-for t in 240 280 295; do
+# Decoded tail: metadata can lie, a decoder cannot. Probe points scale with the
+# song - fixed seconds only ever worked for the one song they were written for.
+PROBES=($(python3 -c "
+v=float('$V')
+print(' '.join('%.1f' % (v*f) for f in (0.80, 0.94, 0.985)))"))
+# Array, not a bare string: this script is zsh, which does NOT word-split an
+# unquoted scalar, so `for t in $PROBES` iterated once over the whole list.
+for t in "${PROBES[@]}"; do
   n=$(ffmpeg -nostdin -hide_banner -ss $t -t 0.4 -i "$SRC" -af volumedetect -f null - 2>&1 | grep -o 'n_samples: [0-9]*' | tail -1 | cut -d' ' -f2)
   echo "  source audio t=${t}s: n_samples=${n:-0}"
   [ "${n:-0}" -gt 0 ] || { echo "STOP: no audio decoded at ${t}s — silent tail"; exit 1; }
