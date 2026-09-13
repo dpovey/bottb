@@ -931,6 +931,15 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
       // were once listed one by one, which meant each new song's variant
       // ("endcard_installed", "endcard_4k_v3_installed", ...) failed the
       // "understands every line" test until someone added another case.
+      // Scheduling a platform is a production step too: the publication entry
+      // lands later, when the times can be read back off the platform rather
+      // than predicted from what we asked for.
+      if (action.startsWith('scheduled_')) {
+        ctx.ignored.push(
+          `line ${line}: scheduling step (${action}), publication logged separately`
+        )
+        return
+      }
       if (action.startsWith('endcard')) {
         ctx.ignored.push(
           `line ${line}: production/QC step (${action}), not a publication`
