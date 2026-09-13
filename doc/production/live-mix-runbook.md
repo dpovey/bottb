@@ -100,15 +100,19 @@ Settings/{Track,Bus,Master,Instrument}/` are all **empty**, and
 - **Snare Bottom**: rebuild the trigger (Replace or Double Drum Track, mode _Double_, on
   that band's Snare Top) per band — the trigger is a MIDI region that lives only inside the
   project, and the Replacer's own settings were never saved, so it cannot be carried.
-  Then: trigger note **D1** → **Sampler** (not Quick Sampler) loading
-  `~/Music/Audio Music Apps/Sampler Instruments/Snare A RR9.exs` → Gain → Channel EQ
-  "Clean Up Snare". Set **Root Key = the trigger note (D1)**, not the default C3, so
-  nothing transposes. The sampler measures **+3.6 dB above the real snare's own
-  contribution — drop it ~9 dB**.
-  > There is no saved Quick Sampler setting, `.patch` or Channel Strip Setting; the one
-  > saved asset is that `.exs` (9 round-robins × 3 velocity layers, 27 samples, built by
-  > `scripts/build_exs.py` from `Snare A Template.exs`). It is **SnareA** — SnareB was the
-  > first attempt and survives only in Epsilon alternative 000.
+  Then: trigger note **D1** → **Sampler**, and pick **"Snare A RR9"** from Sampler's
+  instrument menu → Gain → Channel EQ "Clean Up Snare". Set **Root Key = the trigger note
+  (D1)**, not the default C3, so nothing transposes. The sampler measures **+3.6 dB above
+  the real snare's own contribution — drop it ~9 dB**.
+  > It shows up in that menu because it is a Sampler **Instrument** —
+  > `~/Music/Audio Music Apps/Sampler Instruments/Snare A RR9.exs`, 9 round-robins × 3
+  > velocity layers, 27 samples, built by `scripts/build_exs.py` from
+  > `Snare A Template.exs`. It is **SnareA**; SnareB was the first attempt and survives
+  > only in Epsilon alternative 000.
+  >
+  > It is _not_ a plug-in Setting (`.pst`), a `.patch` or a Channel Strip Setting — those
+  > folders are empty, so searching for it under Plug-In Settings finds nothing. Same
+  > thing, different shelf.
   >
   > **It references its 27 WAVs by absolute path** under
   > `/Volumes/Extreme SSD/…/01_Media/_samples/Snare Bottom (DrumThrash SnareA)/`, so the
