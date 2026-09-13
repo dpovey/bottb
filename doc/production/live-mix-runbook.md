@@ -97,8 +97,23 @@ Settings/{Track,Bus,Master,Instrument}/` are all **empty**, and
   > not as a later check.
 
 - **Ozone preset "BOTTB ShipRex"** on Stereo Out; **Loudness Meter/Insight** after it.
-- **Snare Bottom**: rebuild the trigger (Replace or Double Drum Track) per band; load the
-  saved Quick Sampler setting.
+- **Snare Bottom**: rebuild the trigger (Replace or Double Drum Track, mode _Double_, on
+  that band's Snare Top) per band — the trigger is a MIDI region that lives only inside the
+  project, and the Replacer's own settings were never saved, so it cannot be carried.
+  Then: trigger note **D1** → **Sampler** (not Quick Sampler) loading
+  `~/Music/Audio Music Apps/Sampler Instruments/Snare A RR9.exs` → Gain → Channel EQ
+  "Clean Up Snare". Set **Root Key = the trigger note (D1)**, not the default C3, so
+  nothing transposes. The sampler measures **+3.6 dB above the real snare's own
+  contribution — drop it ~9 dB**.
+  > There is no saved Quick Sampler setting, `.patch` or Channel Strip Setting; the one
+  > saved asset is that `.exs` (9 round-robins × 3 velocity layers, 27 samples, built by
+  > `scripts/build_exs.py` from `Snare A Template.exs`). It is **SnareA** — SnareB was the
+  > first attempt and survives only in Epsilon alternative 000.
+  >
+  > **It references its 27 WAVs by absolute path** under
+  > `/Volumes/Extreme SSD/…/01_Media/_samples/Snare Bottom (DrumThrash SnareA)/`, so the
+  > Extreme SSD must be mounted under that exact name or the instrument loads silent.
+  > Renaming or moving that volume breaks it with no obvious error.
 
 Then adjust per band:
 
