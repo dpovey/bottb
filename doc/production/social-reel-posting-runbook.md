@@ -43,7 +43,18 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      channel by default; always navigate to
      `studio.youtube.com/channel/UCJVbMoGFRdQxVgHvW1heYCg/videos/upload?d=ud`.
    - Studio's CSP allows `fetch()` of the Blob URL, so inject the file with JS: fetch → `new File`
-     → `DataTransfer` → set `input[name=Filedata].files` → dispatch `change`. Works for ~90 MB files.
+     → `DataTransfer` → set `input[name=Filedata].files` → dispatch `change`.
+   - **Size is not the constraint people assume.** This has carried a 1.69 GB master (The Chain,
+     7 Sep) and a 1.30 GB master (Bring Me to Life, 13 Sep — 1,299,723,260 bytes, fetched in 37.7 s).
+     An earlier note here said "works for ~90 MB files" and led to telling Dean that YouTube needed a
+     manual upload; that was wrong by more than an order of magnitude. **The 10 MB cap is on the
+     Chrome extension's own `file_upload` tool, NOT on the fetch-inject.** Only LinkedIn and TikTok
+     genuinely need Dean, because their CSP blocks the fetch.
+   - Run the fetch **asynchronously** and poll a `window.__inj` state object — a 1.3 GB fetch will
+     outlast the JS tool's own timeout if you await it inline.
+   - Memory: the tab holds the response buffer plus the `File` copy, so budget ~2x the file size as a
+     transient Chrome peak (~2.6 GB for a 1.3 GB master). Check available RAM first on this machine;
+     Chrome is exempt from mem-guard, so nothing will stop it if it goes wrong.
    - **Wait for the dialog to actually render before typing title/description** — typing right after
      inject reliably vanishes; retype and verify.
    - Next ×3 → Visibility → Schedule. The date field is a text+calendar hybrid; click the calendar
@@ -52,6 +63,16 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      (`youtube.com/shorts/<id>`) exists as soon as the upload starts — capture it then.
    - Covers trigger "Claimed content found" (Content ID). Posts still publish on schedule; revenue
      routes to rights holders. Glance at Studio → Content detection after uploading.
+   - **Title cap is 100 characters, hard.** The house format
+     `{artist} - {song} (Live Cover) - {company} - Brisbane Battle of the Tech Bands {year}` came to
+     104 for Bring Me to Life and would not have fitted. Shorten the event, not the sponsor:
+     `... - Jumbo Interactive - BoTTB Brisbane 2026` is 85 and "BoTTB" already has precedent in the
+     ShipReX title. Check the length before typing it.
+   - **Thumbnail cap is 2 MB.** A 1920x1080 PNG export runs 2.5–3 MB and is rejected at upload.
+     Convert to JPEG q92: ~0.36 MB, still 1920x1080, no visible artefacts on logo or type.
+   - **External links in descriptions are not clickable until the channel completes a one-off
+     verification.** Studio says so under the description box. Until that is done, every URL we put
+     in a description renders as plain text, which defeats the point of putting a gallery link there.
 6. **LinkedIn via the page composer in Chrome** (no LinkedIn OAuth token is connected; the site has
    the connect flow but it needs an admin session, and the API can't schedule anyway):
    - The Chrome extension's `file_upload` tool caps at **10 MB** and LinkedIn/TikTok CSP blocks the
@@ -177,6 +198,26 @@ Other composer facts, verified:
 - `cmd+a` then `Delete` in the composer clears the text but **leaves the attached images**, so a
   botched caption is cheap to redo.
 
+### TikTok — confirm the caption before you Post
+
+**On 10 Sep a post published with NO title and NO description.** The fields looked filled; the text
+never landed. The tell was the content list showing "No description" — **not** the "Only me /
+Content under review" state, which is normal for any new post and clears within a day. TikTok allows
+**one caption edit per day, within 7 days of posting**, so there is exactly one chance to fix it.
+
+**Before clicking Post or Schedule, confirm the character counters.** `51/90` on the title and
+`424/4000` on the description are computed from TikTok's own state, so they are real evidence the
+value is registered. The rendered text alone is not — on the photo-post page the title lives in a
+non-editable `div.title` that a naive `input`/`textarea` sweep misses entirely.
+
+Video uploads have a single Description field (no separate title); photo posts have both.
+
+**TikTok schedules natively** — a "Schedule" radio beside "Now" in Settings, with separate time and
+date pickers. The hour column needs scrolling to reach times below 19:00. Turn on **Music copyright
+check** for covers before scheduling: it takes a few seconds and tells you whether the video will be
+muted, which matters far more than the delay. Both it and Content check lite returned "No issues
+found" for Bring Me to Life.
+
 ### TikTok photo posts
 
 TikTok Studio has a **Photos** tab beside Videos (`/tiktokstudio/upload?tab=photo`). Same
@@ -211,25 +252,43 @@ Jumbo Interactive Limited (ALWAYS), the band's company (Epsilon / Rex Software /
 Suncorp Group / For The Record (FTR)), and Youngcare. Check the draft for any company named in
 plain text that should be a chip.
 
-**Use the company's FULL registered name** — a partial name silently returns nothing from the
-typeahead (`Jumbo Interactive Limited` works, `Jumbo Interactive` does not; `Rex Software` works,
-`Rex` returns people).
+### The technique that works (corrected 11 Sep 2026 — read this, not the old advice)
 
-**The technique that works** (proven 7 Sep, and the caret rule that explains it):
+**Type a SHORT query, then pick from the dropdown with a MOUSE CLICK.**
 
-1. Type the caption up to and including `@Full Company Name`.
-2. Down, then Return, to take the chip.
-3. Type the remainder.
+1. Type the caption up to and including a short `@Query` — `@Jumbo`, `@Youngcare`, `@For The Record`.
+2. Screenshot, confirm the right entry, and **click it with the mouse**.
+3. Press **`cmd+Down` then `End`**.
+4. Type the remainder.
 
-The caret always resets to **immediately after the most recent chip** on any non-typing action
-(screenshot, JS call, key press). That is harmless while the chip is the last thing in the box — so
-it is safe to screenshot and confirm the right entry is highlighted BEFORE taking it. It is
-destructive once you have typed past the chip: a later `type` lands mid-sentence and `BackSpace`
-eats the chip. So never go back to add a mention; build the caption forward, chip by chip.
+Three corrections to what this section used to say, each of which cost real time:
 
-**Verify before clicking Post:**
+- **The FULL registered name is WRONG.** The old advice was "use the company's full registered name,
+  a partial name returns nothing". The opposite is true in this composer: `@Jumbo Interactive Limited`
+  and `@Youngcare` returned **no dropdown at all**, while `@Jumbo` and `@Youngcare` typed
+  incrementally both returned it immediately. Long queries appear to return nothing rather than a
+  narrowed list. Short query, then disambiguate by eye — `@Jumbo` offers Jumbo Supermarkten, Jumbo
+  Interactive Limited and Jumbo (Retail Groceries), and only one is ours.
+- **Down+Return did not take the chip.** It inserted the name as plain text and left the remainder
+  to be appended later in the wrong place. Mouse click on the dropdown row works every time.
+- **`cmd+Down End` after every chip is mandatory.** The caret lands _inside_ the chip, not after it,
+  so the very next keystroke splits it — "For The Record (FTR)" became "For The Record." with
+  "(FTR)" appearing three paragraphs later. `cmd+Down End` moves to the true end of the document
+  first.
+
+**Never screenshot or run JS between taking a chip and the next keystroke.** The caret snaps back to
+the chip and a `BackSpace` then eats the chip instead of the character you meant. This happened on
+11 Sep and destroyed a chip that had taken correctly.
+
+If a dropdown does not appear for a query you believe is right, **do not BackSpace blindly** — press
+`cmd+Down End` first, then edit. Deleting a few characters to shorten the query (`@Youngcare` →
+`@Young`, then retyping `care`) reliably re-triggers it.
+
+**Verify before clicking Post or Schedule:**
 `document.querySelector('.ql-editor').querySelectorAll('[data-entity-urn]').length` — must equal the
-number of mentions you intended, and the text must contain no stray `@`.
+number of mentions you intended, and the text must contain no stray `@`. Read the `data-entity-urn`
+values too: Jumbo Interactive Limited is `1517297`, Youngcare is `307122`, For The Record (FTR) is
+`81140`. A chip with the wrong urn looks identical in the composer.
 
 ## Handles / tags (verified Aug 2026)
 
@@ -409,6 +468,27 @@ prepared by the `cut-recipe-colour-correction` session under
   - So a photo post CAN link to the gallery, but **only after the set is ingested** — as of 7 Sep,
     `brisbane-2026` had 1 photo in the table, so the link would have led to an empty gallery.
 
+## Photo visibility — the manual step that gets forgotten
+
+Photos default to `visibility='private'` and are **admin-released**. Publishing the social post does
+NOT release them. Someone who sees the post and comes to the site finds nothing until you run:
+
+```sql
+UPDATE photos SET visibility='public'
+WHERE event_id='<event>' AND band_id='<band>' AND visibility <> 'public';
+```
+
+Brisbane 2026 ran five band posts plus an audience post before anyone noticed the photos were all
+still private. Check the photographer's page afterwards — Amy Corrie's should read 79 public / 0
+private.
+
+**This is not automated and rides on a human or a session being alive.** On 12 Sep the audience
+photos were released only because a one-shot reminder fired. The durable fix is to tie the release
+to the post going out; until that exists, treat it as part of publishing, not as follow-up.
+
+Related: photographers must exist in the `photographers` table for credit to render, and the
+photographer pages join on `name`, **not slug** — `photos.photographer` holds the display name.
+
 ## Website: every published video goes into the site
 
 The site renders videos from the `videos` table (YouTube-backed; see `src/lib/db/videos.ts` and
@@ -523,6 +603,18 @@ the argument for moving a burst rather than compressing the checks.
 | 4   | ShipReX `post.json` scheduled 13:00 with the folders delivered at 12:50                                                                            | Nothing was approved or written yet. Treat peer-supplied times as suggestions; the burst time is Dean's call                                       |
 | 5   | Draft caption opened by announcing the win and signed off "Congratulations from all of us at @battleofthetechbands"                                | We _are_ BotTB. Never self-mention or congratulate from the brand account; lead with a detail from the room instead                                |
 
+### 11–13 Sep 2026 — Off the Record, the roundup, and Jumbo Band
+
+| #   | What went wrong                                                                                                                                                                                             | Why it mattered                                                                                                                       | Fixed by                                                                                                                                 |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Followed this runbook's "use the FULL registered name" advice for LinkedIn mentions. Three failed attempts: no dropdown at all, then a chip split in half, then a `BackSpace` ate a chip after a screenshot | ~20 wasted tool calls on a post that should have taken five                                                                           | Short query + mouse click + `cmd+Down End`. The section above is rewritten; the old advice was not merely incomplete, it was backwards   |
+| 2   | Told Dean YouTube needed his manual upload because the file exceeded "the 10 MB cap"                                                                                                                        | Would have handed him work I could do. He challenged it and was right                                                                 | The 10 MB cap is the extension's `file_upload` tool only. The Studio fetch-inject has carried 1.69 GB. Corrected in the pipeline section |
+| 3   | The log interpreter derived the band from the **action name**, so three bands' publications all filed under Epsonics                                                                                        | Jumbo Band's and Total Loss's posts were recorded against the wrong band                                                              | Read the band from the entry's `item` text; `scheduled_*` and `endcard*` now handled as production steps                                 |
+| 4   | `endcard-treat.sh` had one song's constants hardcoded (299 s, probes at t=240/280/295)                                                                                                                      | Refused to run on a 230 s song — the gates fired on the wrong song, not on a bad master                                               | Derives fade from the card's own length, scales probes to the song, `--expect` optional                                                  |
+| 5   | A fix to that script used `for t in $PROBES`                                                                                                                                                                | zsh does **not** word-split an unquoted scalar, so it iterated once over the whole string and reported a silent tail on a good master | Array. Failing closed was correct; the lesson is to distrust the error, not the file                                                     |
+| 6   | Dean's thumbnail PNG was 2.71 MB                                                                                                                                                                            | YouTube's cap is 2 MB — it would have been rejected at upload                                                                         | JPEG q92, 0.36 MB                                                                                                                        |
+| 7   | Photos stayed private through five band posts and the audience post                                                                                                                                         | Anyone arriving from a post found an empty gallery                                                                                    | Released 80/80. Still a manual step — see "Photo visibility"                                                                             |
+
 ### 8 Sep 2026 — Amy Corrie photo run
 
 | #   | What happened                                                                                                                                                                                  | Why it mattered                                                                             | What changed                                                                                                                                                                                                                                                                                                                                     |
@@ -531,6 +623,39 @@ the argument for moving a burst rather than compressing the checks.
 | 2   | I posted the Epsonics LinkedIn caption with **plain-text company names**, no mentions, despite having proven the mention technique the day before                                              | Jumbo Interactive is the major sponsor and got no credit. Dean had to edit the post himself | See the HARD RULE section above. Root cause was mine: I reverted to the older "type it all in one block" workaround because it felt safer, after already learning the correct method. A proven fix supersedes the workaround it replaced                                                                                                         |
 | 3   | A stale scheduled FB post would have **republished The Chain on Sat 12 Sep using the old flickery file**                                                                                       | A duplicate post with a known-bad video                                                     | Deleted with Dean's approval. Lesson: when a post is held and pushed to a later date, it stays on the schedule after the real post ships — always re-check `/{page}/scheduled_posts` after a held item is finally published                                                                                                                      |
 | 4   | The FB handle-swap turned a standalone `@epsilonmarketing` line into a one-word paragraph reading "Epsilon"                                                                                    | Ugly orphan line, caught only by the `--dry` run                                            | **Always `--dry` first** and read the rendered caption for both platforms. Never leave a bare @handle on its own line — fold the company into a sentence                                                                                                                                                                                         |
+
+## Measuring what a post did (and what you cannot measure)
+
+- **Instagram**: `like_count` and `comments_count` come off `/{ig-user}/media` on the current token.
+- **TikTok**: views and likes are readable from the Studio content list. Nothing via API.
+- **Facebook**: reactions/comments need `pages_read_user_content`, which this token does NOT have.
+  `/{page}_{post}?fields=reactions.summary(total_count)` returns error 10. FB engagement is simply
+  not available without a re-auth — do not promise a ranking that includes it.
+- **Per-slide engagement inside a carousel does not exist on any platform.** "Which photo performed
+  best" is unanswerable. The honest proxy is slide 1, the image that appeared in feed and therefore
+  earned whatever the post earned.
+- **`heart_count` on the site is a dead signal** — 17 hearts across 509 Sydney photos. Do not rank on it.
+- **Age skews raw totals.** A post 5 days old beats one 5 hours old on volume alone; say so rather
+  than presenting a leaderboard that is really an age ranking.
+- **UTM-tag links that are meant to convert.** `src/lib/social/utm.ts` builds them and already treats
+  Instagram as `social_bio` because captions are not clickable. First tagged post was the Brisbane
+  gallery roundup, `utm_content=brisbane-2026-photos-roundup`.
+
+## Choosing a thumbnail frame
+
+Offer a **spread, not single frames**. Nine frames at half-second steps across ±2 s of a candidate
+moment, as a contact sheet, reading chronologically — name the files so a glob sorts in time order,
+or the sheet reads in alphabetical nonsense.
+
+This is not fussiness. On 13 Sep the frame picked as "the strongest portrait by a distance" turned
+out to be the **worst** in its own group: a haze blast washed it out, and half a second later it
+cleared completely. Two frames after that, the sponsor's logo became readable on the singer's robe.
+A single frame hides all of that.
+
+Pull the frames from the **delivered render** with `ffmpeg -ss <t> -i <render> -frames:v 1 -q:v 2`,
+not from the camera masters — the render carries the grade. Watch for a ±2 s window that spans a
+camera cut or crops a subject at the frame edge; both happened and both are invisible until you see
+the spread.
 
 ## Improvements for next time
 
