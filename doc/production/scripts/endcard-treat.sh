@@ -14,9 +14,14 @@
 #   * audio actually DECODES near the end (metadata alone is not proof)
 #
 # Runs the encode detached (nohup) so a lost session or a machine reboot does
-# not leave a truncated file behind with no explanation. Memory: one ffmpeg,
-# well under 1 GB; do not parallelise this on a 24 GB machine that also runs
-# Resolve and Logic (see ~/.claude/CLAUDE.md).
+# not leave a truncated file behind with no explanation.
+#
+# Memory, MEASURED not guessed: a 1080p pass peaks at ~1.0 GB RSS (Sultans of
+# Swing, 359 s, 15 Sep — 1012 MB). This comment used to say "well under 1 GB",
+# which was wrong at 1080p and badly wrong at 4K: the blend holds full frames,
+# so 3840x2160 is ~4x the pixels and should be budgeted at several GB. State
+# the number and check with Dean before running --4k. Never parallelise this on
+# a 24 GB machine that also runs Resolve and Logic (see ~/.claude/CLAUDE.md).
 set -e
 
 SRC="$1"; OUT="$2"; shift 2 2>/dev/null || true

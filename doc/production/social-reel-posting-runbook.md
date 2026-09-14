@@ -636,6 +636,27 @@ the argument for moving a burst rather than compressing the checks.
 | 6   | Dean's thumbnail PNG was 2.71 MB                                                                                                                                                                            | YouTube's cap is 2 MB — it would have been rejected at upload                                                                         | JPEG q92, 0.36 MB                                                                                                                        |
 | 7   | Photos stayed private through five band posts and the audience post                                                                                                                                         | Anyone arriving from a post found an empty gallery                                                                                    | Released 80/80. Still a manual step — see "Photo visibility"                                                                             |
 
+### 15 Sep 2026 — Sultans of Swing masters
+
+| #   | What went wrong                                                                                              | Why it mattered                                                                                                                                                                                   | Fixed by                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | A tail-probe script ran ffmpeg with `-v error` and reported "NO AUDIO DECODED" on two perfectly good masters | `volumedetect` prints its summary at **info** level, so `-v error` suppresses the very line the grep looks for — the check failed closed on a good file, same shape as the zsh word-splitting bug | Use `-hide_banner -nostats`, never `-v error`, whenever you need a filter's printed output. Diagnosis by the peer session; `endcard-treat.sh` line 77 already did this correctly |
+| 2   | `endcard-treat.sh`'s header claimed the encode sits "well under 1 GB"                                        | A measured 1080p pass peaked at 1012 MB, and 4K is ~4x the pixels — the comment would have justified running a 4K pass unannounced on a 24 GB shared machine                                      | Measured and corrected in the script. Budget several GB for `--4k` and check first                                                                                               |
+| 3   | Nearly called the end card broken because the final frame was near-black rather than logo-on-black           | It is not a fault: the shipped Bring Me to Life does the same (YAVG 39 -> 17 over its last 0.2 s; Sultans 45 -> 18). The card's own tail fades                                                    | Compare against a shipped master before declaring a regression                                                                                                                   |
+
+**Loudness is a publishing gate, not an afterthought.** Sultans of Swing bounced at
+**-16.2 LUFS** against Bring Me to Life's shipped **-13.6** — a 2.6 LU step down between two videos
+in the same playlist. YouTube normalises to about -14 and **only attenuates, never boosts**, so the
+louder one gets pulled down to -14 and the quieter one is left where it is: the gap is audible and
+it is the new song that sounds wrong.
+
+It cannot be fixed at the end-card encode, even though that stage already re-encodes the audio.
+Sample peak and true peak are both **-0.5 dBFS**, so a linear gain buys 0.4 dB before clipping —
+about -15.8 LUFS at best against a -13 target. Closing the rest needs a limiter or `loudnorm`, which
+changes dynamics rather than level, and on an LRA 3.2 master that is a mastering decision. **Measure
+integrated loudness on every master before scheduling anything, and treat a >1 LU drift from the
+last published song as a hold.**
+
 ### 14 Sep 2026 — Bring Me to Life publication day
 
 | #   | What went wrong                                                                                                                | Why it mattered                                                                                                                      | Fixed by                                                                                                   |

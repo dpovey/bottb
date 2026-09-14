@@ -711,3 +711,50 @@ cut — it is that song's opening shot too.
 ## Plain-WAV 4 GiB ceiling (bottb-91 via deapovey-0a, 2026-09-14)
 
 BOTTB_reference_48k.wav is plain RIFF at 3.52 GiB — 88% of RIFF's hard 4 GiB limit (32-bit chunk size; a filesystem-independent format ceiling, not exFAT). If the reference is ever regenerated longer, deeper, or with more channels it will silently truncate/corrupt: use RF64 or WAVE64 (or split) for any future rebuild. Same applies to any long multitrack bounce.
+
+## Sultans of Swing delivery (2026-09-14/15)
+
+Render times, for planning: **4K 3840x2160 took 1306 s, 1080p 1920x1080 took 1259 s** — the same
+359.28 s programme, within 4 % of each other. **Output resolution is not what costs the time**;
+the Film Look Creator and the source decode are, and they are identical either way. Do not
+budget the 1080p as a quick follow-up to the 4K, and do not read a slow-looking percentage as a
+stall — I wrongly accused my own status polling of slowing the job, on nothing more than a
+percentage that advances non-linearly. The finished numbers say otherwise.
+
+Both masters: **8982 frames** by `-count_frames`, exactly `MarkOut - MarkIn + 1`
+(285735-294716). Video 359.280 s / audio 359.360 s, a 0.080 s delta. 4K 46.6 Mb/s, 1080p
+11.7 Mb/s, AAC 320 kb/s both. Integrated **-16.2 LUFS**, LRA 3.2, true peak -0.5 dBFS.
+
+**`-v error` suppresses `volumedetect`'s output.** The tail probes reported "no audio decoded"
+on _both_ good masters, because `volumedetect` prints its `max_volume:` summary at **info**
+level and `-v error` throws it away. This is the second instance of the same shape in a week
+(the first was zsh not word-splitting `$PROBES` in `endcard-treat.sh`), so it is now a rule:
+**when a QC check fails on a file you have reason to trust, prove the checker works on a file
+you know is good before you go looking in Resolve.** Use `-hide_banner -nostats` rather than
+`-v error` whenever a filter's printed output _is_ the measurement, and grep the whole
+`max_volume: N dB` string rather than taking the last whitespace field (which is `dB`).
+
+**Loudness carried straight through from the bounce, and cannot be fixed downstream.** The
+master measures -16.2 LUFS and the v3 bounce measures -16.3 on its own, so the timeline applies
+no gain. Bring Me to Life shipped at -13.6, so there is a 2.6 LU step down between two songs on
+the same channel.
+
+The end-card pass re-encodes audio anyway (it applies a fade and writes AAC 320k), so the
+obvious thought is to correct the level there and skip a re-bounce. **It does not work.** Sample
+peak and true peak are both **-0.5 dBFS**: linear gain buys **0.4 dB** before clipping, i.e.
+-15.8 LUFS at the absolute best. Reaching -13 needs `loudnorm` or a limiter, which changes
+dynamics rather than level — a mastering decision on a master whose LRA is already 3.2, not a
+pipeline tweak. **A level target missed in the bounce has to be fixed in the bounce.** Check
+integrated loudness on the bounce _before_ rendering 45 minutes of deliverables.
+
+(Care with the LRA comparison: BMTL's 8.7 LU is measured across the whole master including its
+quiet intro and crowd tail, as is Sultans' 3.2. Neither is a song-only figure. The level gap is
+solid; the dynamics inference is softer.)
+
+**Upload route (from the Social Posting session, 2026-09-14).** The Chrome extension's
+`file_upload` tool is capped at 10 MB, which does _not_ rule out browser upload: the working
+route is `doc/production/scripts/blob-upload.mjs` (run with the repo root as cwd) to get a
+public Vercel Blob URL, then a `fetch()`-inject inside YouTube Studio, which pulls the bytes
+itself and never touches the local filesystem. Carried 541 MB here, 1.69 GB on The Chain.
+Budget a transient Chrome peak of **~2x the file size** — which is why the 2.1 GB 4K, at a
+~4.2 GB peak, is a decision to put to Dean rather than just run.
