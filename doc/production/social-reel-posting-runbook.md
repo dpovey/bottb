@@ -655,6 +655,51 @@ the argument for moving a burst rather than compressing the checks.
 | 3   | A stale scheduled FB post would have **republished The Chain on Sat 12 Sep using the old flickery file**                                                                                       | A duplicate post with a known-bad video                                                     | Deleted with Dean's approval. Lesson: when a post is held and pushed to a later date, it stays on the schedule after the real post ships — always re-check `/{page}/scheduled_posts` after a held item is finally published                                                                                                                      |
 | 4   | The FB handle-swap turned a standalone `@epsilonmarketing` line into a one-word paragraph reading "Epsilon"                                                                                    | Ugly orphan line, caught only by the `--dry` run                                            | **Always `--dry` first** and read the rendered caption for both platforms. Never leave a bare @handle on its own line — fold the company into a sentence                                                                                                                                                                                         |
 
+## The app must be Published, or nothing you post is visible to anyone else
+
+**Symptom:** you can see every post; nobody else can. An outsider following a link gets
+_"This content isn't available at the moment — when this happens, it's usually because the owner
+only shared it with a small group of people or changed who can see it, or it's been deleted."_
+Views sit near zero. Everything looks perfect from the admin account, and the Graph API reports the
+post `published: true`, privacy `EVERYONE`, `embeddable: true`, `video_status: ready`.
+
+**Cause:** a Meta app in Development mode ("Unpublished") only shows the content it creates to
+people who hold a role on that app. Hand-posted content is unaffected, which is what makes it so
+confusing — the page looks half-working.
+
+Found 14 Sep 2026 after For The Record reported it. The split was total and had run for two weeks:
+
+| Posted                     | How       | Public?     |
+| -------------------------- | --------- | ----------- |
+| 22 Jun – 20 Aug (21 reels) | by hand   | all fine    |
+| 30 Aug – 14 Sep (9 reels)  | Graph API | all blocked |
+
+The schedule log starts 30 Aug, exactly when the API pipeline began. Every Brisbane 2026 reel — the
+whole band-by-band rollout and the Jumbo Band launch — was invisible to everyone but us.
+
+**Fix:** App Dashboard → App settings → Basic → set a Privacy policy URL
+(`https://www.battleofthetechbands.com/privacy`) → **Save Changes at the very bottom of the page**,
+below the Data Protection Officer block. The field silently reverts if you don't scroll down to it.
+Then Publish → Publish. **Visibility is restored retroactively** — all 30 reels went public the
+moment the app flipped, with no re-posting. The page token and its 7 scopes keep working.
+
+**How to check this in 10 seconds, any time:**
+
+```sh
+curl -s -A "Mozilla/5.0" "https://www.facebook.com/battleofthetechbands/videos/<video_id>" \
+  | grep -c "isn't available"     # 0 = public, 1 = blocked
+```
+
+Use the `/{page}/videos/{id}` form — it is the only Facebook URL shape that serves an
+unauthenticated client. `/reel/{id}` and `/{page}/posts/{id}` return a 1,542-byte error page for
+_everything_, including the page's own root and made-up ids, so they cannot tell a live link from a
+dead one. Two things that also look decisive and are not: the embed plugin
+(`/plugins/video.php`) cleared posts that were actually blocked, and the Sharing Debugger refuses
+outright with "Facebook URLs cannot be crawled".
+
+**The tell that cracked it:** a working post shows a _login prompt_ to a logged-out viewer; a
+blocked one shows the _error_. Treating those two as the same failure hid the problem for a week.
+
 ## Measuring what a post did (and what you cannot measure)
 
 - **Instagram**: `like_count` and `comments_count` come off `/{ig-user}/media` on the current token.

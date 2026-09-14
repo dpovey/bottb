@@ -120,6 +120,27 @@ Project.db`, SQLite) is readable: `Sm2TiTrack` / `Sm2TiItem` (Start/Duration sto
 Group Pre-Clip = camera correction (+ Deflicker) → Clip = per-shot exceptions →
 Timeline node = Film Look Creator (Aurora, tuned: contrast ~1.1, fade 0.03–0.06, highlight
 roll-off up, tint 0, richness over saturation, skin bias +0.1–0.2, halation small, bloom off).
+
+**Halation, with numbers (2026-09-14).** "Small" is: **Enable Halation on, Highlights Only on,
+Amount 0.250, Radius 4.00, Saturation 1.000, Hue 0.500** — what The Chain and Bring Me to Life
+were delivered with. Two things pin it there:
+
+- **It is one node over the whole 3 h 39 m.** `Timeline.GetNodeGraph()` node 1 is the timeline
+  grade; there is no per-song FLC. Any halation change re-grades two published songs, so the
+  bar for moving it is "the show was wrong", not "this song would prefer it".
+- **Hazy does not mean more halation here.** The intuition is that a bright, smoky song blooms
+  harder, and the measurement says the opposite. Duration-weighted frame fraction above luma
+  0.75 / 0.85 / 0.95, post-grade: Bring Me to Life **6.59 / 3.94 / 2.26 %**, Sultans of Swing
+  **4.92 / 2.85 / 1.39 %** — 0.75× to 0.62× the area. The haze _offset_ pulls the wash down,
+  and with it the shoulder that "Highlights Only" acts on. Same Amount reads lighter on the
+  hazier song, not heavier.
+
+Why light at all, on this footage: real smoke already scatters the spots optically, so halation
+is re-doing in software what the room did — and it puts light back into exactly the floor the
+haze Offset just pulled from ~0.10 to ~0.02. **Highlights Only must stay on**: without it the
+effect lands on hazy midtones, which is the whole problem. If a halo ever reads as coloured
+smear on the magenta/blue gels, that is the source colour bleeding — drop Saturation toward
+0.85, do not touch Hue (0.5 is the red/orange end, which is what film halation physically is).
 Auto camera-match from frame statistics gave usable _colour balance_ (CAM D −15 % blue) but
 **wrong exposure** (framing bias — "CAM C darker" was dark background, not the sensor); exposure
 is matched by eye on a common reference (e.g. both cameras at the same spot, 08:34). CAM A is
@@ -536,6 +557,34 @@ After Render in Place the clip is a plain `Video` item and **group changes no lo
 it**. Measured, with a control: toggling every CAM C group pre-clip node changed **0.000** on
 a RiP'd clip and **7.593 mean / 88.6 % of pixels** on a multicam one in the same song.
 
+### What RiP freezes and what stays live — the full picture (2026-09-14)
+
+The note above is right but only covers one layer, and the question "do the colour nodes still
+apply?" needs all four. Measured on a RiP'd Bring Me to Life clip (`CAM C Render 53.mov` at
+02:13:43:05), each toggled and restored byte-identically:
+
+| layer                                                        | after Render in Place          | evidence                                                                           |
+| ------------------------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------------------- |
+| source, edit-page zoom/transform, Super Scale                | **baked**                      | the point of the exercise                                                          |
+| group pre-clip — camera correction, Deflicker, NR            | **baked, no longer reachable** | 0.000 change vs 7.593 / 88.6 % on a multicam control                               |
+| **clip node 1 — the gigstills CDLs**                         | **still live**                 | identity vs applied: 5.692 mean, **96.0 %** of pixels; black floor 0.0006 → 0.0065 |
+| timeline node — Film Look Creator (+ halation), black anchor | **still live**                 | bypass: 11.544 mean, **98.7 %** of pixels                                          |
+
+So RiP bakes everything _upstream of the clip grade_ and leaves the clip node and everything
+downstream running on the baked result. The CDLs are applied **once**, not twice — the
+double-application worry is unfounded, and it was worth testing rather than assuming, because
+nothing can read a CDL back to check afterwards.
+
+The practical consequence is unchanged and is the reason for the ordering: Deflicker and
+Temporal NR live in the group pre-clip, so they must be **on before the RiP** or they are lost
+for good. Grades, the look and halation can still be changed afterwards.
+
+**Grabbing stills to verify: allow ~4-6 s after moving the playhead.** At 1.5 s the grab
+returned the _previous_ playhead position — a still from a different song entirely — which read
+as "the timeline node does not reach RiP'd clips" until the frame was actually looked at. A
+comparison against a stale grab is worse than no comparison: it produces a confident wrong
+answer. Always sanity-check that the frame is the shot you think it is.
+
 So whatever was live at RiP time is baked in permanently. **Enable Deflicker and Temporal NR
 _before_ the RiP pass, not after** — on this song CAM A's Deflicker was bypassed when the RiP
 ran, so one of the 22 clips is baked without it. (`GetColorGroup()` is no help: it returns
@@ -564,6 +613,21 @@ leave the look running:
 Film Look Creator is cheap enough on this machine — the earlier note pairing it with Deflicker
 as a thing to bypass while cutting is wrong, and it costs the editor the actual look for
 nothing. Temporal NR and Deflicker are the expensive ones.
+
+**Halation is the fifth switch, and it is MANUAL** (Dean, 2026-09-14). It is a checkbox inside
+the Film Look Creator OFX, not a node, and **there is no OFX-parameter API** — the whole
+scripting surface for OFX is `InsertOFXGeneratorIntoTimeline`, which inserts a generator clip.
+Searching the 21.1 API for `Halation` returns nothing. So it cannot be scripted, will not
+appear in any node-toggle result, and has to be done by hand in the FLC panel:
+
+- **Pre-render:** tick **Enable Halation** (settings: Highlights Only on, Amount 0.250,
+  Radius 4.00, Saturation 1.000, Hue 0.500).
+- **Post-render:** untick it before handing the timeline back for cutting.
+
+Because there is no `GetNodeEnabled` **and** no parameter read-back, nothing can verify this
+one from the outside — not even on a grabbed still, since at Amount 0.250 on this footage the
+difference is inside H.264 noise on most frames. It is a checklist item, and the only defence
+is doing it in a fixed order every time.
 
 **Before any render, all of the above go back ON.** There is still no `GetNodeEnabled`, so
 nothing can read the state back — it has to be set explicitly and verified on a grabbed still.
