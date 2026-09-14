@@ -15,8 +15,10 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    _before_ padding, or the logo lands mid-frame. Keep output 1080×1920 H.264 + AAC, `+faststart`.
    On busy bright shots the additive logo washes out; acceptable, but check a frame.
 2. **Upload the branded file to Vercel Blob** (`@vercel/blob` `put`, `social/<event>/<file>`,
-   public, `allowOverwrite`). This single URL feeds Facebook, Instagram _and_ the YouTube browser
-   trick.
+   public, `allowOverwrite`). This URL feeds Facebook and the YouTube browser trick.
+   **Instagram needs a second, 1080p upload — the 4K master does not work there** (see step 4).
+   Upload both up front on a 4K job; the 1080p is already rendered beside the master in
+   `TO_POST_<song>/` because LinkedIn and TikTok want it too.
 3. **Facebook Reel via Graph API** (page token `META_PAGE_ACCESS_TOKEN`): `POST /{page}/video_reels`
    `upload_phase=start` → `POST rupload.facebook.com/video-upload/v21.0/{video_id}` with header
    `file_url: <blob url>` (no binary upload needed) → poll `{video_id}?fields=status` until
@@ -24,7 +26,7 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    `scheduled_publish_time=<epoch>`, `description`. Permalink is `facebook.com/reel/{video_id}`
    immediately. FB captions: names only — the API cannot @-tag other Pages.
 4. **Instagram Reel via Graph API** (same token; IG business id `17841461862790198`):
-   `POST /{ig}/media` with `media_type=REELS`, `video_url=<blob url>`, `caption`,
+   `POST /{ig}/media` with `media_type=REELS`, `video_url=<1080p blob url>`, `caption`,
    `share_to_feed=true`, `collaborators=["handle1","handle2"]` (max 3; each account gets an accept
    prompt). Poll container `status_code` until `FINISHED` (~1–2 min). Collaborators are creation-time
    only: to change them on a pending post, recreate the container; on a **published** post the API
@@ -36,8 +38,27 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    ~24 h and in practice every pre-built one died before its slot** (errors: subcode 2207032 "Cannot
    Create Media" / 2207020 "Expired Media"). Don't pre-build a week of containers — have the daily
    job build the container from the Blob URL and publish it in one go (~1–2 min), or at minimum keep
-   the recreate-from-blob fallback that every Brisbane job ended up using. Business-discovery handle lookup is not permitted on this token; verify IG handles by
-   loading instagram.com/<handle> in the browser.
+   the recreate-from-blob fallback that every Brisbane job ended up using. Business-discovery handle lookup is not permitted on this token.
+
+   **Do not "verify" a handle by loading instagram.com/<handle>** — this runbook said to and it
+   proves nothing. Logged out, Instagram serves the same gated page for every path: a handle
+   invented on the spot returns HTTP 200 with `<title>Instagram</title>`, exactly like a real one.
+   The Graph API's own validation is the only check that works. If a container is refused with
+   code 210 / subcode 2207066 ("The user <handle> cannot be tagged on this media"), the error names
+   only the first bad handle, so **probe each one alone** — build a throwaway container per handle
+   and see which come back with an id. Throwaway containers cost nothing; they expire unused.
+
+   Known: **`jumbointeractive` is NOT taggable** (refused 14 Sep 2026), so a Jumbo Band post's three
+   slots are @quirkylikethat, @kurtboldy, @youngcareoz. When a company cannot be tagged, also strip
+   the `@` from its mentions in the caption body and write the name in full — an `@` that resolves
+   to nothing reads worse than plain text.
+   **Instagram will not take a 4K master.** The Reels API caps at 1080p and 1 GB. Hand it a
+   3840x2160 / 1.3 GB file and the container does not fail fast: it runs ~50 s of processing and
+   then returns `status_code: ERROR`, `"Media upload has failed with error code 2207076"` — a
+   generic message that names neither the resolution nor the size. The same master uploads to
+   YouTube and Facebook without complaint, so a 2207076 on a file those two accepted means
+   "re-encode for Instagram", not "the file is broken". Post the 1080p; it published first try.
+
 5. **YouTube via Studio in Chrome** (the API key is read-only; no upload OAuth exists):
    - Channel: Battle of the Tech Bands `UCJVbMoGFRdQxVgHvW1heYCg` — Studio opens on Dean's personal
      channel by default; always navigate to
@@ -615,6 +636,16 @@ the argument for moving a burst rather than compressing the checks.
 | 6   | Dean's thumbnail PNG was 2.71 MB                                                                                                                                                                            | YouTube's cap is 2 MB — it would have been rejected at upload                                                                         | JPEG q92, 0.36 MB                                                                                                                        |
 | 7   | Photos stayed private through five band posts and the audience post                                                                                                                                         | Anyone arriving from a post found an empty gallery                                                                                    | Released 80/80. Still a manual step — see "Photo visibility"                                                                             |
 
+### 14 Sep 2026 — Bring Me to Life publication day
+
+| #   | What went wrong                                                                                                                | Why it mattered                                                                                                                      | Fixed by                                                                                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 1   | Sent the 4K master to Instagram because "one Blob URL feeds FB, IG and YouTube"                                                | ~50 s of processing, then a bare `2207076` that names neither the resolution nor the size                                            | IG caps at 1080p / 1 GB. Post the 1080p there; FB and YouTube keep the 4K. Step 2 now says upload both     |
+| 2   | Used `jumbointeractive` as an IG collaborator, which the API refused outright — killing the whole container, not just that tag | The handles table already said Jumbo has **no Instagram**. The runbook was right and the brief's guess was wrong                     | Probe each handle alone with a throwaway container. Read the handles table before trusting a supplied list |
+| 3   | This runbook's own advice — verify a handle by loading `instagram.com/<handle>` — is worthless                                 | A handle invented on the spot returns 200 exactly like a real one; it would have "confirmed" the bad handle                          | Deleted and replaced with the API-probe method                                                             |
+| 4   | `ALL_PLATFORMS_LIVE` in the log interpreter had The Chain's group, band **and read-back times** hardcoded                      | Identical to incident 3 of 11–13 Sep, one layer down: it would have filed Jumbo Band under Epsonics and backdated the IG reel a week | Group and times now come from the entry. Five regression tests added                                       |
+| 5   | Nearly recorded LinkedIn's and TikTok's times as exact                                                                         | Neither platform exposes one — only "2h ago". Writing them as measured would have made the ledger look precise where it is not       | `~` prefix on the `<platform>_at` key sets `posted_at_estimated`                                           |
+
 ### 8 Sep 2026 — Amy Corrie photo run
 
 | #   | What happened                                                                                                                                                                                  | Why it mattered                                                                             | What changed                                                                                                                                                                                                                                                                                                                                     |
@@ -637,6 +668,17 @@ the argument for moving a burst rather than compressing the checks.
 - **`heart_count` on the site is a dead signal** — 17 hearts across 509 Sydney photos. Do not rank on it.
 - **Age skews raw totals.** A post 5 days old beats one 5 hours old on volume alone; say so rather
   than presenting a leaderboard that is really an age ranking.
+- **Reading a posting time back.** Facebook (`updated_time`), Instagram (the media `timestamp`) and
+  YouTube (`datePublished` on the watch page) each hand back an exact instant. LinkedIn and TikTok
+  do not — the UI shows a relative label ("2h ago", "2m ago") and nothing else, so their times are
+  good to a few minutes. Record that difference rather than flattening it: the schedule log marks an
+  inferred time with a leading `~` on the `<platform>_at` key and the interpreter sets
+  `posted_at_estimated`.
+- **An id's timestamp is the UPLOAD time, not the publication time.** A LinkedIn `ugcPost` URN
+  (`id >> 22` = unix ms) and a TikTok item id (`id >> 32` = unix s) are both minted when the post is
+  created. For a natively-scheduled post that is the night you staged it: Bring Me to Life decoded
+  to 13 Sep 22:08 and 22:11 for posts that published 14 Sep 16:30 and 18:30. Use the id to find a
+  post, never to date one.
 - **UTM-tag links that are meant to convert.** `src/lib/social/utm.ts` builds them and already treats
   Instagram as `social_bio` because captions are not clickable. First tagged post was the Brisbane
   gallery roundup, `utm_content=brisbane-2026-photos-roundup`.

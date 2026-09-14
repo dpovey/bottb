@@ -130,6 +130,30 @@ const THECHAIN = {
   title: 'Epsonics - The Chain',
 }
 
+const BRINGMETOLIFE = {
+  group: 'brisbane-2026-bringmetolife',
+  band: 'jumbo-band-brisbane-2026',
+  title: 'Jumbo Band - Bring Me to Life',
+}
+
+/**
+ * Which full-video publication an entry is about, read from its `item` text.
+ *
+ * Same trap as {@link PHOTO_ITEM_PATTERNS}: "ALL_PLATFORMS_LIVE" is a generic
+ * action name that more than one song now uses, so keying the group off the
+ * action filed Jumbo Band's publication under Epsonics. Read `item`, and keep
+ * The Chain only as the fallback for the entries written before this mattered.
+ */
+const VIDEO_ITEM_PATTERNS: [RegExp, typeof THECHAIN][] = [
+  [/bring\s*me\s*to\s*life|jumbo\s*band/i, BRINGMETOLIFE],
+  [/the\s*chain|epsonics/i, THECHAIN],
+]
+
+function videoTargetFromItem(item: unknown): typeof THECHAIN {
+  const text = typeof item === 'string' ? item : ''
+  return VIDEO_ITEM_PATTERNS.find(([re]) => re.test(text))?.[1] ?? THECHAIN
+}
+
 /** The four Amy Corrie photo posts Facebook was told to publish on its own. */
 const PHOTO_GROUPS: Record<string, { group: string; band: string | null }> = {
   'jumbo-band': {
@@ -204,6 +228,25 @@ function parseScheduled(s: string): string | null {
     /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?(?:[+-]\d{2}:\d{2})?)/
   )
   return m ? normaliseIso(m[1]) : null
+}
+
+/**
+ * A time read back off the platform, carried on a sibling `<platform>_at` key.
+ * Absent means we never measured it and the entry's own `ts` stands in.
+ *
+ * A leading "~" means the time was inferred rather than measured. Only the
+ * Meta and YouTube surfaces hand back an exact instant; LinkedIn and TikTok
+ * show a relative "2h ago" label and nothing more, so their times are good to
+ * a few minutes and must not be recorded as if they were exact.
+ */
+function parsePublishedAt(v: unknown): {
+  at: string
+  estimated: boolean
+} | null {
+  if (typeof v !== 'string') return null
+  const at = parseScheduled(v)
+  if (!at) return null
+  return { at, estimated: v.trimStart().startsWith('~') }
 }
 
 /** Give every instant an explicit offset. Brisbane never changes its clocks. */
@@ -1010,10 +1053,11 @@ function handleTheChainV2(
   action: string,
   ts: string | null
 ) {
-  const group = THECHAIN.group
+  const target = videoTargetFromItem(e.item)
+  const group = target.group
   const base = {
-    band: THECHAIN.band,
-    title: THECHAIN.title,
+    band: target.band,
+    title: target.title,
     contentType: 'video' as PostContentType,
   }
   const at = ts ? normaliseIso(ts) : null
@@ -1036,15 +1080,26 @@ function handleTheChainV2(
         facebook: `2026-09-07T18:00:00${OFFSET}`,
         instagram: `2026-09-07T18:00:19${OFFSET}`,
       }
-      const measured =
-        action === 'ALL_PLATFORMS_LIVE' ? measuredTimes[platform] : undefined
+      // Those two instants belong to The Chain's burst and nothing else.
+      // "ALL_PLATFORMS_LIVE" is a generic action that later songs reuse, so
+      // stamping every such entry with them backdated Jumbo Band's Instagram
+      // reel to a week before it existed. Later entries carry their own
+      // read-back time inline, as "published <ISO>" beside the link.
+      const readBack =
+        action === 'ALL_PLATFORMS_LIVE' && group === THECHAIN.group
+          ? measuredTimes[platform] && {
+              at: measuredTimes[platform] as string,
+              estimated: false,
+            }
+          : parsePublishedAt(e[`${field}_at`])
+      const measured = readBack ? readBack.at : undefined
       merge(ctx, group, platform, line, {
         ...base,
         externalId: externalIdFromUrl(platform, v),
         permalink: v.replace(/\/$/, ''),
         status: 'published',
         postedAt: measured ?? at,
-        postedAtEstimated: !measured,
+        postedAtEstimated: readBack ? readBack.estimated : true,
         postedVia:
           platform === 'instagram' || platform === 'facebook'
             ? 'native_schedule'
@@ -1071,13 +1126,13 @@ function handleTheChainV2(
       merge(ctx, group, 'instagram', line, {
         ...base,
         status: 'scheduled',
-        scheduledFor: `2026-09-07T18:00:00${OFFSET}`,
+        scheduledFor: parseScheduled(v) ?? at,
         postedVia: 'api',
         metadata: { ig_container: container },
       })
       continue
     }
-    ctx.ignored.push(`line ${line}: thechain "${field}" is prose, not an id`)
+    ctx.ignored.push(`line ${line}: ${group} "${field}" is prose, not an id`)
   }
 }
 

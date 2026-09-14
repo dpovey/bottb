@@ -604,3 +604,46 @@ JPEG, not PNG.
 frame lands exactly on the last frame of picture. On this song that put it 2.1 s after the
 music stops, sitting over the crowd tail — which is why the render out-point is chosen to leave
 a few seconds of tail after the last note rather than cutting on it.
+
+## Reference-audio ground truth (bottb-91, 2026-09-13)
+
+- BOTTB_reference_48k.wav is built from the Zoom H6essential recording, whose TrLR content is (2026-09-14 re-verified, bottb-91 retraction) very likely a DESK FEED recorded onto the Zoom — not a room capture; '21 Room'/LineL/R is the actual room pair (~21 m, arriving +61.2 ms LATE vs close mics). The Zoom clock runs ~6.89–6.92 ppm vs the desk USB clock; stems-vs-reference measures ~2.84 ppm because the reference is partly drift-corrected. Always name the clock pair with any ppm figure.
+- The picture-true reference is SPLICED between band regions (e.g. ~1.30 s step OTR→Epsonics) but continuous within a set. Never fit drift across a set boundary (it models the step as a bogus slope, e.g. −26.71 ppm for Total Loss vs the true 6.8935); drift/continuity → measure against the raw Zoom take, picture-true TC → measure against the reference, locally, inside the band's own region.
+
+## Sultans of Swing grade handover (2026-09-13)
+
+Second song through the 21.1 scripted handover, and the first with any cast in it.
+Song range **03:10:31:00 → 03:16:34:00**; snapping to whole items gives record
+**285735–295012** (9277 frames, 371.1 s, 93 cuts, no transitions, all four angles).
+
+Sequence, all scripted, no human in Resolve:
+
+1. `ClearClipColor()` on the 33 **Beige** gigstills shot-recommendation clips in range
+   (the cut is made; the recommendations have done their job).
+2. `GetNodeGraph().SetNodeEnabled(1|2, False)` — Film Look Creator and the black anchor —
+   verified on pixels (99.92% changed, mean |Δ| 17.6).
+3. 1080p H.264 measurement render, **~2 min** for 371 s.
+4. Restore both nodes, verified **byte-identical** to the pre-bypass still (mean |Δ| 0.0000).
+5. `gigstills cut-recipe` → 69 non-identity CDLs → `SetCDL` in three batches, 69/69 `True`.
+6. Verified on Resolve's own pixels: three of the largest haze offsets read back black floors
+   **0.018 / 0.021 / 0.015** against measured-before 0.095 / 0.106 / 0.103.
+
+**The one that nearly went wrong.** 33 of the 93 cuts carry a cast remedy — Bring Me to Life
+had none, so the first song never tested it. gigstills marks a cast `report`, never `apply`
+("a gel is lighting"), **but the composed `item["cdl"]` still carries its Gain**. Applying
+`set_cdl` verbatim — exactly what worked on Bring Me to Life — would have pushed R down and G
+up on a third of the song: blue stage to teal, magenta wash to grey-green, sallow skin. Caught
+by building the before/after montage instead of trusting the numbers. Re-ran with
+`cut.correct_cast: false`, now the show default in `runs_bottb_config.json`.
+
+Song-specific config lives in `gigstills/runs_bottb_sultans_config.json`
+(`haze_contrast_k: 1.0` — Dean's call, this being the haziest song measured: `haze` on 64 of
+93 cuts, `flat` on 61).
+
+**Boundary note:** the last item in range runs to 295012, i.e. 162 frames (6.5 s) past Paint It
+Black's first note at 294850. It is graded as part of Sultans. Check it when Paint It Black is
+cut — it is that song's opening shot too.
+
+## Plain-WAV 4 GiB ceiling (bottb-91 via deapovey-0a, 2026-09-14)
+
+BOTTB_reference_48k.wav is plain RIFF at 3.52 GiB — 88% of RIFF's hard 4 GiB limit (32-bit chunk size; a filesystem-independent format ceiling, not exFAT). If the reference is ever regenerated longer, deeper, or with more channels it will silently truncate/corrupt: use RF64 or WAVE64 (or split) for any future rebuild. Same applies to any long multitrack bounce.

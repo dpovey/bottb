@@ -379,3 +379,58 @@ describe('collaborators and media', () => {
     ).toBeNull()
   })
 })
+
+describe('full-video publications are keyed off the item, not the action', () => {
+  // "ALL_PLATFORMS_LIVE" started life as The Chain's entry and had that song's
+  // group, band and title hardcoded behind it. Bring Me to Life reused the
+  // action, so every one of its five posts landed in The Chain's group under
+  // Epsonics - the same trap "published_all_four_platforms" fell into.
+  it('files Bring Me to Life under its own group and band', () => {
+    const posts = result.posts.filter(
+      (p) => p.group_key === 'brisbane-2026-bringmetolife'
+    )
+    expect(posts).toHaveLength(5)
+    for (const p of posts) {
+      expect(p.band_id).toBe('jumbo-band-brisbane-2026')
+      expect(p.status).toBe('published')
+    }
+  })
+
+  it('leaves The Chain where it was', () => {
+    expect(find('brisbane-2026-thechain', 'youtube')?.band_id).toBe(
+      'epsonics-brisbane-2026'
+    )
+  })
+
+  it('does not stamp a later song with The Chain’s read-back times', () => {
+    // The two measured instants in the interpreter belong to the 7 Sep burst.
+    // Applied to every ALL_PLATFORMS_LIVE entry they backdated this Instagram
+    // reel to a week before it was created.
+    const ig = find('brisbane-2026-bringmetolife', 'instagram')
+    expect(ig?.posted_at).toBe('2026-09-14T18:08:04+10:00')
+    expect(ig?.posted_at_estimated).toBe(false)
+  })
+
+  it('marks a time inferred from a relative label as estimated', () => {
+    // Facebook, Instagram and YouTube hand back an exact instant. LinkedIn and
+    // TikTok only ever show "2h ago", so their times carry a leading "~".
+    expect(find('brisbane-2026-bringmetolife', 'linkedin')?.posted_at).toBe(
+      '2026-09-14T16:30:00+10:00'
+    )
+    expect(
+      find('brisbane-2026-bringmetolife', 'linkedin')?.posted_at_estimated
+    ).toBe(true)
+    expect(
+      find('brisbane-2026-bringmetolife', 'youtube')?.posted_at_estimated
+    ).toBe(false)
+  })
+
+  it('reads the ids off each permalink', () => {
+    expect(find('brisbane-2026-bringmetolife', 'youtube')?.external_id).toBe(
+      'bJWWOUYBYmQ'
+    )
+    expect(find('brisbane-2026-bringmetolife', 'tiktok')?.external_id).toBe(
+      '7684991463591185685'
+    )
+  })
+})
