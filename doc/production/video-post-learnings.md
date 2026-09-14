@@ -704,6 +704,28 @@ Song-specific config lives in `gigstills/runs_bottb_sultans_config.json`
 (`haze_contrast_k: 1.0` — Dean's call, this being the haziest song measured: `haze` on 64 of
 93 cuts, `flat` on 61).
 
+**Re-graded 2026-09-15 after Dean watched the preview**, and both of his notes were real
+defects rather than taste:
+
+- *"Lots of the shots are very hazy and washed out."* `haze_cap` was pinning **55 of the 64
+  hazed cuts (86%)** at 0.05, having removed 0.05 of a median 0.086 neutral pedestal — so
+  nearly half the wash was still on the picture by construction. Raised to **0.10** for this
+  song: black floor 0.0198 → 0.0091, and **clipping did not move** (0.110 either way), an
+  Offset only lowering. Rationale in `gigstills/docs/cut-recipe.md`.
+- *"The guitarist in the solo was way too dark."* That cut had an **identity CDL**.
+  `G27:1618`, CAM A, 03:15:29:14, **13 s** — the longest shot of the outro solo. The recipe's
+  rules fire on the *lighting state*, and G27 pools that close-up with six CAM D wides of a
+  dark stage: weighted the group reads 0.520 against a 0.498 dark band, so nothing fired,
+  while the cut measures 0.483 and the frame Dean saw measures 0.375. Hand-fixed with
+  **Slope 1.15 / Power 0.85**; verified on a still grabbed back out of Resolve (subject 0.621,
+  black floor still 0.0000). A second cut hidden the same way, `G26:1570`, took its recipe CDL
+  plus Power 0.85 at **no** extra clipping.
+
+Applied set is now **70** non-identity CDLs of 93. Note for the next song: a pure gain of 1.33
+measured the same subject lift as gain 1.15 + gamma 0.85 but looked worse, because gain raises
+the beam and the haze proportionally while gamma lifts shadows preferentially — the pipeline's
+own "Gain to the bottom of normal, then Gamma for the remainder" rule, confirmed on pixels.
+
 **Boundary note:** the last item in range runs to 295012, i.e. 162 frames (6.5 s) past Paint It
 Black's first note at 294850. It is graded as part of Sultans. Check it when Paint It Black is
 cut — it is that song's opening shot too.
