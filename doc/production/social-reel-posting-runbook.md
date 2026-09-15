@@ -255,6 +255,52 @@ wrap them in a code fence — the quote bars come along and he can't use it. Pla
 per line, labelled by platform. Send one as each post goes live, and again consolidated when every
 platform for that item is up.
 
+## Setting thumbnails and covers without freezing the session
+
+**The extension's `file_upload` tool works for thumbnails.** Its 10 MB cap is irrelevant here — a
+1920x1080 JPEG runs 0.2-0.3 MB. What you must NOT do is click the visible "Upload file" / "Upload
+cover" button: that opens a native file dialog the extension cannot see or dismiss, and the session
+stops responding until somebody clears it by hand.
+
+Instead, find the hidden `input[type=file]` and upload straight to it:
+
+```js
+;[...document.querySelectorAll('input[type=file]')]
+  .map((e, i) => `${i} accept="${e.accept}" id="${e.id}"`)
+  .join(' || ')
+```
+
+then `find` that element and pass its ref to `file_upload`. Confirmed working on **YouTube**
+(`id="file-loader"`, `ytcp-thumbnail-uploader`) and **TikTok** (inside the Edit cover dialog).
+
+Two constraints:
+
+- **`file_upload` only accepts paths inside the session's own directories.** Copy the file into the
+  scratchpad first; a path on /Volumes is rejected outright.
+- **LinkedIn is the exception.** Its video-thumbnail input does not exist in the DOM until the click
+  that opens the native dialog, so there is nothing to target. That one genuinely needs Dean — it is
+  the image icon in the Editor toolbar, beside **T** and **CC**, reached by going Back from the
+  composer.
+
+## Time pickers: three platforms, three different lies
+
+Every one of these silently reverts if you type into it and walk away. **Always re-read the field
+after setting it.**
+
+- **TikTok** — the hour column advances exactly one step per scroll gesture no matter what
+  `scroll_amount` says, so reaching 19:00 from 00:00 is 19 round trips. Typing is rejected. What
+  works: locate the two scrollable columns, set `scrollTop = index * 32` on each, dispatch a
+  `scroll` event, **then click the centred value in each column** — scrollTop alone moves the wheel
+  without committing the value.
+- **YouTube** — "End, backspace x6, type, Tab" is in this runbook and it does not work; the field
+  reverts to 00:00 and the Schedule button stays disabled with "Select a time in the future". It is
+  a combobox: type the value, then **click the matching option in the dropdown**. The options are
+  virtualised and absent from the accessibility tree, so find them with
+  `[...document.querySelectorAll('tp-yt-paper-item')].filter(e => e.textContent.trim() === '07:30')`
+  and click the coordinates it reports. The date field is separate and does take a calendar click.
+- **LinkedIn** — the friendliest: type `08:00 AM` and a suggestion appears below; click it. The
+  dialog header restates the full local time, so read that back before hitting Next.
+
 ## Scheduling doctrine (AU)
 
 One burst per day so each band has a single moment to amplify: **LinkedIn 4:30 pm → YouTube 5:00 →
