@@ -16,12 +16,20 @@
 # Runs the encode detached (nohup) so a lost session or a machine reboot does
 # not leave a truncated file behind with no explanation.
 #
-# Memory, MEASURED not guessed: a 1080p pass peaks at ~1.0 GB RSS (Sultans of
-# Swing, 359 s, 15 Sep — 1012 MB). This comment used to say "well under 1 GB",
-# which was wrong at 1080p and badly wrong at 4K: the blend holds full frames,
-# so 3840x2160 is ~4x the pixels and should be budgeted at several GB. State
-# the number and check with Dean before running --4k. Never parallelise this on
-# a 24 GB machine that also runs Resolve and Logic (see ~/.claude/CLAUDE.md).
+# Memory, MEASURED not guessed: a 1080p pass peaks at ~1.2 GB RSS (Sultans of
+# Swing v4, 354.6 s, 15 Sep — 1173 MB). This comment used to say "well under
+# 1 GB", which was wrong at 1080p and badly wrong at 4K: the blend holds full
+# frames, so 3840x2160 is ~4x the pixels and should be budgeted at several GB.
+# State the number and check with Dean before running --4k. Never parallelise
+# this on a 24 GB machine that also runs Resolve and Logic (~/.claude/CLAUDE.md).
+#
+# MEASURE THE PEAK BY WAITING FOR THE PROCESS, NOT BY SAMPLING A FIXED WINDOW.
+# A sampler that loops a set number of times and then reports treats its own
+# timeout as "the encode finished": on 15 Sep that read 898 MB off a run that
+# was still going and still climbing (real peak 1173 MB), and left a half
+# written file that ffprobe rightly called "moov atom not found" — faststart
+# writes the moov atom last, so an incomplete file always looks corrupt.
+# Poll `ps -p <pid>` until it is gone, exactly as the line below tells you to.
 set -e
 
 SRC="$1"; OUT="$2"; shift 2 2>/dev/null || true

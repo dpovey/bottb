@@ -638,6 +638,14 @@ the argument for moving a burst rather than compressing the checks.
 
 ### 15 Sep 2026 — Sultans of Swing masters
 
+**Three failures in one night, all the same shape: the check was wrong, the artefact was fine.**
+A probe run with `-v error` reported "NO AUDIO DECODED" on two good masters. A tail contact sheet
+looked like a broken end card when the shipped Bring Me to Life does exactly the same thing. A
+memory sampler hit its iteration limit and reported a still-running encode as finished, handing back
+a half-written file that ffprobe called corrupt. In every case the instinct to trust the instrument
+over the thing it measures was the error. **Before calling a master broken, open a known-good one
+and run the identical check on it.**
+
 | #   | What went wrong                                                                                              | Why it mattered                                                                                                                                                                                   | Fixed by                                                                                                                                                                         |
 | --- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | A tail-probe script ran ffmpeg with `-v error` and reported "NO AUDIO DECODED" on two perfectly good masters | `volumedetect` prints its summary at **info** level, so `-v error` suppresses the very line the grep looks for — the check failed closed on a good file, same shape as the zsh word-splitting bug | Use `-hide_banner -nostats`, never `-v error`, whenever you need a filter's printed output. Diagnosis by the peer session; `endcard-treat.sh` line 77 already did this correctly |

@@ -707,14 +707,14 @@ Song-specific config lives in `gigstills/runs_bottb_sultans_config.json`
 **Re-graded 2026-09-15 after Dean watched the preview**, and both of his notes were real
 defects rather than taste:
 
-- *"Lots of the shots are very hazy and washed out."* `haze_cap` was pinning **55 of the 64
+- _"Lots of the shots are very hazy and washed out."_ `haze_cap` was pinning **55 of the 64
   hazed cuts (86%)** at 0.05, having removed 0.05 of a median 0.086 neutral pedestal — so
   nearly half the wash was still on the picture by construction. Raised to **0.10** for this
   song: black floor 0.0198 → 0.0091, and **clipping did not move** (0.110 either way), an
   Offset only lowering. Rationale in `gigstills/docs/cut-recipe.md`.
-- *"The guitarist in the solo was way too dark."* That cut had an **identity CDL**.
+- _"The guitarist in the solo was way too dark."_ That cut had an **identity CDL**.
   `G27:1618`, CAM A, 03:15:29:14, **13 s** — the longest shot of the outro solo. The recipe's
-  rules fire on the *lighting state*, and G27 pools that close-up with six CAM D wides of a
+  rules fire on the _lighting state_, and G27 pools that close-up with six CAM D wides of a
   dark stage: weighted the group reads 0.520 against a 0.498 dark band, so nothing fired,
   while the cut measures 0.483 and the frame Dean saw measures 0.375. Hand-fixed with
   **Slope 1.15 / Power 0.85**; verified on a still grabbed back out of Resolve (subject 0.621,
@@ -784,7 +784,7 @@ Budget a transient Chrome peak of **~2x the file size** — which is why the 2.1
 ## The `run_script` 10 s timeout can truncate a script mid-edit (2026-09-15)
 
 **The dangerous one from this session.** The documented `run_script` limit is 10 seconds and
-the script is *killed*, but the edits it already made **stand**. A verification script shaped
+the script is _killed_, but the edits it already made **stand**. A verification script shaped
 like this is therefore unsafe:
 
 ```python
@@ -817,7 +817,7 @@ did not), which is what proved how far it had got.
 
 Re-checking the grade after reopening the project, I compared a frame at 03:12:00 against a
 still of the same timecode from two days earlier and got a result pointing the **wrong way**
-(black floor 0.047 -> 0.119, when a raised `haze_cap` must *lower* it). Nothing was wrong: in
+(black floor 0.047 -> 0.119, when a raised `haze_cap` must _lower_ it). Nothing was wrong: in
 between, that clip had been Render-in-Placed, halation had been switched on, and the cap had
 changed. Three variables, one number.
 
@@ -834,7 +834,7 @@ Sultans v4 (level fix only, same bars) cross-correlates **0 samples** against v3
 and 330 s, and lands at the same -3 to -5 ms against the picture-true reference. So a
 level-only re-bounce is a straight `MediaPoolItem.ReplaceClip` at the same timeline position.
 **Still measure it**: it costs 30 seconds, and v2 -> v3 on this same song moved by 1181
-samples (24.6 ms) because the bounce region *had* changed without anyone saying so.
+samples (24.6 ms) because the bounce region _had_ changed without anyone saying so.
 
 ## Loudness passes through Resolve unchanged; true peak does not (2026-09-15)
 
@@ -846,12 +846,12 @@ leave at least 1 dB of headroom in the bounce or the delivered file can exceed 0
 ## Where Render-in-Place media actually lives — do not assume the cache (2026-09-15)
 
 Clearing Resolve's clip cache is safe on this project, but **verify before deleting**, because
-Resolve *can* be configured to write Render in Place output into the cache folder.
+Resolve _can_ be configured to write Render in Place output into the cache folder.
 
 - RiP media: `/Volumes/Extreme SSD/bottb/events/2026/Brisbane/02_Production/Battle of the
-  Bands Brisbane Full Show/Renders/` — 249 files, 56 GB.
+Bands Brisbane Full Show/Renders/` — 249 files, 56 GB.
 - `~/Movies/DaVinci Resolve/CacheClip` held 8.7 GB, **7.2 GB of it audio waveform cache**, and
-  no RiP media at all (checked for `*Render*` by name *and* for anything modified recently,
+  no RiP media at all (checked for `*Render*` by name _and_ for anything modified recently,
   because a UUID-named file would not match the first test).
 - `/Volumes/BOTTB/Renders/` also holds 13 `... Render N.mov` files, but they are from 30 August
   — an old RiP session. Counting those is what first made it look as though tonight's media
@@ -866,10 +866,10 @@ Before moving the cache anywhere, measure it. `Supp1Tb` was assumed to be "a rel
 SSD"; it is an SSD (0.87 ms random 4K read — a spinning disk is 5-15 ms) but its **write path
 is ~20 MB/s**, consistent over two runs.
 
-| volume | write | read | free |
-| --- | --- | --- | --- |
-| BOTTB | 402 MB/s | 509 MB/s | 969 GB |
-| Extreme SSD | 412 MB/s | 645 MB/s | 153 GB |
+| volume      | write        | read        | free   |
+| ----------- | ------------ | ----------- | ------ |
+| BOTTB       | 402 MB/s     | 509 MB/s    | 969 GB |
+| Extreme SSD | 412 MB/s     | 645 MB/s    | 153 GB |
 | **Supp1Tb** | **~20 MB/s** | 72-174 MB/s | 243 GB |
 
 4K ProRes 422 HQ at 25 fps is ~110 MB/s **per stream**, and multicam playback pulls several at
