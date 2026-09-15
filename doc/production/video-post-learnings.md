@@ -780,3 +780,100 @@ public Vercel Blob URL, then a `fetch()`-inject inside YouTube Studio, which pul
 itself and never touches the local filesystem. Carried 541 MB here, 1.69 GB on The Chain.
 Budget a transient Chrome peak of **~2x the file size** — which is why the 2.1 GB 4K, at a
 ~4.2 GB peak, is a decision to put to Dean rather than just run.
+
+## The `run_script` 10 s timeout can truncate a script mid-edit (2026-09-15)
+
+**The dangerous one from this session.** The documented `run_script` limit is 10 seconds and
+the script is *killed*, but the edits it already made **stand**. A verification script shaped
+like this is therefore unsafe:
+
+```python
+grab_still("before")
+item.SetCDL(IDENTITY);  time.sleep(4.0)      # <- change applied
+grab_still("identity")
+item.SetCDL(REAL);      time.sleep(4.0)      # <- NEVER REACHED
+grab_still("after")
+```
+
+Two 4 s settles plus three `GrabStill`/`ExportStills` round-trips exceeded 10 s, so it died
+**after** setting the clip to identity and **before** restoring it. The tool returned no
+result at all, which reads as "the script failed" — but one clip on the timeline was now
+ungraded, and a 45-minute render was about to start. It was caught only by listing which
+stills the script had managed to write (`HZ_applied` and `HZ_identity` existed, `HZ_restored`
+did not), which is what proved how far it had got.
+
+**Rules:**
+
+- **Never put a state change and its restore in the same `run_script` call.** One call per
+  step, each well under 10 s. The restore must be its own call that cannot be pre-empted.
+- A missing result means **"unknown state", never "nothing happened"** — go and find out how
+  far it got before doing anything else.
+- Keep the artefacts the script writes in a fixed order, so their presence reconstructs its
+  progress. That is what saved this.
+- Budget: a `GrabStill` + `ExportStills` pair costs roughly 1-2 s, and a playhead move needs
+  4-6 s to settle. That is only two grabs per call.
+
+## A comparison is only worth what its controls are worth (2026-09-15)
+
+Re-checking the grade after reopening the project, I compared a frame at 03:12:00 against a
+still of the same timecode from two days earlier and got a result pointing the **wrong way**
+(black floor 0.047 -> 0.119, when a raised `haze_cap` must *lower* it). Nothing was wrong: in
+between, that clip had been Render-in-Placed, halation had been switched on, and the cap had
+changed. Three variables, one number.
+
+The controlled comparison — same session, one variable, taken minutes apart — said the
+opposite and was right: the clip's own CDL toggled to identity and back moved the floor
+**0.0911 -> 0.0000** over 99.3% of pixels, restoring byte-identically.
+
+**Same timecode is not the same control.** Before trusting an A/B across time, list every
+change between the two grabs. If there is more than one, the comparison is decoration.
+
+## Re-bouncing over an identical region needs no re-sync (2026-09-15)
+
+Sultans v4 (level fix only, same bars) cross-correlates **0 samples** against v3 at t=20, 180
+and 330 s, and lands at the same -3 to -5 ms against the picture-true reference. So a
+level-only re-bounce is a straight `MediaPoolItem.ReplaceClip` at the same timeline position.
+**Still measure it**: it costs 30 seconds, and v2 -> v3 on this same song moved by 1181
+samples (24.6 ms) because the bounce region *had* changed without anyone saying so.
+
+## Loudness passes through Resolve unchanged; true peak does not (2026-09-15)
+
+v4 bounce **-13.7 LUFS / TP -1.0 dBFS** -> 4K master **-13.7 LUFS / TP -0.6 dBFS**. Integrated
+loudness is untouched, so **the bounce is the only place to fix a level target** (see the
+Sultans re-bounce). True peak rose 0.4 dB through the AAC encode — intersample peaks — so
+leave at least 1 dB of headroom in the bounce or the delivered file can exceed 0 dBFS.
+
+## Where Render-in-Place media actually lives — do not assume the cache (2026-09-15)
+
+Clearing Resolve's clip cache is safe on this project, but **verify before deleting**, because
+Resolve *can* be configured to write Render in Place output into the cache folder.
+
+- RiP media: `/Volumes/Extreme SSD/bottb/events/2026/Brisbane/02_Production/Battle of the
+  Bands Brisbane Full Show/Renders/` — 249 files, 56 GB.
+- `~/Movies/DaVinci Resolve/CacheClip` held 8.7 GB, **7.2 GB of it audio waveform cache**, and
+  no RiP media at all (checked for `*Render*` by name *and* for anything modified recently,
+  because a UUID-named file would not match the first test).
+- `/Volumes/BOTTB/Renders/` also holds 13 `... Render N.mov` files, but they are from 30 August
+  — an old RiP session. Counting those is what first made it look as though tonight's media
+  had gone missing.
+
+Clearing the cache took the boot disk from **22 GB to 118 GB free** (APFS released purgeable
+space along with it). 22 GB was already under the 25 GB floor.
+
+## Disk throughput, measured (2026-09-15)
+
+Before moving the cache anywhere, measure it. `Supp1Tb` was assumed to be "a relatively slow
+SSD"; it is an SSD (0.87 ms random 4K read — a spinning disk is 5-15 ms) but its **write path
+is ~20 MB/s**, consistent over two runs.
+
+| volume | write | read | free |
+| --- | --- | --- | --- |
+| BOTTB | 402 MB/s | 509 MB/s | 969 GB |
+| Extreme SSD | 412 MB/s | 645 MB/s | 153 GB |
+| **Supp1Tb** | **~20 MB/s** | 72-174 MB/s | 243 GB |
+
+4K ProRes 422 HQ at 25 fps is ~110 MB/s **per stream**, and multicam playback pulls several at
+once. So Supp1Tb would write cache at about a fifth of realtime and could not sustain even one
+4K stream on read. **Cache belongs on BOTTB**; Supp1Tb is for archive and finished
+deliverables only. (A 20 MB/s write on an SSD is low enough to suspect the enclosure or the
+drive itself — worth checking.)
