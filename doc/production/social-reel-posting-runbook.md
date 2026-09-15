@@ -799,6 +799,32 @@ blocked one shows the _error_. Treating those two as the same failure hid the pr
   created. For a natively-scheduled post that is the night you staged it: Bring Me to Life decoded
   to 13 Sep 22:08 and 22:11 for posts that published 14 Sep 16:30 and 18:30. Use the id to find a
   post, never to date one.
+- **You do not have to capture a LinkedIn URN at schedule time — it is recoverable.** Scheduling
+  through the composer never shows you one, and the admin URL
+  `/admin/page-posts/scheduled/` does not exist (it silently redirects to the dashboard; the
+  scheduled list is only reachable via the composer's clock icon -> "View all scheduled posts").
+  After it publishes, read the URN off the page-posts admin instead — every row carries a Boost
+  link with the URN in its query string:
+
+  ```js
+  ;[...document.querySelectorAll('a[href*="content=urn"]')].map((a) =>
+    decodeURIComponent(
+      a.getAttribute('href').match(/content=(urn%3Ali%3A\w+%3A\d+)/)[1]
+    )
+  )
+  ```
+
+  Then **confirm which row is yours by decoding the snowflake** (`>> 22` = unix ms) against the time
+  you built the post, not the time it published — that is what the bullet above means in practice.
+  Sultans of Swing published 16 Sep 08:00 and its URN decoded to 16 Sep 00:25, the moment I typed
+  the caption. The permalink is `linkedin.com/feed/update/<urn>/`.
+
+- **Facebook's copyright check runs AFTER you schedule, and it is the one to re-read before the
+  slot.** At `upload_phase=finish` the status comes back
+  `copyright_check_status: {status: "in_progress"}` — that is not a pass, it is "not finished". Read
+  it again nearer the publish time: Sultans of Swing (a Dire Straits cover) settled to
+  `{status: "complete", matches_found: false}` about eight hours later. A cover that fails here is
+  better known before the slot than after.
 - **UTM-tag links that are meant to convert.** `src/lib/social/utm.ts` builds them and already treats
   Instagram as `social_bio` because captions are not clickable. First tagged post was the Brisbane
   gallery roundup, `utm_content=brisbane-2026-photos-roundup`.
@@ -828,7 +854,9 @@ the spread.
   Vercel cron hitting an admin endpoint (or the schedule skill's cloud routines) would be sturdier.
 - Consider re-titling YouTube uploads before the file finishes uploading fails — always retype after
   the Details step renders (see step 5).
-- Capture LinkedIn/IG/TikTok permalinks the day after each post and append to the schedule log; FB
+- ~~Capture LinkedIn/IG/TikTok permalinks the day after each post~~ — superseded: LinkedIn URNs are
+  recoverable from the admin Boost links at any time (see "Measuring what a post did"), so a missed
+  capture is an inconvenience, not a loss. Still append them to the schedule log; FB
   and YouTube links are known at schedule time.
 - Live posts can be corrected after the fact: LinkedIn (UI edit), Facebook (API), YouTube (Studio,
   see the execCommand recipe). **Instagram captions cannot be edited via the API** (app only) and
