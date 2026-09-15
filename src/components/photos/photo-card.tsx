@@ -70,6 +70,7 @@ export function PhotoCard({
 
   return (
     <div
+      data-testid="photo-card"
       className={`group relative cursor-pointer overflow-hidden rounded-lg bg-bg-elevated transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] ${
         size ? 'shrink-0' : 'aspect-square'
       }`}

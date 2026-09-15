@@ -255,8 +255,9 @@ test.describe('Gallery to Photo to Slideshow Flow', () => {
     await page.waitForLoadState('networkidle')
 
     // Step 2: Click on a photo thumbnail to go to photo detail page
-    // Photos are rendered as clickable divs with images inside
-    const firstPhoto = page.locator('.aspect-square.cursor-pointer').first()
+    // Photo tiles carry a stable test hook: the gallery's justified layout
+    // sizes them per-photo, so they are no longer square-cropped.
+    const firstPhoto = page.getByTestId('photo-card').first()
     await expect(firstPhoto).toBeVisible({ timeout: 10000 })
     await firstPhoto.click()
 
