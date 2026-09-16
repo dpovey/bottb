@@ -144,7 +144,14 @@ const BRINGMETOLIFE = {
  * action filed Jumbo Band's publication under Epsonics. Read `item`, and keep
  * The Chain only as the fallback for the entries written before this mattered.
  */
+const SULTANSOFSWING = {
+  group: 'brisbane-2026-sultansofswing',
+  band: 'total-loss-brisbane-2026',
+  title: 'Total Loss - Sultans of Swing',
+}
+
 const VIDEO_ITEM_PATTERNS: [RegExp, typeof THECHAIN][] = [
+  [/sultans\s*of\s*swing|total\s*loss/i, SULTANSOFSWING],
   [/bring\s*me\s*to\s*life|jumbo\s*band/i, BRINGMETOLIFE],
   [/the\s*chain|epsonics/i, THECHAIN],
 ]
@@ -977,6 +984,12 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
       // Scheduling a platform is a production step too: the publication entry
       // lands later, when the times can be read back off the platform rather
       // than predicted from what we asked for.
+      // A split burst publishes over two sessions of the day, so the log gets
+      // a publication entry while some platforms are still pending. It is a
+      // real publication for the platforms it names — route it like any other.
+      if (action.startsWith('partial_publication_')) {
+        return handleTheChainV2(ctx, e, line, action, ts)
+      }
       if (action.startsWith('scheduled_')) {
         ctx.ignored.push(
           `line ${line}: scheduling step (${action}), publication logged separately`

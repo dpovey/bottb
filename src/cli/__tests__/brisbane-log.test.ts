@@ -434,3 +434,46 @@ describe('full-video publications are keyed off the item, not the action', () =>
     )
   })
 })
+
+describe('split bursts publish over more than one entry', () => {
+  // A morning/evening split means the log gets a publication entry while some
+  // platforms are still scheduled. "partial_publication_*" is a real
+  // publication for the platforms it names, not a production step to ignore.
+  it('files a partial publication under the song, not the fallback group', () => {
+    const posts = result.posts.filter(
+      (p) => p.group_key === 'brisbane-2026-sultansofswing'
+    )
+    expect(posts.length).toBeGreaterThan(0)
+    for (const p of posts) {
+      expect(p.band_id).toBe('total-loss-brisbane-2026')
+      expect(p.status).toBe('published')
+    }
+  })
+
+  it('does not leak a new song into The Chain, which is the fallback', () => {
+    // videoTargetFromItem falls back to THECHAIN, so a song it does not
+    // recognise lands there silently and looks plausible. Assert on identity
+    // rather than a count: the group legitimately holds two YouTube rows, the
+    // withdrawn flickery first cut and the published replacement.
+    const thechain = result.posts.filter(
+      (p) => p.group_key === 'brisbane-2026-thechain'
+    )
+    expect(thechain.length).toBeGreaterThan(0)
+    for (const p of thechain) {
+      expect(p.band_id).toBe('epsonics-brisbane-2026')
+      expect(p.title).toBe('Epsonics - The Chain')
+    }
+  })
+
+  it('keeps the exact/estimated distinction across a partial publication', () => {
+    expect(find('brisbane-2026-sultansofswing', 'youtube')?.posted_at).toBe(
+      '2026-09-16T07:30:22+10:00'
+    )
+    expect(
+      find('brisbane-2026-sultansofswing', 'youtube')?.posted_at_estimated
+    ).toBe(false)
+    expect(
+      find('brisbane-2026-sultansofswing', 'linkedin')?.posted_at_estimated
+    ).toBe(true)
+  })
+})
