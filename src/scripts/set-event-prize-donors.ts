@@ -65,10 +65,12 @@ const eventDonors: Record<string, EventPrizeDonors> = {
         link: LINKEDIN('goboat-aunz'),
       },
       {
-        // Plain text in the thank-you post with no link of any kind. Left
-        // unlinked deliberately rather than guessing a URL.
+        // Plain text in the thank-you post with no link. Dean supplied the
+        // website afterwards; it is the business's own site rather than a
+        // LinkedIn page, which is why this one differs.
         name: 'Activate Sports Recovery',
         suburb: 'Upper Mount Gravatt',
+        link: 'https://www.activatesportsrecovery.com',
       },
     ],
   },

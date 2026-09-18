@@ -48,7 +48,9 @@ const eventWithDonors = {
         suburb: 'Newmarket',
         link: 'https://www.linkedin.com/company/reading-entertainment-australia-pty-ltd/',
       },
-      { name: 'Activate Sports Recovery', suburb: 'Upper Mount Gravatt' },
+      // Stands for any donor whose URL we could not verify. Kept generic so
+      // the case survives a real donor later gaining a website.
+      { name: 'A Donor With No Website', suburb: 'Woolloongabba' },
     ],
   },
 }
@@ -65,8 +67,8 @@ describe('EventSponsorsPage', () => {
 
     expect(screen.getByText('Reading Cinemas')).toBeInTheDocument()
     expect(screen.getByText('Newmarket')).toBeInTheDocument()
-    expect(screen.getByText('Activate Sports Recovery')).toBeInTheDocument()
-    expect(screen.getByText('Upper Mount Gravatt')).toBeInTheDocument()
+    expect(screen.getByText('A Donor With No Website')).toBeInTheDocument()
+    expect(screen.getByText('Woolloongabba')).toBeInTheDocument()
   })
 
   it('shows the raffle total', async () => {
@@ -88,10 +90,10 @@ describe('EventSponsorsPage', () => {
       'https://www.linkedin.com/company/reading-entertainment-australia-pty-ltd/'
     )
 
-    // Activate Sports Recovery has no verified URL, so it must render as
-    // plain text rather than guessing one.
+    // A donor with no verified URL must render as plain text rather than
+    // guessing one.
     expect(
-      screen.queryByRole('link', { name: /Visit Activate Sports Recovery/ })
+      screen.queryByRole('link', { name: /Visit A Donor With No Website/ })
     ).not.toBeInTheDocument()
   })
 
