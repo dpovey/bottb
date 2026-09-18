@@ -141,11 +141,13 @@ export function EventJsonLd({
     startDate,
     endDate,
     location,
+    // Reference the Organization node from OrganizationJsonLd rather than
+    // repeating it, so both resolve to one entity in the graph.
     organizer: {
       '@type': 'Organization',
+      '@id': `${baseUrl}/#organization`,
       name: 'Battle of the Tech Bands',
       url: baseUrl,
-      logo: `${baseUrl}/images/logos/bottb-dark-square.png`,
     },
     performer:
       performers.length > 0

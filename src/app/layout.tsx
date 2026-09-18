@@ -13,7 +13,7 @@ import { ScrollRestoration } from '@/components/scroll-restoration'
 import { PostHogProvider } from '@/components/posthog-provider'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { getBaseUrl } from '@/lib/seo'
-import { OrganizationJsonLd } from '@/components/seo'
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo'
 
 const jost = Jost({
   subsets: ['latin'],
@@ -85,6 +85,7 @@ export default function RootLayout({
     <html lang="en" className={`dark ${jost.variable}`}>
       <head>
         <OrganizationJsonLd />
+        <WebSiteJsonLd />
         {/* Resource hints for third-party domains - improve connection time */}
         {/* PostHog - critical for LCP (saves 660ms) */}
         <link rel="preconnect" href="https://us.i.posthog.com" />

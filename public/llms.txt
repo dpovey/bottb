@@ -4,7 +4,7 @@
 
 ## About
 
-Battle of the Tech Bands is Brisbane's premier tech industry music competition. Technology companies form bands and perform live covers, mashups, and medleys in front of judges and a crowd vote. The event raises money for Youngcare while celebrating the musical talents within the tech community.
+Battle of the Tech Bands is an Australian tech industry music competition, running in Brisbane, Sydney and Melbourne. Technology companies form bands and perform live covers, mashups, and medleys in front of judges and a crowd vote. The event raises money for Youngcare while celebrating the musical talents within the tech community.
 
 ## Site Structure
 
@@ -27,7 +27,7 @@ Battle of the Tech Bands is Brisbane's premier tech industry music competition. 
 
 ## Key Information
 
-- **Location**: Brisbane, Australia (with expansion to Sydney)
+- **Location**: Australia — Brisbane, Sydney and Melbourne
 - **Charity**: Youngcare (https://youngcare.com.au)
 - **Scoring**: Events use judge scores (Song Choice, Performance, Crowd Vibe) plus crowd voting
 - **History**: Running since 2022 with multiple events per year

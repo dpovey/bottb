@@ -19,12 +19,25 @@ export function OrganizationJsonLd() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    // Stable node id so every other schema on the site (event organizers, the
+    // WebSite publisher) can point at this one entity instead of repeating an
+    // anonymous copy that Google has to reconcile.
+    '@id': `${baseUrl}/#organization`,
     name: 'Battle of the Tech Bands',
     alternateName: 'BOTTB',
+    legalName: 'BOTB Events Ltd',
+    foundingDate: '2022',
     url: baseUrl,
     logo: `${baseUrl}/images/logos/bottb-dark-square.png`,
     description:
       "Where technology meets rock 'n' roll. A community charity event supporting Youngcare.",
+    // Country only: the company has no public shopfront address, and the
+    // events move between three cities.
+    areaServed: 'AU',
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'AU',
+    },
     ...(socialProfiles.length > 0 && {
       sameAs: socialProfiles,
     }),
