@@ -122,6 +122,9 @@ export function EventPageClient({
   // National Partner and/or event sponsors, shown as badges on upcoming events.
   const hasSponsors =
     !!eventInfo?.national_partner || !!eventInfo?.sponsors?.length
+  // Raffle prize donors get their own page; link to it from the event once
+  // any are recorded.
+  const hasPrizeDonors = !!eventInfo?.prize_donors?.length
 
   const breadcrumbs = [
     { label: 'Events', href: '/events' },
@@ -332,6 +335,13 @@ export function EventPageClient({
                         Videos
                       </Button>
                     </Link>
+                    {hasPrizeDonors && (
+                      <Link href={`/event/${eventId}/sponsors`}>
+                        <Button variant="outline-solid" size="lg">
+                          Prize Partners
+                        </Button>
+                      </Link>
+                    )}
                   </>
                 )}
               </div>

@@ -253,8 +253,7 @@ export default async function SponsorsPage() {
               <p className="text-xs tracking-[0.3em] uppercase text-accent mb-2">
                 1 Available Per City
               </p>
-              <h3 className="font-semibold text-xl mb-1">Headline Sponsor</h3>
-              <p className="text-2xl font-bold text-white mb-4">$5,000</p>
+              <h3 className="font-semibold text-xl mb-4">Headline Sponsor</h3>
               <ul className="space-y-3 text-text-muted text-sm flex-1">
                 <li className="flex gap-2">
                   <span className="text-accent shrink-0">-</span>
@@ -283,8 +282,7 @@ export default async function SponsorsPage() {
               <p className="text-xs tracking-[0.3em] uppercase text-accent mb-2">
                 2 Available Per City
               </p>
-              <h3 className="font-semibold text-xl mb-1">Supporting Sponsor</h3>
-              <p className="text-2xl font-bold text-white mb-4">$2,000</p>
+              <h3 className="font-semibold text-xl mb-4">Supporting Sponsor</h3>
               <ul className="space-y-3 text-text-muted text-sm flex-1">
                 <li className="flex gap-2">
                   <span className="text-accent shrink-0">-</span>

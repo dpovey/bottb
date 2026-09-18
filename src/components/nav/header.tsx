@@ -159,6 +159,18 @@ export function Header({
                   About
                 </Link>
 
+                {/* Sponsors link — the mobile menu and footer have always
+                    carried this; the desktop nav was the odd one out. */}
+                <Link
+                  href="/sponsors"
+                  onClick={() =>
+                    trackNavClick({ nav_item: 'sponsors', location: 'header' })
+                  }
+                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors py-3 -my-3"
+                >
+                  Sponsors
+                </Link>
+
                 {/* Search button */}
                 <button
                   onClick={search.open}

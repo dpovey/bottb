@@ -379,8 +379,8 @@ export default async function AboutPage() {
                     Melbourne joins the movement at{' '}
                     <strong className="text-white">The Howler</strong>, making
                     it three cities, three massive nights. Brisbane returns to
-                    The Triffid and Sydney to The Factory Theatre — with some of
-                    Australia&apos;s biggest tech companies across all three
+                    The Triffid and Sydney moves to The Manning Bar — with some
+                    of Australia&apos;s biggest tech companies across all three
                     lineups.
                   </p>
                 </div>
