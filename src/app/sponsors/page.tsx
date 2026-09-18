@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
-import { BorderGlow, Button } from '@/components/ui'
+import { Button } from '@/components/ui'
 import { getCompanyBySlug, getEvents } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
 import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
@@ -65,10 +65,8 @@ export default async function SponsorsPage() {
         {/* National Partner */}
         <section className="mb-20">
           <div className="bg-bg-elevated rounded-2xl p-8 md:p-12 border border-accent/20 relative overflow-hidden">
-            {/* Subtle accent glow, and one lap of it around the border as the
-                card arrives. rounded-2xl is 16px, so the glow matches. */}
+            {/* Subtle accent glow */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
-            <BorderGlow radius={16} />
 
             <div className="text-center mb-8">
               <p className="text-xs tracking-[0.3em] uppercase text-accent mb-2">

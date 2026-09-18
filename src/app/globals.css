@@ -44,7 +44,6 @@
     var(--tw-gradient-stops)
   );
 
-  --animate-border-glow: border-glow-travel 1.6s ease-out forwards;
   --animate-shimmer: shimmer 2s infinite linear;
   --animate-vinyl-spin: vinyl-spin 1.8s linear infinite;
   --animate-ken-burns: ken-burns 16s ease-in-out infinite alternate;
@@ -94,35 +93,6 @@
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* One clockwise lap of light around a card's border, used by <BorderGlow />.
- *
- * The element sets pathLength="100", so the dash values are hundredths of the
- * perimeter and a single offset of -100 is exactly one lap at any card size.
- * Fading in and back out keeps the arc from appearing and vanishing abruptly
- * at the start and finish. */
-@keyframes border-glow-travel {
-  0% {
-    stroke-dashoffset: 0;
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -100;
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-border-glow {
-    animation: none;
   }
 }
 
