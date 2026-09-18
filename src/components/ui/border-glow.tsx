@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface BorderGlowProps {
@@ -11,8 +11,10 @@ export interface BorderGlowProps {
   radius?: number
   /** How long the single lap takes, in ms. */
   duration?: number
-  /** Fraction of the perimeter the lit arc covers, 0-1. */
+  /** Fraction of the perimeter the light covers, 0-1. Wider reads softer. */
   arc?: number
+  /** Blur radius in px. This is what makes it glow rather than draw. */
+  blur?: number
   /** How far into view the card must be before the lap starts, 0-1. */
   threshold?: number
   className?: string
@@ -22,10 +24,15 @@ export interface BorderGlowProps {
  * A single clockwise lap of light around the parent's border, run once when
  * the card scrolls into view.
  *
- * The parent needs `relative`; `overflow-hidden` keeps the stroke's outer half
- * off the corners. The rect carries `pathLength={100}`, which renormalises the
- * dash units to hundredths of the perimeter — so one set of dash values works
- * at every card size without measuring the element.
+ * It is the card's top-edge glow smeared around the border rather than a line
+ * traced along it: two heavily blurred arcs, wide and dim, travel together.
+ * Sharpening the stroke or dropping the blur turns it back into a drawn
+ * outline, which is the thing this is not meant to look like.
+ *
+ * The parent needs `relative`; `overflow-hidden` keeps the outer half of the
+ * blur off the corners. `pathLength={100}` renormalises the dash units to
+ * hundredths of the perimeter, so one set of values works at every card size
+ * without measuring the element.
  *
  * It fires once and then stops: `forwards` holds the final frame, and the
  * observer disconnects on the first intersection, so scrolling back up does
@@ -34,8 +41,9 @@ export interface BorderGlowProps {
  */
 export function BorderGlow({
   radius = 16,
-  duration = 1600,
-  arc = 0.18,
+  duration = 1800,
+  arc = 0.3,
+  blur = 6,
   threshold = 0.35,
   className,
 }: BorderGlowProps) {
@@ -63,6 +71,26 @@ export function BorderGlow({
   }, [hasRun, threshold])
 
   const lit = Math.round(arc * 100)
+  const filterId = `border-glow-${useId().replace(/:/g, '')}`
+  const travelling = cn('opacity-0', hasRun && 'animate-border-glow')
+  const travel = hasRun ? { animationDuration: `${duration}ms` } : undefined
+
+  // Shared geometry. pathLength renormalises the dash to hundredths of the
+  // perimeter, so both passes stay in step at any card size.
+  const arcProps = {
+    x: 0,
+    y: 0,
+    width: '100%',
+    height: '100%',
+    rx: radius,
+    ry: radius,
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeLinecap: 'round' as const,
+    pathLength: 100,
+    strokeDasharray: `${lit} ${100 - lit}`,
+    strokeDashoffset: 0,
+  }
 
   return (
     <svg
@@ -75,22 +103,40 @@ export function BorderGlow({
         className
       )}
     >
+      <defs>
+        <filter
+          id={filterId}
+          x="-25%"
+          y="-25%"
+          width="150%"
+          height="150%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur stdDeviation={blur} />
+        </filter>
+      </defs>
+
+      {/* The glow itself: a wide, heavily blurred arc. This is the top bar's
+          soft shading smeared along the border, not a drawn line — the blur
+          is what stops it reading as a stroke. */}
       <rect
-        x="0"
-        y="0"
-        width="100%"
-        height="100%"
-        rx={radius}
-        ry={radius}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        pathLength={100}
-        strokeDasharray={`${lit} ${100 - lit}`}
-        strokeDashoffset={0}
-        className={cn('opacity-0', hasRun && 'animate-border-glow')}
-        style={hasRun ? { animationDuration: `${duration}ms` } : undefined}
+        {...arcProps}
+        strokeWidth={blur * 2.5}
+        opacity={0.55}
+        filter={`url(#${filterId})`}
+        className={travelling}
+        style={travel}
+      />
+
+      {/* A dim core, blurred too, so the brightest point tracks the middle of
+          the smear rather than leaving it uniformly foggy. */}
+      <rect
+        {...arcProps}
+        strokeWidth={blur}
+        opacity={0.35}
+        filter={`url(#${filterId})`}
+        className={travelling}
+        style={travel}
       />
     </svg>
   )
