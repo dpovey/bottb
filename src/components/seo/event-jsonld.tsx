@@ -68,11 +68,21 @@ export function EventJsonLd({
 
   const endDate = `${endDateStr}T${String(utcHour).padStart(2, '0')}:59:59.000Z`
 
-  // Determine city and country from event name/location for better address data
-  const isBrisbane = event.name.toLowerCase().includes('brisbane')
-  const isSydney = event.name.toLowerCase().includes('sydney')
+  // City and state come from the event's IANA timezone, which every event row
+  // carries, rather than from matching words in its name. The name-matching
+  // version special-cased Brisbane and Sydney and silently fell through to
+  // "Sydney, NSW 2000" for anything else — which put Melbourne in New South
+  // Wales the moment that event existed.
+  const cityByTimezone: Record<string, { locality: string; region: string }> = {
+    'Australia/Brisbane': { locality: 'Brisbane', region: 'QLD' },
+    'Australia/Sydney': { locality: 'Sydney', region: 'NSW' },
+    'Australia/Melbourne': { locality: 'Melbourne', region: 'VIC' },
+  }
+  const city = cityByTimezone[event.timezone]
 
-  // Build location with full address details
+  // No postalCode: the previous 4000/2000 values were the CBD's, not the
+  // venue's (The Triffid is Newstead 4006). An omitted field is better than a
+  // confidently wrong one, and Google does not require it.
   const location = {
     '@type': 'Place',
     name: event.location,
@@ -80,9 +90,10 @@ export function EventJsonLd({
       '@type': 'PostalAddress',
       name: event.location,
       streetAddress: eventInfo?.venue_info || event.location,
-      addressLocality: isBrisbane ? 'Brisbane' : isSydney ? 'Sydney' : 'Sydney',
-      addressRegion: isBrisbane ? 'QLD' : 'NSW',
-      postalCode: isBrisbane ? '4000' : '2000',
+      ...(city && {
+        addressLocality: city.locality,
+        addressRegion: city.region,
+      }),
       addressCountry: 'AU',
     },
   }
