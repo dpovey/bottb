@@ -11,9 +11,11 @@ export interface BorderGlowProps {
   radius?: number
   /** How long the single lap takes, in ms. */
   duration?: number
-  /** Fraction of the perimeter the light covers, 0-1. Wider reads softer. */
+  /** Fraction of the perimeter the light covers, 0-1. */
   arc?: number
-  /** Blur radius in px. This is what makes it glow rather than draw. */
+  /** Thickness in px. Defaults to 4 to match the card's h-1 top bar. */
+  thickness?: number
+  /** Blur radius in px. Just enough to soften the ends, not to bloom. */
   blur?: number
   /** How far into view the card must be before the lap starts, 0-1. */
   threshold?: number
@@ -24,13 +26,13 @@ export interface BorderGlowProps {
  * A single clockwise lap of light around the parent's border, run once when
  * the card scrolls into view.
  *
- * It is the card's top-edge glow smeared around the border rather than a line
- * traced along it: two heavily blurred arcs, wide and dim, travel together.
- * Sharpening the stroke or dropping the blur turns it back into a drawn
- * outline, which is the thing this is not meant to look like.
+ * This is the card's existing top-edge glow taken around the other three
+ * edges — same 4px thickness, same accent at 50% — not a brighter or wider
+ * effect of its own. Widening the stroke or raising the blur turns it into a
+ * halo, which is what it is deliberately not.
  *
  * The parent needs `relative`; `overflow-hidden` keeps the outer half of the
- * blur off the corners. `pathLength={100}` renormalises the dash units to
+ * stroke off the corners. `pathLength={100}` renormalises the dash units to
  * hundredths of the perimeter, so one set of values works at every card size
  * without measuring the element.
  *
@@ -43,7 +45,8 @@ export function BorderGlow({
   radius = 16,
   duration = 1800,
   arc = 0.3,
-  blur = 6,
+  thickness = 4,
+  blur = 2,
   threshold = 0.35,
   className,
 }: BorderGlowProps) {
@@ -116,24 +119,12 @@ export function BorderGlow({
         </filter>
       </defs>
 
-      {/* The glow itself: a wide, heavily blurred arc. This is the top bar's
-          soft shading smeared along the border, not a drawn line — the blur
-          is what stops it reading as a stroke. */}
+      {/* One pass, matching the top bar: 4px at accent/50, with just enough
+          blur to fade the ends the way the bar's gradient does. */}
       <rect
         {...arcProps}
-        strokeWidth={blur * 2.5}
-        opacity={0.55}
-        filter={`url(#${filterId})`}
-        className={travelling}
-        style={travel}
-      />
-
-      {/* A dim core, blurred too, so the brightest point tracks the middle of
-          the smear rather than leaving it uniformly foggy. */}
-      <rect
-        {...arcProps}
-        strokeWidth={blur}
-        opacity={0.35}
+        strokeWidth={thickness}
+        opacity={0.5}
         filter={`url(#${filterId})`}
         className={travelling}
         style={travel}
