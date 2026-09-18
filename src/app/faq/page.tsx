@@ -42,7 +42,7 @@ const faqItems: {
       {
         question: 'When and where are the events held?',
         answer:
-          'We host events in Brisbane and Sydney throughout the year. Brisbane events are held at The Triffid in Newstead, and Sydney events at The Factory Theatre. Check our homepage for upcoming event dates.',
+          'We host events in Brisbane, Sydney and Melbourne throughout the year. Brisbane events are held at The Triffid in Newstead, Sydney at The Manning Bar, and Melbourne at The Howler. Check our homepage for upcoming event dates.',
       },
       {
         question: 'How much does it cost to attend?',
