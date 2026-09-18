@@ -72,6 +72,22 @@ export interface Event {
       link?: string
       label?: string
     }[]
+    /**
+     * Local businesses that donated raffle prizes for this event, credited on
+     * `/event/<id>/sponsors`. Distinct from `sponsors` above: these back a
+     * single night's raffle rather than the event itself, field no band, and
+     * have no logo asset yet — `logo_url` is optional so one can be added
+     * later without a redesign. `link` is omitted where no URL was verified;
+     * the card then renders the name as plain text rather than guessing one.
+     */
+    prize_donors?: {
+      name: string
+      suburb?: string
+      link?: string
+      logo_url?: string
+    }[]
+    /** What the raffle raised, as display text (e.g. "$3,000"). */
+    raffle_raised?: string
     [key: string]: unknown
   }
   created_at: string

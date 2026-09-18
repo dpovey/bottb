@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { PublicLayout } from '@/components/layouts'
 import { Button } from '@/components/ui'
-import { getCompanyBySlug } from '@/lib/db'
+import { getCompanyBySlug, getEvents } from '@/lib/db'
 import { getNavEvents } from '@/lib/nav-data'
 import { getBaseUrl, DEFAULT_OG_IMAGE } from '@/lib/seo'
 import { ExternalLinkIcon } from '@/components/icons'
@@ -25,11 +25,19 @@ export const metadata: Metadata = {
 }
 
 export default async function SponsorsPage() {
-  const [jumbo, v2ai, navEvents] = await Promise.all([
+  const [jumbo, v2ai, navEvents, events] = await Promise.all([
     getCompanyBySlug('jumbo-interactive'),
     getCompanyBySlug('v2-ai'),
     getNavEvents(),
+    getEvents(),
   ])
+
+  // Each event credits its own prize donors, so the list here is derived from
+  // the data rather than hardcoded: an event gets a link the moment its
+  // `prize_donors` are recorded.
+  const eventsWithPrizeDonors = events.filter(
+    (event) => (event.info?.prize_donors?.length ?? 0) > 0
+  )
 
   return (
     <PublicLayout
@@ -190,6 +198,40 @@ export default async function SponsorsPage() {
             </div>
           </div>
         </section>
+
+        {/* Prize Partners, per event */}
+        {eventsWithPrizeDonors.length > 0 && (
+          <section className="mb-20">
+            <div className="text-center mb-8">
+              <p className="text-xs tracking-[0.3em] uppercase text-text-muted mb-2">
+                Prize Partners
+              </p>
+              <h2 className="font-semibold text-2xl sm:text-3xl">
+                Local Businesses Who Donated
+              </h2>
+            </div>
+
+            <div className="bg-bg-elevated rounded-2xl p-8 md:p-10 border border-white/5">
+              <p className="text-text-muted leading-relaxed mb-6">
+                Our raffles run on prizes donated by local businesses near each
+                venue, and every dollar they raise goes to Youngcare. Each event
+                credits its own.
+              </p>
+              <ul className="space-y-3">
+                {eventsWithPrizeDonors.map((event) => (
+                  <li key={event.id}>
+                    <Link
+                      href={`/event/${event.id}/sponsors`}
+                      className="inline-flex items-center gap-2 text-accent hover:text-accent-light transition-colors"
+                    >
+                      {event.name} prize partners
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
 
         {/* Sponsorship Opportunities */}
         <section className="mb-20">
