@@ -9,6 +9,7 @@ export {
   type CardProps,
 } from './card'
 export { Badge, type BadgeProps } from './badge'
+export { BorderGlow, type BorderGlowProps } from './border-glow'
 export { DateBadge, type DateBadgeProps } from './date-badge'
 export { EarlyBirdBadge } from './early-bird-badge'
 export { EventCountdownBadge } from './event-countdown-badge'
