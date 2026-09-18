@@ -148,19 +148,8 @@ export function Header({
                 {/* Gallery Dropdown */}
                 <ExperienceDropdown />
 
-                {/* About link */}
-                <Link
-                  href="/about"
-                  onClick={() =>
-                    trackNavClick({ nav_item: 'about', location: 'header' })
-                  }
-                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors py-3 -my-3"
-                >
-                  About
-                </Link>
-
-                {/* Sponsors link — the mobile menu and footer have always
-                    carried this; the desktop nav was the odd one out. */}
+                {/* Sponsors, then About. About sits last across the header,
+                    mobile menu and footer; the three used to disagree. */}
                 <Link
                   href="/sponsors"
                   onClick={() =>
@@ -169,6 +158,16 @@ export function Header({
                   className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors py-3 -my-3"
                 >
                   Sponsors
+                </Link>
+
+                <Link
+                  href="/about"
+                  onClick={() =>
+                    trackNavClick({ nav_item: 'about', location: 'header' })
+                  }
+                  className="text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors py-3 -my-3"
+                >
+                  About
                 </Link>
 
                 {/* Search button */}
@@ -249,21 +248,8 @@ export function Header({
                 </div>
               ))}
 
-              {/* About & Sponsors links */}
+              {/* Sponsors & About links */}
               <div className="border-t border-white/5 pt-4 -mb-1">
-                <Link
-                  href="/about"
-                  onClick={() => {
-                    trackNavClick({
-                      nav_item: 'about',
-                      location: 'mobile_menu',
-                    })
-                    setMobileMenuOpen(false)
-                  }}
-                  className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
-                >
-                  About
-                </Link>
                 <Link
                   href="/sponsors"
                   onClick={() => {
@@ -276,6 +262,19 @@ export function Header({
                   className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
                 >
                   Sponsors
+                </Link>
+                <Link
+                  href="/about"
+                  onClick={() => {
+                    trackNavClick({
+                      nav_item: 'about',
+                      location: 'mobile_menu',
+                    })
+                    setMobileMenuOpen(false)
+                  }}
+                  className="block py-3 text-sm tracking-widest uppercase text-text-muted hover:text-white transition-colors"
+                >
+                  About
                 </Link>
               </div>
 

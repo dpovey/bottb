@@ -19,10 +19,12 @@ const sitemapLinks = {
     { label: 'Photographers', href: '/photographers' },
     { label: 'Videographers', href: '/videographers' },
   ],
+  // About sits last before the legal links, matching the header and the
+  // mobile menu.
   info: [
-    { label: 'About', href: '/about' },
     { label: 'Sponsors', href: '/sponsors' },
     { label: 'FAQ', href: '/faq' },
+    { label: 'About', href: '/about' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Use', href: '/terms' },
   ],
