@@ -31,7 +31,9 @@ export interface ImageVariant {
  * - thumbnail2x: max 800px on longest side (2x/Retina displays)
  * - medium: max 1200px (3x thumbnails + mobile slideshows, quality 90)
  * - large: max 2000px (tablet/desktop displays)
- * - large4k: max 4000px (4K displays)
+ * - large4k: max 4000px (4K displays), built whenever the source is >= 3000px
+ *   on its longest side — UHD video stills (3840x2160) and most mirrorless
+ *   exports land just under 4000px and would otherwise top out at 2000px
  *
  * CSS handles cropping to container shape using object-fit: cover with
  * object-position set to the photo's hero_focal_point.
@@ -87,9 +89,11 @@ export async function processImage(
     .webp({ quality: 92 })
     .toBuffer()
 
-  // 4K: max 4000px (only if original is large enough)
+  // 4K: max 4000px (only if original is large enough).
+  // The gate is 3000px, not 4000px: a 4000px gate excluded UHD stills (3840 wide)
+  // and 3936px camera exports, leaving both with 2000px as their largest variant.
   let large4k: Buffer | undefined
-  if (originalWidth >= 4000 || originalHeight >= 4000) {
+  if (originalWidth >= 3000 || originalHeight >= 3000) {
     large4k = await image
       .clone()
       .resize(4000, 4000, { fit: 'inside', withoutEnlargement: true })

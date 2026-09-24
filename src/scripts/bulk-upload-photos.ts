@@ -182,6 +182,15 @@ interface PhotoRecord {
   original_filename: string
 }
 
+/** Content types for the source files the scanner accepts. */
+const ORIGINAL_CONTENT_TYPES: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+}
+
 /**
  * Find all image files in a directory (recursively if specified)
  */
@@ -422,6 +431,20 @@ async function uploadPhoto(
       { access: 'public', contentType: 'image/webp' }
     )
 
+    // Upload the untouched source file so the full-resolution original stays
+    // available for downloads and for regenerating variants later. Without it,
+    // backfill-responsive-variants.ts can only re-derive from large.webp (2000px).
+    const originalExt =
+      extname(filename).toLowerCase().replace('.', '') || 'jpg'
+    const originalBlob = await put(
+      `photos/${photoId}/original.${originalExt}`,
+      imageBuffer,
+      {
+        access: 'public',
+        contentType: ORIGINAL_CONTENT_TYPES[originalExt] ?? 'image/jpeg',
+      }
+    )
+
     // Upload 4K large variant if available
     let large4kBlob = null
     if (processed.large4k) {
@@ -447,13 +470,13 @@ async function uploadPhoto(
     await sql`
       INSERT INTO photos (
         id, event_id, band_id, photographer,
-        blob_url, blob_pathname, original_filename,
+        blob_url, blob_pathname, original_blob_url, original_filename,
         width, height, file_size, content_type,
         xmp_metadata, matched_event_name, matched_band_name, match_confidence,
         uploaded_at, captured_at
       ) VALUES (
         ${photoId}, ${eventId}, ${bandId}, ${metadata.photographer},
-        ${largeBlob.url}, ${`photos/${photoId}/large.webp`}, ${filename},
+        ${largeBlob.url}, ${`photos/${photoId}/large.webp`}, ${originalBlob.url}, ${filename},
         ${processed.width}, ${processed.height}, ${processed.fileSize}, ${`image/${processed.format}`},
         ${JSON.stringify(thumbnailVariants)}, ${matchedEventName}, ${matchedBandName}, ${matchConfidence},
         NOW(), ${capturedAt}::timestamp with time zone

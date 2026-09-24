@@ -72,6 +72,7 @@
 - [ ] **Email notifications** - Event reminders, results announcements
 - [ ] **Band registration form** - Replace mailto with proper form
 - [ ] **Live leaderboard** - Real-time crowd scores during events
+- [ ] **Videographer credit on photos** - Photos extracted from video (e.g. the 13 ShipReX CAM A stills, Brisbane 2026) have no way to credit the camera operator. `photos.photographer` is free text rendered with a camera icon linking to `/photographer/<slug>`, and the operator (Kurt Boldy) exists in `videographers`, not `photographers`. Needs a videographer credit on `photos` plus UI rendering "Stills from the video by <name>" linked to `/videographer/<slug>`, then backfill onto those 13 (currently uploaded with a NULL credit).
 
 ### Photo Intelligence
 

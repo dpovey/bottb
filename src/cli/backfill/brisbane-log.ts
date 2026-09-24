@@ -976,6 +976,15 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
         `line ${line}: production/QC step (${action}), not a publication`
       )
       return
+    // A ruling on a question the log had left open — what changes is the
+    // runbook, not what went out. The entry names an item that was already
+    // published under its own entry, so routing it like a publication would
+    // double-count that post.
+    case 'open_question_closed':
+      ctx.ignored.push(
+        `line ${line}: decision entry (${action}), not a publication`
+      )
+      return
     default:
       // Every end-card action is a production step, not a publication. They
       // were once listed one by one, which meant each new song's variant
