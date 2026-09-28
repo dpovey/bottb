@@ -877,3 +877,137 @@ once. So Supp1Tb would write cache at about a fifth of realtime and could not su
 4K stream on read. **Cache belongs on BOTTB**; Supp1Tb is for archive and finished
 deliverables only. (A 20 MB/s write on an SSD is low enough to suspect the enclosure or the
 drive itself — worth checking.)
+
+## Delivery render checklist — before the render, and back to editing after (2026-09-27, Everlong)
+
+The two lists are mirror images: everything switched on to make the delivery correct is
+expensive to play back, so it all comes off again afterwards. Written up after Everlong, the
+seventh delivery through this pipeline, because the order was re-derived — and got wrong —
+more than once.
+
+### Before the render — ORDER MATTERS
+
+1. **Deflicker + temporal NR ON**, on the group pre-clips. **Before** the Render in Place, not
+   after: the group pre-clip is baked into a RiP and group changes never reach a RiP'd clip
+   again (measured: 0.000 change). Enable after the RiP and those clips ship without them.
+   CAM D's group carries NR only, no Deflicker — that is correct, not an omission.
+2. **Mark the zoomed cuts** with clip colour **Orange**: `DynamicZoomEnabled OR ZoomX >= 1.3`.
+   Resolve has no "Red" clip colour — `SetClipColor("Red")` returns success and does nothing.
+   Read the colour back.
+3. **Super Scale = 2 on the camera source clips**, as an **integer**, verified by read-back.
+   Never on the multicam item: one `BOTTB Multicam` pool item backed 1616 cuts across the whole
+   show on Everlong, so setting it there would Super Scale all of them. Setting it on every
+   non-DJI camera `.MP4` avoids having to map show time to source file (each camera has its own
+   clock) and is safe because Super Scale only acts during a RiP of a clip that uses it.
+4. **Decompose any already-RiP'd cut that needs Super Scale** before re-RiPping it; decomposing
+   clears its clip colour, so re-mark it.
+5. **Render in Place the orange cuts**: Include Video Effects **ON** (bakes Dynamic Zoom),
+   colour grading **OFF** (the clip node and timeline node stay live on top of the bake — the
+   CDLs apply once, not twice).
+6. **Super Scale back to 1** on every source clip, verified by read-back. Left at 2, any later
+   RiP anywhere in the show silently picks it up.
+7. **Halation ON**, highlights only, threshold above the haze so the sources bloom and the air
+   around them does not. It lives in the Film Look Creator on the timeline node, so it stays
+   live through a RiP and can be set after.
+8. **Timeline resolution = delivery resolution** (3840×2160) before any RiP — a RiP bakes at
+   timeline resolution.
+
+### Render
+
+- Codec **first**, then settings. `VideoQuality` is in **Kb/s** (45000 = 45 Mb/s).
+- **Do not pass `MarkIn`/`MarkOut` to `SetRenderSettings`** — it overwrites the timeline's
+  In/Out marks. Set the range with `SetMarkInOut`, and record the release range in a Cyan
+  `RELEASE:` marker whose duration spans In→Out, so it can be restored if anything clobbers it.
+- Start only your job id; there were 28 completed jobs in the queue on Everlong.
+- **Wait on `IsRenderingInProgress()`, not the file.** A file-size watcher declared the Everlong
+  render stable at 99% while Resolve was still finalising.
+- QC: frame count = `out − in + 1`; **audio stream** duration vs video within 0.2 s; last 5 s of
+  audio non-zero; achieved bitrate by `ffprobe`.
+  `scripts/render-qc.sh <mp4> <in> <out> [fps] [min_mbps]` runs all four (proved on the Everlong
+  4K master, and fails a wrong range). Late mix: `scripts/splice-mix.sh`. Resolve state before and
+  after: `scripts/resolve/state.py`. The editor role that uses these is the `live-video-editor`
+  skill in `~/.claude/skills/`.
+
+### After delivery — back to editing
+
+1. **Halation OFF** (UI only — it is a Film Look Creator parameter; the API has no OFX
+   parameter access and could only bypass the whole look node).
+2. **Deflicker + temporal NR OFF** on the group pre-clips. The RiP'd clips have them baked, so
+   this costs nothing until the next delivery — and they must go back on **before** the next RiP.
+3. Super Scale is already 1 from step 6 above; re-check it.
+4. **Put the final mix on the timeline audio track.** A late re-bounce spliced straight into the
+   delivered files with ffmpeg (to save a render, and a codec generation) leaves the *timeline*
+   on the old mix, so the next render off the timeline silently puts it back. Everlong shipped
+   v14 while A11 still held v9 until this step caught it.
+5. **Clear completed render jobs**, keeping anything not `Complete`.
+6. **Reset the render custom name** to the timeline name (an empty `CustomName` is rejected).
+   Otherwise the next render reuses the last delivery's filename.
+7. Clear the song's clip colours.
+8. **Close any multicam opened in the timeline before scripting.** With it open, the API
+   addresses the multicam's internal timeline: reads return plausible but wrong values (A11 read
+   *disabled* when it was enabled) and every write is refused.
+
+### Why the late-mix splice exists, and its cost
+
+When the mix changes after the picture is final, splice the WAV onto the finished video with
+`-c:v copy` and apply the end-card audio fade in the same pass. It saves a 20-minute 4K render,
+and it saves a codec generation: `endcard-treat.sh` decodes the render's AAC and re-encodes it,
+so a render-then-end-card chain is **two** AAC generations before YouTube adds a third. On
+Everlong that took true peak from −1.2 (WAV) to −0.8 (render) to −0.5 dBTP (end card). One
+generation straight from the WAV landed at −0.9. The video stream stays md5-identical to the
+source, which is the check that nothing but the audio changed.
+
+`endcard-treat.sh` prints "run: endcard-treat.sh --qc <file>" when it finishes, but it has no
+`--qc` mode — `$1` is always parsed as the source. QC the output directly.
+
+## Four more traps from the Everlong delivery (2026-09-27)
+
+**Superseded mixes stay in the media pool.** Every audio swap imports the new bounce and leaves
+the previous one in the pool at usage 0. Delete the bounce files and those items go offline.
+On Everlong the pool held v4, v8, v9 and a renamed v2 alongside the live v14 when the bounces
+were about to be cleared. Before deleting bounces: read the path the timeline clip actually
+resolves to (`GetMediaPoolItem().GetClipProperty("File Path")`), then remove the usage-0 items
+from the pool (`MediaPool.DeleteClips` removes pool items only, never files).
+
+**`ExportStills` on `GetStills()[-1]` exported the wrong still — the same one, three times.**
+Three grabs, the album count rising 48 → 49 → 50, and all three exports identical by md5 and
+all named `..._1.1.3.png`, including a control grabbed from a different song entirely. The last
+element of `GetStills()` is not the newest still. This is separate from the settle-time problem
+above, and a comparison built on it is worse than none. Use a short render instead: it is the
+only still-grab route here whose provenance can be checked.
+
+**Playback blocks the scripting bridge; do not kill `ResolvePython` helpers to fix it.** With
+the timeline playing, even `GetCurrentPage()` timed out. Each timed-out call left a
+`ResolvePython … pylauncher` helper behind, which looked like the cause. Killing them by that
+pattern also killed the live MCP bridge — it uses the same launcher — and the connection had to
+be re-established with `/mcp`. The fix was stopping playback. A Resolve process sitting at ~40%
+CPU with nothing scripted running is the tell.
+
+**Correlation cannot tell close mix versions apart, and a vocal-free sync check cannot see the
+vocal.** v8 against v9 measured r = 0.99954 against 0.99959: a thousandth-of-a-percent margin
+between mixes that differ by 0.2 dB in two third-octaves. Residual energy after alignment and
+gain-matching separated them only by 0.45 dB. For near-identical versions, the timeline's file
+path is the evidence and the audio test is corroboration at best. Separately, the room-mic
+correlation that confirmed each bounce's placement is vocal-free by design, so it is
+structurally blind to a pitch-corrected vocal that has moved inside the mix. When Dean saw
+drums in sync and vocals loose, that was the only check that could not have caught it.
+
+## Pitchcurve bounces place themselves by BWF (2026-09-28, from the repitch session)
+
+Every pitchcurve render and deliverable carries a verified BWF `time_reference`, derived from the
+song's recorded Logic landmark (Everlong's is in pitchcurve `songs/everlong.json`). Import it into
+Resolve with "use timecode from BWF" and it lands at its true position: no correlation needed. The
+Everlong v4→v14 swaps were all placed by correlation. Use correlation only for bounces that did
+not come through that path, and as a cross-check. The room-mic sync check is vocal-blind by
+construction (the mic hears the PA, not the stem); only a vocal-stem ↔ bounce comparison sees
+a resynthesised vocal move. The repitch session's gain-matched best-lag residual check is the
+measure that separated v8 from v9 by 0.45 dB.
+
+## Later: move the editor tools out of bottb (noted 2026-09-29)
+
+`scripts/render-qc.sh`, `scripts/splice-mix.sh` and `scripts/resolve/` are general Resolve
+delivery tools that live here only because BOTTB is the only show using them. When a second show
+or project needs them, or they stop being show-specific, move them and the general parts of this
+runbook into their own repo (e.g. `~/src/personal/resolve-tools`), keep the show-specific notes
+here, and update the paths in the `live-video-editor` skill. Not before: the runbook still changes
+on every song.
