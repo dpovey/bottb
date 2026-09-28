@@ -1003,6 +1003,18 @@ construction (the mic hears the PA, not the stem); only a vocal-stem ↔ bounce 
 a resynthesised vocal move. The repitch session's gain-matched best-lag residual check is the
 measure that separated v8 from v9 by 0.45 dB.
 
+### ~~Pitchcurve bounces need no check~~ — CORRECTED 2026-09-29: check bext once with `align-mix`
+
+mix-assist's `align-mix` (merged d13b539, `uv run mix-analyser align-mix`, manual in mix-assist
+`doc/mixdown-tools.md`) placed the delivered Everlong v9 against
+`/Volumes/BOTTB/Audio/BOTTB_reference_48k.wav` (`--ref-tc 00:00:00:00 --search-s 12000 --band
+300 3000`) at 6541.341 s = **01:49:01:09**. The filename said :09; the file's bext
+`time_reference` (313,991,040) said **:12, 3.5 frames late**. So a BWF stamp can be wrong: place by
+bext, then confirm once with `align-mix`. Against the room/FOH reference use `--band 300 3000`
+(the default band refused on Everlong) and read only `verdict_placed`; the residual there is ~0 dB
+by nature. Bounce against bounce, `reading` separates same_mix from different_version at −30 dB:
+v9 vs v14 read −7.0 dB where correlation (r 0.895) could not tell them apart.
+
 ## Later: move the editor tools out of bottb (noted 2026-09-29)
 
 `scripts/render-qc.sh`, `scripts/splice-mix.sh` and `scripts/resolve/` are general Resolve
