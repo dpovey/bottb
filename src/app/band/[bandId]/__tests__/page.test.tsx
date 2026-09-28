@@ -360,6 +360,50 @@ describe('BandPage', () => {
     expect(screen.getByText(/out of 50 total/)).toBeInTheDocument()
   })
 
+  it('shows 0% and no highest-voted badge when there are no crowd votes', async () => {
+    const bandData = [
+      {
+        id: 'band-1',
+        event_id: 'event-1',
+        name: 'Test Band',
+        order: 1,
+        created_at: '2024-01-01T00:00:00Z',
+        event_name: 'Test Event',
+        date: '2024-12-25T18:30:00Z',
+        location: 'Test Venue',
+        timezone: 'America/New_York',
+        status: 'finalized',
+        event_info: { scoring_version: '2025.1' },
+      },
+    ]
+
+    // Postgres counts arrive as strings, and "0" is truthy
+    const bandScores = [
+      {
+        id: 'band-1',
+        name: 'Test Band',
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 0,
+        crowd_vote_count: '0',
+        judge_vote_count: 3,
+        total_crowd_votes: '0',
+      },
+    ]
+
+    mockSql.mockResolvedValue(createMockQueryResult(bandData))
+    mockGetBandScores.mockResolvedValue(bandScores)
+
+    render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+    expect(screen.getByText(/out of 0 total/)).toBeInTheDocument()
+    expect(screen.getByText('0%')).toBeInTheDocument()
+    expect(screen.queryByText(/NaN/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Highest voted band/)).not.toBeInTheDocument()
+  })
+
   it('displays scream-o-meter for 2025.1 events', async () => {
     const bandData = [
       {

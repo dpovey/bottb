@@ -695,17 +695,20 @@ export default async function BandPage({
     }
   }
 
-  // Calculate crowd vote percentage
-  const crowdVotePercent = bandScore?.total_crowd_votes
-    ? (Number(bandScore.crowd_vote_count || 0) /
-        Number(bandScore.total_crowd_votes)) *
-      100
-    : 0
+  // Calculate crowd vote percentage. Counts can arrive as strings from
+  // Postgres ("0" is truthy), so compare the numeric total to avoid 0/0.
+  const totalCrowdVotes = Number(bandScore?.total_crowd_votes || 0)
+  const crowdVotePercent =
+    totalCrowdVotes > 0
+      ? (Number(bandScore?.crowd_vote_count || 0) / totalCrowdVotes) * 100
+      : 0
 
-  // Check if this band has the highest crowd votes
+  // Check if this band has the highest crowd votes (no badge when nobody
+  // has voted yet, since every band would tie at 0)
   const isHighestVoted =
     bandScore &&
     scores.length > 0 &&
+    totalCrowdVotes > 0 &&
     Number(bandScore.crowd_vote_count || 0) ===
       Math.max(...scores.map((s) => Number(s.crowd_vote_count || 0)))
 
