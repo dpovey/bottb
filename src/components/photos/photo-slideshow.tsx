@@ -19,6 +19,7 @@ import { HeroSettingsModal } from './hero-settings-modal'
 import { EditMetadataModal } from './edit-metadata-modal'
 import { HeartButton } from './heart-button'
 import { recordPhotoDownload } from '@/lib/photo-hearts-client'
+import { getPhotoDownload } from '@/lib/photo-download'
 import {
   trackPhotoDownload,
   trackPhotoShare,
@@ -814,12 +815,13 @@ export function PhotoSlideshow({
 
     try {
       // Fetch the image and trigger download
-      const response = await fetch(photo.blob_url)
+      const download = getPhotoDownload(photo)
+      const response = await fetch(download.url)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = photo.original_filename || `photo-${photo.id}.jpg`
+      a.download = download.filename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

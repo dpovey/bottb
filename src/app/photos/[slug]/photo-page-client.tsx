@@ -19,6 +19,7 @@ import {
 } from '@/components/icons'
 import { trackPhotoDownload } from '@/lib/analytics'
 import { recordPhotoDownload } from '@/lib/photo-hearts-client'
+import { getPhotoDownload } from '@/lib/photo-download'
 
 interface PhotoPageClientProps {
   /** The photo to display */
@@ -66,20 +67,15 @@ export function PhotoPageClient({
   // Handle photo download
   const handleDownload = async () => {
     try {
-      const response = await fetch(photo.blob_url)
+      const download = getPhotoDownload(photo)
+      const response = await fetch(download.url)
       const blob = await response.blob()
-
-      // Generate filename
-      const ext = photo.content_type?.split('/')[1] || 'jpg'
-      const filename =
-        photo.original_filename ||
-        `bottb-${photo.band_name || 'photo'}-${photo.id.slice(0, 8)}.${ext}`
 
       // Create download link
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = filename
+      a.download = download.filename
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
