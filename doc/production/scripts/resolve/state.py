@@ -5,6 +5,9 @@ IN, OUT = None, None
 MAIN_TIMELINE = "BOTTB Brisbane 2026"
 import DaVinciResolveScript as dvr
 resolve = dvr.scriptapp("Resolve"); proj = resolve.GetProjectManager().GetCurrentProject()
+if proj.IsRenderingInProgress():  # 21.1.1: every GetProperty/GetProperties read is empty during
+    raise SystemExit("A render is in progress: clip property reads return nothing until it ends "
+                     "(zoom counts would silently read 0). Wait on IsRenderingInProgress(), then rerun.")
 tl = proj.GetCurrentTimeline()
 def tc(f):
     f = int(f); return "%02d:%02d:%02d:%02d" % (f//90000, f//1500 % 60, f//25 % 60, f % 25)
@@ -22,7 +25,9 @@ for f, m in sorted((tl.GetMarkers() or {}).items()):
         s = tl.GetStartFrame() + f
         print("RELEASE mark  %s dur %s  %s  -> implies %d-%d" % (tc(s), m.get("duration"), m.get("name"), s, s + int(m.get("duration", 1)) - 1))
 lo = IN if IN is not None else v.get("in"); hi = OUT if OUT is not None else v.get("out")
-rs = proj.GetRenderSettings() if hasattr(proj, "GetRenderSettings") else {}
+# hasattr() is True for ANY name on a Resolve object (the attribute is None), so test callable().
+# GetRenderSettings does not exist on 21.1/21.1.1; this prints None until it does.
+f = getattr(proj, "GetRenderSettings", None); rs = f() if callable(f) else {}
 print("render name   %r" % (rs.get("CustomName") if isinstance(rs, dict) else "?"))
 print("rendering     %s" % proj.IsRenderingInProgress())
 jobs = proj.GetRenderJobList() or []

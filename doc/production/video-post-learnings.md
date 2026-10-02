@@ -936,7 +936,7 @@ more than once.
    this costs nothing until the next delivery — and they must go back on **before** the next RiP.
 3. Super Scale is already 1 from step 6 above; re-check it.
 4. **Put the final mix on the timeline audio track.** A late re-bounce spliced straight into the
-   delivered files with ffmpeg (to save a render, and a codec generation) leaves the *timeline*
+   delivered files with ffmpeg (to save a render, and a codec generation) leaves the _timeline_
    on the old mix, so the next render off the timeline silently puts it back. Everlong shipped
    v14 while A11 still held v9 until this step caught it.
 5. **Clear completed render jobs**, keeping anything not `Complete`.
@@ -945,7 +945,7 @@ more than once.
 7. Clear the song's clip colours.
 8. **Close any multicam opened in the timeline before scripting.** With it open, the API
    addresses the multicam's internal timeline: reads return plausible but wrong values (A11 read
-   *disabled* when it was enabled) and every write is refused.
+   _disabled_ when it was enabled) and every write is refused.
 
 ### Why the late-mix splice exists, and its cost
 
@@ -1023,3 +1023,194 @@ or project needs them, or they stop being show-specific, move them and the gener
 runbook into their own repo (e.g. `~/src/personal/resolve-tools`), keep the show-specific notes
 here, and update the paths in the `live-video-editor` skill. Not before: the runbook still changes
 on every song.
+
+## Reels from other shows: Sydney 2025 Canvanauts "Anti-hero" (2026-09-30)
+
+First job outside the Brisbane 2026 show. Everything above assumes the Brisbane project; this is
+what differs.
+
+- **A reel is its own Resolve project** (`Canvanauts - Anti-hero - Reel`), timeline
+  `Canvanauts Anti-hero`, **2160×3840 vertical 25p**, cut from a multicam `Canvanauts` (starts
+  01:00:00:00). `state.py`'s `MAIN_TIMELINE` check assumes the Brisbane show timeline and will
+  flag a reel as "NOT the show timeline"; set `MAIN_TIMELINE` to the reel's timeline name.
+- **Sydney 2025 cameras** (embedded Sony XML checked per the "Cameras and formats" method): Wide
+  = A7S III `luca_2_*` (H.264 4:2:2 10-bit), Audience = A7S III `luca_1_*` (**H.264 4:2:0,
+  8-bit**), Chase = FX6 `LUK-fx6-*.MXF` (XAVC). All three are genuinely `rec709`, not log, so
+  "washed out and desaturated" is not a missing LUT. Project is **DaVinci YRGB Color Managed v2**,
+  Rec.709 (Scene) in and out, working luminance 1000 (Brisbane was plain YRGB). Grade state found:
+  **no clip grades, no colour groups, one Film Look Creator on the timeline node**, so nothing
+  had been camera-matched.
+- **`MVI_*.MP4` is a Canon stills camera, not a phone** (Eddy Hill's EOS R8, in
+  `01_Media/Photos/Eddy Hill/...`): 1920×1080 25p H.264 8-bit **full range** (`yuvj420p`, pc).
+  Rotation tag 0, so a sideways shot is baked into the pixels; fix it with the edit-page rotation.
+  Dean called it "the phone clip"; read `exiftool -Make -Model` before assuming a source.
+  The Canon clock read ~1 h 02 m behind the Sony TC (no daylight saving), which is a rough
+  cross-check only.
+- **A clip added after the multicam is not in it.** Dean's audio-sync attempt left no trace: the
+  project DB (`Sm2TiItem` joined to `Sm2TiTrack`, container = the multicam) listed only the three
+  cameras, `Canvanauts.wav` and two empty angle tracks. Such a clip goes on V2 over the cut.
+- **Sync of MVI_0208: the lock was RIGHT to ~2 frames; the error was the room delay** (re-checked
+  2026-09-30 after Dean: "That clip does not line up with audio"). I first wrote that the lock was false,
+  from a pose comparison across angles (Canon low side angle vs Chase front). That was wrong and is
+  withdrawn. What settled it: **three independent Canon clips** from different songs (MVI_0105, MVI_0297,
+  MVI_0208) each put the Canon clock at the same offset from the Wide file, −125.4 / −125.6 / −125.7 s,
+  which wrong-repeat locks cannot do. The real error: **the Wide camera's room audio lags the desk mix by
+  81 ms** (27 m back of room; measured at three points, ±1 ms), and I had aligned the Canon to the Wide's
+  audio. The Canon against the desk mix in a ±1 s window gives −99 ms, so reel frame **3607.98 → 3608**,
+  2 frames earlier than placed. Rules: (1) confirm a short-clip sync by **clock-offset agreement across
+  several clips from the same camera** (Canon MP4 CreateDate is UTC; Eddy's R8 was set to UTC+10);
+  (2) align to the audio the timeline plays (the mix), or subtract the reference camera's acoustic
+  delay; (3) a pose check across very different angles is weak evidence. Original entry, kept for context: New tool
+  `scripts/sync-short-clip.py`. MVI_0208 (7 s) against `Canvanauts.wav` (desk mix): r 0.106 vs
+  reversed-clip control 0.091, no lock. Against Wide `luca_2_20251023_9974.MP4` audio: r 0.27, next
+  peak 0.144, control 0.124, and first half / second half / middle all at **404.7384 s** into the
+  media file (0 ms spread); a wrong-region window reported NOT TRUSTED (6.5 s spread).
+  Conversion to the reel: multicam frame = item Start (DB) + media offset × 25; reel frame =
+  multicam frame − 90000 − the first cut's source frame (6511 here, the cuts are contiguous).
+  MVI_0208 → reel frame 3610.46 = **00:02:24:10**.
+- **Every `run_script` timed out, even a one-line read: it was playback** (Dean confirmed). Five
+  in a row from ~22:05; `get_resolve_status` still said running, and the Resolve process was 13 min
+  old, which sent me chasing a restart. That was a red herring (corrected same day). Ask "are you
+  playing?" first; the moment playback stopped, the next call answered. Never kill `ResolvePython`.
+- **A multicam cut's active angle is in its name**: `TimelineItem.GetName()` returns
+  `"<multicam> - Video N"`, where N is the multicam's video track (Project.db
+  `Sm2SequenceContainer_Sm2TiTrack` `VideoTrackVec` index + 1). The API has no angle getter, and
+  `Sm2TiItem.CurrentSelectorIdx` reads 0 on every cut (it is not the angle). The item's `FieldsBlob`
+  also carries it as "Camera N". Canvanauts: Video 1 = Audience luca_1, 2 = Wide luca_2, 3 = Chase FX6.
+- **`AppendToTimeline` `endFrame` is exclusive on 21.1**: `startFrame 0, endFrame 173` on a
+  174-frame clip gave record 3610–3783 (173 frames) and dropped the last frame. Pass `endFrame = frames`
+  to get the whole clip.
+- **Placing a stills-camera insert for a vertical reel**: `mediaType 1` (video only; the timeline
+  audio stays the mix), `RotationAngle 90` (Dean confirmed the right way up), **Zoom 1.0**, and
+  Super Scale 2 on the source. ~~`ZoomX = ZoomY = 1.7778` to fill 2160×3840 from a rotated 1080p that
+  Resolve fitted to 2160×1215~~ (corrected 2026-09-30: Dean saw it "zoomed in too much" and said
+  "that's wrong, set the zoom to 1". I assumed the fit happens before rotation and derived 1.7778
+  without looking at a rendered frame. Cause of the actual fit not yet verified; check geometry on a
+  rendered frame, never by arithmetic alone).
+- ~~**`SetMarkInOut(0, out)` returns False and leaves In unset**~~ (corrected same day: it was the Deliver page, where the render had left Resolve; from the Edit page `SetMarkInOut(0, 6164)` returned True and set In 0).
+  Out is set; with no In the render range starts at the timeline start anyway, and the queued job
+  read `MarkIn 0, MarkOut 6164`. Read the job's MarkIn/MarkOut from `GetRenderJobList()`, not the
+  return value.
+- **Measurement render cost on this reel**: 246 frames of 1080×1920 H.264 with FLC off took 4.7 s;
+  Resolve's footprint rose 5.8 → 6.6 GB (peak +0.7 GB, `top -pid` sampled at 1 s).
+- **A restore check can't be a frame hash of a lossy render of a different length.** Stage 0
+  restore check (25 frames) vs S0a (246 frames, same state): 0/25 `framemd5` match, because
+  automatic-bitrate H.264 encodes the two jobs differently. Judge it by pixel statistics against a
+  real change instead: restore vs identity mean |d| 1.15/255, mean RGB delta +0.04/−0.01/+0.04 (no
+  bias); a Sat 1.20 CDL gives 3.92 and a slope/offset/power CDL 10.16. For a byte-identical check,
+  render the same range at the same length (the 2026-09-12 FLC restore was byte-identical that way).
+- **Measurement renders overwrite the Deliver page's settings.** `SetRenderSettings` is the same
+  state Dean renders from: after the Canvanauts measurement renders the Deliver page read
+  1080×1920, audio off, H.264 MP4, `/Volumes/BOTTB/Renders`, name `measure_…`, and Dean spotted the
+  resolution before his 9:16 render. `GetRenderSettings` does not exist on 21.1 (a read-back call
+  fails), and `GetCurrentRenderFormatAndCodec` read `unknown` beforehand, so there was nothing to
+  snapshot. Rule: before a measurement render, tell Dean it will change the Deliver settings;
+  afterwards set resolution back to the timeline's and audio back on, and say which fields to check.
+- **MultiPassEncode on means the percentage runs 0→100 twice** (look-on render: 97% → 10% with a
+  65 min estimate that then fell quickly). It was already on in the project (not set by these
+  calls). Wait on `IsRenderingInProgress()`, never on the percentage.
+- **`SetTrackEnable` returns True and does nothing while Resolve is on the Deliver page.** After the
+  look-on render Resolve sat on Deliver; `SetTrackEnable("video", 2, True)` returned True twice and
+  `GetIsTrackEnabled` stayed False. After `resolve.OpenPage("edit")` the same call took (read back
+  True). Restore track state from the Edit page, and always read it back.
+- **Verifying Deliver settings without a getter**: `AddRenderJob()`, read FormatWidth/Height and
+  IsExportAudio from `GetRenderJobList()`, then `DeleteRenderJob(jid)` in its own call.
+- **A subagent's announced peak was measured on one unit and the real run was bigger.** The gigstills
+  chase-pan detector (torchvision KeypointRCNN, CPU, 4 threads) measured 1.05 GB on one cut, was
+  announced as ~1.1 GB, and peaked at **2.1 GB** over 32 cuts in one process (194 s), crossing the
+  ≥ 2 GB "tell Dean first" line after the fact. Measure the unit at the size of the real run, or
+  require the tool to bound its peak per process, before quoting a number for it.
+- **`AddRenderJob`/`StartRendering` switch Resolve to the Deliver page** (`AddRenderJob` alone did it when queuing a settings-check job; seen repeatedly on 2026-09-30: the page read
+  `deliver` after each render, with Dean not touching it), and on Deliver `SetTrackEnable` returns True
+  and does nothing. So after every render: `resolve.OpenPage("edit")` before any timeline state change,
+  and read the change back.
+- **Resolve Pan unit on the reel (gigstills `cut-pan-calibrate`, 2026-09-30):** `Pan = 2160 × ZoomX × (0.5 − cx)`,
+  cx = window centre as a fraction of source width; positive Pan moves the picture right.
+  Fitted k = 2158.4 on 7 of Dean's hand-framed cuts, rms 0.3 source px. The "timeline pixels"
+  guess was 1.78× out, and ignoring zoom fits 50× worse. 2160 is both timeline width and source
+  height here, so recalibrate on another format.
+- **My cut list's `source_in_frame` was one frame early on 13 of 32 Chase cuts** (those where
+  `source_in − record_in` = 6510, not 6511): `GetSourceStartFrame()` on multicam items rounds the
+  multicam source frame. Matching against the render showed 0.76–0.99 similarity at the stated frame
+  and 0.9997 at +1. Record frames were right. Anything that decodes source by `source_in_frame`
+  should verify against a render (`cut-pan` now does and flags `source_in_frame_+1`).
+- **There is no clip-move call in the 21.1 API.** To move a clip: read `GetProperty()` (all transform
+  keys) and any audio properties, `DeleteClips([v, a], False)`, re-`AppendToTimeline` video and audio at
+  the new record frame, re-`SetProperty` each changed key, `SetClipsLinked`, and read everything back.
+  Check the node graph first; a clip grade would be lost. Done on MVI_0208 → 3608 (Dean's zoom 0.5768
+  and A2 volume 4.3 carried over). Also: Dean's own nudge had left video and audio a frame apart, so read
+  both positions before assuming they moved together.
+- **Reel timeline FLC, as found (Dean's screenshot, 2026-10-01 00:01), before any saturation change:**
+  Film Look Blend 1.000, Core Look Cinematic, Skin Bias 0.250 | Exposure 0.00, Contrast 1.300,
+  Highlights 0.650, Highlight Rolloff 0.500, Fade 0.000, Fade Rolloff 0.650, White Balance 6500,
+  Tint 0.0, Subtractive Sat 1.200, Richness 1.000, Bleach Bypass 0.000. Measured effect (gigstills-17,
+  render 4 vs 3): shadows 0.10 → 0.044, mids +0.05, white shoulder ~0.967, saturation ×0.66 on lit
+  Wide regions, ×0.84–0.85 Audience/Chase, ×0.82 Wide midtones. So Subtractive Sat 1.2 does not offset
+  the look's own desaturation; the loss comes from the Cinematic core look and the highlight handling.
+- **FLC change 1 (Dean, 2026-10-01): Highlight Rolloff 0.50 → 0.25**, everything else as found. Test
+  render `lookon_Canvanauts_Antihero_flc_rolloff025.mp4` vs control `lookon_…control_v3.mp4` (both look-on,
+  V2 off, 3099–4551). Result: pending gigstills-17.
+- **Screen darkening test (Dean, 2026-10-01):** on the Wide clip 4027–4161 (00:02:41:02), node 02 = Resolve
+  FX Depth Map (preview off; Dean set Target Depth and Tolerance to 0 first, which still left the drummer
+  half in), key output → node 03 key input, node 03 Gain 0.5 (Dean's choice; gigstills-17's starting target
+  was ×0.75 ≈ −1 stop). The depth map keeps front performers black (untouched) and puts the drummer at
+  mid-grey (half effect), which suits a gain move because the projector wash falls on everything. Needs
+  both links: green = picture, blue = matte. Watch for per-frame depth flicker on the wall.
+  **Settled (Dean): node 03 Gain 0.8 + Gamma −1** (keeps the screen's highlights while the grey wash sinks); a job-specific setting, not a rule.
+- **Heavy-job lock with the retime session (agreed 2026-10-01).** retime's background agents can't post
+  every gap, so before any Resolve render: (1) wait until none of theirs runs, checking
+  `ps -axo pid,command | grep -E "wd.py|sep_runner|sep_bench" | grep -v grep` and waiting on the PID
+  (each run is 2–10 min); (2) write `/Volumes/Supp1Tb/ai-models/scratch/heavy.lock` containing
+  "bottb-48 resolve render"; (3) render; (4) delete the lock, **always, even if the render fails**. Keep
+  each lock under ~5 min; their agents wait while it exists. A protocol between sessions only, not Dean's
+  approval for anything.
+
+## Resolve 21.1.1 upgrade: API audit and the local manual (2026-10-02, deapovey-be)
+
+Installed build **21.1.1.10 Studio** (`resolve.GetVersion()`); `get_resolve_status` still says
+"21.1", which is only how it truncates the version. Release notes: Dean pasted the r/davinciresolve
+post (Reddit blocks scripted fetches).
+
+**Local manual and API reference:** `~/Documents/reference/davinci-resolve-21.1/` (see its README).
+The 21.1 Reference Manual PDF (4,351 pp), `manual.txt` (one form feed per page, so text page = PDF page), the bookmark
+outline, and `search.sh` (`search.sh 'render in place'`, `-c multicam` for chapters, `-p 1152` for a
+page). Also snapshots of the installed 21.1.1 developer stub/README/CHANGELOG and of the stub the
+MCP server serves, for diffing at the next upgrade.
+
+- **The MCP server's API reference is stale.** `get_scripting_api` / `search_scripting_api` still
+  serve the 21.1 stub and `get_whats_new` reports nothing after 21.1. The 21.1.1 additions are only in
+  `/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/DaVinciResolveScript.pyi`
+  (copied to the reference folder). Grep that file for anything new; its `CHANGELOG.md` also stops at 21.1.
+- **New in 21.1.1, verified live:** `Project.GetRenderWithQuickExportStatus`, `GetTranscribeAudioStatus`,
+  `GetAnalyzeForSlateStatus`, `GetSmartReframeStatus`, `GetDetectSceneCutsStatus`,
+  `GetCreateSubtitlesFromAudioStatus` (each returns `{'JobStatus': 'Inactive'}` when idle). These are
+  the release notes' "async APIs": start the job and poll, instead of one `run_script` call blocking
+  past its 60 s cap. `Graph.ApplyGradeFromDRX(path, gradeMode, applyToAllLayers=False)` gained the
+  all-layers flag.
+- **Render job status, 21.1.1:** `GetRenderJobStatus` now returns `JobStatus: 'Rendering'` (the stub
+  also lists Upload Pending / Uploading / Inactive / Unexpected) plus `EstimatedTimeRemainingInMs`.
+  **The ETA is not usable for waiting:** on bottb-48's reel render it read 43 000 ms at 65 % and
+  57 000 ms at 70 % several minutes later. Keep waiting on `IsRenderingInProgress()`.
+- **Clip property reads are blank while ANY render runs (found 2026-10-02).** During bottb-48's reel
+  render, `GetProperties()` returned `{}` and `GetProperty('ZoomX')` `None` on every item (MVI_0208
+  included); the moment `IsRenderingInProgress()` went False the same calls returned 32 keys and
+  ZoomX 0.5768. Because the tools treat `None` as "not zoomed", `state.py` and `mark_zoomed.py`
+  would have reported **zero** zoomed cuts. Both now refuse to run during a render. Not known
+  whether 21.1 did the same; treat it as true for any property read.
+- **`hasattr()` lies on Resolve objects:** it is True for any name (the attribute is `None`), so
+  `state.py`'s `hasattr(proj, "GetRenderSettings")` guard crashed. Use `callable(getattr(obj, name, None))`.
+  Fixed; `state.py` then ran clean on 21.1.1 (reel 3099-4550: 15 multicam + 1 video item, 2 dynamic +
+  2 static zoomed). `superscale.py` not yet re-run on 21.1.1 (it writes; run when a song needs it).
+- **Still impossible (unchanged):** no OFX-parameter API (Halation / Film Look Creator stay UI-only),
+  no Render in Place or Decompose call, no `Project.GetRenderSettings`.
+- **Our calls are deprecated but still work:** `GetSetting(name)`, `TimelineItem.GetProperty(name)`,
+  `SetSetting`, `SetProperty`. The canonical forms are `GetSettings()` / `GetProperties()` and index into the dict.
+  `state.py`, `mark_zoomed.py` use the old forms; migrate when next touched. The 4-arg
+  `SetSetting('superScale', 2, sharp, nr)` is not deprecated. `GetSetting('timelineResolutionWidth')`
+  read 2160 live on 21.1.1.
+- Release-note items that touch our UI steps: **"Addressed issue with Halation controls in Film Look
+  Creator"** (the manual halation toggle; nothing in the runbook named a symptom, so just watch it);
+  **"Multicam actions are now available in single viewer mode"** and **"Sync bin multi angle view now
+  displays record timecode"** (may relax the 21.1 multicam-viewer gate above; not yet tried);
+  Smart Reframe is now pollable from the API (`TimelineItem.SmartReframe` + status), a possible first
+  pass for 9:16 reels next to `gigstills cut-pan`, not yet tried.
