@@ -1499,3 +1499,256 @@ measure_Google_FullSet.mp4`: 1314.12 s, 32853 frames, **173 s to render** (look-
   byte counts, resolution, duration 1314.12 s, QC + Dean's approval ("Okay we are good to go", ~14:32), thumbnail NOT
   made (Dean making it), the played-order chapters (the DB order is wrong), and Dean's instruction verbatim: YouTube
   following the Melbourne full-set guidelines, then link posts on every platform that supports links, ASAP.
+- **Drive "storageQuotaExceeded" was the photographer's quota, not ours (2026-10-03).** The archive had failed every 3 h
+  since 2026-09-30 on `events/2026/Melbourne/01_media/photos`. Drive had 2.2 TiB free and a 50 MB probe uploaded fine,
+  but the six subfolders there are **owned by `ellahasdel@gmail.com`** (shared in), and uploads into them count against
+  her full personal quota (`rclone lsjson -M --dirs-only` shows the owner). Fix: upload into a folder we own
+  (`photos-bottb`). Dean's archive rule: Drive keeps what is needed to RECREATE a set (raw footage, all audio, production
+  projects, Resolve project library), no finished renders (YouTube 4K is the master). `bottb-archive.sh` job lines
+  now take a third field of per-line rclone filters; job `doc/archive-jobs/04-recreate-sources.txt`.
+- **Canvanauts full-set handoff** written to `canvanauts-sydney-2025-fullset-handoff.md`. Its desk recording
+  `DLIVE003.WAV` covers only 11:12 of a 21:33 set; the rest is on `BotB-001` (verify what those channels are).
+
+## Sydney 2025 full sets: Canvanauts (2026-10-03, bottb-b2)
+
+- **What the Canvanauts audio is (measured; full table in `canvanauts-sydney-2025-fullset-mix-brief.md`).**
+  `Canvanauts.wav` (the 2025 full-set bounce, BWF 01:00:00:00) is **sample-locked to the MixPre `BotB-001`**
+  (t=0 = BotB-001 3784.000 s); `DLIVE003` (desk) covers only bounce 621.18 s → end and drifts −13.5 ppm
+  against the MixPre. BotB-001's four tracks (MixL, MixR, Mkh417, Mkh50; Dean: "4 ambient mics") all lock to
+  the desk at **0 ms**, and Mkh417 ≈ MixL, Mkh50 ≈ MixR (r 0.98, ~4.7 dB hotter). So a MixPre/desk join needs
+  no acoustic-delay correction. **MixL = 0.58 × Mkh417, MixR = 0.55 × Mkh50** (least-squares, cross terms ≤ 0.01,
+  residual −13 to −16 dB): the Mix tracks are the MixPre's mix bus of its two mics, so the four tracks are two
+  signals. Dean thought all four were independent; the decisive test (music, 10 s) gave MixL–Mkh417 and
+  MixR–Mkh50 **r 1.000 in 100–1000, 4–8 k and 8–16 kHz at a constant 1-sample lag**, which independent mics
+  cannot do (they decorrelate at HF). For "are these separate mics?" test HF-band correlation and lag, not
+  full-band r. Dean: "let's just take mixl and mixr then" (the desk replacement for the first half). The bounce halves are already −14.3 / −14.4 LUFS.
+  **(Corrected 2026-10-03, mixdown: `Canvanauts.wav` contains no desk anywhere.** It is MixL/MixR through the
+  2025 mastering chain (`Project.logicx`, Logic 11.2.2, unreadable by logic-cli; window shot shows Bus 1 Multipressor/
+  EQ/Comp/Ozone, Stereo Out Ozone 12 "Mastering") for the whole set, Anti-Hero included. My scan had shown the
+  bounce sample-locked to BotB-001 at 800/1100/1250 s while the desk drifted, and I still wrote "the desk covers
+  the second half" as if the bounce used it. **Where a source exists in time is not what a bounce is made of:
+  the lock (which clock the bounce follows) says which source it is.** QC by mixdown: −14.37 LUFS, LRA 9.66,
+  true peak −0.06 dBTP (the one failure against −1.0).)
+- **"A different version" meant a cover** (Dean: "anti-hero is an as covered by version"), not a different
+  take. The 2025 Anti-Hero delivery's audio places in the full-set bounce at 239.241 s, gain −0.01 dB,
+  residual −25.7 dB (`align-mix` reads `different_version`: AAC plus the delivery's fade-out). Ask what a
+  phrase means before building a test plan around it.
+- **A whole-recording NCC search at 4 kHz peaked at 1.97 GB** (`/usr/bin/time -l`, 2 h × 1 channel,
+  `oaconvolve` + float64 cumsum), where I had guessed "well under 1 GB" and did not announce it. Search
+  short windows at predicted positions instead (the same check on 16 s segments peaked at 0.11 GB), or
+  use `align-mix` (0.35 GB on a 3.65 h reference), and measure before calling a job light.
+- **Project `Canvanauts` as found (2026-10-03):** unmanaged DaVinci YRGB (like Google; the reel project is RCM v2),
+  `Timeline 1` 1920×1080 25p, 0–54331 (36:13), **one uncut multicam item** (`Canvanauts - Video 1`, the Audience
+  angle) on V1 and one on A1: the full set has never been angle-cut. Media was offline: cameras moved from
+  `/Volumes/Extreme SSD/Battle of the Bands/Video/Sydney 2025/Pro Footage/Footage/…` to
+  `/Volumes/Battle Of Band 2025/Footage/<Wide|Chase|Audience>/…`, audio to `bottb/_TO_SORT_Audio/Sydney/Canvanauts/`.
+  `MediaPool.RelinkClips(items, folder)` per camera folder, one call each, File Path read back (27 + 1). Cache
+  location moved to `/Volumes/BOTTB/DaVinci/CacheClip` (Dean) with `SetSetting("perfCacheClipsLocation", …)`, read
+  back; not yet confirmed by a cache write.
+- **Bringing a song's cut from another project into the full set (2026-10-03):** in the song project
+  `Timeline.Export(path, resolve.EXPORT_DRT)`; in the full-set project `MediaPool.ImportTimelineFromFile(path,
+{"timelineName": …, "importSourceClips": False})`. With `importSourceClips False` all 77 cuts linked to the
+  project's **existing** `Canvanauts` multicam (`GetUniqueId()` equal), no duplicate pool items. Strip the scratch
+  timeline to V1 (`DeleteClips` on end card and audio), Dean Cmd+A / Cmd+C there, I `SetCurrentTimeline` + park the
+  playhead at the song's multicam frame (record = multicam frame here, base item left offset 0), Dean Cmd+V. Read back:
+  77/77 same multicam frame, angle, zoom, dynamic zoom; neighbours untouched. Anti-Hero = Timeline 1 frames 6511–12676
+  (00:04:20:11–00:08:27:01). DRT kept at `events/2025/Sydney/02_Production/Canvanauts/`.
+- **`GetProperty("Pan")` is not a stable read across timelines of different resolution.** The same 8 pasted items read
+  +710.4 … (the 4K source values) in one call and +355.2 … (the same framing in 1920 px) a few calls later with no
+  edit in between; the 4K scratch timeline's items did the same. Pan looks stored resolution-independent and reported
+  in pixels of some current resolution. Don't "fix" pans from a read after a cross-resolution paste: compare framing
+  on pixels (here, Dean's eye against the 2025 delivery frame). **Dean confirmed by eye (2026-10-03): the pasted pans frame the same as the 2025 delivery; no fix needed.**
+- **Canvanauts master v2 (mixdown, 2026-10-03):** `03_Delivery/Canvanauts/Canvanauts_FullSet_Master_v2_at_01-00-00-00.wav`,
+  the 2025 master with only the true peak fixed (0.32 % of samples, ≤ 1.02 dB). My QC: sha256 c5d19e7c… matches,
+  62,051,666 samples = Canvanauts.wav, bext 172800000, −14.4 LUFS, LRA 9.7, TP −1.1 dBTP; null vs Canvanauts.wav RMS
+  −65 dB, peak −19 dB. Not listened to by Dean. Expected position: wav sample 0 at multicam frame ≈ 530 (Anti-Hero 2025
+  cut: multicam 6511 = wav 239.241 s); verify with a short render.
+- **I answered Dean's choice for him (2026-10-03).** Mixdown had put "2025 master with the true peak fixed, or a new
+  desk/MixPre mix?" to Dean. When he said "Get audio ready" I told mixdown to take the peak-fix path "if he hasn't
+  picked", and it built Master v2. Dean: "Wait I wanted the mixdown first and then I'd apply ozone to master, what have
+  you done?" **Dean masters himself (Ozone) after the mixdown; what mixdown hands back is an unmastered mix with
+  headroom.** A go-ahead like "get audio ready" does not pick an option; when a peer has put a choice to Dean, relay
+  his words without a default, or ask him which option he means.
+- **`MediaPool.AppendToTimeline` moves the playhead to the end of what it appended** (2026-10-03: Master v2 TEMP on A2
+  at 530–32849 left the playhead at 00:21:53:24 = frame 32849, while Dean was cutting and I had said it would not move).
+  Before an append while Dean works, read `GetCurrentTimecode()`, and restore it in its own call straight after.
+  Master v2 is on A2 "Master v2 TEMP" for cutting only (Dean: "We can put this on temporarily to cut"); the
+  delivery audio will be Dean's own Ozone master of an unmastered mixdown.
+- **Mixdown source (Dean, 2026-10-03): "combine Mix L and Mix R into a single stereo track we'll start from that. The desk
+  only covers 2.5 songs so we'll just use this."** Made `02_Production/Canvanauts/Canvanauts - MixLR - full set_at_01-00-00-00.wav`
+  with ffmpeg (`pan=stereo|c0=c0|c1=c1,atrim=start_sample=181632000:end_sample=+62051666`, `-write_bext 1 -metadata
+time_reference=172800000`), 10 s, 9 MB peak. Bit-exact against BotB-001 ch1/2 at three points; 0-sample lag against
+  Canvanauts.wav at five. Same span and clock as the 2025 bounce, so it drops in at 01:00:00:00.
+- **Fade handles are scriptable on 21.1.1: `TimelineItem.GetFades()` / `SetFades({"FadeIn": n, "FadeOut": n})`** (frames;
+  in the 21.1.1 stub and CHANGELOG, not in the MCP's stale 21.1 stub, and not in `GetProperty()`). The pasted Anti-Hero
+  cut brought the 2025 ending with it: its last cut (12584–12676) had **FadeOut 91** (it faded into the old end card).
+  Found by unzipping the exported `.drt` (`SeqContainer/*.xml`; `ElementTree` fails on `ListMgt::` tags, use regex):
+  only that clip had an `EffectFiltersBA` holding 91.0. `SetFades` to 0/0, read back 0/0, playhead unchanged. When
+  pasting a song's cut into a full set, check `GetFades()` on its first and last cuts.
+- **Canvanauts measurement render (2026-10-03):** Dean cut the set (260 V1 items) and set In/Out 758–31183
+  (00:00:30:08–00:20:47:08; Cyan RELEASE marker). Cut list 259 rows → gigstills `runs/canvanauts-sydney-fullset/`
+  (angle → source from Project.db: each angle is ONE file in this multicam, Audience luca_1_9973 and Wide luca_2_9974 at
+  multicam frame 3, Chase LUK-fx6-0004 at 0; the exported song `.drt` only carries the clips its range uses). Render
+  `/Volumes/BOTTB/Renders/measure_Canvanauts_FullSet.mp4`, 1080p video only, 30,426 frames = In/Out exactly, **384 s**
+  (Google's 1314 s set took 173 s: here memcheck said COMFORT ask, compressor 9.1 GB, and MultiPassEncode ran the
+  percentage 0→100 twice; Dean said run it). In/Out survived the render, DeleteRenderJob and SetRenderSettings this time
+  (read on Edit after each); still read it every time.
+- **Song cards and set titles generated (2026-10-03):** `generate-song-overlays.ts --out` APPENDS `<Band>/Overlays` to the
+  path you give (pass the event's `02_Production`, not the band folder). In a worktree whose `node_modules` pnpm wants to
+  purge, call `./node_modules/.bin/tsx` directly instead of `pnpm tsx` (no TTY → ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY).
+  Outputs in `02_Production/Canvanauts/Overlays/` (5 cards in DB order, `title-filmic.png`, `credits-filmic-nomembers.png`).
+- **Canvanauts grade approved (Dean, 2026-10-03, after opening the sheet): "These look good. We'll do the FLC based on the
+  google settings on the adjustment clip."** gigstills k0 recipe `runs/canvanauts-sydney-fullset/k0/` (136 moves, needs the
+  Chase FX6 0.03 camera-match LUT on a group Pre-Clip first). Plan when Resolve reopens: Chase group + LUT → SetCDL (node
+  graphs read first, esp. the 77 pasted Anti-Hero cuts) → V2-off verify render → Dean: Adjustment Clip on V2 with the
+  Google FLC (titles on V3) → look-on render of the 28 Audience cuts → crowd lift re-fitted to the real look → titles.
+- **Apply list (Dean, 2026-10-03: "drop them" for the tiny exposure tweaks):** `gigstills/runs/canvanauts-sydney-fullset/apply_final.json`,
+  113 cuts = 136 moved − 17 exposure-only gains < 1.03 (none were composed into another move) − 6 unverified with moves
+  (2, 50, 187, 193, 222, 224; the recipe says "measure, do not apply"). CDLs are the recipe's own `set_cdl`.
+- **Canvanauts look (Dean, 2026-10-03):** Adjustment Clip on V2, 0–31183, FLC from the Google settings with "a few
+  adjustments to FLC, pushed up richness and contrast back at 1.5" (Google: Contrast 1.3, Richness 1.2; exact new Richness
+  not yet recorded). Contrast 1.5 is above Google's 1.3, whose toe already crushed 19 crowd cuts: the crowd lift must be
+  fitted on a look-on render of THIS FLC, after the Chase LUT and the k0 CDLs are in. Timeline node graph: 0 nodes.
+- **Dean switched the full set to colour management and 4K (2026-10-03), after the measurement render:** now DaVinci YRGB
+  Color Managed v2, Rec.709 (Scene) in/timeline/out, SDR 100, DaVinci DRTs, colour-space-aware tools on, timeline
+  3840×2160 (output 3840×2160). The k0 recipe was measured on the unmanaged render, so a Stage 0 check (short V2-off render
+  vs the measurement render) is owed before SetCDL. Pan on cut 6859 now reads +710.4 at 3840 (355.2 at 1920 before): same
+  framing, consistent with Pan stored resolution-independent and read in current-timeline pixels.
+- ~~**"Overlit" here = lifted blacks (Dean, 2026-10-03):**~~ — CORRECTED 2026-10-03 (gigstills look report, below): with the k0
+  CDLs in, the look crushes every floor and the "overlit" is the MID/HIGHLIGHT lift; my inference from "lowering contrast made
+  it worse" was wrong. Original: after enabling RCM he said "It's looking a bit overlit", "Lowering
+  contrast made it worst", and "the reason I lifted contrast was it _darkened_ blacks". With no clip corrections applied yet,
+  the Chase pedestal (~0.03) and haze floors (~0.10) were being fought with global FLC contrast (1.5), which also crushes the
+  already-black Wide and the crowd. Same complaint as Everlong's "hazy and overlit". The per-cut k0 offsets are the targeted
+  fix; revisit FLC contrast after they are in.
+- **In/Out found EMPTY with no render in between (2026-10-03).** Read 758–31183 after the Stage 0 restore; then (Dean in the
+  UI, then away) AddTrack/SetTrackName/ImportMedia/AppendToTimeline (Master v3 on A3), SetTrackEnable(A2 off),
+  SetCurrentTimecode, 113 × SetCDL, SetTrackEnable(V2 off) → `GetMarkInOut()` = `{}`. Cause not isolated. Restored from the
+  RELEASE marker. Rule: read In/Out before every render setup, not only after renders.
+- **Retime lock race:** I wrote heavy.lock in the same second retime's next `wd.py` started (its previous one had just
+  exited). Check `ps` for their jobs immediately after writing the lock, and wait on any that slipped in.
+- **Canvanauts titles built (2026-10-03):** Whisper (`openai/whisper-small.en` from `/Volumes/Supp1Tb/ai-models/hf`, gigstills
+  venv, 60–70 s per slot, 40 s total, **1.11 GB peak**) named all five slots: played order = DB order this time (Are You
+  Gonna Be My Girl, Anti-Hero, Valerie, I'm Still Standing, Don't Stop Me Now). Movies: `ffmpeg -loop 1 … -c:v prores_ks
+-profile:v 4444 -pix_fmt yuva444p10le`, **1.7 GB peak at -threads 4, 1.27 GB at -threads 2** (4K 4444 frame threads).
+  **Trap: `fade=t=in` without `alpha=1` on an rgba stream fades the ALPHA too**, so the opening started transparent. For an
+  opaque card fading in from black use `format=rgb24,fade=t=in:…,format=rgba,fade=t=out:…:alpha=1`, and read alpha on frames.
+- **AddTrack / ImportMedia / AppendToTimeline clear In/Out (seen twice, 2026-10-03).** Second time: In/Out read 758–31183
+  after the verify-render restore; then DeleteRenderJob, AddTrack(video), SetTrackName, ImportMedia (8 title movs),
+  AppendToTimeline (V3), SetProperty(CompositeMode) → `GetMarkInOut()` = `{}`, playhead at the end of the last append.
+  Both incidents share AddTrack + ImportMedia + AppendToTimeline; not isolated further. Rule: after any of these, restore
+  In/Out from the RELEASE marker in its own call and read it back.
+- **Titles placed (2026-10-03), V3 "Titles":** opening 758–933; cards on Dean's song-start cuts: Are You Gonna Be My Girl 1307,
+  Anti-Hero 7044, Valerie 13105, I'm Still Standing 18833, Don't Stop Me Now 25326 (125 f each); credits 30886–31086;
+  `EndCard_2x.mov` 31086–31184 (ends on Out 31183), CompositeMode ADD read back 1. First notes (drum entries, 0.2 s):
+  1250, 7035, 13050, ~18830, 25395; slot 5's card is on a cut 2.8 s before the first note (the next is 8.6 s late).
+- **Measurement/look-on renders: set `MultiPassEncode: False` in `SetRenderSettings`** (the project has it on; the job dict reads
+  it back as `MultiPassEncode`). With the FLC on, the 1080p full-set look-on render was at 15 % after 5 min, pass 1 of 2,
+  ~55 min projected. `StopRendering()` took ~8 s to reach `Cancelled`; then DeleteRenderJob and re-queue single-pass.
+  Put MultiPassEncode back to True afterwards for Dean's delivery render.
+- **Canvanauts look-on render (2026-10-03):** `lookon_Canvanauts_FullSet_k0_V3off.mp4`, 1080p, V2 look on, V3 titles off,
+  single pass: **1918 s for 1217 s of programme (1.6× real time)**, so the FLC on an adjustment clip is the cost, not the
+  CDLs (the look-off verify render of the same range took 397 s). Deliver settings restored and checked via a throwaway
+  job: 3840×2160, MultiPassEncode True, audio on, `Canvanauts_FullSet`, In/Out 758–31183.
+- **Pre-render checklist, Canvanauts (2026-10-03):** colour group "Chase FX6" carries only the camera-match LUT (no
+  Deflicker/NR nodes to toggle); 79 zoomed cuts Orange (read back); `superscale.py` VALUE=2 → 27 camera clips (MP4+MXF);
+  timeline already 3840×2160 (RiP bakes at timeline res). Waiting on Dean: RiP of the 79 Orange cuts (Video Effects ON,
+  Color Grading OFF) into /Volumes/BOTTB/Renders, then Super Scale 1, halation.
+- **Canvanauts look measured (gigstills, 2026-10-03; `gigstills/runs/canvanauts-sydney-fullset/look/`):** per-angle transfer
+  from the look-off verify / look-on pair (offset 0, 563 cut boundaries aligned). Contrast 1.5 toe: everything below ~0.08 →
+  black (0.06 → 0.0016; Google's 1.3 mapped 0.098 → 0.038); p10 = 0 on 190 of 259 cuts. Mids lift: lit subject Wide
+  0.563 → 0.693, Chase 0.502 → 0.554, Audience 0.576 → 0.702. Clipping 0.0135 → 0.0079. **"Overlit" = the mids/highlights
+  lift**: the Wide's lit stage wash rises ~10 L\* while Lab chroma falls ×0.25 (near-white); highlights 0.7–0.98 go yellow
+  (chroma ×1.7–2.1); blue-violet rotates 15–23° toward blue; Chase neutral mids pick up a yellow-green tint (chroma 0.8 → 5.6
+  at 117°). Use per-angle curves: the pooled curve hides the Wide +0.13 vs Chase +0.05 difference.
+- **Crowd lift under Contrast 1.5:** 25 of 28 Audience cuts crushed (p50 0.131 → 0.037). Lift A (Offset o 0.065–0.085, white
+  held, Power 0.94–1.00) restores p10/p50 within 0.016 of look-off but raises p90 a median +0.06 (max +0.12); lift B (p90
+  capped +0.03, Power ≤ 1.3) holds highlights, p50 a median 0.027 under. Both in `crowd_lift_final.json`; Dean's pick, and it
+  should be re-solved if he changes the FLC. Not applied.
+- **Dean picked crowd lift B (2026-10-03): "Actually looking again B is the best"** (p90 capped +0.03), after the A/B montage.
+  Held, not applied: Dean is adjusting the FLC next (suggested Contrast 1.5 → 1.3, Highlights 0.65 → ~0.50, Exposure −0.2 to
+  −0.3 stops last, optional Fade ~0.1; manual p.3562: Exposure is in stops, Highlights/Fade shape the S-curve's top/bottom).
+  Re-solve B on a fresh look-on render of the 28 Audience cuts once the look is set, then apply.
+- **"The FLC seems to have gone from the adjustment clip?" (Dean, 2026-10-03): it hadn't.** The playhead was at the In
+  (00:00:30:08), under the opening title on V3, and the Color page shows the top clip's graph (`GetCurrentVideoItem()` =
+  `00-opening-filmic.mov`, V3). The V2 Adjustment Clip read 2 nodes, node 2 `OFX: Film Look Creator`. Same family as Google's
+  "everything is black" (playhead on the opaque opening card). With titles on V3, park the playhead outside the cards
+  (or select the V2 clip in the Color page strip) before look work.
+- **Canvanauts FLC as set by Dean (screenshot, 2026-10-03, after the look suggestions), V2 Adjustment Clip node 2:** Film Look
+  Blend 1.000, Core Look Aurora, Skin Bias 0.200 | **Exposure −0.25**, **Contrast 1.300**, **Highlights 0.500**, Highlight
+  Rolloff 0.250, **Fade 0.100**, Fade Rolloff 0.500, White Balance 7000, Tint 10.0, Subtractive Sat 1.200, **Richness 1.300**,
+  Bleach Bypass 0.000 | Split Tone on, Natural (rest below the screenshot). Output White Point D65 (the default; manual
+  p.3561: only matters under Color Space Overrides, i.e. display-referred use). The crowd lift B must be re-solved on this look.
+- **FLC Tint +10 was not a choice (Dean, 2026-10-03: "i think it was the default").** Consistent with the reel's FLC on Core Look
+  Cinematic reading Tint 0.0: +10 likely comes with Aurora/its preset. It is the magenta side (Google measurement) and small;
+  on Canvanauts it leans against the look's yellow-green on Chase neutral mids, so it was left at +10. The house default
+  (Brisbane grading structure) is Tint 0. Check FLC defaults per Core Look before attributing a value to anyone.
+- **RiP vs a colour group (Canvanauts, 2026-10-03) — corrects "RiP bakes … the group pre-clip".** Dean RiP'd the 79 Orange cuts
+  (Video Effects on, Color Grading off) → `/Volumes/BOTTB/Renders/Canvanauts - Video N Render M.mov` (ProRes 422 10-bit 4K).
+  All 79 became Video items; clip CDLs intact (113/113 read back). The one Chase cut among them (245, 28906–29186) **left the
+  "Chase FX6" group (114 → 113 members) and its RiP file has NO pedestal fix** (luma p0.1 0.0398 = the model's raw 0.0401,
+  not matched 0.0104): the group Pre-Clip LUT was not baked. Fixed by `AssignToColorGroup` on the RiP'd item (back to 114,
+  LUT live on top). Rule: after a RiP, re-assign group membership and verify on pixels. Also: **while the RiP dialog runs,
+  `GetCurrentPage()` is None and `GetToolsInNode(1)` read empty on all 113 graded cuts** — a modal makes reads lie; ask Dean
+  whether a dialog is open before believing a "lost grades" read. Super Scale back to 1 on 27 camera clips after the RiP.
+- **Canvanauts crowd lift B applied (2026-10-03):** 24 cuts (`crowd_lift_B_final.json`, log `applied_crowdB.json`), composed on k0
+  for 40/51/56/127/167; some targets are RiP'd Video items (SetCDL works on them). Verify on the delivery render.
+- **Canvanauts 4K delivery v1 started (2026-10-03 ~22:3x), Dean: "Yep halation is on. Let's render. Remember we need 4k only as
+  this is just going to YT."** Job a6dda951: `/Volumes/BOTTB/Renders/Canvanauts_FullSet_Sydney2025_4K_v1.mp4`, 758–31183, H.264
+  3840×2160, VideoQuality 45000 (job dict reads None, as on Google), MultiPass on, AAC 320 / 48 k (AudioBitRate reads None), A3
+  "Master v3 FINAL" only, look on the V2 adjustment clip, titles + end card on V3. No 1080p copy for this set (YouTube only).
+  memcheck COMFORT ask (cheap 3.2 GB, compressor 10.4 GB, swap 9.1/10 GB); Dean said render. heavy.lock held, retime told.
+- **Dean (2026-10-03, during the Canvanauts 4K render): "In future let's not bother with the multipass option."** Rule: every
+  render, delivery included, goes with `MultiPassEncode: False` (set it in `SetRenderSettings`, read it back from the job).
+  The project default had it on; turn it off in the Deliver settings after any render that used it.
+- **Canvanauts 4K v1 rendered (2026-10-03 22:2x–23:24): 3808 s for 1217 s (3.1× real time) WITH multipass** (pass 1 ≈ 33 min, pass 2 ≈ 30 min;
+  the pass-2 ETA first read 12 h). 6,896,812,068 bytes; render-qc PASS (30426 frames, audio Δ 0.05 s, 45.0 Mb/s); AAC LC 320/48 k,
+  −13.9 LUFS, TP −0.8 dBTP; audio = Master v3 at 228.0 frames (same_mix, r 0.9997). Crowd B on pixels: median Δ ≈ 0, 22/24 within 0.03;
+  cuts 40 and 160 (both dynamic-zoom, RiP'd) brighter than predicted at p90 (+0.13/+0.10). After the render, two trivial run_script calls
+  (DeleteRenderJob; SetRenderSettings MultiPassEncode False) timed out, and so did a one-line read: playback or a dialog. State of those
+  two calls unknown until Resolve answers.
+- **Dean on v1 (2026-10-04): "the Canva logo looks a bit pixelated, and the guitars sound a bit muted, maybe compressed, but that may have
+  been there before."** Logo cause: Canva's `logo.svg` (Blob) declares `width="80" height="30"`; @napi-rs/canvas `loadImage` rasterises an
+  SVG at its declared size, so both title scripts drew an 80×30 bitmap scaled up to 4K. Fix (uncommitted, worktrees): `loadSharp()` in
+  `generate-song-overlays.ts` (canvanauts-reel-notes) and `generate-set-titles.ts` (filmic-set-titles) rewrites the root svg width/height so
+  the long side is 2400 px (viewBox kept) before loading. Regenerated into `02_Production/Canvanauts/Overlays-v2/` (`*_v2.mov`); A/B crop
+  confirms sharp edges. Any band whose logo is an SVG with a small declared size had the same problem. Guitars: render = master to −32 dB,
+  so it is in the mix; passed to mixdown with Dean's words.
+- **Chapter markers go JUST BEFORE the first transient (Dean, 2026-10-04: "make sure all these are just before the transient so the
+  note does not get cut off").** Method: 10 ms RMS on the master around the song start, first block ≥ 9 dB over the median of the
+  preceding 300 ms and ≥ 6 dB for 60 ms; marker = floor(transient frame) − 5 (0.2 s). Canvanauts: 1245, 7007 (Dean said 7011,
+  transient 7012), 13043, 25387 (soft piano, +12 dB); ~~I'm Still Standing open: transient 18833 (00:12:33:08, where Dean's cut is)
+  vs Dean's 00:12:34:22~~ (corrected same day: 18833 is a short hit that decays to −50 dB silence; the song enters at 18874.5,
+  so Dean was right, marker 18869). Don't Stop Me Now: Dean 00:16:53:01, onset 25327.5 after −46 dB silence, marker 25322 (my
+  window started after that onset and found a louder entry 2.6 s later). **Detector rule: the transient must be followed by
+  sustained level (≥ 1 s), and the search window must start ≥ 3 s before the candidate.** Dean confirmed song 1 and gave Anti-Hero 00:04:40:11.
+- **Canvanauts v2 (2026-10-04):** Resolve crashed after v1 (the timeouts); everything saved survived (113 + 24 CDLs, group 114 + LUT,
+  Super Scale 1, titles, markers, In/Out). 79 Orange cleared (`ClearClipColor()`, read back). Titles swapped to the sharp-logo v2 files with
+  `MediaPoolItem.ReplaceClip()` on the 7 Titles-bin items (positions, lengths, end-card ADD unchanged). Chapter markers moved to just before
+  the transients (1245, 7007, 13043, 18869, 25322). **Dean's audio fade:** he cut A3 at the Out (31183) and put a 287-frame FadeOut on
+  the first piece (over credits + end card), "I trimmed the clip". The cut left a second piece starting AT the Out frame, which the
+  inclusive Out would have rendered as 1 frame at full level: disabled it (`SetClipEnabled(False)`). After any razor at the Out, check
+  the next piece. Render v2 job b94eaa8d single pass (`MultiPassEncode` False read back), Dean: "Let's make sure we don't double render" /
+  "double pass I mean".
+- **Canvanauts 4K v2 rendered (2026-10-04): 1821 s single pass (1.5× real time; v1 multipass 3808 s).** 6,887,837,009 bytes;
+  render-qc PASS (30426 frames, audio Δ 0.07 s, 45.0 Mb/s), AAC LC 320/48 k, −13.9 LUFS, TP −0.8 dBTP; Master v3 at 228.0 frames
+  (same_mix, r 0.9997); tail fades −39 → −64 dB over the last 5 s and the last frame reads −105.7 dB (no blip from the disabled tail
+  piece); Canva logo sharp on a rendered card frame. Queue emptied, project saved, In/Out intact. v1 superseded.
+- **Canvanauts 4K v3 = v2 video + Master v4 (2026-10-04).** Dean via mixdown: "replace the old master with this one if it passes qc and
+  remake the splice and fade so we can recreate." v4: sha 41900f57…, same length/bext as v3, −14.0 LUFS, TP −1.6, 0 samples vs v3
+  (different_version: +1 dB 500 Hz–1 kHz for guitars, −0.6 dB trim). `splice-mix.sh v2.mp4 v4.wav 9.12 v3.mp4 11.52` (fade = Dean's
+  287-frame Resolve fade + the silent Out frame): 118 s, 1.6 MB peak; video md5 identical; render-qc PASS; −14.0 LUFS, TP −0.9;
+  align-mix vs v4 228.0 frames same_mix r 0.9997. ffmpeg's linear `afade` tracked Resolve's fade-handle curve within ~1 dB (0.5 s
+  blocks over the last 13 s), so splice-mix's fade is an adequate stand-in for a Resolve fade handle. **Timeline not yet updated:**
+  Resolve was closed when I went to add A4 "Master v4 FINAL" (530 → 31183, FadeOut 287, A3 disabled); do that next session so the
+  project recreates v3.
+- **Canvanauts handover state (2026-10-04 ~09:50):** Dean: "all the starts are okay" (chapters 0:19 / 4:09 / 8:11 / 12:04 / 16:22, credits
+  20:05, from the render start). Thumbnail: Dean's first export read "…Tech Bands 2026" for a 2025 show; flagged, re-exported as
+  `03_Delivery/Canvanauts/canvanauts-sydney-battle-of-the-tech-bands-2025-youtube.jpg` (the 2026 one in `_superseded/`). **Read the text
+  on a thumbnail before handing it over.** Social agent (bottb-5b) asked for the facts for a draft and got them; Dean has not yet
+  approved v3 to me, v1/v2 not yet moved, and v4 is not yet on the Resolve timeline (Resolve closed).
+- **Canvanauts closed out (2026-10-04, Dean: "1. Yes. 2. Delete 3. Yes").** v3 approved for YouTube and handed to the Social agent
+  (bottb-5b) with Dean's words; v1/v2 deleted at his word (only `…_4K_v3.mp4` remains). Resolve relaunched: new A4 "Master v4 FINAL",
+  v4 appended 530 → 31183 (`endFrame` = 31183 − 530, so no tail piece), `SetFades({"FadeOut": 287})` = A3's fade read back, A3 disabled
+  (A1/A2 already off), In/Out restored (the append cleared it again), saved. The timeline now matches v3's audio; not re-verified by a
+  render. Placing a mix straight to the Out with `endFrame` avoids Dean's razor-and-leftover-piece trap.

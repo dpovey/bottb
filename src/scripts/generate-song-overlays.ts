@@ -31,6 +31,32 @@ import { composeOverlay, OV_W, OV_H } from '../app/admin/thumbnails/compose'
 import { songCredit } from '../app/admin/thumbnails/setlist-artist'
 import { trimTransparent } from '../lib/canvas'
 
+// SVG logos rasterise at their declared width/height: Canva's logo.svg declares 80x30, so it came
+// out pixelated on 4K cards (Canvanauts full set, 2026-10-04). Scale the declared size up first,
+// keeping the viewBox, so the vector is drawn at full resolution.
+async function loadSharp(src: string) {
+  if (!/\.svg(\?|$)/i.test(src)) return napiLoad(src)
+  const text = /^https?:/i.test(src)
+    ? await (await fetch(src)).text()
+    : fs.readFileSync(src, 'utf8')
+  const scaled = text.replace(/<svg\b[^>]*>/i, (tag) => {
+    if (!/viewBox=/i.test(tag)) return tag
+    const num = (k: string) =>
+      parseFloat(new RegExp(`(?<![-\\w])${k}="([\\d.]+)`).exec(tag)?.[1] ?? '')
+    const w = num('width')
+    const h = num('height')
+    if (!w || !h) return tag
+    const k = 2400 / Math.max(w, h)
+    return tag
+      .replace(/(?<![-\w])width="[\d.]+(px)?"/, `width="${Math.round(w * k)}"`)
+      .replace(
+        /(?<![-\w])height="[\d.]+(px)?"/,
+        `height="${Math.round(h * k)}"`
+      )
+  })
+  return napiLoad(Buffer.from(scaled))
+}
+
 const args = process.argv.slice(2)
 const get = (k: string) => {
   const i = args.indexOf(`--${k}`)
@@ -82,7 +108,7 @@ async function main() {
     const companyLogos = []
     for (const u of logoUrls) {
       try {
-        companyLogos.push(trimTransparent((await napiLoad(u)) as any))
+        companyLogos.push(trimTransparent((await loadSharp(u)) as any))
       } catch (e) {
         console.warn(`   logo failed ${u}: ${e}`)
       }
