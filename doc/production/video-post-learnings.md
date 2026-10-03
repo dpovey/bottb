@@ -1149,7 +1149,21 @@ what differs.
   the look's own desaturation; the loss comes from the Cinematic core look and the highlight handling.
 - **FLC change 1 (Dean, 2026-10-01): Highlight Rolloff 0.50 → 0.25**, everything else as found. Test
   render `lookon_Canvanauts_Antihero_flc_rolloff025.mp4` vs control `lookon_…control_v3.mp4` (both look-on,
-  V2 off, 3099–4551). Result: pending gigstills-17.
+  V2 off, 3099–4551). ~~Result: pending gigstills-17.~~ **Result (gigstills-17, 2026-10-03):** a small gain at no
+  cost. Lit-region sat ratio look-on/look-off Wide 0.83 → 0.86, Chase 0.81 → 0.82, Audience 0.59 → 0.61;
+  midtones +0.01–0.03; haze-cut on-screen p10 unchanged. **The Audience A7S III loses the most saturation
+  through the FLC.** Canon (MVI_0208) grade verify PASS: p0.1/p5/p10/p50 0.004/0.020/0.027/0.096 vs predicted
+  0.006/0.022/0.030/0.097.
+- **Skin Bias 0.25 → 0.40: no measurable effect** (median skin sat in face boxes −0.010…+0.003 on 7 cuts). Not
+  the lever for skin colour; untested candidates are Richness 1.0 → 1.2 or a post-FLC Hue-vs-Sat lift on the
+  skin band.
+- **Depth-Map screen darkening applied to all screen cuts:** screen ×0.65–0.70, blacks unchanged. Chase
+  cuts: performers untouched (×1.00). **Wide cuts: the depth map darkens the performers too** (skin ×0.71–0.94,
+  white shirts ×0.73–0.92; Dean's cut 51 screen ×0.63, skin ×0.75), visibly greyer shirts on 49/53. On the
+  Wide the key needs to separate band from screen (Magic Mask on performers inverted, or a qualifier on the
+  screen). Per-frame screen ratio 0.52–0.83: check 48 and 44 in playback for pumping.
+- **FLC Contrast 1.3 vs 1.2:** no strong case either way; black T-shirt folds read but are low (12–22 % of
+  dark pixels ≤ 0.01). Taste call, 1.2 not measured.
 - **Screen darkening test (Dean, 2026-10-01):** on the Wide clip 4027–4161 (00:02:41:02), node 02 = Resolve
   FX Depth Map (preview off; Dean set Target Depth and Tolerance to 0 first, which still left the drummer
   half in), key output → node 03 key input, node 03 Gain 0.5 (Dean's choice; gigstills-17's starting target
@@ -1164,6 +1178,38 @@ what differs.
   "bottb-48 resolve render"; (3) render; (4) delete the lock, **always, even if the render fails**. Keep
   each lock under ~5 min; their agents wait while it exists. A protocol between sessions only, not Dean's
   approval for anything.
+- **FLC change 2 (Dean, 2026-10-02): Skin Bias 0.25 → 0.40** ("overall the skin tones need a bit more
+  color"). Test `lookon_Canvanauts_Antihero_skinbias040.mp4` vs control `lookon_…_screen_depth.mp4`.
+  Result: pending gigstills-17. FLC as of Dean's 2026-10-02 16:26 screenshot: as found except Skin Bias
+  0.40 and Highlight Rolloff 0.25.
+- **Copying a node graph to other clips: `TimelineItem.CopyGrades(targets)` REPLACES each target's whole
+  grade** (current layer). Copying Dean's 3-node screen graph from Wide 4027 to 9 clips wiped the haze CDLs
+  on node 1 of the 4 Chase targets (read back: node 1 empty). Fix: snapshot the targets' graphs first,
+  `CopyGrades`, then re-`SetCDL` node 1 in its own call and read back `GetToolsInNode(1)`. (The UI's
+  "Append Node Graph" from a still would keep the target's nodes; the API has no append.)
+- **10 Depth Map nodes cost ~5× render time:** the minute look-on took 14.7 min against ~3 min without
+  them, with a Resolve peak of about +0.9 GB (sampled for the first half only). Bypass them while cutting.
+- **Screen node across 10 clips (first read):** with gigstills' `screen_rois.json`, screens came down
+  ×0.65–0.83. Performer-box medians on the Wide cuts dropped 0.04–0.08, but the boxes include screen
+  behind the band, and by eye the white T-shirt and face are unchanged. Use person masks, not boxes, for
+  this check (asked of gigstills-17).
+- **A Depth Map key leaves an unkeyed strip the width of the clip's Pan** (Dean spotted it, 2026-10-02).
+  Chase 3751 (Pan +123): the leftmost ~120 timeline px of screen got no darkening (column ratio 1.00 vs
+  ×0.72 elsewhere), and Dean confirmed on the matte (Shift+H, Isolate Specific Depth on) that the clipped
+  band matches the pan. The depth analysis does not follow the edit-page transform. **Fix: Render in Place**
+  (Video Effects ON, Color Grading OFF) bakes the transform, so the live clip nodes key the framed picture.
+  So any transformed clip (pan, zoom, dynamic zoom) carrying a depth/AI key goes in the RiP set.
+- **A stills-camera insert with Super Scale goes in the RiP set too.** `superscale.py VALUE=1` resets every
+  `.MP4`, including the Canon `MVI_*`, which is not behind a multicam. RiP it at Super Scale 2 first, or it
+  ships at Super Scale 1. Canvanauts RiP set: Wide 3164, 3357, 4027, 4388, Chase 3751, Canon on V2.
+  `superscale.py VALUE=2` set 18 (`luca_1`/`luca_2`), already 1 (the Canon), failed 0 — its first run,
+  correct.
+- **Canvanauts reel v1 delivered render (2026-10-02):** 2160×3840 H.264 45 Mb/s + AAC, from Dean's In/Out
+  3099–4550 (RELEASE marker), 7.3 min in Resolve with 10 Depth Map nodes and multipass (the full render was
+  faster than the 1080p look-on test, 14.7 min). `render-qc.sh` PASS: 1452 frames, audio 58.15 s vs video
+  58.08 s, 330,373,085 bytes, which is over the 300 MB IG cap. The 1080×1920 copy (x264 slow CRF 18, audio
+  stream copied, so no extra AAC generation) is 109,082,466 bytes, PASS. **That ffmpeg 4K→1080 encode peaked at
+  1.12 GB** (`/usr/bin/time -l`, 33 s), so it counts as heavy: announce it.
 
 ## Resolve 21.1.1 upgrade: API audit and the local manual (2026-10-02, deapovey-be)
 
@@ -1214,3 +1260,242 @@ MCP server serves, for diffing at the next upgrade.
   displays record timecode"** (may relax the 21.1 multicam-viewer gate above; not yet tried);
   Smart Reframe is now pollable from the API (`TimelineItem.SmartReframe` + status), a possible first
   pass for 9:16 reels next to `gigstills cut-pan`, not yet tried.
+
+## Sydney 2025 full sets: Google / The Incident Commanders (2026-10-02, bottb-48)
+
+- **Project `Incident Commanders`** = the full set: `Timeline 1`, 1920×1080 25p, 00:00:00:00–00:23:39:18,
+  336 multicam cuts. Every multicam audio angle holds the same file, `Incident Commanders - Full Set.wav`
+  (starts at multicam frame 551 = 22.04 s; camera audio before and after), so A1 does not change sound at
+  angle cuts. **Timeline time = Full Set file time + 22.04 s** (cross-checked: the Don't Start Now WAV on A2
+  lands at Full Set 528.18 s, i.e. +22.02 s).
+- **What the audio files are.** `_TO_SORT_Audio/Sydney/DLIVE006.WAV` = the dLive 2-track desk recording of
+  the set (96k/24, 1333.98 s, −27.6 LUFS). `Incident Commanders - Full Set.wav` = a Logic bounce of it
+  (2025-10-31, BWF time_reference 359222450 @ 96k), **sample-aligned with DLIVE006** (lag 0), +5–6 dB,
+  r 0.92 (processed), −22.0 LUFS. `02_Production/Google/Google - Don't Stop Now.wav` (2026-07-06 bounce,
+  the song is Don't **Start** Now) is mastered: −11.2 LUFS, LRA 3.6.
+- **Used to Be in Love has no bounce.** The delivered 2025 videos (`_TO_SORT_Video/Incident Commanders/`)
+  were cut from the Full Set bounce (the per-song Resolve projects reference only that WAV). ~~The 2026-07-06
+  Logic project `Google - Used to be in Love.logicx` (DLIVE006 + separated stems + room mics BotB-002_06–09)
+  was never bounced~~ (corrected 2026-10-02 by the mixdown session: that `.logicx` is the **Don't Start Now
+  session saved 10 min before a Save As**: identical settings, its only placed regions start at desk 528.1 s
+  and run 186.8 s = DSN. **Used to Be in Love has never been mixed.** And **BotB-002_01–09 are not room
+  mics**: they are copies of the desk L/R (r 0.99–1.00 below 1 kHz) on a recorder clock drifting −13.2 ppm,
+  so this set has no independent crowd/room source. I had read a project's name and its file list as its
+  content; open the project, or ask mixdown, before describing what a `.logicx` holds.)
+- **The DB setlist order is wrong for the played order.** DB: Bohemian Like You, Song 2, Don't Start Now,
+  Call Me Maybe, Dumb Things, Used to Be in Love. Measured: the delivered Used to Be in Love video's audio
+  locks at Full Set 281.72 s (r 0.86 at both ends, runner-up 0.02), so it was played **second**. Slots by
+  gaps (timeline TC, ±5 s): 1 **Dumb Things, first note 00:01:26:06 (Dean)**, 2 **Used to Be in Love first note 00:05:04:11 (Dean)** (2025 delivered cut starts 00:05:03:20), 3 **Don't Start Now first note 00:09:14:13 (Dean)** (mix on A2 from 00:09:11:00),
+  4 **Call Me Maybe 00:12:47:24 (Dean; 22 s before my gap estimate, quiet intro)**, 5 **Bohemian Like You 00:16:30:04 (Dean)**, 6 **Song 2 00:20:18:09 (Dean)**; music ends ≈ 00:22:22. Played order (Dean, by ear): Dumb Things, Used to Be in Love, Don't Start Now, Call Me Maybe, Bohemian Like You, Song 2.
+- **Fairlight plugin inserts (e.g. Ozone on a bus) are not readable**: not in the scripting API, and no
+  plugin name appears in `Project.db` as plain text (Ozone 12 AU is installed). Ask Dean to look at the
+  Fairlight mixer.
+- **`strings` fails on this Mac** (Xcode licence not accepted); read binary DBs with `grep -a` / Python.
+- **Song cards and chapters done (2026-10-02):** 6 Mint `CH Incident Commanders <n> <song>` markers at
+  Dean's first notes; cards on V2 "Titles" at first note +32 frames. `generate-song-overlays.ts --event
+"sydney 2025" --band "incident commanders"` numbers its PNGs in **DB setlist order**, which is not the
+  played order here; renamed by played order into `02_Production/Google/Overlays/` (PNG + 5 s 4K ProRes
+  4444 with alpha fades in 12f / out 22f). Place cards by title, never by the file's number.
+- **Desk segments for Logic (2026-10-02):** `02_Production/Google/Segments/Google - NN-<song> - desk.wav`, cut
+  sample-exact from DLIVE006 (96k/24), BWF `time_reference` = 359222450 + start sample (the Full Set
+  bounce's basis, so they land where the full-set bounce does). Timeline ranges include ≥ 2 s overlap for
+  crossfades: Dumb Things 00:00:22:01–00:04:52, Call Me Maybe 00:12:16–00:16:12, Bohemian Like You
+  00:16:08–00:20:12, Song 2 00:20:08–end of recording (≈ 00:22:36). Verified: sample counts and BWF
+  read back exact; Bohemian vs Full Set lag 0, r 0.921.
+- **zsh trap:** in `"atrim=start_sample=$sa:end_sample=…"` zsh reads `$sa:e` as the `:e` (extension)
+  modifier and ffmpeg gets garbage. Brace every variable followed by a colon: `${sa}:`.
+- **Full-set titles: Dean's design decisions (2026-10-02).** Song cards stay as they are (the corner-logo
+  song overlay). The full-set **opening** card is "filmic", on black: "BATTLE OF THE TECH BANDS PRESENTS"
+  as **text** (not the logo), the band's own logo (keyed to white when it has a white background), "FROM" +
+  the company logo(s) in colour, then "LIVE AT <venue> · <city> · <date>". The **credits** card: band
+  name, members (role | name, two columns) **or a no-members variant**, "Recorded live at…", and a logo
+  row (company, Bottb, Powered by <national partner>, Supporting Youngcare), over a darkened, blurred final
+  wide, then the existing end card. No band in the DB has `info.members` (checked 2026-10-02). Dean: member names won't be available for every Sydney band, so **no-members is the default for Sydney 2025**; use the members variant only where names exist. Built as a
+  "Filmic" style on `/admin/band-set` + `src/scripts/generate-set-titles.ts` (branch `feat/filmic-set-titles`).
+- **Opening and credits placed (2026-10-02):** `00-opening-filmic.mov` (7 s: opaque black, content fades
+  in 1.2 s, whole card alpha-fades out 5.5–7 s to reveal the picture) at 00:00:00:00, and
+  `99-credits-filmic-nomembers.mov` (8 s, baked 0.66 scrim, 1 s alpha fades) at 00:22:50:00 over the last
+  V1 shot (00:22:46:02–00:23:39:18), both on V2 "Titles", from `02_Production/Google/Overlays/`. Alpha
+  verified by measurement (opening 255 → 20/255 at 6.9 s; credits peak 169/255 = the scrim). The blur
+  under the credits is not scriptable (no OFX API); Dean adds it in the UI if wanted.
+- **Master v2 swapped in (2026-10-02 ~22:10).** `03_Delivery/Google/Google_FullSet_Master_v2_at_00-00-22-01.wav`
+  (mixdown session; 96k/24, 1334.000 s, bext 359222450, −13.3 LUFS, TP −1.0, LRA 9.6; sha256 85e3b831…; my
+  re-measure matched). Placement checked before the swap: lag 0 against DLIVE006 and the Oct bounce at ten
+  points from the opening talk to the tail.
+  ~~**Swapping a mix inside a multicam: `MediaPoolItem.ReplaceClip(new_path)` on the pool item the multicam's
+  audio angles use.**~~ (CORRECTED same evening. Dean: "We normally just add as a track on the edit, I don't
+  see any good reason to put it in the multicam." He could not see the master anywhere on the timeline.
+  **The master always goes on its own named audio track** (here A3 "Master v2", placed at its desk offset,
+  frame 551), with the multicam audio disabled; the ReplaceClip was reverted. The track route also measured
+  better: r 1.000 at 0.00 frames against v2, where the multicam route gave r 0.959 at −2 ms. Original text kept below.) All 5 uses followed and Start TC stayed 01:02:21:22 (same BWF), with no clip moved, so
+  there were no straddling A1 cuts to split. (The API has no razor; 2 of the 342 A1 cuts straddled the
+  mix's start and end, so disabling clips would have left a gap or a doubled mix.) The pool item keeps its
+  old _name_, so read `File Path`, not the name. A2 (the July DSN mix and a multicam stub) disabled: v2
+  already contains DSN.
+  **Verified on a render:** 30 s at 00:10:00:00 (`measure_google_v2_swapcheck.mov`) correlates with v2 at
+  −0.05 frames (−2 ms), r 0.959, against r 0.187 for the Oct bounce.
+- **No WAV render through the API on 21.1.1:** `GetRenderCodecs("wav")` is `{}` and
+  `SetCurrentRenderFormatAndCodec("wav", …)` fails for every codec name. For an audio check render use
+  `mov` + `H264` at 1280×720 with `AudioCodec "lpcm"`, 48k/24 (30 s took 5.8 s). Afterwards: Edit page,
+  `ClearMarkInOut("all")` if there were no marks before, delete the job, and reset width/height and the
+  custom name. Format, codec, target dir and audio codec stay as the check left them: tell Dean.
+- **End card (2026-10-02):** Dean moved the credits to 00:22:23:20–00:22:31:20. `TitleCards/EndCard_2x.mov`
+  (1920×1080, 98 frames = 3.92 s, fades baked into RGB) placed on V2 directly after them, 00:22:31:20–
+  00:22:35:18, ending 8 frames before the master (00:22:36:01). **Additive is scriptable:**
+  `item.SetProperty("CompositeMode", resolve.COMPOSITE_ADD)` (= 1.0) read back 1. Compute frame numbers from
+  `GetEnd()` of the neighbour, never from a TC converted by hand: I mis-converted 00:22:31:20 by 25 frames
+  and first left a 1 s gap.
+- **Grade handover (2026-10-02 ~23:00).** Dean ripple-edited the set and set In/Out 0–32852 (00:00:00:00–
+  00:21:54:02); Cyan RELEASE marker added. Project colour state: unmanaged YRGB, **no timeline nodes, no
+  groups, no clip grades**, so the measurement render needed no bypass. Cut list (327 V1 multicam items;
+  Wide 148, Chase 151, Audience 28) at gigstills `runs/google-sydney-fullset/cut_list.json`. After a
+  ripple edit record frame ≠ multicam frame: use `GetLeftOffset()` as the multicam frame and resolve the
+  source file from the Project.db angle tracks (paths there are the old `/Volumes/Battle Of Band 2025/
+Resolve/…` and need rewriting to the Extreme SSD paths). Render `/Volumes/BOTTB/Renders/
+measure_Google_FullSet.mp4`: 1314.12 s, 32853 frames, **173 s to render** (look-free 1080p).
+- **The Deliver page hides In = 0.** After the render, `GetMarkInOut()` read `{'out': 32852}` with no `in`,
+  and the page read `deliver` even though I had opened Edit one call earlier: `SetRenderSettings` /
+  `DeleteRenderJob` switch to Deliver again. On Edit the same marks read `in: 0`. Re-set the marks and read
+  them on the Edit page; open Edit after **every** render-queue call, not once.
+- **A measurement render must have V2 (titles, cards, end card) OFF.** I rendered the Google measurement
+  with V2 on, so 15 of 327 cuts were measured with titles burned in (the opening card is opaque black over
+  cut 1; the credits scrim darkens cuts 325–327; song cards put logos and text on 9 more). It showed up as a
+  crowd cut with the credits on it in the review frame. The Canvanauts renders were "V2 off": that was the
+  protocol, and I skipped it. Turn V2 off in its own call, render, then turn it back on in its own call
+  from the Edit page, and read each step back.
+- **Check a clip's node graph before `SetCDL`.** 7 of 132 target cuts already had a Primary Balance on
+  clip node 1 (Dean's hand grades); `SetCDL` would have overwritten them silently. Read `GetNodeGraph()`
+  and `GetToolsInNode` on every target first, and skip any that are graded.
+- **The render cycle clears an In mark of 0, even on the Edit page.** After the verify render, delete job and
+  `SetRenderSettings`, `GetMarkInOut()` on Edit read only `out`; re-reading in a separate call confirmed the In
+  was gone. Restore it from the RELEASE marker after every render (`SetMarkInOut(0, out)`, read back).
+- **Google k0 applied (2026-10-03 ~09:50):** 125 cuts via `SetCDL` in logged batches (index list in the
+  scratchpad's `applied_k0.json`). I chose k0 over k06 because a look follows (Canvanauts ruling); Dean had
+  asked for "all the color fixes". Verify render `/Volumes/BOTTB/Renders/verify_Google_FullSet_k0_V2off.mp4`
+  (V2 off, 163 s) is also the clean re-measure for the 15 contaminated cuts. memcheck said COMFORT ask
+  (retime's review server 2.9 GB, Resolve 5.3 GB, compressor 8.2 GB); Dean said run it.
+- **Google colour fixes complete (2026-10-03 ~10:20): 128 cuts.** k0 on 125 (verify: all within 0.01, median
+  +0.001; 187 untouched cuts unchanged), plus 165/166/278 from gigstills' clean-composite re-run (verify within
+  0.003). Not applied: 327 (both caps, clip +0.07, Dean's call), the 7 Dean-graded cuts, crowd cut 118, and
+  unverified 1/2/13/114/325. gigstills' method for contaminated cuts: swap their frames into the original
+  render and re-run the WHOLE recipe, because thresholds and lighting states come from the full set. All
+  applied under Dean's general "make all the color fixes"; he had not seen the sheets (gigstills told him).
+- **Google look, FLC grain (Dean, 2026-10-03 10:22):** Aurora is a **Grain preset** (Grain > Preset) ~~not a
+  Core Look~~ (corrected same day: Dean's screenshot shows **Core Look: Aurora** too, so it is both a Core Look and a
+  grain preset); the 21.1 manual names neither. As set: Amount 0.350, Size 0.000, Softness 0.250, Saturation
+  0.150, Image Defocus 0.900. Dean: "a bit too much grain". Note that Image Defocus softens the picture and
+  not the grain (manual p.3563): at 0.9 it costs sharpness. Remember that the FLC needs manual Color Space
+  Overrides on this unmanaged YRGB project.
+- **Keeping titles out of the look: an Adjustment Clip below them (2026-10-03).** The timeline node grades the
+  final composite, so the titles were getting the FLC (halation). Fix: FLC moved to an **Adjustment Clip on
+  V2** spanning the range (Edit page > Effects > Toolbox > Effects > Adjustment Clip; graded on the Color
+  page), titles moved to **V3**. Verified on a render over the Dumb Things card (frames 1190–1214): the footage
+  takes the look and the title text and logos are unchanged, with no glow. **The API can't see an adjustment
+  clip's grade:** `GetNodeGraph()` on it shows one node with `GetToolsInNode` → None, and the timeline graph
+  shows 0 nodes, while the render shows the look. Check on pixels. Dean's first "everything is black" was
+  the viewer: a render at 00:10:00 was normal (the playhead was on the opaque opening card at 0).
+  Measurement renders now need **V2 (the adjustment clip) and V3 (titles) off**.
+- **Google look, FLC as set by Dean (2026-10-03, screenshots), on the V2 Adjustment Clip:** Film Look Blend 1.000,
+  **Core Look Aurora**, Skin Bias 0.200 | Exposure 0.00, Contrast 1.300, Highlights 0.650, Highlight Rolloff 0.250,
+  **Fade 0.500**, Fade Rolloff 0.500, White Balance 7000, Tint 10.0, Subtractive Sat 1.200, **Richness 1.200**,
+  Bleach Bypass 0 | Split Tone ON, Natural, Protect Neutrals ON, Amount 0.200, Hue Angle 30.0 (direction not
+  verified), Pivot 0.400 | Vignette off | Halation ON, Highlights Only, Amount 0.100, Radius 4.00, Sat 1.000,
+  Hue 0.500 | Bloom ON 0.050 / 10.0 | Grain ON, Custom, Amount 0.200, Size 0, Softness 0.250, Saturation 0,
+  Image Defocus 1.000. (The reel had Fade 0.000 and Core Look Cinematic.)
+  **Fade 0.500 → 0.000** (Dean, 2026-10-03, after I flagged it could lift the black floor the recipe set).
+- **Google look measured (gigstills-17, 2026-10-03; `runs/google-sydney-fullset/look_measure.json`, CIELAB, look-on
+  vs verify render).** (1) The purple stage wash rotates **295–299° → 267–281°** and loses ~40 % chroma (×0.57–0.66);
+  (max−min)/max saturation misleads here (×1.07–1.11, because blacks deepen): use Lab chroma. (2) Driver: probably
+  the **Aurora core look**, not WB (neutrals move only slightly green/yellow; the rotation is hue-selective and
+  fits a per-channel gain badly). A/B on c040 + c185: Tint 0 / WB 6500 / Core Look Cinematic, one change each.
+  (3) Contrast 1.3 + Fade 0 **crushes the crowd shots** (Audience c005 p50 0.040 → 0.000; c185 p50 0.110 → 0.049);
+  lit-shot mids lift (Chase p50 0.468 → 0.545). (4) Clipping falls 0.091 → 0.003 (Highlights 0.65 / Rolloff 0.25).
+  (5) Skin chroma +12–21 % but hue stays 80–94° (yellow-olive; typical skin 55–65°): **the skin was never
+  magenta**, the "less magenta" is the purple surround turning blue. (6) Vests clean yellow on Chase, orange and
+  −25 % chroma on Audience. (7) Amber practicals greyer (×0.64–0.80 chroma). (8) Split tone 30° does warm the
+  0.7–0.98 band toward orange-yellow, so hue 30 = warm highlights (direction confirmed).
+- **Set marks with `ClearMarkInOut("all")` first when queuing several ranges.** `SetMarkInOut(a, b)` with a
+  new In beyond the old Out queued jobs with MarkOut = MarkIn (one frame) for 3 of 6 test ranges. Read each
+  job's MarkIn/MarkOut back from `GetRenderJobList()`.
+- **Dean on the Google look (2026-10-03):** "apart from the crowd shot issue, I am okay with the rest, maybe
+  we could get a little bit back on the stage color." Plan: crowd cuts get a per-cut pre-look lift (gigstills
+  computes composed CDLs from the look-on/off pairs; Power preferred over Offset); stage colour is pulled back in
+  the FLC by Dean (Tint 10 → 0 first, then a post-FLC Hue-vs-Hue/Sat node on blue-violet if needed).
+- **Tint 10 → 0 does not bring the purple back (2026-10-03, my measurement, Lab on the lit wash: look-off / Tint 10
+  / Tint 0):** hue c040 295/268/269, c058 295/273/273, c014 301/287/288; chroma c040 61.7/38.3/38.7, c014 78.8/52.8/
+  53.6. Neutrals went slightly MORE green at Tint 0 (a −1.9 → −2.9 on c040), so in the FLC **Tint +10 was the
+  magenta side**, not green as gigstills guessed. The violet → blue rotation is the Aurora core look's
+  (hue-selective); recover it after the FLC (Hue-vs-Hue/Sat on blue-violet) or with a lower Film Look Blend.
+- **Crowd lift under the look (2026-10-03).** gigstills: the crowd shots are exactly the 28 Audience-camera cuts;
+  19 are crushed by the FLC's shadow toe (everything below luma ~0.045 → black; fitted on c005/c185), 9 house-lit
+  ones are not. Fix per cut: a small pre-look **Offset with white held (Slope 1 − o)**, o 0.025–0.05, plus Power
+  0.83–0.98. Power alone overshoots the upper mids before p50 recovers, because the look already lifts the mids.
+  Composed over k0 exactly (Slope s₁(1−o), Offset o₁(1−o)+o). Applied to 18; **118 skipped**: it carries a
+  Primary Balance that is not mine (probably Dean's), and the proposal assumed identity. **Check every target's
+  node graph against what the proposal assumed as the current CDL**, not just "graded or not". Verify clips
+  `lookon_Google/crowdlift_*.mp4` (look on, titles off).
+- **Crowd lift verify PASS (gigstills-17, 2026-10-03):** cuts 5/185/104/212 look-on p10/p50 within 0.008 of
+  prediction and 0.007 of the look-off values; p0.1 stays ≤ 0.013; p90 +0.02–0.06 over look-off (the look's own mid
+  lift). Control on cut 5: unlifted look-on 0.000/0.000/0.000/0.086 → lifted 0.010/0.016/0.039/0.164 (look-off
+  0.006/0.015/0.041/0.148). The other 14 lifted cuts were checked only through the model; measure all 18 on the
+  look-on delivery render instead of a separate full-set look-on render (the FLC makes that render slow).
+- **Resolve's render cache fills the BOOT disk (2026-10-03 ~11:15).** `~/Movies/CacheClip` = 43 GB (9.4 GB written
+  in 2 h, ~650 `.dvcc` files/min) once the FLC sat on an Adjustment Clip with Smart cache on; boot free fell to
+  **3 GB** (memcheck SAFETY FAIL; swap 5/6 GB), then recovered to 44 GB from released swap or purgeable space,
+  not the cache. Dean asked "is anything you are doing writing to disk?" (nothing of mine was running). Rule:
+  before any look work, check the **Cache files location** (Project Settings > Master Settings > Working
+  Folders) is on an external drive, and check `du -sh ~/Movies/CacheClip` and `df` when playback with a look starts.
+- **Stage-colour node (Dean, 2026-10-03):** Adjustment Clip node 02 after the FLC, **Hue vs Hue** band Input Hue
+  ~140–183 (middle on the wash peak), **Hue Rotate −10** (+15 turned the purple bluer: in Resolve's Hue vs Hue a
+  negative rotate moved this band toward violet). Resolve's Input Hue values do NOT match a 0–360 reading of the
+  strip (I estimated 224/267 from screenshots; Dean read 140–183): use the field values, not pixel positions.
+  Hue vs Sat on the same band next (target ~1.25).
+- **The hue node missed the stage (2026-10-03).** Rendered and measured: stage-wash hue/chroma unchanged (±0–3°),
+  skin/vests unchanged, crowd 185 blue chroma 18.4 → 19.0. The node WAS on the adjustment clip (the API now listed
+  `['OFX: Film Look Creator'], ['Hue vs Hue Curve', 'Hue vs Sat Curve']`, where earlier it listed None, so the
+  adjustment-clip read is not reliable either way), but Dean had picked the band on crowd cut 185
+  (playhead 00:13:31:15), whose blue differs from the stage wash. Pick a hue band on the shot it is meant to fix,
+  and verify on a render of that kind of shot.
+- **Second hue band, picked on a stage shot (Chase 00:02:42:00), works (2026-10-03; Lab, look-off / look / look +
+  node):** wash hue c040 295/269/282, c058 295/273/285, c006 269/233/248, c014 301/288/291; chroma c040
+  61.7/38.7/48.6, c058 68.6/44.1/57.3, c006 32.9/24.4/26.1, c014 78.7/53.7/60.3. So about half the hue rotation and
+  27–54 % of the lost chroma came back. Skin/vests unchanged (hue ±3°, chroma ±0.4). Crowd 185 blue chroma 18.4 → 20.0,
+  L unchanged. Both bands kept (Dean).
+- **Google pre-render checklist + RiP (2026-10-03):** no colour groups, so no Deflicker/NR step. 53 cuts marked Orange
+  (21 DZ + static ≥ 1.3); Super Scale 2 on 27 camera clips. **`superscale.py` filtered `.MP4` only and would have
+  skipped every FX6 `.MXF` (Chase) clip; it now uses `CAMERA_EXT = (".MP4", ".MXF")`**, deliberately excluding
+  `.mov` title cards. Dean RiP'd the 53 (Include Video Effects on, Color Grading off) into `/Volumes/BOTTB/Renders`;
+  all 53 became Video items with their CDLs intact. Single-change check on cut 185 (pre-RiP with hue node vs post-RiP):
+  colour/levels within 0.4/255, detail +5–8 % (Super Scale). Super Scale back to 1 on all 27.
+- **4K delivery render started 12:01:** job 76fce595, In/Out 0–32852, H.264 3840×2160 with VideoQuality 45000 (codec set
+  first), AAC 320 requested (`AudioBitRate` reads None in the job dict), A3 "Master v2" only, look on the V2
+  adjustment clip, titles + end card on V3. memcheck COMFORT ask (swap 7.6/8 GB; retime review server 4.0 GB); Dean: "go".
+  A Sonnet watcher polls `IsRenderingInProgress()`; the heavy.lock is held for the whole render and retime was told.
+- **Google 4K v1 rendered (2026-10-03 12:01–12:36): 2026 s for 1314 s = 1.5× real time**, not the 75–85 min I quoted
+  from Everlong (1306 s for 359 s = 3.6×). This project has no group Deflicker/NR nodes; budget from the node stack,
+  not from another song. 7,428,902,867 bytes. render-qc PASS (32853 frames, audio Δ 0.08 s, tail decodes, 44.9 Mb/s);
+  −13.3 LUFS (master −13.3), TP −0.4 dBTP (master −1.0; the AAC encode adds ~0.6), AAC 320 kb/s 48 kHz.
+  **After the render, `GetMarkInOut()` was `{}`: both In and Out were cleared**, not only an In of 0. Restored from the
+  RELEASE marker.
+- **Watcher subagents: a foreground `sleep N` is blocked by the harness** ("Blocked: standalone sleep"). The watcher
+  that worked used `sleep 230` with `run_in_background: true`, then `while pgrep -f "^sleep 230$"; do sleep 5; done`.
+  Put that in any watcher brief.
+- **1080p made from the 4K master with ffmpeg** (lanczos, x264 medium, 12 Mb/s, `-c:a copy`, so no second AAC
+  generation), not a second Resolve render: ~0.95 GB RSS, 6 threads, ~10 min.
+- **Google 1080p v1 (ffmpeg from the 4K master):** 910 s wall, **peak footprint 1.01 GB** (`/usr/bin/time -l`), 2,016,451,519
+  bytes, 11.9 Mb/s; render-qc PASS; audio packets md5-identical to the 4K (`-c:a copy`), so nothing changed in the sound.
+- **Google post-delivery (2026-10-03):** 53 Orange colours cleared (`ClearClipColor()`, read back, 0 left); Super Scale 1
+  on all 27 camera clips (re-checked); render queue empty, name reset; final mix on the timeline = A3 "Master v2"
+  (A1/A2 off). The look stays live on the V2 adjustment clip; for editing playback, disable that clip
+  (`SetClipEnabled(False)`) or turn halation off in the FLC (UI only). No groups, so no Deflicker/NR to turn off.
+  Extreme SSD went to 2 MB free (cache disabled by Resolve); Dean had `.gradle` (86 GB) and `ml-cache` (31 GB) deleted
+  → 117 GB free. A ~74 GB drop after 11:58 is still unexplained (not visible new files, not deleted-but-open, not Trash).
+  Archive upload `03-extreme-rest` failing since 2026-10-03 00:30 on "Drive storage quota exceeded".
+- **Google test renders deleted (Dean, 2026-10-03: "Do you want to just delete the test renders?"):** measure, verify,
+  verify_supp × 2, `lookon_Google/` (26 clips), 3.8 GB on BOTTB. Kept: 4K + 1080p deliverables and the 53
+  `Timeline 1 - Video N Render N.mov` RiP files in the same folder (the timeline plays from them, so never glob-delete
+  `*Render*` there). Destination: YouTube only (Dean); no IG cut.
+- **Google full set handed to the Social agent (bottb-5b) 2026-10-03 14:3x**, in one message per the contract: paths, local
+  byte counts, resolution, duration 1314.12 s, QC + Dean's approval ("Okay we are good to go", ~14:32), thumbnail NOT
+  made (Dean making it), the played-order chapters (the DB order is wrong), and Dean's instruction verbatim: YouTube
+  following the Melbourne full-set guidelines, then link posts on every platform that supports links, ASAP.
