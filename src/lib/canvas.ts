@@ -96,7 +96,7 @@ const RASTER_TARGET = 1600
  * original image untouched when it can't be read (no 2D context, zero size,
  * or a cross-origin taint) or when there is nothing to trim.
  */
-export function trimTransparent(img: HTMLImageElement): LogoSource {
+export function trimTransparent(img: LogoSource): LogoSource {
   const { w: natW, h: natH } = naturalSize(img)
   // Rasterise small sources (above all SVGs, whose natural size can be tiny —
   // Rex's is 76x34) big enough that the overlay only ever scales the result
@@ -143,6 +143,110 @@ export function trimTransparent(img: HTMLImageElement): LogoSource {
   }
 }
 
+/** Alpha at or above this counts as solid when looking for transparency. */
+const SOLID_ALPHA = 250
+/** Below this share of see-through pixels, an image counts as fully opaque. */
+const MIN_TRANSPARENT_SHARE = 0.005
+/** Luminance at or above which a pixel keys out completely. */
+const KEY_WHITE_POINT = 235
+/** How steeply alpha rises as a pixel darkens below the white point. */
+const KEY_GAIN = 1.25
+/** Mean border luminance an opaque logo needs before it is treated as "on white". */
+const LIGHT_BORDER = 200
+
+function luminance(r: number, g: number, b: number): number {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+/** True when enough of an RGBA buffer is see-through to call it a cut-out logo. */
+export function hasMeaningfulAlpha(data: Uint8ClampedArray): boolean {
+  const pixels = data.length / 4
+  if (pixels === 0) return false
+  let clear = 0
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] < SOLID_ALPHA) clear++
+  }
+  return clear / pixels >= MIN_TRANSPARENT_SHARE
+}
+
+/** True when the outermost ring of pixels is, on average, light (a white backdrop). */
+export function hasLightBorder(
+  data: Uint8ClampedArray,
+  w: number,
+  h: number
+): boolean {
+  if (w === 0 || h === 0) return false
+  let sum = 0
+  let count = 0
+  const add = (x: number, y: number) => {
+    const i = (y * w + x) * 4
+    sum += luminance(data[i], data[i + 1], data[i + 2])
+    count++
+  }
+  for (let x = 0; x < w; x++) {
+    add(x, 0)
+    add(x, h - 1)
+  }
+  for (let y = 1; y < h - 1; y++) {
+    add(0, y)
+    add(w - 1, y)
+  }
+  return sum / count >= LIGHT_BORDER
+}
+
+/**
+ * Key an opaque, dark-on-white RGBA buffer (in place) to white-on-transparent:
+ * every pixel becomes white, and its alpha rises as it darkens below the white
+ * point — `alpha = clamp((235 − luminance) × 1.25)`. Anti-aliased edges keep
+ * their soft falloff because they land part-way up that ramp.
+ */
+export function keyWhiteToAlpha(data: Uint8ClampedArray): void {
+  for (let i = 0; i < data.length; i += 4) {
+    const lum = luminance(data[i], data[i + 1], data[i + 2])
+    const alpha = Math.min(
+      255,
+      Math.max(0, Math.round((KEY_WHITE_POINT - lum) * KEY_GAIN))
+    )
+    data[i] = 255
+    data[i + 1] = 255
+    data[i + 2] = 255
+    data[i + 3] = alpha
+  }
+}
+
+/**
+ * Turn a logo that was supplied as an opaque file (a band's PNG on a white
+ * background, with no alpha channel) into a white mark on transparent, ready
+ * for a dark card, then trim the padding away ({@link trimTransparent}).
+ *
+ * Logos that already carry meaningful transparency are returned untouched, as
+ * are opaque images that are not on a light backdrop (keying a white logo on
+ * black by luminance would invert it). Like {@link trimTransparent}, returns the
+ * original when the pixels cannot be read.
+ */
+export function keyOpaqueLogo(img: LogoSource): LogoSource {
+  const { w: natW, h: natH } = naturalSize(img)
+  const scale = Math.max(1, RASTER_TARGET / Math.max(natW, natH))
+  const w = Math.round(natW * scale)
+  const h = Math.round(natH * scale)
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return img
+    ctx.drawImage(img, 0, 0, w, h)
+    const image = ctx.getImageData(0, 0, w, h)
+    if (hasMeaningfulAlpha(image.data)) return img
+    if (!hasLightBorder(image.data, w, h)) return img
+    keyWhiteToAlpha(image.data)
+    ctx.putImageData(image, 0, 0)
+    return trimTransparent(canvas)
+  } catch {
+    return img // cross-origin taint, or canvas unavailable
+  }
+}
+
 /**
  * Greedy word-wrap `text` into at most `maxLines` lines that each fit
  * `maxWidth` at the current `ctx.font`. Overflowing words stay on the last
@@ -176,10 +280,10 @@ export function wrapLines(
 }
 
 export interface LogoRowOptions {
-  /** Left edge of the row when `align` is 'left'; right edge when 'right'. */
+  /** Left edge of the row when `align` is 'left'; right edge when 'right'; middle when 'center'. */
   x: number
   centerY: number
-  align: 'left' | 'right'
+  align: 'left' | 'right' | 'center'
   /** Total width available for the whole row (logos + gaps). */
   maxW: number
   /** Tallest any single logo may be. */
@@ -188,22 +292,19 @@ export interface LogoRowOptions {
   gap: number
 }
 
-/**
- * Draw several logos side by side (e.g. every company behind a multi-company
- * band), each scaled to fit `maxH` tall, then shrunk together if the row would
- * overflow `maxW`. Logos are vertically centred on `centerY` and packed from
- * the `align` edge, so the first logo is always closest to that edge.
- * Returns the width the row actually occupies.
- */
 /** How strongly a logo's width counts against its height in a row; see below. */
 const WIDTH_PENALTY = 0.62
 
-export function drawLogoRow(
-  ctx: CanvasRenderingContext2D,
+/**
+ * Size a row of logos without drawing it: the per-logo boxes and the width the
+ * whole row will take, as {@link drawLogoRow} would lay it out. Lets callers
+ * place a row among other items before committing to it.
+ */
+export function layoutLogoRow(
   logos: LogoSource[],
-  { x, centerY, align, maxW, maxH, gap }: LogoRowOptions
-): number {
-  if (logos.length === 0) return 0
+  { maxW, maxH, gap }: Pick<LogoRowOptions, 'maxW' | 'maxH' | 'gap'>
+): { sizes: { w: number; h: number }[]; width: number; height: number } {
+  if (logos.length === 0) return { sizes: [], width: 0, height: 0 }
   // Height-fitting every logo makes a wide wordmark tower over a compact
   // mark, so penalise width: each logo's height scales with
   // (aspect ratio)^-WIDTH_PENALTY relative to the squarest logo, which keeps
@@ -225,15 +326,37 @@ export function drawLogoRow(
     const scale = (maxW - totalGap) / (rowW - totalGap)
     sizes = sizes.map((s) => ({ w: s.w * scale, h: s.h * scale }))
   }
-  const finalW = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap
+  const width = sizes.reduce((sum, s) => sum + s.w, 0) + totalGap
+  return { sizes, width, height: Math.max(...sizes.map((s) => s.h)) }
+}
+
+/**
+ * Draw several logos side by side (e.g. every company behind a multi-company
+ * band), each scaled to fit `maxH` tall, then shrunk together if the row would
+ * overflow `maxW`. Logos are vertically centred on `centerY` and packed from
+ * the `align` edge, so the first logo is always closest to that edge (or
+ * centred on `x` when `align` is 'center').
+ * Returns the width the row actually occupies.
+ */
+export function drawLogoRow(
+  ctx: CanvasRenderingContext2D,
+  logos: LogoSource[],
+  { x, centerY, align, maxW, maxH, gap }: LogoRowOptions
+): number {
+  if (logos.length === 0) return 0
+  const {
+    sizes,
+    width: finalW,
+    height: rowH,
+  } = layoutLogoRow(logos, { maxW, maxH, gap })
 
   // Bottom-align the row (the whole row stays visually centred on
   // `centerY`): wordmarks keep their baselines near the bottom of their
   // trimmed box, so this lines the text up far better than centring each
   // logo, which floats a short wordmark high against a taller neighbour.
-  const rowH = Math.max(...sizes.map((s) => s.h))
   const bottomY = centerY + rowH / 2
-  let cursor = align === 'left' ? x : x - finalW
+  let cursor =
+    align === 'left' ? x : align === 'right' ? x - finalW : x - finalW / 2
   logos.forEach((img, i) => {
     const { w, h } = sizes[i]
     ctx.drawImage(img, cursor, bottomY - h, w, h)

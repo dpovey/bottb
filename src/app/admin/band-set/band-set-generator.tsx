@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Button,
   Card,
+  Checkbox,
   FileDropzone,
   FormField,
   Input,
@@ -16,7 +17,12 @@ import type { SetlistSong } from '@/lib/db'
 import type { Band, Event } from '@/lib/db-types'
 import { createZipBlob, type ZipEntry } from '@/lib/zip'
 import { formatEventDateLabel } from '@/lib/date-utils'
-import { loadImage, trimTransparent, type LogoSource } from '@/lib/canvas'
+import {
+  keyOpaqueLogo,
+  loadImage,
+  trimTransparent,
+  type LogoSource,
+} from '@/lib/canvas'
 import {
   composeCreditsOverlay,
   composeCreditsPreview,
@@ -28,6 +34,17 @@ import {
   PV_W,
   type LogoCorner,
 } from './compose'
+import {
+  cityFromEventName,
+  composeFilmicCredits,
+  composeFilmicCreditsPreview,
+  composeFilmicTitle,
+  composeFilmicTitlePreview,
+  filmicDate,
+  type FilmicCreditsContent,
+  type FilmicTitleContent,
+  type SetCardStyle,
+} from './filmic'
 import { composeOverlay, composeYouTube } from '../thumbnails/compose'
 import { songCredit } from '../thumbnails/setlist-artist'
 import { loadJostFont } from '../thumbnails/jost-font'
@@ -36,6 +53,8 @@ import { useVideoScrubber, SCRUB_FRAME } from '../thumbnails/use-video-scrubber'
 
 const BOTTB_LOGO_SRC = '/images/logos/bottb-square-black.png'
 const YOUNGCARE_LOGO_SRC = '/images/logos/youngcare.png'
+/** White horizontal wordmark, for the Filmic credits' logo row. */
+const BOTTB_WORDMARK_SRC = '/images/logos/bottb-horizontal.png'
 
 interface BandSetGeneratorProps {
   events: Event[]
@@ -47,6 +66,11 @@ interface MemberRow {
   name: string
   role: string
 }
+
+const STYLES: { id: SetCardStyle; label: string }[] = [
+  { id: 'classic', label: 'Classic' },
+  { id: 'filmic', label: 'Filmic' },
+]
 
 const TABS = [
   { id: 'title' as const, label: 'Title page' },
@@ -97,6 +121,12 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [eventName, setEventName] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [eventVenue, setEventVenue] = useState('')
+  // Filmic cards print the city separately; there is no city field on an
+  // event, so it is derived from the event name and editable here.
+  const [eventCity, setEventCity] = useState('')
+  const [cardStyle, setCardStyle] = useState<SetCardStyle>('classic')
+  const [showMembers, setShowMembers] = useState(true)
+  const [bakeScrim, setBakeScrim] = useState(true)
   const [members, setMembers] = useState<MemberRow[]>([{ name: '', role: '' }])
   const [songsByBand, setSongsByBand] = useState<Record<string, SetlistSong[]>>(
     {}
@@ -110,6 +140,15 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
   const [companyLogos, setCompanyLogos] = useState<LogoSource[]>([])
   // The band's own logo (band.info.logo_url), distinct from the company logo.
   const [bandLogo, setBandLogo] = useState<HTMLImageElement | null>(null)
+  // The same logo keyed to white on transparent (when it came on white) and
+  // trimmed, for the Filmic title's black card.
+  const [filmicBandLogo, setFilmicBandLogo] = useState<LogoSource | null>(null)
+  // Trimmed sponsor marks for the Filmic credits' evenly spaced logo row.
+  const [bottbWordmark, setBottbWordmark] = useState<LogoSource | null>(null)
+  const [partnerTrimmed, setPartnerTrimmed] = useState<LogoSource | null>(null)
+  const [youngcareTrimmed, setYoungcareTrimmed] = useState<LogoSource | null>(
+    null
+  )
   const [partnerLogo, setPartnerLogo] = useState<HTMLImageElement | null>(null)
   const [youngcareLogo, setYoungcareLogo] = useState<HTMLImageElement | null>(
     null
@@ -131,7 +170,13 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       .then(setBottbLogo)
       .catch(() => {})
     loadImage(YOUNGCARE_LOGO_SRC)
-      .then(setYoungcareLogo)
+      .then((img) => {
+        setYoungcareLogo(img)
+        setYoungcareTrimmed(trimTransparent(img))
+      })
+      .catch(() => {})
+    loadImage(BOTTB_WORDMARK_SRC)
+      .then((img) => setBottbWordmark(trimTransparent(img)))
       .catch(() => {})
     loadJostFont()
       .then(() => setFontReady(true))
@@ -203,10 +248,14 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
     pending
       .then((img) => {
-        if (!cancelled) setPartnerLogo(img)
+        if (cancelled) return
+        setPartnerLogo(img)
+        setPartnerTrimmed(img && trimTransparent(img))
       })
       .catch(() => {
-        if (!cancelled) setPartnerLogo(null)
+        if (cancelled) return
+        setPartnerLogo(null)
+        setPartnerTrimmed(null)
       })
 
     return () => {
@@ -258,10 +307,14 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
 
     pending
       .then((img) => {
-        if (!cancelled) setBandLogo(img)
+        if (cancelled) return
+        setBandLogo(img)
+        setFilmicBandLogo(img && trimTransparent(keyOpaqueLogo(img)))
       })
       .catch(() => {
-        if (!cancelled) setBandLogo(null)
+        if (cancelled) return
+        setBandLogo(null)
+        setFilmicBandLogo(null)
       })
 
     return () => {
@@ -288,6 +341,54 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     [bottbLogo, companyLogos, bottbCorner]
   )
 
+  /** The Filmic title and credits content, from the current form state. */
+  const filmicContent = useCallback((): {
+    title: FilmicTitleContent
+    credits: FilmicCreditsContent
+  } => {
+    const place = {
+      venue: eventVenue,
+      city: eventCity,
+      date: filmicDate(eventDate),
+    }
+    return {
+      title: {
+        ...place,
+        bandName,
+        bandLogo: filmicBandLogo,
+        companyLogos,
+      },
+      credits: {
+        ...place,
+        bandName,
+        members,
+        showMembers,
+        scrim: bakeScrim,
+        companyLogos,
+        bottbLogo: bottbWordmark,
+        partnerLogo: partnerTrimmed,
+        youngcareLogo: youngcareTrimmed,
+      },
+    }
+  }, [
+    eventVenue,
+    eventCity,
+    eventDate,
+    bandName,
+    filmicBandLogo,
+    companyLogos,
+    members,
+    showMembers,
+    bakeScrim,
+    bottbWordmark,
+    partnerTrimmed,
+    youngcareTrimmed,
+  ])
+  const filmic = cardStyle === 'filmic' && mode !== 'songs'
+  // With no named members the Filmic credits fall back to the sponsors-only card.
+  const filmicNoMembers =
+    !showMembers || !members.some((m) => m.name.trim().length > 0)
+
   // Redraw the preview whenever any input changes.
   const draw = useCallback(() => {
     const canvas = previewCanvas
@@ -306,7 +407,11 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
       youngcareLogo,
     }
 
-    if (mode === 'title') {
+    if (filmic && mode === 'title') {
+      composeFilmicTitlePreview(ctx, filmicContent().title)
+    } else if (filmic && mode === 'credits') {
+      composeFilmicCreditsPreview(ctx, source, sw, sh, filmicContent().credits)
+    } else if (mode === 'title') {
       composeTitlePreview(ctx, source, sw, sh, {
         ...logos,
         bandLogo,
@@ -348,6 +453,8 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     eventDate,
     eventVenue,
     members,
+    filmic,
+    filmicContent,
   ])
 
   useEffect(() => {
@@ -369,6 +476,7 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
         stripTime(formatEventDateLabel(event.date, event.timezone, event.info))
       )
       setEventVenue(event.location)
+      setEventCity(cityFromEventName(event.name))
     }
   }
 
@@ -468,6 +576,20 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
     canvas.height = OV_H
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    if (filmic) {
+      const content = filmicContent()
+      if (mode === 'title') composeFilmicTitle(ctx, content.title)
+      else composeFilmicCredits(ctx, content.credits)
+      const variant = mode === 'credits' && filmicNoMembers ? '-nomembers' : ''
+      canvas.toBlob(
+        (blob) =>
+          triggerDownload(blob, buildName(`${mode}-filmic${variant}-4k`)),
+        'image/png'
+      )
+      return
+    }
+
     const logos = {
       bottbLogo,
       companyLogos,
@@ -622,6 +744,32 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
             aria-label="Overlay type"
           />
 
+          {mode !== 'songs' && (
+            <FormField
+              label="Style"
+              helperText={
+                cardStyle === 'filmic'
+                  ? 'Tracked type, no corner logos. The title is an opaque black card; the credits sit over a darkened, blurred final shot.'
+                  : 'Transparent overlays with corner logos and a sponsor row.'
+              }
+            >
+              <div className="flex gap-2">
+                {STYLES.map(({ id, label }) => (
+                  <Button
+                    key={id}
+                    type="button"
+                    size="sm"
+                    variant={cardStyle === id ? 'accent' : 'outline-solid'}
+                    aria-pressed={cardStyle === id}
+                    onClick={() => setCardStyle(id)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </FormField>
+          )}
+
           {mode === 'songs' ? (
             <div className="space-y-4">
               {bandSongs.length === 0 ? (
@@ -743,6 +891,18 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                   placeholder="e.g. Factory Theatre, Sydney"
                 />
               </FormField>
+              {cardStyle === 'filmic' && (
+                <FormField
+                  label="City"
+                  helperText="Filmic only. Derived from the event name; left out when the venue already names it."
+                >
+                  <Input
+                    value={eventCity}
+                    onChange={(e) => setEventCity(e.target.value)}
+                    placeholder="e.g. Sydney"
+                  />
+                </FormField>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -753,51 +913,99 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
                   placeholder="e.g. The Null Pointers"
                 />
               </FormField>
-              <FormField
-                label="Band members"
-                helperText="Pre-filled from the band's saved lineup when available. Shown alphabetically by surname, split into two columns once there are more than 6."
-              >
-                <div className="space-y-2">
-                  {members.map((member, i) => (
-                    <div key={i} className="flex gap-2">
-                      <Input
-                        value={member.name}
-                        onChange={(e) =>
-                          updateMember(i, 'name', e.target.value)
-                        }
-                        placeholder="Name"
-                        className="flex-1"
-                      />
-                      <Input
-                        value={member.role}
-                        onChange={(e) =>
-                          updateMember(i, 'role', e.target.value)
-                        }
-                        placeholder="Instrument"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline-solid"
-                        aria-label="Remove member"
-                        onClick={() => removeMember(i)}
-                      >
-                        <DeleteIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline-solid"
-                    onClick={addMember}
+              {cardStyle === 'filmic' && (
+                <>
+                  <FormField
+                    label="Venue"
+                    helperText="Printed as “Recorded live at …” with the city and date."
                   >
-                    <PlusIcon className="mr-1.5 h-4 w-4" />
-                    Add member
-                  </Button>
-                </div>
-              </FormField>
+                    <Input
+                      value={eventVenue}
+                      onChange={(e) => setEventVenue(e.target.value)}
+                      placeholder="e.g. The Factory Theatre"
+                    />
+                  </FormField>
+                  <div className="grid grid-cols-2 gap-2">
+                    <FormField label="City">
+                      <Input
+                        value={eventCity}
+                        onChange={(e) => setEventCity(e.target.value)}
+                        placeholder="e.g. Sydney"
+                      />
+                    </FormField>
+                    <FormField label="Date">
+                      <Input
+                        value={eventDate}
+                        onChange={(e) => setEventDate(e.target.value)}
+                        placeholder="e.g. 23 October 2025"
+                      />
+                    </FormField>
+                  </div>
+                  <div className="space-y-2">
+                    <Checkbox
+                      label="Show members"
+                      checked={showMembers}
+                      onChange={(e) => setShowMembers(e.target.checked)}
+                    />
+                    <Checkbox
+                      label="Bake in a dark scrim (66% black)"
+                      checked={bakeScrim}
+                      onChange={(e) => setBakeScrim(e.target.checked)}
+                    />
+                  </div>
+                </>
+              )}
+              {(cardStyle === 'classic' || showMembers) && (
+                <FormField
+                  label="Band members"
+                  helperText={
+                    cardStyle === 'filmic'
+                      ? 'Pre-filled from the band’s saved lineup when available. Shown in this order, instrument beside each name.'
+                      : "Pre-filled from the band's saved lineup when available. Shown alphabetically by surname, split into two columns once there are more than 6."
+                  }
+                >
+                  <div className="space-y-2">
+                    {members.map((member, i) => (
+                      <div key={i} className="flex gap-2">
+                        <Input
+                          value={member.name}
+                          onChange={(e) =>
+                            updateMember(i, 'name', e.target.value)
+                          }
+                          placeholder="Name"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={member.role}
+                          onChange={(e) =>
+                            updateMember(i, 'role', e.target.value)
+                          }
+                          placeholder="Instrument"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline-solid"
+                          aria-label="Remove member"
+                          onClick={() => removeMember(i)}
+                        >
+                          <DeleteIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline-solid"
+                      onClick={addMember}
+                    >
+                      <PlusIcon className="mr-1.5 h-4 w-4" />
+                      Add member
+                    </Button>
+                  </div>
+                </FormField>
+              )}
             </div>
           )}
         </Card>
@@ -808,18 +1016,25 @@ export function BandSetGenerator({ events }: BandSetGeneratorProps) {
         <Card padding="md" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold text-white">
-              {mode === 'title' ? 'Title page' : 'Credits page'} · {PV_W}×{PV_H}
+              {mode === 'title' ? 'Title page' : 'Credits page'}
+              {filmic ? ' (Filmic)' : ''} · {PV_W}×{PV_H}
             </h2>
             {mode !== 'songs' && (
               <Button
                 size="sm"
                 variant="outline-solid"
                 disabled={!fontReady}
-                title="Transparent 4K PNG of the logos + text, to composite over the start of the full-set video"
+                title={
+                  filmic && mode === 'title'
+                    ? 'Opaque black 4K PNG, to fade into the start of the full-set video'
+                    : filmic
+                      ? 'Transparent 4K PNG (scrim optional), to lay over the darkened final shot'
+                      : 'Transparent 4K PNG of the logos + text, to composite over the start of the full-set video'
+                }
                 onClick={downloadOverlay}
               >
                 <DownloadIcon className="mr-1.5 h-4 w-4" />
-                Overlay 4K
+                {filmic && mode === 'title' ? 'Card 4K' : 'Overlay 4K'}
               </Button>
             )}
           </div>
