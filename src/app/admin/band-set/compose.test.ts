@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { createCanvas } from '@napi-rs/canvas'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { keyOpaqueLogo, keyWhiteToAlpha, type LogoSource } from '@/lib/canvas'
 import {
   composeCreditsOverlay,
   composeCreditsPreview,
@@ -12,13 +14,22 @@ import {
   type CreditsMember,
   type TitleContent,
 } from './compose'
+import {
+  cityFromEventName,
+  composeFilmicCredits,
+  composeFilmicTitle,
+  filmicDate,
+  PRESENTS_LINE,
+  type FilmicCreditsContent,
+  type FilmicTitleContent,
+} from './filmic'
 
 /**
  * A minimal recording stand-in for a 2D canvas context. jsdom has no real
  * canvas, and the compose functions only need the handful of methods below,
  * so we record the drawImage / fillText / rect calls we care about.
  */
-function createMockContext() {
+function createMockContext({ letterSpacing = true } = {}) {
   const calls = {
     fillText: [] as { text: string; x: number; y: number; font: string }[],
     drawImage: [] as unknown[][],
@@ -35,6 +46,7 @@ function createMockContext() {
     shadowBlur: 0,
     shadowOffsetX: 0,
     shadowOffsetY: 0,
+    ...(letterSpacing ? { letterSpacing: '0px' } : {}),
     clearRect: (...a: number[]) => calls.clearRect.push(a),
     fillRect: (...a: number[]) => calls.fillRect.push(a),
     createLinearGradient: () => {
@@ -450,5 +462,272 @@ describe('band logo on the title page', () => {
         .map((c) => c.y)
     )
     expect(lowestCopy).toBeLessThan(sponsorLabel.y)
+  })
+})
+
+describe('filmic title', () => {
+  const filmicTitle: FilmicTitleContent = {
+    bandName: 'The Null Pointers',
+    bandLogo: fakeLogo,
+    companyLogos: [fakeLogo],
+    venue: 'The Factory Theatre',
+    city: 'Sydney',
+    date: '23 October 2025',
+  }
+
+  it('paints an opaque black card over the whole frame', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicTitle(ctx, filmicTitle)
+    expect(calls.fillRect[0]).toEqual([0, 0, OV_W, OV_H])
+  })
+
+  it('sets the "presents" line as text, above the band logo', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicTitle(ctx, filmicTitle)
+    const presents = calls.fillText.find((c) => c.text === PRESENTS_LINE)
+    expect(presents).toBeDefined()
+    // Nudged right by half the tracking so the ink, not the box, is centred.
+    expect(Math.abs(presents!.x - OV_W / 2)).toBeLessThanOrEqual(16)
+    const [, , logoY] = calls.drawImage[0] as number[]
+    expect(presents!.y).toBeLessThan(logoY)
+  })
+
+  it('draws no corner logos: only the band logo and the company logo, centred', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicTitle(ctx, filmicTitle)
+    expect(calls.drawImage).toHaveLength(2)
+    for (const [, x, y, w] of calls.drawImage as number[][]) {
+      expect(x + w / 2).toBeCloseTo(OV_W / 2, 0)
+      expect(y).toBeGreaterThan(OV_H * 0.3)
+    }
+  })
+
+  it('draws "from" and the live-at line, uppercase', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicTitle(ctx, filmicTitle)
+    const drawn = calls.fillText.map((c) => c.text)
+    expect(drawn).toContain('FROM')
+    expect(drawn).toContain(
+      'LIVE AT THE FACTORY THEATRE  ·  SYDNEY  ·  23 OCTOBER 2025'
+    )
+  })
+
+  it('falls back to the band name when there is no band logo', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicTitle(ctx, { ...filmicTitle, bandLogo: null })
+    expect(calls.fillText.map((c) => c.text)).toContain('THE NULL POINTERS')
+    expect(calls.drawImage).toHaveLength(1)
+  })
+
+  it('tracks type a glyph at a time where letterSpacing is unsupported', () => {
+    const { ctx, calls } = createMockContext({ letterSpacing: false })
+    composeFilmicTitle(ctx, filmicTitle)
+    expect(calls.fillText.map((c) => c.text).join('')).toContain(PRESENTS_LINE)
+    expect(calls.fillText.every((c) => [...c.text].length === 1)).toBe(true)
+  })
+})
+
+describe('filmic credits', () => {
+  const filmicCredits: FilmicCreditsContent = {
+    bandName: 'The Null Pointers',
+    members: [
+      { name: 'John Smith', role: 'Guitar' },
+      { name: 'Jane Doe', role: 'Vocals' },
+      { name: '', role: '' },
+    ],
+    showMembers: true,
+    scrim: true,
+    companyLogos: [fakeLogo],
+    bottbLogo: fakeLogo,
+    partnerLogo: fakeLogo,
+    youngcareLogo: fakeLogo,
+    venue: 'The Factory Theatre',
+    city: 'Sydney',
+    date: '23 October 2025',
+  }
+  const textOf = (calls: { text: string }[]) => calls.map((c) => c.text)
+
+  it('bakes in a full-frame scrim only when asked', () => {
+    const on = createMockContext()
+    composeFilmicCredits(on.ctx, filmicCredits)
+    expect(on.calls.fillRect[0]).toEqual([0, 0, OV_W, OV_H])
+    const off = createMockContext()
+    composeFilmicCredits(off.ctx, { ...filmicCredits, scrim: false })
+    expect(off.calls.fillRect).toHaveLength(0)
+  })
+
+  it('draws role | name rows in the order given, about the centre line', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicCredits(ctx, filmicCredits)
+    const drawn = textOf(calls.fillText)
+    expect(drawn.indexOf('John Smith')).toBeLessThan(drawn.indexOf('Jane Doe'))
+    const role = calls.fillText.find((c) => c.text === 'GUITAR')!
+    const name = calls.fillText.find((c) => c.text === 'John Smith')!
+    expect(role.y).toBe(name.y)
+    expect(role.x).toBeLessThan(OV_W / 2)
+    expect(name.x).toBeGreaterThan(OV_W / 2)
+  })
+
+  it('draws the band name, the recorded-live line and the captioned logo row', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicCredits(ctx, filmicCredits)
+    const drawn = textOf(calls.fillText)
+    expect(drawn).toContain('THE NULL POINTERS')
+    expect(drawn).toContain(
+      'RECORDED LIVE AT THE FACTORY THEATRE, SYDNEY  ·  23 OCTOBER 2025'
+    )
+    expect(drawn).toContain('POWERED BY')
+    expect(drawn).toContain('SUPPORTING')
+    // Company, Bottb wordmark, partner, Youngcare: one row, one centre line.
+    expect(calls.drawImage).toHaveLength(4)
+    const centres = (calls.drawImage as number[][]).map(
+      ([, , y, , h]) => y + h / 2
+    )
+    for (const c of centres) expect(c).toBeCloseTo(centres[0], 5)
+  })
+
+  it('omits any logo that is missing', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicCredits(ctx, {
+      ...filmicCredits,
+      partnerLogo: null,
+      youngcareLogo: null,
+    })
+    expect(calls.drawImage).toHaveLength(2)
+    expect(textOf(calls.fillText)).not.toContain('POWERED BY')
+  })
+
+  it('the no-members variant draws no member rows and re-centres the block', () => {
+    const withMembers = createMockContext()
+    composeFilmicCredits(withMembers.ctx, filmicCredits)
+    const { ctx, calls } = createMockContext()
+    composeFilmicCredits(ctx, { ...filmicCredits, showMembers: false })
+    const drawn = textOf(calls.fillText)
+    for (const text of ['John Smith', 'Jane Doe', 'GUITAR', 'VOCALS']) {
+      expect(drawn).not.toContain(text)
+    }
+    const nameY = (c: { text: string; y: number }[]) =>
+      c.find((t) => t.text === 'THE NULL POINTERS')!.y
+    // Pulled down from the top so the card is not empty above the copy.
+    expect(nameY(calls.fillText)).toBeGreaterThan(
+      nameY(withMembers.calls.fillText) + OV_H * 0.1
+    )
+    const ys = (calls.drawImage as number[][]).map(([, , y, , h]) => y + h)
+    expect(Math.max(...ys)).toBeLessThan(OV_H * 0.8)
+  })
+
+  it('treats a roster with no named members as the no-members variant', () => {
+    const off = createMockContext()
+    composeFilmicCredits(off.ctx, { ...filmicCredits, showMembers: false })
+    const empty = createMockContext()
+    composeFilmicCredits(empty.ctx, {
+      ...filmicCredits,
+      members: [{ name: '  ', role: 'Bass' }],
+    })
+    expect(empty.calls.fillText).toEqual(off.calls.fillText)
+  })
+
+  it('keeps a long roster clear of the bottom safe area', () => {
+    const { ctx, calls } = createMockContext()
+    composeFilmicCredits(ctx, {
+      ...filmicCredits,
+      members: Array.from({ length: 12 }, (_, i) => ({
+        name: `Member${i}`,
+        role: 'Guitar',
+      })),
+    })
+    for (const [, , y, , h] of calls.drawImage as number[][]) {
+      expect(y + h).toBeLessThanOrEqual(OV_H * 0.9)
+    }
+    const lastMember = calls.fillText.find((c) => c.text === 'Member11')!
+    const recorded = calls.fillText.find((c) => c.text.startsWith('RECORDED'))!
+    expect(lastMember.y).toBeLessThan(recorded.y)
+  })
+})
+
+describe('filmic text helpers', () => {
+  it('derives the city from the event name', () => {
+    expect(cityFromEventName('Sydney 2025')).toBe('Sydney')
+    expect(cityFromEventName('Brisbane')).toBe('Brisbane')
+  })
+
+  it('formats dates as "D Month YYYY"', () => {
+    expect(filmicDate('23rd October 2025')).toBe('23 October 2025')
+    expect(filmicDate('1st June 2026 @ 6:30PM')).toBe('1 June 2026')
+  })
+})
+
+describe('keyOpaqueLogo', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  /** Route the helper's scratch canvases through @napi-rs/canvas (jsdom has none). */
+  function useRealCanvas() {
+    vi.spyOn(document, 'createElement').mockImplementation(
+      () => createCanvas(1, 1) as unknown as HTMLElement
+    )
+  }
+
+  /** A `w`×`h` image: `bg` everywhere, with a `fg` block in the middle. */
+  function makeLogo(w: number, h: number, bg: string, fg: string) {
+    const canvas = createCanvas(w, h)
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, h)
+    ctx.fillStyle = fg
+    ctx.fillRect(w / 4, h / 4, w / 2, h / 2)
+    return canvas
+  }
+
+  function pixel(source: LogoSource, x: number, y: number): number[] {
+    const canvas = source as unknown as ReturnType<typeof createCanvas>
+    return Array.from(canvas.getContext('2d').getImageData(x, y, 1, 1).data)
+  }
+
+  it('keys an opaque white-background logo to white on transparent, trimmed', () => {
+    useRealCanvas()
+    const logo = makeLogo(40, 20, '#ffffff', '#000000')
+    const keyed = keyOpaqueLogo(logo as unknown as LogoSource)
+    expect(keyed).not.toBe(logo)
+    // Rasterised up to 1600 px across, then trimmed to the dark block (plus
+    // the soft edge the upscale smooths in).
+    expect(keyed.width).toBeGreaterThanOrEqual(800)
+    expect(keyed.width).toBeLessThan(860)
+    expect(keyed.height).toBeGreaterThanOrEqual(400)
+    expect(keyed.height).toBeLessThan(460)
+    const mid = pixel(keyed, keyed.width / 2, keyed.height / 2)
+    expect(mid).toEqual([255, 255, 255, 255])
+    // The soft edge is white too, just partly see-through.
+    const row = Array.from({ length: keyed.width }, (_, x) =>
+      pixel(keyed, x, keyed.height / 2)
+    )
+    const edge = row.filter(([, , , a]) => a > 64 && a < 255)
+    expect(edge.length).toBeGreaterThan(0)
+    for (const [r, g, b] of edge) {
+      expect(Math.min(r, g, b)).toBeGreaterThanOrEqual(250)
+    }
+  })
+
+  it('maps luminance to alpha: white clears, black is solid, grey in between', () => {
+    const data = new Uint8ClampedArray([
+      255, 255, 255, 255, 0, 0, 0, 255, 128, 128, 128, 255,
+    ])
+    keyWhiteToAlpha(data)
+    expect(Array.from(data)).toEqual([
+      255, 255, 255, 0, 255, 255, 255, 255, 255, 255, 255, 134,
+    ])
+  })
+
+  it('leaves a logo that already has transparency unchanged', () => {
+    useRealCanvas()
+    const logo = makeLogo(40, 20, 'rgba(0,0,0,0)', '#ff0000')
+    expect(keyOpaqueLogo(logo as unknown as LogoSource)).toBe(logo)
+  })
+
+  it('leaves an opaque logo on a dark background unchanged', () => {
+    useRealCanvas()
+    const logo = makeLogo(40, 20, '#000000', '#ffffff')
+    expect(keyOpaqueLogo(logo as unknown as LogoSource)).toBe(logo)
   })
 })

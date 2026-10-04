@@ -25,7 +25,7 @@ import { MIN_TYPE, safeInsets } from '../video-safe-area'
 export type LogoCorner = 'top-left' | 'top-right'
 
 /** Family is registered by {@link import('../thumbnails/jost-font').loadJostFont}. */
-const FONT_FAMILY = "'Jost', system-ui, sans-serif"
+export const FONT_FAMILY = "'Jost', system-ui, sans-serif"
 
 /** Site accent (Vibrant Gold, `--color-accent` in DESIGN.md) — used sparingly. */
 const ACCENT_COLOR = '#F5A623'
