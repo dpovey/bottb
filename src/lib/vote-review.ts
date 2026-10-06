@@ -58,6 +58,26 @@ export interface VoteMatch {
 
 export type ReviewSuggestion = 'approve' | 'reject'
 
+/**
+ * What a held vote has in common with the votes it matched, which is also
+ * what held votes are grouped by on the review screen:
+ *
+ * - `email`    the same email address
+ * - `address`  the same IP address (a household, venue Wi-Fi, a carrier gateway)
+ * - `handset`  an identical handset, each on a different IP address
+ */
+export interface ReviewGroupInfo {
+  kind: 'email' | 'address' | 'handset'
+  /** The shared email, IP address or handset fingerprint. */
+  key: string
+  /** For `address`: every crowd vote cast from that IP address, held or not. */
+  votesOnAddress?: number
+  /** For `address`: how many different kinds of device voted from it. */
+  deviceKindsOnAddress?: number
+  /** For `address`: enough kinds of device to call it a shared network. */
+  sharedNetwork?: boolean
+}
+
 export interface ReviewItem {
   vote: ReviewVote
   /** Earlier votes this one matched, most recent first. */
@@ -65,6 +85,13 @@ export interface ReviewItem {
   suggestion: ReviewSuggestion
   /** One line explaining the suggestion. */
   reason: string
+  group: ReviewGroupInfo
+}
+
+/** Held votes that share an email, an IP address or a handset. */
+export interface ReviewGroup {
+  group: ReviewGroupInfo
+  items: ReviewItem[]
 }
 
 /**
@@ -167,11 +194,30 @@ export function reviewVote(
   }
   matches.sort((a, b) => a.secondsEarlier - b.secondsEarlier)
 
+  // What this vote is grouped by on the review screen.
+  const emailMatch = matches.some((m) => m.matchedBy.includes('email'))
+  let group: ReviewGroupInfo
+  if (emailMatch && email) {
+    group = { kind: 'email', key: email }
+  } else if (vote.ip_address && matches.some((m) => m.sameIp)) {
+    const onAddress = all.filter((v) => v.ip_address === vote.ip_address)
+    group = {
+      kind: 'address',
+      key: vote.ip_address,
+      votesOnAddress: onAddress.length,
+      deviceKindsOnAddress: new Set(onAddress.map(deviceKind)).size,
+      sharedNetwork: sharedNetworks.has(vote.ip_address),
+    }
+  } else {
+    group = { kind: 'handset', key: device ?? vote.id }
+  }
+
   const item = (suggestion: ReviewSuggestion, reason: string): ReviewItem => ({
     vote,
     matches,
     suggestion,
     reason,
+    group,
   })
 
   if (matches.some((m) => m.matchedBy.includes('email'))) {
@@ -216,6 +262,25 @@ export function buildReviewQueue(votes: ReviewVote[]): ReviewItem[] {
     .filter((v) => v.status === 'pending')
     .sort((a, b) => (isEarlier(a, b) ? -1 : 1))
     .map((v) => reviewVote(v, votes, sharedNetworks))
+}
+
+/**
+ * Collect review items into groups that share an email, an IP address or a
+ * handset, so they can be read and decided together. Groups come out in the
+ * order of their first vote; items keep their order within a group.
+ */
+export function groupReviewItems(items: ReviewItem[]): ReviewGroup[] {
+  const groups = new Map<string, ReviewGroup>()
+  for (const item of items) {
+    const id = `${item.group.kind}:${item.group.key}`
+    const existing = groups.get(id)
+    if (existing) {
+      existing.items.push(item)
+    } else {
+      groups.set(id, { group: item.group, items: [item] })
+    }
+  }
+  return [...groups.values()]
 }
 
 /** "iOS 18.6 · Safari · 390x844" — enough to recognise a handset model. */

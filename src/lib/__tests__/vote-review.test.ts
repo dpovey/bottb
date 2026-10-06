@@ -6,7 +6,10 @@ import {
   countCrowdVotes,
   describeDevice,
   findSharedNetworks,
+  groupReviewItems,
   reviewVote,
+  type ReviewGroupInfo,
+  type ReviewItem,
   type ReviewVote,
 } from '../vote-review'
 
@@ -444,6 +447,209 @@ describe('vote-review', () => {
           reviewVote(held, [earlier, held], new Set([WIFI])).suggestion
         ).toBe('reject')
       })
+    })
+  })
+
+  describe('review group', () => {
+    it('groups by the normalised email when it matched an email', () => {
+      const earlier = vote(0, { email: 'Sam@Example.com ' })
+      const held = vote(10, { email: ' sam@example.COM', status: 'pending' })
+      expect(reviewVote(held, [earlier, held]).group).toEqual({
+        kind: 'email',
+        key: 'sam@example.com',
+      })
+    })
+
+    it('prefers the email group over the address group', () => {
+      const earlier = vote(0, {
+        email: 'a@b.c',
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+      })
+      const held = vote(10, {
+        email: 'a@b.c',
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+        status: 'pending',
+      })
+      expect(reviewVote(held, [earlier, held]).group.kind).toBe('email')
+    })
+
+    it('groups by IP address when it matched a vote on the same address', () => {
+      const earlier = vote(0, {
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+      })
+      const held = vote(10, {
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+        status: 'pending',
+      })
+      const group = reviewVote(held, [earlier, held]).group
+      expect(group).toEqual<ReviewGroupInfo>({
+        kind: 'address',
+        key: HOME,
+        votesOnAddress: 2,
+        deviceKindsOnAddress: 1,
+        sharedNetwork: false,
+      })
+    })
+
+    it('counts every vote on the address, whatever its status or time, and the kinds of device', () => {
+      const all = [
+        vote(0, { ip_address: HOME, fingerprintjs_visitor_id: 'p' }),
+        vote(1, {
+          ip_address: HOME,
+          user_agent: 'Android',
+          status: 'rejected',
+        }),
+        vote(2, {
+          ip_address: HOME,
+          screen_resolution: '430x932',
+          status: 'approved',
+        }),
+        vote(3, { ip_address: '192.0.2.9' }), // another address: not counted
+      ]
+      const held = vote(10, {
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+        status: 'pending',
+      })
+      const later = vote(20, { ip_address: HOME, status: 'pending' })
+      const group = reviewVote(held, [...all, held, later]).group
+      expect(group.kind).toBe('address')
+      // 3 earlier + the held vote + 1 later on HOME.
+      expect(group.votesOnAddress).toBe(5)
+      // iPhone/390x844, Android/390x844, iPhone/430x932.
+      expect(group.deviceKindsOnAddress).toBe(3)
+      expect(group.sharedNetwork).toBe(true)
+    })
+
+    it('takes the shared-network flag from the networks it is given', () => {
+      const earlier = vote(0, {
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+      })
+      const held = vote(10, {
+        ip_address: HOME,
+        fingerprintjs_visitor_id: 'p',
+        status: 'pending',
+      })
+      expect(
+        reviewVote(held, [earlier, held], new Set([HOME])).group.sharedNetwork
+      ).toBe(true)
+    })
+
+    it('groups by handset when the only matches are on other networks', () => {
+      const earlier = vote(0, { fingerprintjs_visitor_id: 'pixel-7' })
+      const held = vote(10, {
+        fingerprintjs_visitor_id: 'pixel-7',
+        status: 'pending',
+      })
+      expect(reviewVote(held, [earlier, held]).group).toEqual({
+        kind: 'handset',
+        key: 'pixel-7',
+      })
+    })
+
+    it('falls back to the vote id for a vote with no visitor id and no match', () => {
+      const held = vote(10, {
+        id: 'lonely-vote',
+        fingerprintjs_visitor_id: null,
+        status: 'pending',
+      })
+      expect(reviewVote(held, [held]).group).toEqual({
+        kind: 'handset',
+        key: 'lonely-vote',
+      })
+    })
+
+    it('uses the visitor id when nothing matched but there is one', () => {
+      const held = vote(10, {
+        fingerprintjs_visitor_id: 'p',
+        status: 'pending',
+      })
+      expect(reviewVote(held, [held]).group).toEqual({
+        kind: 'handset',
+        key: 'p',
+      })
+    })
+  })
+
+  describe('groupReviewItems', () => {
+    function item(id: string, group: ReviewGroupInfo): ReviewItem {
+      return {
+        vote: vote(0, { id }),
+        matches: [],
+        suggestion: 'approve',
+        reason: '',
+        group,
+      }
+    }
+
+    it('returns no groups for no items', () => {
+      expect(groupReviewItems([])).toEqual([])
+    })
+
+    it('keeps groups in order of first appearance and items in order within each', () => {
+      const a1 = item('a1', { kind: 'address', key: HOME })
+      const h1 = item('h1', { kind: 'handset', key: 'p' })
+      const a2 = item('a2', { kind: 'address', key: HOME })
+      const e1 = item('e1', { kind: 'email', key: 'x@y.z' })
+      const h2 = item('h2', { kind: 'handset', key: 'p' })
+      const a3 = item('a3', { kind: 'address', key: HOME })
+      const groups = groupReviewItems([a1, h1, a2, e1, h2, a3])
+      expect(
+        groups.map((g) => [g.group.kind, g.items.map((i) => i.vote.id)])
+      ).toEqual([
+        ['address', ['a1', 'a2', 'a3']],
+        ['handset', ['h1', 'h2']],
+        ['email', ['e1']],
+      ])
+    })
+
+    it('never merges different kinds that share a key string', () => {
+      const groups = groupReviewItems([
+        item('1', { kind: 'address', key: 'same' }),
+        item('2', { kind: 'handset', key: 'same' }),
+        item('3', { kind: 'email', key: 'same' }),
+      ])
+      expect(groups).toHaveLength(3)
+      expect(groups.every((g) => g.items.length === 1)).toBe(true)
+    })
+
+    it('keeps single-item groups', () => {
+      const groups = groupReviewItems([
+        item('1', { kind: 'handset', key: 'a' }),
+        item('2', { kind: 'handset', key: 'b' }),
+      ])
+      expect(groups.map((g) => g.items.length)).toEqual([1, 1])
+    })
+
+    it('groups a real queue: three repeats on one address, two lookalikes elsewhere', () => {
+      const votes = [
+        vote(0, { ip_address: HOME, fingerprintjs_visitor_id: 'p' }),
+        vote(1, { fingerprintjs_visitor_id: 'q' }),
+        vote(2, {
+          ip_address: HOME,
+          fingerprintjs_visitor_id: 'p',
+          status: 'pending',
+        }),
+        vote(3, { fingerprintjs_visitor_id: 'q', status: 'pending' }),
+        vote(4, {
+          ip_address: HOME,
+          fingerprintjs_visitor_id: 'p',
+          status: 'pending',
+        }),
+        vote(5, { fingerprintjs_visitor_id: 'q', status: 'pending' }),
+      ]
+      const groups = groupReviewItems(buildReviewQueue(votes))
+      expect(
+        groups.map((g) => [g.group.kind, g.group.key, g.items.length])
+      ).toEqual([
+        ['address', HOME, 2],
+        ['handset', 'q', 2],
+      ])
     })
   })
 

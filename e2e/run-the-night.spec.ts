@@ -540,6 +540,27 @@ test.describe('Run the night', () => {
       admin.getByRole('list', { name: 'Held votes' })
     ).not.toContainText('Null Pointer Sisters')
 
+    // Held votes are grouped by what they share. The two from phone B's
+    // address sit together and can be decided together; the others stand
+    // alone, so they only have their own buttons.
+    await expect(
+      admin.getByRole('heading', { name: '2 held votes from one IP address' })
+    ).toBeVisible()
+    await expect(
+      admin.getByRole('button', { name: /^Approve these 2 \(198\.51\.100\.2 / })
+    ).toBeVisible()
+    await expect(
+      admin.getByRole('button', { name: /^Reject these 2 \(198\.51\.100\.2 / })
+    ).toBeVisible()
+    await expect(
+      admin.getByRole('heading', {
+        name: '1 held vote with an email address already used',
+      })
+    ).toBeVisible()
+    await expect(
+      admin.getByRole('button', { name: /^Approve these 1/ })
+    ).toHaveCount(0)
+
     await admin
       .getByRole('button', {
         name: 'Follow suggestions (2 approve · 2 reject)',
@@ -738,11 +759,21 @@ test.describe('Run the night', () => {
 
     // The winner is not on screen until asked for.
     await expect(admin.getByText('The winner is hidden.')).toBeVisible()
+    await expect(admin.getByRole('list', { name: 'Read-out' })).toHaveCount(0)
     await admin.getByRole('checkbox', { name: /Show scores/ }).check()
     await expect(admin.getByText('86.00 points')).toBeVisible()
     await expect(
       admin.getByRole('table', { name: 'Final results' })
     ).toBeVisible()
+
+    // The read-out for the MC: third place up to the winner, with the other
+    // awards each band took (worked out by hand from the sheets above).
+    const readOut = admin.getByRole('list', { name: 'Read-out' })
+    await expect(readOut.getByRole('listitem')).toHaveText([
+      /Third place.*In third place, with 78 points: Soundcheck Sally\./,
+      /Second place.*In second place, with 79\.67 points: Merge Conflict\..*Merge Conflict also won the judges' vote, best Song Choice, best Performance and best Crowd Vibe\./,
+      /Winner.*And the winner of Test Night \(rehearsal\), with 86 points: The Dry Runs!.*The Dry Runs also won the popular vote and best Visuals\./,
+    ])
     await admin.getByRole('checkbox', { name: /Show scores/ }).uncheck()
 
     const state = await nightState(admin)

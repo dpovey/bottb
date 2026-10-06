@@ -11,6 +11,7 @@ import type {
   NightState,
   NightTransition,
 } from '@/lib/night-types'
+import { buildReadOut } from '@/lib/read-out'
 import { buildReviewQueue, type ReviewVote } from '@/lib/vote-review'
 import { RunTheNight } from '../run-the-night'
 
@@ -138,6 +139,7 @@ interface StateOptions {
   warnings?: string[]
   votes?: ReviewVote[]
   judges?: NightJudge[]
+  standings?: NightStanding[]
   reviewed?: ReviewVote[]
 }
 
@@ -196,7 +198,7 @@ function makeState(
     reviewQueue: buildReviewQueue(votes),
     reviewed: options.reviewed ?? [],
     judges: options.judges ?? [],
-    standings: [
+    standings: options.standings ?? [
       standing('b1', ROCKERS, 1, 87.25),
       standing('b2', POINTERS, 2, 61.5),
     ],
@@ -593,8 +595,11 @@ describe('RunTheNight', () => {
       expect(toggle).not.toBeChecked()
       await user.click(toggle)
 
-      expect(screen.getByText('Winner')).toBeInTheDocument()
-      expect(screen.getByText(/87\.25 points/)).toBeInTheDocument()
+      // The winner block above the stepper card (the read-out repeats it).
+      expect(screen.getByText('Winner', { selector: 'p' })).toBeInTheDocument()
+      expect(
+        screen.getByText('87.25 points', { selector: 'span' })
+      ).toBeInTheDocument()
       const tallies = screen.getByRole('table', { name: 'Crowd votes by band' })
       expect(
         within(tallies).getByRole('row', { name: `${ROCKERS} 23 2 1` })
@@ -874,6 +879,514 @@ describe('RunTheNight', () => {
         ).not.toBeInTheDocument()
       }
     )
+  })
+
+  describe('held vote groups', () => {
+    const ADDRESS = '5.5.5.5'
+    const ADDRESS_DETAIL =
+      '5.5.5.5 · 5 votes from this address in all, from 2 kinds of device'
+
+    /**
+     * On ADDRESS: one approved and one rejected earlier vote, then three held
+     * repeats of the same phone. Elsewhere: one held Pixel lookalike on another
+     * network (a group of one).
+     */
+    function groupedVotes(): ReviewVote[] {
+      voteSeq = 0
+      const phone = { fingerprintjs_visitor_id: 'iphone', ip_address: ADDRESS }
+      return [
+        vote({ ...phone }),
+        vote({
+          ip_address: ADDRESS,
+          user_agent: 'Android Chrome',
+          status: 'rejected',
+        }),
+        vote({ fingerprintjs_visitor_id: 'pixel', ip_address: '6.6.6.6' }),
+        vote({ ...phone, id: 'addr-1', status: 'pending', band_id: 'b1' }),
+        vote({ ...phone, id: 'addr-2', status: 'pending', band_id: 'b2' }),
+        vote({
+          fingerprintjs_visitor_id: 'pixel',
+          ip_address: '7.7.7.7',
+          id: 'lone-1',
+          status: 'pending',
+        }),
+        vote({ ...phone, id: 'addr-3', status: 'pending', band_id: 'b1' }),
+      ]
+    }
+
+    function groupItem(title: string): HTMLElement {
+      const outer = screen.getByRole('list', { name: 'Held votes' })
+      const heading = within(outer).getByRole('heading', {
+        level: 3,
+        name: title,
+      })
+      return heading.closest('li') as HTMLElement
+    }
+
+    it('shows each group with its title, detail and rows', () => {
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes: groupedVotes() })}
+        />
+      )
+      const address = groupItem('3 held votes from one IP address')
+      expect(within(address).getByText(ADDRESS_DETAIL)).toBeInTheDocument()
+      const rows = within(address).getByRole('list', {
+        name: '3 held votes from one IP address',
+      })
+      expect(
+        within(rows)
+          .getAllByRole('button', { name: /^Approve held vote/ })
+          .map((b) => b.getAttribute('aria-label'))
+      ).toEqual([
+        'Approve held vote addr-1',
+        'Approve held vote addr-2',
+        'Approve held vote addr-3',
+      ])
+
+      const lone = groupItem(
+        '1 held vote from an identical handset on a different network'
+      )
+      expect(
+        within(lone).getByText('iOS 18.6 · Safari · 390x844', { selector: 'p' })
+      ).toBeInTheDocument()
+    })
+
+    it('"Approve these 3" sends one batch with exactly that group\'s votes', async () => {
+      fetchMock.mockImplementation(async (_url, init) =>
+        init?.method === 'PATCH'
+          ? jsonResponse(200, { updated: 3 })
+          : new Promise<Response>(() => {})
+      )
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes: groupedVotes() })}
+        />
+      )
+      await user.click(
+        screen.getByRole('button', {
+          name: `Approve these 3 (${ADDRESS_DETAIL})`,
+        })
+      )
+      await waitFor(() => expect(actionCalls()).toHaveLength(1))
+      expect(actionCalls()).toEqual([
+        [
+          `${NIGHT_URL}/votes`,
+          'PATCH',
+          { status: 'approved', voteIds: ['addr-1', 'addr-2', 'addr-3'] },
+        ],
+      ])
+    })
+
+    it('"Reject these 3" sends the same ids as a rejection', async () => {
+      fetchMock.mockImplementation(async (_url, init) =>
+        init?.method === 'PATCH'
+          ? jsonResponse(200, { updated: 3 })
+          : new Promise<Response>(() => {})
+      )
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('voting', { votes: groupedVotes() })}
+        />
+      )
+      await user.click(
+        screen.getByRole('button', {
+          name: `Reject these 3 (${ADDRESS_DETAIL})`,
+        })
+      )
+      await waitFor(() => expect(actionCalls()).toHaveLength(1))
+      expect(actionCalls()[0][2]).toEqual({
+        status: 'rejected',
+        voteIds: ['addr-1', 'addr-2', 'addr-3'],
+      })
+    })
+
+    it('offers no group buttons for a group of one', () => {
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes: groupedVotes() })}
+        />
+      )
+      const lone = groupItem(
+        '1 held vote from an identical handset on a different network'
+      )
+      expect(
+        within(lone).queryByRole('button', { name: /these/ })
+      ).not.toBeInTheDocument()
+      expect(
+        within(lone).getByRole('button', { name: 'Approve held vote lone-1' })
+      ).toBeInTheDocument()
+      expect(
+        screen.getAllByRole('button', { name: /^Approve these/ })
+      ).toHaveLength(1)
+    })
+
+    it.each<EventStatus>(['upcoming', 'locked', 'finalized'])(
+      'offers no group buttons while %s',
+      (status) => {
+        render(
+          <RunTheNight
+            eventId={EVENT_ID}
+            initialState={makeState(status, { votes: groupedVotes() })}
+          />
+        )
+        expect(
+          screen.getByRole('heading', {
+            name: '3 held votes from one IP address',
+          })
+        ).toBeInTheDocument()
+        expect(
+          screen.queryByRole('button', { name: /these 3/ })
+        ).not.toBeInTheDocument()
+      }
+    )
+
+    it('disables the group buttons while a decision is being sent', async () => {
+      const pending = deferred<Response>()
+      fetchMock.mockImplementation((_url, init) =>
+        init?.method === 'PATCH'
+          ? pending.promise
+          : new Promise<Response>(() => {})
+      )
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes: groupedVotes() })}
+        />
+      )
+      const approve = screen.getByRole('button', {
+        name: `Approve these 3 (${ADDRESS_DETAIL})`,
+      })
+      const reject = screen.getByRole('button', {
+        name: `Reject these 3 (${ADDRESS_DETAIL})`,
+      })
+      await user.click(approve)
+      expect(approve).toBeDisabled()
+      expect(reject).toBeDisabled()
+      await act(async () => {
+        pending.resolve(jsonResponse(200, { updated: 3 }))
+      })
+      await waitFor(() => expect(reject).toBeEnabled())
+    })
+
+    it('titles a group whose earlier match has gone accordingly', () => {
+      voteSeq = 0
+      const votes = [
+        vote({
+          id: 'orphan-1',
+          fingerprintjs_visitor_id: 'gone-phone',
+          status: 'pending',
+        }),
+      ]
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes })}
+        />
+      )
+      expect(
+        groupItem('1 held vote whose earlier match is no longer there')
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('heading', { name: /identical handset/ })
+      ).not.toBeInTheDocument()
+    })
+
+    it('keeps the "identical handset" title when any vote in the group matched', () => {
+      voteSeq = 0
+      // The first held vote's match has gone; the second matches the first.
+      const votes = [
+        vote({
+          id: 'h-1',
+          fingerprintjs_visitor_id: 'pixel',
+          status: 'pending',
+        }),
+        vote({
+          id: 'h-2',
+          fingerprintjs_visitor_id: 'pixel',
+          status: 'pending',
+        }),
+      ]
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes })}
+        />
+      )
+      expect(
+        groupItem(
+          '2 held votes from an identical handset on different networks'
+        )
+      ).toBeInTheDocument()
+    })
+
+    it('names the shared network in the detail', () => {
+      const votes = groupedVotes()
+      // A third kind of device on the address makes it a shared network.
+      votes.push(
+        vote({ ip_address: ADDRESS, user_agent: 'Firefox', status: 'approved' })
+      )
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes })}
+        />
+      )
+      const address = groupItem('3 held votes from one IP address')
+      expect(
+        within(address).getByText(
+          '5.5.5.5 · 6 votes from this address in all, from 3 kinds of device — looks like a shared network (venue Wi-Fi or a mobile carrier)'
+        )
+      ).toBeInTheDocument()
+    })
+
+    it('shows the email address for an email group', () => {
+      voteSeq = 0
+      const votes = [
+        vote({ email: 'sam@example.com' }),
+        vote({ id: 'mail-1', email: 'SAM@example.com', status: 'pending' }),
+        vote({ id: 'mail-2', email: 'sam@example.com ', status: 'pending' }),
+      ]
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes })}
+        />
+      )
+      const group = groupItem('2 held votes with an email address already used')
+      expect(
+        within(group).getByText('sam@example.com', { selector: 'p' })
+      ).toBeInTheDocument()
+      expect(
+        within(group).getByRole('button', {
+          name: 'Approve these 2 (sam@example.com)',
+        })
+      ).toBeInTheDocument()
+    })
+
+    it('never puts a band name in a group title or detail with "Show scores" off', () => {
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { votes: groupedVotes() })}
+        />
+      )
+      const outer = screen.getByRole('list', { name: 'Held votes' })
+      expect(within(outer).queryByText(ROCKERS, { exact: false })).toBeNull()
+      expect(within(outer).queryByText(POINTERS, { exact: false })).toBeNull()
+      for (const button of within(outer).getAllByRole('button')) {
+        expect(button.getAttribute('aria-label') ?? '').not.toMatch(
+          new RegExp(`${ROCKERS}|${POINTERS}`)
+        )
+      }
+    })
+  })
+
+  describe('read-out for the MC', () => {
+    const THIRD = 'Null Pointer Sisters'
+    const FOURTH = 'Merge Conflict'
+
+    /** Four bands, all judged the same except the totals; equal crowd votes. */
+    function fourBands(): NightStanding[] {
+      return [
+        standing('b1', ROCKERS, 1, 87.25),
+        standing('b2', POINTERS, 2, 61.5),
+        standing('b3', THIRD, 3, 55),
+        standing('b4', FOURTH, 4, 40),
+      ].map((s, i) => ({
+        ...s,
+        // Distinct judge scores so no award is shared, and every award goes
+        // to the winner.
+        songChoice: 18 - i,
+        performance: 18 - i,
+        crowdVibe: 18 - i,
+        visuals: 18 - i,
+        judgeScore: 72 - 4 * i,
+      }))
+    }
+
+    async function showScores(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getByRole('checkbox', { name: /Show scores/ }))
+    }
+
+    function headings(): string[] {
+      const list = screen.getByRole('list', { name: 'Read-out' })
+      return within(list)
+        .getAllByRole('heading', { level: 3 })
+        .map((h) => h.textContent ?? '')
+    }
+
+    it('mentions the read-out on the "Show scores" toggle', () => {
+      render(
+        <RunTheNight eventId={EVENT_ID} initialState={makeState('locked')} />
+      )
+      expect(
+        screen.getByRole('checkbox', { name: /the read-out/ })
+      ).toBeInTheDocument()
+    })
+
+    it('is never shown from provisional standings, even with "Show scores" on', async () => {
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('closed', { standings: fourBands() })}
+        />
+      )
+      await showScores(user)
+      expect(
+        screen.getByRole('table', { name: 'Provisional standings' })
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('heading', { name: 'Read-out for the MC' })
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('list', { name: 'Read-out' })
+      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/And the winner of/)).not.toBeInTheDocument()
+    })
+
+    it('is not in the document for locked results while "Show scores" is off', () => {
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('locked', { standings: fourBands() })}
+        />
+      )
+      expect(
+        screen.queryByRole('heading', { name: 'Read-out for the MC' })
+      ).not.toBeInTheDocument()
+      expect(screen.queryByText(/And the winner of/)).not.toBeInTheDocument()
+    })
+
+    it.each<EventStatus>(['locked', 'finalized'])(
+      'reads third, second, then the winner once %s',
+      async (status) => {
+        const user = userEvent.setup()
+        render(
+          <RunTheNight
+            eventId={EVENT_ID}
+            initialState={makeState(status, {
+              standings: fourBands().map((s) => ({ ...s, crowdVoteCount: 0 })),
+            })}
+          />
+        )
+        await showScores(user)
+        expect(
+          screen.getByRole('heading', { name: 'Read-out for the MC' })
+        ).toBeInTheDocument()
+        expect(headings()).toEqual(['Third place', 'Second place', 'Winner'])
+        const list = screen.getByRole('list', { name: 'Read-out' })
+        const sections = within(list).getAllByRole('listitem')
+        expect(sections[2]).toHaveTextContent(
+          `And the winner of Sydney 2026, with 87.25 points: ${ROCKERS}!`
+        )
+        expect(sections[0]).toHaveTextContent(
+          `In third place, with 55 points: ${THIRD}.`
+        )
+        // The fourth-placed band is not read out.
+        expect(within(list).queryByText(FOURTH, { exact: false })).toBeNull()
+      }
+    )
+
+    it('announces an award won outside the top three first', async () => {
+      const standings = fourBands().map((s) => ({
+        ...s,
+        crowdVoteCount: s.band_id === 'b4' ? 40 : 10,
+      }))
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('locked', { standings })}
+        />
+      )
+      await showScores(user)
+      expect(headings()).toEqual([
+        'Other awards',
+        'Third place',
+        'Second place',
+        'Winner',
+      ])
+      const first = within(
+        screen.getByRole('list', { name: 'Read-out' })
+      ).getAllByRole('listitem')[0]
+      expect(first).toHaveTextContent(`The popular vote goes to ${FOURTH}.`)
+    })
+
+    it('flags a tie on the podium with a note', async () => {
+      const standings = fourBands()
+      standings[1] = {
+        ...standings[1],
+        totalScore: 87.25,
+        tiedWithPrevious: true,
+      }
+      const user = userEvent.setup()
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('locked', { standings })}
+        />
+      )
+      await showScores(user)
+      expect(screen.getByRole('note')).toHaveTextContent(
+        `${ROCKERS} and ${POINTERS} are level on 87.25 points.`
+      )
+    })
+
+    it('copies exactly the read-out text and says so', async () => {
+      const standings = fourBands()
+      const user = userEvent.setup()
+      const writeText = vi
+        .spyOn(navigator.clipboard, 'writeText')
+        .mockResolvedValue(undefined)
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('locked', { standings })}
+        />
+      )
+      await showScores(user)
+      await user.click(screen.getByRole('button', { name: 'Copy text' }))
+
+      const expected = buildReadOut(standings, '2026.2', 'Sydney 2026').text
+      expect(writeText).toHaveBeenCalledTimes(1)
+      expect(writeText).toHaveBeenCalledWith(expected)
+      expect(expected).toContain(
+        `And the winner of Sydney 2026, with 87.25 points: ${ROCKERS}!`
+      )
+      expect(
+        await screen.findByRole('button', { name: 'Copied' })
+      ).toBeInTheDocument()
+    })
+
+    it('offers a fallback when the clipboard refuses', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(
+        new Error('Not allowed')
+      )
+      render(
+        <RunTheNight
+          eventId={EVENT_ID}
+          initialState={makeState('locked', { standings: fourBands() })}
+        />
+      )
+      await showScores(user)
+      await user.click(screen.getByRole('button', { name: 'Copy text' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Could not copy. Select the text below instead.'
+      )
+      expect(
+        screen.getByRole('button', { name: 'Copy text' })
+      ).toBeInTheDocument()
+    })
   })
 
   describe('judge sheets', () => {

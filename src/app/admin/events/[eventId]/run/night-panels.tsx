@@ -1,8 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import { Badge, Button, Card } from '@/components/ui'
+import { buildReadOut } from '@/lib/read-out'
 import type { NightJudge, NightStanding, NightState } from '@/lib/night-types'
-import { describeDevice, type ReviewItem } from '@/lib/vote-review'
+import {
+  describeDevice,
+  groupReviewItems,
+  type ReviewGroup,
+  type ReviewItem,
+} from '@/lib/vote-review'
 
 export type Decision = 'approved' | 'rejected' | 'pending'
 
@@ -147,6 +154,39 @@ function describeMatches(item: ReviewItem): string {
   return parts.join(', ')
 }
 
+/** What the votes in a group have in common, in a sentence. */
+function describeGroup({ group, items }: ReviewGroup): {
+  title: string
+  detail: string
+} {
+  const held = `${items.length} held ${items.length === 1 ? 'vote' : 'votes'}`
+  if (group.kind === 'email') {
+    return {
+      title: `${held} with an email address already used`,
+      detail: group.key,
+    }
+  }
+  if (group.kind === 'address') {
+    const votes = group.votesOnAddress ?? items.length
+    const kinds = group.deviceKindsOnAddress ?? 1
+    return {
+      title: `${held} from one IP address`,
+      detail: `${group.key} · ${votes} ${votes === 1 ? 'vote' : 'votes'} from this address in all, from ${kinds} ${kinds === 1 ? 'kind' : 'kinds'} of device${group.sharedNetwork ? ' — looks like a shared network (venue Wi-Fi or a mobile carrier)' : ''}`,
+    }
+  }
+  // Held, but the vote it matched has since gone (deleted or reset).
+  if (items.every((item) => item.matches.length === 0)) {
+    return {
+      title: `${held} whose earlier match is no longer there`,
+      detail: describeDevice(items[0].vote),
+    }
+  }
+  return {
+    title: `${held} from an identical handset on ${items.length === 1 ? 'a different network' : 'different networks'}`,
+    detail: describeDevice(items[0].vote),
+  }
+}
+
 export function ReviewQueue({
   state,
   canReview,
@@ -239,69 +279,126 @@ export function ReviewQueue({
             </div>
           )}
 
-          <ul className="space-y-2" aria-label="Held votes">
-            {queue.map((item) => (
-              <li
-                key={item.vote.id}
-                className="bg-bg-surface rounded-lg p-3 flex flex-col sm:flex-row sm:items-center gap-3"
-              >
-                <div className="min-w-0 flex-1 text-sm">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant={
-                        item.suggestion === 'approve' ? 'success' : 'error'
-                      }
-                    >
-                      Suggest {item.suggestion}
-                    </Badge>
-                    {showStandings && (
-                      <span className="text-white font-medium">
-                        {bandName(item.vote.band_id)}
-                      </span>
+          <ul className="space-y-4" aria-label="Held votes">
+            {groupReviewItems(queue).map((reviewGroup) => {
+              const { title, detail } = describeGroup(reviewGroup)
+              const ids = reviewGroup.items.map((item) => item.vote.id)
+              return (
+                <li
+                  key={`${reviewGroup.group.kind}:${reviewGroup.group.key}`}
+                  className="rounded-lg border border-white/10 p-3"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                    <div className="min-w-0 text-sm">
+                      <h3 className="text-white font-medium">{title}</h3>
+                      <p className="text-text-muted text-xs break-words">
+                        {detail}
+                      </p>
+                    </div>
+                    {canReview && ids.length > 1 && (
+                      <div className="flex gap-2 shrink-0">
+                        <Button
+                          variant="outline-solid"
+                          size="sm"
+                          disabled={busy}
+                          aria-label={`Approve these ${ids.length} (${detail})`}
+                          onClick={() =>
+                            onDecide([{ voteIds: ids, decision: 'approved' }])
+                          }
+                        >
+                          Approve these {ids.length}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          disabled={busy}
+                          aria-label={`Reject these ${ids.length} (${detail})`}
+                          onClick={() =>
+                            onDecide([{ voteIds: ids, decision: 'rejected' }])
+                          }
+                        >
+                          Reject these {ids.length}
+                        </Button>
+                      </div>
                     )}
                   </div>
-                  <p className="text-white mt-1">{item.reason}</p>
-                  <p className="text-text-muted text-xs mt-1 break-words">
-                    {describeDevice(item.vote)}
-                    {item.vote.ip_address ? ` · ${item.vote.ip_address}` : ''}
-                    {item.vote.email ? ` · ${item.vote.email}` : ''}
-                    {item.matches.length > 0
-                      ? ` · ${describeMatches(item)}`
-                      : ''}
-                  </p>
-                </div>
-                {canReview && (
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      variant="outline-solid"
-                      size="sm"
-                      disabled={busy}
-                      aria-label={`Approve held vote ${item.vote.id}`}
-                      onClick={() =>
-                        onDecide([
-                          { voteIds: [item.vote.id], decision: 'approved' },
-                        ])
-                      }
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={busy}
-                      aria-label={`Reject held vote ${item.vote.id}`}
-                      onClick={() =>
-                        onDecide([
-                          { voteIds: [item.vote.id], decision: 'rejected' },
-                        ])
-                      }
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                )}
-              </li>
-            ))}
+                  <ul className="space-y-2" aria-label={title}>
+                    {reviewGroup.items.map((item) => (
+                      <li
+                        key={item.vote.id}
+                        className="bg-bg-surface rounded-lg p-3 flex flex-col sm:flex-row sm:items-center gap-3"
+                      >
+                        <div className="min-w-0 flex-1 text-sm">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge
+                              variant={
+                                item.suggestion === 'approve'
+                                  ? 'success'
+                                  : 'error'
+                              }
+                            >
+                              Suggest {item.suggestion}
+                            </Badge>
+                            {showStandings && (
+                              <span className="text-white font-medium">
+                                {bandName(item.vote.band_id)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-white mt-1">{item.reason}</p>
+                          <p className="text-text-muted text-xs mt-1 break-words">
+                            {describeDevice(item.vote)}
+                            {item.vote.ip_address
+                              ? ` · ${item.vote.ip_address}`
+                              : ''}
+                            {item.vote.email ? ` · ${item.vote.email}` : ''}
+                            {item.matches.length > 0
+                              ? ` · ${describeMatches(item)}`
+                              : ''}
+                          </p>
+                        </div>
+                        {canReview && (
+                          <div className="flex gap-2 shrink-0">
+                            <Button
+                              variant="outline-solid"
+                              size="sm"
+                              disabled={busy}
+                              aria-label={`Approve held vote ${item.vote.id}`}
+                              onClick={() =>
+                                onDecide([
+                                  {
+                                    voteIds: [item.vote.id],
+                                    decision: 'approved',
+                                  },
+                                ])
+                              }
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              disabled={busy}
+                              aria-label={`Reject held vote ${item.vote.id}`}
+                              onClick={() =>
+                                onDecide([
+                                  {
+                                    voteIds: [item.vote.id],
+                                    decision: 'rejected',
+                                  },
+                                ])
+                              }
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )
+            })}
           </ul>
         </>
       )}
@@ -582,6 +679,84 @@ export function Standings({ state }: { state: NightState }) {
           </tbody>
         </table>
       </div>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Read-out for the MC
+// ---------------------------------------------------------------------------
+
+/**
+ * What to say on stage: third place, second, the winner, and the other awards
+ * each took. Only rendered for final (locked) results, and only by the caller
+ * once "Show scores" is on — it names the winner.
+ */
+export function ReadOut({ state }: { state: NightState }) {
+  const [copied, setCopied] = useState<'yes' | 'failed' | null>(null)
+  const readOut = buildReadOut(
+    state.standings,
+    state.scoring.version,
+    state.event.name
+  )
+  if (readOut.sections.length === 0) return null
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(readOut.text)
+      setCopied('yes')
+    } catch {
+      setCopied('failed')
+    }
+  }
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1">
+        <h2 className="text-lg font-semibold text-white">
+          Read-out for the MC
+        </h2>
+        <Button variant="outline-solid" size="sm" onClick={copy}>
+          {copied === 'yes' ? 'Copied' : 'Copy text'}
+        </Button>
+      </div>
+      <p className="text-sm text-text-muted mb-4">
+        Read from the top: other awards first, then third place up to the
+        winner.
+      </p>
+      {copied === 'failed' && (
+        <p className="text-sm text-warning mb-4" role="alert">
+          Could not copy. Select the text below instead.
+        </p>
+      )}
+
+      {readOut.notes.map((note) => (
+        <p
+          key={note}
+          className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning"
+          role="note"
+        >
+          {note}
+        </p>
+      ))}
+
+      <ol className="space-y-5" aria-label="Read-out">
+        {readOut.sections.map((section) => (
+          <li key={section.heading}>
+            <h3 className="text-xs tracking-widest uppercase text-text-muted mb-1">
+              {section.heading}
+            </h3>
+            {section.lines.map((line) => (
+              <p
+                key={line}
+                className="text-lg sm:text-xl text-white leading-snug"
+              >
+                {line}
+              </p>
+            ))}
+          </li>
+        ))}
+      </ol>
     </Card>
   )
 }

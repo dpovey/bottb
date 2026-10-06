@@ -15,6 +15,7 @@ import type { NightState, NightTransition } from '@/lib/night-types'
 import {
   CrowdCounts,
   JudgeSheets,
+  ReadOut,
   ReviewQueue,
   Standings,
   type DecisionBatch,
@@ -475,10 +476,15 @@ export function RunTheNight({ eventId, initialState }: RunTheNightProps) {
               checked={showStandings}
               onChange={(e) => setShowStandings(e.target.checked)}
             />
-            Show scores (band tallies, standings and the winner). Leave off if
-            anyone can see this screen.
+            Show scores (band tallies, standings, the winner and the read-out).
+            Leave off if anyone can see this screen.
           </label>
-          {showStandings && <Standings state={state} />}
+          {showStandings && (
+            <div className="space-y-6">
+              {state.standingsFrozen && <ReadOut state={state} />}
+              <Standings state={state} />
+            </div>
+          )}
         </div>
       )}
 

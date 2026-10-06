@@ -31,6 +31,11 @@ Between closing and finalising:
 
 - **Held votes.** A vote that looks like a repeat of an earlier one is not
   counted until you approve it. Each has a suggestion and the reason for it.
+  They are grouped by what they share — one IP address, one email address, or
+  an identical handset on different networks — and a group can be approved or
+  rejected in one go. The header of an address group says how many votes and
+  kinds of device came from it; many kinds means a shared network (venue
+  Wi-Fi, a mobile carrier), where identical phones are normal.
   _Follow suggestions_ applies them all; _Approve all_ / _Reject all_ and the
   per-vote buttons are there too, and _Already decided_ lets you undo. Band
   names are hidden on this list so decisions are made blind.
@@ -39,7 +44,11 @@ Between closing and finalising:
   the sheet and enter it again. Sheets can be entered at any point up to
   finalising, including before voting opens.
 - **Show scores** reveals the per-band vote tallies, the standings and (once
-  locked) the winner. It is off by default so the screen is safe to have open
+  locked) the winner and the **read-out for the MC**: third place, second, the
+  winner, and with each the other awards that band took — the judges' vote,
+  the popular vote, and the best score in each judging category. An award won
+  outside the top three is read first. _Copy text_ puts it on the clipboard.
+  It exists only on this admin page. It is off by default so the screen is safe to have open
   where others can see it.
 
 The _Screens_ box links the QR code page for the projector (it shows whether
