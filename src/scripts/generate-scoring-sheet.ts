@@ -165,9 +165,17 @@ function renderHtml(params: {
   judgeCategories: ScoringCategory[]
   maxJudgePoints: number
   scoringVersion: ScoringVersion
+  /** Non-competing bands playing the night; each gets a "don't score" note. */
+  guests: BandRow[]
 }): string {
-  const { event, bands, judgeCategories, maxJudgePoints, scoringVersion } =
-    params
+  const {
+    event,
+    bands,
+    judgeCategories,
+    maxJudgePoints,
+    scoringVersion,
+    guests,
+  } = params
 
   const eventTitle = escapeHtml(event.name)
   const colCount = judgeCategories.length + 2 // band + categories + total
@@ -227,6 +235,22 @@ function renderHtml(params: {
     })
     .join('')
 
+  const firstCompetingOrder = Math.min(...bands.map((b) => b.order))
+  const guestNotes = guests
+    .map((g) => {
+      const who = g.company_name
+        ? `${escapeHtml(g.name)} (${escapeHtml(g.company_name)})`
+        : escapeHtml(g.name)
+      const when =
+        g.order < firstCompetingOrder ? 'open the night' : 'also perform'
+      return `
+        <div class="guest-note">
+          <strong>${who}</strong> ${when} as special guests and are not
+          eligible for judging or voting. Please don&rsquo;t score them.
+        </div>`
+    })
+    .join('')
+
   const judgeShare = maxJudgePoints
   const crowdShare = 100 - maxJudgePoints
   const footerNote =
@@ -272,6 +296,10 @@ function renderHtml(params: {
       }
       .criteria .item strong {
         display: block; font-size: 10pt; margin-bottom: 1mm;
+      }
+      .guest-note {
+        border: 1.5px solid #111; border-radius: 2mm; background: #f3f3f3;
+        padding: 2mm 3mm; margin-bottom: 4mm; font-size: 10pt;
       }
       table { width: 100%; border-collapse: collapse; font-size: 10pt; }
       thead th {
@@ -331,6 +359,7 @@ function renderHtml(params: {
       <section class="criteria" aria-label="Scoring criteria">
         ${criteriaCards}
       </section>
+      ${guestNotes}
 
       <table>
         <thead>
@@ -444,11 +473,12 @@ async function main(): Promise<void> {
 
   const event = await fetchEvent(opts.eventId)
   const allBands = await fetchBands(opts.eventId)
-  const bands = selectSheetBands(allBands, opts.excludeBandIds).map((b) =>
+  const withLabel = (b: BandRow): BandRow =>
     opts.companyLabels[b.id]
       ? { ...b, company_name: opts.companyLabels[b.id] }
       : b
-  )
+  const bands = selectSheetBands(allBands, opts.excludeBandIds).map(withLabel)
+  const guests = allBands.filter((b) => !isCompetingBand(b)).map(withLabel)
 
   if (bands.length === 0) {
     console.error(
@@ -476,6 +506,7 @@ async function main(): Promise<void> {
     judgeCategories,
     maxJudgePoints,
     scoringVersion,
+    guests,
   })
 
   await mkdir(opts.outDir, { recursive: true })
