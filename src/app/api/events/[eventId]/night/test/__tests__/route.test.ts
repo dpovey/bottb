@@ -85,13 +85,27 @@ function event(
   }
 }
 
-const bands: Band[] = [1, 2, 3].map((i) => ({
-  id: `b${i}`,
-  event_id: EVENT_ID,
-  name: `Band ${i}`,
-  order: i,
-  created_at: '2026-01-01T00:00:00Z',
-}))
+/**
+ * Three competing bands, opened by special guests (non-competing), as on the
+ * real test event. The guests must never get a simulated vote or judge score.
+ */
+const bands: Band[] = [
+  {
+    id: 'guests',
+    event_id: EVENT_ID,
+    name: 'The Special Guests',
+    order: 0,
+    info: { non_competing: true },
+    created_at: '2026-01-01T00:00:00Z',
+  },
+  ...[1, 2, 3].map((i) => ({
+    id: `b${i}`,
+    event_id: EVENT_ID,
+    name: `Band ${i}`,
+    order: i,
+    created_at: '2026-01-01T00:00:00Z',
+  })),
+]
 
 async function post(body: unknown) {
   const request = {
@@ -210,7 +224,7 @@ describe('POST /api/events/[eventId]/night/test (rehearsal tools)', () => {
       }
     )
 
-    it('adds votes for the event bands while voting is open', async () => {
+    it('adds votes for the competing bands while voting is open', async () => {
       const { status, body } = await post({ action: 'simulate-crowd' })
       expect(status).toBe(200)
       expect(body.message).toBe(
@@ -252,7 +266,7 @@ describe('POST /api/events/[eventId]/night/test (rehearsal tools)', () => {
       }
     )
 
-    it('adds three judge sheets covering every band, with scores in range', async () => {
+    it('adds three judge sheets covering every competing band, with scores in range', async () => {
       const { status, body } = await post({ action: 'simulate-judges' })
       expect(status).toBe(200)
       expect(body.message).toBe('Added 3 simulated judge sheets.')

@@ -8,6 +8,7 @@
  * reaches everyone within about five.
  */
 
+import { competingBands } from './competing-bands'
 import { getBandsForEvent, getEventById } from './db'
 import { isCrowdVotingOpen, isEventStatus } from './event-lifecycle'
 
@@ -42,7 +43,8 @@ export async function getBallot(eventId: string): Promise<Ballot | null> {
   const event = await getEventById(eventId)
   let ballot: Ballot | null = null
   if (event) {
-    const bands = await getBandsForEvent(eventId)
+    // Special guests (non-competing bands) are not on the ballot.
+    const bands = competingBands(await getBandsForEvent(eventId))
     ballot = {
       event: {
         id: event.id,

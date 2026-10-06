@@ -10,6 +10,7 @@ import {
   TEST_EVENT_ID,
   deleteJudgeSheet,
   ensureTestEvent,
+  TEST_GUEST_BAND,
   getCrowdVotesForReview,
   getOtherEventsVoting,
   insertJudgeSheet,
@@ -357,7 +358,7 @@ describe('db/night', () => {
   })
 
   describe('ensureTestEvent', () => {
-    it('creates the rehearsal event and its five bands', async () => {
+    it('creates the rehearsal event, its five bands and its special guests', async () => {
       const testEvent = { id: TEST_EVENT_ID, is_test: true }
       mockSql.mockImplementation(((strings: TemplateStringsArray) =>
         Promise.resolve(
@@ -378,11 +379,20 @@ describe('db/night', () => {
       const bandInserts = calls.filter((c) =>
         textOf(c).includes('INSERT INTO bands')
       )
-      expect(bandInserts).toHaveLength(5)
+      expect(bandInserts).toHaveLength(6)
       for (const c of bandInserts) {
         expect(textOf(c)).toContain('ON CONFLICT (id) DO NOTHING')
         expect(valuesOf(c)[1]).toBe(TEST_EVENT_ID)
       }
+      // The last one is the non-competing special guests, opening the night.
+      const guests = bandInserts[5]
+      expect(valuesOf(guests)).toEqual([
+        TEST_GUEST_BAND.id,
+        TEST_EVENT_ID,
+        TEST_GUEST_BAND.name,
+        JSON.stringify({ non_competing: true }),
+      ])
+      expect(textOf(guests)).toContain(', 0,')
     })
 
     it.each([

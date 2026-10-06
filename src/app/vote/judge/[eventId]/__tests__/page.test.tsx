@@ -325,6 +325,43 @@ describe('JudgeVotingPage', () => {
     )
   }, 15000)
 
+  it('leaves special guests (a non-competing band) off the sheet', async () => {
+    let submitted: { votes: { band_id: string }[] } | undefined
+    server.use(
+      http.get('/api/bands/test-event-id', () =>
+        HttpResponse.json([
+          {
+            id: 'band-guest',
+            name: 'ShipReX',
+            order: 0,
+            info: { non_competing: true },
+          },
+          ...mockBands,
+        ])
+      ),
+      http.post('/api/votes/batch', async ({ request }) => {
+        submitted = (await request.json()) as typeof submitted
+        return HttpResponse.json({ votes: [] })
+      })
+    )
+    render(<JudgeVotingPage />)
+    await screen.findByText('Test Band 1')
+
+    expect(screen.queryByText('ShipReX')).not.toBeInTheDocument()
+
+    await user.type(
+      screen.getByPlaceholderText("Enter judge's name"),
+      'Judge Smith'
+    )
+    for (const input of screen.getAllByRole('spinbutton')) {
+      fireEvent.change(input, { target: { value: '15' } })
+    }
+    await user.click(screen.getByRole('button', { name: 'Submit All Scores' }))
+
+    await screen.findByText('Scores Submitted!')
+    expect(submitted?.votes.map((v) => v.band_id)).toEqual(['band-1', 'band-2'])
+  })
+
   describe('when the scores are not saved', () => {
     /** Load two bands, name the judge and fill every score in range. */
     async function fillSheet() {

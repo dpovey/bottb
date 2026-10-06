@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { BandThumbnail } from '@/components/ui'
+import { competingBands } from '@/lib/competing-bands'
 
 interface Band {
   id: string
@@ -69,7 +70,8 @@ export default function CrowdNoisePage() {
       try {
         const response = await fetch(`/api/bands/${eventId}`)
         const data = await response.json()
-        setBands(Array.isArray(data) ? data : [])
+        // The scream-o-meter is a score, so special guests are not measured.
+        setBands(competingBands(Array.isArray(data) ? data : []))
       } catch (error) {
         console.error('Error fetching bands:', error)
       }

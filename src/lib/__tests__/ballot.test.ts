@@ -61,6 +61,23 @@ describe('getBallot', () => {
     vi.useRealTimers()
   })
 
+  it('leaves non-competing bands (special guests) off the ballot', async () => {
+    mockGetEventById.mockResolvedValue(event('voting'))
+    mockGetBandsForEvent.mockResolvedValue([
+      {
+        id: 'guest',
+        event_id: 'sydney-2026',
+        name: 'ShipReX',
+        order: 0,
+        info: { non_competing: true },
+        created_at: '2026-01-01T00:00:00Z',
+      } as Band,
+      ...bands,
+    ])
+    const ballot = await getBallot('sydney-2026')
+    expect(ballot?.bands.map((b) => b.id)).toEqual(['band-1', 'band-2'])
+  })
+
   it('returns the event and only the fields the voting page needs for each band', async () => {
     mockGetEventById.mockResolvedValue(event('voting'))
     const ballot = await getBallot('sydney-2026')

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
+import { competingBands } from '@/lib/competing-bands'
 import { getBandsForEvent, getEventById } from '@/lib/db'
 import {
   hasJudgeSubmitted,
@@ -89,7 +90,8 @@ const postHandler: ProtectedApiHandler = async (request, context) => {
       const count = Number.isInteger(requested)
         ? Math.min(Math.max(requested, 1), MAX_SIMULATED_VOTES)
         : 40
-      const bands = await getBandsForEvent(eventId)
+      // Like real votes, simulated ones never go to special guests.
+      const bands = competingBands(await getBandsForEvent(eventId))
       const { added, held } = await insertSimulatedCrowdVotes(
         eventId,
         bands.map((b) => b.id),
@@ -111,7 +113,8 @@ const postHandler: ProtectedApiHandler = async (request, context) => {
       )
       const max = (id: string) => getCategoryById(version, id)?.maxPoints
       const visualsMax = max('visuals')
-      const bands = await getBandsForEvent(eventId)
+      // Special guests are not judged, so they are not on the sheet.
+      const bands = competingBands(await getBandsForEvent(eventId))
       let added = 0
       for (const judge of SIMULATED_JUDGES) {
         if (await hasJudgeSubmitted(eventId, judge)) continue

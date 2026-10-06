@@ -117,6 +117,31 @@ describe('EventPage', () => {
     expect(screen.getByText('2')).toBeInTheDocument()
   })
 
+  it('lists special guests (a non-competing band) with a label instead of an order number', () => {
+    render(
+      <EventPageClient
+        {...defaultProps}
+        bands={[
+          {
+            id: 'band-guest',
+            event_id: 'test-event-id',
+            name: 'ShipReX',
+            order: 0,
+            info: { non_competing: true },
+            created_at: '2024-01-01T00:00:00Z',
+          },
+          ...mockBands,
+        ]}
+      />
+    )
+
+    expect(screen.getByText('ShipReX')).toBeInTheDocument()
+    expect(screen.getByText('Special guests')).toBeInTheDocument()
+    expect(screen.getByText('★')).toBeInTheDocument()
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
   it('shows no bands message with contact CTA when empty', () => {
     render(<EventPageClient {...defaultProps} bands={[]} />)
 

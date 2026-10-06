@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 // No fingerprinting needed for judge voting
 import { BandThumbnail } from '@/components/ui'
+import { competingBands } from '@/lib/competing-bands'
 import {
   ScoringVersion,
   parseScoringVersion,
@@ -28,6 +29,7 @@ interface Band {
       facebook?: string
     }
     genre?: string
+    non_competing?: boolean
     members?: string[]
     [key: string]: unknown
   }
@@ -152,8 +154,11 @@ export default function JudgeVotingPage() {
         const response = await fetch(`/api/bands/${eventId}`)
         const data = await response.json()
 
-        // Ensure data is an array
-        const bandsData = Array.isArray(data) ? data : []
+        // Ensure data is an array. Special guests (non-competing bands) are
+        // not judged, so they are not on the sheet.
+        const bandsData: Band[] = competingBands(
+          Array.isArray(data) ? data : []
+        )
         setBands(bandsData)
 
         // Initialize scores

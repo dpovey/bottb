@@ -68,6 +68,50 @@ On the test event only, the run page has **Rehearsal tools**: add 40 simulated
 crowd votes (a quarter of them repeats, so there are held votes to review), add
 three simulated judges, and reset. These refuse to run against a real event.
 
+## Non-competing bands
+
+A band can play on the night without competing: special guests, such as
+ShipReX at Sydney 2026. Such a band is flagged in its `info` jsonb as
+`non_competing: true` (no column; a band without the flag competes). The check
+is `isCompetingBand` / `competingBands` in `src/lib/competing-bands.ts`; its SQL
+twin in `getBandScores` is `b.info->'non_competing' IS DISTINCT FROM 'true'::jsonb`.
+
+A non-competing band:
+
+- is listed on the event page (with a _Special guests_ label and a star in
+  place of its running-order number) and has its own band page, without scores;
+- is not on the crowd ballot, and `POST /api/votes` refuses a vote for it (400,
+  nothing recorded);
+- is not on the judge sheet; `POST /api/votes/batch` expects every competing
+  band exactly once and refuses a sheet that scores it (400);
+- is left out of everything that counts: `getBandScores` (so the standings,
+  the crowd-vote leader and share, `finalized_results`, the results page, the
+  read-out and every score API), and on this page the band count, each judge's
+  _n/n bands_, the held-vote queue and the "a frozen result for every band"
+  release check;
+- is left off the printed judge sheet (`pnpm generate-scoring-sheet`, which also
+  takes `--exclude <bandId>` for a one-off);
+- never gets a simulated vote or judge score. The test event has one,
+  _The Special Guests_ (`test-night-guests`, order 0), so every rehearsal runs
+  with a non-competing band present; it is added the next time
+  _Rehearse with test event_ is pressed.
+
+To set or clear the flag (and, for an opening act, put it first):
+
+```sql
+UPDATE bands
+SET info = COALESCE(info, '{}'::jsonb) || '{"non_competing": true}'::jsonb,
+    "order" = 0
+WHERE id = 'shiprex-sydney-2026';
+
+-- Competing again:
+UPDATE bands SET info = info - 'non_competing' WHERE id = 'shiprex-sydney-2026';
+```
+
+Set it before voting opens. Changed after results are locked, the frozen
+results no longer cover exactly the competing bands, so release is blocked
+until the results are unlocked and finalised again.
+
 ## Event statuses
 
 ```

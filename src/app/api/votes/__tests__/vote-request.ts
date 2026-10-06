@@ -11,9 +11,12 @@ import type { Event, Vote } from '@/lib/db-types'
 export const EVENT_ID = 'event-1'
 export const BAND_ID = 'band-1'
 export const OTHER_BAND_ID = 'band-2'
+/** Special guests: in the event, but flagged `info.non_competing`. */
+export const GUEST_BAND_ID = 'band-guest'
 export const BAND_NAMES: Record<string, string> = {
   [BAND_ID]: 'The Compilers',
   [OTHER_BAND_ID]: 'Stack Overflow',
+  [GUEST_BAND_ID]: 'ShipReX',
 }
 
 /** A vote id as the database would issue it. */
@@ -64,7 +67,15 @@ export function bandLookup(
     const [bandId, eventId] = values as [string, string]
     const inEvent = bandsByEvent[eventId]?.includes(bandId)
     return {
-      rows: inEvent ? [{ name: BAND_NAMES[bandId] ?? bandId }] : [],
+      rows: inEvent
+        ? [
+            {
+              name: BAND_NAMES[bandId] ?? bandId,
+              info:
+                bandId === GUEST_BAND_ID ? { non_competing: true } : undefined,
+            },
+          ]
+        : [],
       rowCount: inEvent ? 1 : 0,
       command: 'SELECT',
       oid: 0,

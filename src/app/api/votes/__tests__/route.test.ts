@@ -51,6 +51,7 @@ import type { Event, Vote } from '@/lib/db-types'
 import {
   BAND_ID,
   EVENT_ID,
+  GUEST_BAND_ID,
   NEW_VOTE_ID,
   OTHER_BAND_ID,
   NO_EVENT,
@@ -221,6 +222,43 @@ describe('POST /api/votes', () => {
         error: 'That band is not part of this event',
       })
       expect(mockSubmitVote).not.toHaveBeenCalled()
+      expect(mockUpdateChoice).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 for a non-competing band (special guests)', async () => {
+      mockSql.mockImplementation(
+        bandLookup({
+          [EVENT_ID]: [BAND_ID, GUEST_BAND_ID],
+        }) as unknown as typeof sql
+      )
+
+      const response = await POST(
+        voteRequest({ event_id: EVENT_ID, band_id: GUEST_BAND_ID })
+      )
+
+      expect(response.status).toBe(400)
+      expect(await response.json()).toEqual({
+        error: 'ShipReX are special guests and are not in the vote',
+      })
+      expect(mockSubmitVote).not.toHaveBeenCalled()
+      expect(mockUpdateChoice).not.toHaveBeenCalled()
+    })
+
+    it('will not move an earlier vote to a non-competing band', async () => {
+      mockSql.mockImplementation(
+        bandLookup({
+          [EVENT_ID]: [BAND_ID, GUEST_BAND_ID],
+        }) as unknown as typeof sql
+      )
+
+      const response = await POST(
+        voteRequest(
+          { event_id: EVENT_ID, band_id: GUEST_BAND_ID },
+          { cookie: votedCookie({ bandId: BAND_ID, voteId: VOTE_ID }) }
+        )
+      )
+
+      expect(response.status).toBe(400)
       expect(mockUpdateChoice).not.toHaveBeenCalled()
     })
 

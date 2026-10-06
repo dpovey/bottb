@@ -8,6 +8,7 @@ import {
   getPhotosByLabel,
   PHOTO_LABELS,
 } from '@/lib/db'
+import { competingBands } from '@/lib/competing-bands'
 import { hasFrozenResults } from '@/lib/event-lifecycle'
 import { getNavEvents } from '@/lib/nav-data'
 import { notFound, redirect } from 'next/navigation'
@@ -231,11 +232,14 @@ export default async function ResultsPage({
   const crowdVoteMax =
     getCategoryById(scoringVersion, 'crowd_vote')?.maxPoints ?? 10
 
-  // Fetch bands and hero photos - needed for both legacy and modern results
-  const [bands, eventHeroPhotos] = await Promise.all([
+  // Fetch bands and hero photos - needed for both legacy and modern results.
+  // Special guests (non-competing bands) did not compete, so the results
+  // page leaves them out altogether; the event page still lists them.
+  const [allBands, eventHeroPhotos] = await Promise.all([
     getBandsForEvent(eventId),
     getPhotosByLabel(PHOTO_LABELS.EVENT_HERO, { eventId }),
   ])
+  const bands = competingBands(allBands)
   const heroPhoto = eventHeroPhotos.length > 0 ? eventHeroPhotos[0] : null
 
   const breadcrumbs = [

@@ -1,5 +1,6 @@
 import { isIP } from 'net'
 import { NextRequest, NextResponse } from 'next/server'
+import { competingBands, isCompetingBand } from '@/lib/competing-bands'
 import { getBandsForEvent, getEventById } from '@/lib/db'
 import {
   hasJudgeSubmitted,
@@ -35,10 +36,10 @@ function badRequest(error: string) {
  * POST /api/votes/batch — record one judge's sheet. Admin only.
  *
  * Body: `{ votes: [{ event_id, band_id, voter_type: 'judge', name, song_choice,
- * performance, crowd_vibe, visuals? }, ...] }` — one entry per band in the
- * event, all for the same judge.
+ * performance, crowd_vibe, visuals? }, ...] }` — one entry per competing band
+ * in the event (special guests are left off), all for the same judge.
  *
- * The sheet is validated as a whole (every band exactly once, every score a
+ * The sheet is validated as a whole (every competing band exactly once, every score a
  * whole number within the scoring version's range) and saved in one
  * statement, so a judge is either fully recorded or not at all. Allowed until
  * results are locked.
@@ -99,11 +100,21 @@ async function handleBatchVotes(request: NextRequest) {
       )
     }
 
-    // The sheet must cover every band in the event exactly once.
-    const bands = await getBandsForEvent(eventId)
+    // The sheet must cover every competing band in the event exactly once.
+    // Special guests (non-competing bands) are not judged.
+    const allBands = await getBandsForEvent(eventId)
+    const bands = competingBands(allBands)
     const bandNames = new Map(bands.map((b) => [b.id, b.name]))
     const seen = new Set<string>()
     for (const vote of votes) {
+      const guest = allBands.find(
+        (b) => b.id === vote.band_id && !isCompetingBand(b)
+      )
+      if (guest) {
+        return badRequest(
+          `${guest.name} are special guests and are not judged. Leave them off the sheet.`
+        )
+      }
       if (typeof vote.band_id !== 'string' || !bandNames.has(vote.band_id)) {
         return badRequest('The sheet includes a band that is not in this event')
       }

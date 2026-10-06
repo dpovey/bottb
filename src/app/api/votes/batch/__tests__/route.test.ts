@@ -181,6 +181,49 @@ describe('POST /api/votes/batch', () => {
       })
     })
 
+    describe('with special guests (a non-competing band) in the event', () => {
+      const GUEST = {
+        id: 'band-guest',
+        name: 'ShipReX',
+        info: { non_competing: true },
+      }
+
+      beforeEach(() => {
+        mockGetBands.mockResolvedValue([GUEST, ...BANDS] as unknown as Band[])
+      })
+
+      it('accepts a sheet of only the competing bands', async () => {
+        const response = await POST(batchRequest({ votes: sheet() }))
+
+        expect(response.status).toBe(200)
+        expect(mockInsert.mock.calls[0][2].map((r) => r.band_id)).toEqual([
+          'band-a',
+          'band-b',
+          'band-c',
+        ])
+      })
+
+      it('refuses a sheet that scores the special guests', async () => {
+        const votes = [...sheet(), { ...sheet()[0], band_id: GUEST.id }]
+
+        const body = await expectRefused(
+          await POST(batchRequest({ votes })),
+          400
+        )
+        expect(body.error).toBe(
+          'ShipReX are special guests and are not judged. Leave them off the sheet.'
+        )
+      })
+
+      it('still requires every competing band', async () => {
+        const body = await expectRefused(
+          await POST(batchRequest({ votes: sheet().slice(1) })),
+          400
+        )
+        expect(body.error).toBe('The sheet is missing scores for The Compilers')
+      })
+    })
+
     it('accepts the bands in any order', async () => {
       const response = await POST(
         batchRequest({ votes: [...sheet()].reverse() })

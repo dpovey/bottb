@@ -13,11 +13,13 @@ import {
 } from '@/lib/db'
 import { slugify, cn } from '@/lib/utils'
 import { bandCompanyList } from '@/lib/band-companies'
+import { isCompetingBand, NON_COMPETING_LABEL } from '@/lib/competing-bands'
 import { notFound } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
 import { auth } from '@/lib/auth'
 import Link from 'next/link'
 import {
+  Badge,
   CompanyBadgeGroup,
   BandThumbnail,
   SocialIconLink,
@@ -812,6 +814,12 @@ export default async function BandPage({
                             : `${bandRank}th Place`}
                     </span>
                   )}
+                </div>
+              )}
+
+              {!isCompetingBand(band) && (
+                <div className="mb-4">
+                  <Badge>{NON_COMPETING_LABEL}</Badge>
                 </div>
               )}
 

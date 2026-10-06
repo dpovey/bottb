@@ -12,6 +12,7 @@ import {
   type ScoringCategory,
   type ScoringVersion,
 } from '../lib/scoring'
+import { isCompetingBand, type BandWithInfo } from '../lib/competing-bands'
 
 config({ path: '.env.local' })
 
@@ -23,7 +24,7 @@ interface EventRow {
   info: { scoring_version?: string; [k: string]: unknown } | null
 }
 
-interface BandRow {
+interface BandRow extends BandWithInfo {
   id: string
   name: string
   order: number
@@ -36,6 +37,7 @@ interface CliOptions {
   htmlOnly: boolean
   pdfOnly: boolean
   companyLabels: Record<string, string>
+  excludeBandIds: string[]
 }
 
 function parseArgs(argv: string[]): CliOptions {
@@ -45,6 +47,7 @@ function parseArgs(argv: string[]): CliOptions {
   let htmlOnly = false
   let pdfOnly = false
   const companyLabels: Record<string, string> = {}
+  const excludeBandIds: string[] = []
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i]
@@ -57,6 +60,13 @@ function parseArgs(argv: string[]): CliOptions {
     } else if (a === '--company-label') {
       const [bandId, ...rest] = args[++i].split('=')
       companyLabels[bandId] = rest.join('=')
+    } else if (a === '--exclude') {
+      const bandId = args[++i]
+      if (!bandId || bandId.startsWith('-')) {
+        console.error('--exclude needs a band id')
+        process.exit(1)
+      }
+      excludeBandIds.push(bandId)
     } else if (a === '--help' || a === '-h') {
       printHelp()
       process.exit(0)
@@ -73,7 +83,14 @@ function parseArgs(argv: string[]): CliOptions {
     process.exit(1)
   }
 
-  return { eventId: positional[0], outDir, htmlOnly, pdfOnly, companyLabels }
+  return {
+    eventId: positional[0],
+    outDir,
+    htmlOnly,
+    pdfOnly,
+    companyLabels,
+    excludeBandIds,
+  }
 }
 
 function printHelp(): void {
@@ -82,13 +99,24 @@ Generate a printable judge scoring sheet for an event.
 
 Usage:
   pnpm generate-scoring-sheet <eventId> [--out <dir>] [--html-only|--pdf-only]
-    [--company-label <bandId>=<label>]...
+    [--company-label <bandId>=<label>]... [--exclude <bandId>]...
+
+Non-competing bands (special guests, bands.info.non_competing = true) are
+left off the sheet automatically.
+
+Options:
+  --out, -o <dir>                    Output directory (default: scoring-sheets)
+  --html-only | --pdf-only           Write just one of the two files
+  --company-label <bandId>=<label>   Print <label> as the band's company
+  --exclude <bandId>                 Also leave this band off the sheet (repeatable;
+                                     the id must be a band in the event)
 
 Examples:
   pnpm generate-scoring-sheet melbourne-2026
   pnpm generate-scoring-sheet melbourne-2026 --out tmp/sheets
   pnpm generate-scoring-sheet melbourne-2026 --html-only
   pnpm generate-scoring-sheet brisbane-2026 --company-label the-shiprex-brisbane-2026="Rex Software / URBAN X"
+  pnpm generate-scoring-sheet sydney-2026 --exclude v2-voyagers-sydney-2026
 `)
 }
 
@@ -106,7 +134,7 @@ async function fetchEvent(eventId: string): Promise<EventRow> {
 
 async function fetchBands(eventId: string): Promise<BandRow[]> {
   const { rows } = await sql<BandRow>`
-    SELECT b.id, b.name, b."order", c.name AS company_name
+    SELECT b.id, b.name, b."order", b.info, c.name AS company_name
     FROM bands b
     LEFT JOIN companies c ON b.company_slug = c.slug
     WHERE b.event_id = ${eventId}
@@ -379,18 +407,53 @@ async function renderPdf(htmlPath: string, pdfPath: string): Promise<void> {
   })
 }
 
+/**
+ * The bands on the judges' sheet: every competing band, minus any `--exclude`.
+ * Non-competing bands (special guests) are left off and reported. Exits on an
+ * `--exclude` id that is not a band in the event, so a typo cannot silently
+ * leave a band on the sheet.
+ */
+function selectSheetBands(
+  allBands: BandRow[],
+  excludeBandIds: string[]
+): BandRow[] {
+  const unknown = excludeBandIds.filter(
+    (id) => !allBands.some((b) => b.id === id)
+  )
+  if (unknown.length > 0) {
+    console.error(
+      `❌ --exclude: not a band in this event: ${unknown.join(', ')}\n` +
+        `   Bands: ${allBands.map((b) => b.id).join(', ')}`
+    )
+    process.exit(1)
+  }
+  for (const band of allBands) {
+    if (!isCompetingBand(band)) {
+      console.log(`ℹ️  Leaving off ${band.name} (${band.id}): non-competing`)
+    } else if (excludeBandIds.includes(band.id)) {
+      console.log(`ℹ️  Leaving off ${band.name} (${band.id}): --exclude`)
+    }
+  }
+  return allBands.filter(
+    (b) => isCompetingBand(b) && !excludeBandIds.includes(b.id)
+  )
+}
+
 async function main(): Promise<void> {
   const opts = parseArgs(process.argv)
 
   const event = await fetchEvent(opts.eventId)
-  const bands = (await fetchBands(opts.eventId)).map((b) =>
+  const allBands = await fetchBands(opts.eventId)
+  const bands = selectSheetBands(allBands, opts.excludeBandIds).map((b) =>
     opts.companyLabels[b.id]
       ? { ...b, company_name: opts.companyLabels[b.id] }
       : b
   )
 
   if (bands.length === 0) {
-    console.error(`❌ No bands found for event ${opts.eventId}`)
+    console.error(
+      `❌ No competing bands to put on the sheet for ${opts.eventId}`
+    )
     process.exit(1)
   }
 

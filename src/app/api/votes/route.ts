@@ -7,6 +7,7 @@ import {
   hasUserVotedByEmail,
   getEventById,
 } from '@/lib/db'
+import { isCompetingBand, type BandWithInfo } from '@/lib/competing-bands'
 import { isUuid } from '@/lib/db/night'
 import { sql } from '@/lib/sql'
 import { isCrowdVotingOpen, isEventStatus } from '@/lib/event-lifecycle'
@@ -120,13 +121,22 @@ async function handleVote(request: NextRequest) {
       )
     }
 
-    // The band must be one of this event's.
-    const { rows: bandRows } = await sql<{ name: string }>`
-      SELECT name FROM bands WHERE id = ${band_id} AND event_id = ${event_id}
+    // The band must be one of this event's, and competing: special guests
+    // (non-competing bands) cannot be voted for.
+    const { rows: bandRows } = await sql<{ name: string } & BandWithInfo>`
+      SELECT name, info FROM bands WHERE id = ${band_id} AND event_id = ${event_id}
     `
     if (bandRows.length === 0) {
       return NextResponse.json(
         { error: 'That band is not part of this event' },
+        { status: 400 }
+      )
+    }
+    if (!isCompetingBand(bandRows[0])) {
+      return NextResponse.json(
+        {
+          error: `${bandRows[0].name} are special guests and are not in the vote`,
+        },
         { status: 400 }
       )
     }

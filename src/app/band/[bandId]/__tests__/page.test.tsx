@@ -535,6 +535,62 @@ describe('BandPage', () => {
     expect(mockNotFound).not.toHaveBeenCalled()
   })
 
+  it('labels special guests (a non-competing band) and shows them no score', async () => {
+    mockSql.mockResolvedValue(
+      createMockQueryResult([
+        {
+          id: 'guest',
+          event_id: 'event-1',
+          name: 'ShipReX',
+          order: 0,
+          info: { non_competing: true },
+          created_at: '2024-01-01T00:00:00Z',
+          event_name: 'Test Event',
+          date: '2024-12-25T18:30:00Z',
+          location: 'Test Venue',
+          timezone: 'America/New_York',
+          status: 'finalized',
+          event_info: { scoring_version: '2026.2' },
+        },
+      ])
+    )
+    // getBandScores has no row for a non-competing band.
+    mockGetBandScores.mockResolvedValue([])
+
+    render(await BandPage({ params: Promise.resolve({ bandId: 'guest' }) }))
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'ShipReX' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Special guests')).toBeInTheDocument()
+    expect(screen.queryByText('Total Score')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Event Winner/)).not.toBeInTheDocument()
+  })
+
+  it('does not label a competing band as special guests', async () => {
+    mockSql.mockResolvedValue(
+      createMockQueryResult([
+        {
+          id: 'band-1',
+          event_id: 'event-1',
+          name: 'Test Band',
+          order: 1,
+          created_at: '2024-01-01T00:00:00Z',
+          event_name: 'Test Event',
+          date: '2024-12-25T18:30:00Z',
+          location: 'Test Venue',
+          timezone: 'America/New_York',
+          status: 'upcoming',
+          event_info: { scoring_version: '2026.2' },
+        },
+      ])
+    )
+
+    render(await BandPage({ params: Promise.resolve({ bandId: 'band-1' }) }))
+
+    expect(screen.queryByText('Special guests')).not.toBeInTheDocument()
+  })
+
   it('handles missing description gracefully', async () => {
     const bandData = [
       {

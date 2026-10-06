@@ -186,6 +186,8 @@ export interface Band {
     }
     genre?: string
     members?: string[]
+    /** Special guests: not judged, not voted for, never ranked. */
+    non_competing?: boolean
     [key: string]: unknown
   }
   created_at: string

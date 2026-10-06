@@ -322,9 +322,20 @@ const TEST_BANDS = [
 ]
 
 /**
- * Create the rehearsal event with five made-up bands, or return it if it
- * already exists. The bands have no company, setlist or photos, so nothing
- * about them reaches company pages, song stats or the gallery.
+ * Special guests who open the rehearsal night: on the event's pages, but not
+ * on the ballot or the judge sheet and never ranked, as ShipReX at Sydney 2026.
+ */
+export const TEST_GUEST_BAND = {
+  id: `${TEST_EVENT_ID}-guests`,
+  name: 'The Special Guests',
+}
+
+/**
+ * Create the rehearsal event with five made-up competing bands and one
+ * non-competing band of special guests, or return it if it already exists
+ * (adding any band it is missing). The bands have no company, setlist or
+ * photos, so nothing about them reaches company pages, song stats or the
+ * gallery.
  */
 export async function ensureTestEvent(scoringVersion: string): Promise<Event> {
   await sql`
@@ -353,6 +364,15 @@ export async function ensureTestEvent(scoringVersion: string): Promise<Event> {
       ON CONFLICT (id) DO NOTHING
     `
   }
+  await sql`
+    INSERT INTO bands (id, event_id, name, description, "order", info)
+    VALUES (
+      ${TEST_GUEST_BAND.id}, ${TEST_EVENT_ID}, ${TEST_GUEST_BAND.name},
+      'Rehearsal special guests — not competing', 0,
+      ${JSON.stringify({ non_competing: true })}
+    )
+    ON CONFLICT (id) DO NOTHING
+  `
   return rows[0]
 }
 

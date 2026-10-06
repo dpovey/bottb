@@ -140,6 +140,11 @@ export async function updateEventStatus(eventId: string, status: EventStatus) {
  * - Calculates scores from live vote data (which may change)
  * - Should only be used for non-finalized events or admin preview
  *
+ * Non-competing bands (special guests, `info.non_competing`) are left out
+ * entirely — no row, and none of their votes in `total_crowd_votes` — so they
+ * are never ranked, frozen or counted in a crowd-vote share. This is the SQL
+ * twin of `isCompetingBand` in `src/lib/competing-bands.ts`.
+ *
  * Only `approved` votes are counted. A crowd vote that tripped duplicate
  * detection is `pending` until an admin approves or rejects it on the "Run the
  * night" page, and counts for nothing in the meantime.
@@ -158,6 +163,7 @@ export async function getBandScores(eventId: string) {
       JOIN bands b ON v.band_id = b.id
       WHERE b.event_id = ${eventId} AND v.voter_type = 'crowd'
         AND COALESCE(v.status, 'approved') = 'approved'
+        AND b.info->'non_competing' IS DISTINCT FROM 'true'::jsonb
     )
     SELECT 
       b.id,
@@ -196,6 +202,7 @@ export async function getBandScores(eventId: string) {
     LEFT JOIN crowd_noise_measurements cnm ON b.id = cnm.band_id AND cnm.event_id = ${eventId}
     CROSS JOIN total_votes tv
     WHERE b.event_id = ${eventId}
+      AND b.info->'non_competing' IS DISTINCT FROM 'true'::jsonb
     GROUP BY b.id, b.name, b."order", b.info, b.description, b.company_slug, c.name, c.icon_url, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
     ORDER BY b."order"
   `

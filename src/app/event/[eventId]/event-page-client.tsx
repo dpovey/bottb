@@ -33,6 +33,7 @@ import type {
 import type { NavEvent } from '@/components/nav'
 import { hasDetailedBreakdown, parseScoringVersion } from '@/lib/scoring'
 import { bandCompanyList } from '@/lib/band-companies'
+import { isCompetingBand, NON_COMPETING_LABEL } from '@/lib/competing-bands'
 
 /** Overall winner data passed from server component */
 export interface OverallWinner {
@@ -414,14 +415,16 @@ export function EventPageClient({
                       }`}
                     >
                       <div className="flex items-center p-4 md:p-6 gap-4 md:gap-6">
-                        {/* Order Number or Trophy */}
+                        {/* Order Number or Trophy. Special guests sit
+                            outside the competing running order (a star, not
+                            their order 0). */}
                         {isWinner ? (
                           <div className="w-10 h-10 flex items-center justify-center rounded-lg shrink-0 bg-warning/20">
                             <span className="text-lg">🏆</span>
                           </div>
                         ) : (
                           <NumberedIndicator
-                            number={band.order}
+                            number={isCompetingBand(band) ? band.order : '★'}
                             shape="square"
                             size="lg"
                             variant="muted"
@@ -449,6 +452,11 @@ export function EventPageClient({
                             {isWinner && (
                               <Badge variant="warning" className="shrink-0">
                                 Champion
+                              </Badge>
+                            )}
+                            {!isCompetingBand(band) && (
+                              <Badge className="shrink-0">
+                                {NON_COMPETING_LABEL}
                               </Badge>
                             )}
                           </div>

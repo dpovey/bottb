@@ -1280,6 +1280,65 @@ describe('night', () => {
       ])
     })
 
+    describe('with special guests (a non-competing band)', () => {
+      beforeEach(() => {
+        world.bands = [
+          {
+            ...band('guest', 'ShipReX', 0),
+            info: { non_competing: true },
+          },
+          ...world.bands,
+        ]
+        // A stray vote for the guests (cast before the flag was set): it is
+        // not counted and not put up for review. getBandScores already leaves
+        // the guests out, so world.scores stays as it is.
+        world.votes = [
+          ...world.votes,
+          crowdVote('guest', { status: 'pending' }),
+        ]
+      })
+
+      it('runs the night over the competing bands only', async () => {
+        const state = await getNightState(EVENT_ID)
+        expect(state?.bands.map((b) => b.id)).toEqual(['b1', 'b2'])
+        expect(state?.crowd.total).toEqual({
+          approved: 4,
+          pending: 0,
+          rejected: 0,
+        })
+        expect(state?.crowd.byBand.guest).toBeUndefined()
+        expect(state?.reviewQueue).toEqual([])
+        expect(state?.standings.map((s) => s.band_id)).toEqual(['b1', 'b2'])
+      })
+
+      it('lets judges who left the guests off finalise', async () => {
+        const state = await getNightState(EVENT_ID)
+        expect(state?.judges.map((j) => j.bandsScored)).toEqual([2, 2, 2])
+        const lock = state?.transitions.find((t) => t.id === 'lock-results')
+        expect(lock?.blockers).toEqual([])
+      })
+
+      it('releases with one frozen result per competing band', async () => {
+        world.status = 'locked'
+        const state = await getNightState(EVENT_ID)
+        const release = state?.transitions.find(
+          (t) => t.id === 'release-results'
+        )
+        expect(release?.blockers).toEqual([])
+      })
+
+      it('freezes the results when the guests have no row', async () => {
+        const result = await performTransition(
+          EVENT_ID,
+          { transition: 'lock-results', acknowledgedWarnings: [] },
+          null
+        )
+        expect(result.ok).toBe(true)
+        expect(mocks.finalizeEventResults).toHaveBeenCalledTimes(1)
+        expect(world.status).toBe('locked')
+      })
+    })
+
     it('stamps generatedAt when the reads begin, not when they finish', async () => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date('2026-10-08T09:10:00.000Z'))

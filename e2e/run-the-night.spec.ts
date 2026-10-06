@@ -35,6 +35,13 @@ const BANDS = [
   'Rollback Kings',
 ]
 const bandId = (n: number) => `${EVENT_ID}-band-${n}`
+/**
+ * The test event's sixth band: special guests who open the night (order 0)
+ * but do not compete. They are on the event page, and nowhere votes are
+ * offered, taken, counted or announced. The scores below are for the five
+ * competing bands only.
+ */
+const GUESTS = { id: `${EVENT_ID}-guests`, name: 'The Special Guests' }
 
 /** [song choice, performance, crowd vibe, visuals] per band, in running order. */
 const JUDGE_SHEETS: Record<string, number[][]> = {
@@ -81,6 +88,7 @@ function expectedTotals(): number[] {
 
 interface NightStateSnapshot {
   event: { status: string; isTest: boolean }
+  bands: { id: string; name: string }[]
   crowd: {
     total: { approved: number; pending: number; rejected: number }
     byBand: Record<
@@ -219,6 +227,18 @@ test.describe('Run the night', () => {
     const state = await nightState(admin)
     expect(state.event).toMatchObject({ status: 'upcoming', isTest: true })
     expect(state.crowd.total).toEqual({ approved: 0, pending: 0, rejected: 0 })
+    // The night is run over the five competing bands; the guests are not in it.
+    expect(state.bands.map((b) => b.name)).toEqual(BANDS)
+  })
+
+  test('the special guests are on the event page, labelled, ahead of the competing bands', async () => {
+    await voter.goto(`/event/${EVENT_ID}`)
+    const guests = voter.getByRole('link', { name: new RegExp(GUESTS.name) })
+    await expect(guests).toBeVisible({ timeout: 30000 })
+    await expect(guests).toContainText('Special guests')
+    // Order 0 is not shown as a number.
+    await expect(guests).not.toContainText(/^0/)
+    await expect(voter.getByText('6 Bands')).toBeVisible()
   })
 
   test('the test event is hidden from every public listing', async () => {
@@ -323,6 +343,14 @@ test.describe('Run the night', () => {
     for (const band of BANDS) {
       await expect(voter.getByText(band, { exact: true })).toBeVisible()
     }
+    // Special guests are not on the ballot.
+    await expect(voter.getByText(GUESTS.name, { exact: true })).toHaveCount(0)
+    const ballot = await voter.request.get(`/api/events/${EVENT_ID}/ballot`)
+    const ballotBands = ((await ballot.json()) as { bands: { id: string }[] })
+      .bands
+    expect(ballotBands.map((b) => b.id)).toEqual(
+      BANDS.map((_, i) => bandId(i + 1))
+    )
 
     // A second phone sits on the ballot without voting, for later.
     await lateVoter.goto(`/vote/crowd/${EVENT_ID}`)
@@ -436,6 +464,14 @@ test.describe('Run the night', () => {
       { band_id: 'test-band-1' }
     )
     expect(wrongBand.status()).toBe(400)
+
+    // So is a vote for the special guests, and nothing is recorded.
+    const forGuests = await phoneVote(
+      playwright,
+      { ip: '198.51.100.7', userAgent: 'E2E phone G' },
+      { band_id: GUESTS.id }
+    )
+    expect(forGuests.status()).toBe(400)
 
     // Ordinary votes from five more distinct phones.
     const ordinary = [1, 1, 2, 3, 4]
@@ -629,6 +665,11 @@ test.describe('Run the night', () => {
     await expect(
       judgePage.getByRole('heading', { name: 'Judge Scoring' })
     ).toBeVisible({ timeout: 30000 })
+    // Special guests are not judged, so they are not on the sheet.
+    await expect(
+      judgePage.getByLabel(`Song Choice for ${BANDS[0]}`)
+    ).toBeVisible({ timeout: 30000 })
+    await expect(judgePage.getByText(GUESTS.name)).toHaveCount(0)
     await judgePage.locator('#name').fill('Judge One')
     const criteria = ['Song Choice', 'Performance', 'Crowd Vibe', 'Visuals']
     for (const [bandIndex, band] of BANDS.entries()) {
@@ -677,6 +718,22 @@ test.describe('Run the night', () => {
               4
             ),
           },
+        })
+      ).status()
+    ).toBe(400)
+
+    // A sheet that scores the special guests is refused.
+    const withGuests = [
+      ...sheetFor('Judge Four', JUDGE_SHEETS['Judge One']),
+      {
+        ...sheetFor('Judge Four', JUDGE_SHEETS['Judge One'])[0],
+        band_id: GUESTS.id,
+      },
+    ]
+    expect(
+      (
+        await admin.request.post('/api/votes/batch', {
+          data: { votes: withGuests },
         })
       ).status()
     ).toBe(400)
@@ -730,6 +787,7 @@ test.describe('Run the night', () => {
       expect(row, band).toBeTruthy()
       expect(row!.totalScore, band).toBeCloseTo(totals[index], 6)
     }
+    // Five rows: the special guests are never ranked.
     expect(state.standings.map((s) => s.band_name)).toEqual([
       'The Dry Runs',
       'Merge Conflict',
@@ -777,10 +835,15 @@ test.describe('Run the night', () => {
       /Second place.*In second place, with 79\.67 points: Merge Conflict\..*Merge Conflict also won the judges' vote, best Song Choice, best Performance and best Crowd Vibe\./,
       /Winner.*And the winner of Test Night \(rehearsal\), with 86 points: The Dry Runs!.*The Dry Runs also won the popular vote and best Visuals\./,
     ])
+    await expect(readOut).not.toContainText(GUESTS.name)
+    await expect(
+      admin.getByRole('table', { name: 'Final results' })
+    ).not.toContainText(GUESTS.name)
     await admin.getByRole('checkbox', { name: /Show scores/ }).uncheck()
 
     const state = await nightState(admin)
     expect(state.standingsFrozen).toBe(true)
+    expect(state.standings).toHaveLength(5)
     expect(state.standings[0]).toMatchObject({
       band_name: 'The Dry Runs',
       rank: 1,
@@ -870,6 +933,8 @@ test.describe('Run the night', () => {
       'content',
       /noindex/
     )
+    await expect(voter.getByText('Band Details')).toBeVisible()
+    await expect(voter.locator('body')).not.toContainText(GUESTS.name)
 
     const scores = await voter.request.get(`/api/events/${EVENT_ID}/scores`)
     expect(scores.status()).toBe(200)

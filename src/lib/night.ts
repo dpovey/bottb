@@ -6,6 +6,7 @@
  * modules `event-lifecycle.ts` and `vote-review.ts`.
  */
 
+import { competingBands } from './competing-bands'
 import {
   deleteFinalizedResults,
   finalizeEventResults,
@@ -179,8 +180,8 @@ async function loadNight(eventId: string): Promise<NightSnapshot | null> {
   const detailed = hasDetailedBreakdown(scoringVersion)
 
   const [
-    bands,
-    crowdVotes,
+    allBands,
+    allCrowdVotes,
     judgeRows,
     frozenRows,
     scores,
@@ -198,8 +199,15 @@ async function loadNight(eventId: string): Promise<NightSnapshot | null> {
     wasLockedByRunTheNight(eventId),
   ])
 
+  // Special guests (non-competing bands) are not voted for, judged or
+  // ranked, so the night is run over the competing bands only: they set the
+  // band count every judge sheet and the frozen results must match, and a
+  // stray vote for a guest is neither counted nor put up for review.
+  const bands = competingBands(allBands)
+  const bandIds = new Set(bands.map((b) => b.id))
+  const crowdVotes = allCrowdVotes.filter((v) => bandIds.has(v.band_id))
   const counts = countCrowdVotes(crowdVotes)
-  const judges = groupJudges(judgeRows, new Set(bands.map((b) => b.id)))
+  const judges = groupJudges(judgeRows, bandIds)
   const liveStandings = calculateStandings(scores, scoringVersion)
   const live = liveStandings.map(toNightStanding)
   const frozen = hasFrozenResults(status)
