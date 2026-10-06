@@ -502,7 +502,7 @@ describe('Database Functions', () => {
       const query = sqlText()
       // The total-votes CTE (used to normalise the crowd vote)...
       expect(query).toMatch(
-        /WITH total_votes AS \(.*v\.voter_type = 'crowd' AND COALESCE\(v\.status, 'approved'\) = 'approved' \)/
+        /WITH total_votes AS \(.*v\.voter_type = 'crowd' AND COALESCE\(v\.status, 'approved'\) = 'approved' AND b\.info->'non_competing' IS DISTINCT FROM 'true'::jsonb \)/
       )
       // ...and the per-band join that the averages and counts come from.
       expect(query).toMatch(
