@@ -537,14 +537,17 @@ test.describe('Run the night', () => {
     ).toBeVisible()
     // Band names stay off the review list until scores are switched on.
     await expect(
-      admin.getByRole('list', { name: 'Held votes' })
+      admin.getByRole('list', { name: 'Held votes', exact: true })
     ).not.toContainText('Null Pointer Sisters')
 
     // Held votes are grouped by what they share. The two from phone B's
     // address sit together and can be decided together; the others stand
     // alone, so they only have their own buttons.
     await expect(
-      admin.getByRole('heading', { name: '2 held votes from one IP address' })
+      admin.getByRole('heading', {
+        name: '2 held votes from one IP address',
+        exact: true,
+      })
     ).toBeVisible()
     await expect(
       admin.getByRole('button', { name: /^Approve these 2 \(198\.51\.100\.2 / })
