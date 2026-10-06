@@ -24,7 +24,11 @@ CREATE TABLE IF NOT EXISTS events (
     info jsonb DEFAULT '{}'::jsonb,
     timezone character varying(64) DEFAULT 'Australia/Brisbane'::character varying NOT NULL,
     description text,
-    CONSTRAINT events_status_check CHECK (((status)::text = ANY ((ARRAY['upcoming'::character varying, 'voting'::character varying, 'finalized'::character varying])::text[])))
+    -- Rehearsal event: hidden from every public listing, sitemap and search index
+    is_test boolean DEFAULT false NOT NULL,
+    -- upcoming -> voting -> closed (reviewing votes) -> locked (results frozen,
+    -- not public) -> finalized (results public). See src/lib/event-lifecycle.ts
+    CONSTRAINT events_status_check CHECK (((status)::text = ANY ((ARRAY['upcoming'::character varying, 'voting'::character varying, 'closed'::character varying, 'locked'::character varying, 'finalized'::character varying])::text[])))
 );
 
 -- Companies table
@@ -108,11 +112,13 @@ CREATE TABLE IF NOT EXISTS votes (
     email character varying(255),
     name character varying(255),
     visuals integer,
+    reviewed_at timestamp with time zone,
+    reviewed_by character varying(255),
     CONSTRAINT votes_crowd_vibe_check CHECK (((crowd_vibe >= 0) AND (crowd_vibe <= 30))),
     CONSTRAINT votes_crowd_vote_check CHECK (((crowd_vote >= 0) AND (crowd_vote <= 20))),
     CONSTRAINT votes_performance_check CHECK (((performance >= 0) AND (performance <= 30))),
     CONSTRAINT votes_song_choice_check CHECK (((song_choice >= 0) AND (song_choice <= 20))),
-    CONSTRAINT votes_status_check CHECK (((status)::text = ANY ((ARRAY['approved'::character varying, 'pending'::character varying])::text[]))),
+    CONSTRAINT votes_status_check CHECK (((status)::text = ANY ((ARRAY['approved'::character varying, 'pending'::character varying, 'rejected'::character varying])::text[]))),
     CONSTRAINT votes_visuals_check CHECK (((visuals >= 0) AND (visuals <= 20))),
     CONSTRAINT votes_voter_type_check CHECK (((voter_type)::text = ANY ((ARRAY['crowd'::character varying, 'judge'::character varying])::text[])))
 );
@@ -155,6 +161,18 @@ CREATE TABLE IF NOT EXISTS finalized_results (
     finalized_at timestamp with time zone DEFAULT now(),
     avg_visuals numeric(10,2),
     visuals_score numeric(10,2)
+);
+
+-- Event lifecycle audit log: one row per "Run the night" transition
+CREATE TABLE IF NOT EXISTS event_status_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    event_id character varying(255) NOT NULL,
+    transition character varying(40) NOT NULL,
+    from_status character varying(20) NOT NULL,
+    to_status character varying(20) NOT NULL,
+    actor character varying(255),
+    details jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 -- Photos table
@@ -419,6 +437,7 @@ CREATE INDEX IF NOT EXISTS idx_crowd_noise_event_id ON crowd_noise_measurements(
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_band_id ON crowd_noise_measurements(band_id);
 CREATE INDEX IF NOT EXISTS idx_crowd_noise_created_at ON crowd_noise_measurements(created_at);
 CREATE INDEX IF NOT EXISTS idx_finalized_results_event_id ON finalized_results(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_status_log_event ON event_status_log(event_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_finalized_results_band_id ON finalized_results(band_id);
 CREATE INDEX IF NOT EXISTS idx_finalized_results_final_rank ON finalized_results(final_rank);
 CREATE INDEX IF NOT EXISTS idx_photos_event_id ON photos(event_id);
@@ -466,6 +485,7 @@ ALTER TABLE ONLY votes ADD CONSTRAINT votes_band_id_fkey FOREIGN KEY (band_id) R
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY crowd_noise_measurements ADD CONSTRAINT crowd_noise_measurements_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
 ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+ALTER TABLE ONLY event_status_log ADD CONSTRAINT event_status_log_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY finalized_results ADD CONSTRAINT finalized_results_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;
 ALTER TABLE ONLY photos ADD CONSTRAINT photos_event_id_fkey FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 ALTER TABLE ONLY photos ADD CONSTRAINT photos_band_id_fkey FOREIGN KEY (band_id) REFERENCES bands(id) ON DELETE CASCADE;

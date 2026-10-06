@@ -33,16 +33,19 @@ Events are grouped into **Upcoming** and **Past** sections across the app:
 
 ### Active Event (Special Case)
 
-- When an event has `is_active: true` AND `status: voting`
+- When an event's status is `voting`, `closed` or `locked` — from voting
+  opening until the results are released
 - Shows live indicator banner on home page
-- "Vote Now" CTA prominently displayed
-- Only one event can be active at a time
+- "Vote Now" CTA while `voting`; "results coming soon" once voting has closed
+- Never listed as a past event and never shown with a winner while live
+- Only one event should be active at a time
 
 ## Event Data
 
 - id, name, date, location, timezone
-- status: upcoming/voting/finalized
-- is_active: boolean
+- status: upcoming/voting/closed/locked/finalized (see [run-the-night.md](./run-the-night.md#event-statuses))
+- is_active: boolean (legacy; kept in step with the status)
+- is_test: boolean — the rehearsal event, hidden from every public listing
 - info (JSONB): image_url, description, ticket_url, social_media
 
 ## Event Creation

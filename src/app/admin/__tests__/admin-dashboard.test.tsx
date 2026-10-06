@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import { server } from '@/__mocks__/server'
 import { http, HttpResponse } from 'msw'
@@ -17,7 +18,66 @@ vi.mock('next/link', () => ({
   },
 }))
 
+const mockPush = vi.hoisted(() => vi.fn())
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}))
+
 // Use MSW for fetch mocking
+
+const events = [
+  {
+    id: 'event-1',
+    name: 'Test Event 1',
+    date: '2024-12-25T18:30:00Z',
+    location: 'Test Venue 1',
+    status: 'voting',
+  },
+  {
+    id: 'event-2',
+    name: 'Test Event 2',
+    date: '2024-12-26T18:30:00Z',
+    location: 'Test Venue 2',
+    status: 'upcoming',
+  },
+  {
+    id: 'event-3',
+    name: 'Test Event 3',
+    date: '2023-12-10T00:00:00Z',
+    location: 'Test Venue 3',
+    status: 'finalized',
+  },
+  {
+    id: 'event-4',
+    name: 'Mid-night Event',
+    date: '2026-10-08T08:00:00Z',
+    location: 'Factory Theatre',
+    status: 'closed',
+  },
+  {
+    id: 'event-5',
+    name: 'Announcing Event',
+    date: '2026-10-09T08:00:00Z',
+    location: 'Factory Theatre',
+    status: 'locked',
+  },
+  {
+    id: 'test-night',
+    name: 'Rehearsal Night',
+    date: '2026-10-07T08:00:00Z',
+    location: 'Nowhere',
+    status: 'voting',
+    is_test: true,
+  },
+]
+
+/** The list entry for an event: its name heading's surrounding row. */
+function eventRow(name: string): HTMLElement {
+  const heading = screen.getByRole('heading', { name })
+  const row = heading.parentElement?.parentElement
+  if (!row) throw new Error(`No row for ${name}`)
+  return row
+}
 
 const mockSession = {
   user: {
@@ -80,32 +140,193 @@ describe('AdminDashboard', () => {
     })
   })
 
-  it('shows correct status badges for different event statuses', async () => {
+  describe('event status', () => {
+    beforeEach(() => {
+      server.use(http.get('/api/events', () => HttpResponse.json(events)))
+    })
+
+    it.each([
+      ['Test Event 1', 'Voting open'],
+      ['Test Event 2', 'Before voting'],
+      ['Test Event 3', 'Results released'],
+      ['Mid-night Event', 'Voting closed'],
+      ['Announcing Event', 'Results locked'],
+    ])('labels %s as "%s"', async (name, label) => {
+      render(<AdminDashboard session={mockSession} />)
+
+      await screen.findByRole('heading', { name })
+      expect(within(eventRow(name)).getByText(label)).toBeInTheDocument()
+    })
+
+    it('shows a status it does not know as it is', async () => {
+      server.use(
+        http.get('/api/events', () =>
+          HttpResponse.json([{ ...events[0], status: 'archived' }])
+        )
+      )
+      render(<AdminDashboard session={mockSession} />)
+
+      await screen.findByRole('heading', { name: 'Test Event 1' })
+      expect(
+        within(eventRow('Test Event 1')).getByText('archived')
+      ).toBeInTheDocument()
+    })
+
+    it('no longer offers a status picker: status changes go through "Run the night"', async () => {
+      render(<AdminDashboard session={mockSession} />)
+
+      await screen.findByRole('heading', { name: 'Test Event 1' })
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+    })
+
+    it('marks the rehearsal event as a test, and only that one', async () => {
+      render(<AdminDashboard session={mockSession} />)
+
+      await screen.findByRole('heading', { name: 'Rehearsal Night' })
+      expect(
+        within(eventRow('Rehearsal Night')).getByText('Test')
+      ).toBeInTheDocument()
+      expect(within(eventRow('Test Event 1')).queryByText('Test')).toBeNull()
+      expect(screen.getAllByText('Test')).toHaveLength(1)
+    })
+
+    it('links each event to its "Run the night" page', async () => {
+      render(<AdminDashboard session={mockSession} />)
+
+      await screen.findByRole('heading', { name: 'Rehearsal Night' })
+      for (const event of events) {
+        expect(
+          within(eventRow(event.name)).getByRole('link', {
+            name: 'Run the night',
+          })
+        ).toHaveAttribute('href', `/admin/events/${event.id}/run`)
+      }
+    })
+  })
+
+  it('asks for the event list including the rehearsal event', async () => {
+    let requested = ''
+    server.use(
+      http.get('/api/events', ({ request }) => {
+        requested = request.url
+        return HttpResponse.json(events)
+      })
+    )
+
     render(<AdminDashboard session={mockSession} />)
 
-    await waitFor(
-      () => {
-        // Check that status dropdowns are rendered with correct values
-        const statusSelects = screen.getAllByRole('combobox')
-        expect(statusSelects).toHaveLength(3)
+    await screen.findByRole('heading', { name: 'Rehearsal Night' })
+    expect(new URL(requested).searchParams.get('includeTest')).toBe('1')
+  })
 
-        // Check first event (voting)
-        const votingSelect = statusSelects[0]
-        expect(votingSelect).toHaveValue('voting')
-        expect(votingSelect).toHaveClass('text-success')
+  describe('Rehearse with test event', () => {
+    it('creates (or reuses) the test event and opens its "Run the night" page', async () => {
+      const user = userEvent.setup()
+      let method = ''
+      server.use(
+        http.post('/api/admin/test-event', ({ request }) => {
+          method = request.method
+          return HttpResponse.json({
+            event: { id: 'test-night', name: 'Rehearsal Night' },
+          })
+        })
+      )
+      render(<AdminDashboard session={mockSession} />)
 
-        // Check second event (upcoming)
-        const upcomingSelect = statusSelects[1]
-        expect(upcomingSelect).toHaveValue('upcoming')
-        expect(upcomingSelect).toHaveClass('text-blue-400')
+      await user.click(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      )
 
-        // Check third event (finalized)
-        const finalizedSelect = statusSelects[2]
-        expect(finalizedSelect).toHaveValue('finalized')
-        expect(finalizedSelect).toHaveClass('text-text-muted')
-      },
-      { timeout: 10000 }
-    )
+      await waitFor(() =>
+        expect(mockPush).toHaveBeenCalledWith('/admin/events/test-night/run')
+      )
+      expect(method).toBe('POST')
+    })
+
+    it('shows that it is working, and cannot be pressed twice', async () => {
+      const user = userEvent.setup()
+      let calls = 0
+      let release: () => void = () => {}
+      server.use(
+        http.post('/api/admin/test-event', async () => {
+          calls++
+          await new Promise<void>((resolve) => (release = resolve))
+          return HttpResponse.json({ event: { id: 'test-night' } })
+        })
+      )
+      render(<AdminDashboard session={mockSession} />)
+
+      await user.click(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      )
+
+      const busy = await screen.findByRole('button', { name: 'Opening…' })
+      expect(busy).toBeDisabled()
+      await user.click(busy)
+      expect(calls).toBe(1)
+
+      release()
+      await waitFor(() => expect(mockPush).toHaveBeenCalledTimes(1))
+    })
+
+    it('shows the error and stays put when the test event cannot be created', async () => {
+      const user = userEvent.setup()
+      server.use(
+        http.post('/api/admin/test-event', () =>
+          HttpResponse.json(
+            { error: 'Failed to create the test event' },
+            { status: 500 }
+          )
+        )
+      )
+      render(<AdminDashboard session={mockSession} />)
+
+      await user.click(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      )
+
+      expect(
+        await screen.findByText('Failed to create the test event')
+      ).toBeInTheDocument()
+      expect(mockPush).not.toHaveBeenCalled()
+      expect(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      ).toBeEnabled()
+    })
+
+    it('does not navigate when the response has no event', async () => {
+      const user = userEvent.setup()
+      server.use(
+        http.post('/api/admin/test-event', () => HttpResponse.json({}))
+      )
+      render(<AdminDashboard session={mockSession} />)
+
+      await user.click(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      )
+
+      expect(
+        await screen.findByText('Failed to open the test event')
+      ).toBeInTheDocument()
+      expect(mockPush).not.toHaveBeenCalled()
+    })
+
+    it('reports a network failure', async () => {
+      const user = userEvent.setup()
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      server.use(http.post('/api/admin/test-event', () => HttpResponse.error()))
+      render(<AdminDashboard session={mockSession} />)
+
+      await user.click(
+        screen.getByRole('button', { name: 'Rehearse with test event' })
+      )
+
+      expect(
+        await screen.findByText('Failed to open the test event')
+      ).toBeInTheDocument()
+      expect(mockPush).not.toHaveBeenCalled()
+      consoleSpy.mockRestore()
+    })
   })
 
   it('renders Manage Event button for each event', async () => {

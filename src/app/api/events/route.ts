@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getEvents, getEventById } from '@/lib/db'
 import { sql } from '@/lib/sql'
 import { withAdminProtection, ProtectedApiHandler } from '@/lib/api-protection'
+import type { EventStatus } from '@/lib/event-lifecycle'
 
-async function handleGetEvents(_request: NextRequest) {
+async function handleGetEvents(request: NextRequest) {
   try {
     // All events, newest first (an event that has started but is still
-    // voting is neither "upcoming" nor "past", so don't build from those)
-    const allEvents = await getEvents()
+    // voting is neither "upcoming" nor "past", so don't build from those).
+    // The rehearsal ("test") event is only listed when asked for, so it stays
+    // out of pickers such as the photo metadata editor.
+    const includeTest =
+      new URL(request.url).searchParams.get('includeTest') === '1'
+    const allEvents = await getEvents({ includeTest })
 
     return NextResponse.json(allEvents)
   } catch (error) {
@@ -38,7 +43,7 @@ interface EventCreateBody {
   date: string
   location: string
   timezone?: string
-  status?: 'upcoming' | 'voting' | 'finalized'
+  status?: EventStatus
   info?: Record<string, unknown>
 }
 

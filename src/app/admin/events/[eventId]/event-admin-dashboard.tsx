@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { formatEventDate } from '@/lib/date-utils'
+import { getStatusLabel } from '@/lib/event-lifecycle'
 import type { BandCompany } from '@/lib/db-types'
 import {
   EditIcon,
@@ -379,12 +380,33 @@ export default function EventAdminDashboard({
                 : 'bg-gray-600 text-white'
           }`}
         >
-          {event.status.toUpperCase()}
+          {getStatusLabel(event.status).toUpperCase()}
         </span>
         <span className="text-muted">
           {formatEventDate(event.date, event.timezone)}
         </span>
       </div>
+
+      {/* Run the night */}
+      <Link
+        href={`/admin/events/${eventId}/run`}
+        className="block bg-accent/15 hover:bg-accent/25 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-accent/40 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Run the night
+            </h2>
+            <p className="text-gray-300 text-sm sm:text-base mt-1">
+              Open and close crowd voting, review held votes, finalise and
+              release the results — one step at a time.
+            </p>
+          </div>
+          <span className="shrink-0 bg-accent text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl text-sm sm:text-base">
+            Open
+          </span>
+        </div>
+      </Link>
 
       {/* Event Description */}
       <Card>

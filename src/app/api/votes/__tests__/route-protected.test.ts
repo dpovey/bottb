@@ -1,277 +1,175 @@
 // @vitest-environment node
 
-import { vi } from 'vitest'
-import { createRequest } from 'node-mocks-http'
-import { NextRequest } from 'next/server'
+/**
+ * Rate limiting on POST /api/votes. The limit is per IP address + browser, and
+ * has to leave room for a crowd voting from one venue Wi-Fi address.
+ *
+ * What the route stores lives in route.test.ts; the response body in
+ * response-format.test.ts.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('next/server', async (importOriginal) => importOriginal())
+vi.mock('@/lib/auth', () => ({ auth: vi.fn() }))
+vi.mock('@/lib/db', () => ({
+  getEventById: vi.fn(),
+  submitVote: vi.fn(),
+  updateCrowdVoteChoice: vi.fn(),
+  hasUserVotedByEmail: vi.fn(),
+}))
+vi.mock('@/lib/sql', () => ({ sql: vi.fn(), sqlQuery: vi.fn() }))
+vi.mock('@/lib/user-context-server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/user-context-server')>()),
+  hasUserVoted: vi.fn(),
+  hasUserVotedByFingerprintJS: vi.fn(),
+}))
+
 import { POST } from '../route'
-import { submitVote, updateVote as _updateVote } from '@/lib/db'
+import {
+  getEventById,
+  hasUserVotedByEmail,
+  submitVote,
+  updateCrowdVoteChoice,
+} from '@/lib/db'
+import { sql } from '@/lib/sql'
 import {
   hasUserVoted,
   hasUserVotedByFingerprintJS,
 } from '@/lib/user-context-server'
+import { clearRateLimitStore } from '@/lib/api-protection'
+import type { Event, Vote } from '@/lib/db-types'
+import {
+  bandLookup,
+  storedVote,
+  voteRequest,
+  votingEvent,
+  NO_VOTE,
+} from './vote-request'
 
-// Mock the database functions
-vi.mock('@/lib/db', () => ({
-  submitVote: vi.fn(),
-  updateVote: vi.fn(),
-  hasUserVotedByEmail: vi.fn(),
-  getEventById: vi.fn(),
-}))
+const VOTE_LIMIT = 300
+const mockSubmitVote = vi.mocked(submitVote)
 
-// Mock user context functions
-vi.mock('@/lib/user-context-server', () => ({
-  extractUserContext: vi.fn(() => ({
-    ip_address: '127.0.0.1',
-    user_agent: 'test-agent',
-    vote_fingerprint: 'test-fingerprint',
-  })),
-  hasUserVoted: vi.fn(() => Promise.resolve(false)),
-  hasUserVotedByFingerprintJS: vi.fn(() => Promise.resolve(false)),
-}))
+const phone = (ip: string, userAgent = 'iPhone Safari') => ({
+  headers: { 'x-forwarded-for': ip, 'user-agent': userAgent },
+})
 
-// Mock the database query for band name lookup
-vi.mock('@vercel/postgres', () => ({
-  sql: vi.fn(),
-}))
-
-// Mock NextResponse.json to return a response with cookies
-vi.mock('next/server', () => ({
-  NextResponse: {
-    json: vi.fn((data, init) => {
-      const response = {
-        json: () => Promise.resolve(data),
-        status: init?.status || 200,
-        headers: new Headers(init?.headers),
-        cookies: {
-          set: vi.fn(),
-          get: vi.fn(),
-          delete: vi.fn(),
-        },
-        ...init,
-      }
-      return response
-    }),
-  },
-}))
-
-const mockSubmitVote = submitVote as ReturnType<typeof vi.fn>
-const mockHasUserVoted = hasUserVoted as ReturnType<typeof vi.fn>
-const mockHasUserVotedByFingerprintJS =
-  hasUserVotedByFingerprintJS as ReturnType<typeof vi.fn>
-
-// Import and mock getEventById
-import { getEventById } from '@/lib/db'
-const mockGetEventById = getEventById as ReturnType<typeof vi.fn>
-
-// Import sql after mocking
-import { sql } from '@vercel/postgres'
-const mockSql = sql as unknown as ReturnType<typeof vi.fn>
-
-// Helper function to create NextRequest mock
-function createNextRequestMock(
-  voteData: Record<string, unknown>,
-  headers: Record<string, string> = {}
+async function sendVotes(
+  count: number,
+  ip = '203.0.113.7',
+  userAgent?: string
 ) {
-  const request = createRequest({
-    method: 'POST',
-    url: '/api/votes',
-    body: voteData,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-  })
-
-  // Add required NextRequest properties
-  request.json = vi.fn().mockResolvedValue(voteData)
-  request.cookies = {
-    get: vi.fn().mockReturnValue(undefined),
-    set: vi.fn(),
-    delete: vi.fn(),
-  }
-
-  return request as unknown as NextRequest
+  return Promise.all(
+    Array.from({ length: count }, () =>
+      POST(voteRequest(undefined, phone(ip, userAgent)))
+    )
+  )
 }
 
-describe('/api/votes (Protected)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+beforeEach(() => {
+  vi.clearAllMocks()
+  clearRateLimitStore()
+  vi.mocked(getEventById).mockResolvedValue(
+    votingEvent('voting') as unknown as Event
+  )
+  vi.mocked(sql).mockImplementation(bandLookup() as unknown as typeof sql)
+  mockSubmitVote.mockResolvedValue(storedVote() as unknown as Vote)
+  vi.mocked(updateCrowdVoteChoice).mockResolvedValue(NO_VOTE)
+  vi.mocked(hasUserVotedByEmail).mockResolvedValue(false)
+  vi.mocked(hasUserVoted).mockResolvedValue(false)
+  vi.mocked(hasUserVotedByFingerprintJS).mockResolvedValue(false)
+})
 
-    // Mock getEventById to return a voting event by default
-    mockGetEventById.mockResolvedValue({
-      id: 'event-1',
-      name: 'Test Event',
-      status: 'voting',
-      is_active: true,
-    })
+afterEach(() => {
+  vi.useRealTimers()
+})
 
-    // Mock the band name query
-    mockSql.mockResolvedValue({
-      rows: [{ name: 'Test Band' }],
-      command: 'SELECT',
-      rowCount: 1,
-      oid: 0,
-      fields: [],
-    })
+describe('POST /api/votes rate limiting', () => {
+  it(`lets ${VOTE_LIMIT} votes a minute through from one address and browser`, async () => {
+    const responses = await sendVotes(VOTE_LIMIT)
+
+    expect(responses.every((r) => r.status === 200)).toBe(true)
+    expect(mockSubmitVote).toHaveBeenCalledTimes(VOTE_LIMIT)
   })
 
-  describe('POST', () => {
-    it('submits a vote successfully with rate limiting', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        song_choice: undefined,
-        performance: undefined,
-        crowd_vibe: undefined,
-        crowd_vote: 20,
-      }
+  it('refuses the next one with 429, and stores nothing for it', async () => {
+    await sendVotes(VOTE_LIMIT)
+    mockSubmitVote.mockClear()
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
+    const response = await POST(voteRequest(undefined, phone('203.0.113.7')))
 
-      mockSubmitVote.mockResolvedValue(mockVote)
-
-      const request = createNextRequestMock(voteData, {
-        'X-Forwarded-For': '127.0.0.1',
-        'User-Agent': 'test-agent',
-      })
-
-      const response = await POST(request)
-
-      expect(mockSubmitVote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...voteData,
-          ip_address: '127.0.0.1',
-          user_agent: 'test-agent',
-          vote_fingerprint: 'test-fingerprint',
-        })
-      )
-
-      expect(response.status).toBe(200)
-
-      const data = await response.json()
-      expect(data).toEqual({
-        ...mockVote,
-        message: 'Vote submitted successfully',
-        status: 'approved',
-        duplicateDetected: false,
-      })
+    expect(response.status).toBe(429)
+    const body = await response.json()
+    expect(body).toMatchObject({
+      error: 'Too many requests',
+      limit: VOTE_LIMIT,
+      windowMs: 60_000,
     })
+    expect(body.retryAfter).toBeGreaterThan(0)
+    expect(body.retryAfter).toBeLessThanOrEqual(60)
+    expect(response.headers.get('Retry-After')).toBe(String(body.retryAfter))
+    expect(response.headers.get('X-RateLimit-Remaining')).toBe('0')
+    expect(mockSubmitVote).not.toHaveBeenCalled()
+    expect(getEventById).toHaveBeenCalledTimes(VOTE_LIMIT)
+  })
 
-    it('handles rate limiting correctly', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        song_choice: undefined,
-        performance: undefined,
-        crowd_vibe: undefined,
-        crowd_vote: 20,
-      }
+  it('counts each browser on the same address separately', async () => {
+    await sendVotes(VOTE_LIMIT, '203.0.113.7', 'iPhone Safari')
 
-      mockSubmitVote.mockResolvedValue({
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      })
+    const android = await POST(
+      voteRequest(undefined, phone('203.0.113.7', 'Android Chrome'))
+    )
 
-      // Make 11 requests (exceeding the 10/min vote limit)
-      const requests = Array.from({ length: 11 }, (_, _i) => {
-        return createNextRequestMock(voteData, {
-          'X-Forwarded-For': '192.168.1.1',
-          'User-Agent': 'TestAgent',
-        })
-      })
+    expect(android.status).toBe(200)
+  })
 
-      const responses = await Promise.all(requests.map((req) => POST(req)))
+  it('counts each address separately', async () => {
+    await sendVotes(VOTE_LIMIT, '203.0.113.7')
 
-      // First 10 should succeed
-      for (let i = 0; i < 10; i++) {
-        expect(responses[i].status).toBe(200)
-      }
+    const otherAddress = await POST(
+      voteRequest(undefined, phone('198.51.100.20'))
+    )
 
-      // 11th should be rate limited
-      const lastResponse = responses[10]
-      expect(lastResponse.status).toBe(429)
+    expect(otherAddress.status).toBe(200)
+  })
 
-      const data = await lastResponse.json()
-      expect(data.error).toBe('Too many requests')
-      expect(data.limit).toBe(10)
-      expect(data.retryAfter).toBeDefined()
-    })
+  it('lets votes through again once the minute is up', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-08T10:00:00Z'))
+    await sendVotes(VOTE_LIMIT)
+    expect(
+      (await POST(voteRequest(undefined, phone('203.0.113.7')))).status
+    ).toBe(429)
 
-    it('includes rate limit headers', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        song_choice: undefined,
-        performance: undefined,
-        crowd_vibe: undefined,
-        crowd_vote: 20,
-      }
+    vi.setSystemTime(new Date('2026-10-08T10:01:01Z'))
 
-      mockSubmitVote.mockResolvedValue({
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      })
+    expect(
+      (await POST(voteRequest(undefined, phone('203.0.113.7')))).status
+    ).toBe(200)
+  })
 
-      const request = createNextRequestMock(voteData, {
-        'X-Forwarded-For': '127.0.0.1',
-        'User-Agent': 'test-agent',
-      })
+  it('reports the limit and what is left on an accepted vote', async () => {
+    const [first, second] = [
+      await POST(voteRequest(undefined, phone('203.0.113.7'))),
+      await POST(voteRequest(undefined, phone('203.0.113.7'))),
+    ]
 
-      const response = await POST(request)
+    expect(first.headers.get('X-RateLimit-Limit')).toBe(String(VOTE_LIMIT))
+    expect(first.headers.get('X-RateLimit-Remaining')).toBe(
+      String(VOTE_LIMIT - 1)
+    )
+    expect(second.headers.get('X-RateLimit-Remaining')).toBe(
+      String(VOTE_LIMIT - 2)
+    )
+  })
 
-      expect(response.status).toBe(200)
-      expect(response.headers.get('X-RateLimit-Limit')).toBe('10')
-      expect(response.headers.get('X-RateLimit-Remaining')).toBeDefined()
-    })
+  it('also reports the limit on a refused vote', async () => {
+    vi.mocked(getEventById).mockResolvedValue(
+      votingEvent('closed') as unknown as Event
+    )
 
-    it('returns 500 when database error occurs', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const response = await POST(voteRequest(undefined, phone('203.0.113.7')))
 
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        song_choice: undefined,
-        performance: undefined,
-        crowd_vibe: undefined,
-        crowd_vote: 20,
-      }
-
-      // Mock the user context functions to return false for duplicate checks
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      // Mock submitVote to throw an error
-      mockSubmitVote.mockRejectedValue(new Error('Database error'))
-
-      const request = createNextRequestMock(voteData, {
-        'X-Forwarded-For': '127.0.0.1',
-        'User-Agent': 'test-agent',
-      })
-
-      const response = await POST(request)
-
-      expect(response.status).toBe(500)
-
-      const data = await response.json()
-      expect(data).toEqual({ error: 'Failed to submit vote' })
-
-      // Assert that console.error was called with the expected error
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Error submitting vote:',
-        expect.any(Error)
-      )
-
-      consoleSpy.mockRestore()
-    })
+    expect(response.status).toBe(403)
+    expect(response.headers.get('X-RateLimit-Limit')).toBe(String(VOTE_LIMIT))
   })
 })

@@ -8,9 +8,10 @@ config({ path: '.env.local' })
 
 async function activateEvent(eventId: string) {
   try {
-    // First, deactivate all events and set status to 'upcoming'
-    await sql`UPDATE events SET is_active = false, status = 'upcoming'`
-    console.log('✅ Deactivated all events')
+    // Clear the active flag everywhere else. Statuses of other events are
+    // left alone: resetting them would hide every past event's results.
+    await sql`UPDATE events SET is_active = false WHERE id <> ${eventId}`
+    console.log('✅ Cleared the active flag on other events')
 
     // Activate the specified event and set status to 'voting'
     const { rows } = await sql`

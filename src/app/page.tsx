@@ -140,7 +140,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (activeEvent) {
     title = `${activeEvent.name} | Battle of the Tech Bands`
-    description = `Vote now for ${activeEvent.name}! ${description}`
+    description =
+      activeEvent.status === 'voting'
+        ? `Vote now for ${activeEvent.name}! ${description}`
+        : `${activeEvent.name} is happening now. ${description}`
   }
 
   return {
@@ -356,7 +359,19 @@ export default async function HomePage() {
         }
       }
 
-      // Only calculate scores for non-finalized past events
+      // Until an event is finalized its results are not public, whatever
+      // votes and judge scores have been entered so far.
+      if (!isFinalized) {
+        return {
+          ...event,
+          overallWinner: null,
+          bands,
+          scoringVersion,
+          heroPhoto,
+        }
+      }
+
+      // Finalized without stored results (legacy): calculate from the votes
       const scores = (await getBandScores(event.id)) as BandScore[]
 
       const bandResults = scores
@@ -435,11 +450,13 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             {activeEvent && (
               <>
-                <Link href={`/vote/crowd/${activeEvent.id}`}>
-                  <Button variant="accent" size="lg">
-                    Vote Now
-                  </Button>
-                </Link>
+                {activeEvent.status === 'voting' && (
+                  <Link href={`/vote/crowd/${activeEvent.id}`}>
+                    <Button variant="accent" size="lg">
+                      Vote Now
+                    </Button>
+                  </Link>
+                )}
                 <Link href={`/event/${activeEvent.id}`}>
                   <Button variant="outline-solid" size="lg">
                     Event
@@ -470,7 +487,9 @@ export default async function HomePage() {
                 Happening Now
               </h2>
               <p className="text-text-muted text-lg">
-                Cast your vote and support your favorite band
+                {activeEvent.status === 'voting'
+                  ? 'Cast your vote and support your favorite band'
+                  : 'Voting has closed — results coming soon'}
               </p>
             </div>
 

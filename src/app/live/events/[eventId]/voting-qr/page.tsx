@@ -40,6 +40,31 @@ export default function VotingQRPage() {
     fetchEvent()
   }, [eventId])
 
+  // Follow voting opening and closing, so the screen can stay up all night.
+  useEffect(() => {
+    let cancelled = false
+    const refreshStatus = async () => {
+      try {
+        const response = await fetch(`/api/events/${eventId}/ballot`)
+        if (!response.ok || cancelled) return
+        const ballot = await response.json()
+        if (cancelled || typeof ballot?.event?.status !== 'string') return
+        setEvent((current) =>
+          current && current.status !== ballot.event.status
+            ? { ...current, status: ballot.event.status }
+            : current
+        )
+      } catch {
+        // Keep showing the last known status; the next tick will retry.
+      }
+    }
+    const interval = setInterval(refreshStatus, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [eventId])
+
   useEffect(() => {
     if (event) {
       const generateQRCode = async () => {
@@ -105,7 +130,13 @@ export default function VotingQRPage() {
                   : 'bg-gray-600 text-white'
             }`}
           >
-            {event.status.toUpperCase()}
+            {event.status === 'voting'
+              ? 'VOTING OPEN'
+              : event.status === 'upcoming'
+                ? 'VOTING OPENS SOON'
+                : event.status === 'finalized'
+                  ? 'RESULTS ARE OUT'
+                  : 'VOTING CLOSED'}
           </span>
         </div>
       </div>

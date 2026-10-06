@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import QRCode from 'qrcode'
 import { formatEventDate } from '@/lib/date-utils'
+import { getStatusLabel } from '@/lib/event-lifecycle'
 
 interface Event {
   id: string
@@ -105,7 +106,7 @@ export default function JudgeQRPage() {
                   : 'bg-gray-600 text-white'
             }`}
           >
-            {event.status.toUpperCase()}
+            {getStatusLabel(event.status).toUpperCase()}
           </span>
         </div>
       </div>

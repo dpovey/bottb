@@ -7,6 +7,10 @@
  * For database queries, import from './db' (server-only)
  */
 
+import type { EventStatus } from './event-lifecycle'
+
+export type { EventStatus }
+
 export interface Event {
   id: string
   name: string
@@ -14,7 +18,9 @@ export interface Event {
   location: string
   timezone: string // IANA timezone name (e.g., "Australia/Brisbane")
   is_active: boolean
-  status: 'upcoming' | 'voting' | 'finalized'
+  status: EventStatus
+  /** Rehearsal event, hidden from every public listing. */
+  is_test?: boolean
   description?: string // Top-level description field
   image_url?: string
   info?: {
@@ -226,9 +232,17 @@ export interface Vote {
   fingerprintjs_confidence_comment?: string
   email?: string
   name?: string
-  status?: 'approved' | 'pending'
+  status?: VoteStatus
+  reviewed_at?: string | null
+  reviewed_by?: string | null
   created_at: string
 }
+
+/**
+ * `pending` votes tripped duplicate detection and wait for an admin decision;
+ * only `approved` votes count towards the score.
+ */
+export type VoteStatus = 'approved' | 'pending' | 'rejected'
 
 export interface CrowdNoiseMeasurement {
   id: string

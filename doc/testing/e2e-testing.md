@@ -91,6 +91,16 @@ test.describe('Feature', () => {
 })
 ```
 
+### The full-night rehearsal
+
+`e2e/run-the-night.spec.ts` is the exception to "each test is independent": it
+is one night, told in order (`mode: 'serial'`), on the rehearsal test event —
+create it, open voting, vote from several "phones", close, review held votes,
+enter judge sheets, finalise, release, and every undo. The expected scores are
+worked out in the spec from the votes and sheets it submits, not by the app's
+scoring code. Extend it whenever the lifecycle, the vote rules or the scoring
+change; it is the only test that runs the real SQL.
+
 ## Selectors
 
 Prefer accessible selectors:

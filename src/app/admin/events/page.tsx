@@ -4,6 +4,11 @@ import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/layouts'
+import {
+  getStatusLabel,
+  isEventLive,
+  isEventStatus,
+} from '@/lib/event-lifecycle'
 
 interface Event {
   id: string
@@ -11,6 +16,7 @@ interface Event {
   location: string
   status: string
   date: string
+  is_test?: boolean
 }
 
 export default function AdminEventsPage() {
@@ -21,7 +27,7 @@ export default function AdminEventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('/api/events')
+        const response = await fetch('/api/events?includeTest=1')
         if (response.ok) {
           const data = await response.json()
           setEvents(data)
@@ -93,17 +99,28 @@ export default function AdminEventsPage() {
                   <p className="text-sm text-dim">{event.date}</p>
                 </div>
                 <div className="flex items-center space-x-3">
+                  {event.is_test && (
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
+                      Test
+                    </span>
+                  )}
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      event.status === 'active'
+                      isEventStatus(event.status) && isEventLive(event.status)
                         ? 'bg-green-500/20 text-green-400'
                         : event.status === 'upcoming'
                           ? 'bg-blue-500/20 text-blue-400'
                           : 'bg-gray-500/20 text-gray-400'
                     }`}
                   >
-                    {event.status}
+                    {getStatusLabel(event.status)}
                   </span>
+                  <Link
+                    href={`/admin/events/${event.id}/run`}
+                    className="border border-white/30 hover:border-white/60 text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors"
+                  >
+                    Run the night
+                  </Link>
                   <Link
                     href={`/admin/events/${event.id}`}
                     className="bg-accent hover:bg-accent-light text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors"

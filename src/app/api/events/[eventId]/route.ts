@@ -37,7 +37,6 @@ interface EventUpdateBody {
   date?: string
   location?: string
   timezone?: string
-  status?: 'upcoming' | 'voting' | 'finalized'
   description?: string | null
   info?: Record<string, unknown>
 }
@@ -65,7 +64,9 @@ const handleUpdateEvent: ProtectedApiHandler = async (
     }
 
     const body: EventUpdateBody = await request.json()
-    const { name, date, location, timezone, status, description, info } = body
+    // `status` is deliberately not updatable here: it only changes through the
+    // lifecycle steps on the "Run the night" page.
+    const { name, date, location, timezone, description, info } = body
 
     const { rows } = await sql`
       UPDATE events SET
@@ -73,7 +74,6 @@ const handleUpdateEvent: ProtectedApiHandler = async (
         date = COALESCE(${date || null}, date),
         location = COALESCE(${location || null}, location),
         timezone = COALESCE(${timezone || null}, timezone),
-        status = COALESCE(${status || null}, status),
         description = ${description === undefined ? existing.description : description},
         info = ${info ? JSON.stringify(info) : existing.info}
       WHERE id = ${eventId}

@@ -10,14 +10,21 @@ import {
   CameraIcon,
   StarIcon,
 } from '@/components/icons'
-import { Button, Select, VinylSpinner } from '@/components/ui'
+import { useRouter } from 'next/navigation'
+import { Badge, Button, VinylSpinner } from '@/components/ui'
+import {
+  getStatusLabel,
+  isEventLive,
+  isEventStatus,
+} from '@/lib/event-lifecycle'
 
 interface Event {
   id: string
   name: string
   location: string
-  status: 'upcoming' | 'voting' | 'finalized'
+  status: string
   date: string
+  is_test?: boolean
 }
 
 interface Session {
@@ -36,9 +43,10 @@ interface AdminDashboardProps {
 export default function AdminDashboard({
   session: _session,
 }: AdminDashboardProps) {
+  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [openingTestEvent, setOpeningTestEvent] = useState(false)
   const [refreshingCache, setRefreshingCache] = useState(false)
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error'
@@ -51,7 +59,7 @@ export default function AdminDashboard({
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/events')
+      const response = await fetch('/api/events?includeTest=1')
       if (response.ok) {
         const data = await response.json()
         // Ensure data is an array
@@ -70,43 +78,30 @@ export default function AdminDashboard({
     }
   }
 
-  const handleStatusChange = async (eventId: string, newStatus: string) => {
-    setUpdatingStatus(eventId)
+  // Create the rehearsal event if it does not exist yet, then open its
+  // "Run the night" page.
+  const handleOpenTestEvent = async () => {
+    setOpeningTestEvent(true)
     setStatusMessage(null)
     try {
-      const response = await fetch(`/api/events/${eventId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        // Update the local state
-        setEvents((prevEvents) =>
-          prevEvents.map((event) =>
-            event.id === eventId
-              ? {
-                  ...event,
-                  status: newStatus as 'upcoming' | 'voting' | 'finalized',
-                }
-              : event
-          )
-        )
-        setStatusMessage({ type: 'success', text: result.message })
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => setStatusMessage(null), 3000)
+      const response = await fetch('/api/admin/test-event', { method: 'POST' })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok && data.event?.id) {
+        router.push(`/admin/events/${data.event.id}/run`)
       } else {
-        const error = await response.json()
-        setStatusMessage({ type: 'error', text: error.error })
+        setStatusMessage({
+          type: 'error',
+          text: data.error || 'Failed to open the test event',
+        })
       }
     } catch (error) {
-      console.error('Error updating event status:', error)
-      setStatusMessage({ type: 'error', text: 'Failed to update event status' })
+      console.error('Error opening test event:', error)
+      setStatusMessage({
+        type: 'error',
+        text: 'Failed to open the test event',
+      })
     } finally {
-      setUpdatingStatus(null)
+      setOpeningTestEvent(false)
     }
   }
 
@@ -265,8 +260,19 @@ export default function AdminDashboard({
       <div className="bg-elevated rounded-2xl p-4 sm:p-6 border border-white/5">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-white">Events</h2>
-          <div className="flex items-center gap-2">
-            {refreshingCache && <VinylSpinner size="xxs" />}
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {(refreshingCache || openingTestEvent) && (
+              <VinylSpinner size="xxs" />
+            )}
+            <Button
+              variant="outline-solid"
+              size="sm"
+              onClick={handleOpenTestEvent}
+              disabled={openingTestEvent}
+              title="A hidden practice event for rehearsing the night"
+            >
+              {openingTestEvent ? 'Opening…' : 'Rehearse with test event'}
+            </Button>
             <Button
               variant="outline-solid"
               size="sm"
@@ -311,28 +317,23 @@ export default function AdminDashboard({
                   </p>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
-                  <div className="flex items-center gap-2">
-                    <Select
-                      size="sm"
-                      value={event.status}
-                      onChange={(e) =>
-                        handleStatusChange(event.id, e.target.value)
-                      }
-                      disabled={updatingStatus === event.id}
-                      className={`w-auto cursor-pointer font-medium ${
-                        event.status === 'voting'
-                          ? 'text-success'
-                          : event.status === 'upcoming'
-                            ? 'text-blue-400'
-                            : 'text-text-muted'
-                      }`}
-                    >
-                      <option value="upcoming">Upcoming</option>
-                      <option value="voting">Voting</option>
-                      <option value="finalized">Finalized</option>
-                    </Select>
-                    {updatingStatus === event.id && <VinylSpinner size="xxs" />}
-                  </div>
+                  {event.is_test && <Badge variant="info">Test</Badge>}
+                  <Badge
+                    variant={
+                      isEventStatus(event.status) && isEventLive(event.status)
+                        ? 'success'
+                        : event.status === 'upcoming'
+                          ? 'info'
+                          : 'default'
+                    }
+                  >
+                    {getStatusLabel(event.status)}
+                  </Badge>
+                  <Link href={`/admin/events/${event.id}/run`}>
+                    <Button variant="outline-solid" size="sm">
+                      Run the night
+                    </Button>
+                  </Link>
                   <Link href={`/admin/events/${event.id}`}>
                     <Button variant="accent" size="sm">
                       Manage

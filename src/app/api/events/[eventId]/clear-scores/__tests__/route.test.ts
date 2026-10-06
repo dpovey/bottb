@@ -25,6 +25,8 @@ describe('Clear Scores API', () => {
       name: 'Test Event',
       location: 'Test Location',
       date: '2024-01-01',
+      status: 'upcoming',
+      is_test: false,
     }
 
     const mockVotesDeleted = 5
@@ -131,5 +133,98 @@ describe('Clear Scores API', () => {
     )
 
     consoleSpy.mockRestore()
+  })
+
+  describe('only before voting opens, unless it is the test event', () => {
+    beforeEach(() => {
+      vi.mocked(sql).mockReset()
+    })
+
+    function selectReturns(event: Record<string, unknown>) {
+      vi.mocked(sql).mockResolvedValueOnce({
+        rows: [event],
+        command: 'SELECT',
+        rowCount: 1,
+        oid: 0,
+        fields: [],
+      })
+    }
+
+    function deleteStatements(): string[] {
+      return vi
+        .mocked(sql)
+        .mock.calls.map((c) => (c[0] as unknown as string[]).join('?'))
+        .filter((text) => text.includes('DELETE'))
+    }
+
+    function clearScores(id = 'sydney-2026') {
+      return DELETE(
+        new NextRequest(`http://localhost/api/events/${id}/clear-scores`, {
+          method: 'DELETE',
+        })
+      )
+    }
+
+    it('reads the status and test flag of the event', async () => {
+      selectReturns({ id: 'sydney-2026', name: 'Sydney', status: 'voting' })
+      await clearScores()
+      const select = (
+        vi.mocked(sql).mock.calls[0][0] as unknown as string[]
+      ).join('?')
+      expect(select.replace(/\s+/g, ' ')).toMatch(/SELECT .*status.*is_test/)
+    })
+
+    it.each(['voting', 'closed', 'locked', 'finalized'])(
+      'refuses with 409 and deletes nothing when a real event is %s',
+      async (status) => {
+        selectReturns({
+          id: 'sydney-2026',
+          name: 'Sydney 2026',
+          status,
+          is_test: false,
+        })
+        const response = await clearScores()
+        const data = await response.json()
+        expect(response.status).toBe(409)
+        expect(data.error).toBe(
+          'Scores can only be cleared before voting opens. To correct a vote or a judge sheet, use "Run the night".'
+        )
+        expect(deleteStatements()).toEqual([])
+        expect(sql).toHaveBeenCalledTimes(1)
+      }
+    )
+
+    it('treats a missing test flag as a real event', async () => {
+      selectReturns({
+        id: 'sydney-2026',
+        name: 'Sydney 2026',
+        status: 'closed',
+      })
+      const response = await clearScores()
+      expect(response.status).toBe(409)
+      expect(deleteStatements()).toEqual([])
+    })
+
+    it.each(['upcoming', 'voting', 'closed', 'locked', 'finalized'])(
+      'clears the test event while it is %s',
+      async (status) => {
+        selectReturns({
+          id: 'test-night',
+          name: 'Test Night (rehearsal)',
+          status,
+          is_test: true,
+        })
+        vi.mocked(sql).mockResolvedValue({
+          rows: [],
+          command: 'DELETE',
+          rowCount: 0,
+          oid: 0,
+          fields: [],
+        })
+        const response = await clearScores('test-night')
+        expect(response.status).toBe(200)
+        expect(deleteStatements()).toHaveLength(3)
+      }
+    )
   })
 })

@@ -25,7 +25,7 @@ api/
 | Endpoint                    | Auth   | Rate Limit |
 | --------------------------- | ------ | ---------- |
 | `GET /api/events`           | Public | 100/min    |
-| `POST /api/votes`           | Public | 10/min     |
+| `POST /api/votes`           | Public | 300/min    |
 | `POST /api/votes/batch`     | Admin  | 200/min    |
 | `GET /api/photos/[id]/jpeg` | Public | 20/min     |
 | `PATCH /api/photos/*`       | Admin  | -          |

@@ -65,13 +65,17 @@ export default async function Image({
   })
 
   // Status badge
-  const statusLabel =
-    event.status === 'voting'
-      ? 'LIVE NOW'
-      : event.status === 'finalized'
-        ? 'RESULTS'
-        : 'UPCOMING'
-  const statusColor = event.status === 'voting' ? '#F5A623' : '#a0a0a0'
+  // Live from the moment voting opens until the results are released.
+  const isLive =
+    event.status === 'voting' ||
+    event.status === 'closed' ||
+    event.status === 'locked'
+  const statusLabel = isLive
+    ? 'LIVE NOW'
+    : event.status === 'finalized'
+      ? 'RESULTS'
+      : 'UPCOMING'
+  const statusColor = isLive ? '#F5A623' : '#a0a0a0'
 
   return new ImageResponse(
     <div

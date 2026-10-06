@@ -6,6 +6,7 @@ import {
   getFinalizedResults,
 } from '@/lib/db'
 import { withPublicRateLimit } from '@/lib/api-protection'
+import { auth } from '@/lib/auth'
 
 async function handleGetScores(request: NextRequest, _context?: unknown) {
   try {
@@ -43,7 +44,19 @@ async function handleGetScores(request: NextRequest, _context?: unknown) {
       return NextResponse.json(scores)
     }
 
-    // For non-finalized events, calculate scores dynamically
+    // Until an event is finalized its scores are not public: the live tally
+    // is for admins only (it would otherwise leak the result during voting).
+    if (event?.status !== 'finalized') {
+      const session = await auth()
+      if (!session?.user?.isAdmin) {
+        return NextResponse.json(
+          { error: 'Scores are not available until results are released' },
+          { status: 403 }
+        )
+      }
+    }
+
+    // No stored results (not finalized yet, or a legacy event): calculate
     const scores = await getBandScores(eventId)
     return NextResponse.json(scores)
   } catch (error) {

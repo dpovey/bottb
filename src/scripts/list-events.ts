@@ -34,12 +34,7 @@ async function listEvents(showBands = false) {
     for (let index = 0; index < rows.length; index++) {
       const event = rows[index]
       const statusIcon = event.is_active ? '🟢' : '⚪'
-      const statusText =
-        event.status === 'finalized'
-          ? 'FINALIZED'
-          : event.status === 'voting'
-            ? 'VOTING'
-            : 'UPCOMING'
+      const statusText = String(event.status).toUpperCase()
       const date = new Date(event.date).toLocaleDateString()
 
       console.log(`${index + 1}. ${event.name}`)

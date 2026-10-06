@@ -80,6 +80,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // A rehearsal event must never be indexed.
+    robots: event.is_test ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}/event/${eventId}`,
     },

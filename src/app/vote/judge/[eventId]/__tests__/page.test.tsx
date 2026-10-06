@@ -325,6 +325,161 @@ describe('JudgeVotingPage', () => {
     )
   }, 15000)
 
-  // Note: Complex timing tests removed to focus on core functionality
-  // The component works correctly - these were testing edge cases with MSW timing
+  describe('when the scores are not saved', () => {
+    /** Load two bands, name the judge and fill every score in range. */
+    async function fillSheet() {
+      server.use(
+        http.get('/api/bands/test-event-id', () => HttpResponse.json(mockBands))
+      )
+      render(<JudgeVotingPage />)
+      await screen.findByText('Test Band 1')
+      await user.type(
+        screen.getByPlaceholderText("Enter judge's name"),
+        'Judge Smith'
+      )
+      for (const input of screen.getAllByRole('spinbutton')) {
+        fireEvent.change(input, { target: { value: '15' } })
+      }
+      const submitButton = screen.getByRole('button', {
+        name: 'Submit All Scores',
+      })
+      expect(submitButton).toBeEnabled()
+      return submitButton
+    }
+
+    let consoleSpy: ReturnType<typeof vi.spyOn>
+    beforeEach(() => {
+      consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    })
+    afterEach(() => {
+      consoleSpy.mockRestore()
+    })
+
+    it.each([
+      [409, 'Already recorded a vote for judge: Judge Smith'],
+      [
+        403,
+        'Judge scores cannot be entered while the event is "Results locked"',
+      ],
+      [400, 'Visuals for Test Band 1 must be a whole number from 0 to 20'],
+      [500, 'Failed to submit votes'],
+    ])(
+      'says so with the reason from the server (%s) and keeps the scores',
+      async (status, error) => {
+        server.use(
+          http.post('/api/votes/batch', () =>
+            HttpResponse.json({ error }, { status })
+          )
+        )
+        const submitButton = await fillSheet()
+
+        await user.click(submitButton)
+
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+          `Scores not saved: ${error}`
+        )
+        expect(screen.queryByText('Scores Submitted!')).not.toBeInTheDocument()
+        expect(screen.getAllByRole('spinbutton')[0]).toHaveValue(15)
+        expect(
+          screen.getByRole('button', { name: 'Submit All Scores' })
+        ).toBeEnabled()
+      }
+    )
+
+    it('says so when the server gives no reason', async () => {
+      server.use(
+        http.post(
+          '/api/votes/batch',
+          () => new HttpResponse('Bad gateway', { status: 502 })
+        )
+      )
+      const submitButton = await fillSheet()
+
+      await user.click(submitButton)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Scores not saved. Check your connection and submit again.'
+      )
+    })
+
+    it('says so when the connection fails', async () => {
+      server.use(http.post('/api/votes/batch', () => HttpResponse.error()))
+      const submitButton = await fillSheet()
+
+      await user.click(submitButton)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Scores not saved. Check your connection and submit again.'
+      )
+      expect(screen.queryByText('Scores Submitted!')).not.toBeInTheDocument()
+    })
+
+    it('tells a signed-out admin how to save without losing the scores', async () => {
+      server.use(
+        http.post('/api/votes/batch', () =>
+          HttpResponse.json(
+            { error: 'Unauthorized - Admin access required' },
+            { status: 401 }
+          )
+        )
+      )
+      const submitButton = await fillSheet()
+
+      await user.click(submitButton)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        /signed out.*your scores are still on this page/
+      )
+      expect(screen.getAllByRole('spinbutton')[0]).toHaveValue(15)
+    })
+
+    it('clears the error once a retry succeeds', async () => {
+      let attempts = 0
+      server.use(
+        http.post('/api/votes/batch', () => {
+          attempts++
+          return attempts === 1
+            ? HttpResponse.json(
+                { error: 'Failed to submit votes' },
+                { status: 500 }
+              )
+            : HttpResponse.json({ votes: [] })
+        })
+      )
+      const submitButton = await fillSheet()
+
+      await user.click(submitButton)
+      await screen.findByRole('alert')
+      await user.click(
+        screen.getByRole('button', { name: 'Submit All Scores' })
+      )
+
+      expect(await screen.findByText('Scores Submitted!')).toBeInTheDocument()
+      expect(screen.queryByText(/Scores not saved/)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('when no bands load', () => {
+    it.each([
+      ['the event has no bands', () => HttpResponse.json([])],
+      [
+        'the bands request fails',
+        () => HttpResponse.json({ error: 'Failed' }, { status: 500 }),
+      ],
+    ])('cannot be submitted when %s', async (_case, respond) => {
+      server.use(http.get('/api/bands/test-event-id', respond))
+      render(<JudgeVotingPage />)
+
+      await screen.findByRole('heading', { name: 'Judge Scoring' })
+      await user.type(
+        screen.getByPlaceholderText("Enter judge's name"),
+        'Judge Smith'
+      )
+
+      expect(screen.queryAllByRole('spinbutton')).toHaveLength(0)
+      expect(
+        screen.getByRole('button', { name: 'Submit All Scores' })
+      ).toBeDisabled()
+    })
+  })
 })

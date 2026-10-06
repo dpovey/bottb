@@ -5,8 +5,15 @@ import { UserContext, BrowserInfo } from './user-context'
 
 /**
  * Extract user context from request headers and cookies (SERVER-SIDE ONLY)
+ *
+ * Pass `eventId` when the context is for a vote: it goes into the vote
+ * fingerprint, so the same phone voting at two events (or at the rehearsal
+ * event and then the real one) the same day is not mistaken for a repeat.
  */
-export function extractUserContext(request: NextRequest): UserContext {
+export function extractUserContext(
+  request: NextRequest,
+  eventId?: string
+): UserContext {
   const userAgent = request.headers.get('user-agent') || ''
   const forwardedFor = request.headers.get('x-forwarded-for')
   const realIp = request.headers.get('x-real-ip')
@@ -23,11 +30,11 @@ export function extractUserContext(request: NextRequest): UserContext {
 
   // Extract UTM parameters from URL
   let utmParams = {}
-  let eventId = ''
+  let fingerprintEventId = eventId || ''
   try {
     const url = new URL(request.url)
     utmParams = extractUtmParams(url)
-    eventId = url.searchParams.get('eventId') || ''
+    fingerprintEventId ||= url.searchParams.get('eventId') || ''
   } catch {
     console.warn('Invalid URL in request:', request.url)
   }
@@ -39,7 +46,7 @@ export function extractUserContext(request: NextRequest): UserContext {
   const voteFingerprint = generateVoteFingerprint({
     ip: ipAddress,
     userAgent,
-    eventId,
+    eventId: fingerprintEventId,
     timestamp: new Date().toISOString().split('T')[0], // Daily fingerprint
   })
 
@@ -208,29 +215,12 @@ export async function hasUserVotedByFingerprintJS(
   eventId: string,
   visitorId: string
 ): Promise<boolean> {
-  console.log('🔍 hasUserVotedByFingerprintJS - Event ID:', eventId)
-  console.log('🔍 hasUserVotedByFingerprintJS - Visitor ID:', visitorId)
-
-  // Let's also check what votes exist for this event
-  const { rows: allVotesForEvent } = await sql`
-    SELECT event_id, fingerprintjs_visitor_id, voter_type, created_at 
-    FROM votes 
-    WHERE event_id = ${eventId}
-  `
-  console.log('🔍 All votes for this event:', allVotesForEvent)
-
   const { rows } = await sql`
     SELECT 1 FROM votes 
     WHERE event_id = ${eventId} 
     AND fingerprintjs_visitor_id = ${visitorId}
     LIMIT 1
   `
-
-  console.log(
-    '🔍 hasUserVotedByFingerprintJS - Query result rows:',
-    rows.length
-  )
-  console.log('🔍 hasUserVotedByFingerprintJS - Rows:', rows)
 
   return rows.length > 0
 }

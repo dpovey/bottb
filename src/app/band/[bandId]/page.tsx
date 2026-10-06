@@ -390,7 +390,7 @@ export async function generateMetadata({
   const { sql } = await import('@vercel/postgres')
   const { rows: bandData } = await sql`
     SELECT b.*, 
-           e.name as event_name, e.date, e.location, e.timezone, e.status, e.info as event_info,
+           e.name as event_name, e.date, e.location, e.timezone, e.status, e.is_test, e.info as event_info,
            c.name as company_name, c.slug as company_slug, c.icon_url as company_icon_url,
            (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_thumbnail_url
     FROM bands b
@@ -434,6 +434,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // A band in the rehearsal event must never be indexed.
+    robots: band.is_test ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}/band/${bandId}`,
     },
@@ -546,7 +548,10 @@ export default async function BandPage({
 
   if (eventStatus === 'finalized' || isAdmin) {
     // Check if event is finalized and has finalized results
-    if (eventStatus === 'finalized' && (await hasFinalizedResults(eventId))) {
+    if (
+      (eventStatus === 'finalized' || eventStatus === 'locked') &&
+      (await hasFinalizedResults(eventId))
+    ) {
       // Use finalized results from table
       const finalizedResults = await getFinalizedResults(eventId)
       const finalizedResult = finalizedResults.find((r) => r.band_id === bandId)

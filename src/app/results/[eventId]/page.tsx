@@ -8,6 +8,7 @@ import {
   getPhotosByLabel,
   PHOTO_LABELS,
 } from '@/lib/db'
+import { hasFrozenResults } from '@/lib/event-lifecycle'
 import { getNavEvents } from '@/lib/nav-data'
 import { notFound, redirect } from 'next/navigation'
 import { formatEventDate } from '@/lib/date-utils'
@@ -102,8 +103,11 @@ export async function generateMetadata({
   let winnerName = ''
   if (!showDetailedBreakdown) {
     winnerName = eventInfo?.winner || ''
+  } else if (event.status !== 'finalized') {
+    // Results are not public yet, so the winner must not reach the page title.
+    winnerName = ''
   } else {
-    if (event.status === 'finalized' && (await hasFinalizedResults(eventId))) {
+    if (await hasFinalizedResults(eventId)) {
       const finalizedResults = await getFinalizedResults(eventId)
       if (finalizedResults.length > 0) {
         winnerName = finalizedResults[0].band_name
@@ -168,6 +172,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // A rehearsal event must never be indexed.
+    robots: event.is_test ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}/results/${eventId}`,
     },
@@ -377,8 +383,9 @@ export default async function ResultsPage({
     rank: number
   }[] = []
 
-  // Check if event is finalized and has finalized results
-  if (event.status === 'finalized' && (await hasFinalizedResults(eventId))) {
+  // Once results are locked they are read from the frozen table, so an admin
+  // previewing a locked event sees exactly what will be released.
+  if (hasFrozenResults(event.status) && (await hasFinalizedResults(eventId))) {
     // Use finalized results from table
     const finalizedResults = await getFinalizedResults(eventId)
 

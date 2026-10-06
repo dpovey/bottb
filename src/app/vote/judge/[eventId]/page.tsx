@@ -204,6 +204,7 @@ export default function JudgeVotingPage() {
   const isFormValid = () => {
     return (
       name.trim() !== '' && // Name is required
+      bands.length > 0 && // Nothing to submit if the bands failed to load
       bands.every((band) => {
         const bandScores = scores[band.id]
         const baseValid =
@@ -257,34 +258,32 @@ export default function JudgeVotingPage() {
         }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
         // No cookie needed for judge voting - admins can vote multiple times
+        setDuplicateError('')
         setIsSubmitted(true)
+      } else if (response.status === 404) {
+        setDuplicateError('Event not found')
+      } else if (response.status === 401) {
+        setDuplicateError(
+          'You have been signed out. Sign in again in another tab, then submit — your scores are still on this page.'
+        )
       } else {
-        if (response.status === 403) {
-          // Event status validation error
-          setDuplicateError(
-            data.error || 'Voting is not currently open for this event'
-          )
-          return
-        } else if (response.status === 404) {
-          // Event not found
-          setDuplicateError('Event not found')
-          return
-        } else if (response.status === 409) {
-          // Duplicate judge vote
-          setDuplicateError(data.error)
-          return
-        } else {
-          console.error('Error submitting votes:', response.status)
-          // Show error but don't block future submissions
-        }
+        // The scores were NOT saved. Say so, and keep them on screen.
+        console.error('Error submitting votes:', response.status)
+        setDuplicateError(
+          data.error
+            ? `Scores not saved: ${data.error}`
+            : 'Scores not saved. Check your connection and submit again.'
+        )
       }
     } catch (error) {
       console.error('Error submitting votes:', error)
-      // Show error but don't block future submissions
+      setDuplicateError(
+        'Scores not saved. Check your connection and submit again.'
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -502,6 +501,15 @@ export default function JudgeVotingPage() {
               </div>
             ))}
           </div>
+
+          {duplicateError && (
+            <p
+              className="mt-8 text-yellow-100 bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 font-medium"
+              role="alert"
+            >
+              {duplicateError}
+            </p>
+          )}
 
           <button
             type="submit"

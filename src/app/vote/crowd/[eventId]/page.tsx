@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
   getClientUserContext,
@@ -8,40 +9,101 @@ import {
   getFingerprintJSData,
   getVoteFromCookie,
 } from '@/lib/user-context-client'
+import type { Ballot } from '@/lib/ballot'
 import { BandThumbnail } from '@/components/ui'
 
-interface Band {
-  id: string
-  name: string
-  description?: string
-  company_name?: string
-  order: number
-  hero_thumbnail_url?: string
-  info?: {
-    logo_url?: string
-    website?: string
-    social_media?: {
-      twitter?: string
-      instagram?: string
-      facebook?: string
+/** How often an open voting page checks whether voting has opened or closed. */
+const BALLOT_POLL_MS = 5000
+/** How many times a vote is re-sent automatically when the server is busy. */
+const MAX_BUSY_RETRIES = 4
+
+/** Give up on a ballot check that has not answered, so the next one can run. */
+const BALLOT_TIMEOUT_MS = 8000
+/** Give up on a vote that has not answered, so the voter can tap again. */
+const VOTE_TIMEOUT_MS = 15000
+
+/**
+ * Shown when we cannot tell whether the vote reached the server. Tapping again
+ * is only guaranteed harmless when this browser could keep a vote id.
+ */
+function couldNotConfirm(hasVoteId: boolean): string {
+  return hasVoteId
+    ? 'We could not confirm your vote. Please check your connection and tap the button again — it will not be counted twice.'
+    : 'We could not confirm your vote. Please check your connection and tap the button again.'
+}
+
+/**
+ * A signal that aborts a request after `ms`. On a bad signal a request can
+ * hang for minutes; without this a stalled one would freeze the page.
+ */
+function timeoutSignal(ms: number): AbortSignal {
+  const controller = new AbortController()
+  setTimeout(() => controller.abort(), ms)
+  return controller.signal
+}
+
+type BallotState =
+  | { phase: 'loading' }
+  | { phase: 'not-found' }
+  | { phase: 'ready'; ballot: Ballot }
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * An id for this browser's vote in this event, made once and kept. It is sent
+ * with every attempt, so a vote that was saved but whose answer never arrived
+ * (bad signal) is recognised when the voter taps again instead of being
+ * recorded a second time. Returns undefined if the browser cannot store one.
+ */
+function getClientVoteId(eventId: string): string | undefined {
+  try {
+    const key = `vote_id_${eventId}`
+    let id = window.localStorage.getItem(key)
+    if (!id) {
+      id = window.crypto.randomUUID()
+      window.localStorage.setItem(key, id)
     }
-    genre?: string
-    members?: string[]
-    [key: string]: unknown
+    return id
+  } catch {
+    return undefined
   }
+}
+
+function Panel({
+  icon,
+  title,
+  children,
+}: {
+  icon: string
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
+        <div className="text-6xl mb-4">{icon}</div>
+        <h2 className="text-3xl font-bold text-white mb-4">{title}</h2>
+        <div className="text-gray-300">{children}</div>
+      </div>
+    </div>
+  )
 }
 
 export default function CrowdVotingPage() {
   const params = useParams()
   const eventId = params.eventId as string
-  const [bands, setBands] = useState<Band[]>([])
+  const [ballotState, setBallotState] = useState<BallotState>({
+    phase: 'loading',
+  })
+  const [connectionTrouble, setConnectionTrouble] = useState(false)
   const [selectedBand, setSelectedBand] = useState<string>('')
   const [email, setEmail] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [hasAlreadyVoted, setHasAlreadyVoted] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [duplicateError, setDuplicateError] = useState<string>('')
+  const [notice, setNotice] = useState<string>('')
   const [voteStatus, setVoteStatus] = useState<'approved' | 'pending'>(
     'approved'
   )
@@ -50,43 +112,77 @@ export default function CrowdVotingPage() {
     bandName: string
   } | null>(null)
 
+  // Nothing more to follow once the vote is in.
+  const isDone = isSubmitted || hasAlreadyVoted
+
   useEffect(() => {
     if (isSubmitted) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [isSubmitted])
 
+  // Load the ballot, then keep checking it so the page follows voting opening
+  // and closing without anyone having to refresh.
   useEffect(() => {
-    const fetchBands = async () => {
+    if (isDone) return
+    let cancelled = false
+    let loading = false
+
+    const loadBallot = async () => {
+      // One check at a time: on a slow connection an older answer must not
+      // arrive after, and overwrite, a newer one.
+      if (loading) return
+      loading = true
       try {
-        const response = await fetch(`/api/bands/${eventId}`)
-        const data = await response.json()
-
-        // Ensure data is an array
-        const bandsData = Array.isArray(data) ? data : []
-        setBands(bandsData)
-      } catch (error) {
-        console.error('Error fetching bands:', error)
-        // Set empty array on error to prevent map errors
-        setBands([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    const fetchPreviousVote = () => {
-      // Check if user has a voting cookie and get vote data
-      if (hasVotingCookie(eventId)) {
-        const voteData = getVoteFromCookie(eventId)
-        if (voteData) {
-          setPreviousVote(voteData)
-          setSelectedBand(voteData.bandId) // Pre-select the previous choice
+        const response = await fetch(`/api/events/${eventId}/ballot`, {
+          signal: timeoutSignal(BALLOT_TIMEOUT_MS),
+        })
+        // Always read the body, so the request is finished either way.
+        const data = (await response.json().catch(() => null)) as Ballot | null
+        if (cancelled) return
+        if (response.status === 404) {
+          setBallotState({ phase: 'not-found' })
+          return
         }
+        if (!response.ok || !data?.event || !Array.isArray(data.bands)) {
+          throw new Error(`Ballot request failed: ${response.status}`)
+        }
+        setBallotState({ phase: 'ready', ballot: data })
+        setConnectionTrouble(false)
+      } catch (error) {
+        if (cancelled) return
+        console.error('Error fetching ballot:', error)
+        // Keep whatever is on screen and try again on the next tick.
+        setConnectionTrouble(true)
+      } finally {
+        loading = false
       }
     }
 
-    fetchBands()
-    fetchPreviousVote()
+    loadBallot()
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') loadBallot()
+    }, BALLOT_POLL_MS)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadBallot()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [eventId, isDone])
+
+  useEffect(() => {
+    // Check if user has a voting cookie and get vote data
+    if (!hasVotingCookie(eventId)) return
+    const voteData = getVoteFromCookie(eventId)
+    if (voteData) {
+      setPreviousVote(voteData)
+      setSelectedBand(voteData.bandId) // Pre-select the previous choice
+    }
   }, [eventId])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,6 +190,8 @@ export default function CrowdVotingPage() {
     if (!selectedBand) return
 
     setIsSubmitting(true)
+    setNotice('')
+    const clientVoteId = getClientVoteId(eventId)
     try {
       // Get client-side user context
       const clientContext = getClientUserContext()
@@ -107,66 +205,91 @@ export default function CrowdVotingPage() {
         fingerprintData = null
       }
 
-      const response = await fetch('/api/votes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Send client context as headers
-          'X-Screen-Resolution': clientContext.screen_resolution || '',
-          'X-Timezone': clientContext.timezone || '',
-          'X-Language': clientContext.language || '',
-          // Send FingerprintJS visitor ID and confidence as headers (small data)
-          'X-FingerprintJS-Visitor-ID': fingerprintData?.visitorId || '',
-          'X-FingerprintJS-Confidence':
-            fingerprintData?.confidence?.toString() || '',
-          'X-FingerprintJS-Confidence-Comment':
-            fingerprintData?.confidenceComment || '',
-        },
-        body: JSON.stringify({
-          event_id: eventId,
-          band_id: selectedBand,
-          voter_type: 'crowd',
-          crowd_vote: 20, // Crowd gets full points for crowd vote
-          email: email || undefined, // Only send email if provided
-          // Only send essential fingerprint data, not all components
-          fingerprintjs_visitor_id: fingerprintData?.visitorId,
-          fingerprintjs_confidence: fingerprintData?.confidence,
-          fingerprintjs_confidence_comment: fingerprintData?.confidenceComment,
-        }),
-      })
+      const sendVote = () =>
+        fetch('/api/votes', {
+          method: 'POST',
+          signal: timeoutSignal(VOTE_TIMEOUT_MS),
+          headers: {
+            'Content-Type': 'application/json',
+            // Send client context as headers
+            'X-Screen-Resolution': clientContext.screen_resolution || '',
+            'X-Timezone': clientContext.timezone || '',
+            'X-Language': clientContext.language || '',
+            // Send FingerprintJS visitor ID and confidence as headers (small data)
+            'X-FingerprintJS-Visitor-ID': fingerprintData?.visitorId || '',
+            'X-FingerprintJS-Confidence':
+              fingerprintData?.confidence?.toString() || '',
+            'X-FingerprintJS-Confidence-Comment':
+              fingerprintData?.confidenceComment || '',
+          },
+          body: JSON.stringify({
+            event_id: eventId,
+            band_id: selectedBand,
+            voter_type: 'crowd',
+            client_vote_id: clientVoteId,
+            crowd_vote: 20, // Crowd gets full points for crowd vote
+            email: email || undefined, // Only send email if provided
+            // Only send essential fingerprint data, not all components
+            fingerprintjs_visitor_id: fingerprintData?.visitorId,
+            fingerprintjs_confidence: fingerprintData?.confidence,
+            fingerprintjs_confidence_comment:
+              fingerprintData?.confidenceComment,
+          }),
+        })
 
-      const data = await response.json()
+      // A busy server (429) is not the voter's problem: wait and send again.
+      let response = await sendVote()
+      for (
+        let attempt = 0;
+        response.status === 429 && attempt < MAX_BUSY_RETRIES;
+        attempt++
+      ) {
+        setNotice('Lots of votes coming in — sending yours again…')
+        // No (or a nonsense) Retry-After means "a couple of seconds".
+        const retryAfter = Number(response.headers.get('Retry-After'))
+        const seconds = retryAfter > 0 ? Math.min(retryAfter, 5) : 2
+        await wait(seconds * 1000 + Math.random() * 1000)
+        response = await sendVote()
+      }
+
+      const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
         // Cookie is set by server with vote data
-        setVoteStatus(data.status || 'approved')
+        setVoteStatus(data.status === 'pending' ? 'pending' : 'approved')
         setIsSubmitted(true)
+      } else if (response.status === 409) {
+        setHasAlreadyVoted(true)
+      } else if (response.status === 403) {
+        // Voting closed (or has not opened) since this page last checked.
+        setNotice('Voting is not open right now.')
+        setBallotState((current) =>
+          current.phase === 'ready'
+            ? {
+                phase: 'ready',
+                ballot: {
+                  ...current.ballot,
+                  event: {
+                    ...current.ballot.event,
+                    status: data.eventStatus || current.ballot.event.status,
+                    votingOpen: false,
+                  },
+                },
+              }
+            : current
+        )
+      } else if (response.status === 404) {
+        setBallotState({ phase: 'not-found' })
+      } else if (response.status === 429) {
+        setNotice(
+          'It is very busy right now and your vote has not gone through yet. Please tap the button again.'
+        )
       } else {
-        if (response.status === 400 && data.duplicateDetected) {
-          // Duplicate detected but no email provided
-          setDuplicateError(data.message)
-          return
-        } else if (response.status === 403) {
-          // Event status validation error
-          setDuplicateError(
-            data.message || 'Voting is not currently open for this event'
-          )
-          return
-        } else if (response.status === 404) {
-          // Event not found
-          setDuplicateError('Event not found')
-          return
-        } else if (response.status === 409) {
-          setHasAlreadyVoted(true)
-          return // Exit early for other duplicate vote scenarios
-        } else {
-          setHasAlreadyVoted(true)
-          return // Exit early for other errors
-        }
+        setNotice(couldNotConfirm(!!clientVoteId))
       }
     } catch (error) {
       console.error('Error submitting vote:', error)
-      setHasAlreadyVoted(true)
+      setNotice(couldNotConfirm(!!clientVoteId))
     } finally {
       setIsSubmitting(false)
     }
@@ -174,57 +297,105 @@ export default function CrowdVotingPage() {
 
   if (isSubmitted) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
-          <div className="text-6xl mb-4">
-            {voteStatus === 'pending' ? '⏳' : '✅'}
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            {voteStatus === 'pending' ? 'Vote Under Review' : 'Vote Submitted!'}
-          </h2>
-          <p className="text-gray-300">
-            {voteStatus === 'pending'
-              ? 'Your vote has been recorded and will be reviewed for approval. Thank you for participating!'
-              : 'Your vote has been recorded. Thank you for participating!'}
-          </p>
-        </div>
-      </div>
+      <Panel
+        icon={voteStatus === 'pending' ? '⏳' : '✅'}
+        title={voteStatus === 'pending' ? 'Vote Received' : 'Vote Submitted!'}
+      >
+        <p>
+          {voteStatus === 'pending'
+            ? 'Your vote has been recorded. A phone just like yours has already voted, so we will double-check it before it is counted. Thank you for participating!'
+            : 'Your vote has been recorded. Thank you for participating!'}
+        </p>
+      </Panel>
     )
   }
 
   if (hasAlreadyVoted) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
-          <div className="text-6xl mb-4">🚫</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Already Voted</h2>
-          <p className="text-gray-300">
-            It looks like you may have already voted for this event. Each person
-            can only vote once.
+      <Panel icon="🚫" title="Already Voted">
+        <p>
+          It looks like you may have already voted for this event. Each person
+          can only vote once.
+        </p>
+      </Panel>
+    )
+  }
+
+  const header = (
+    <div className="text-center mb-8">
+      <h1 className="text-4xl font-bold text-white mb-4">Crowd Voting</h1>
+      <p className="text-gray-300 text-lg">Vote for your favorite band!</p>
+    </div>
+  )
+
+  if (ballotState.phase === 'loading') {
+    return (
+      <Panel icon="⏳" title="Loading...">
+        <p>
+          {connectionTrouble
+            ? 'Having trouble connecting. Still trying…'
+            : 'Fetching bands for this event'}
+        </p>
+      </Panel>
+    )
+  }
+
+  if (ballotState.phase === 'not-found') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {header}
+        <Panel icon="🤔" title="Event Not Found">
+          <p>
+            We could not find this event. Check the link or scan the QR code
+            again.
           </p>
-        </div>
+        </Panel>
       </div>
     )
   }
 
-  if (isLoading) {
+  const { event, bands } = ballotState.ballot
+
+  if (!event.votingOpen) {
+    const notOpenYet = event.status === 'upcoming'
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md mx-auto text-center">
-          <div className="text-6xl mb-4">⏳</div>
-          <h2 className="text-3xl font-bold text-white mb-4">Loading...</h2>
-          <p className="text-gray-300">Fetching bands for this event</p>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        {header}
+        <Panel
+          icon={notOpenYet ? '🎸' : '🔒'}
+          title={notOpenYet ? 'Voting Opens Soon' : 'Voting Has Closed'}
+        >
+          {notOpenYet ? (
+            <p>
+              Voting for {event.name} has not opened yet. Keep this page open —
+              the ballot will appear here as soon as voting starts.
+            </p>
+          ) : event.status === 'finalized' ? (
+            <>
+              <p className="mb-6">
+                Voting for {event.name} has closed and the results are in.
+              </p>
+              <Link
+                href={`/results/${event.id}`}
+                className="inline-block bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition-colors"
+              >
+                See the Results
+              </Link>
+            </>
+          ) : (
+            <p>
+              Voting for {event.name} has closed. Thanks for taking part — the
+              results will be announced shortly.
+            </p>
+          )}
+        </Panel>
       </div>
     )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-4">Crowd Voting</h1>
-        <p className="text-gray-300 text-lg">Vote for your favorite band!</p>
-      </div>
+      {header}
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8">
@@ -232,14 +403,15 @@ export default function CrowdVotingPage() {
             Select Your Favorite Band
           </h2>
 
-          {duplicateError && (
-            <div className="bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 mb-6">
+          {notice && (
+            <div
+              className="bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 mb-6"
+              role="alert"
+            >
               <div className="flex items-center">
                 <div className="text-yellow-400 mr-3">⚠️</div>
                 <div>
-                  <p className="text-yellow-100 font-medium">
-                    {duplicateError}
-                  </p>
+                  <p className="text-yellow-100 font-medium">{notice}</p>
                 </div>
               </div>
             </div>

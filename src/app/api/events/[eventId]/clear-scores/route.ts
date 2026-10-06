@@ -18,7 +18,7 @@ async function handleClearScores(request: NextRequest, _context?: unknown) {
 
     // First, verify the event exists
     const { rows: eventRows } = await sql`
-      SELECT id, name, location, date 
+      SELECT id, name, location, date, status, is_test
       FROM events 
       WHERE id = ${eventId}
     `
@@ -28,6 +28,18 @@ async function handleClearScores(request: NextRequest, _context?: unknown) {
     }
 
     const event = eventRows[0]
+
+    // Wiping votes is for clearing out test entries before a night starts. Once
+    // voting has opened, or the results exist, it would destroy the real thing.
+    if (event.status !== 'upcoming' && event.is_test !== true) {
+      return NextResponse.json(
+        {
+          error:
+            'Scores can only be cleared before voting opens. To correct a vote or a judge sheet, use "Run the night".',
+        },
+        { status: 409 }
+      )
+    }
 
     // Delete all votes for this event (includes both judge and crowd votes)
     const { rowCount: votesDeleted } = await sql`

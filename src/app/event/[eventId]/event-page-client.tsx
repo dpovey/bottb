@@ -82,6 +82,9 @@ function getStatusBadge(status: string, hasWinner: boolean) {
   switch (status) {
     case 'voting':
       return <Badge variant="success">Voting Open</Badge>
+    case 'closed':
+    case 'locked':
+      return <Badge variant="accent">Results Coming Soon</Badge>
     case 'finalized':
       return hasWinner ? (
         <Badge variant="warning">Completed</Badge>
@@ -277,9 +280,7 @@ export function EventPageClient({
       )}
 
       {/* Action Section */}
-      {(event.status === 'voting' ||
-        event.status === 'finalized' ||
-        (event.status === 'upcoming' && hasSponsors)) && (
+      {(event.status !== 'upcoming' || hasSponsors) && (
         <section
           className={`border-b border-white/5 ${
             event.status === 'upcoming' ? 'py-4' : 'py-8'

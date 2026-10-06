@@ -519,7 +519,8 @@ export function EventCard({
               </TrackedTicketLink>
             )}
 
-            {isActive && (
+            {/* A live event only takes votes while its voting is open */}
+            {isActive && (event.status ?? 'voting') === 'voting' && (
               <Link href={`/vote/crowd/${event.id}`}>
                 <Button variant="accent" size="sm">
                   Vote Now
