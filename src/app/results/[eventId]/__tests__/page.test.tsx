@@ -551,4 +551,58 @@ describe('ResultsPage', () => {
     expect(band1Link).toHaveAttribute('href', '/band/band-1')
     expect(band2Link).toHaveAttribute('href', '/band/band-2')
   })
+
+  it('leaves special guests (a non-competing band) off the results page', async () => {
+    mockGetEventById.mockResolvedValue({
+      id: 'event-1',
+      name: 'Test Event',
+      date: '2024-12-25T18:30:00Z',
+      location: 'Test Venue',
+      is_active: false,
+      status: 'finalized' as const,
+      created_at: '2024-01-01T00:00:00Z',
+    })
+    mockGetBandsForEvent.mockResolvedValue([
+      {
+        id: 'guest',
+        event_id: 'event-1',
+        name: 'ShipReX',
+        order: 0,
+        info: { non_competing: true },
+        created_at: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'band-1',
+        event_id: 'event-1',
+        name: 'Band 1',
+        order: 1,
+        created_at: '2024-01-01T00:00:00Z',
+      },
+    ])
+    // getBandScores has no row for the guests.
+    mockGetBandScores.mockResolvedValue([
+      {
+        id: 'band-1',
+        name: 'Band 1',
+        order: 1,
+        avg_song_choice: 15.5,
+        avg_performance: 25.0,
+        avg_crowd_vibe: 22.5,
+        avg_crowd_vote: 18.0,
+        crowd_vote_count: 10,
+        judge_vote_count: 3,
+        total_crowd_votes: 10,
+      },
+    ])
+
+    render(
+      await ResultsPage({ params: Promise.resolve({ eventId: 'event-1' }) })
+    )
+
+    expect(screen.getByRole('link', { name: /Band 1/ })).toBeInTheDocument()
+    expect(screen.queryByText('ShipReX')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /ShipReX/ })
+    ).not.toBeInTheDocument()
+  })
 })

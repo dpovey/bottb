@@ -1,344 +1,301 @@
 // @vitest-environment node
 
-import { vi } from 'vitest'
-import { createRequest } from 'node-mocks-http'
-import { NextRequest } from 'next/server'
+/**
+ * The contract between POST /api/votes and the crowd voting page: the
+ * response body for each outcome, and the `voted_<event>` cookie the page
+ * reads back.
+ *
+ * What the route stores and when it refuses lives in route.test.ts.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('next/server', async (importOriginal) => importOriginal())
+vi.mock('@/lib/auth', () => ({ auth: vi.fn() }))
+vi.mock('@/lib/db', () => ({
+  getEventById: vi.fn(),
+  submitVote: vi.fn(),
+  updateCrowdVoteChoice: vi.fn(),
+  hasUserVotedByEmail: vi.fn(),
+}))
+vi.mock('@/lib/sql', () => ({ sql: vi.fn(), sqlQuery: vi.fn() }))
+vi.mock('@/lib/user-context-server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/user-context-server')>()),
+  hasUserVoted: vi.fn(),
+  hasUserVotedByFingerprintJS: vi.fn(),
+}))
+vi.mock('@fingerprintjs/fingerprintjs', () => ({ default: { load: vi.fn() } }))
+
 import { POST } from '../route'
-import { submitVote, updateVote as _updateVote } from '@/lib/db'
+import {
+  getEventById,
+  hasUserVotedByEmail,
+  submitVote,
+  updateCrowdVoteChoice,
+} from '@/lib/db'
+import { sql } from '@/lib/sql'
 import {
   hasUserVoted,
   hasUserVotedByFingerprintJS,
 } from '@/lib/user-context-server'
+import { getVoteFromCookie } from '@/lib/user-context-client'
+import { clearRateLimitStore } from '@/lib/api-protection'
+import type { Event, Vote } from '@/lib/db-types'
+import {
+  BAND_ID,
+  BAND_NAMES,
+  EVENT_ID,
+  NEW_VOTE_ID,
+  OTHER_BAND_ID,
+  VOTE_ID,
+  bandLookup,
+  storedVote,
+  voteRequest,
+  votedCookie,
+  votingEvent,
+  NO_VOTE,
+} from './vote-request'
 
-// Mock the database functions
-vi.mock('@/lib/db', () => ({
-  submitVote: vi.fn(),
-  updateVote: vi.fn(),
-  hasUserVotedByEmail: vi.fn(),
-  getEventById: vi.fn(),
-}))
+const mockSubmitVote = vi.mocked(submitVote)
+const mockUpdateChoice = vi.mocked(updateCrowdVoteChoice)
 
-// Mock user context functions
-vi.mock('@/lib/user-context-server', () => ({
-  extractUserContext: vi.fn(() => ({
-    ip_address: '127.0.0.1',
-    user_agent: 'test-agent',
-    vote_fingerprint: 'test-fingerprint',
-  })),
-  hasUserVoted: vi.fn(() => Promise.resolve(false)),
-  hasUserVotedByFingerprintJS: vi.fn(() => Promise.resolve(false)),
-}))
+beforeEach(() => {
+  vi.clearAllMocks()
+  clearRateLimitStore()
+  vi.mocked(getEventById).mockResolvedValue(
+    votingEvent('voting') as unknown as Event
+  )
+  vi.mocked(sql).mockImplementation(bandLookup() as unknown as typeof sql)
+  mockSubmitVote.mockImplementation(
+    async (vote) =>
+      storedVote({
+        band_id: vote.band_id,
+        status: vote.status ?? 'approved',
+        email: vote.email,
+      }) as unknown as Vote
+  )
+  mockUpdateChoice.mockResolvedValue(NO_VOTE)
+  vi.mocked(hasUserVotedByEmail).mockResolvedValue(false)
+  vi.mocked(hasUserVoted).mockResolvedValue(false)
+  vi.mocked(hasUserVotedByFingerprintJS).mockResolvedValue(false)
+})
 
-// Mock the database query for band name lookup
-vi.mock('@vercel/postgres', () => ({
-  sql: vi.fn(),
-}))
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
-// Mock NextResponse.json to return a response with cookies
-vi.mock('next/server', () => ({
-  NextResponse: {
-    json: vi.fn((data, init) => {
-      const response = {
-        json: () => Promise.resolve(data),
-        status: init?.status || 200,
-        headers: new Headers(init?.headers),
-        cookies: {
-          set: vi.fn(),
-          get: vi.fn(),
-          delete: vi.fn(),
-        },
-        ...init,
-      }
-      return response
-    }),
-  },
-}))
-
-const mockSubmitVote = submitVote as ReturnType<typeof vi.fn>
-const mockHasUserVoted = hasUserVoted as ReturnType<typeof vi.fn>
-const mockHasUserVotedByFingerprintJS =
-  hasUserVotedByFingerprintJS as ReturnType<typeof vi.fn>
-
-// Import and mock hasUserVotedByEmail and getEventById
-import { hasUserVotedByEmail, getEventById } from '@/lib/db'
-const mockHasUserVotedByEmail = hasUserVotedByEmail as ReturnType<typeof vi.fn>
-const mockGetEventById = getEventById as ReturnType<typeof vi.fn>
-
-// Import sql after mocking
-import { sql } from '@vercel/postgres'
-const mockSql = sql as unknown as ReturnType<typeof vi.fn>
-
-// Helper function to create NextRequest mock
-function createNextRequestMock(
-  voteData: Record<string, unknown>,
-  headers: Record<string, string> = {}
-) {
-  const request = createRequest({
-    method: 'POST',
-    url: '/api/votes',
-    body: voteData,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-  })
-
-  // Add required NextRequest properties
-  request.json = vi.fn().mockResolvedValue(voteData)
-  request.cookies = {
-    get: vi.fn().mockReturnValue(undefined),
-    set: vi.fn(),
-    delete: vi.fn(),
-  }
-
-  return request as unknown as NextRequest
-}
-
-describe('Vote API Response Format', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-
-    // Mock getEventById to return a voting event by default
-    mockGetEventById.mockResolvedValue({
-      id: 'event-1',
-      name: 'Test Event',
-      status: 'voting',
-      is_active: true,
-    })
-
-    // Mock the band name query
-    mockSql.mockResolvedValue({
-      rows: [{ name: 'Test Band' }],
-      command: 'SELECT',
-      rowCount: 1,
-      oid: 0,
-      fields: [],
-    })
-  })
-
-  describe('Crowd Voting Response Format', () => {
-    it('returns success response with all required fields for crowd vote', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-        email: 'test@example.com',
-      }
-
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
+describe('POST /api/votes response format', () => {
+  describe('body', () => {
+    it('describes a new counted vote, and nothing else about it', async () => {
+      const response = await POST(voteRequest())
 
       expect(response.status).toBe(200)
-      const data = await response.json()
-
-      expect(data).toEqual({
-        ...mockVote,
+      // Exactly these fields: none of the stored row (IP address, fingerprint,
+      // email, ...) is echoed back.
+      expect(await response.json()).toEqual({
+        id: NEW_VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: BAND_ID,
+        voter_type: 'crowd',
         message: 'Vote submitted successfully',
         status: 'approved',
         duplicateDetected: false,
       })
     })
 
-    it('returns pending response for duplicate crowd vote with email', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-        email: 'test@example.com',
-      }
+    it('describes a held vote', async () => {
+      vi.mocked(hasUserVotedByEmail).mockResolvedValue(true)
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
+      const response = await POST(
+        voteRequest({
+          event_id: EVENT_ID,
+          band_id: BAND_ID,
+          email: 'fan@example.com',
+        })
+      )
 
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(true) // Duplicate by email
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
-
-      expect(response.status).toBe(201) // Created but needs review
-      const data = await response.json()
-
-      expect(data).toEqual({
-        ...mockVote,
+      expect(response.status).toBe(201)
+      expect(await response.json()).toEqual({
+        id: NEW_VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: BAND_ID,
+        voter_type: 'crowd',
         message:
-          'Duplicate vote detected. Your vote has been recorded and will be reviewed for approval.',
+          'Your vote has been recorded and will be checked before it is counted.',
         status: 'pending',
         duplicateDetected: true,
       })
     })
 
-    it('returns error response for duplicate crowd vote without email', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-      }
+    it('describes a changed vote', async () => {
+      mockUpdateChoice.mockResolvedValue(
+        storedVote({ id: VOTE_ID, band_id: OTHER_BAND_ID }) as unknown as Vote
+      )
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(true) // Duplicate by fingerprint
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
-
-      expect(response.status).toBe(400) // Bad request - needs email
-      const data = await response.json()
-
-      expect(data).toEqual({
-        ...mockVote,
-        message:
-          'Duplicate vote detected. Please provide an email address to submit your vote for review.',
-        status: 'pending',
-        duplicateDetected: true,
-      })
-    })
-  })
-
-  describe('Judge Voting Response Format', () => {
-    it('returns success response for judge vote', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'judge' as const,
-        song_choice: 15,
-        performance: 25,
-        crowd_vibe: 20,
-        name: 'Judge Smith',
-      }
-
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
+      const response = await POST(
+        voteRequest(
+          { event_id: EVENT_ID, band_id: OTHER_BAND_ID },
+          { cookie: votedCookie({ voteId: VOTE_ID }) }
+        )
+      )
 
       expect(response.status).toBe(200)
-      const data = await response.json()
-
-      expect(data).toEqual({
-        ...mockVote,
-        message: 'Vote submitted successfully',
+      expect(await response.json()).toEqual({
+        id: VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: OTHER_BAND_ID,
+        voter_type: 'crowd',
+        message: 'Vote updated',
         status: 'approved',
         duplicateDetected: false,
       })
     })
+
+    it('describes a changed vote that is still held', async () => {
+      mockUpdateChoice.mockResolvedValue(
+        storedVote({
+          id: VOTE_ID,
+          band_id: OTHER_BAND_ID,
+          status: 'pending',
+        }) as unknown as Vote
+      )
+
+      const response = await POST(
+        voteRequest(
+          { event_id: EVENT_ID, band_id: OTHER_BAND_ID },
+          { cookie: votedCookie({ voteId: VOTE_ID }) }
+        )
+      )
+
+      expect(response.status).toBe(201)
+      expect(await response.json()).toEqual({
+        id: VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: OTHER_BAND_ID,
+        voter_type: 'crowd',
+        message:
+          'Your vote has been updated and will be checked before it is counted.',
+        status: 'pending',
+        duplicateDetected: true,
+      })
+    })
+
+    it('describes a vote from an identical phone on the same connection as held', async () => {
+      vi.mocked(hasUserVoted).mockResolvedValue(true)
+
+      const response = await POST(voteRequest())
+
+      expect(response.status).toBe(201)
+      expect(await response.json()).toEqual({
+        id: NEW_VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: BAND_ID,
+        voter_type: 'crowd',
+        message:
+          'Your vote has been recorded and will be checked before it is counted.',
+        status: 'pending',
+        duplicateDetected: true,
+      })
+    })
+
+    it('describes a changed rejected vote neutrally, without saying it was rejected', async () => {
+      mockUpdateChoice.mockResolvedValue(
+        storedVote({
+          id: VOTE_ID,
+          band_id: OTHER_BAND_ID,
+          status: 'rejected',
+        }) as unknown as Vote
+      )
+
+      const response = await POST(
+        voteRequest(
+          { event_id: EVENT_ID, band_id: OTHER_BAND_ID },
+          { cookie: votedCookie({ voteId: VOTE_ID }) }
+        )
+      )
+
+      expect(response.status).toBe(201)
+      expect(await response.json()).toEqual({
+        id: VOTE_ID,
+        event_id: EVENT_ID,
+        band_id: OTHER_BAND_ID,
+        voter_type: 'crowd',
+        message: 'Vote updated',
+        status: 'pending',
+        duplicateDetected: true,
+      })
+    })
+
+    it('reports already voted, without a vote id, when the vote cannot be stored at all', async () => {
+      mockSubmitVote.mockRejectedValue(
+        Object.assign(new Error('duplicate key'), { code: '23505' })
+      )
+
+      const response = await POST(voteRequest())
+
+      expect(response.status).toBe(409)
+      expect(await response.json()).toEqual({
+        error: 'You have already voted for this event',
+        duplicateDetected: true,
+      })
+    })
+
+    it('tells the page which status the event is in when voting is shut', async () => {
+      vi.mocked(getEventById).mockResolvedValue(
+        votingEvent('closed') as unknown as Event
+      )
+
+      const response = await POST(voteRequest())
+
+      expect(response.status).toBe(403)
+      expect((await response.json()).eventStatus).toBe('closed')
+    })
   })
 
-  describe('Response Field Validation', () => {
-    it('always includes message field', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-      }
+  describe('vote cookie', () => {
+    it('is a 30-day, site-wide cookie the page can read', async () => {
+      const response = await POST(voteRequest())
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
-
-      const data = await response.json()
-      expect(data).toHaveProperty('message')
-      expect(typeof data.message).toBe('string')
+      const setCookie = response.headers.get('set-cookie') ?? ''
+      expect(setCookie).toMatch(new RegExp(`^voted_${EVENT_ID}=`))
+      expect(setCookie).toContain('Path=/')
+      expect(setCookie).toContain(`Max-Age=${30 * 24 * 60 * 60}`)
+      expect(setCookie.toLowerCase()).toContain('samesite=lax')
+      expect(setCookie.toLowerCase()).not.toContain('httponly')
     })
 
-    it('always includes status field', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-      }
+    it('holds the band, its name from the database and the vote id', async () => {
+      const response = await POST(
+        voteRequest({
+          event_id: EVENT_ID,
+          band_id: OTHER_BAND_ID,
+          bandName: 'Injected Name',
+        })
+      )
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
-
-      const data = await response.json()
-      expect(data).toHaveProperty('status')
-      expect(['approved', 'pending']).toContain(data.status)
+      const cookies = (
+        response as unknown as {
+          cookies: { get(name: string): { value: string } | undefined }
+        }
+      ).cookies
+      const value = JSON.parse(cookies.get(`voted_${EVENT_ID}`)?.value ?? '{}')
+      expect(value).toEqual({
+        bandId: OTHER_BAND_ID,
+        bandName: BAND_NAMES[OTHER_BAND_ID],
+        voteId: NEW_VOTE_ID,
+      })
     })
 
-    it('always includes duplicateDetected field', async () => {
-      const voteData = {
-        event_id: 'event-1',
-        band_id: 'band-1',
-        voter_type: 'crowd' as const,
-        crowd_vote: 20,
-      }
+    it('is read back by the voting page as the previous vote', async () => {
+      const response = await POST(voteRequest())
+      const cookiePair = (response.headers.get('set-cookie') ?? '').split(
+        ';'
+      )[0]
+      vi.stubGlobal('document', { cookie: `other=1; ${cookiePair}` })
 
-      const mockVote = {
-        id: 'vote-1',
-        ...voteData,
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSubmitVote.mockResolvedValue(mockVote)
-      mockHasUserVotedByEmail.mockResolvedValue(false)
-      mockHasUserVoted.mockResolvedValue(false)
-      mockHasUserVotedByFingerprintJS.mockResolvedValue(false)
-
-      const request = createNextRequestMock(voteData)
-      const response = await POST(request)
-
-      const data = await response.json()
-      expect(data).toHaveProperty('duplicateDetected')
-      expect(typeof data.duplicateDetected).toBe('boolean')
+      expect(getVoteFromCookie(EVENT_ID)).toMatchObject({
+        bandId: BAND_ID,
+        bandName: BAND_NAMES[BAND_ID],
+      })
     })
   })
 })

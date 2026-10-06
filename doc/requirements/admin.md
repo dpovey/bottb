@@ -23,9 +23,17 @@ CLI: `pnpm manage-users`
 
 ## Event Management `/admin/events`
 
-- List all events with status
-- Activate/finalize actions
+- List all events with status (the rehearsal event is tagged "Test")
+- "Run the night" for each event
 - QR code generation
+
+## Run the Night `/admin/events/[id]/run`
+
+Step-by-step operation of a live event: open and close crowd voting, review
+held votes, check judge sheets, finalise and release results, with an undo for
+every step. Includes a hidden test event for rehearsals.
+
+See [run-the-night.md](./run-the-night.md).
 
 ## Setlist Management `/admin/events/[id]/setlists`
 
@@ -55,8 +63,8 @@ See [songs.md](./songs.md) for data model.
 
 ```bash
 pnpm create-event <json>
-pnpm activate-event <id>
-pnpm finalize-event <id>
+pnpm activate-event <id>   # legacy — use Run the night
+pnpm finalize-event <id>   # legacy — use Run the night
 pnpm manage-users
 pnpm bulk-upload-photos <dir> <event-id>
 pnpm setup-db

@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronRightIcon } from '@/components/icons'
 import { CompanyBadge } from '@/components/ui/company-badge'
+import type { EventStatus } from '@/lib/event-lifecycle'
 
 export interface NavEvent {
   id: string
   name: string
   date: string
   location: string
-  status: 'upcoming' | 'voting' | 'finalized'
+  status: EventStatus
   info?: {
     winner?: string
     winner_company_slug?: string

@@ -68,7 +68,9 @@ export async function matchEventName(
 ): Promise<MatchResult<Event>> {
   const normalizedName = normalizeString(name)
 
-  const { rows: events } = await sql<Event>`SELECT id, name FROM events`
+  const { rows: events } = await sql<Event>`
+    SELECT id, name FROM events WHERE is_test = false
+  `
 
   let bestMatch: MatchResult<Event> = {
     id: null,

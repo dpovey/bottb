@@ -7,27 +7,41 @@ export async function getVotesForEvent(eventId: string) {
   return rows
 }
 
+/**
+ * Has this email address already been used for a vote in this event? Held
+ * votes count as well as approved ones — otherwise a second vote with the same
+ * address would sail through while the first was still waiting for review.
+ */
 export async function hasUserVotedByEmail(
   eventId: string,
   email: string
 ): Promise<boolean> {
   const { rows } = await sql<{ count: number }>`
     SELECT COUNT(*) as count FROM votes 
-    WHERE event_id = ${eventId} AND email = ${email} AND status = 'approved'
+    WHERE event_id = ${eventId} AND email = ${email}
+      AND COALESCE(status, 'approved') <> 'rejected'
   `
   return rows[0]?.count > 0
 }
 
-export async function submitVote(vote: Omit<Vote, 'id' | 'created_at'>) {
+/**
+ * Insert a vote. `id` is normally left to the database; the crowd voting page
+ * supplies its own so that a vote re-sent after a lost response is recognised
+ * as the same vote (the insert then fails on the primary key).
+ */
+export async function submitVote(
+  vote: Omit<Vote, 'id' | 'created_at'> & { id?: string }
+) {
   const { rows } = await sql<Vote>`
             INSERT INTO votes (
-              event_id, band_id, voter_type, song_choice, performance, crowd_vibe, visuals, crowd_vote,
+              id, event_id, band_id, voter_type, song_choice, performance, crowd_vibe, visuals, crowd_vote,
               ip_address, user_agent, browser_name, browser_version, os_name, os_version, device_type,
               screen_resolution, timezone, language, google_click_id, facebook_pixel_id,
               utm_source, utm_medium, utm_campaign, utm_term, utm_content, vote_fingerprint,
               fingerprintjs_visitor_id, fingerprintjs_confidence, fingerprintjs_confidence_comment, email, name, status
             )
             VALUES (
+              COALESCE(${vote.id ?? null}::uuid, gen_random_uuid()),
               ${vote.event_id}, ${vote.band_id}, ${vote.voter_type}, ${
                 vote.song_choice
               },
@@ -59,42 +73,29 @@ export async function submitVote(vote: Omit<Vote, 'id' | 'created_at'>) {
   return rows[0]
 }
 
-export async function updateVote(vote: Omit<Vote, 'id' | 'created_at'>) {
+/**
+ * Change which band an existing crowd vote is for (the voter came back with
+ * their cookie). Targets exactly one vote by id; everything else about it,
+ * including whether it is approved, held or rejected, stays as it was. An
+ * email is recorded if the voter supplies one and the vote has none.
+ *
+ * Returns the updated vote, or `null` if there is no such crowd vote for the
+ * event.
+ */
+export async function updateCrowdVoteChoice(update: {
+  voteId: string
+  eventId: string
+  bandId: string
+  email?: string
+}) {
   const { rows } = await sql<Vote>`
-    UPDATE votes SET
-      band_id = ${vote.band_id},
-      song_choice = ${vote.song_choice},
-      performance = ${vote.performance},
-      crowd_vibe = ${vote.crowd_vibe},
-      crowd_vote = ${vote.crowd_vote},
-      ip_address = ${vote.ip_address},
-      user_agent = ${vote.user_agent},
-      browser_name = ${vote.browser_name},
-      browser_version = ${vote.browser_version},
-      os_name = ${vote.os_name},
-      os_version = ${vote.os_version},
-      device_type = ${vote.device_type},
-      screen_resolution = ${vote.screen_resolution},
-      timezone = ${vote.timezone},
-      language = ${vote.language},
-      google_click_id = ${vote.google_click_id},
-      facebook_pixel_id = ${vote.facebook_pixel_id},
-      utm_source = ${vote.utm_source},
-      utm_medium = ${vote.utm_medium},
-      utm_campaign = ${vote.utm_campaign},
-      utm_term = ${vote.utm_term},
-      utm_content = ${vote.utm_content},
-      vote_fingerprint = ${vote.vote_fingerprint},
-      fingerprintjs_visitor_id = ${vote.fingerprintjs_visitor_id},
-      fingerprintjs_confidence = ${vote.fingerprintjs_confidence},
-      fingerprintjs_confidence_comment = ${
-        vote.fingerprintjs_confidence_comment
-      },
-      email = ${vote.email},
-      name = ${vote.name},
-      status = ${vote.status || 'approved'}
-    WHERE event_id = ${vote.event_id} AND voter_type = ${vote.voter_type}
+    UPDATE votes
+    SET band_id = ${update.bandId},
+        email = COALESCE(email, ${update.email ?? null})
+    WHERE id = ${update.voteId}
+      AND event_id = ${update.eventId}
+      AND voter_type = 'crowd'
     RETURNING *
   `
-  return rows[0]
+  return rows[0] || null
 }

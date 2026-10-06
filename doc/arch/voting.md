@@ -49,55 +49,114 @@ Events have a `scoring_version` that determines categories and point distributio
 | Crowd | `/vote/crowd/[eventId]` | 10 max (proportional)     |
 | Judge | `/vote/judge/[eventId]` | 70-90 (version dependent) |
 
+## Event Lifecycle
+
+```
+upcoming → voting → closed → locked → finalized
+```
+
+Defined in `src/lib/event-lifecycle.ts` and driven from the "Run the night"
+admin page (see `doc/requirements/run-the-night.md`).
+
+| Status      | Meaning                                                          |
+| ----------- | ---------------------------------------------------------------- |
+| `upcoming`  | Before crowd voting opens                                        |
+| `voting`    | Crowd voting open                                                |
+| `closed`    | Voting closed; held votes reviewed, judge sheets checked         |
+| `locked`    | Results calculated and frozen in `finalized_results`; not public |
+| `finalized` | Results public                                                   |
+
+- Transitions are a compare-and-swap on `events.status`, so only one of two
+  simultaneous requests wins, and each is logged in `event_status_log`.
+- An event is _live_ while `voting`, `closed` or `locked`: `getActiveEvent`
+  returns it and `getPastEvents` leaves it out. Nothing public shows a winner
+  until `finalized`.
+- Writes that depend on the status (held-vote decisions, judge sheets) repeat
+  the status condition in their own SQL, so they cannot land after a transition.
+
 ## Double Voting Prevention
 
-### Layer 1: FingerprintJS (Primary)
+Only `approved` votes are counted (`getBandScores`). A vote that looks like a
+repeat is stored as `pending` and decided by an admin; it is never refused,
+because identical phones are indistinguishable (same FingerprintJS id, same
+browser string, and on venue Wi-Fi or a carrier gateway the same IP address).
 
-- 40+ browser characteristics
-- Stable across sessions
-- Confidence scoring
+### Layer 1: Cookie
 
-### Layer 2: Custom Fingerprint (Fallback)
-
-- IP + User Agent + Event ID + Daily timestamp
-- SHA-256 hashed
-
-### Layer 3: Cookie Tracking
-
-- `voted_[eventId]` cookie
-- Allows vote updates (not duplicates)
+- `voted_[eventId]` holds `{ bandId, bandName, voteId }`
+- A returning voter updates that one vote by id (`updateCrowdVoteChoice`)
 - 30-day expiry
 
-### Layer 4: Server Validation
+### Layer 2: Email
 
-- Check both fingerprint types in database
-- Return 409 if duplicate found
+- Optional; lower-cased
+- Same address as an approved vote → held
+
+### Layer 3: FingerprintJS
+
+- 40+ browser characteristics; identical handsets collide
+- Same visitor id as an earlier vote → held
+
+### Layer 4: Custom Fingerprint
+
+- SHA-256 of IP + User Agent + Event ID + date
+- Same fingerprint as an earlier vote → held (stored under a fresh fingerprint,
+  since `votes.vote_fingerprint` is unique)
+
+### Review
+
+`src/lib/vote-review.ts` matches each held vote against the earlier votes and
+suggests approve or reject; the admin decides on the "Run the night" page.
+Rejected votes are kept with `status = 'rejected'`.
 
 ## Vote Flow
 
-1. Client gets fingerprint (FingerprintJS + custom)
-2. POST `/api/votes` with fingerprints
-3. Server checks cookie (can update?)
-4. Server checks database fingerprints
-5. Create/update/reject vote
+1. The voting page polls `GET /api/events/[eventId]/ballot` (cached) and shows
+   the ballot only while the event is `voting`
+2. Client gets fingerprint (FingerprintJS) and POSTs `/api/votes`
+3. Server checks the event is `voting` and the band belongs to it
+4. Cookie with a vote id → update that vote; otherwise run the repeat checks
+5. Insert as `approved` (200) or `pending` (201)
 6. Set cookie for future updates
+
+`POST /api/votes` only ever records crowd votes: `voter_type` and judge score
+fields in the body are ignored.
+
+## Judge Sheets
+
+`POST /api/votes/batch` (admin) takes one judge's whole sheet: every band
+exactly once, whole-number scores within the scoring version's range. It is
+saved in a single statement (all or nothing), one sheet per judge
+(case-insensitive), until results are locked. To correct a sheet, delete it on
+the "Run the night" page and enter it again.
 
 ## API Endpoints
 
-| Endpoint                | Auth   | Rate Limit |
-| ----------------------- | ------ | ---------- |
-| `POST /api/votes`       | Public | 10/min     |
-| `POST /api/votes/batch` | Admin  | 200/min    |
+| Endpoint                           | Auth                                | Rate Limit        |
+| ---------------------------------- | ----------------------------------- | ----------------- |
+| `POST /api/votes`                  | Public                              | 300/min           |
+| `POST /api/votes/batch`            | Admin                               | 200/min           |
+| `GET /api/events/[eventId]/ballot` | Public                              | none (CDN-cached) |
+| `/api/events/[eventId]/night/*`    | Admin                               | 200/min           |
+| `GET /api/events/[eventId]/scores` | Public once finalized; admin before | 100/min           |
+
+Rate limits are per IP address + browser, with a separate counter per limit
+type. The vote limit is high because a venue's Wi-Fi puts the whole crowd behind
+one address.
 
 ## UI States
 
-1. **New Voter**: Clean form, "Submit Vote"
-2. **Returning** (cookie): Pre-filled, "Update Vote"
-3. **Already Voted** (fingerprint): "Already voted" message
-4. **Event Not Active**: "Voting closed" message
+1. **Voting Opens Soon**: event `upcoming`
+2. **New Voter**: Clean form, "Submit Vote"
+3. **Returning** (cookie): Pre-filled, "Update Vote"
+4. **Vote Submitted / Vote Received**: counted, or held for review
+5. **Voting Has Closed**: event `closed`, `locked` or `finalized`
 
 ## Key Files
 
 - `src/lib/scoring.ts`: Version configs, category definitions
+- `src/lib/event-lifecycle.ts`: Statuses, transitions, readiness rules
+- `src/lib/vote-review.ts`: Held-vote matching and suggestions
+- `src/lib/night.ts`, `src/lib/db/night.ts`: "Run the night" state and writes
 - `src/app/vote/`: Voting pages
 - `src/app/api/votes/`: Vote submission API

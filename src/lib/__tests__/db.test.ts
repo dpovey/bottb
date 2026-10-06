@@ -10,6 +10,9 @@ import {
   submitVote,
   getEventById,
   getBandScores,
+  getPastEventsWithWinners,
+  hasUserVotedByEmail,
+  updateCrowdVoteChoice,
 } from '../db'
 
 // Helper function to create a proper QueryResult mock
@@ -27,6 +30,13 @@ vi.mock('@vercel/postgres', () => ({
 }))
 
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>
+
+/** The SQL text of the `n`th query, placeholders as `$`, whitespace collapsed. */
+const sqlText = (n = 0): string =>
+  (mockSql.mock.calls[n][0] as string[]).join('$').replace(/\s+/g, ' ').trim()
+
+/** The values interpolated into the `n`th query. */
+const sqlValues = (n = 0): unknown[] => mockSql.mock.calls[n].slice(1)
 
 describe('Database Functions', () => {
   beforeEach(() => {
@@ -60,10 +70,24 @@ describe('Database Functions', () => {
 
       const result = await getEvents()
 
-      expect(mockSql).toHaveBeenCalledWith([
-        'SELECT * FROM events ORDER BY date DESC',
-      ])
+      expect(sqlText()).toMatch(/^SELECT \* FROM events\b.*ORDER BY date DESC$/)
       expect(result).toEqual(mockEvents)
+    })
+
+    it('leaves rehearsal (test) events out by default', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getEvents()
+
+      expect(sqlText()).toMatch(/WHERE is_test = false/)
+    })
+
+    it('includes rehearsal (test) events when asked', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getEvents({ includeTest: true })
+
+      expect(sqlText()).toBe('SELECT * FROM events ORDER BY date DESC')
     })
 
     it('returns empty array when no events exist', async () => {
@@ -91,10 +115,35 @@ describe('Database Functions', () => {
 
       const result = await getActiveEvent()
 
-      expect(mockSql).toHaveBeenCalledWith([
-        "\n    SELECT * FROM events \n    WHERE is_active = true AND status = 'voting' \n    LIMIT 1\n  ",
-      ])
       expect(result).toEqual(mockEvent)
+    })
+
+    it('treats an event as active from voting open until results are released', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getActiveEvent()
+
+      const query = sqlText()
+      expect(query).toMatch(/status IN \('voting', 'closed', 'locked'\)/)
+      // Keyed on status alone: an event that is voting but not flagged
+      // is_active must still be found.
+      expect(query).not.toMatch(/is_active/)
+    })
+
+    it('never picks the rehearsal (test) event', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getActiveEvent()
+
+      expect(sqlText()).toMatch(/is_test = false/)
+    })
+
+    it('picks the most recent live event if there is more than one', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getActiveEvent()
+
+      expect(sqlText()).toMatch(/ORDER BY date DESC LIMIT 1$/)
     })
 
     it('returns null when no active voting event exists', async () => {
@@ -102,27 +151,6 @@ describe('Database Functions', () => {
 
       const result = await getActiveEvent()
 
-      expect(result).toBeNull()
-    })
-
-    it('returns null when event is active but not in voting status', async () => {
-      const _mockEvent = {
-        id: 'upcoming-event-1',
-        name: 'Upcoming Event',
-        date: '2024-12-25T18:30:00Z',
-        location: 'Upcoming Venue',
-        is_active: true,
-        status: 'upcoming',
-        created_at: '2024-01-01T00:00:00Z',
-      }
-
-      mockSql.mockResolvedValue(createMockQueryResult([]))
-
-      const result = await getActiveEvent()
-
-      expect(mockSql).toHaveBeenCalledWith([
-        "\n    SELECT * FROM events \n    WHERE is_active = true AND status = 'voting' \n    LIMIT 1\n  ",
-      ])
       expect(result).toBeNull()
     })
   })
@@ -145,12 +173,8 @@ describe('Database Functions', () => {
 
       const result = await getUpcomingEvents()
 
-      expect(mockSql).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.stringMatching(
-            /SELECT \* FROM events\s+WHERE date >= NOW\(\)\s+ORDER BY date ASC/
-          ),
-        ])
+      expect(sqlText()).toBe(
+        'SELECT * FROM events WHERE date >= NOW() AND is_test = false ORDER BY date ASC'
       )
       expect(result).toEqual(mockEvents)
     })
@@ -174,14 +198,51 @@ describe('Database Functions', () => {
 
       const result = await getPastEvents()
 
-      expect(mockSql).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.stringMatching(
-            /SELECT \* FROM events\s+WHERE date < NOW\(\) AND status <> 'voting'\s+ORDER BY date DESC/
-          ),
-        ])
-      )
+      const query = sqlText()
+      expect(query).toMatch(/WHERE date < NOW\(\)/)
+      expect(query).toMatch(/ORDER BY date DESC$/)
       expect(result).toEqual(mockEvents)
+    })
+
+    it('keeps an event out of the past until its results are released', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getPastEvents()
+
+      expect(sqlText()).toMatch(
+        /status NOT IN \('voting', 'closed', 'locked'\)/
+      )
+    })
+
+    it('leaves rehearsal (test) events out', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getPastEvents()
+
+      expect(sqlText()).toMatch(/is_test = false/)
+    })
+  })
+
+  describe('getPastEventsWithWinners', () => {
+    it('lists only past, non-live, non-test events', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getPastEventsWithWinners()
+
+      const query = sqlText()
+      expect(query).toMatch(/WHERE e\.date < NOW\(\)/)
+      expect(query).toMatch(/e\.status NOT IN \('voting', 'closed', 'locked'\)/)
+      expect(query).toMatch(/e\.is_test = false/)
+    })
+
+    it('takes the winner from frozen results only once they are released', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getPastEventsWithWinners()
+
+      expect(sqlText()).toMatch(
+        /LEFT JOIN finalized_results fr ON fr\.event_id = e\.id AND fr\.final_rank = 1 AND e\.status = 'finalized'/
+      )
     })
   })
 
@@ -275,6 +336,7 @@ describe('Database Functions', () => {
 
       expect(mockSql).toHaveBeenCalledWith(
         expect.arrayContaining([expect.stringMatching(/INSERT INTO votes/)]),
+        null, // id: none supplied, so the database picks one
         'event-1', // event_id
         'band-1', // band_id
         'crowd', // voter_type
@@ -309,6 +371,61 @@ describe('Database Functions', () => {
         'approved' // status
       )
       expect(result).toEqual(mockVote)
+    })
+
+    it('inserts the id the voting page chose, so a re-sent vote is the same vote', async () => {
+      const id = '3f2b8c1e-7d4a-4f6b-9c2e-1a5d8e9f0b7c'
+      mockSql.mockResolvedValue(createMockQueryResult([{ id }]))
+
+      await submitVote({
+        id,
+        event_id: 'event-1',
+        band_id: 'band-1',
+        voter_type: 'crowd',
+        crowd_vote: 20,
+      })
+
+      expect(sqlValues()[0]).toBe(id)
+      expect(sqlText()).toMatch(
+        /VALUES \( COALESCE\(\$::uuid, gen_random_uuid\(\)\), \$,/
+      )
+    })
+
+    it('lets the database pick the id when none is given', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([{ id: 'db-id' }]))
+
+      const result = await submitVote({
+        event_id: 'event-1',
+        band_id: 'band-1',
+        voter_type: 'crowd',
+        crowd_vote: 20,
+      })
+
+      expect(sqlValues()[0]).toBeNull()
+      expect(result).toEqual({ id: 'db-id' })
+    })
+  })
+
+  describe('hasUserVotedByEmail', () => {
+    it('counts held votes as well as approved ones, but not rejected ones', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([{ count: '1' }]))
+
+      const result = await hasUserVotedByEmail('event-1', 'fan@example.com')
+
+      expect(result).toBe(true)
+      const query = sqlText()
+      expect(query).toMatch(/COALESCE\(status, 'approved'\) <> 'rejected'/)
+      expect(query).not.toMatch(/status = 'approved'/)
+      expect(sqlValues()).toEqual(['event-1', 'fan@example.com'])
+    })
+
+    it('is false when the email has no votes in the event', async () => {
+      // Postgres returns COUNT(*) as a string.
+      mockSql.mockResolvedValue(createMockQueryResult([{ count: '0' }]))
+
+      expect(await hasUserVotedByEmail('event-1', 'new@example.com')).toBe(
+        false
+      )
     })
   })
 
@@ -375,6 +492,94 @@ describe('Database Functions', () => {
         eventId
       )
       expect(result).toEqual(mockScores)
+    })
+
+    it('counts only approved votes, in the totals and per band', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await getBandScores('event-1')
+
+      const query = sqlText()
+      // The total-votes CTE (used to normalise the crowd vote)...
+      expect(query).toMatch(
+        /WITH total_votes AS \(.*v\.voter_type = 'crowd' AND COALESCE\(v\.status, 'approved'\) = 'approved' AND b\.info->'non_competing' IS DISTINCT FROM 'true'::jsonb \)/
+      )
+      // ...and the per-band join that the averages and counts come from.
+      expect(query).toMatch(
+        /LEFT JOIN votes v ON b\.id = v\.band_id AND COALESCE\(v\.status, 'approved'\) = 'approved'/
+      )
+    })
+  })
+
+  describe('updateCrowdVoteChoice', () => {
+    const voteId = '3f2b8c1e-7d4a-4f6b-9c2e-1a5d8e9f0b7c'
+
+    it('moves exactly one crowd vote in the event to the new band', async () => {
+      const updated = {
+        id: voteId,
+        event_id: 'event-1',
+        band_id: 'band-2',
+        voter_type: 'crowd',
+        status: 'approved',
+      }
+      mockSql.mockResolvedValue(createMockQueryResult([updated]))
+
+      const result = await updateCrowdVoteChoice({
+        voteId,
+        eventId: 'event-1',
+        bandId: 'band-2',
+      })
+
+      expect(result).toEqual(updated)
+      expect(mockSql).toHaveBeenCalledTimes(1)
+      expect(sqlText()).toMatch(/^UPDATE votes SET band_id = \$, /)
+      expect(sqlText()).toMatch(
+        /WHERE id = \$ AND event_id = \$ AND voter_type = 'crowd' RETURNING \*$/
+      )
+      expect(sqlValues()).toEqual(['band-2', null, voteId, 'event-1'])
+    })
+
+    it('leaves the vote status (approved, held or rejected) alone', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await updateCrowdVoteChoice({
+        voteId,
+        eventId: 'event-1',
+        bandId: 'band-2',
+      })
+
+      expect(sqlText()).not.toMatch(/status/)
+    })
+
+    it('records an email only if the vote has none yet', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      await updateCrowdVoteChoice({
+        voteId,
+        eventId: 'event-1',
+        bandId: 'band-2',
+        email: 'fan@example.com',
+      })
+
+      expect(sqlText()).toMatch(/email = COALESCE\(email, \$\)/)
+      expect(sqlValues()).toEqual([
+        'band-2',
+        'fan@example.com',
+        voteId,
+        'event-1',
+      ])
+    })
+
+    it('returns null when there is no such crowd vote in the event', async () => {
+      mockSql.mockResolvedValue(createMockQueryResult([]))
+
+      const result = await updateCrowdVoteChoice({
+        voteId,
+        eventId: 'other-event',
+        bandId: 'band-2',
+      })
+
+      expect(result).toBeNull()
     })
   })
 })

@@ -177,29 +177,76 @@ describe('API Protection System', () => {
     })
 
     it('uses different limits for different types', async () => {
-      const voteHandler = withRateLimit(async () => {
-        return NextResponse.json({ success: true })
-      }, 'vote')
-
-      // Make 11 requests (exceeding the 10/min vote limit)
-      const requests = Array.from({ length: 11 }, (_, _i) =>
-        createMockRequest('http://localhost/api/votes', {
-          headers: {
-            'X-Forwarded-For': '192.168.1.1',
-            'User-Agent': 'TestAgent',
-          },
+      const ok = async () => NextResponse.json({ success: true })
+      const voteHandler = withRateLimit(ok, 'vote')
+      const photoHandler = withRateLimit(ok, 'photo')
+      const request = (ip: string) =>
+        createMockRequest('http://localhost/api/test', {
+          headers: { 'X-Forwarded-For': ip, 'User-Agent': 'TestAgent' },
         })
+
+      // 21 photo requests: the 21st is over the photo limit (20/min)
+      const photoResponses = await Promise.all(
+        Array.from({ length: 21 }, () => photoHandler(request('192.168.1.1')))
       )
+      expect(photoResponses[19].status).toBe(200)
+      expect(photoResponses[20].status).toBe(429)
+      expect((await photoResponses[20].json()).limit).toBe(20)
 
-      const responses = await Promise.all(
-        requests.map((req) => voteHandler(req))
+      // 21 vote requests from another client are all fine (300/min)
+      const voteResponses = await Promise.all(
+        Array.from({ length: 21 }, () => voteHandler(request('192.168.1.2')))
       )
+      expect(voteResponses.every((r) => r.status === 200)).toBe(true)
+    })
+  })
 
-      const lastResponse = responses[responses.length - 1]
-      expect(lastResponse.status).toBe(429)
+  describe('separate counters per limit type', () => {
+    const ok = async () => NextResponse.json({ success: true })
+    const sameClient = () =>
+      createMockRequest('http://localhost/api/test', {
+        headers: {
+          'X-Forwarded-For': '192.168.1.9',
+          'User-Agent': 'TestAgent',
+        },
+      })
 
-      const data = await lastResponse.json()
-      expect(data.limit).toBe(10) // Vote limit is 10/min
+    it('does not block api requests from a client that has used up its votes', async () => {
+      const voteHandler = withVoteRateLimit(ok)
+      const apiHandler = withPublicRateLimit(ok)
+
+      const votes = await Promise.all(
+        Array.from({ length: 301 }, () => voteHandler(sameClient()))
+      )
+      expect(votes[300].status).toBe(429)
+
+      const api = await apiHandler(sameClient())
+      expect(api.status).toBe(200)
+      expect(api.headers.get('X-RateLimit-Limit')).toBe('100')
+      expect(api.headers.get('X-RateLimit-Remaining')).toBe('99')
+    })
+
+    it('does not block votes from a client that has used up its api requests', async () => {
+      const voteHandler = withVoteRateLimit(ok)
+      const apiHandler = withPublicRateLimit(ok)
+
+      const api = await Promise.all(
+        Array.from({ length: 101 }, () => apiHandler(sameClient()))
+      )
+      expect(api[100].status).toBe(429)
+
+      const vote = await voteHandler(sameClient())
+      expect(vote.status).toBe(200)
+      expect(vote.headers.get('X-RateLimit-Remaining')).toBe('299')
+    })
+
+    it('still shares one counter between handlers of the same type', async () => {
+      const first = withPublicRateLimit(ok)
+      const second = withPublicRateLimit(ok)
+
+      await Promise.all(Array.from({ length: 100 }, () => first(sameClient())))
+
+      expect((await second(sameClient())).status).toBe(429)
     })
   })
 
@@ -288,13 +335,15 @@ describe('API Protection System', () => {
   })
 
   describe('withVoteRateLimit', () => {
-    it('applies stricter rate limiting to vote endpoints', async () => {
+    // A venue's Wi-Fi puts a whole crowd of identical phones behind one
+    // address, so the vote limit has to leave room for them.
+    it('lets 300 votes a minute through from one address and browser', async () => {
       const handler = withVoteRateLimit(async () => {
         return NextResponse.json({ success: true })
       })
 
-      // Make 11 requests (exceeding the 10/min vote limit)
-      const requests = Array.from({ length: 11 }, (_, _i) =>
+      // 301 requests: the first 300 pass, the 121st is over the limit
+      const requests = Array.from({ length: 301 }, (_, _i) =>
         createMockRequest('http://localhost/api/votes', {
           headers: {
             'X-Forwarded-For': '192.168.1.1',
@@ -305,11 +354,13 @@ describe('API Protection System', () => {
 
       const responses = await Promise.all(requests.map((req) => handler(req)))
 
+      expect(responses.slice(0, 300).every((r) => r.status === 200)).toBe(true)
       const lastResponse = responses[responses.length - 1]
       expect(lastResponse.status).toBe(429)
 
       const data = await lastResponse.json()
-      expect(data.limit).toBe(10)
+      expect(data.limit).toBe(300)
+      expect(data.windowMs).toBe(60_000)
     })
   })
 

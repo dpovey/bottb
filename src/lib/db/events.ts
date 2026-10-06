@@ -1,15 +1,36 @@
 import { sql } from '../sql'
 import type { Event, BandCompany } from '../db-types'
+import type { EventStatus } from '../event-lifecycle'
 
-export async function getEvents() {
-  const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`
+/**
+ * All events, newest first.
+ *
+ * Rehearsal ("test") events are left out unless `includeTest` is set: this
+ * feeds the sitemap, the search index and the public filter dropdowns, none of
+ * which may ever show one. Only the admin event list asks for them.
+ */
+export async function getEvents(options: { includeTest?: boolean } = {}) {
+  if (options.includeTest) {
+    const { rows } = await sql<Event>`SELECT * FROM events ORDER BY date DESC`
+    return rows
+  }
+  const { rows } = await sql<Event>`
+    SELECT * FROM events WHERE is_test = false ORDER BY date DESC
+  `
   return rows
 }
 
+/**
+ * The event whose night is in progress: crowd voting is open, or it has
+ * closed and the results are not out yet (see `isEventLive`). Keyed on status
+ * alone — `is_active` is kept in step by the lifecycle transitions but is not
+ * required here, so an event can never be "voting" yet missing from the site.
+ */
 export async function getActiveEvent() {
   const { rows } = await sql<Event>`
     SELECT * FROM events 
-    WHERE is_active = true AND status = 'voting' 
+    WHERE status IN ('voting', 'closed', 'locked') AND is_test = false
+    ORDER BY date DESC
     LIMIT 1
   `
   return rows[0] || null
@@ -18,20 +39,23 @@ export async function getActiveEvent() {
 export async function getUpcomingEvents() {
   const { rows } = await sql<Event>`
     SELECT * FROM events 
-    WHERE date >= NOW() 
+    WHERE date >= NOW() AND is_test = false
     ORDER BY date ASC
   `
   return rows
 }
 
 /**
- * Events whose date has passed, excluding any still in 'voting' — an event
- * stays "live" (not "past") until voting closes, even after its start time.
+ * Events whose date has passed, excluding any that are still live — an event
+ * stays "live" (not "past") from the moment voting opens until its results are
+ * released, even after its start time.
  */
 export async function getPastEvents() {
   const { rows } = await sql<Event>`
     SELECT * FROM events 
-    WHERE date < NOW() AND status <> 'voting'
+    WHERE date < NOW()
+      AND status NOT IN ('voting', 'closed', 'locked')
+      AND is_test = false
     ORDER BY date DESC
   `
   return rows
@@ -69,7 +93,10 @@ export async function getPastEventsWithWinners(): Promise<
         WHERE bc.band_id = COALESCE(b.id, b_name.id)
       ), '[]'::json) as winner_companies
     FROM events e
+    -- Frozen results exist from the moment results are locked, but only a
+    -- finalized (released) event may show its winner.
     LEFT JOIN finalized_results fr ON fr.event_id = e.id AND fr.final_rank = 1
+      AND e.status = 'finalized'
     LEFT JOIN bands b ON b.id = COALESCE(fr.band_id, e.info->>'winner_band_id')
     LEFT JOIN companies c ON c.slug = b.company_slug
     -- Also try to match winner by name for legacy events without winner_band_id
@@ -78,7 +105,9 @@ export async function getPastEventsWithWinners(): Promise<
       AND fr.band_id IS NULL 
       AND e.info->>'winner_band_id' IS NULL
     LEFT JOIN companies c_name ON c_name.slug = b_name.company_slug
-    WHERE e.date < NOW() AND e.status <> 'voting'
+    WHERE e.date < NOW()
+      AND e.status NOT IN ('voting', 'closed', 'locked')
+      AND e.is_test = false
     ORDER BY e.date DESC
   `
   return rows
@@ -91,10 +120,7 @@ export async function getEventById(eventId: string) {
   return rows[0] || null
 }
 
-export async function updateEventStatus(
-  eventId: string,
-  status: 'upcoming' | 'voting' | 'finalized'
-) {
+export async function updateEventStatus(eventId: string, status: EventStatus) {
   const { rows } = await sql<Event>`
     UPDATE events 
     SET status = ${status}
@@ -114,6 +140,15 @@ export async function updateEventStatus(
  * - Calculates scores from live vote data (which may change)
  * - Should only be used for non-finalized events or admin preview
  *
+ * Non-competing bands (special guests, `info.non_competing`) are left out
+ * entirely — no row, and none of their votes in `total_crowd_votes` — so they
+ * are never ranked, frozen or counted in a crowd-vote share. This is the SQL
+ * twin of `isCompetingBand` in `src/lib/competing-bands.ts`.
+ *
+ * Only `approved` votes are counted. A crowd vote that tripped duplicate
+ * detection is `pending` until an admin approves or rejects it on the "Run the
+ * night" page, and counts for nothing in the meantime.
+ *
  * @param eventId - The event ID
  * @returns Array of band scores with calculated averages
  *
@@ -127,6 +162,8 @@ export async function getBandScores(eventId: string) {
       FROM votes v
       JOIN bands b ON v.band_id = b.id
       WHERE b.event_id = ${eventId} AND v.voter_type = 'crowd'
+        AND COALESCE(v.status, 'approved') = 'approved'
+        AND b.info->'non_competing' IS DISTINCT FROM 'true'::jsonb
     )
     SELECT 
       b.id,
@@ -161,9 +198,11 @@ export async function getBandScores(eventId: string) {
     FROM bands b
     LEFT JOIN companies c ON b.company_slug = c.slug
     LEFT JOIN votes v ON b.id = v.band_id
+      AND COALESCE(v.status, 'approved') = 'approved'
     LEFT JOIN crowd_noise_measurements cnm ON b.id = cnm.band_id AND cnm.event_id = ${eventId}
     CROSS JOIN total_votes tv
     WHERE b.event_id = ${eventId}
+      AND b.info->'non_competing' IS DISTINCT FROM 'true'::jsonb
     GROUP BY b.id, b.name, b."order", b.info, b.description, b.company_slug, c.name, c.icon_url, tv.total_crowd_votes, cnm.energy_level, cnm.peak_volume, cnm.crowd_score
     ORDER BY b."order"
   `

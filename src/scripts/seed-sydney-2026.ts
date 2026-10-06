@@ -66,6 +66,8 @@ interface SeedBand {
   additional_companies?: string[]
   order: number
   description?: string
+  /** Seeded into bands.info; `non_competing: true` marks special guests. */
+  info?: Record<string, unknown>
 }
 
 const BANDS: SeedBand[] = [
@@ -77,8 +79,11 @@ const BANDS: SeedBand[] = [
     name: 'ShipReX',
     company_slug: 'rex-software',
     additional_companies: ['urbanx'],
-    order: 5,
+    // Opens the night, before the four competing bands at 1-4. Not judged,
+    // not on the crowd ballot and never ranked.
+    order: 0,
     description: 'Special guest performance (non-competing).',
+    info: { non_competing: true },
   },
 ]
 
@@ -171,7 +176,8 @@ async function main() {
     await sql`
       INSERT INTO bands (id, event_id, name, description, company_slug, "order", info)
       VALUES (${id}, ${EVENT_ID}, ${band.name}, ${band.description ?? null},
-              ${band.company_slug}, ${band.order}, '{}'::jsonb)
+              ${band.company_slug}, ${band.order},
+              ${JSON.stringify(band.info ?? {})}::jsonb)
     `
 
     // Band <-> company links: primary first, then any additional companies.

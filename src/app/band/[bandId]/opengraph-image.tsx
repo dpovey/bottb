@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { sql } from '@/lib/sql'
+import { isCompetingBand, NON_COMPETING_LABEL } from '@/lib/competing-bands'
 
 // Image metadata
 export const runtime = 'edge'
@@ -15,7 +16,7 @@ async function getBandData(bandId: string) {
   try {
     const result = await sql`
       SELECT 
-        b.id, b.name, b.company_name, b.order,
+        b.id, b.name, b.company_name, b.order, b.info,
         e.name as event_name, e.date as event_date, e.status as event_status,
         (SELECT blob_url FROM photos WHERE band_id = b.id AND 'band_hero' = ANY(labels) LIMIT 1) as hero_url
       FROM bands b
@@ -66,6 +67,9 @@ export default async function Image({
         year: 'numeric',
       })
     : null
+
+  // Special guests have no run-order number to show, so they get a star.
+  const competing = isCompetingBand(band)
 
   return new ImageResponse(
     <div
@@ -206,7 +210,7 @@ export default async function Image({
               marginBottom: 8,
             }}
           >
-            BAND
+            {competing ? 'BAND' : NON_COMPETING_LABEL.toUpperCase()}
           </div>
           <div
             style={{
@@ -215,7 +219,7 @@ export default async function Image({
               fontWeight: 700,
             }}
           >
-            #{band.order}
+            {competing ? `#${band.order}` : '★'}
           </div>
         </div>
       </div>

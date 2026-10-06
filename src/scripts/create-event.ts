@@ -37,7 +37,7 @@ interface EventData {
   ticket_url?: string
   description?: string // Event description (displayed on event page)
   is_active?: boolean
-  status?: 'upcoming' | 'voting' | 'finalized'
+  status?: 'upcoming' | 'voting' | 'closed' | 'locked' | 'finalized'
   date_tbc?: boolean // Date is tentative; show date_display instead of the precise date
   date_display?: string // Human label shown when date_tbc (e.g. "October 2026")
   lineup_locked?: boolean // Lineup confirmed but unannounced; hides the "Want to participate?" CTA

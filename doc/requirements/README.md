@@ -14,6 +14,7 @@
 | [Songs](./songs.md)                       | Setlists and all songs page            |
 | [Bands & Companies](./bands-companies.md) | Band pages, company associations       |
 | [Admin](./admin.md)                       | Administrative dashboard               |
+| [Run the Night](./run-the-night.md)       | Operating a live event, rehearsing     |
 | [Public Pages](./public-pages.md)         | Static pages, SEO, accessibility       |
 
 ## User Journeys
@@ -34,9 +35,9 @@
 ### Admin
 
 1. Create event from JSON
-2. Activate event for voting
+2. Rehearse the night on the test event
 3. Share QR codes
-4. Finalize event
+4. Run the night: open voting, close it, review held votes, finalise, release
 5. Manage photos/videos
 
 ### Visitor

@@ -79,8 +79,11 @@ export function clearRateLimitStore() {
  * Rate limiting configuration
  */
 const RATE_LIMITS = {
-  // Public voting endpoints - more restrictive
-  vote: { requests: 10, windowMs: 60 * 1000 }, // 10 requests per minute
+  // Public voting endpoint. The limit is per IP address + browser, and a
+  // venue's Wi-Fi puts hundreds of identical phones behind one address, so
+  // this has to leave room for a whole crowd voting in the same minute.
+  // Repeat votes are held for review; this only caps how fast they can pile up.
+  vote: { requests: 300, windowMs: 60 * 1000 }, // 300 requests per minute
   // General API endpoints
   api: { requests: 100, windowMs: 60 * 1000 }, // 100 requests per minute
   // Admin endpoints - more permissive
@@ -97,7 +100,9 @@ export function withRateLimit(
   limitType: keyof typeof RATE_LIMITS = 'api'
 ): ApiHandler {
   return async (request: NextRequest, context?: unknown) => {
-    const clientId = getClientIdentifier(request)
+    // One counter per limit type, so a client's admin or page-load traffic
+    // does not eat into its budget for another kind of request.
+    const clientId = `${limitType}:${getClientIdentifier(request)}`
     const limit = RATE_LIMITS[limitType]
     const now = Date.now()
     const _windowStart = now - limit.windowMs

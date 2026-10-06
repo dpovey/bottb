@@ -79,7 +79,8 @@ export async function getBandsForEvent(eventId: string) {
 }
 
 /**
- * Get all bands across all events
+ * Get all bands across all events. Bands of rehearsal ("test") events are left
+ * out: this feeds the search index and the public filter dropdowns.
  */
 export async function getBands(): Promise<Band[]> {
   const { rows } = await sql<Band>`
@@ -96,6 +97,9 @@ export async function getBands(): Promise<Band[]> {
       ), '[]'::json) as companies
     FROM bands b
     LEFT JOIN companies c ON b.company_slug = c.slug
+    WHERE NOT EXISTS (
+      SELECT 1 FROM events e WHERE e.id = b.event_id AND e.is_test
+    )
     ORDER BY b.event_id, b."order"
   `
   return rows

@@ -206,7 +206,19 @@ export default async function EventsPage() {
         }
       }
 
-      // Only calculate scores for non-finalized past events
+      // Until an event is finalized its results are not public, whatever
+      // votes and judge scores have been entered so far.
+      if (!isFinalized) {
+        return {
+          ...event,
+          overallWinner: null,
+          bands,
+          scoringVersion,
+          heroPhoto,
+        }
+      }
+
+      // Finalized without stored results (legacy): calculate from the votes
       const scores = (await getBandScores(event.id)) as BandScore[]
 
       const bandResults = scores
@@ -272,7 +284,9 @@ export default async function EventsPage() {
                 Happening Now
               </h2>
               <p className="text-text-muted">
-                Cast your vote and support your favorite band
+                {activeEvent.status === 'voting'
+                  ? 'Cast your vote and support your favorite band'
+                  : 'Voting has closed — results coming soon'}
               </p>
             </div>
 

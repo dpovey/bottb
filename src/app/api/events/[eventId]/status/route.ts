@@ -1,63 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
-import { updateEventStatus } from '@/lib/db'
 import { withAdminProtection } from '@/lib/api-protection'
 
+/**
+ * PATCH /api/events/[eventId]/status — retired.
+ *
+ * This used to set an event's status directly, with no checks. Statuses now
+ * only change through the lifecycle steps on the "Run the night" page
+ * (`POST /api/events/[eventId]/night/transition`), which guard each step and
+ * freeze the results before they can go public. The route is kept so that an
+ * admin page left open from before answers with an explanation rather than
+ * changing anything.
+ */
 async function handleUpdateEventStatus(
-  request: NextRequest,
+  _request: NextRequest,
   _context?: unknown
 ) {
-  try {
-    // Extract eventId from the URL path
-    const url = new URL(request.url)
-    const pathParts = url.pathname.split('/')
-    const eventId = pathParts[pathParts.length - 2] // status is the last part, eventId is before it
-
-    if (!eventId) {
-      return NextResponse.json(
-        { error: 'Event ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const body = await request.json()
-    const { status } = body
-
-    if (!status || !['upcoming', 'voting', 'finalized'].includes(status)) {
-      return NextResponse.json(
-        {
-          error: "Invalid status. Must be 'upcoming', 'voting', or 'finalized'",
-        },
-        { status: 400 }
-      )
-    }
-
-    const updatedEvent = await updateEventStatus(eventId, status)
-
-    if (!updatedEvent) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
-    }
-
-    // Revalidate pages that depend on event status
-    revalidatePath('/')
-    revalidatePath('/events')
-    revalidatePath(`/event/${eventId}`)
-    if (status === 'finalized') {
-      revalidatePath(`/results/${eventId}`)
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Event status updated to ${status}`,
-      event: updatedEvent,
-    })
-  } catch (error) {
-    console.error('Error updating event status:', error)
-    return NextResponse.json(
-      { error: 'Failed to update event status' },
-      { status: 500 }
-    )
-  }
+  return NextResponse.json(
+    {
+      error:
+        'Event status is now changed from the "Run the night" page. Reload this page to get it.',
+    },
+    { status: 410 }
+  )
 }
 
 export const PATCH = withAdminProtection(handleUpdateEventStatus)

@@ -142,7 +142,7 @@ export const VisualPastWithWinner: Story = {
 // Visual card - active/live event
 export const VisualLiveEvent: Story = {
   args: {
-    event: { ...sampleEvent, status: 'active' },
+    event: { ...sampleEvent, status: 'voting' },
     relativeDate: 'now',
     variant: 'active',
     layout: 'tile',
@@ -193,7 +193,7 @@ export const HorizontalPastWithWinner: Story = {
 // Horizontal card - active
 export const HorizontalActive: Story = {
   args: {
-    event: { ...sampleEvent, status: 'active' },
+    event: { ...sampleEvent, status: 'voting' },
     relativeDate: 'now',
     variant: 'active',
     layout: 'horizontal',

@@ -18,6 +18,7 @@ import {
 import { parseScoringVersion, hasDetailedBreakdown } from '@/lib/scoring'
 import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { stripMarkdown } from '@/lib/markdown'
+import { competingBands } from '@/lib/competing-bands'
 import { EventPageClient, type OverallWinner } from './event-page-client'
 import { EventJsonLd } from '@/components/seo'
 import { notFound } from 'next/navigation'
@@ -46,7 +47,8 @@ export async function generateMetadata({
 
   // Get bands count
   const bands = await getBandsForEvent(eventId)
-  const bandCount = bands.length
+  // A finished event counts only the bands that competed, not special guests.
+  const bandCount = isFinalized ? competingBands(bands).length : bands.length
 
   // Build title - use tiered suffix approach (full → short → none)
   let baseTitle = event.name
@@ -80,6 +82,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // A rehearsal event must never be indexed.
+    robots: event.is_test ? { index: false, follow: false } : undefined,
     alternates: {
       canonical: `${baseUrl}/event/${eventId}`,
     },

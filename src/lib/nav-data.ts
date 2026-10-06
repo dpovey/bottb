@@ -1,6 +1,7 @@
 'use cache'
 
 import { cacheLife, cacheTag } from 'next/cache'
+import type { EventStatus } from './event-lifecycle'
 import {
   getPastEventsWithWinners,
   getUpcomingEvents,
@@ -26,7 +27,7 @@ export interface NavEvent {
   name: string
   date: string
   location: string
-  status: 'upcoming' | 'voting' | 'finalized'
+  status: EventStatus
   info?: {
     winner?: string
     winner_company_slug?: string

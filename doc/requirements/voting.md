@@ -23,10 +23,15 @@
 
 ### Crowd Voting Page
 
-1. **New Voter**: Band list with radio buttons, "Submit Vote"
-2. **Returning Voter** (cookie): Previous choice shown, "Update Vote"
-3. **Already Voted** (fingerprint): "Already voted" message
-4. **Success**: Confirmation with band name
+The page follows the event's status by itself (it polls a cached ballot
+endpoint), so a phone left open switches screens without a refresh.
+
+1. **Voting Opens Soon**: event is `upcoming`
+2. **New Voter**: Band list with radio buttons, "Submit Vote"
+3. **Returning Voter** (cookie): Previous choice shown, "Update Vote"
+4. **Success**: "Vote Submitted!", or "Vote Received" when the vote is held for review
+5. **Voting Has Closed**: event is `closed` or `locked`; links to results once `finalized`
+6. **Could not send**: a notice with the form still usable (busy server is retried automatically)
 
 ### Judge Voting Page
 
@@ -37,13 +42,17 @@
 
 ## Double Voting Prevention
 
-1. **FingerprintJS**: Browser fingerprint (primary)
-2. **Custom Fingerprint**: IP + User Agent hash (fallback)
-3. **Cookie**: Allows updates, tracks previous vote
-4. **Server Validation**: Database duplicate check
+A vote that looks like a repeat is **held for review, not refused** — identical
+phones cannot be told apart. Only approved votes count. See
+[run-the-night.md](./run-the-night.md#held-votes).
+
+1. **Cookie**: Remembers the voter's own vote so they can change it
+2. **Email**: Same address as an earlier vote → held
+3. **FingerprintJS**: Same browser fingerprint as an earlier vote → held
+4. **Custom Fingerprint**: Identical browser on the same IP address → held
 
 ## API
 
-- `POST /api/votes`: Submit vote (public, 10/min rate limit)
-- `POST /api/votes/batch`: Admin batch submission
-- Response 409 for duplicates with previous band name
+- `POST /api/votes`: Submit a crowd vote (public; 200 counted, 201 held for review)
+- `POST /api/votes/batch`: Admin: one judge's whole sheet, validated and saved atomically
+- `GET /api/events/[eventId]/ballot`: Public: voting open? and the bands
