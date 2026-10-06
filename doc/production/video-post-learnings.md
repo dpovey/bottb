@@ -900,7 +900,7 @@ more than once.
    non-DJI camera `.MP4` avoids having to map show time to source file (each camera has its own
    clock) and is safe because Super Scale only acts during a RiP of a clip that uses it.
 4. **Decompose any already-RiP'd cut that needs Super Scale** before re-RiPping it; decomposing
-   clears its clip colour, so re-mark it.
+   clears its clip colour, so re-mark it, **and drops its clip grade, so re-apply the CDL** (NOK, 2026-10-06).
 5. **Render in Place the orange cuts**: Include Video Effects **ON** (bakes Dynamic Zoom),
    colour grading **OFF** (the clip node and timeline node stay live on top of the bake — the
    CDLs apply once, not twice).
@@ -1920,3 +1920,154 @@ time_reference=172800000`), 10 s, 9 MB peak. Bit-exact against BotB-001 ch1/2 at
 - **New tools (built after doing each by hand twice, proven on Jamazon):** `scripts/resolve/wait_render.py` (background render
   waiter outside the MCP bridge) and `scripts/edge_scan.py` (black pan-edge scan per cut; flagged cut 8 at 142 px on the old render,
   nothing after Dean's fix).
+
+## Brisbane: Epsonics "No One Knows" (2026-10-05, bottb-a7)
+
+- **Scope (Dean):** the full song, delivered as 4K + 1080p + an IG cut (< 300 MB). The Resolve project **"No One Knows Clip"** is a
+  23 Aug pre-show promo (Grok and stock clips over the QOTSA studio track, 1080p), not live footage. The edit is on
+  `BOTTB Brisbane 2026` in "Battle of the Bands Brisbane Full Show".
+- **As found:** the cut is done, not graded. In 00:51:04:11–00:56:03:11 V1 holds 74 items: 54 live multicam and **20 already RiP'd**
+  (`… Render N.mov`, created 5–6 Sep, before the RiP rules of 13–14 Sep, so whatever Deflicker/NR/Super Scale/group state they had then
+  is baked in). 17 live zoomed cuts (14 Dynamic Zoom, 3 static 1.5–2.0×). Title card `epsonics_02-no-one-knows` on V2. No In/Out, no
+  RELEASE marker, empty queue.
+- **Mix v2 placed (Dean approved it as final, via mix-assist-b8):** `03_Delivery/Epsonics/Epsonics_S1_No_One_Knows_v2_at_00-51-04-11.wav`,
+  bext 147,093,108 = 00:51:04:10.99; `align-mix --band 300 3000 --ref-tc 0` placed it at 3064.440 s = :11 (coarse ratio 7.34, 5/5 windows
+  within a frame). Measured −14.5 LUFS, −1.0 dBTP, LRA 5.7, 258.000 s. Imported into the "Epsonics mixes" bin; the pool shows Start TC
+  :10 (floored stamp), so place by record frame 76611, not by the pool TC. New track **A12 "Epsonics S1 NOK MIX"**, 76611–83061 (00:51:04:11–00:55:22:11). I first set a check In/Out to 82060 by hand arithmetic (40 s short): derive frames with the `tc()` helper, never in your head.
+  The mix ends inside crowd sound at 00:55:22:11 while picture runs on: fade to picture at Dean's Out.
+- **A5 "REFERENCE (Zoom+CAM B)" is enabled and audible across the whole show.** Dean had to mute it to preview NOK. Nothing in this runbook
+  said how earlier masters kept it out; check every delivery's audio against its mix WAV (null test) rather than trusting the track flag.
+- **A one-frame range (In = Out) cannot be rendered (2026-10-05).** `SetMarkInOut(77100, 77100)` returned **False** but read back
+  as set, and every job queued on it stayed `Ready`: `StartRendering(jid)` False from the MCP sandbox and from the plain Python bridge,
+  for PNG and H.264 alike, with no dialog on screen and nothing in ResolveDebug.txt. `SetMarkInOut(77100, 77101)` returned True and
+  the same job settings rendered in 1.2 s. For a single-frame pixel check use a two-frame range. A False from `SetMarkInOut` is real
+  even when the read-back looks right.
+- **Audio-only (`ExportVideo False`) mov/ProRes422P + lpcm would not start on this 4K project** (5450-frame range, so not the In = Out
+  trap; it worked on Jamazon's 1080p project). A normal H.264 job started right after. On ProRes, `SetRenderSettings` rejects
+  `MultiPassEncode` (H.264/H.265 only) and `SelectAllFrames: False`, and one rejected key makes the whole dict call return False
+  while the other keys still apply: set keys one at a time when a False needs explaining.
+  Retested on the full mix range 76611–83060 with every key accepted: still refused. `SetCurrentRenderFormatAndCodec("wav", c)` is False
+  for every codec name tried (`GetRenderCodecs("wav")` is `{}`). Lesson: **put audio in the look-off measurement render** (it costs
+  nothing there) and null it against the mix, instead of planning a separate audio-only render.
+- **Grade measurement (2026-10-05, Dean away):** look nodes bypassed and restored one call each, verified on a 2-frame PNG pair (bypass
+  99 % pixels changed, mean |Δ| 18; restore mean/max |Δ| 0, md5 differs only in PNG metadata). `measure_NOK.mp4` 75768–83433, 7666
+  frames, 52 s (comfort: idle-ok, idle 10 min; peers held). Node 1 now holds FLC + Primary Balance + **Custom Curves**. All 68 cuts had
+  no clip grade; 33 camera sources at Super Scale 1; cache on `/Volumes/BOTTB/CacheClip`; 19 zoomed cuts marked Orange.
+- **The 20 old RiPs (gigstills, camera-original fit):** CAM A/B/C match live within one 8-bit code. **The 8 CAM D RiPs are uncorrected
+  source**: CAM D's group correction (R ×0.98, G shadow +0.013) was added after 6 Sep, so they missed it (2–5 codes on near-black wides).
+  Re-RiP is Dean's call; Deflicker/NR state baked into them is not measurable this way.
+- **Look moved toward an Adjustment Clip (Dean, 2026-10-05), so the FLC stops grading the song cards and each song can get its own look.**
+  `AddTrack` only adds at the top (no index in 21.1.1), so the 30 cards moved V2 → V3 by script: backup of every item
+  (`v2_cards_backup.json`: all 125-frame full movs, default transforms, no grade), `AppendToTimeline` to V3 at the same record frame,
+  read-back of name/start/end/left offset/source end/path against V2 (30/30, no stray audio), then `DeleteClips(v2, False)`.
+  **`AppendToTimeline`'s `endFrame` is EXCLUSIVE**: `startFrame 0, endFrame 124` gave a 124-frame item; `endFrame 125` gave 125
+  (`GetSourceEndFrame()` then reads 124). Tracks now: V1 picture, **V2 "Adjustment"**, **V3 "Titles"**. Before any re-render of a
+  published Brisbane song: its picture must match the timeline-node look (pixel check), and its cards will now be ungraded.
+- **Look switch verified (2026-10-05):** Dean pasted timeline nodes 1–2 into an Adjustment Clip on V2 (00:00:12:10–end; nodes: empty,
+  FLC + Primary Balance + Custom Curves, black anchor) and disabled the timeline nodes. Frame pair 77100–77101 timeline-look-only (X: nodes
+  on, V2 off) vs adjustment-clip-only (Y): mean |Δ| 1.3/255, max 20, 89 % of pixels, **but zero signed mean in every channel and gone
+  under a 16 px blur (0.07, max 2)**: the FLC grain pattern differs per instance, the tone/halation does not. A re-render of Y (Z)
+  matched Y exactly, so grain is deterministic per instance. **Compare a look moved between instances blurred, never per-pixel.**
+- **`StartRendering` refused (5 ways, no message) while Dean was working in the Color page copying nodes**; the first try after he
+  finished started at once. Observed, not proven. If a start is refused and Dean is in the UI, ask him to step out before debugging.
+- Render settings fell back to timeline resolution (4K PNGs) when a later job only set `CustomName`: set `FormatWidth/Height` on every job.
+- **v8 applied (Dean: "I like the 3rd one"):** `gigstills/runs/epsonics-nok/apply_lift_satclip.json`, 38 SetCDL True (32 per-channel
+  lift-to-touch + 0.95× gamma + clip-capped sat, 6 v4), every target read 1 node / no tools first, log `applied_v8.json`; node 1 then reads
+  Primary Balance + Sat/Hue/Lum on targets, empty on an identity control. Pixel verification pending.
+- **Audio verified on the verify render (AAC) vs the v2 WAV:** lag 0 samples, r 0.99965, gain 0.998, residual −31.5 dB, flat
+  (−30.6…−32.5 per 15 s block, no drift). Before the mix −124 dBFS, after it −113 dBFS: Dean's A5 mute holds and nothing else
+  plays, so no reference bleed. My check loaded both files whole as float32 and peaked at **1.45 GB** unannounced (3 s): read mono or in
+  slices (`sf.read(..., frames=, start=)`) for these nulls.
+- **v8 verified on pixels (gigstills, `verify_v8.json`):** 30 identity controls unchanged (max 0.008); 38 applied cuts on prediction
+  (medians ≤ 0.003, Y p50 max 0.004). Systematic miss: the biggest red lifts land at R p0.1 ≈ 0.012–0.014 (1013: 0.023, under v4's Power
+  0.87) instead of 0, i.e. 3–6 codes of red still above "touching". Cause unproven (Resolve's CDL clamp/Power order vs numpy, or the
+  H.264 render). The super-white clip model was pessimistic on 8 cuts (measured clipping lower by 0.012–0.040).
+- **Release range (Dean, 2026-10-05: "The out point is where the audio ends"):** In 76611 (00:51:04:11, first note = mix start, the mix
+  starts in sound at −19 dB) → Out 83060 (00:55:22:10, last frame of the v2 mix; crowd ≈ −30 dB there, guitar noodling and talk follow).
+  6450 frames = 258.0 s. **`AddMarker` returns False on a frame that already has a marker:** the Mint chapter marker sits on 76611, so
+  the Cyan RELEASE marker is at 76612 (dur 6449) with In/Out in its name; `state.py`'s "implies" line reads one frame late for this song.
+- **Red-floor nudge (Dean: "Do the nudge"):** 8 cuts re-SetCDL from `apply_nudge8.json` (extra red lift = measured floor^(1/Power),
+  pre-checked that each still held exactly the logged v8 CDL); verify render `verify_NOK_nudge.mp4` (76611–83060, look/titles off, 78 s):
+  red p0.1 now 0–0.008 (four exactly 0), G/B unchanged, Y p50 −0.0005…−0.0025, controls within 1 code. H.264 renders differ by ≤ 1 code
+  with no grade change: that is the noise floor for any render-vs-render check.
+- **Phone review package (Dean reviewing remotely, 2026-10-05):** look-on 720p render of the release range (6450 frames), then a contact
+  sheet (one mid-cut frame per cut, timecode + cut + angle + RiP, two pages) and a timecoded MP4. Homebrew ffmpeg here has **no drawtext**
+  (no freetype): draw one PIL label per second and `overlay` it as a 1 fps image sequence. **SendUserFile caps at 30 MiB**: 258 s at
+  640×360, 780k video + 96k AAC = 26 MiB. Script: session scratchpad `phone_review.py` (move into `scripts/` if used twice).
+- **Orange shift fixed with G/B Power, not G/B Slope (Dean: "shots got more towards orange", seen on his phone).** gigstills sized both on
+  measured frames: a G/B Slope trim capped (0.80) on 10 of 14 cuts and pushed skin up to −19.5° toward magenta (it hits near-neutral
+  pixels as hard as red-lit ones); multiplying the G/B Power (1.01–1.28) restored G/R exactly with skin within ±5.7° at up to −0.020 Y p50.
+  Applied to 14 cuts (`applied_huehold_power.json`, each pre-checked against the logged live CDL). Look-off check
+  `verify_NOK_huehold.mp4`: red-lit G/R on those 14 0.085 → 0.068 (before 0.072); all 32: 0.049 → 0.041 (before 0.037); G/B floors 0.
+  **Strobing cuts keep a red floor on their hottest frames** (1014 0.29, 1026 0.15, 1004 0.09 at p0.1, unchanged from the nudge): one
+  static lift per cut cannot follow the strobe; touching on every frame would need keyframed lifts (Dean, UI).
+- **The remaining "orange" is the Film Look, not the grade (2026-10-05).** Red-lit pixels' G/R, same frames: source 0.037, graded look-off
+  0.028, graded **look-on 0.228** (`review_NOK_huehold.mp4`): the FLC adds ≈ +0.19 on every red-wash cut, an order of magnitude more than
+  any CDL move tonight. Same FLC as the published Brisbane songs; NOK's all-red lighting makes it show. Fix it per song on its own
+  adjustment-clip segment (blade at the RELEASE In/Out), e.g. Hue vs Hue orange → red after the FLC. Measure hue look-ON before blaming the grade.
+- **Red-only gamma replaces the neutral compensation (Dean, 2026-10-06, cut 1004 at 00:51:19:05):** lift-to-touch on R + R Power 0.635
+  (R mids back to source), G/B Power 1. Applied to 1004 alone for Dean to judge with the look on (`try_1004_redgamma.json`).
+  Color page Mini Timeline zoom = scroll wheel / two-finger vertical swipe over it (manual p. 3106).
+- **Look trimmed by Dean (2026-10-06):** the V2 adjustment clip (whole show, not bladed) now holds node 1 empty + node 2 FLC with
+  "Custom Curves" only: the FLC node's Primary Balance and the black-anchor node 3 are gone. The "Custom Curves" tool is a single
+  control point ON the Y diagonal (inert; Soft Clip and intensities default), so the API lists a tool that does nothing. FLC settings on
+  screen: Cinematic, Skin Bias 0.2, Contrast 1.0, Highlights 0.65, H. Rolloff 0.7, Fade 0.1, Fade Rolloff 0.65, WB 6500, Tint 5.0,
+  Subtractive Sat 1.2. **The pre-change look survives in the disabled timeline nodes 1–2** (FLC + Primary Balance + curve; black anchor):
+  any re-render of a published Brisbane song needs that look restored or the songs will not match their releases.
+- Color page Mini-Timeline "zoom does nothing": Dean's mouse showed "Mouse Battery Very Low"; scroll over the V1–V3 lanes, trackpad otherwise.
+- **Full-show adjustment clip vs Color page navigation (2026-10-06):** clicking in the Mini-Timeline selects the V2 adjustment clip, and
+  `SetTrackLock("video", 2, True)` does not change that (`GetCurrentVideoItem()` still returns the Adjustment Clip; lock undone). Use the
+  Thumbnail timeline ("Clips" button, top-left of the Color page) and click the V1 cut's thumbnail, with the editor moving the playhead
+  by timecode (`SetCurrentTimecode`).
+- **What works for grading under a full-show adjustment clip:** `SetTrackEnable("video", 2, False)` (on the Color page, read back) +
+  `SetCurrentTimecode(tc)` → `GetCurrentVideoItem()` returns the V1 cut and the Color page grades it (verified 00:51:19:05 → cut 1004).
+  The look is off while V2 is off: toggle V2 on for Dean to judge, off to grade. Dean could not zoom the Mini-Timeline (low mouse
+  battery) and could not reach V1 thumbnails; drive the playhead for him instead of sending UI directions (2026-10-06).
+- **1004 red gamma: 0.635 lifted the red toe (Dean: "no black anymore … in the reds"), now 0.80** (red p10 0.06, mids 88 % of source).
+  Note the removed black-anchor node: the FLC has Fade 0.10, which lifts blacks with the look on; node 3 used to pull them back.
+- **Brisbane FLC as of 2026-10-06 (adjustment clip, screenshots):** Cinematic, Skin Bias 0.2, Exposure 0, Highlights 0.65,
+  H. Rolloff 0.70, **Fade 0.10**, Fade Rolloff 0.65, WB 6500, **Tint 5.0**, Subtractive Sat 1.2, **Richness 2.0**, Bleach 0,
+  **Split Tone ON (Natural, Protect Neutrals off, Amount 0.10, Hue 56.6°, Pivot 0.70)**, Vignette off, Halation ON (Highlights Only,
+  0.25, R 4). Dean then raised Contrast (from 1.0; new value to record). Split Tone at 56.6° and Richness 2.0 are the likely sources of
+  the look-on orange on red (G/R 0.028 look-off → 0.228 look-on). Sydney: Contrast 1.3, Fade 0, Tint 0, Richness 1.0–1.2.
+- **Dean's FLC changes (2026-10-06, his screenshot): Contrast 1.0 → 1.300, Tint 5.0 → 0.0** (both = Sydney). Still different from
+  Canvanauts: Fade 0.10 (Syd 0; suggested 0.03 because Contrast 1.3 + Fade 0 crushed Google's crowd), Richness 2.0 (Syd 1.0–1.2),
+  Split Tone 56.6° on (Syd none), Highlight Rolloff 0.70 (Canvanauts 0.25), Skin Bias 0.2 (Canvanauts 0.40). Whole-show clip.
+- **I left V2 (the look) disabled after navigating Dean to a V1 cut; he then edited the FLC and saw "it doesn't seem to change the
+  preview"** (2026-10-06). Whenever the look track is switched off for navigation, say so every time and switch it back the moment the
+  work moves to the look.
+- **Decomposing a RiP'd cut drops its clip grade, not just its colour (2026-10-06).** Dean decomposed RiP'd cut 1033 (00:53:22:02)
+  to re-zoom it; the live multicam item came back with node 1 EMPTY (its v8 CDL had been on the RiP'd item). Re-applied from
+  `applied_v8.json`, read back, re-marked Orange. Rescan after any decompose: 67 cuts, 19 zoomed (all live, all Orange), 0 Face Refinement.
+- **NEW RULE (Dean, 2026-10-06): end card and fades go ON THE TIMELINE before the render, not via `endcard-treat.sh` after**
+  ("I'd like to add closing title and fade in the video pre-render, it seems to cause issues post render"). Same treatment as the
+  script: last 98 frames (3.92 s) ending on the Out — `EndCard_2x.mov` on the Titles track (`AppendToTimeline` startFrame 0,
+  endFrame 98 EXCLUSIVE, recordFrame = Out − 97), `SetProperty("CompositeMode", resolve.COMPOSITE_ADD)` read back 1; mix item
+  `SetFades({"FadeOut": 98})` when it ends on the Out; last V1 cut `SetFades({"FadeOut": its end − (Out − 97)})`. NOK: card
+  82963–83061, A12 FadeOut 98, CAM B cut 82929–83073 FadeOut 110 (the cut runs 12 frames past the Out, so ~11 % picture remains on
+  the last frame unless Dean trims it to the Out). The append cleared In/Out again; restored from the RELEASE marker.
+- **4K v1 (2026-10-06 08:51) superseded before handover:** `BOTTB_Epsonics_NoOneKnows_4K_v1.mp4`, 1,452,477,488 bytes, render-qc PASS
+  (6450 frames, 44.7 Mb/s), −14.5 LUFS, TP −0.8 dBTP, audio vs WAV lag 0 / r 0.99977, 21 min 9 s (4.9× real time with FLC + Deflicker/NR).
+  Dean: **halation was off** and the finish is too late. I had reported halation ON from a screenshot taken earlier in the session;
+  there is no API read, so **ask Dean to confirm Enable Halation immediately before pressing render**, never from an older screenshot.
+  End card on the timeline worked (Add blend, logo over a fading picture), but the last V1 cut ran 12 frames past the Out, so the
+  final frames kept ~12–14 % picture: blade the last cut AND the mix at the Out before setting the 98-frame fades.
+- **Release range v2 (Dean, 2026-10-06: "end before we go to the last cut which is 0:55:17:03"):** In 76611 → Out **82928**
+  (00:55:17:03, last frame of the CAM D RiP before the CAM B cut), 6318 frames = 252.72 s. No V1 blade needed (that cut ends at
+  82929). **The mix was trimmed by script, no UI:** `DeleteClips` the A12 item, re-`AppendToTimeline` the same pool item with
+  startFrame 0, endFrame 6318 (exclusive), recordFrame 76611, mediaType 2 → 76611–82929, left offset 0; `SetFades({"FadeOut": 98})`.
+  End card deleted and re-appended at 82831–82929 (Add, read back 1); last cut FadeOut 98; old 110 fade on the CAM B cut set to 0;
+  RELEASE marker re-added (`DeleteMarkerAtFrame` + `AddMarker`); In/Out set and read back. Dean confirmed halation ON, "good to
+  re-render" → `BOTTB_Epsonics_NoOneKnows_4K_v2.mp4`.
+- **NOK delivered to Social (2026-10-06 ~09:45; Dean 09:33: "Okay this is good to go. Give it to the social agent to go out ASAP"):**
+  4K v2 1,416,194,700 B (3840×2160, 44.5 Mb/s, 21 min 55 s render); 1080p v2 385,058,763 B (ffmpeg Lanczos from the 4K, 11.9 Mb/s, AAC
+  copied, 4 min 53 s, 1.03 GB peak); IG v2 259,904,881 B (8 Mb/s, 247.9 MiB). render-qc PASS on all three (6318 frames), −14.5 LUFS,
+  TP −0.8 dBTP, audio lag 0 vs the mix, last frames black. Deriving the 1080p/IG from the 4K with ffmpeg replaced a second ~22-min
+  Resolve render (same picture, one less heavy job). Thumbnails filed under `Renders/Thumbnails/NoOneKnows/` (no year on the art).
+- **Post-delivery done:** Deflicker/NR off (6 group nodes, one call each; proven by a 38 s re-render matching the off reference), 21
+  completed jobs cleared, render name reset to the timeline name, 19 Orange marks cleared, Super Scale 1 on 33 sources, In/Out =
+  RELEASE, saved. The final mix stays on A12 (trimmed v2, FadeOut 98). **Left for Dean (UI): halation off for playback.** The 19 new
+  RiPs are back in their camera groups (needed for the colour correction; see above).
+- **Published (bottb-5b, 2026-10-06 ~11:00):** YouTube https://youtu.be/E2yeRiHRUlw (4K v2), FB + IG reels from Blob
+  `release/brisbane-2026/Epsonics_NoOneKnows_1080p_IG_v2.mp4` (259,904,881 B verified), LinkedIn + TikTok from 1080p_v2 (Dean dragged).
+  Live YouTube thumbnail checked from `maxresdefault.jpg`: Dean's custom art, no year on it. Copy: `doc/production/epsonics-noone-knows-copy.md`.
