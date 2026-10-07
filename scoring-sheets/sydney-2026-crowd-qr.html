@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sydney 2026 — Crowd Voting</title>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+          sans-serif;
+        color: #111;
+        font-size: 12pt;
+      }
+      .sheet {
+        width: 186mm;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        text-align: center;
+        padding-bottom: 6mm;
+        border-bottom: 2px solid #111;
+        margin-bottom: 8mm;
+      }
+      header h1 {
+        font-size: 28pt;
+        margin: 0 0 2mm;
+        line-height: 1.05;
+      }
+      header .meta {
+        font-size: 12pt;
+        color: #444;
+        margin-top: 2mm;
+      }
+      header .meta span + span::before {
+        content: ' \00b7 ';
+        color: #999;
+      }
+
+      .card-title {
+        font-size: 22pt;
+        font-weight: 700;
+        margin: 0 0 1mm;
+      }
+      .card-sub {
+        font-size: 13pt;
+        color: #555;
+        margin: 0 0 6mm;
+      }
+
+      .qr-wrap {
+        text-align: center;
+        padding: 6mm;
+        border: 2px solid #111;
+        border-radius: 3mm;
+        margin: 0 auto 8mm;
+        width: 130mm;
+      }
+      .qr-wrap img {
+        width: 120mm;
+        height: 120mm;
+        display: block;
+        margin: 0 auto;
+      }
+      .qr-url {
+        margin-top: 4mm;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 9pt;
+        color: #333;
+        word-break: break-all;
+      }
+
+      .body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8mm;
+        align-items: start;
+      }
+      .body .left {
+        text-align: center;
+      }
+
+      .steps {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .steps li {
+        display: flex;
+        align-items: flex-start;
+        gap: 4mm;
+        margin-bottom: 4mm;
+        font-size: 12pt;
+        line-height: 1.35;
+      }
+      .steps .num {
+        flex: 0 0 9mm;
+        height: 9mm;
+        width: 9mm;
+        border-radius: 50%;
+        background: #111;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 11pt;
+      }
+      .steps .text {
+        padding-top: 1mm;
+      }
+
+      .panel-title {
+        font-size: 16pt;
+        font-weight: 700;
+        margin: 0 0 4mm;
+      }
+
+      footer {
+        margin-top: auto;
+        padding-top: 6mm;
+        border-top: 1px solid #ccc;
+        font-size: 9pt;
+        color: #666;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      @media screen {
+        body {
+          background: #e5e5e5;
+          padding: 12mm 0;
+        }
+        .sheet {
+          background: #fff;
+          padding: 12mm;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+          min-height: 270mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header>
+        <h1>Sydney 2026</h1>
+        <div class="meta">
+          <span>The Manning Bar</span>
+          <span>Thursday 8 October 2026</span>
+        </div>
+      </header>
+
+      <div class="body">
+        <div class="left">
+          <div class="card-title">Crowd Voting</div>
+          <div class="card-sub">Scan to vote for your favourite band</div>
+          <div class="qr-wrap">
+            <img
+              src="data:image/png;base64,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"
+              alt="Crowd Voting QR code"
+            />
+            <div class="qr-url">
+              https://www.battleofthetechbands.com/vote/crowd/sydney-2026
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="panel-title">How to vote</div>
+          <ol class="steps">
+            <li>
+              <span class="num">1</span
+              ><span class="text">Scan the QR code with your phone camera</span>
+            </li>
+            <li>
+              <span class="num">2</span
+              ><span class="text"
+                >Select your favourite band from the list</span
+              >
+            </li>
+            <li>
+              <span class="num">3</span
+              ><span class="text">Submit your vote</span>
+            </li>
+            <li>
+              <span class="num">4</span
+              ><span class="text">One vote per person — make it count!</span>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <footer>
+        <div>Sydney 2026 &middot; Crowd voting</div>
+        <div>battleofthetechbands.com</div>
+      </footer>
+    </div>
+  </body>
+</html>

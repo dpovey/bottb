@@ -24,7 +24,21 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    `file_url: <blob url>` (no binary upload needed) → poll `{video_id}?fields=status` until
    `uploading_phase.status=complete` → `upload_phase=finish` with `video_state=SCHEDULED`,
    `scheduled_publish_time=<epoch>`, `description`. Permalink is `facebook.com/reel/{video_id}`
-   immediately. FB captions: names only — the API cannot @-tag other Pages.
+   immediately. **`copyright_check_status` is NOT a top-level field** — asking for
+   `?fields=copyright_check_status` returns `(#100) Tried accessing nonexisting field`. It is nested
+   under `status`, so query `?fields=status` and read `status.copyright_check_status`, which sits
+   alongside `uploading_phase`, `processing_phase` and `publishing_phase`. (Confirmed 21 Sep 2026;
+   the earlier wording here implied a top-level field.)
+
+   **`GET /{page}/scheduled_posts` lags the video object — do not use it as an emptiness check
+   while a reel is still processing.** A reel scheduled at 12:02 read `published=false`,
+   `scheduled_publish_time` correct and `length` correct on its own object, while the page's
+   `scheduled_posts` edge returned an empty list for minutes afterwards, because the video was still
+   `processing`. Read the video by id for the authoritative answer; the sweep is only trustworthy
+   once `status.video_status` is `ready`. (21 Sep 2026 — the empty sweep briefly looked like the
+   schedule had failed, and on a different day could just as easily look like nothing is scheduled
+   when something is.) FB captions: names only — the API cannot @-tag other Pages.
+
 4. **Instagram Reel via Graph API** (same token; IG business id `17841461862790198`):
    `POST /{ig}/media` with `media_type=REELS`, `video_url=<1080p blob url>`, `caption`,
    `share_to_feed=true`, `collaborators=["handle1","handle2"]` (max 3; each account gets an accept
@@ -34,7 +48,14 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    Standing crew for Brisbane: videographers @quirkylikethat + @kurtboldy on every video post, so the
    3-cap list is [band company, @quirkylikethat, @kurtboldy]; if the band's company has no IG,
    use @youngcareoz as the third — NOT @thetriffid (they never accept collaborator invites). **IG cannot pre-schedule** —
-   run `media_publish` with `creation_id` at post time from a scheduled job. **Containers expire in
+   run `media_publish` with `creation_id` at post time from a scheduled job. **A session cron does
+   not give you the time you asked for.** Jobs fire only while the session's REPL is idle, with
+   jitter on top, so the real behaviour is "whenever the session is next free". Sultans of Swing was
+   set for 17:28 AEST on 16 Sep and published at 21:27:58 — four hours late, into the tail of the IG
+   evening peak instead of its middle. Nothing looked broken and nobody noticed for five days. So:
+   record the scheduled time AND the actual time in the ledger for anything published from a session
+   cron, treat a gap as a defect rather than a success, and tell Dean in plain words that IG is the
+   one platform whose slot cannot be guaranteed. **Containers expire in
    ~24 h and in practice every pre-built one died before its slot** (errors: subcode 2207032 "Cannot
    Create Media" / 2207020 "Expired Media"). Don't pre-build a week of containers — have the daily
    job build the container from the Blob URL and publish it in one go (~1–2 min), or at minimum keep
@@ -52,12 +73,36 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    slots are @quirkylikethat, @kurtboldy, @youngcareoz. When a company cannot be tagged, also strip
    the `@` from its mentions in the caption body and write the name in full — an `@` that resolves
    to nothing reads worse than plain text.
-   **Instagram will not take a 4K master.** The Reels API caps at 1080p and 1 GB. Hand it a
-   3840x2160 / 1.3 GB file and the container does not fail fast: it runs ~50 s of processing and
-   then returns `status_code: ERROR`, `"Media upload has failed with error code 2207076"` — a
-   generic message that names neither the resolution nor the size. The same master uploads to
-   YouTube and Facebook without complaint, so a 2207076 on a file those two accepted means
-   "re-encode for Instagram", not "the file is broken". Post the 1080p; it published first try.
+   **Instagram's real limits, from the `POST /{ig-user-id}/media` reference — not inferred:**
+
+   |               |                                                                                 |
+   | ------------- | ------------------------------------------------------------------------------- |
+   | Duration      | **15 min max**, 3 s min                                                         |
+   | **File size** | **300 MB max**                                                                  |
+   | Resolution    | 1080x1920 recommended, 540x960 min                                              |
+   | `cover_url`   | JPEG, **8 MB max**, 9:16 recommended; **overrides `thumb_offset`** if both sent |
+
+   **The 300 MB cap is the one that bites, and this runbook previously said 1 GB — which was wrong
+   and cost an evening.** That figure was inferred from a 4K rejection rather than read from the
+   reference. Sultans of Swing (1080p, 517 MB, 5:55) was refused three times with
+   `"Media upload has failed with error code 2207053"` — with a cover, with a corrected cover, and
+   with no cover at all — while the identical bytes sat published on Facebook. A 300 MB-compliant
+   re-encode at 6.3 Mb/s fixed it with no edit to the cut.
+
+   Two traps in diagnosing this:
+   - **Size and duration move together** on our ~12 Mb/s encodes, so a size limit looks exactly like
+     a duration limit. Our post history brackets "works at 4:59, fails at 5:55" — which is true and
+     entirely misleading. Check bytes against 300 MB before theorising.
+   - **Enforcement is soft near the line.** 337 MB and ~430 MB files have gone through; 517 MB does
+     not. Do not treat a past success slightly over the cap as proof the cap is not real.
+
+   **A 4K master is refused separately**, with `2207076` after ~50 s. Same shape of generic message,
+   different code. The same master uploads to YouTube and Facebook without complaint, so either code
+   on a file those two accepted means "re-encode for Instagram", not "the file is broken".
+
+   **Meta's own Reels spec page says "3 to 90 seconds" and is wrong by a factor of ten** — we have
+   published 3:51 and 4:59 reels to Instagram and 5:55 to Facebook. Use the `ig-user/media`
+   reference above, not the spec page.
 
 5. **YouTube via Studio in Chrome** (the API key is read-only; no upload OAuth exists):
    - Channel: Battle of the Tech Bands `UCJVbMoGFRdQxVgHvW1heYCg` — Studio opens on Dean's personal
@@ -73,22 +118,54 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      genuinely need Dean, because their CSP blocks the fetch.
    - Run the fetch **asynchronously** and poll a `window.__inj` state object — a 1.3 GB fetch will
      outlast the JS tool's own timeout if you await it inline.
-   - Memory: the tab holds the response buffer plus the `File` copy, so budget ~2x the file size as a
-     transient Chrome peak (~2.6 GB for a 1.3 GB master). Check available RAM first on this machine;
-     Chrome is exempt from mem-guard, so nothing will stop it if it goes wrong.
+   - Memory: the naive version holds the response buffer plus the `File` copy, so budget ~2x the
+     file size as a transient Chrome peak (~2.6 GB for a 1.3 GB master). **Use `response.blob()`,
+     not `response.arrayBuffer()`** — Blobs spill to disk, which held Chrome's peak to ~0.45 GB on
+     a 1.19 GB master (measured 20 Sep 2026) instead of ~2x. Check available RAM first on this
+     machine either way; Chrome is exempt from mem-guard, so nothing will stop it if it goes wrong.
+   - **localhost HTTP is not a shortcut for getting a file into the page.** Chrome blocks the
+     request from an HTTPS page before it leaves, so the local server's log stays empty and it looks
+     like the page never tried. The Vercel Blob hop is load-bearing, not a convenience.
    - **Wait for the dialog to actually render before typing title/description** — typing right after
      inject reliably vanishes; retype and verify.
    - Next ×3 → Visibility → Schedule. The date field is a text+calendar hybrid; click the calendar
      day (typing dates half-works), then the time field: End, backspace ×6, type `17:00`, **Tab**
      (Enter clears it). Time zone defaults to GMT+10 local. The shorts link
      (`youtube.com/shorts/<id>`) exists as soon as the upload starts — capture it then.
+     **6 Oct 2026:** triple-click + type left the field on 00:00 ("Select a time in the future"); a single click, cmd+a,
+     type `14:00`, then click the matching `tp-yt-paper-item` worked. The open list is fixed-position, so `offsetParent`
+     is null for every option: find the visible one by `getBoundingClientRect().width > 0`, not `offsetParent`.
    - Covers trigger "Claimed content found" (Content ID). Posts still publish on schedule; revenue
      routes to rights holders. Glance at Studio → Content detection after uploading.
+   - **Fill the "Show more" settings on every upload (Dean, 2026-10-05: "youtube have a lot of other settings like
+     recording data and location we have not been setting").** Before Visibility, open **Show more** on the Details step and set:
+     - **Recording date** = the show date from the DB (`events.date` in the event's timezone), not the upload date.
+       Sydney 2025 = 23 Oct 2025 (DB 2025-10-23 18:30 Australia/Sydney; camera files `*_20251023_*`).
+     - **Video location** = the venue as Google Maps names it (Sydney 2025: The Factory Theatre, Marrickville; Sydney 2026:
+       Manning Bar). Take the venue from `events.location`.
+     - **Category: Music. Language: English.** **Made for kids: No** (Audience step).
+     - **Altered or synthetic content ("AI use"): No** on every live-performance upload (Dean, 2026-10-05). YouTube's
+       help page (support.google.com/youtube/answer/14328491, checked 5 Oct) exempts colour/lighting adjustment, beauty
+       and effects filters and production assistance; disclosure is for AI that makes a real person appear to say or do
+       something they didn't, alters footage of a real event, or generates a realistic scene. Our grade, Face Refinement,
+       Super Scale, stem-split remix and pitch correction of the band's own performance are enhancement. Answer Yes only
+       if a video ever carries a cloned voice or generated realistic footage.
+     - **Allow embedding: ON.** The site embeds every video from the `videos` table, so this is load-bearing.
+     - Tags: band, company, songs, "Battle of the Tech Bands", city + year.
+       Check the field names in Studio the first time (this list was written from Dean's report, not a walk-through) and
+       correct this entry. For videos already up, the same fields are on each video's edit page; backfill them.
    - **Title cap is 100 characters, hard.** The house format
      `{artist} - {song} (Live Cover) - {company} - Brisbane Battle of the Tech Bands {year}` came to
      104 for Bring Me to Life and would not have fitted. Shorten the event, not the sponsor:
      `... - Jumbo Interactive - BoTTB Brisbane 2026` is 85 and "BoTTB" already has precedent in the
      ShipReX title. Check the length before typing it.
+   - **The thumbnail library** lives at `/Volumes/BOTTB/Renders/Thumbnails/<SongInCamelCase>/`,
+     named `<band-slug>-<song-slug>-<platform>.jpg`, one per platform: `youtube` and `linkedin` at
+     1920x1080, `instagram` at 1080x1920. Dean exports them to `~/Downloads`; file them here and
+     clear Downloads. Reusable art such as `thumbnail-overlay-4k.png` goes in `_templates/`, never
+     under a song. Drop an `UPLOAD_NOTES.txt` beside the images carrying the file paths, title,
+     description and the after-publish steps — it makes the upload self-serve and outlives the
+     session that wrote it.
    - **Thumbnail cap is 2 MB.** A 1920x1080 PNG export runs 2.5–3 MB and is rejected at upload.
      Convert to JPEG q92: ~0.36 MB, still 1920x1080, no visible artefacts on logo or type.
    - **External links in descriptions are not clickable until the channel completes a one-off
@@ -96,6 +173,13 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      in a description renders as plain text, which defeats the point of putting a gallery link there.
 6. **LinkedIn via the page composer in Chrome** (no LinkedIn OAuth token is connected; the site has
    the connect flow but it needs an admin session, and the API can't schedule anyway):
+   - The page admin is reached by numeric id, not slug: `linkedin.com/company/104393733/admin/page-posts/published/?share=true`
+     opens the composer (the slug URL says "This LinkedIn Page isn't available", 1 Oct 2026).
+   - After Dean's drag the Editor opens on **Add captions** with auto captions ON: switch it off
+     **6 Oct 2026:** after Post on a 385 MB video, the post took ~2 min to appear in the page feed and the tab
+     raised "Leave site?" the whole time (the upload is still running in that tab). Check from a second tab;
+     never force-navigate the posting tab. Auto captions came up ON again on this video (OFF on a 27 MB one).
+     for sung vocals, Apply, Next. No video-title field was offered in the page composer on 1 Oct.
    - The Chrome extension's `file_upload` tool caps at **10 MB** and LinkedIn/TikTok CSP blocks the
      fetch-inject trick, so **Dean drags the video into the composer manually**; the agent does copy,
      mentions and scheduling. (A ~9 MB 720p re-encode technically fits the tool but looks soft —
@@ -126,7 +210,15 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
        lists the chips in order (compare against the intended tag list), `ed.innerHTML.match(/@<a/g)`
        catches stray `@`s, and mapping `p.innerText.length` over paragraphs catches stray blank lines
        (pattern: text,1,text,1,… — any run of 1s means extra empties to remove).
-   - Schedule: clock icon → date (calendar click) → time (type `4:30 PM`, click the suggestion
+   - - **LinkedIn rewrites URLs to its own shortener on save.** A caption containing
+       `https://youtu.be/<id>` reads back as `https://lnkd.in/<hash>` after the post is saved, so
+       verifying a link by substring-matching the original URL returns false and looks exactly like a
+       failed edit. It is not. Check for `lnkd.in`, or follow the shortened link, rather than grepping
+       for the URL you typed (21 Sep 2026).
+   - **Posts are editable after publishing**, which is the escape hatch when a link did not exist at
+     compose time. Verify mention chips survived the edit **after a full page reload**, not from the
+     edit dialog.
+     Schedule: clock icon → date (calendar click) → time (type `4:30 PM`, click the suggestion
      option) → Next → Schedule. Scheduled posts have **no permalink until they publish**.
 7. **TikTok via TikTok Studio in Chrome** (Content Posting API needs app review — not worth it):
    - Account: **@bottb0**. Direct navigation to `/upload` or `/tiktokstudio/*` hits a "Please wait…"
@@ -134,8 +226,15 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      sidebar**. Same for getting back after posting: Home → Upload.
    - Dean uploads the file manually (same 10 MB extension cap). Then: caption (plain text; the
      `#`/`@` pickers exist but plain hashtags in text work), Location chip "The Triffid", Schedule
-     radio → date via calendar → time via the two scroll columns (click values to re-centre the
-     wheel; it drifts — verify with a zoom before submitting). Allows scheduling ≤10 days out.
+     radio → date via calendar → **time via the two scroll columns — CLICK, never scroll or drag.**
+     The wheel ignores mouse-wheel events and drag entirely; it only moves when you **click a
+     value**, which re-centres the list on that value and reveals three more either side. So to
+     reach 09:00 from a default of 23:15 you click the topmost visible hour repeatedly (23 → 20 →
+     17 → 14 → 11 → 08) until the hour you want is on screen, then click it, then click the minute.
+     Roughly five clicks, not a scroll. **A wheel that will not scroll is not a wheel that is
+     restricted to the hours it is showing** — that misreading cost a long detour on 27 Sep, where
+     only 20–23 were visible and it looked like TikTok had capped the schedule window. Verify the
+     final value with a `zoom` on the two columns before submitting. Allows scheduling ≤10 days out.
    - After Schedule it lands on /tiktokstudio/content — the new post can take a reload to appear;
      don't panic and don't double-post. **Getting permalinks: never map video ids from the Studio
      list's anchors or profile-grid tile order — both burned us with swapped links.** The reliable
@@ -185,8 +284,56 @@ cast ints (`$5::int`). Ready-made script: session scratchpad `insert-video-http.
 - **JS results containing URLs/query strings can come back `[BLOCKED: Cookie/query string data]`** —
   have injected scripts return short plain strings (counts, booleans, text slices), not full hrefs.
 - **YouTube's confirmation toast lies**: a scheduled Short can pop "Video published". Trust the
-  "Video scheduled — public on <date> at <time>" dialog, or reopen the video's Visibility; the Data
-  API (read key) returning no item for the ID is also consistent with private-until-scheduled.
+  "Video scheduled — public on <date> at <time>" dialog, or reopen the video's Visibility.
+
+- **oEmbed CANNOT tell public from unlisted — do not use it as a visibility check.** It returns
+  HTTP 200 with the correct title for BOTH. Proven 21 Sep 2026 with a control, which is the only way
+  this kind of claim should be made:
+
+  | video                   | actual   | oEmbed  | Data API `status.privacyStatus` |
+  | ----------------------- | -------- | ------- | ------------------------------- |
+  | `8YIPtpb5-0s` (Sultans) | public   | **200** | `public`                        |
+  | `zgtbqLOIOBU`           | unlisted | **200** | `unlisted`                      |
+  | `Fof1cfAv_g0`           | deleted  | 404     | no item                         |
+
+  oEmbed only separates _exists_ from _deleted_. **The authoritative check is the Data API with the
+  read-only key**, which needs no OAuth:
+
+  ```bash
+  K=$(grep '^YOUTUBE_API_KEY=' .env.local | cut -d= -f2- | tr -d '"')
+  curl -s "https://www.googleapis.com/youtube/v3/videos?part=status&id=<ID>&key=$K"
+  ```
+
+  `privacyStatus` is `public` / `unlisted` / `private`; **no item at all** means deleted or private.
+  This matters because an unlisted id in a caption is a link the public cannot open — the same
+  user-visible failure as a dead one, and it passes a naive oEmbed gate silently. An earlier note
+  here and in the Sultans ledger entry said "oEmbed 200 with the right title confirms public". That
+  was wrong, and a rebuild script was briefly gated on it.
+
+  **`privacyStatus: public` is not the same as watchable.** Public describes the video's visibility
+  setting, not a viewer's ability to play it: a public video can still be region-blocked. Every song
+  we post is a cover, so this is the normal case rather than an edge case.
+
+  **`contentDetails.regionRestriction` DOES surface region blocks on the read-only key** — verified
+  21 Sep 2026 against a blocked video and a clean control, which is the only way this should be
+  claimed:
+
+  | video                          | privacyStatus | `regionRestriction`   |                                     |
+  | ------------------------------ | ------------- | --------------------- | ----------------------------------- |
+  | `2t0zoh-ZJO4` (Jumbo full set) | public        | `{"blocked": ["RU"]}` | reads "Partially blocked" in Studio |
+  | `8YIPtpb5-0s` (Sultans)        | public        | absent                | control                             |
+  | `zgtbqLOIOBU`                  | unlisted      | absent                | control                             |
+
+  So the full gate is: **refuse unless `privacyStatus == "public"` AND (`regionRestriction` is absent
+  OR its `blocked` list excludes `AU` OR its `allowed` list includes `AU`)**. Handle `allowed` as
+  well as `blocked` — an allow-list that omits AU is a block by another name.
+
+  **Scope limit, deliberately not overstated:** this is verified for _region_ blocks only. A full
+  Content ID takedown or a forced mute may present differently and there is no control to test that
+  with, so do not read a clean `regionRestriction` as "no copyright problem". For that, still glance
+  at Studio → Content detection. The RU block above affects none of our audience; what it proves is
+  the mechanism, not a live problem.
+
 - TikTok's caption box: after typing, press Escape only to close its own hashtag dropdown — on
   LinkedIn Escape means "discard?", and a triple-click on some fields triggers macOS's dictionary
   "No definition found" popover; both are harmless but occlude clicks, so re-screenshot after.
@@ -233,11 +380,41 @@ non-editable `div.title` that a naive `input`/`textarea` sweep misses entirely.
 
 Video uploads have a single Description field (no separate title); photo posts have both.
 
+**Scheduled TikTok posts are IMMUTABLE.** The Studio says "Scheduled posts cannot be edited" — the
+time cannot be changed without deleting and rebuilding the entire post, which means a fresh upload
+of the full file and a fresh copyright check. On a cover that already reads clean, rebuilding to
+move the slot an hour is a bad trade. **Get the time right first go** (Dean, 21 Sep 2026, choosing
+to leave a post at 20:00 rather than rebuild it to 19:00).
+
+**The TikTok precedent is 19:00, not 20:00.** Sultans of Swing went at 19:00; a later slot was once
+inferred from "Instagram peaks 5-10pm and TikTok later still" and landed an hour off. Read the
+posts list for the actual shipped time rather than reasoning from the audience-peak note.
+
 **TikTok schedules natively** — a "Schedule" radio beside "Now" in Settings, with separate time and
-date pickers. The hour column needs scrolling to reach times below 19:00. Turn on **Music copyright
-check** for covers before scheduling: it takes a few seconds and tells you whether the video will be
-muted, which matters far more than the delay. Both it and Content check lite returned "No issues
+date pickers. The hour column needs scrolling to reach times below 19:00. **Music copyright check and Content check lite are ON by default** (Dean, 21 Sep 2026 — both
+toggles were already enabled and green at page load). An earlier version of this line said to "turn
+on" the music check, which sends you hunting for a switch that is already thrown. The action is
+reading the **result**, not enabling the feature: for covers, confirm both show "No issues found"
+before scheduling. It takes a few seconds and tells you whether the video will be muted, which
+matters far more than the delay. Both it and Content check lite returned "No issues
 found" for Bring Me to Life.
+
+**The "Video published" toast also appears when you SCHEDULE** (1 Oct 2026). Clicking Schedule
+landed on `/tiktokstudio/content` with a "Video published" toast; after a reload the row read
+"Oct 2, 7:00 PM" with a clock icon, i.e. scheduled. Trust the row, not the toast.
+
+**Finding a fresh post's id (2 Oct 2026).** The Studio content list has no `/video/` anchors, the
+profile page rendered no grid ids, and a direct `/@bottb0/video/<id>` load hits the "Please wait…"
+wall. What worked: on `/tiktokstudio/content`, scan `document.documentElement.innerHTML` for
+`\b7\d{18}\b` and decode each (`BigInt(id) >> 32n` = unix s); ids minted when you staged the post
+are the candidates, in staging order. Then confirm by oEmbed caption. On 2 Oct oEmbed returned 429
+for both fresh ids for 30+ min while a months-old control returned 200, so a 429 on a new post is
+"not yet", not "wrong id": retry later rather than recording an unconfirmed link. (Corrected 3 Oct:
+at 09:17 the control returned 429 too, so the limit is on our IP, not the post. Repeated retries
+make it worse; after two failures ask Dean to copy the link from the app, Share → Copy link.
+At 19:23 the same day the control was back to 200 while both fresh posts (Fri and Sat) still
+returned 429 — 24 h after publishing. So oEmbed cannot confirm a fresh post on any useful
+timescale: for new TikTok posts, get the link from Dean's app from the start.)
 
 ### TikTok photo posts
 
@@ -398,6 +575,11 @@ with the choice/freedom/dignity line. Hashtag base: `#BattleOfTheTechBands #BotT
 
 - Facts from the DB (`finalized_results`, recomputed against raw `votes`) and the **audio show pack**
   for set lists — the admin `setlist_songs` were stale; sync them back to the DB once corrected.
+- **Do not use "house band".** Dean, 23 Sep 2026 — it is overused. The house opening
+  `"<Band> — <Company>'s house band — play ..."` put it in effectively every band post across five
+  platforms. Vary the apposition instead: "<Company>'s band", "the band from <Company>", or name the
+  company after the band with a comma. The problem is the formula, so do not just substitute one new
+  fixed phrase for the old one — check a new caption against the last few posts before shipping.
 - Voice rules that survived review: no em dashes, no "the moment when", no rule-of-three, no
   "it's not X it's Y", no emoji bookends, first-person "we", lead with a detail someone in the room
   would recognise. Don't invent crowd reactions ("got its own cheer") — Dean cut every one; stick to
@@ -427,12 +609,20 @@ with the choice/freedom/dignity line. Hashtag base: `#BattleOfTheTechBands #BotT
 
 - Facebook: post as a normal `/{page}/videos` `file_url` post, NOT a reel — plays landscape natively.
 - Instagram: the API only accepts video as REELS, and the app letterboxes 16:9 in the player but
-  centre-crops previews — looks "converted to vertical". Fix: render a 9:16 canvas with the full
-  16:9 frame centred over a blurred, slightly darkened fill
-  (`scale=1080:1920:force_original_aspect_ratio=increase,crop,gblur` bg + overlay), then post that.
-  There is no API delete — remove a bad IG post via instagram.com ⋯ → Manage post → Delete.
-- Big masters (4.8 GB ProRes-ish renders) exceed IG's ~1 GB limit: make a ~10 Mbps H.264 social
-  master first; it also spares Dean the giant manual uploads for LinkedIn/TikTok.
+  centre-crops previews — looks "converted to vertical". **Post the plain 16:9 file anyway and
+  accept that.** An earlier version of this bullet said to fix it by rendering a 9:16 canvas with
+  the 16:9 frame over a blurred, darkened fill. **Do not do that** — Dean tried that version and
+  rejected it, and his preference section above ("Keep them landscape everywhere. Never crop, never
+  blur-fill") is the ruling. The two sections contradicted each other from Sep 2026 until this was
+  corrected on 21 Sep; if they ever disagree again, Dean's stated preference wins over a platform
+  workaround. There is no API delete — remove a bad IG post via instagram.com ⋯ → Manage post →
+  Delete.
+- Big masters exceed IG's limit: make a ~10 Mbps H.264 social master first; it also spares Dean the
+  giant manual uploads for LinkedIn/TikTok. **The IG limit is 300 MB, not the "~1 GB" this bullet
+  used to claim** — see the 300 MB table in step 4, which is read from Meta's `ig-user/media`
+  reference rather than inferred from a rejection. At ~10 Mb/s that caps a social master at roughly
+  four minutes, so check bytes against 300 MB rather than assuming the bitrate is safe: a 212 s song
+  lands ~265 MB and fits, a 355 s song at the same bitrate does not.
 
 ## YouTube thumbnails (offline generator)
 
@@ -468,6 +658,35 @@ Company logo comes from the DB (`companies.logo_url`, a Vercel Blob URL) — `cu
 `/Volumes/BOTTB/Renders/Thumbnails/<Song>/`. YouTube caps thumbnails at 2 MB; the CLI steps the
 JPEG quality down until it fits.
 
+## What a render handover from the editor session must contain (28 Sep 2026)
+
+The cutting session's `live-video-editor` skill now defines the handover as a contract (its step 6).
+Expect every one of these, and **chase the missing ones before scheduling anything**:
+
+- File paths, with **byte counts verified remotely**, not just locally. Encode the count into the
+  injector as `blob.size === <bytes>` and abort on mismatch — v9 and v14 of Everlong differed by
+  15 KB in 1.6 GB, and nothing else would have caught a stale fetch.
+- The Instagram variant's size in **MB and MiB both**, against the 300 MB cap.
+- Which files are **over the IG cap by design**. The editor flags this; **routing files to platforms
+  is ours, not theirs** — an earlier handover said "4K master (YouTube, Facebook)" and nearly sent
+  1.6 GB into a Facebook reel, which takes the same 1080p as Instagram.
+- **Duration in seconds**, for the `videos` row.
+- **What changed between versions.** "Audio only, video streams byte-identical" let a whole picture
+  re-check be skipped.
+- The **version in the Blob path** (`..._v14.mp4`), so a stale Blob URL cannot silently serve the
+  superseded cut.
+- Whether a **thumbnail exists yet** — not the editor's job, but it is the thing that blocks
+  publishing.
+- **Dean's instruction quoted verbatim, with a timestamp on the quote.** A relayed instruction can
+  go stale between him saying it and us reading it; that happened twice in one week.
+- Superseded renders **moved to `_superseded/`**. Everlong left two 1080p files at an identical
+  415.1 MB one token apart in the name, and picking the wrong one is a silent failure: it publishes
+  cleanly and carries the mix Dean rejected.
+
+**A QC PASS is mechanical, not approval.** Frames, stream length, non-silent tail and bitrate all
+passed on the cut Dean rejected for how it sounded. Never read PASS as "cleared to publish", and
+never publish on the editor session's word — **only on Dean's**.
+
 ## Photo posts (stills) — settled Sep 2026, not yet exercised
 
 First run: Amy Corrie's Brisbane 2026 stills, six posts (one per band + one audience/community),
@@ -479,9 +698,15 @@ prepared by the `cut-recipe-colour-correction` session under
   | Platform | Asset |
   |---|---|
   | Instagram | 1080x1350 4:5 crop (hard aspect limits, and a carousel forces the first slide's ratio on the rest) |
-  | Facebook | the same 4:5 crop |
+  | Facebook | the same crop as Instagram — **but see below** |
   | LinkedIn | **the ORIGINAL photo, uncropped, native aspect** — LinkedIn happily mixes portrait and landscape in one post |
+
+  **Facebook should usually get the originals too** (Dean, 24 Sep: "if Facebook supports different
+  photos why wouldn't we choose that?"). Facebook has neither the shared-aspect-ratio constraint nor
+  the 10-item cap, so making it match Instagram throws away pixels and whole images for nothing. Send
+  Facebook the crops only when the crop is genuinely the better picture, not out of habit.
   | TikTok | the 4:5 crop (vertical feed; a landscape original would letterbox) |
+
 - **LinkedIn assets**: Amy's originals are 2.6-9 MB each (57 MB for nine), far over `file_upload`'s
   10 MB per call. Downscale to a **long edge of 2048** preserving aspect — that is still larger than
   LinkedIn displays, and brings a whole post to 1.6-3.1 MB so it uploads in one call:
@@ -534,6 +759,129 @@ prepared by the `cut-recipe-colour-correction` session under
     (`src/app/event/[eventId]/event-page-client.tsx:325`).
   - So a photo post CAN link to the gallery, but **only after the set is ingested** — as of 7 Sep,
     `brisbane-2026` had 1 photo in the table, so the link would have led to an empty gallery.
+
+### Choosing the common aspect ratio when the sources are mixed (24 Sep 2026)
+
+Every slide in one Instagram post must share an aspect ratio, so a mixed-shape set needs one crop
+for all of them. **Pick the ratio by geometry, not by habit.** The ShipReX stills spanned 1.778
+(16:9) and 0.562 (9:16) — exact reciprocals, so their geometric mean is exactly 1.000. At 1:1 each
+extreme keeps 56% of its long axis; the house 4:5 crop would have kept only **45%** of a 16:9
+frame's width while giving the single portrait frame a discount nothing else in the set needed.
+
+So 4:5 is the right default when the sources are portrait or square, and the wrong one when the set
+is mostly landscape. Compute `sqrt(widest x narrowest)` and check what each end actually loses.
+
+**Always eyeball a contact sheet of the crops before publishing**, not the originals — a centre crop
+can behead a subject who was framed to one side, and a spreadsheet of ratios will never show it:
+
+```
+magick in.jpg -gravity center -crop 1:1 +repage -resize 400x400 out.png
+montage out/*.png -tile 5x -geometry +6+6 -background black sheet.jpg
+```
+
+### Deleting a video when another carries the same title (27 Sep 2026)
+
+Replacing a video means two items with **identical titles** sit in the Studio list at once, so
+choosing the delete target from that list is a coin flip on destroying the replacement. The sequence
+that is safe:
+
+1. **Upload the replacement first**, and wait until the Data API reports `uploadStatus: processed`
+   with a real `duration` — not merely `uploaded`, which is true while it is still transcoding.
+   Never delete the thing being replaced until the replacement is confirmed complete.
+2. Navigate to `studio.youtube.com/video/<id>/edit` so **the id is in the URL**. Do not click a row.
+3. Cross-check a second, independent signal on the page — the **Filename** panel names the source
+   file, which differs between versions even when titles do not.
+4. Re-read `location.href` **immediately before** the irreversible click.
+5. Verify afterwards by Data API: the deleted id returns **no item**, and the survivor still reads
+   as expected. Query both ids in one call so there is no chance of reading a stale answer for one.
+
+Encode the expected byte count into the injector too — `blob.size === <bytes>` before injecting
+catches a stale file by name, which matters when two versions differ by ~15 KB in 1.6 GB.
+
+### A disabled button eats the click and reports nothing
+
+The delete confirmation checkbox did not register when clicked by accessibility ref. The dialog
+stayed open with the box unticked, "Delete forever" stayed greyed out, and the click on the disabled
+button **returned success and did nothing**. The tool reports the click, not the effect.
+
+Nothing revealed this except the Data API still returning the supposedly-deleted video. Without that
+check the report would have been "deleted" when nothing had happened.
+
+**So: for any gated control, confirm the gate is actually open before clicking through** — read the
+checkbox state back, or screenshot and look — and always verify the outcome through a different
+instrument than the one that performed the action.
+
+### A peer's state report is a fact about when it was written
+
+"Resolve is closed" was true when the cutting session sent it and false by the time it was acted on,
+because Dean reopened Resolve in between. Neither session was wrong; the message was simply stale.
+**Re-measure anything time-varying yourself** — memory, disk, whether an app or job is running —
+however recently and however confidently a peer reported it. Ask peers to send measurements with
+the moment they were taken, and treat one as evidence about that moment only.
+
+### LinkedIn photos do NOT need dragging — only video does
+
+Correcting a standing assumption. The CSP problem is specific to the **fetch-inject** route, where
+the page itself fetches a Blob URL; `file_upload` sets files on the input directly and is
+unaffected. The 10 MB limit is **per call**, so a downscaled photo set sails through where a video
+cannot: 13 JPEGs at 2048 long edge came to 6.5 MB and went in one call on 24 Sep.
+
+Find the input with `find` ("file input for uploading images"), then `file_upload` with every path
+in one call. Dragging is only needed for video.
+
+### Verify LinkedIn mention chips by `data-entity-urn` before clicking Post
+
+**Never click a typeahead row by coordinate.** The list re-renders between reading it and clicking,
+so the click lands on a different row. On 24 Sep that produced three wrong mentions in one caption —
+"Big Rex Software" for Rex Software, "URBAN-X" (a US venture capital firm) for URBAN X, and **Jumbo
+Interactive Limited left as plain text**, which would have broken the mandatory sponsor mention. The
+rest of the caption was silently swallowed too. A screenshot shows none of this: the text reads
+correctly either way.
+
+The procedure that works:
+
+1. Type `@<full registered name>`.
+2. Press `ArrowDown`.
+3. Read back `aria-selected="true"` and **confirm it names the company you meant**.
+4. `Return`.
+
+Then, before Post, read the editor and check every chip:
+
+```js
+const ed = document.querySelector(
+  '.ql-editor, [contenteditable="true"][role="textbox"]'
+)
+Array.from(ed.querySelectorAll('[data-entity-urn]')).map((e) => ({
+  t: e.innerText,
+  u: e.getAttribute('data-entity-urn'),
+}))
+```
+
+Known-good URNs: Rex Software `1985577`, URBAN X `2758387`, Jumbo Interactive Limited `1517297`.
+Also confirm the hashtags are present — a swallowed tail is the other half of this failure.
+
+`cmd+a` then `Delete` clears the composer **only with focus inside the editor**; click into it
+first and read `innerText` back to confirm. Images survive the clear.
+
+### A caption can be fixed after publishing; the images cannot
+
+`POST /{page-post-id}` with `message=` rewrites a live Facebook post's text and returns
+`{"success":true}`. Read it back with `?fields=message,updated_time` to confirm. **There is no
+equivalent for the attached photos** — changing those means deleting and reposting, which loses the
+URL and any engagement.
+
+Instagram has no caption-edit endpoint at all, so an IG caption must be right at `media_publish`.
+
+Consequence for ordering: when a fact is still outstanding (a credit, a link), **ship the platform
+whose text you can edit first, and hold the one you cannot.** On 24 Sep the CAM A operator's name
+landed one minute after the Facebook post went out; the FB caption was edited in place and Instagram
+then published correct the first time.
+
+### Do not put a full stop immediately after an @handle
+
+Instagram usernames may legally contain periods (`@urbanx.io`), so `@kurtboldy.` is ambiguous in a
+way `@kurtboldy,` is not. Rephrase so the handle is not sentence-final, or end the line without
+punctuation. The same care applies to a handle followed by `'s`.
 
 ## Photo visibility — the manual step that gets forgotten
 
@@ -645,6 +993,59 @@ Keep these in the repo, not the session scratchpad: `/private/tmp` was wiped by 
 Dated, so the fix is traceable to the failure that caused it. Add to this every time something
 breaks or a rule changes; the sections above are the distilled rules, this is the evidence.
 
+### 21 Sep 2026 — two withdrawals in one morning, both times the ears beat the instruments
+
+Off the Record's "It's All Coming Back to Me Now" was scheduled across five platforms, published to
+YouTube and LinkedIn, and withdrawn twice in four hours. Nothing defective reached Facebook,
+Instagram or TikTok. Both holds came from Dean listening, and both times the measurements initially
+said the file was clean.
+
+| #   | What happened                                                                  | What the instruments said                                                                                                                             | What was actually true                                                                                                                                                                                             |
+| --- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Dean judged the guitar too loud and harsh after the video went public at 07:30 | No clipping anywhere, master peak -1.62 dBFS, zero flat-top runs, all stems clean                                                                     | A balance problem, not a defect. The guitar was driving the limiter — pulling it 2.1 dB moved crest 13.73 → 15.42 at the same Maximizer setting. One cause, two symptoms ("too loud" AND "limited")                |
+| 2   | Dean then heard the two guitars as not tight                                   | `19 Gtr 2 DI` would not correlate against its own source on four methods, r=0.016–0.067. Read as "structurally right, cannot measure to ms precision" | **The search window never reached the true offset.** Widened to full file length, Gtr 2 locks at -1090.62 ms. Cause: **uncompensated RX De-hum latency**, ~1.09 s, past Logic's PDC. Confirmed by Dean on playback |
+
+**A null result only covers the range you actually searched.** r=0.02 was not a precision limit and not
+non-linear processing; it was the right answer sitting outside the window. A measurement's stated
+limitation is a hypothesis about the measurement, not a fact about the audio.
+
+**When a candidate offset looks like a musical interval, test for the comb before dismissing it as
+an alias.** This number surfaced earlier as a 1.092 s "step" and was waved away as a two-beat alias
+at ~110 bpm. What settles it is structural, not musical: an alias produces a _comb_ of comparable
+peaks at beat multiples, a real displacement is a lone peak. Gtr 2's peak was r=+0.749 with the
+next-best anywhere in 2335 s at r=+0.017 — a 44x margin, and nothing at all where the rest of the
+band sits.
+
+**Do not derive a tempo from an offset and then cite it as confirmation of that offset.** The
+"exactly 2 beats at 110.03 bpm" reading was RETRACTED: the bpm had been derived _from_ the
+1090.62 ms figure by assuming it was two beats, then quoted back as evidence the displacement was a
+grid-snap nudge. Circular, and it would have sent Dean hunting through region positions for a fault
+that was in a plugin. A coincidence with a musical interval is not evidence of a musical cause —
+plugin latency lands wherever it lands.
+
+**Latency that exceeds the host's PDC is never compensated, and it is silent.** The real cause was
+uncompensated RX De-hum on that channel, ~1.09 s, past Logic's compensation limit. Dean guessed
+De-hum first and was right; it was dismissed on the reasoning that "de-hum latency is milliseconds".
+Check a plugin's actual reported latency against the host's limit rather than assuming a class of
+plugin is low-latency.
+
+**Correlating an export against its own source cannot be defeated by loose playing.** Looseness is a
+relationship between two channels. When one channel returns 0.99 against its own source and its pair
+returns 0.02 on identical chains, that asymmetry is a fault to be found, not a limit to be accepted.
+
+**Also from this morning:** a plugin-latency theory was built from a screenshot in which a bus strip
+was read as a channel strip, blaming two Neutron instances that sit on the _shared_ guitar bus and
+therefore delay both guitars equally. Retracted. Check what a strip actually is before reasoning
+about relative delay from it.
+
+### 20 Sep 2026 — `pnpm format` in a tree three sessions were writing to
+
+| #   | What happened                                                                                                                                                                                                                                                                   | Why it mattered                                                                                                                                                          | What changed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Ran `pnpm format` after editing this runbook. Prettier walks the whole repo, and second-precision mtimes show it also rewrote `live-mix-starting-points.md` three seconds later — another session's in-flight work on compressor makeup gain, nothing to do with social posting | Nothing was lost (prettier is semantic-preserving on markdown) but another session gets unexplained reflow churn in a diff it did not make, while its author is mid-edit | **Do not run repo-wide `pnpm format` mid-session.** Format only the paths you actually edited. The `pnpm format && pnpm typecheck && pnpm lint && pnpm test` line is a PRE-COMMIT gate; running it as a reflex after every edit is wrong when you are one of several writers in one working tree. **When you do touch another session's file, tell them with second-precision mtimes** (`stat -f "%Sm %N" -t "%H:%M:%S"`) — mix-assist-38 resolved this in one pass because it could separate my 23:47:05 write from its own 23:47:08; without them the honest answer is "I don't know", which usually ends in a needless revert |
+| 2   | Assumed the pre-existing uncommitted changes belonged to the peer session I was talking to, and used that to justify not committing                                                                                                                                             | Right conclusion, wrong reason — the peer had written nothing in this repo. `brief/`, the videographer PDF and the live-mix docs were a third party's                    | Check `git status` mtimes and content before attributing uncommitted work to whoever you happen to be talking to. With several sessions live, "not mine" does not narrow to "theirs"                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 3   | Stamped a ledger entry `2026-09-21T00:05` while it was still 23:46 on the 20th                                                                                                                                                                                                  | A ledger whose purpose is recording accurate publication times had a future-dated, wrong-day entry in it                                                                 | Read the clock (`date`) rather than estimating it when writing a timestamp into the ledger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
 ### 7 Sep 2026 — Epsonics "The Chain" full video
 
 | #   | What happened                                                                                    | Why it mattered                                                                                                                                                                              | What changed                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -698,18 +1099,46 @@ and run the identical check on it.**
 | 2   | `endcard-treat.sh`'s header claimed the encode sits "well under 1 GB"                                        | A measured 1080p pass peaked at 1012 MB, and 4K is ~4x the pixels — the comment would have justified running a 4K pass unannounced on a 24 GB shared machine                                      | Measured and corrected in the script. Budget several GB for `--4k` and check first                                                                                               |
 | 3   | Nearly called the end card broken because the final frame was near-black rather than logo-on-black           | It is not a fault: the shipped Bring Me to Life does the same (YAVG 39 -> 17 over its last 0.2 s; Sultans 45 -> 18). The card's own tail fades                                                    | Compare against a shipped master before declaring a regression                                                                                                                   |
 
-**Loudness is a publishing gate, not an afterthought.** Sultans of Swing bounced at
-**-16.2 LUFS** against Bring Me to Life's shipped **-13.6** — a 2.6 LU step down between two videos
-in the same playlist. YouTube normalises to about -14 and **only attenuates, never boosts**, so the
-louder one gets pulled down to -14 and the quieter one is left where it is: the gap is audible and
-it is the new song that sounds wrong.
+### True peak: set the bounce ceiling 0.2 dB below the delivered target
 
-It cannot be fixed at the end-card encode, even though that stage already re-encodes the audio.
-Sample peak and true peak are both **-0.5 dBFS**, so a linear gain buys 0.4 dB before clipping —
-about -15.8 LUFS at best against a -13 target. Closing the rest needs a limiter or `loudnorm`, which
-changes dynamics rather than level, and on an LRA 3.2 master that is a mastering decision. **Measure
-integrated loudness on every master before scheduling anything, and treat a >1 LU drift from the
-last published song as a hold.**
+**Dean set the ceiling on 15 Sep 2026** when he ordered the Sultans re-bounce: **true peak
+<= -1.0 dBFS**. It was then missed on every delivery until v7 of It's All Coming Back to Me Now —
+shipped Sultans **-0.3**, The Chain **-0.9**, v6 **-0.8**. None was flagged, and v6 was nearly waved
+through because it was more conservative than the first two, i.e. using two unflagged breaches to
+justify a third. A ceiling nobody enforces stops existing without anyone deciding it should.
+
+**The cause was mundane: the bounce ceiling was set AT the target instead of below it.**
+
+| stage                        | integrated | true peak     |
+| ---------------------------- | ---------- | ------------- |
+| v7 WAV bounce                | -13.1 LUFS | **-1.2 dBFS** |
+| v7 -> AAC 320k, generation 1 | -13.2 LUFS | **-1.0 dBFS** |
+
+**The first encode costs +0.2 dB. Later generations cost ~0.1 dB and do not compound** (measured
+-0.8 -> -0.7 -> -0.8 across g2/g3/g4). The generation every delivery actually goes through is the
+expensive one, so a bounce at exactly -1.0 delivers -0.8 — which is what v6 did.
+
+**Set the bounce ceiling 0.2 dB below the true peak you want delivered.** -1.2 delivers -1.0,
+measured end to end. **Then measure the delivered file anyway** — that is two measurements, not a
+law, and the check costs seconds.
+
+**The limiter is not the problem, and that was tested rather than assumed.** A theory that the
+Maximizer's true-peak detection under-read against BS.1770 4x oversampling died against Dean's own
+seven bounces: v1 -1.0, v2 -1.0, v3 -1.0, v4 -2.0, v5 -1.0, v6 -1.0, v7 -1.2. Every one lands exactly
+on its set ceiling; his limiter agrees with BS.1770 to 0.0 dB. Do not reach for a calibration
+explanation.
+
+**Shipped Sultans at -0.3 is UNEXPLAINED.** That is 0.7 dB above a presumed -1.0 bounce and one
+generation at +0.2 does not cover it. Its bounce WAV would settle it. Left unexplained on purpose
+rather than attributed to a mechanism that does not fit — an explanation covering 0.2 of a 0.7 dB gap
+is not an explanation.
+
+**Two retractions produced this section.** The per-generation lift was first quoted from memory as
+0.2, then retracted as "generations are near-free" on a test that decoded from an already-encoded
+file and so could only see generations 2->4. The one generation that mattered was the one the test
+could not reach, and a fixed "target -1.4" spec was built on that retraction and written in as
+arithmetic. **A test that cannot reach the case you care about is not evidence about that case** —
+and a correction can overshoot as easily as the error it corrects.
 
 ### 14 Sep 2026 — Bring Me to Life publication day
 
@@ -775,6 +1204,98 @@ outright with "Facebook URLs cannot be crawled".
 **The tell that cracked it:** a working post shows a _login prompt_ to a logged-out viewer; a
 blocked one shows the _error_. Treating those two as the same failure hid the problem for a week.
 
+## Recording performance in the database
+
+**Every post goes in `posts`, every metric capture goes in `post_metrics`.** Do this as part of
+publishing, not as a separate project — the ledger went stale for two weeks (7 Sep to 22 Sep) simply
+because nobody wrote the step down, and 25 posts had to be reconstructed from the platforms
+afterwards.
+
+### The two tables
+
+- **`posts`** — one row per publication per platform. The publication ledger, however the post got
+  there (Graph API, browser drag, native scheduler, human). NOT the same as `social_posts` /
+  `social_post_results`, which are the admin UI's _queue_ and are barely used.
+- **`post_metrics`** — one row per (post, capture). `post_id` references `posts.id`.
+
+### Run the collection
+
+```bash
+node doc/production/scripts/collect-social-metrics.mjs --dry   # always dry first
+node doc/production/scripts/collect-social-metrics.mjs
+```
+
+It upserts `posts` by `(platform, external_id)` and appends a `post_metrics` capture. Re-running is
+safe: existing posts are skipped and the unique `(post_id, captured_at)` stops duplicate captures.
+
+### Snapshots, not current values
+
+`post_metrics` stores a capture per collection rather than overwriting a "latest" figure. **Age is
+the dominant confound** — a post five days old beats one five hours old on volume alone — and a
+history of captures is the only thing that lets age be modelled later. Overwriting throws that away
+permanently and it cannot be reconstructed.
+
+### NULL is not zero, and this is the part that matters
+
+Platforms differ in what they will tell us, and the differences are not uniform:
+
+| Platform  | reach                  | likes/reactions | comments | shares/reposts | How                                                             |
+| --------- | ---------------------- | --------------- | -------- | -------------- | --------------------------------------------------------------- |
+| LinkedIn  | **impressions** ✅     | ✅              | ✅       | ✅             | Page admin → Analytics → Content engagement. **Scrape, no API** |
+| TikTok    | views ✅               | ✅              | ✅       | —              | Studio `/tiktokstudio/content` list. **Scrape, no API**         |
+| YouTube   | views ✅               | ✅              | ✅       | —              | Data API, read-only key                                         |
+| Instagram | —                      | ✅              | ✅       | —              | `/{ig-user}/media`                                              |
+| Facebook  | views ✅ (videos only) | ❌              | ❌       | shares ✅      | `views` off `/videos`, `shares` off `/published_posts`          |
+
+**LinkedIn is the richest source we have, and an earlier version of this table said it had nothing.**
+Corrected 22 Sep 2026. The page admin's Content engagement table gives per-post impressions, views,
+clicks, CTR, reactions, comments, reposts and engagement rate — more than any other platform, and the
+only source of **impressions** anywhere. The feasibility doc rates LinkedIn "manual export, Medium
+confidence"; that understates it. It is a DOM scrape of a table, not an export. Read `thead` for the
+column order rather than assuming it — that is what makes the scrape stable.
+
+**Linking LinkedIn rows to posts is the hard part, not reading the numbers.** The analytics table
+carries no URN. URNs come from the page-posts admin's Boost links, and **only recent posts expose
+one** — on 22 Sep, 10 posts had metrics but only 5 had a recoverable URN. Match a URN to a row by the
+**publish date printed in the page-posts row** ("By <author> <date>"), never by decoding the
+snowflake: an id's timestamp is when the post was COMPOSED, which for a scheduled post is a different
+day. Rows without a URN get a deterministic `li-unlinked-<date>-<type>` external id and
+`metadata.unlinked = true`, so re-runs stay idempotent and they can be reconciled rather than
+silently duplicating.
+
+LinkedIn's **Reactions** map to `likes` and **Reposts** to `shares` in `post_metrics`; the mapping is
+written into each row's `notes` so nobody later reads `likes` as a literal like count.
+
+TikTok's Studio list nests the counts as `Everyone <views> <likes> <comments>` in the row's second
+child. **Reload the page before scraping** — a Studio tab left open overnight served a stale list
+that was missing the four most recent posts entirely, and the scrape looked successful.
+
+**Facebook reactions and comments are NOT available** — the token lacks `pages_read_user_content`
+and the call returns error 10. Re-verified 22 Sep 2026, still blocked. Getting them needs an app
+re-auth with `read_insights`, which requires App Review; start the lead time early if it is wanted.
+
+**Write NULL, never 0, when a platform refuses to answer.** A zero silently turns "unknown" into
+"nobody engaged", and every average computed afterwards is wrong in a direction nobody can see.
+The columns are all nullable for exactly this reason.
+
+### Joining Facebook posts to their view counts
+
+`/published_posts` carries the real publish time and `shares`; `/videos` carries `views` but its
+`created_time` is the **upload** time, not publication (a reel staged at midday and scheduled for
+18:00 reports midday). Link them through `attachments{type,target}` on the post — `target.id` is the
+video id. Pass `curl -g`, or curl's own URL globbing eats the `{}` and you get two concatenated JSON
+documents and a confusing parse error.
+
+### Traps already paid for
+
+- `posts.status` must be one of `scheduled` / `published` / `withdrawn` / `deleted` / `failed`.
+  `'posted'` fails the check constraint. It fails closed, which is correct — do not work around it.
+- `posts.content_type`: `reel` / `short` / `video` / `photo` / `carousel` / `story` / `text` / `link`.
+- `posts.posted_via`: `api` / `browser` / `manual` / `native_schedule`.
+- **LinkedIn and TikTok are not in the automated collection at all.** Anything claiming to be an
+  all-platform ranking while missing those two is a partial ranking — say so rather than presenting
+  it as complete.
+
 ## Measuring what a post did (and what you cannot measure)
 
 - **Instagram**: `like_count` and `comments_count` come off `/{ig-user}/media` on the current token.
@@ -828,6 +1349,33 @@ blocked one shows the _error_. Treating those two as the same failure hid the pr
 - **UTM-tag links that are meant to convert.** `src/lib/social/utm.ts` builds them and already treats
   Instagram as `social_bio` because captions are not clickable. First tagged post was the Brisbane
   gallery roundup, `utm_content=brisbane-2026-photos-roundup`.
+
+## Connecting posts to the website (PostHog) — 30 Sep 2026
+
+`node doc/production/scripts/social-site-attribution.mjs [--since YYYY-MM-DD] [--window-hours 48]
+[--event sydney-2026] [--json]` joins the `posts` ledger to PostHog site sessions and
+`tickets:clicked`. Read-only. A session's platform comes from `utm_source`, then the **in-app
+browser user agent**, then `$referring_domain`; it is credited to the latest same-platform post in
+the window before it, or exactly by `utm_content` when that matches a post.
+
+- **The user agent is load-bearing.** The Facebook app strips the referrer: 156 of 218 Facebook
+  sessions since 20 Aug (72%) were identifiable only by `FBAN`/`FBAV`/`FB_IAB` and would otherwise
+  count as direct. Instagram (`Instagram`) and LinkedIn (`LinkedInApp`) apps are also tagged.
+- **Time-window credit is correlation.** A band member's own share of the event page lands in the
+  same window. Compare each post against the `baseline` column (that platform's average per
+  window), and cross-check a headline number with a direct HogQL query before reporting it — the
+  18 Sep Bandlassian FB post's 16 Sydney-page sessions were confirmed that way, first one 29 s
+  after posting.
+- **What it showed (20 Aug – 30 Sep):** direct 72% of 3,317 sessions; Facebook 218, LinkedIn 57,
+  Instagram 55 (41 of them the tagged bio link), **YouTube 0, TikTok 0**. Ticket-click rate by
+  session: LinkedIn 28%, Instagram 29%, Facebook 16%, search 13%. Posts that beat baseline were
+  Facebook posts **with a link in the caption** (Sydney band announcements, photo posts); reels and
+  videos without a link produced nothing measurable.
+- `utm_source=drip, utm_campaign=yow Aug W4 2026` is the YOW! newsletter: 147 visitors to the
+  Brisbane page on 26–28 Aug, zero ticket clicks. That is the unexplained 27 Aug spike.
+- **None of 123 posts since 20 Aug carries a UTM**, though `posts.utm_*` columns exist. Tag every
+  link (`pnpm bottb post link`) and store the `utm_content` on the post row; that turns window
+  credit into exact credit.
 
 ## Choosing a thumbnail frame
 

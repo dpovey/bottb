@@ -1,0 +1,73 @@
+# Jumbo (Melbourne 2026) -- the 66 Dynamic Zoom cuts, coloured Orange in both timelines.
+# Source: Resolve OTIO export of Timeline 1 (Resolve_OTIO 'Dynamic Zoom' effect).
+# Centre is 0,0 on every cut. 'default' = Resolve's own rects (keyframe order 0.8 then 1.0);
+# 'SWAPPED' = the reverse; 'custom' = a hand-set scale the Inspector cannot type in.
+# ease values: 0 Linear, 1 Ease In, 2 Ease Out, 3 Ease In and Out (menu order; verify on first use).
+#
+#  n  timecode     dur  angle          direction  scale keys (most-negative key first)  ease
+  1  00:01:53:20    67  Full Stage     default    (0.8, 1.0)                            1 Ease In
+  2  00:01:56:15    62  Left Camera    default    (0.8, 1.0)                            1 Ease In
+  3  00:04:06:20    74  Right Camera   default    (0.8, 1.0)                            1 Ease In
+  4  00:04:09:22    68  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+  5  00:08:26:18    93  Full Stage     default    (0.8, 1.0)                            1 Ease In
+  6  00:08:30:15    49  Right Camera   default    (0.8, 1.0)                            1 Ease In
+  7  00:10:01:04    80  Full Stage     default    (0.8, 1.0)                            1 Ease In
+  8  00:10:04:12   143  Right Camera   default    (0.8, 1.0)                            3 Ease In and Out
+  9  00:10:31:02   109  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 10  00:10:45:06   111  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 11  00:10:59:07    55  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 12  00:11:04:07    79  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 13  00:11:53:23    47  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 14  00:11:55:22    40  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 15  00:12:07:09   105  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 16  00:12:19:20    35  Left Camera    default    (0.8, 1.0)                            1 Ease In
+ 17  00:12:21:07    45  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 18  00:12:23:04    74  Left Camera    default    (0.8, 1.0)                            1 Ease In
+ 19  00:12:26:06   108  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 20  00:12:32:18   152  Full Stage     default    (0.8, 1.0)                            0 Linear
+ 21  00:12:45:21    33  Full Stage     custom     (0.9028, 0.8)                         1 Ease In
+ 22  00:13:43:07   120  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 23  00:13:52:15    88  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 24  00:14:37:11    77  Left Camera    default    (0.8, 1.0)                            1 Ease In
+ 25  00:14:40:16    77  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 26  00:15:28:03    85  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 27  00:15:31:16    86  Left Camera    SWAPPED    (1.0, 0.8)                            2 Ease Out
+ 28  00:15:41:14    90  Full Stage     default    (0.8, 1.0)                            2 Ease Out
+ 29  00:16:16:11    62  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 30  00:16:45:05   336  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 31  00:17:46:05    88  Full Stage     SWAPPED    (1.0, 0.8)                            1 Ease In
+ 32  00:18:30:07    60  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 33  00:19:21:07    94  Left Camera    SWAPPED    (1.0, 0.8)                            0 Linear
+ 34  00:20:50:11   131  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 35  00:21:41:01   253  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 36  00:21:55:22   170  Full Stage     SWAPPED    (1.0, 0.8)                            3 Ease In and Out
+ 37  00:22:26:09    84  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 38  00:22:32:01    54  Right Camera   custom     (0.8, 0.8662)                         0 Linear
+ 39  00:22:36:11   108  Full Stage     SWAPPED    (1.0, 0.8)                            3 Ease In and Out
+ 40  00:22:40:23    54  Left Camera    custom     (0.8952, 0.8)                         3 Ease In and Out
+ 41  00:22:45:02   100  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 42  00:23:07:17    44  Full Stage     custom     (0.8, 0.8628)                         1 Ease In
+ 43  00:23:21:04    64  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 44  00:23:25:15    63  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 45  00:23:29:22    70  Full Stage     default    (0.8, 1.0)                            3 Ease In and Out
+ 46  00:24:04:14    21  Full Stage     custom     (0.8, 0.8804)                         0 Linear
+ 47  00:24:07:15    46  Full Stage     custom     (0.8, 0.8582)                         0 Linear
+ 48  00:24:17:15    87  Full Stage     SWAPPED    (1.0, 0.8)                            3 Ease In and Out
+ 49  00:24:29:23    51  Full Stage     custom     (0.8, 0.8969)                         1 Ease In
+ 50  00:24:34:12    52  Full Stage     custom     (0.8, 0.8781)                         1 Ease In
+ 51  00:25:14:10    53  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 52  00:25:16:15    57  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 53  00:25:19:00    30  Full Stage     custom     (0.8473, 1.0)                         1 Ease In
+ 54  00:25:23:09    53  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 55  00:25:25:14    40  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 56  00:25:45:04   110  Full Stage     SWAPPED    (1.0, 0.8)                            3 Ease In and Out
+ 57  00:25:49:18    52  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 58  00:25:54:00    57  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 59  00:25:58:07    58  Full Stage     SWAPPED    (1.0, 0.8)                            2 Ease Out
+ 60  00:26:16:00    64  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 61  00:26:18:16    66  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 62  00:26:23:04    68  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 63  00:26:32:19   141  Full Stage     SWAPPED    (1.0, 0.8)                            3 Ease In and Out
+ 64  00:27:07:22    52  Full Stage     default    (0.8, 1.0)                            1 Ease In
+ 65  00:27:10:02    60  Right Camera   default    (0.8, 1.0)                            1 Ease In
+ 66  00:27:25:03    69  Full Stage     default    (0.8, 1.0)                            1 Ease In

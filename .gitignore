@@ -77,3 +77,12 @@ __pycache__/
 
 # stray ffmpeg two-pass logs
 ffmpeg2pass-*.log*
+
+# Private working notes with third-party contact details or account info (the repo is public)
+doc/production/sydney-2026-outreach-contacts.md
+doc/research/sydney-2026-videographers.md
+doc/archive-jobs/
+
+# Other agent tools' local config
+.agents/
+.codex/

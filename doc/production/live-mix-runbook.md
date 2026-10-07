@@ -2,7 +2,8 @@
 
 The ShipRex process, in order, with the lessons folded in. Each step says who does it
 (**you** in Logic, **agent** = Claude with the scripts / MCP / Resolve API). Companion docs:
-`live-mix-starting-points.md` (why), `live-mix-logic-learnings.md` (gotchas),
+`live-mix-starting-points.md` (why — including §4, makeup gain and the Mix knob, which the
+compressor steps below assume are set), `live-mix-logic-learnings.md` (gotchas),
 `scripts/TOOLBOX.md` (commands), `mix-analyser-learnings.md`, `video-post-learnings.md`.
 Offline `.logicx` reader + `doctor` (orphan/permission/version checks): `~/src/personal/logic-cli`.
 
@@ -24,15 +25,24 @@ each further song ~45 min, delivery/QA ~10 min per song.
 3. **Coverage**: README says whether the Reaper render missed anything; the USB set is
    complete for every band. Nothing to do unless a folder is missing.
 4. **Dead-channel check** on every stereo file (`09 OH`, `13 Keys`, `21 Room`): per-channel
-   RMS. A silent channel ⇒ set that strip to mono in Logic.
-5. **Loudness/peak table** (ffmpeg ebur128 one-liner in TOOLBOX) → Gain-trim column with
+   RMS. A silent channel ⇒ set **that one strip** to mono in Logic. **Not the others.** On
+   ShipRex 2026 all three went to mono although only Keys had a dead channel, which collapsed a
+   genuinely wide overhead pair (L/R correlation +0.42) into mono — losing the kit's width and
+   comb-filtering it at the same time, since summing two decorrelated mics both narrows and thins.
+   Report **per-channel RMS _and_ L/R correlation**: a dead channel is ~−90 dB on one side;
+   correlation near +1.0 means dual-mono and mono is harmless; anything well below +0.9 is a real
+   stereo pair and **must stay stereo**.
+5. **Overhead orientation** (audience vs drummer perspective) — measure it now, from the stems, per
+   `live-mix-starting-points.md` §11. It cannot be judged by ear later, and getting it wrong is
+   invisible until the mix is against picture.
+6. **Loudness/peak table** (ffmpeg ebur128 one-liner in TOOLBOX) → Gain-trim column with
    the rule `trim = min(target − LUFS, ceiling − TP)`.
-6. **Polarity/alignment**: `venv/bin/python drum_polarity.py "<stem folder>"` → snare flip?,
+7. **Polarity/alignment**: `venv/bin/python drum_polarity.py "<stem folder>"` → snare flip?,
    Sample Delay values for kick/toms.
-7. **Show TC of file start**: measure with `stem_vs_ref.py` against the rebuilt picture-true
+8. **Show TC of file start**: measure with `stem_vs_ref.py` against the rebuilt picture-true
    `BOTTB_reference_48k.wav` (lead-vocal stem, 3 probes; negative lag = stems late). Never
    use a Zoom-derived TC directly — picture blocks carried offsets up to 1.3 s.
-8. **Song boundaries**: per-second RMS of the desk feed → provisional song list with bars
+9. **Song boundaries**: per-second RMS of the desk feed → provisional song list with bars
    (agent), to be nudged by ear. Three things that make this go wrong, all seen on this event:
    - **A count that disagrees with the setlist usually means a tape intro, not a segue.**
      Recorded intros never hit the desk, so they are absent from the stems: Epsonics opens on
@@ -48,8 +58,9 @@ each further song ~45 min, delivery/QA ~10 min per song.
    `video-post-learnings.md` → "Song starts, title cards and chapters (final, 2026-09-06)".
    Use that in preference to anything derived here.
 
-9. Deliverables so far: trim table, polarity/delay table, song table, TC. Put them at the
-   top of the band's `03_Delivery/<Band>/DELIVERY-NOTES.md`.
+10. Deliverables so far: trim table, polarity/delay table, song table, TC, **stereo-pair report
+    (per-channel RMS, L/R correlation, overhead orientation)**. Put them at the top of the band's
+    `03_Delivery/<Band>/DELIVERY-NOTES.md`.
 
 ## Phase 1 — Project (you, 15 min)
 
@@ -66,7 +77,12 @@ each further song ~45 min, delivery/QA ~10 min per song.
    FCPXML with `make_fcpxml.py` and you File › Import › Final Cut Pro XML — untested once.)
 3. Rename tracks to the clean names (agent can do this via MCP, one call per track, by
    `target_ref`). Order: drums, OH, room, bass, guitars, keys, extras, vocals.
-4. Stereo strips with a dead channel → mono (format button). Record-arm off everywhere.
+4. Stereo strips with a dead channel → mono (format button) — **only the ones the prep report
+   flagged dead**; a healthy pair stays stereo. Then set the **overhead orientation** the prep
+   measured: audience perspective, so hat audience-right. One checkbox — **Swap L/R in the Gain
+   plug-in** already in slot 0 — and the room pair gets the same treatment so the two agree.
+   **Mirror the kit's close-mic pans to match, or not at all** (`live-mix-starting-points.md` §11).
+   Record-arm off everywhere.
 5. Markers from the song table (agent: `goto_position` + `create_marker`, one pair at a
    time; names/lengths finished by you).
 6. ⌘S as `<Band> - Full Set.logicx` in `02_Production/<Band>/`.
@@ -159,6 +175,23 @@ Nothing global after this without re-branching unmixed alternatives.
 2. Static tweaks for the song → rides (lead vocal Latch; crowd up in gaps, ducked −8 for
    speech; mutes on silent instruments; keys/erhu lifts where they carry a part).
 3. Ozone on; chorus short-term ≈ **−12 LUFS**, integrated lands ~−14.5; TP −1.0.
+   **Master Assistant's Loudness target (measured, Google Sydney full set, 2026-10-02).** The
+   Assistant measures the integrated loudness of whatever plays during analysis and sets **one
+   Maximizer gain for the whole file** (Ozone 11 manual, Master Assistant › Loudness; Ozone 12's
+   is not online). It does not lift the rest of the file to the target: master − pre-master was
+   +14.3…+15.0 LU in every section, talk and loudest chorus alike, so the file keeps its shape.
+   Two consequences:
+   - The whole file lands at _target − (analysed section − whole file)_, with the gap measured on
+     the pre-master (1.6 LU there). For −14 integrated, set the target to −14 + gap.
+   - **The analysed section itself missed its own target by about 1 LU:** −11.3 LUFS against
+     −12.4. The cause isn't pinned down yet; other modules adding level after the gain is set is
+     the leading guess. So set the target, bounce, have the agent measure, then correct once with
+     the Maximizer slider. The limiter barely changed the integrated loudness there, so it was
+     about 1:1 (dB of slider per LU), not Everlong's 0.75:1. Use a post-limiter fader trim only
+     if the amount of limiting is already right.
+     Analyse the loudest representative minute (the agent names it). Leave Clarity, Imager and
+     Stabilizer off on a reverb-heavy live mix: each one lifts background or wide content, which here
+     means the reverb.
 4. ⌘S, bounce cycle into `03_Delivery/<Band>/` as `<Band>_Sn_<title>_vN` (no extension —
    Logic adds `.wav` and defaults to the project folder; navigate).
 5. Agent: QA (rate/bits/length/peak/LUFS/chorus), verify start bar by correlation, stamp
