@@ -33,7 +33,10 @@ export function CompanyBadgeGroup({
 
   return (
     <div
-      className={cn('inline-flex flex-wrap items-center gap-1.5', className)}
+      className={cn(
+        'inline-flex max-w-full flex-wrap items-center gap-1.5',
+        className
+      )}
     >
       {companies.map((company) => (
         <CompanyBadge

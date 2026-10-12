@@ -75,7 +75,7 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
             <Link
               key={company.slug}
               href={`/companies/${company.slug}`}
-              className="group shrink-0 px-6 py-3 sm:px-8 sm:py-4 md:px-10 lg:px-12 lg:py-5"
+              className="group max-w-full shrink-0 px-6 py-3 sm:px-8 sm:py-4 md:px-10 lg:px-12 lg:py-5"
             >
               <div className="flex h-10 items-center justify-center sm:h-12 lg:h-14">
                 <Image
@@ -83,7 +83,7 @@ export function EventCompanyStrip({ bands }: EventCompanyStripProps) {
                   alt={`${company.name} logo`}
                   width={logoIntrinsicWidths.marquee.width}
                   height={logoIntrinsicWidths.marquee.height}
-                  className="logo-muted h-full w-auto object-contain"
+                  className="logo-muted h-full w-auto max-w-full object-contain"
                   loading="lazy"
                   sizes={logoSizes.marquee}
                 />

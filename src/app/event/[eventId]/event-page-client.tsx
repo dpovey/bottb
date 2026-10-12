@@ -401,7 +401,9 @@ export function EventPageClient({
               )}
             </Card>
           ) : (
-            <div className="grid gap-4">
+            // grid-cols-1 sizes the track minmax(0, 1fr); an implicit auto
+            // track grows to each card's nowrap name and badges instead.
+            <div className="grid grid-cols-1 gap-4">
               {bands.map((band) => {
                 const isWinner = hasWinner && band.name === overallWinner?.name
 
@@ -441,7 +443,9 @@ export function EventPageClient({
 
                         {/* Band Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          {/* Wraps so a badge drops below a long name on a
+                              phone rather than squeezing it to one letter. */}
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <h3
                               className={`text-lg font-semibold truncate ${
                                 isWinner ? 'text-warning' : 'text-white'

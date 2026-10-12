@@ -37,7 +37,8 @@ export function CompanyBadge({
   className,
   asLink = true,
 }: CompanyBadgeProps) {
-  const baseStyles = 'transition-colors'
+  // max-w-full lets a long name truncate instead of pushing past its container.
+  const baseStyles = 'max-w-full transition-colors'
 
   const variantStyles = {
     default: cn(
