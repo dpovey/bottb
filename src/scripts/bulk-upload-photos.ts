@@ -398,62 +398,37 @@ async function uploadPhoto(
     // Generate unique photo ID
     const photoId = crypto.randomUUID()
 
-    // Upload thumbnail variants to blob storage (for srcset support)
-    const thumbnailBlob = await put(
-      `photos/${photoId}/thumbnail.webp`,
-      processed.thumbnail,
-      { access: 'public', contentType: 'image/webp' }
-    )
-
-    // Upload 2x thumbnail if available
-    let thumbnail2xBlob = null
-    if (processed.thumbnail2x) {
-      thumbnail2xBlob = await put(
-        `photos/${photoId}/thumbnail-2x.webp`,
-        processed.thumbnail2x,
-        { access: 'public', contentType: 'image/webp' }
-      )
-    }
-
-    // Upload medium variant if available (used for 3x thumbnails + mobile slideshow)
-    let mediumBlob = null
-    if (processed.medium) {
-      mediumBlob = await put(
-        `photos/${photoId}/medium.webp`,
-        processed.medium,
-        { access: 'public', contentType: 'image/webp' }
-      )
-    }
-
-    const largeBlob = await put(
-      `photos/${photoId}/large.webp`,
-      processed.large,
-      { access: 'public', contentType: 'image/webp' }
-    )
+    // Upload every variant at once. Each put is its own round trip to Vercel
+    // Blob (>= 1.5 s even for 10 KB, ~1 MB/s per stream), so in sequence they
+    // took ~18 s a photo; together it is bounded by the largest file.
+    const webp = { access: 'public', contentType: 'image/webp' } as const
+    const putIf = (path: string, buf: Buffer | undefined) =>
+      buf ? put(`photos/${photoId}/${path}`, buf, webp) : Promise.resolve(null)
 
     // Upload the untouched source file so the full-resolution original stays
     // available for downloads and for regenerating variants later. Without it,
     // backfill-responsive-variants.ts can only re-derive from large.webp (2000px).
     const originalExt =
       extname(filename).toLowerCase().replace('.', '') || 'jpg'
-    const originalBlob = await put(
-      `photos/${photoId}/original.${originalExt}`,
-      imageBuffer,
-      {
+
+    const [
+      thumbnailBlob,
+      thumbnail2xBlob,
+      mediumBlob,
+      largeBlob,
+      originalBlob,
+      large4kBlob,
+    ] = await Promise.all([
+      put(`photos/${photoId}/thumbnail.webp`, processed.thumbnail, webp),
+      putIf('thumbnail-2x.webp', processed.thumbnail2x),
+      putIf('medium.webp', processed.medium),
+      put(`photos/${photoId}/large.webp`, processed.large, webp),
+      put(`photos/${photoId}/original.${originalExt}`, imageBuffer, {
         access: 'public',
         contentType: ORIGINAL_CONTENT_TYPES[originalExt] ?? 'image/jpeg',
-      }
-    )
-
-    // Upload 4K large variant if available
-    let large4kBlob = null
-    if (processed.large4k) {
-      large4kBlob = await put(
-        `photos/${photoId}/large-4k.webp`,
-        processed.large4k,
-        { access: 'public', contentType: 'image/webp' }
-      )
-    }
+      }),
+      putIf('large-4k.webp', processed.large4k),
+    ])
 
     // Store thumbnail variant URLs in metadata for srcset support
     const thumbnailVariants = {
