@@ -477,3 +477,116 @@ describe('split bursts publish over more than one entry', () => {
     ).toBe(true)
   })
 })
+
+describe('a release withdrawn twice before it shipped', () => {
+  const OTR = 'brisbane-2026-itsallcomingback'
+  const byId = (id: string) =>
+    result.posts.find((p) => p.group_key === OTR && p.external_id === id)
+
+  it('publishes the v7 set on all five platforms with the shipped ids', () => {
+    const live = result.posts
+      .filter((p) => p.group_key === OTR && p.status === 'published')
+      .map((p) => `${p.platform}:${p.external_id}`)
+      .sort()
+    expect(live).toEqual([
+      'facebook:1367924128842518',
+      'instagram:DdiJSJsjCG7',
+      'linkedin:urn:li:ugcPost:7507618310902079488',
+      'tiktok:7687802000595029268',
+      'youtube:AUjRxVFrMnc',
+    ])
+    for (const p of result.posts.filter((p) => p.group_key === OTR)) {
+      expect(p.band_id).toBe('off-the-record-brisbane-2026')
+    }
+  })
+
+  it('never reads a withdrawn or deleted attempt as published', () => {
+    expect(byId('Fof1cfAv_g0')?.status).toBe('deleted')
+    expect(byId('zgtbqLOIOBU')?.status).toBe('withdrawn')
+    expect(byId('urn:li:ugcPost:7507570991556972544')?.status).toBe('deleted')
+    expect(byId('2070338130265382')?.status).toBe('deleted')
+    expect(byId('1610717237733863')).toBeUndefined()
+  })
+
+  it('keeps the time of an attempt that was live before it was pulled', () => {
+    expect(byId('zgtbqLOIOBU')?.posted_at).toBe('2026-09-21T08:52:00+10:00')
+    expect(byId('zgtbqLOIOBU')?.metadata.went_live).toBe(true)
+    // A schedule that was pulled never went out.
+    expect(byId('2070338130265382')?.posted_at).toBeNull()
+  })
+
+  it('places a bare clock on the release day, not the day it was written', () => {
+    // The confirming entry was written at 20:05 the next day.
+    expect(byId('7687802000595029268')?.posted_at).toBe(
+      '2026-09-21T20:00:00+10:00'
+    )
+    expect(byId('DdiJSJsjCG7')?.posted_at).toBe('2026-09-21T13:01:28+10:00')
+    expect(byId('DdiJSJsjCG7')?.posted_at_estimated).toBe(false)
+  })
+})
+
+describe('entries the Brisbane backfill must not own', () => {
+  it('leaves every Melbourne release out', () => {
+    for (const p of result.posts) {
+      expect(p.external_id).not.toBe('BOWhYAt2MlA')
+      expect(p.external_id).not.toBe('DdoW2mxCma7')
+      expect(p.external_id).not.toBe('1123275470357065')
+      expect(p.title ?? '').not.toMatch(/melbourne|thing called love/i)
+    }
+    expect(
+      result.ignored.filter((m) => /Melbourne backfill/.test(m))
+    ).toHaveLength(4)
+  })
+
+  it('does not record unlisted QC uploads as publications', () => {
+    // Everlong's v9 upload was unlisted for QC and deleted before release.
+    expect(result.posts.some((p) => p.external_id === 'eMp20G3Uqgk')).toBe(
+      false
+    )
+  })
+})
+
+describe('later Brisbane publications', () => {
+  it('files the CAM A stills under their own group, not Amy Corrie’s', () => {
+    const stills = result.posts.filter(
+      (p) => p.group_key === 'brisbane-2026-stills-shiprex'
+    )
+    expect(stills.map((p) => p.platform).sort()).toEqual([
+      'facebook',
+      'instagram',
+      'linkedin',
+    ])
+    expect(find('brisbane-2026-stills-shiprex', 'linkedin')?.external_id).toBe(
+      'urn:li:activity:7508810208375255040'
+    )
+    // Read back and written beside the link.
+    expect(find('brisbane-2026-stills-shiprex', 'facebook')?.posted_at).toBe(
+      '2026-09-24T18:24:36+10:00'
+    )
+    expect(
+      result.posts.some(
+        (p) =>
+          p.group_key === 'brisbane-2026-photos-shiprex' &&
+          p.external_id === 'DdqdEckoNWy'
+      )
+    ).toBe(false)
+  })
+
+  it('closes Sultans’ Instagram with its measured, four-hours-late time', () => {
+    const ig = find('brisbane-2026-sultansofswing', 'instagram')
+    expect(ig?.external_id).toBe('DdWLFu4gaLc')
+    expect(ig?.posted_at).toBe('2026-09-16T21:27:58+10:00')
+    expect(ig?.posted_at_estimated).toBe(false)
+  })
+
+  it('files Everlong under its own group, with the LinkedIn URN as a link', () => {
+    const li = find('brisbane-2026-everlong', 'linkedin')
+    expect(li?.permalink).toBe(
+      'https://www.linkedin.com/feed/update/urn:li:activity:7510095932299022336'
+    )
+    expect(li?.posted_via).toBe('native_schedule')
+    expect(find('brisbane-2026-everlong', 'youtube')?.posted_at).toBe(
+      '2026-09-28T08:30:02+10:00'
+    )
+  })
+})

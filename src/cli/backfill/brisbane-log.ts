@@ -150,8 +150,27 @@ const SULTANSOFSWING = {
   title: 'Total Loss - Sultans of Swing',
 }
 
+/**
+ * Off the Record's Celine Dion cover went out three times on 21 Sep: v1 and
+ * v2 were withdrawn over the mix, v7 shipped. Every attempt lives in this one
+ * group; the withdrawals are what keep the dead ids from reading as published.
+ */
+const ITSALLCOMINGBACK = {
+  group: 'brisbane-2026-itsallcomingback',
+  band: 'off-the-record-brisbane-2026',
+  title: "Off the Record - It's All Coming Back to Me Now",
+}
+
+const EVERLONG = {
+  group: 'brisbane-2026-everlong',
+  band: 'the-shiprex-brisbane-2026',
+  title: 'ShipReX - Everlong',
+}
+
 const VIDEO_ITEM_PATTERNS: [RegExp, typeof THECHAIN][] = [
+  [/everlong/i, EVERLONG],
   [/sultans\s*of\s*swing|total\s*loss/i, SULTANSOFSWING],
+  [/all\s*coming\s*back|off\s*the\s*record/i, ITSALLCOMINGBACK],
   [/bring\s*me\s*to\s*life|jumbo\s*band/i, BRINGMETOLIFE],
   [/the\s*chain|epsonics/i, THECHAIN],
 ]
@@ -203,6 +222,22 @@ const PHOTO_ITEM_PATTERNS: [RegExp, string][] = [
   [/epsonics/i, 'epsonics'],
   [/audience/i, 'audience'],
 ]
+
+/**
+ * Stills pulled from the CAM A video are a different post from Amy Corrie's
+ * ShipReX photos, but the item names ShipReX, so {@link photoTargetFromItem}
+ * would file it under her group. Match the stills first.
+ */
+const STILLS_ITEM_PATTERNS: [RegExp, { group: string; band: string | null }][] =
+  [
+    [
+      /shiprex.*stills/i,
+      {
+        group: 'brisbane-2026-stills-shiprex',
+        band: 'the-shiprex-brisbane-2026',
+      },
+    ],
+  ]
 
 function photoTargetFromItem(
   item: unknown,
@@ -940,6 +975,19 @@ function handleContainerRebuild(ctx: Ctx, e: Entry, line: number) {
 function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
   const action = String(e.action)
   const ts = typeof e.ts === 'string' ? e.ts : null
+  const item = typeof e.item === 'string' ? e.item : ''
+
+  // From 23 Sep the posting session kept using this ledger for Melbourne
+  // releases. They are real publications, just not Brisbane ones: routing
+  // them here would stamp a Melbourne post with event brisbane-2026 (Jumbo's
+  // Melbourne reel would even land under Jumbo Band's Brisbane song). Keyed
+  // on the item, so every Melbourne action is covered, not a list of them.
+  if (/\bmelbourne\b/i.test(item)) {
+    ctx.ignored.push(
+      `line ${line}: not Brisbane (${item}) - belongs to a Melbourne backfill`
+    )
+    return
+  }
 
   switch (action) {
     case 'published_all_platforms': {
@@ -964,8 +1012,78 @@ function handleTimestamped(ctx: Ctx, e: Entry, line: number) {
       )
     case 'published_youtube_plus_scheduled_social':
     case 'linkedin_and_tiktok_published':
-    case 'ALL_PLATFORMS_LIVE':
+    // Sultans' Instagram, closed five days late from the Graph API. Bare
+    // link plus a measured instagram_at, the shape handleTheChainV2 reads.
+    case 'all_platforms_live_retroactive_ledger_closure':
       return handleTheChainV2(ctx, e, line, action, ts)
+    // The same action name has been written for The Chain, Bring Me to Life
+    // and Everlong. The first two carry bare links; Everlong carries prose
+    // after each link, which handleTheChainV2 would fold into the permalink.
+    case 'ALL_PLATFORMS_LIVE':
+    case 'ALL_FIVE_PLATFORMS_LIVE':
+      return hasAnnotatedLinks(e)
+        ? handleAnnotatedVideo(ctx, e, line, ts)
+        : handleTheChainV2(ctx, e, line, action, ts)
+    // These carry prose after each link ("— SCHEDULED 18:00 AEST,
+    // published=false", "— LIVE 2026-09-21T13:01:28+10:00"), and a link alone
+    // no longer means published: a scheduled Facebook reel has a permalink
+    // before it goes out. handleAnnotatedVideo reads the prose.
+    case 'rescheduled_v2_audio_facebook_instagram_linkedin_live':
+    case 'all_platforms_scheduled_or_live_v2':
+    case 'ALL_FIVE_PLATFORMS_LIVE_OR_SCHEDULED_v7':
+    case 'instagram_published_early_by_deans_decision':
+    case 'ALL_FIVE_PLATFORMS_LIVE_confirmed':
+      return handleAnnotatedVideo(ctx, e, line, ts)
+    // Everlong's schedule. The links are only written once it fires, in the
+    // ALL_FIVE_PLATFORMS_LIVE entry that follows.
+    case 'ALL_FIVE_PLATFORMS_SCHEDULED':
+      ctx.ignored.push(
+        `line ${line}: scheduling step (${action}), publication logged separately`
+      )
+      return
+    case 'HELD_audio_rejected_all_scheduling_rolled_back':
+      return handleHeldRelease(ctx, e, line, ts)
+    case 'WITHDRAWN_ENTIRE_RELEASE_guitar_alignment_investigation':
+      return withdrawByPlatform(
+        ctx,
+        {
+          ...(e.withdrawn_by_peer as Entry),
+          ...(e.withdrawn_by_this_session as Entry),
+        },
+        line,
+        null
+      )
+    case 'stale_facebook_posts_DELETED_v7_approved_awaiting_new_youtube_id':
+      return withdrawByPlatform(ctx, { facebook: e.deleted }, line, 'deleted')
+    // Mix debugging and publishing-gate rulings between the withdrawals.
+    // They change what ships next, not what went out.
+    case 'root_cause_found_gtr2_displaced_two_beats':
+    case 'root_cause_CORRECTED_rx_dehum_latency':
+    case 'region_gate_verified_truepeak_spec_retracted':
+    case 'v7_alignment_fixed_truepeak_settled_HOLDING_on_dean':
+      ctx.ignored.push(
+        `line ${line}: investigation/decision entry (${action}), not a publication`
+      )
+      return
+    // An unlisted upload for Dean to QC. Not public, so not a publication;
+    // the public release gets its own entry.
+    case 'youtube_unlisted_for_qc':
+    case 'youtube_v14_unlisted_old_deleted':
+      ctx.ignored.push(
+        `line ${line}: unlisted QC upload (${action}), not a publication`
+      )
+      return
+    case 'facebook_live_instagram_live':
+    case 'ALL_THREE_PLATFORMS_LIVE': {
+      const stills = STILLS_ITEM_PATTERNS.find(([re]) => re.test(item))?.[1]
+      if (!stills) {
+        ctx.unhandled.push(
+          `line ${line}: "${action}" for an item with no photo group: ${item}`
+        )
+        return
+      }
+      return handlePhotoPost(ctx, e, line, stills.group, stills.band, ts)
+    }
     case 'facebook_scheduled_natively':
       return handleNativeSchedule(ctx, e, line)
     case 'correction_to_earlier_entry':
@@ -1049,6 +1167,7 @@ function handlePhotoPost(
     const notes = [typeof e.notes === 'string' ? e.notes : '', annotation]
       .filter(Boolean)
       .join(' — ')
+    const readBack = inlineReadBack(annotation)
     merge(ctx, group, platform, line, {
       band,
       title: String(e.item ?? ''),
@@ -1058,9 +1177,10 @@ function handlePhotoPost(
       status: 'published',
       // The entry's own timestamp is when it was WRITTEN, not when the post
       // went out. Close, but inferred. Line 43 exists because this gap once
-      // cost two hours of accuracy.
-      postedAt: ts ? normaliseIso(ts) : null,
-      postedAtEstimated: true,
+      // cost two hours of accuracy. A time read back and written beside the
+      // link beats it.
+      postedAt: readBack ? readBack.at : ts ? normaliseIso(ts) : null,
+      postedAtEstimated: readBack ? readBack.estimated : true,
       postedVia: platform === 'instagram' ? 'api' : 'browser',
       collaborators: platform === 'instagram' ? collaborators : undefined,
       note: notes || undefined,
@@ -1155,6 +1275,240 @@ function handleTheChainV2(
       continue
     }
     ctx.ignored.push(`line ${line}: ${group} "${field}" is prose, not an id`)
+  }
+}
+
+/**
+ * A full instant read back off the platform, written inline after a link:
+ * "LIVE 2026-09-21T13:01:28+10:00", "Snowflake decodes to ...". Seconds and
+ * an offset are what make it a read-back; "18:26 approx" is not one.
+ */
+function inlineReadBack(
+  annotation: string
+): { at: string; estimated: boolean } | null {
+  const m = annotation.match(
+    /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2})(\s*approx)?/
+  )
+  if (!m) return null
+  return { at: normaliseIso(m[1]), estimated: Boolean(m[2]) }
+}
+
+/** True when some platform field carries prose after its link. */
+function hasAnnotatedLinks(e: Entry): boolean {
+  return VIDEO_PLATFORMS.some(([field]) => {
+    const v = e[field]
+    return isUrl(v) && splitAnnotation(v).annotation !== ''
+  })
+}
+
+/**
+ * LinkedIn's composer never shows a link, so a few entries record only the
+ * URN. The feed URL is a pure function of it.
+ */
+function asLink(platform: SocialPlatform, v: string): string | null {
+  if (/^https?:\/\//.test(v.trim())) return v
+  const urn = platform === 'linkedin' ? v.match(/^(urn:li:\w+:\d+)/) : null
+  if (urn) {
+    return `https://www.linkedin.com/feed/update/${urn[1]}/${v.slice(urn[1].length)}`
+  }
+  return null
+}
+
+const VIDEO_PLATFORMS: [string, SocialPlatform][] = [
+  ['youtube', 'youtube'],
+  ['facebook', 'facebook'],
+  ['instagram', 'instagram'],
+  ['linkedin', 'linkedin'],
+  ['tiktok', 'tiktok'],
+]
+
+/**
+ * A video release whose platform fields read "<link> — <what happened>".
+ *
+ * The prose decides the status. A Facebook reel has its permalink from the
+ * moment it is scheduled, so "SCHEDULED" or "published=false" after a link is
+ * a schedule, not a publication. A bare clock ("published 20:00 as
+ * scheduled") is placed on the day the release went out, not on the day the
+ * entry was written: the confirming entry for Off the Record was written the
+ * next evening.
+ */
+function handleAnnotatedVideo(
+  ctx: Ctx,
+  e: Entry,
+  line: number,
+  ts: string | null
+) {
+  const target = videoTargetFromItem(e.item)
+  const group = target.group
+  const base = {
+    band: target.band,
+    title: target.title,
+    contentType: 'video' as PostContentType,
+  }
+  const at = ts ? normaliseIso(ts) : null
+
+  for (const [field, platform] of VIDEO_PLATFORMS) {
+    const raw = e[field]
+    if (typeof raw !== 'string') continue
+    const v = asLink(platform, raw)
+    if (!v) {
+      ctx.ignored.push(`line ${line}: ${group} "${field}" is prose, not a link`)
+      continue
+    }
+    const { url, annotation } = splitAnnotation(v)
+    const externalId = externalIdFromUrl(platform, url)
+    const existing = ctx.posts.get(key(group, platform, externalId))
+    const note = annotation.replace(/^[—-]\s*/, '') || undefined
+    const link = {
+      ...base,
+      externalId,
+      permalink: url.replace(/\/$/, ''),
+      note,
+    }
+
+    if (/\bSCHEDULED\b|published=false/.test(annotation)) {
+      const clock = annotation.match(/SCHEDULED (\d{1,2}):(\d{2})/)
+      merge(ctx, group, platform, line, {
+        ...link,
+        status: 'scheduled',
+        scheduledFor:
+          clock && at
+            ? atTimeOn(dayOf(at) as string, `at ${clock[1]}:${clock[2]}`)
+            : null,
+        postedVia: 'native_schedule',
+      })
+      continue
+    }
+
+    let postedAt = at
+    let estimated = true
+    const readBack = inlineReadBack(annotation)
+    // The first clock in the prose: "published 18:00", "LIVE ~08:46",
+    // "public 08:30:02". One with seconds was read off the platform.
+    const clock = annotation.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/)
+    if (readBack) {
+      postedAt = readBack.at
+      estimated = readBack.estimated
+    } else if (clock) {
+      // The day the release went out: its own schedule if it had one, else
+      // the earliest time anything in the group was posted.
+      const groupDays = [...ctx.posts.values()]
+        .filter((p) => p.group_key === group && p.posted_at)
+        .map((p) => p.posted_at as string)
+        .sort()
+      const day =
+        dayOf(existing?.scheduled_for ?? null) ??
+        dayOf(groupDays[0] ?? null) ??
+        dayOf(at)
+      if (day) {
+        postedAt = clock[3]
+          ? `${day}T${clock[1].padStart(2, '0')}:${clock[2]}:${clock[3]}${OFFSET}`
+          : atTimeOn(day, `at ${clock[1]}:${clock[2]}`)
+        estimated = !clock[3]
+      }
+    }
+
+    merge(ctx, group, platform, line, {
+      ...link,
+      status: 'published',
+      postedAt,
+      postedAtEstimated: estimated,
+      // A post that sat scheduled, or that the prose says fired at its slot,
+      // went out on its own. Instagram has no scheduling API: always the API.
+      postedVia:
+        platform === 'instagram'
+          ? 'api'
+          : existing?.status === 'scheduled' ||
+              /\bslot\b|as scheduled|unattended/i.test(annotation)
+            ? 'native_schedule'
+            : 'browser',
+    })
+  }
+}
+
+/**
+ * Line 62. Dean rejected the v1 mix after the YouTube upload had already been
+ * public for 52 minutes. It never got a publication entry of its own (its
+ * schedule was logged as a scheduling step), so this is the only record that
+ * it went out. Record it, and record that it is gone.
+ */
+function handleHeldRelease(
+  ctx: Ctx,
+  e: Entry,
+  line: number,
+  ts: string | null
+) {
+  const target = videoTargetFromItem(e.item)
+  const text = typeof e.youtube_deleted === 'string' ? e.youtube_deleted : ''
+  const id = text.match(/^([\w-]{11})\b/)?.[1]
+  if (!id) {
+    ctx.unhandled.push(`line ${line}: hold entry with no deleted YouTube id`)
+    return
+  }
+  const live = text.match(/public (\d{1,2}):(\d{2})/)
+  const day = dayOf(ts ? normaliseIso(ts) : null)
+  merge(ctx, target.group, 'youtube', line, {
+    band: target.band,
+    title: target.title,
+    contentType: 'video',
+    externalId: id,
+    permalink: `https://youtu.be/${id}`,
+    status: 'deleted',
+    postedAt: live && day ? atTimeOn(day, `at ${live[1]}:${live[2]}`) : null,
+    postedAtEstimated: true,
+    postedVia: 'browser',
+    note: `Deleted (line ${line}): ${text}`,
+  })
+  ctx.ignored.push(
+    `line ${line}: the v1 Facebook draft and Instagram cron were parked or cancelled before anything went out; no publication to record`
+  )
+}
+
+/**
+ * Mark withdrawals and deletions, one platform at a time.
+ *
+ * Matching is restricted to the platform the field names. The deletion note
+ * for the Facebook drafts also mentions the YouTube ids they pointed at
+ * ("dead id Fof1cfAv_g0"), and an id-anywhere match would delete the
+ * YouTube video that was only unlisted.
+ *
+ * A post that was live before it was pulled keeps its time and is flagged
+ * `went_live`: it was posted, just not any more. A schedule that was pulled
+ * never went out, and finalise() moves its time to scheduled_for.
+ */
+function withdrawByPlatform(
+  ctx: Ctx,
+  fields: Record<string, unknown>,
+  line: number,
+  status: PostStatus | null
+) {
+  for (const [field, value] of Object.entries(fields)) {
+    const text = typeof value === 'string' ? value : JSON.stringify(value)
+    const platform = field.split('_')[0]
+    if (!VIDEO_PLATFORMS.some(([, p]) => p === platform)) {
+      ctx.ignored.push(`line ${line}: "${field}" is context, not a platform`)
+      continue
+    }
+    const next: PostStatus =
+      status ?? (/\bDELETED\b/.test(text) ? 'deleted' : 'withdrawn')
+    let hits = 0
+    for (const post of ctx.posts.values()) {
+      if (post.platform !== platform || !post.external_id) continue
+      if (!text.includes(post.external_id)) continue
+      if (post.status === 'published' && post.permalink) {
+        post.metadata = { ...post.metadata, went_live: true }
+      }
+      post.status = next
+      const note = `${next === 'deleted' ? 'Deleted' : 'Withdrawn'} (line ${line}): ${text}`
+      post.notes = post.notes ? `${post.notes}\n${note}` : note
+      if (!post.lines.includes(line)) post.lines.push(line)
+      hits++
+    }
+    if (!hits) {
+      ctx.ignored.push(
+        `line ${line}: ${field} names nothing recorded as posted (${text.slice(0, 120)})`
+      )
+    }
   }
 }
 
@@ -1281,7 +1635,11 @@ function finalise(ctx: Ctx) {
   for (const post of ctx.posts.values()) {
     // A post that was pulled before it went live was never posted. Whatever
     // time we have for it is the time it was DUE.
-    if (post.status === 'withdrawn' && post.posted_at_estimated) {
+    if (
+      post.status === 'withdrawn' &&
+      post.posted_at_estimated &&
+      !post.metadata.went_live
+    ) {
       post.scheduled_for = post.scheduled_for ?? post.posted_at
       post.posted_at = null
     }
