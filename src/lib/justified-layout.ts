@@ -38,8 +38,8 @@ export interface JustifiedRow {
   height: number
 }
 
-const DEFAULT_MIN_ASPECT = 0.4
-const DEFAULT_MAX_ASPECT = 3.5
+export const DEFAULT_MIN_ASPECT = 0.4
+export const DEFAULT_MAX_ASPECT = 3.5
 
 /** Aspect ratio (width / height) for a photo, falling back to 3:2 landscape. */
 export function photoAspectRatio(photo: {
@@ -166,4 +166,58 @@ function buildRow(
   }
 
   return { items, height: roundedHeight }
+}
+
+/**
+ * Aspect ratio for a tile in a fixed-height photo row (the photo strips), or
+ * `null` when the photo's dimensions are unknown. Callers fall back to a
+ * square, focal-point-cropped tile for `null`, which is how every strip
+ * looked before photos kept their shape.
+ *
+ * Extremes are clamped to the same range as the gallery, so a panorama
+ * can't take over a row; the image's object-cover crops the excess.
+ */
+export function rowTileAspect(photo: {
+  width: number | null
+  height: number | null
+}): number | null {
+  const { width, height } = photo
+  if (!width || !height || width <= 0 || height <= 0) return null
+  return Math.min(
+    DEFAULT_MAX_ASPECT,
+    Math.max(DEFAULT_MIN_ASPECT, width / height)
+  )
+}
+
+/** Width of a row tile at `rowHeight`; an unknown aspect means a square. */
+export function rowTileWidth(aspect: number | null, rowHeight: number): number {
+  return Math.round((aspect ?? 1) * rowHeight)
+}
+
+export interface RowHeightBreakpoint {
+  /** Largest viewport width (CSS px) this height applies to; omit for the rest */
+  maxViewportWidth?: number
+  /** Row height at this breakpoint, in CSS px */
+  height: number
+}
+
+/**
+ * `sizes` attribute for an image in a fixed-height row, so the browser picks
+ * a srcset candidate for the tile's real width rather than a generic vw
+ * guess. `growth` allows for layouts that stretch tiles past their basis
+ * width to fill a line (flex-grow justified rows).
+ */
+export function rowImageSizes(
+  aspect: number | null,
+  breakpoints: RowHeightBreakpoint[],
+  growth = 1
+): string {
+  return breakpoints
+    .map(({ maxViewportWidth, height }) => {
+      const width = `${Math.ceil(rowTileWidth(aspect, height) * growth)}px`
+      return maxViewportWidth === undefined
+        ? width
+        : `(max-width: ${maxViewportWidth}px) ${width}`
+    })
+    .join(', ')
 }

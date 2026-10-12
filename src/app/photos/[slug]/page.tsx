@@ -9,6 +9,11 @@ import { getBaseUrl, buildSeoTitle, buildSeoDescription } from '@/lib/seo'
 import { slugify } from '@/lib/utils'
 import { buildSlideshowUrl } from '@/lib/shuffle-types'
 import { buildGalleryUrl } from '@/lib/photo-filters'
+import {
+  rowImageSizes,
+  rowTileAspect,
+  type RowHeightBreakpoint,
+} from '@/lib/justified-layout'
 import { ImageObjectJsonLd } from '@/components/seo'
 import { PublicLayout } from '@/components/layouts'
 import { PhotoPageClient } from './photo-page-client'
@@ -84,6 +89,14 @@ function PhotoNavigation({
   )
 }
 
+// Target row heights for the similar photos rows (match the basis classes).
+const SIMILAR_PHOTO_ROW_HEIGHTS: RowHeightBreakpoint[] = [
+  { maxViewportWidth: 639, height: 100 },
+  { height: 140 },
+]
+// Tiles stretch past their basis to fill a line; allow for it in `sizes`.
+const SIMILAR_PHOTO_GROWTH = 1.3
+
 /**
  * Server-rendered similar photos grid
  * Uses rel="nofollow" to avoid passing link equity to near-duplicates
@@ -96,23 +109,43 @@ function SimilarPhotos({ photos }: { photos: Photo[] }) {
       <h2 className="text-lg font-medium mb-4 text-text-muted">
         Similar photos
       </h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-        {photos.map((photo) => (
-          <Link
-            key={photo.id}
-            href={`/photos/${photo.slug}`}
-            rel="nofollow"
-            className="relative aspect-square rounded-md overflow-hidden bg-bg-elevated hover:ring-2 hover:ring-accent transition-all"
-          >
-            <Image
-              src={photo.thumbnail_url || photo.blob_url}
-              alt={`Similar photo${photo.band_name ? ` of ${photo.band_name}` : ''}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
-            />
-          </Link>
-        ))}
+      {/* Justified rows in pure CSS: each tile's basis is its aspect ratio
+          times a target row height, and it grows in proportion to its aspect
+          ratio, so every tile on a line stretches to the same height. The
+          trailing spacer soaks up the last line's slack instead of blowing
+          its photos up. Unknown dimensions fall back to a square crop. */}
+      <div className="flex flex-wrap gap-2">
+        {photos.map((photo) => {
+          const aspect = rowTileAspect(photo) ?? 1
+          return (
+            <Link
+              key={photo.id}
+              href={`/photos/${photo.slug}`}
+              rel="nofollow"
+              className="relative basis-[calc(var(--tile-aspect)*100px)] sm:basis-[calc(var(--tile-aspect)*140px)] rounded-md overflow-hidden bg-bg-elevated hover:ring-2 hover:ring-accent transition-all"
+              style={
+                {
+                  '--tile-aspect': aspect,
+                  flexGrow: aspect,
+                  aspectRatio: aspect,
+                } as React.CSSProperties
+              }
+            >
+              <Image
+                src={photo.thumbnail_url || photo.blob_url}
+                alt={`Similar photo${photo.band_name ? ` of ${photo.band_name}` : ''}`}
+                fill
+                className="object-cover"
+                sizes={rowImageSizes(
+                  aspect,
+                  SIMILAR_PHOTO_ROW_HEIGHTS,
+                  SIMILAR_PHOTO_GROWTH
+                )}
+              />
+            </Link>
+          )
+        })}
+        <span aria-hidden="true" className="grow-[1000]" />
       </div>
     </section>
   )

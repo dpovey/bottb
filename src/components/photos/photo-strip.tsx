@@ -7,8 +7,15 @@ import type { Photo } from '@/lib/db-types'
 import { trackPhotoClick } from '@/lib/analytics'
 import { PhotoImage } from './photo-image'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
-import { Skeleton, VinylSpinner } from '@/components/ui'
+import { VinylSpinner } from '@/components/ui'
+import { PhotoStripSkeleton } from '@/components/skeletons/home-skeletons'
+import { rowTileAspect } from '@/lib/justified-layout'
 import { useShuffledPhotos } from '@/lib/hooks/use-shuffled-photos'
+import {
+  PHOTO_STRIP_TILE_CLASS,
+  photoStripImageSizes,
+  photoStripTileStyle,
+} from './photo-strip-tile'
 
 interface PhotoStripProps {
   /** Filter by event ID */
@@ -206,15 +213,7 @@ export function PhotoStrip({
           </div>
 
           {loading ? (
-            // Loading skeleton
-            <div className="flex gap-4 overflow-hidden px-2 py-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0"
-                />
-              ))}
-            </div>
+            <PhotoStripSkeleton />
           ) : (
             <div className="relative">
               {/* Left chevron button */}
@@ -267,40 +266,52 @@ export function PhotoStrip({
                 role="listbox"
                 aria-label="Photo gallery - use arrow keys to navigate, Enter to open"
               >
-                {photos.map((photo, index) => (
-                  <button
-                    key={`${photo.id}-${index}`}
-                    ref={(el) => {
-                      photoRefs.current[index] = el
-                    }}
-                    onClick={() => handlePhotoClick(index)}
-                    onFocus={() => setSelectedIndex(index)}
-                    className="group relative w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 snap-start rounded-lg overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden"
-                    aria-label={`Photo ${index + 1} of ${totalCount}`}
-                    aria-selected={index === selectedIndex}
-                    role="option"
-                  >
-                    <PhotoImage
-                      photo={photo}
-                      variant="thumbnail"
-                      alt={photo.original_filename || `Photo ${index + 1}`}
-                      className="absolute inset-0 w-full h-full transition-transform duration-300 motion-safe:group-hover:scale-110"
-                      sizes="(max-width: 640px) 192px, (max-width: 768px) 224px, 256px"
-                      loading={index < 4 ? 'eager' : 'lazy'}
-                    />
-                  </button>
-                ))}
+                {photos.map((photo, index) => {
+                  // Real aspect ratio at a fixed row height; a square crop
+                  // (focal point via PhotoImage) when dimensions are unknown.
+                  const aspect = rowTileAspect(photo)
+                  return (
+                    <button
+                      key={`${photo.id}-${index}`}
+                      ref={(el) => {
+                        photoRefs.current[index] = el
+                      }}
+                      onClick={() => handlePhotoClick(index)}
+                      onFocus={() => setSelectedIndex(index)}
+                      style={photoStripTileStyle(aspect)}
+                      className={`group relative ${PHOTO_STRIP_TILE_CLASS} snap-start overflow-hidden cursor-pointer transition-all duration-200 opacity-80 hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-bg-elevated outline-hidden`}
+                      aria-label={`Photo ${index + 1} of ${totalCount}`}
+                      aria-selected={index === selectedIndex}
+                      role="option"
+                    >
+                      <PhotoImage
+                        photo={photo}
+                        variant="thumbnail"
+                        alt={photo.original_filename || `Photo ${index + 1}`}
+                        className="absolute inset-0 w-full h-full transition-transform duration-300 motion-safe:group-hover:scale-110"
+                        sizes={photoStripImageSizes(aspect)}
+                        loading={index < 4 ? 'eager' : 'lazy'}
+                      />
+                    </button>
+                  )
+                })}
 
                 {/* Loading indicator at end */}
                 {loadingMore && (
-                  <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg flex items-center justify-center">
+                  <div
+                    className={`${PHOTO_STRIP_TILE_CLASS} bg-bg flex items-center justify-center`}
+                    style={photoStripTileStyle(null)}
+                  >
                     <VinylSpinner size="xs" className="text-text-dim" />
                   </div>
                 )}
 
                 {/* More photos indicator */}
                 {hasMore && !loadingMore && (
-                  <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0 rounded-lg bg-bg/50 flex items-center justify-center text-text-dim">
+                  <div
+                    className={`${PHOTO_STRIP_TILE_CLASS} bg-bg/50 flex items-center justify-center text-text-dim`}
+                    style={photoStripTileStyle(null)}
+                  >
                     <span className="text-lg font-medium">
                       +{totalCount - photos.length} more
                     </span>

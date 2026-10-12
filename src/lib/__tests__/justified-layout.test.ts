@@ -9,7 +9,13 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { computeJustifiedLayout, photoAspectRatio } from '../justified-layout'
+import {
+  computeJustifiedLayout,
+  photoAspectRatio,
+  rowImageSizes,
+  rowTileAspect,
+  rowTileWidth,
+} from '../justified-layout'
 
 const LANDSCAPE = 3 / 2
 const PORTRAIT = 2 / 3
@@ -148,5 +154,59 @@ describe('computeJustifiedLayout', () => {
     })
 
     expect(wide[0].items.length).toBeGreaterThan(narrow[0].items.length)
+  })
+})
+
+describe('rowTileAspect', () => {
+  it('returns width / height for known dimensions', () => {
+    expect(rowTileAspect({ width: 3000, height: 2000 })).toBeCloseTo(1.5)
+    expect(rowTileAspect({ width: 2000, height: 3000 })).toBeCloseTo(0.667, 2)
+  })
+
+  it('returns null (square fallback) when dimensions are missing', () => {
+    expect(rowTileAspect({ width: null, height: 2000 })).toBeNull()
+    expect(rowTileAspect({ width: 3000, height: null })).toBeNull()
+    expect(rowTileAspect({ width: 0, height: 2000 })).toBeNull()
+    expect(rowTileAspect({ width: -3, height: 2000 })).toBeNull()
+  })
+
+  it('clamps extremes to the gallery range', () => {
+    expect(rowTileAspect({ width: 10000, height: 100 })).toBe(3.5)
+    expect(rowTileAspect({ width: 100, height: 10000 })).toBe(0.4)
+  })
+})
+
+describe('rowTileWidth', () => {
+  it('sets width from aspect ratio at the row height', () => {
+    expect(rowTileWidth(1.5, 256)).toBe(384)
+    expect(rowTileWidth(2 / 3, 176)).toBe(117)
+  })
+
+  it('is square when the aspect is unknown', () => {
+    expect(rowTileWidth(null, 224)).toBe(224)
+  })
+})
+
+describe('rowImageSizes', () => {
+  const breakpoints = [
+    { maxViewportWidth: 639, height: 176 },
+    { maxViewportWidth: 767, height: 224 },
+    { height: 256 },
+  ]
+
+  it('gives each breakpoint the tile width at that row height', () => {
+    expect(rowImageSizes(1.5, breakpoints)).toBe(
+      '(max-width: 639px) 264px, (max-width: 767px) 336px, 384px'
+    )
+  })
+
+  it('uses square widths when the aspect is unknown', () => {
+    expect(rowImageSizes(null, breakpoints)).toBe(
+      '(max-width: 639px) 176px, (max-width: 767px) 224px, 256px'
+    )
+  })
+
+  it('scales by growth for layouts that stretch tiles', () => {
+    expect(rowImageSizes(1, [{ height: 100 }], 1.3)).toBe('130px')
   })
 })

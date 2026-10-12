@@ -1,16 +1,28 @@
 import { Skeleton } from '@/components/ui'
+import {
+  PHOTO_STRIP_TILE_CLASS,
+  photoStripTileStyle,
+} from '@/components/photos/photo-strip-tile'
 
 export function EventCardSkeleton() {
   return <Skeleton className="aspect-4/3 rounded-lg" />
 }
 
+// A landscape/portrait mix, so the placeholder has the strip's rhythm.
+const PHOTO_STRIP_SKELETON_ASPECTS = [1.5, 0.667, 1.5, 1.5, 0.667, 1.5]
+
+/**
+ * Placeholder for `PhotoStrip`. Tile sizes come from the strip's own row
+ * classes so the skeleton and the loaded strip are the same height.
+ */
 export function PhotoStripSkeleton() {
   return (
-    <div className="flex gap-4 overflow-hidden px-2 py-2">
-      {Array.from({ length: 4 }).map((_, i) => (
+    <div className="flex gap-4 overflow-hidden px-2 py-3">
+      {PHOTO_STRIP_SKELETON_ASPECTS.map((aspect, i) => (
         <Skeleton
           key={i}
-          className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 shrink-0"
+          className={PHOTO_STRIP_TILE_CLASS}
+          style={photoStripTileStyle(aspect)}
         />
       ))}
     </div>
