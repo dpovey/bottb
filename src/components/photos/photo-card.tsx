@@ -63,6 +63,8 @@ export function PhotoCard({
   // Show cluster size in badge
   const clusterSize = cluster?.photos.length ?? 0
   const showClusterBadge = clusterSize > 1
+  // 1-based position of the photo currently shown, e.g. the "2" in "2/3"
+  const clusterPosition = (cluster?.currentIndex ?? 0) + 1
 
   // Private photos are only ever rendered for admins; flag them so unreleased
   // photos are obvious while reviewing the public gallery.
@@ -106,11 +108,13 @@ export function PhotoCard({
             <button
               onClick={handleCycleClick}
               className="p-1.5 bg-black/70 backdrop-blur-xs rounded-lg flex items-center gap-1 text-white/90 hover:text-white hover:bg-black/80 transition-all cursor-pointer"
-              title={`${clusterSize} similar photos – click to cycle`}
-              aria-label={`View ${clusterSize} similar photos`}
+              title={`${clusterPosition} of ${clusterSize} similar photos – click to cycle`}
+              aria-label={`View ${clusterSize} similar photos (currently ${clusterPosition} of ${clusterSize})`}
             >
               <LayersIcon size={14} />
-              <span className="text-xs font-medium">{clusterSize}</span>
+              <span className="text-xs font-medium">
+                {clusterPosition}/{clusterSize}
+              </span>
             </button>
           )}
         </div>
