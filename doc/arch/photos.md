@@ -408,9 +408,21 @@ Three types of clusters for organizing and discovering photos.
 #### 1. Near-Duplicate Clusters
 
 - **Type**: `'near_duplicate'`
-- **Method**: Perceptual hashing (pHash/dHash) with Hamming distance
-- **Contains**: Photos that are nearly identical (burst shots, minor variations)
-- **Use case**: Finding and removing duplicate photos
+- **Method**: capture time and pixels reinforcing each other
+  (`scripts/photo-intelligence/ml_services/duplicate_grouping.py`). Same camera + identical
+  EXIF capture time (to the 1/100 s) marks edits of one frame, whatever the crop or grade;
+  frames within 2 s are a burst. A pair is linked only when time agrees with the pixels (pHash,
+  or ORB feature matches surviving a scale+shift RANSAC fit, which sees through re-crops). With
+  no capture time, both pixel signals must agree. Groups are connected components.
+- **Contains**: grading/crop variants of one frame (colour, B&W, …) and burst neighbours;
+  `metadata.kind` is `variant` or `similar`
+- **Representative**: colour before B&W, then the widest crop. The gallery shows only the
+  representative of each group.
+- **Run alone** (no torch needed): `python -I scripts/photo-intelligence/group_duplicates.py
+<photo_dir> <out_dir>`, then `pnpm tsx src/scripts/photo-intelligence/upload-intelligence.ts
+<out_dir>` after the photos are uploaded. Re-running replaces overlapping clusters.
+- **Why not hashes alone** (measured on Sydney 2026, 206 photos): pHash/dHash ≤ 10 missed every
+  re-cropped variant and linked two different singers under the same light.
 
 #### 2. Scene Clusters
 

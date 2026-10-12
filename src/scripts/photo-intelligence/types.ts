@@ -46,6 +46,10 @@ export interface ClusterData {
     cluster_id: number
     photo_filenames: string[]
     representative_photo: string
+    /** "variant": edits of one frame; "similar": includes burst neighbours */
+    kind?: 'variant' | 'similar'
+    /** Distinct camera frames in the group */
+    frames?: number
   }>
   scenes: Array<{
     cluster_id: number

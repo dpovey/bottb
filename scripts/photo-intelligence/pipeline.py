@@ -245,53 +245,19 @@ def process_photo(
         return None
 
 
-def cluster_near_duplicates(
-    photo_results: List[Dict[str, Any]],
-    hash_threshold: int = 10
-) -> List[List[str]]:
+def cluster_near_duplicates(photo_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Cluster photos by perceptual hash (near-duplicates).
-    
-    Args:
-        photo_results: List of photo processing results
-        hash_threshold: Maximum Hamming distance for similarity
-    
+    Group grading/crop variants and burst frames, using capture time and pixels together.
+
+    See ml_services/duplicate_grouping.py (also runnable alone via group_duplicates.py).
+
     Returns:
-        List of clusters, each containing filenames
+        List of {photo_filenames, representative_photo, kind, frames}
     """
-    from ml_services.perceptual_hash import hamming_distance
-    
-    clusters = []
-    processed = set()
-    
-    for i, photo1 in enumerate(photo_results):
-        if photo1["filename"] in processed:
-            continue
-        
-        cluster = [photo1["filename"]]
-        processed.add(photo1["filename"])
-        
-        phash1 = photo1["hashes"]["phash"]
-        dhash1 = photo1["hashes"]["dhash"]
-        
-        for j, photo2 in enumerate(photo_results[i + 1:], start=i + 1):
-            if photo2["filename"] in processed:
-                continue
-            
-            phash2 = photo2["hashes"]["phash"]
-            dhash2 = photo2["hashes"]["dhash"]
-            
-            # Check both hashes
-            phash_dist = hamming_distance(phash1, phash2)
-            dhash_dist = hamming_distance(dhash1, dhash2)
-            
-            if phash_dist <= hash_threshold or dhash_dist <= hash_threshold:
-                cluster.append(photo2["filename"])
-                processed.add(photo2["filename"])
-        
-        if len(cluster) > 1:
-            clusters.append(cluster)
-    
+    from ml_services.duplicate_grouping import group_near_duplicates, load_signals
+
+    photos = [load_signals(r["filepath"]) for r in photo_results]
+    clusters, _review = group_near_duplicates(photos)
     return clusters
 
 
@@ -582,11 +548,7 @@ def main():
         # Save clusters
         clusters_data = {
             "near_duplicates": [
-                {
-                    "cluster_id": i,
-                    "photo_filenames": cluster,
-                    "representative_photo": cluster[0]  # First photo as representative
-                }
+                {"cluster_id": i, **cluster}
                 for i, cluster in enumerate(near_duplicate_clusters)
             ],
             "scenes": [

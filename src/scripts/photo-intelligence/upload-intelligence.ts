@@ -55,12 +55,13 @@ async function loadPipelineResults(outputDir: string): Promise<{
   const clustersJsonPath = join(outputDir, 'clusters.json')
   const peopleJsonPath = join(outputDir, 'people.json')
 
-  if (!existsSync(photosJsonPath)) {
-    throw new Error(`Photos JSON not found: ${photosJsonPath}`)
+  // group_duplicates.py writes clusters.json alone; the full pipeline also writes photos.json
+  let photos: PhotoIntelligenceResult[] = []
+  if (existsSync(photosJsonPath)) {
+    photos = JSON.parse(await readFile(photosJsonPath, 'utf-8'))
+  } else if (!existsSync(clustersJsonPath)) {
+    throw new Error(`Neither photos.json nor clusters.json in ${outputDir}`)
   }
-
-  const photosJson = await readFile(photosJsonPath, 'utf-8')
-  const photos: PhotoIntelligenceResult[] = JSON.parse(photosJson)
 
   let clusters: ClusterData | null = null
   if (existsSync(clustersJsonPath)) {
@@ -235,6 +236,12 @@ async function uploadClusters(
         )
       } else {
         const photoIdsLiteral = `{${photoIds.join(',')}}`
+        // Replace, don't stack: a re-run used to leave each photo in several overlapping clusters
+        await sql`
+          DELETE FROM photo_clusters
+          WHERE cluster_type = 'near_duplicate'
+            AND photo_ids && ${photoIdsLiteral}::uuid[]
+        `
         await sql`
           INSERT INTO photo_clusters (
             cluster_type, photo_ids, representative_photo_id, metadata
@@ -242,7 +249,7 @@ async function uploadClusters(
             'near_duplicate',
             ${photoIdsLiteral}::uuid[],
             ${repPhotoId}::uuid,
-            ${JSON.stringify({ cluster_id: cluster.cluster_id })}::jsonb
+            ${JSON.stringify({ cluster_id: cluster.cluster_id, kind: cluster.kind, frames: cluster.frames })}::jsonb
           )
         `
         inserted++
@@ -268,6 +275,11 @@ async function uploadClusters(
         console.log(`  Would insert scene cluster: ${photoIds.length} photos`)
       } else {
         const photoIdsLiteral = `{${photoIds.join(',')}}`
+        await sql`
+          DELETE FROM photo_clusters
+          WHERE cluster_type = 'scene'
+            AND photo_ids && ${photoIdsLiteral}::uuid[]
+        `
         await sql`
           INSERT INTO photo_clusters (
             cluster_type, photo_ids, representative_photo_id, metadata
