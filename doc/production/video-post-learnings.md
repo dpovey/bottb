@@ -2071,3 +2071,770 @@ time_reference=172800000`), 10 s, 9 MB peak. Bit-exact against BotB-001 ch1/2 at
 - **Published (bottb-5b, 2026-10-06 ~11:00):** YouTube https://youtu.be/E2yeRiHRUlw (4K v2), FB + IG reels from Blob
   `release/brisbane-2026/Epsonics_NoOneKnows_1080p_IG_v2.mp4` (259,904,881 B verified), LinkedIn + TikTok from 1080p_v2 (Dean dragged).
   Live YouTube thumbnail checked from `maxresdefault.jpg`: Dean's custom art, no year on it. Copy: `doc/production/epsonics-noone-knows-copy.md`.
+
+## Sydney 2026 (2026-10-08 show): cameras are LOG (2026-10-13, bottb-68)
+
+First show shot in Log. Everything above is Rec.709 footage (Brisbane 2026, Sydney 2025), so none of the
+grade numbers or "not Log" findings carry over. Media: volume **`BOTTB SYD26`** (exFAT, USB, 1.8 TB, 456 GB used),
+one folder per angle, 24 clips, all 3840×2160 25p. Checked per clip with `ffprobe` + `exiftool` (Canon) and the embedded
+Sony XML (`strings` on the last 4 MB), not from the folder names.
+
+| Folder (angle)               | Body / lens                    | Codec                                           | Log / gamut            | Clips                                        |
+| ---------------------------- | ------------------------------ | ----------------------------------------------- | ---------------------- | -------------------------------------------- |
+| `STAGE RIGHT CAM` (`1O0A*`)  | Canon EOS R6 Mark II, RF 15-35 | HEVC Rext 4:2:2 10-bit, 80 Mb/s                 | C-Log3 / Cinema Gamut  | 2 (0068 42.6 min, 0069 2 h 24 min)           |
+| `STATIC DESKCAM` (`3O1A*`)   | R6 II, RF 28-70 F2             | same                                            | C-Log3 / Cinema Gamut  | 2 (7144 2 h 42 min, 7145 17.8 min; 18 s gap) |
+| `SOUNDESK_TRACKED` (`IMG_*`) | R6 II, RF 70-200               | same                                            | C-Log3 / Cinema Gamut  | 6 (2329 is 2 h 9 min)                        |
+| `PHOTOPIT_ROAMING` (`0V6A*`) | R6 II, RF 24-70                | same                                            | C-Log3 / Cinema Gamut  | 10                                           |
+| `DRUM CAM` (`C136*`)         | **Sony FX30**, Sigma 18-50     | **H.264 High 4:2:0 8-bit**, 57 Mb/s, full range | S-Log3 / S-Gamut3.Cine | 4                                            |
+
+- **`IMG_*` is a Canon, not a phone**: the sound-desk tracking R6 II writes `IMG_` names (same trap as Sydney 2025's
+  `MVI_*`). Canon's Log settings live in the Canon maker notes: `exiftool -a -G1` → `Canon Log Version: CLogV3`,
+  `Color Space 2: CinemaGamut`. `ColorSpace: sRGB` in the same dump is the stills setting; ignore it.
+- **The drum cam is 8-bit S-Log3.** Expect banding and noise in its shadows if pushed; it needs the gentlest correction.
+- Container colour tags are empty (`unknown`) on every clip, so nothing auto-detects the Log: input colour spaces
+  must be set per clip.
+- **Clocks:** `creation_time` is UTC; the show was AEDT (UTC+11). Canon timecodes are per-body free-run
+  (08:15 … 18:47) and agree with nothing. Use creation_time for a rough layout and audio for the sync.
+- **The multitrack** (Logic, `/Volumes/BOTTB/Sydney - 2026/`, take `#02`, 19:18:34–22:05:46) is the desk feed. Its
+  set times are in `prep/SYDNEY-2026-PREP.md`, which says picture TC has not been measured yet. This multicam is the
+  first Sydney 2026 picture reference: hand its offsets to the mixdown session once measured.
+
+### Setting Log input colour spaces through the API (21.1.1, 2026-10-13)
+
+Project `BOTTB Sydney 2026 Full Show`: DaVinci YRGB Color Managed v2, separate colour space and gamma, timeline
+**`DaVinci WG` / `DaVinci Intermediate`** (the string "DaVinci Wide Gamut" is refused; "DaVinci WG" takes), output
+Rec.709 / Gamma 2.4, input and output DRT `DaVinci`, colour-space-aware tools on, 3840×2160 25p. Cache on
+`/Volumes/BOTTB/Sydney - 2026/video/CacheClip`, Optimized Media off. `timelinePlaybackFrameRate` refuses "25" (reads 24).
+
+- **Per-clip `SetClipProperty("Input Color Space", …)` prefix-matches and can pick the wrong preset.** "Canon Cinema
+  Gamut" returned True and set **"Canon Cinema Gamut/Canon Log 2"**. Every spelling of the Log 3 preset was refused, as was
+  "Project" to undo it, and `Input Gamma` refuses every value. The stuck clip was fixed by `DeleteClips` + re-import
+  (before it was in any timeline).
+- **What works:** the project default `colorSpaceInput = "Canon Cinema Gamut"` + `colorSpaceInputGamma = "Canon Log 3"`
+  (both take) for the four Canons, and per clip `"Sony S-Gamut3.Cine"`, which matches the only preset with that gamut and
+  reads back **"S-Gamut3.Cine/S-Log3"** (no "Sony" prefix in Resolve's list). ~~That sets the Sony up~~ — CORRECTED
+  2026-10-13 by a 10-frame render (one frame per camera on a temp timeline, measured against the raw source): the four
+  Canons on the project default decode (Log p0.1 0.125-0.141 → 0.003-0.042), but **the FX30 came out still Log**
+  (p0.1 0.098 → 0.104, p99 0.420 → 0.399). With separate colour space and gamma on, the clip's own `Input Gamma` stays
+  `Rec.709` and wins: the gamut converts, the curve is never decoded. `SetClipProperty("Input Gamma", …)` refuses every
+  S-Log3 spelling, so **a Log clip that differs from the project default needs its Input Gamma set in the UI**
+  (Media Pool → select → right-click → Input Gamma). Check every camera on rendered pixels; the readback lies.
+- **Fixed (Dean, UI, 2026-10-13):** Media Pool → DRUM CAM, all four → right-click → Input Gamma → Sony S-Log3. Reads back
+  `Input Gamma: S-Log3` (the string the API refused). Re-render: FX30 p0.1 0.104 → 0.006, Canons byte-identical to before.
+- `MultiPassEncode` in `SetRenderSettings` makes the whole call fail on ProRes (H.264/H.265 only). **`AddRenderJob`
+  returns "" when it is in the same `run_script` call as `SetRenderSettings`; in a call of its own it returns the job id**
+  (twice on 2026-10-13; also needed `MarkIn`/`MarkOut` on a fresh timeline, safe only where Dean has no In/Out to lose).
+
+### Sync: audio for the lock, picture for the frame (2026-10-13)
+
+Reference = the Logic take `#02` (desk feed), summed to 16 kHz mono (`/Volumes/BOTTB/Sydney - 2026/video/sync_audio/`,
+`_DESKREF_02_16k.wav`: OH, bass, guitars, keys, RX1-4; `_DRUMREF_02_16k.wav`: kit only). REF seconds = take file seconds;
+**timeline TC 01:00:00:00 = REF 2.8025625 s** (the Logic project TC of alternatives 1-6), so BWF-stamped bounces from the
+mix sessions land in place. Tools: `scripts/multicam_sync.py` (audio) and `scripts/picture_sync.py` (light changes).
+
+- **Camera clocks vs the Logic clock (creation_time is UTC, show AEDT):** Photo Pit +20.7 s, Stage Right +29.2 s,
+  Drum (FX30) +26.4 s, Static Desk +83.1 s, Desk Tracking **−3515.5 s** (clock ~an hour out). Each held ±0.6 s over
+  every clip of that camera (1 s creation_time resolution), so clock + offset ± 30 s is a safe search window.
+- **A whole-clip envelope correlation fails on stage-side cameras.** In changeovers the drum cam hears stage noise while
+  the desk is silent; those windows anti-correlate (median r −0.3) and cancel the music (C1364: z −92 at the true lag).
+  Windowed voting (best lag per 60 s window, keep r ≥ 0.3, majority cluster) found it in 9 of 15 windows at +0.2 s.
+- **Single 20 s sample-level probes jitter ±20–40 ms** (a room mic hears the PA and the acoustic kit at different
+  delays). Trust fits over many probes. With ≥ 12 good probes the drift fit matched per-set medians to 2 ms: Static
+  Desk **+8.07 ppm** (78 ms over 2 h 42 m), Desk Tracking +6.84 ppm. Fits from 3–5 probes were noise (same camera
+  −8.8…+23 ppm). Long clips that drift > 1 frame are placed per set, split in the changeovers.
+- **Audio alignment is not picture alignment.** Frame-mean brightness changes (stage lights reach every lens at
+  once) on Killing in the Name, 5 cameras: pairwise lags closed within 2 ms, r 0.47–0.85. Against the drum cam (mic
+  beside the kit, ≈ picture-true) the audio-aligned FOH cameras sat 32 ms early, Stage Right 16 ms, the roaming Photo
+  Pit 54 ms (it moves, so per clip). That is 0.4–1.4 frames, visible on drum hits: every clip gets a picture check.
+
+### Cameras step a frame against their own audio: sync is piecewise (2026-10-13)
+
+The grid pass (`picture_sync.py --grid 240 --win-s 60`, every clip against Static Desk 7144, ~150 decodes, two
+workers ~1.3 GB) showed **one-frame steps that every other camera sees at the same moment**: C1364, 0069, 0922 and 2330
+all moved ~+40 ms against 7144 between 8516 and 8756 s, and C1364, 0069 and 2329 all moved ~−40 ms between 5504 and
+6168 s. So 7144's picture stepped against its own audio (the drift-fitted placement) twice. Stage Right stepped once
+on its own (~4450 s) and Desk Tracking once (~7000 s). Checked and ruled out:
+the file (7144 has exactly 243,136 packets = 9725.44 s × 25), and ffmpeg seeking (direct `-ss` vs a 10 s pre-roll gave
+identical frames at all four step points). Per-window lags also alias by one frame about 1 time in 8 (IMG_2329: 13
+windows at −2 ms, 4 at −42, 1 at +38), so trust runs of agreeing windows, never one.
+
+`scripts/multicam_solve.py` turns that into a plan: drum cam = picture truth (its mic is beside the kit, so audio
+placement ≈ picture), anchor error G(T) = drum's lag vs the anchor per run (78.5 / 28 / 68.5 ms), each clip's net
+correction N = lag − G per run of agreeing windows, clips split at run boundaries (and at the set changeovers for
+drifting clips). Clips with no trusted window take the same camera's nearest measured run; single windows on clips
+< 120 s are not trusted (a changeover clip's lone window gave −152 ms). Result: timeline **`Sydney 2026 - Multicam
+source`**, 43 pieces on V1–V5 + desk scratch on A6, every piece in its camera colour group. The provisional
+audio-only timeline `Sydney 2026 - Sync (pre-multicam)` is kept for comparison.
+
+### Exposure reference: not the projection screen (Dean, 2026-10-13)
+
+I proposed metering the drum cam against the Canons on the projection screen, calling it "one emissive source
+seen by every camera". Dean: **"Projection screen is reflective not emissive."** It is a front-projection surface, so
+its luminance depends on viewing angle (the drum cam sees it steeply from beside it, the Static Desk head-on from the
+back) and it also catches stage-light spill: a camera-to-camera ratio on it carries the angle bias into the exposure
+number. Meter exposure on the subject instead (the drummer's face, scene-linear via the camera's log decoder, pushed to
+a skin target), per set, and keep the screen for sync only (picture_sync uses its changes, not its level).
+(Corrected same day, Dean: "the projector screen even though it's reflective would be a common reference", and my
+"emissive" was Brisbane's LED-wall backdrop carried over. Every camera sees the same projected image at the same
+instant; the angle term is a fixed bias per camera position, not time-varying. So meter BOTH: screen ratio
+camera-to-camera and drummer's face vs the Canons' faces, and read their disagreement as that bias + lighting.)
+
+### Timeline → multicam in 21.1.1: the menu item is a submenu (2026-10-13)
+
+The manual (21.1, ch. 49 p. 1038) says right-click the timeline → "Convert Compound Clips (Timelines) to Multicam Clips".
+**21.1.1 has no such item** (Dean, screenshot): Media Pool right-click on a timeline shows **"Convert Timeline to Multicam
+Clip ›"** (a submenu), next to "Create New Multicam Clip Using Selected Clips…". The manual's warning still stands: the
+conversion is one-way, so convert a DuplicateTimeline copy (`Sydney 2026 - MULTICAM (convert me)`) and keep the measured
+source timeline as the record.
+
+- **Converted (Dean, 2026-10-13) with "Use Reference Audio/Angle 1":** Project.db shows the multicam container
+  (`Sm2TiTrack.Sm2SequenceContainer_id` 3c79f417…) holds the 43 video pieces and **the desk scratch v2 once per angle (5×)**
+  as its only audio: the first audio-only track became the reference, as the manual says. Multicam clip renamed
+  "Sydney 2026 Multicam" (`SetClipProperty("Clip Name")` returned False but the name changed: read back), Start TC
+  00:53:00:00. Edit timeline **`BOTTB Sydney 2026`** (start 00:53:00:00, multicam on V1 at 79500) keeps show TC = Logic TC.
+- **Colour-group membership is not in `Sm2TiItem.Group` or `.ClipGroup`**: both are NULL on all 43 pieces of the source
+  timeline, where `GetColorGroup()` read every group back correctly. It lives elsewhere (a blob). Check survival on
+  pixels: put a grade in the group, render a frame with that angle active.
+- **Desk scratch v1 was −38.7 LUFS** (Dean: "way too quiet"): the 0.35 scale on a raw 16-input sum. v2 =
+  `loudnorm=I=-16:TP=-1.5:LRA=11`, −19.4 LUFS in-set, peaks −1.5 dBFS, sample-aligned with v1 at three points (loudnorm's
+  look-ahead adds no offset), same BWF stamp. Measure any scratch's loudness before handing it over.
+
+### Drum cam base exposure: +1.25 stops on the CAM 5 group (measured 2026-10-13)
+
+Two independent meters, scene-linear via the official decoders (`colour` 0.4.7: `log_decoding_SLog3` /
+`log_decoding_CanonLog3`, luminance in each camera's own gamut). Scripts: gigstills `runs/sydney26_drum_exposure/`.
+
+- **Projection screen, matched instants every 30 s through each set** (`screen_expo.py`, 0.16 GB, 6 min): drum vs
+  Stage Right **+1.34 / +1.23 / +1.33 / +1.25 / +1.20 st** (ShipReX → V2), IQR ±0.15: a camera-level constant. Drum vs
+  Static Desk +1.5…+1.9 (beams through haze sit in front of the screen from the FOH angle: the expected bias).
+- **Faces** (`face_expo.py`, YuNet on keyframes, 34 min): drum face vs Photo Pit faces +0.0 / +0.7 / +1.8 / +1.1 / +0.7,
+  vs Desk Tracking +0.6 / +1.6 / +2.5 / +1.8 / +1.1: median ≈ +1.1, spread by set = the drummer's own lighting (upstage,
+  less front light). All cameras' faces sit 0.3–2.6 st under 18% grey: the room is dark, that is the look's job.
+- So: **group base +1.25 st** (DaVinci Intermediate: 1 st = 0.0733 Offset → +0.092), per-cut trims after the cut for
+  the sets the drummer is lit differently (Canvanauts darkest, ShipReX brightest). The API cannot write it: `Graph` has
+  no `SetCDL` (only `TimelineItem` does) → Dean sets it in the UI; verify on a render.
+
+### Drum cam +1.25 st applied and verified (2026-10-13, 21:03)
+
+- Dean set it by hand in the UI: Color page, node editor dropdown **Group Pre-Clip** (CAM 5), node 01, HDR palette,
+  **Global Exp 1.25**. Check render `video/checks/colourcheck_CAM5exp_v3.mov` (job a9119cce; separate
+  SetRenderSettings / AddRenderJob calls; MarkIn 0 / MarkOut 9 on the temp timeline only).
+- Result: the four Canon frames are **bit-identical** to the v2 check (max |diff| 0); the drum frames gained **+1.24 st
+  scene-linear** (IQR +1.18..+1.29, same in every brightness band).
+- **Trap: do not read exposure off the display-referred render.** The same frames read **+2.26 "stops"** taking
+  code^2.4 as linear: the DaVinci DRT's toe (HDR 1000 working → Rec.709 2.4) stretches deep shadows, and the drum
+  frame sits there (mean code 0.09). Measure it scene-linear instead: decode the source frame (S-Log3 → linear Y, frame
+  = the item's left offset + n, with ±3 frames NCC to confirm alignment), build the render's tone curve from the
+  BEFORE render (binned median code against source log2 Y), invert both renders through it, and difference.
+- **A page change inside a `run_script` call returns `{"error": ""}` but the change happens** (2026-10-13, twice):
+  `SetCurrentRenderFormatAndCodec` from the Color page jumped Resolve to Deliver, and `OpenPage("color")` switched
+  the page; both reported the empty error. Read the state in the next call before retrying. Not playback.
+- ~~Still open: that the group grade reaches the drum angle inside the converted multicam.~~ **It does not** (measured
+  2026-10-13 ~21:40): the multicam pool clip appended to a temp timeline (`zz multicam check (temp)`, Static Desk angle,
+  multicam frame 115500 = 02:10:00:00) rendered with **rotation 0.000°, scale 1.0000** against the raw source, while the
+  same CAM 1 group sizing measured −0.68°/×1.06 on the colour-check timeline. Dean saw it first ("It doesn't look very
+  level"; "Don't you have to go back to the multicam for that?"). The 43 pieces inside the multicam are separate
+  timeline items: assign them to the groups inside it (Media Pool → right-click the multicam → Open in Timeline →
+  Color page; runbook "Multicam group grades are only reachable via…"). No API: an opened multicam hijacks the API.
+  **Then verified on a render through the multicam** (2026-10-13 ~22:10): Dean switched the edit timeline's multicam
+  clip to the Drum angle; 2 frames at 02:10:00:00 (`checks/multicamcheck_drum_021000.mov`, C1364 frame 12380) read
+  **+1.29 st** scene-linear vs the raw source (IQR +1.25..+1.32), through the DRT curve built from the no-exposure check
+  render. So the drum pieces inside the multicam were already in CAM 5 and group _grades_ render through the multicam;
+  it was only the per-clip Node Sizing that did not travel.
+  Dean: "The deflicker and tnr done in brisbane were done that way." Group work on a multicam show always goes
+  through Open in Timeline: assign the groups there, after the conversion, not only on the pre-multicam timeline.
+
+### Wide (CAM 1) roll and keystone fix in the group Pre-Clip (2026-10-13)
+
+- Dean: "in the wide angle the screen is crooked". Done as **Node Sizing on a "Roll" node in the CAM 1 group's Pre-Clip
+  graph**: Rotate **−0.70**, Yaw **−0.038**, Zoom **1.06**, Pan/Tilt 0. Input/Edit sizing (Dean's dynamic zooms) runs
+  _before_ the node graph (manual p.3497, "Sizing Order of Processing"), and zoom/pan preserve angles, so the fix stays
+  right under any later zoom and on a RiP'd clip once it is re-assigned to the group.
+- **Resolve sign conventions (measured by registering renders):** Rotate −0.70 = 0.68° _counter-clockwise_ on screen;
+  Yaw negative raises the right-hand side of a horizontal line above centre. **Yaw is not degrees:** −0.075 changed the
+  screen's top edge (y ≈ 60 of 1080) by 2.1°, so ≈ 0.028 per degree there, roughly linear. Yaw opens a gap on one
+  side: −0.038 needs about ×1.035 more zoom (1.022 → 1.06). Calibrate with one test value + render + homography
+  (ORB + RANSAC against the uncorrected render), not by eye: Dean's eyeballed −0.075 was double the right value.
+- Verified on `checks/colourcheck_CAM1yaw_v5.mov`: top edge −0.02°, screen sides −0.06°, no border (edge rows match
+  the uncorrected render's crowd blacks), other four cameras bit-identical.
+- **CORRECTED the same evening: Node Sizing in a group graph is per clip.** The Roll node appeared on every CAM 1 clip
+  (inside the multicam too) but with **no values set**: only the colour-check clip it was keyed on was rotated
+  (manual: Node Sizing "is specific to a particular clip"). A group node carries grade settings (the drum's HDR
+  exposure is shared), not sizing. Dean then put the fix on the Static Desk clips **inside the multicam**, Edit page
+  Inspector → Transform: **Zoom 1.050, Rotation Angle +0.700, Yaw −0.030** (his taste values). **The Edit Inspector's
+  rotation sign is the opposite of the Color page Sizing palette's**: Inspector +0.70 = Sizing −0.70.
+- Verified on `checks/multicamcheck_wide_allsets_v2.mov` (13 Static Desk frames through the multicam, every set +
+  3O1A7145): every frame rotated CCW against its source, long verticals within ±0.4° in 9 of 13 framings (the outliers
+  are mic stands and lights, checked by eye), no black corners. A stacked Roll-node rotation on one piece (−0.70 node +
+  Inspector +0.70 = 1.4°) showed black corners until reset: **one place for geometry, the Inspector on the multicam's
+  inner clips.**
+- **The "static" wide was reframed during the night** (several framings within sets; V2 Voyagers wider). Roll
+  measured from long verticals is −0.3° to −1.0° in every set, so the rotation is right all night. The keystone
+  depends on the pan: where the screen's top edge was measurable (6 of 15 samples, ShipReX to Amakazaam) the
+  residual after the fix is +0.1° to +0.9°. ShipReX's opening framing and V2 Voyagers were not measurable.
+- **Measuring trap:** the check frame and my clean reference frame were different framings of the same clip. Measure
+  the fix on the same frame you render, and sample the whole night before calling a camera "static".
+
+### Drum cam TNR in the CAM 5 group Pre-Clip (2026-10-13 ~22:30)
+
+- Node 02 after the HDR exposure node (`GetToolsInNode`: `["HDR"]`, `["OFX: Noise Reduction"]`), ResolveFX Noise
+  Reduction, Dean's settings: Temporal **Frames Either Side 3, Better, Motion Range Small, Threshold 25 (luma/chroma
+  linked), Motion 50, Blend 0**; Spatial off (Spatial NR has no switch: thresholds 0 = off, manual "enable Spatial NR
+  by raising either the Luma or Chroma Threshold").
+- Measured on 5 s of C1364 at 02:10:00:00 (temp timeline `zz drum TNR check (temp)`, clip assigned to CAM 5; renders
+  `checks/drumTNR_on_v1.mov` / `_off_v1.mov`): temporal noise (frame minus the mean of its neighbours, motionless
+  pixels only, which cancels the stage-light changes) down **5.6 dB in shadows, 8.4 dB mids, 9.1 dB highlights**. No
+  ghosting on the drummer's fastest stick frame at full res. Cost: **12.9 s to render 5 s with it on, 2.3 s off**.
+- Bypassed for editing (Dean, Ctrl+D). It must be ON before any RiP and every delivery render (checklist step 1).
+- A whole-frame motion mask fails on stage footage: the lights move every pixel. Mask per instant on local motion.
+
+### First-pass auto cut: Dean's review of the Canvanauts pilot (2026-10-13)
+
+- gigstills `first-pass` (Dean's angle priority: pit, then desk tracking, then by the audio: crowd → stage right,
+  drums → drum cam, otherwise wide) gave 142 cuts over the 26-min set at Brisbane pace. Dean: "a pretty good starting
+  point"; he did not object to the tracking-heavy balance (64% tracking, 7% wide).
+- **Never cut between two angles framed on the same subject.** Dean flagged #3→#4 (tracking → pit, same guitarist) and
+  #60→#61 (pit → tracking, same keyboardist): "it would have been better if #3 chose another shot e.g. the stage
+  right shot or drum cam". The pit and the tracked long lens both face the stage, so the same performer from two
+  distances reads as a jump cut. The DP needs a same-subject term between angles (gigstills `docs/first-pass-cut.md`).
+- **Laying the cut into Resolve (Dean's method, 2026-10-13):** the API has no split/blade and no set-angle call, so
+  build and colour, and Dean switches by colour. On a `DuplicateTimeline` copy ("BOTTB Sydney 2026 - first pass"):
+  `DeleteClips` the one V1 multicam item (its linked audio stays, continuous), then one `AppendToTimeline` call with a
+  piece per shot: `{mediaPoolItem: <multicam>, startFrame: rec_in − 79500, endFrame: rec_out − 79500 (exclusive),
+recordFrame: rec_in (absolute), trackIndex 1, mediaType 1}`. Every piece lands on the default angle (Static Desk).
+  `SetClipColor` by angle (1 Blue, 2 Purple, 3 Green, 4 Yellow, 5 Pink; never Orange, which marks zoomed cuts), read
+  back. Canvanauts v2: 140 pieces + head/tail, contiguous, offsets = record − 79500, colour frame shares = v2's angle
+  shares. Dean: Timeline > Select Clips By Clip Color > <colour>, right-click → Switch Multicam Clip Angle.
+- **Dean, watching the laid-in Canvanauts cut (2026-10-13):** "it includes abrupt zooms and pans on the tracked camera, it
+  should cut if there any largish moves." The pilot's tracking thresholds (move 0.45 fw/s, drift 0.28) let medium pans
+  through, and zooms are invisible to its translation metric (REPORT weak spot 2). A tracking shot must end, or be
+  cut around, at any largish pan or any zoom.
+- Dean, same review: "Also probably should go to the wide more instead of the tracked camera." So the accepted 64%
+  tracking / 6% wide balance is withdrawn; Brisbane's rough cut was 52% wide. Then: "can we make it a random choice
+  maybe?": where tracking would beat the wide, pick one at random (p(wide) 0.5, fixed seed, re-rollable).
+- Dean, same review: "It seems you could probably use the photo pit a bit more often too, we can stabilise a bit or
+  dehaze." Pit usability is loosened for stabilisable shake and haze with a performer still visible; those shots carry
+  `needs: stabilise / dehaze` flags in the cut list, to be marked in Resolve for Dean.
+- Dean, same review: "maybe we should have shorter cuts, and we could just go to some different angles", then "can we
+  use retime to analyse tempo and bars". Pace moves from seconds (Brisbane median 7.9 s) to bars: ~2 bars per shot,
+  floor 1 bar, longer on ballads; no return to an angle used in the last two shots. The beat grid should come from
+  mix-assist's groove analysis (part of retime: the drummer's own tempo, beats and downbeats from the close mics,
+  `mix-analyser groove <session>`; needs an `analyse` session over the drum stems). gigstills accepts an optional
+  per-song `{tempo_bpm, beats_s, downbeats_s, sections}` JSON in REF seconds.
+- **Overnight 2026-10-13 → 14, Dean's brief:** "map out each song and then use this hint to drive cuts, use more variety
+  of angles … clearer what's going on, like a guitar solo, singing chorus … get gigstills to label whats in frame … arrive
+  at a rough cut for the whole show"; "approach it … band by band, then song by song within each band." Split: beat/bar
+  grids by mix-assist-12 (`song_maps/<set>/<song>.grid.json`), sections + featured performer from the desk multitrack
+  by a song-map agent (`.events.json`, code in `scripts/songmap/`), in-frame labels + the cut by gigstills
+  (`runs/sydney26_firstpass/cut_full/`). Resolve and the mix-assist servers were shut for memory.
+  Dean, ~23:05: "you are okay to page and generally run less conservatively, your job is to get everything done without
+  crashing the computer, not to keep it responsive and interactive." Comfort gate waived for the night's jobs; the safety
+  gate, the 6 GB/12 GB process limits and memreg still held; concurrent heavy jobs kept under ~14 GB in total.
+- **Song maps done overnight (all 28 songs).** Grids: mix-assist `scripts/show_song_maps.py` (Beat This on kit and
+  instrument downmixes + band_grid bar decoder; ~30 s and ≤ 1.14 GB per song; all 4/4, median downbeat confidence
+  0.98–1.00; Black Parade = Dean's reviewed grid at REF = session time + 5293.0). Events: `scripts/songmap/` (vocal mic
+  level vs overheads, per-instrument lead score with chroma flux for solos, Whisper small.en hook words for choruses,
+  phrase timestamps only: word timestamps took 9.9 GB). `song_maps/songs.json` = songs + talk/changeover spans with
+  timeline TC, for the song markers. allin1 needs NATTEN patched on arm64; MSAF is broken on current scipy.
+- **Input map corrections found from picture/audio:** ShipReX's erhu is on **ACC 2** (the prep doc says ACC 1, which
+  sits at −75 dB all set); Amakazaam's Tyler sings on **RX4**, not RX3 as the stage plot says; Keira sings on the kit
+  mic RX5. Canvanauts: RX2 = blond singer in sunglasses, RX3 = singer in the hat; GTR Q1 house-left curly guitarist,
+  Q2 bandana guitarist, BASS Q far house right.
+
+### Whole-show rough cut laid into Resolve (2026-10-14, ~02:00–02:40, Dean asleep)
+
+- **The combined show list carried the wrong Canvanauts cut.** gigstills' `cut_full/tools/combine.py` read
+  `cut_v2/cutlist_canvanauts.json` (140 shots, 65% tracking) while its tables used `cut_v3` (280 shots, 36% wide), so
+  its hand-back said 1137 shots. Caught by recomputing angle shares per set from `cutlist_show.json` and comparing
+  them with the per-set table; fixed the path, re-ran it: **1277 shots**, 4 changeover gaps, contiguous
+  101705 → 330230. **Check a combined list per set against the per-set reports before laying it in.**
+- **`launch_resolve` said "running" with no Resolve process** (only leftover `ResolvePython` helpers were alive). A
+  `run_script` call then said Resolve was not running. A second `launch_resolve` started it (`pgrep -f MacOS/Resolve`
+  shows the real process). It came up on "Untitled Project": `LoadProject("BOTTB Sydney 2026 Full Show")`.
+- **Dean's angle switches on "… - first pass" survived the close** (he was asked to Cmd+S). **A multicam timeline
+  item's `GetName()` is "<multicam> - <active angle>"**, so angle switches can be verified by name through the API.
+- **Laying in 1283 pieces** (head + 1277 shots + 4 gaps on the wide + tail) on "BOTTB Sydney 2026 - rough cut v3"
+  (a `DuplicateTimeline` of "BOTTB Sydney 2026"): `AppendToTimeline` of 321 pieces took < 60 s; **641 pieces timed out
+  at 60 s but completed**. Keep chunks ≤ ~320 and read back start/end/left offset for every item (all 1283 matched).
+  `SetClipColor` ≤ ~450 items per call. Read the piece list from a JSON file with `run_script_unsafe` rather than
+  pasting it into the script.
+- **Markers:** timeline markers from `song_maps/songs.json`: Yellow `SET: <band>` at each set intro, Green song marker
+  with duration = the song, Red `END: <song>` at the song end. At a segue, the end and the next start share a frame;
+  the end marker moved back 1 frame. Pit shots flagged `needs` get a Sand timeline marker `PIT: stabilise|dehaze` at
+  the shot start (207, all Photo Pit). **`TimelineItem.AddMarker` accepts any frameId, even past the clip's end, so
+  where it lands can't be checked through the API:** use timeline markers.
+- **Dean's real edit starts from the rough cut (2026-10-14 ~08:20):** "I'm pretty happy with this." Colours were cleared
+  on "rough cut v3" only after every item's active angle was read back. The baseline for comparing his edits is the
+  frozen copy "rough cut v3 (auto baseline, don't edit)" plus
+  `gigstills/runs/sydney26_firstpass/cut_full/resolve_baseline_roughcut_v3.json`. When he is done: diff his
+  timeline against the baseline and look for patterns (shot lengths, angle swaps, where he moved cuts).
+- **The multicam's "reference audio" is the unmixed desk sum** (`video/DESK_SCRATCH_unmixed_sum_48k.wav`): **mono** on
+  a stereo track, so it plays in the left ear only, at −36.2 LUFS. A dual-mono copy +16 dB with a −1 dB limiter
+  (`DESK_SCRATCH_sum_stereo_plus16dB_48k.wav`, −17.4 LUFS, starts where the original does) is for a named audio track.
+  The proper fix is a measured per-song starting mix from mix-assist (briefed 2026-10-14; it belongs to **mix-assist-21**, which wrote the Sydney prep, the kit-mix-rock plans and the Sydney26 presets and mixes with Dean: mix-assist-12 forwarded it. Brief Sydney mixing there, not to -12, which does the song grids: gain,
+  HPF/LPF, compressor, pan and fader per input per song, plus an offline render). Dean: "it has given me these numbers
+  before so the approach exists."
+- **Placing REF-time audio on the Sydney timeline (2026-10-14):** a timeline frame F starts at REF sample
+  134523 + (F − 90000)·1920 (2.8025625 s × 48000 = 134523 exactly). A render starting off a frame boundary lands
+  late by the remainder: pad a copy with that many samples of silence (`adelay=delays=<n>S:all=1`) and check that it
+  is otherwise identical. mix-assist renders should start on a boundary. The +16 dB stereo scratch is on A2
+  "Desk scratch +16 dB stereo"; A1 (the multicam's mono scratch) is disabled. mix-assist-21's Beggin' pilot is on A3
+  at 210131. Against the unmixed scratch it reads 7.6 ms early (r 0.42). mix-assist-21 explained it: against the raw mics the render is at lag 0 for OH L/R and RX2. The open mics it muted (RX4, GTR SR 8.9 ms later, SM58 3.4 ms) dominate the unmixed sum. **Place mixes at their stamp; do not chase a lag against the unmixed scratch.** Renders now start on a frame boundary.
+- **The "blub" on the scratch and the Beggin' pilot (2026-10-14):** Dean: "phone interference type low blub blub but
+  constant", "not in my logic project", then by ear on mix-assist-21's solo clips: "I think its the kick clipping".
+  Measured: not TRAX (digital silence), no recorder/MADI glitch (no zero-runs, no simultaneous discontinuities), no
+  GSM 217 Hz signature, no block seams. Kick #02 never reaches full scale (peak −2.96 dBFS, no flat tops), and the +16 dB
+  scratch's limiter takes ~0 dB off kick hits. So, if it is the kick, it is overload before the converter or the raw kick
+  through an open chain. With mix-assist-21 to settle against Dean's Logic kick chain.
+- **Then: the blub is in Resolve's playback, not the audio (2026-10-14).** Dean heard nothing on any of the 16 raw solos or
+  the scratch played in VLC: "It's not on any of those so it maybe is something about playback in davinci?" Project
+  settings showed **`timelinePlaybackFrameRate` "24" on a 25 fps timeline** (timeline and project `timelineFrameRate`
+  25.0). The manual (Master Settings) says Resolve then drops or repeats frames to match, so a 24-against-25
+  mismatch is a ~1 Hz periodic disturbance. `SetSetting("timelinePlaybackFrameRate", "25")` returns False and changes
+  nothing; it is a UI change: Project Settings > Master Settings > Timeline Format > Playback frame rate = 25 (and Video
+  Monitoring > Video format at a 25p/50Hz format if it is locked to it). **Check playback frame rate = timeline
+  frame rate on any new project before judging audio in Resolve.**
+  **Confirmed:** Dean set it to 25 in the UI ("That seems to have fixed it"). Read back: project and timeline
+  `timelinePlaybackFrameRate` = "25". The scratch, the pilot and every input were clean all along.
+- **Starting mix v1 on the timeline (2026-10-14):** Dean chose the pilot's loudness ("Probably the heavily limited one is
+  best": −16 LUFS-I, up to 9 dB of limiting). mix-assist-21 renders one continuous file per set, frame-aligned and
+  REF-stamped. Each set goes on A3 "Starting mix v1" at its start frame (Canvanauts: frame 191404, 39326 frames).
+  A2 (the scratch) still runs under the whole show, so Dean mutes it per set until every set is in.
+  **Re-renders must get a new filename:** Canvanauts was overwritten in place. `ReplaceClip` on the same path returns True,
+  but Resolve's API can't show whether playback picked up the new audio.
+  Fixed by `ReplaceClip` to `CANVANAUTS_full_r2.wav`. It returned an empty error but took effect (read back: path,
+  name, A3 item 191404–230730, offset 0). It's the same empty-error trap as the page-changing calls.
+
+### Paused for shutdown (2026-10-14, Dean off to work): where to pick up
+
+- **Resolve** project "BOTTB Sydney 2026 Full Show", timeline **"BOTTB Sydney 2026 - rough cut v3"**, which Dean is
+  editing. Last API save came after ShipReX was placed; Dean quit Resolve himself. Audio: A1 multicam mono scratch (off),
+  A2 "Desk scratch +16 dB stereo" (on, whole show), A3 "Starting mix v1" = SHIPREX_full.wav 101704–143555 and
+  CANVANAUTS_full_r2.wav 191404–230730. Playback frame rate is now 25 (Dean fixed it).
+- **Still to place on A3** as mix-assist-21 delivers: Bandlassian, Amakazaam, V2 Voyagers (each `<SET>_full[_rN].wav`,
+  a frame-aligned REF stamp, frame = 90000 + (stamp − 134523)/1920; check the stamp and frames with ffprobe, then
+  ImportMedia → AppendToTimeline trackIndex 3 mediaType 2 → read back → SaveProject). Ask whether Dean is playing
+  first. When all five are in: disable A2, or ask Dean.
+  - **Delivered, waiting for Resolve:** Bandlassian `starting_v1/Bandlassian/BANDLASSIAN_full.wav` (336,972,174 B; BWF
+    116830203, i.e. frame 150779; 56,161,920 samples = 29251 frames, so 150779–180030; checked with ffprobe 2026-10-14). Not
+    listened to. good 4 u (−17.01) and Still into You (−18.07) sit below −16 by design, as Beggin' does.
+    Amakazaam `starting_v1/Amakazaam/AMAKAZAAM_full.wav` (461,676,174 B; BWF 295822203, i.e. frame 244004; 76,945,920 samples =
+    40076 frames, so 244004–284080; ffprobe 2026-10-14). Not listened to. Are You Gonna Go My Way −19.42, You Oughta Know
+    −20.02, Killing in the Name −18.88: the 9 dB limiter cap left them 3–4 dB under the show. Dean to choose between more
+    limiting on those songs (mix-assist) or a clip-gain lift on the timeline.
+    V2 Voyagers `starting_v1/V2-Voyagers/V2-VOYAGERS_full.wav` (hyphenated folder; 386,220,174 B; BWF 397006203, i.e. frame
+    296704; 64,369,920 samples = 33526 frames, so 296704–330230, the show's end; ffprobe 2026-10-14). Not listened to. Every
+    song hit the 9 dB cap: −17.05 to −19.14. RX1 is muted throughout because the events list only SM58 as live; check
+    by ear that no backing vocal is lost.
+  - **Whole show:** `starting_v1/SYDNEY26_full.wav`, an RF64 file (2,632,620,210 B, 24-bit stereo; BWF 22606203, i.e. frame 101704;
+    438,769,920 samples = 228526 frames, so 101704–330230, the whole cut; ffprobe 2026-10-14). It holds the five sets plus
+    rendered changeovers (vocal and talk mics only, gated, 6 dB under the songs, 0.5 s crossfades). Plan: put this one file on
+    its own new track, "Starting mix v1 (whole show)", instead of three more set files on A3, then disable A2 and A3, or ask Dean. If the
+    import refuses RF64, fall back to the set files on A3.
+  - **Placed 2026-10-14 (Dean: "Do clip gain"):** RF64 imported fine (25 fps, Start TC 00:07:50:24). New A4 "Starting mix v1
+    whole show (clip gain)" holds 52 pieces cut at the song-file boundaries (at a segue, the cut falls where the next song's file
+    begins), appended with startFrame = rec − 101704 and mediaType 2. Read back: no gaps, every left offset = start − 101704.
+    Measured each song in the whole-show file (ffmpeg ebur128; matches mix-assist's numbers) and lifted every song at
+    −16.5 LUFS or below to −16 with `SetProperty("AudioVolume", dB)`, which works in 21.1.1 and reads back. 19 songs got
+    +0.6 to +4.0 dB. A2 and A3 are off. Table: scratchpad `wholeshow_segs.json`. **About 11 songs now peak over 0 dBTP (up to +2.2,
+    You Oughta Know):** Fairlight is floating-point, so playback is fine, but a render clips without a limiter on the Main bus.
+- **mix-assist-21** was asked to stop cleanly, write `/Volumes/BOTTB/Sydney - 2026/mix/starting_v1/RESUME.md`, and resume
+  by itself when the BOTTB drive is back.
+- **When Dean says his edit is done:** diff "rough cut v3" against "rough cut v3 (auto baseline, don't edit)" and
+  `gigstills/runs/sydney26_firstpass/cut_full/resolve_baseline_roughcut_v3.json` (item start/end/offset/angle name),
+  and report patterns: shot lengths, angle swaps, cut moves, and his choices against the song-map features.
+- **Open offers:** reset the colour-check clip's Roll node values; BNE-named stills masters. Per-set drum exposure trims,
+  camera matching and the look (FLC) come later. TNR must be on before any RiP or delivery. Commits wait for Dean:
+  bottb `docs/sydney26-multicam` (runbook, scripts, songmap) and gigstills `feat/log-source-input`.
+
+### Look and Dean's Canvanauts edit against the auto cut (2026-10-14, evening)
+
+- **Look:** Film Look Creator on the **timeline node** of "rough cut v3" (one node, the whole show), preset **Aurora**, defaults
+  except a small Richness bump and **Skin bias 0.7** (Dean). **Halation is OFF for playback performance and must be ON for
+  any render**: ask Dean to switch it on right before pressing render (the standing NOK rule).
+- **Diff method:** dump V1 (start/end/left offset/angle name) via `run_script_unsafe` to scratchpad
+  `roughv3_dean_20261014.json`, compare with `gigstills/runs/sydney26_firstpass/cut_full/resolve_baseline_roughcut_v3.json`
+  (scripts `canv_diff.py`, `canv_diff2.py` in the session scratchpad). No item was slipped (left offset = start − 79500
+  everywhere). Outside Canvanauts, the only change is one blade on the wide at 02:33:52:18.
+- **What Dean changed, Canvanauts (02:07:36:05–02:33:49:05):** 281 → 355 shots, median 4.0 → 3.5 s, under 2 s 9 → 28.
+  Angle time: pit 20.6 → 30.3 %, wide 35.5 → 24.9 %, tracking 28.6 → 25.6 %, Stage Right 8.0 → 12.4 %, drum 7.3 → 6.9 %.
+  232 of 280 auto cuts kept to the frame; 48 removed, 122 added; he barely nudged cuts (4 within 12 frames). 26.9 % of the set
+  shows a different angle.
+- **Patterns:** (1) **Long holds get split:** 22 of 26 auto shots ≥ 12 s, 12/27 at 8–12 s, 23/53 at 5–8 s, 2/74 under 3 s,
+  so the effective hold ceiling is ~5–8 s. So Easy (the ballad) went from 11 shots at a 13.4 s median to 26 at 4.8 s: no slow
+  pace for ballads. (2) **Pit up, wide down:** the main swaps are wide→pit (94 s) and tracking→pit (86 s), mostly in choruses;
+  wide→Stage Right in outros. (3) **Drum as a short insert:** 12 of his 21 new sub-2 s shots are drum. (4) Removed cuts are
+  mostly short tracking pieces folded into the pit shot beside them (tracking|pit → pit ×7).
+- **For the next auto pass (gigstills knobs, not done yet):** soft max hold ~6 s with no ballad exception, pit weight up
+  ~1.5× relative to wide, Stage Right up in outros, drum allowed as 1–2 s inserts on fills.
+- **`SetMarkInOut` / `GetMarkInOut` count from the timeline start; render jobs report absolute frames (2026-10-14).** On
+  "rough cut v3" (start 79500, i.e. 00:53:00:00) `SetMarkInOut(200000, 200001)` read back 200000 but queued a job with
+  MarkIn 279500, an hour into the wrong set. Subtract `GetStartFrame()` before marking, and read the job's MarkIn back
+  before `StartRendering`. Every earlier Sydney 2025 timeline started at 0, which hid this.
+- **Canvanauts grade, step 1 (2026-10-14):** look-on control frame `video/checks/canv_lookon_F200000_v1.mp4` (absolute
+  frame 200000). Timeline node 1 (FLC) then disabled; measurement render `Renders/measure_Canvanauts_Syd26_lookoff_v1.mp4`,
+  191405–230729, 1080p H.264, no audio, under the project's RCM v2 (output Rec.709 G2.4). Group Pre-Clips (camera
+  match, drum +1.25 st, TNR, wide roll) stay on. Restore FLC and prove it byte-identical against the control.
+- **Stage 0 on this project FAILS for `SetCDL` (2026-10-14).** The project is RCM v2 with timeline DaVinci WG /
+  DaVinci Intermediate, output Rec.709 G2.4, output tone mapping None, gamut mapping None, **colour-space-aware grading
+  tools ON**, and working luminance HDR 1000. Test item: Desk Tracking at 204995 (frames 205000–205245, look off), rendered
+  at identity, then with S 1.1/1.0/0.9, O −0.02, P 0.85, then each parameter alone (`video/checks/stage0_DWG_*.mp4`,
+  scripts `stage0_dwg.py`, `stage0_fit.py` and `stage0_single.py` in the session scratchpad). The recipe's model
+  `clip(x·s+o)^p` on the Rec.709 output misses by up to 0.12 (tolerance 0.013). Mapped into DWG/DI, the response is a clean
+  per-channel curve (fit mae 0.004), but not the commanded CDL:
+  - **Offset −0.02 →** a near-constant ≈ −0.024 shift in DI, i.e. an exposure change, not a black-floor shift.
+  - **Slope →** ratios that vary with level in DI (R 1.27→1.14, G 1.22→1.02, B 1.11→0.94).
+  - **Power 0.85 →** an exponent of ≈ 0.76–0.84.
+
+  **Do not apply recipe CDLs on this project as they are.** Candidate fix: per-clip LUTs that encode the exact recipe maths
+  (DI → Rec.709 G2.4 → CDL → back), applied with `SetLUT`, since LUTs are not colour-space aware. That needs its own Stage 0.
+  The test item's CDL is reset to identity, but not verified on pixels.
+
+- **Look restore verified:** the FLC node is re-enabled, and `canv_lookon_F200000_restored_v1.mp4` matches the control
+  frame for frame (framemd5). The look-off measurement frame at that time differs, so the bypass was real.
+- **LUT route, first test (2026-10-14 ~23:25):** `dicdl_lut.py` (session scratchpad) builds a 65-point .cube: DI → DWG lin →
+  709 → G2.4 → CDL → back. Installed in `/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT/BOTTB_Syd26/`,
+  applied with `RefreshLUTList` and `SetLUT(1, "BOTTB_Syd26/x.cube")`. The identity LUT against no LUT gave mean |d| 0.005,
+  p99 0.024 and max 0.14. The test CDL against the Rec.709 model is within 0.01 at 0.30–0.50, but **+0.018 to +0.034 in the
+  shadows (0.02–0.10)** and −0.02 to −0.05 above 0.5. Cause: a uniform grid in DI is far too coarse near black, where one
+  step of 0.0156 DI spans about 0.066 of Rec.709 code. Next: a 1D shaper ahead of the 3D grid, or a denser grid; repeat
+  Stage 0.
+- **`NodeGraph.ResetAllGrades()` does NOT remove a node LUT** (the tools still listed "LUT: stage0_test"). `SetLUT(1, "")`
+  removes it. Test item verified back to its original state: the look-off render of 205000–205245 matches the pre-test
+  identity render (framemd5). A `SetNodeEnabled(1, True)` call returned `{"error": ""}` but took effect: the look-on
+  control frame matched (v1 = restored v2 = restored v3).
+- **Auto cut v4 (2026-10-14, subagent; gigstills `cut_full/V4_REPORT.md`):** tuned to Dean's Canvanauts edit. Settings:
+  - soft max hold 24 → 6 s, plus `aba_max_s` 6;
+  - no ballad half-time pace, except the wide/tracking roll (`roll_bar_mult`);
+  - pit reward 1.0 → 1.25, plus 0.2 in big sections;
+  - Stage Right `outro_bonus` 0.5;
+  - drum inserts allowed from 1 s on fills;
+  - drum reward 0.58 → 0.45.
+
+  On Canvanauts it matches his pace and shares (368 shots, median 3.8 s, pit 29 %), but only 12.6 % of the frames he changed
+  land on his angle. `cutlist_show_v4.json` holds the four other sets (1323 shots), with the same spans as v3.
+
+- **Dean's pit picks against the usability rules (2026-10-14; `cut_full/V4B_PIT_RULES.md`, contact sheets in
+  `v4b_pit_review/`):** 25 % of his pit time sits on rejected frames.
+  - **What rejected them:** the settle rules (3 s run, 12-frame entry, drift) and the pan/zoom rule, not haze. Pan max is
+    what separates his picks (median 0.27 fw/s) from the bad windows (whips over 0.6).
+  - **Relaxed rules** (no settle requirement, block sustained pans over 0.35, whips over 0.6 and zooms over 0.25) admit his
+    picks, but every variant, including one gated to the featured performer or choruses, lowered overall agreement (45–53 %
+    against v4's 55 %) and pit precision. So v4 stands; the relaxed rules sit in the code behind spec keys, off by default.
+  - **Lesson:** his pit choices are editorial (which moment), not a usability threshold.
+- **Resolve's Rec.709 Gamma 2.4 output on this project is not a 2.4 gamma (measured 2026-10-15).** The look-off Canvanauts
+  set was rendered twice in ProRes 422 LT: once with output DWG/DI (`Renders/measure_Canvanauts_Syd26_lookoff_DWGDI_v1.mov`,
+  output switched for the render only) and once with output Rec.709 G2.4 (`..._709PR_v1.mov`). Paired pixels show the
+  output follows the **Rec.709 camera curve (4.5·L toe) up to about lin 0.2, then a highlight shoulder** (lin 1.0 → about
+  0.74–0.78), and it is not per-channel. It's probably the RCM v2 working luminance HDR 1000 into SDR. A model per channel misses by up to 0.03. Settings
+  restored to Rec.709 / Gamma 2.4 and read back.
+- **Grade by data-driven LUT, method (2026-10-15).** A delta-form 65³ LUT in DI: node v = v + mean over measured pixel
+  pairs near v of [Ti(CDL(a)) − Ti(a)], where a is the measured Rec.709 display value and Ti is a fitted Rec.709 → DI map
+  (per-channel curve plus a 33³ residual grid, held-out error 0.0024). Empty nodes fall back to the model. Scripts in
+  the session scratchpad: `xform_pairs2.py`, `xform_fit3.py`, `lutbuild3.py`, `lutdata.py`, `make_grade_luts.py`,
+  `verify_luts.py`. **Stage 0 with the strong test CDL:** bias ≤ 0.011 in every band, mean |e| 0.008. **Pitfall:** a script that
+  `exec`s the DI constants (`A`, `B_`, …) and then names an array `A` silently breaks `di_dec`.
+- **Canvanauts graded (2026-10-15, Dean away: "don't stop till you've got a final result").** Recipe and Dean option by
+  subagent (`gigstills/runs/sydney26_canvanauts_grade/`, `apply_final.json`: 179 cuts). **163 LUTs applied** with
+  `SetLUT(1, "BOTTB_Syd26/canv26/canv26_cNNN.cube")` (`/Library/Application Support/Blackmagic Design/DaVinci
+Resolve/LUT/BOTTB_Syd26/canv26/`, 1.2 GB), all read back. **16 held for Dean's review** (shadow wash stripped: 18, 77, 91,
+  131, 164, 166, 171, 190, 191, 193, 233, 240, 281, 289, 354; and 44); their LUTs are built but not applied. **Verify render**
+  `Renders/verify_Canvanauts_Syd26_lut_lookoff_v1.mp4` (look off): the 163 graded cuts land on the recipe's prediction
+  (median Y error ≤ 0.0012 at p0.1/p5/p10/p50; worst cut 0.023 at p10; median pixel |e| 0.007), and 31 ungraded
+  controls are unchanged. Undo one cut: `SetLUT(1, "")`. Look re-enabled and confirmed on pixels.
+- **v4 laid into "rough cut v3" (2026-10-15 ~01:00, Dean away).**
+  - **Backup:** "BOTTB Sydney 2026 - rough cut v3 (backup before v4 recut, 2026-10-15)", made with `DuplicateTimeline`
+    (1358 items, with LUTs). **`DuplicateTimeline` makes the copy the current timeline:** switch back with
+    `SetCurrentTimeline` before editing.
+  - **Checked first:** all four sets matched the auto baseline item for item (Dean hadn't touched them).
+  - **Per set:** `DeleteClips(items, False)`, then `AppendToTimeline`, then read back. ShipReX 378, Bandlassian 291,
+    Amakazaam 349, V2 Voyagers 305. V1 is 1684 items, contiguous 79500–360347. Canvanauts is untouched (354 items, 163 LUTs).
+  - **Coloured by angle** (1 Blue, 2 Purple, 3 Green, 4 Yellow, 5 Pink; read back). Every piece lands on the default angle,
+    Static Desk, until Dean switches by colour.
+  - **Markers:** 162 old Sand PIT markers in those spans replaced by 240 new ones. One failed at frame 297469 (V2), probably
+    because a marker already sits on that frame.
+  - **Trap:** I fired the delete and append calls in parallel. They ran out of order, and the permission check refused
+    two of them (one Bandlassian append, one V2 delete). An append onto occupied frames returned 305 "items" but placed
+    nothing. **Run timeline edits strictly one call at a time, and assert the span is empty before appending.**
+
+### Recipe power-window suggestions land on the light, not the subject (Canvanauts Sydney 2026, 2026-10-15)
+
+Dean asked whether the recipe's `segment` windows were worth applying (he never had). Every cut has one
+(`cut_recipe.json` → `segment.ellipse`, `inside_cdl`); 61 of 354 pass gain ≥ ×1.10 over the applied grade,
+stability ≥ 0.6 and subject 4–45 % of frame. **Drawn on the frames, the top ones sit on haze, the projection
+screen or the lights, not on the performer** (cut 129 and 141: keyboardist's face on the left, window on the red
+haze to the right; wides: window on the screen above the band). The mask is the exposure metering's "lit" region,
+so on this show it finds light, not people, on close shots as well as wides. Do not hand these to Dean as window
+positions; a subject window needs a face/person detector (YuNet is already in `face_expo.py`). Sheet:
+`gigstills/runs/sydney26_canvanauts_grade/window-candidates-sheet.html` (left: window, right: rough gain preview).
+
+- **Face metering (research, 2026-10-15):** on Canvanauts, YuNet face luma has no rank correlation with the recipe's
+  `lit_median` (ρ −0.05, 172 cuts) and jumps a median 0.92 stop between adjacent face cuts (recipe metric 0.26): the
+  recipe's subject is the light. Also 159/354 cuts have a bright wash with one channel at 0 (gamut clip, which fakes a
+  "zero floor"), and coloured veils make the white Haze Color in the Dehaze hand-over wrong. Ranked plan and API facts
+  (clip/timeline mattes are API-addable): `gigstills/runs/sydney26_canvanauts_grade/grade_research/REPORT.md`.
+- **The applied Canvanauts grade is nearly invisible (Dean: "I can tell barely any difference between the before and after
+  clips", 2026-10-15).** Measured from `apply_final.json` (179 non-identity cuts): median luma change −0.005 at p0.1/p5/p10/p50
+  (≈ 1 code value), 90 % of cuts within −0.03, max 0.09. 144 of them are the lift-to-touch on floors the camera match had
+  already put near 0, plus gamma 0.97. It is a black-level tidy, not a grade. Visible gains are in face exposure (0.9 stop
+  neighbour jumps), gamut clipping and coloured-haze Dehaze (see the research entry above). The window-sheet preview also
+  looks unchanged because its gain lands on haze, not people.
+- **Face metering, first run (Canvanauts, 2026-10-15; gigstills `runs/sydney26_canvanauts_grade/face_meter/`).** YuNet on the
+  4,059 look-off measurement frames (480×270 `.npy`, 2× upscale, gamma-lifted view for detection): 66 s, 163 MB. Close angles
+  (Pit, Tracking, Drum) give a face on ≥ 4 frames in 200 cuts; wides' faces are 9 px and Stage Right is mostly backs, so
+  leave those out. A cut's face level repeats within 0.42 stop median (split-half), and neighbours jump 1.5–1.8 stop median.
+  **Take the brightest face in the frame, not the largest**: the largest was often a dim side player while the lit singer went
+  undetected or smaller. **A 1-stop lift (×1.33 display) is barely visible at preview size**; cap 2 stops at 70 % of the way to
+  the set median face (0.193 look-off) lifts 77 cuts (median +1.0 stop) and cuts the neighbour jump median 1.46 → 0.97 stop.
+  Lift only, per-channel `y(1+k)/(1+ky)` (black fixed, highlights roll off). Unverified: FX30 drum noise at +2 stops.
+- **Plan the face lift on the GRADED face, not the measurement render's (2026-10-15).** The first face LUTs, sized on the
+  ungraded faces, overshot where the recipe's exposure gain was already in the base CDL (cut 132: Slope 1.6, mid 0.055 →
+  0.115), e.g. face 0.17 → 0.33 for a 0.185 target. v2 (`face_plan_v2_postgrade.json`) applies the base CDL to the face
+  pixels first and solves k by bisection on the median face luma: 83 cuts, median +1.05 stop, neighbour jump 1.45 → 0.87
+  stop. LUTs `BOTTB_Syd26/canv26f/canv26f_cNNN.cube` = base CDL then lift (44 replace a canv26 LUT, 34 on ungraded cuts,
+  5 face-only on cuts whose base is held); canv26 files kept for rollback. LUT vs exact model on face frames: p50 0.002,
+  p99 up to 0.22 (the old, render-verified LUTs show 0.05–0.07 tails on the same check). Not applied, not render-verified.
+  A model check through `T(Ti(x))` is lossy on saturated face pixels (0.159 → 0.122 round trip), so verify on a render.
+- **Face-lift noise clip spec (Dean, 2026-10-15: "make sure this is full res, will be needed to see noise").** Render at the
+  timeline's native resolution (read it from the timeline at render time; no downscale), ProRes 422 HQ so the codec neither
+  hides nor adds noise, look ON, halation ON (ask Dean first). Range: 02:18:07:14–02:18:33:xx (record 207189–207844 + the
+  rest of cut 143), which holds drum cuts 140 (+2.0 stop) and 143 (+1.9). Render it twice, with the old canv26 LUTs and with
+  the canv26f face LUTs, so Dean can A/B the noise. Other +2 stop drum cuts: 279 02:29:22:09, 245 02:26:32:17, 106 02:14:57:06.
+- **Face-lift LUTs applied and verified (Canvanauts, 2026-10-15 afternoon; Dean: "It looks good").** 83 cuts `SetLUT(1,
+canv26f/canv26f_cNNN.cube)`, read back; rollback map `face_meter/rollback_before_canv26f.json` (44 had canv26, 39 none).
+  Look-off verify v1 (`Renders/verify_Canvanauts_Syd26_facelut_lookoff_v1.mp4`, 268 s): faces landed +0.11 stop median over
+  target, overshooting on 27 cuts by 0.15–0.57 stop (the data-driven LUT lifts a little more than the display model;
+  cut 140 drum +2.5 against a 2-stop cap). **One closed-loop pass fixed it:** re-aim those 27 at target²/measured, rebuild as
+  `canv26f_cNNN_r1.cube` (new names so Resolve can't serve a cached table), re-apply, re-render (v2, 265 s): face error
+  median 0.03 stop, p90 0.13, max 0.21; max lift 2.18 stop; 271 untouched cuts unchanged (frame median ≤ 0.0017);
+  measured neighbour face jump 1.48 → 0.78 stop. Face measurement on renders: `scratchpad/verify_face_render.py` (same
+  sample frames and face boxes as the plan, 48 s, 0.15 GB). Plan of record `face_meter/face_plan_v3_closedloop.json`.
+  FLC re-enabled (read back), In/Out cleared (Dean had none), project saved.
+- **Drum noise after the face lift (Dean, 2026-10-15: "they looked pretty noisy to me since the correction").** Measured
+  look-off on the 1080p verify renders (base `verify_..._lut_lookoff_v1` vs `facelut_lookoff_v2`), 4 frames per drum cut,
+  Immerkaer σ on flat shadow pixels (Y 0.01–0.15): **lifted drum cuts ×1.73 median (p90 ×2.22, cut 106 ×2.5, 143 ×2.3);
+  12 unlifted drum controls ×1.00.** Dean is right; the cap of 2 stops is too much for the 8-bit FX30. Script
+  `scratchpad/drum_noise.py` (per-frame `-ss` seek, checked frame-exact against `select=eq(n,…)`; a long `eq()` chain
+  makes ffmpeg fail with "Cannot allocate memory"). **Slip:** the first version held all 352 1080p float frames at once,
+  8.9 GB peak with no memcheck; stream frame pairs (0.28 GB).
+- **Look change (Dean, 2026-10-15): FLC halation ON, vignette OFF** on the rough cut v3 timeline node.
+- **4K noise A/B (2026-10-15 ~16:55), `video/checks/noise_drum_021807_{A_oldgrade,B_facelift}_{lookoff,lookon}_4K_v1.mov`**
+  (207189–207843, ProRes 422 HQ, 655 frames each; A = canv26 LUTs on cuts 140/143, B = face LUTs; look on/off differ 0.028).
+  Shadow σ B/A: cut 140 ×1.66 off / ×1.75 on; cut 143 ×2.11 off / ×2.32 on. Look on doesn't change the ratio. ProRes
+  `SetRenderSettings` returns False when `MultiPassEncode` is passed (the rest of the settings still apply; read the job back).
+- **Dean's Spatial NR (threshold 100) is not on cuts 140/143:** their clip graphs hold one node (the LUT) and a
+  20-frame look-on render of cut 143 after he added it matches clip B (σ 0.0139 vs 0.0139; mean |d| 0.0008). It must be on
+  another cut, or in the drum source's group inside the multicam, which the API can't read through the multicam item.
+- **Drum cap +1.5 stop + Dean's Spatial NR at 100 in the CAM 5 group (2026-10-15 ~17:30).** 10 drum cuts re-aimed at +1.5
+  (`face_plan_v4_drumcap.json`, LUTs `canv26f_cNNN_r2.cube`, closed-loop factor kept), applied, read back. 4K look-on
+  render `checks/noise_drum_021807_C_cap15_NR_lookon_4K_v1.mov` (655 frames): **383 s against 42 s without NR (×9)**.
+  Shadow σ: cut 140 A 0.0059 / B 0.0103 / C 0.0021; cut 143 0.0063 / 0.0146 / 0.0024; unlifted 141/142 0.0038 → 0.0021.
+  **Edge detail (Laplacian on the top 5 % gradients, relative) A 0.59–0.62 → C 0.11–0.12: threshold 100 removes ~80 % of
+  fine texture** (1:1 crop: beard texture smoothed, waxy). Noise is now well under the original grade, so there is room
+  to lower the threshold.
+- **Render range trap (2026-10-15):** after Dean opened the multicam in a timeline and came back, `AddRenderJob` took the
+  whole timeline (79500–360346) although `GetMarkInOut` showed my range, twice. Guarded by reading the job back before
+  `StartRendering`; fixed by passing `MarkIn`/`MarkOut` (absolute frames) in `SetRenderSettings`, allowed here only
+  because the In/Out was mine, not Dean's. Delete the wrong job (`DeleteRenderJob`) and re-add.
+- **Correction to the entry above (Dean's screenshot, 2026-10-15):** clip C's NR is **AI UltraNR** (Spatial NR mode) in the
+  CAM 5 group's Noise Reduction node, profile from **Analyze: Luma 0.041, Chroma 0.016**, not a threshold of 100. (Analyze
+  first "didn't seem to do anything" for Dean; it worked once the drum clip was the one being viewed.) The UltraNR sliders
+  are the analysed noise level, so lowering Luma below 0.041 weakens it. **My "~80 % of fine texture" figure overstates the
+  loss:** Laplacian energy on edges also counts the noise on those edges, so removing noise reads as lost detail. By eye at
+  1:1 the beard texture is smoothed but still readable. A fair detail check needs a noise-free reference (e.g. a temporal
+  mean of a static stretch).
+- **Decision (Dean, 2026-10-15): "Yep it looks fine, I'll bypass it and continue to edit."** UltraNR (Luma 0.041 /
+  Chroma 0.016) stays in the CAM 5 group's NR node with the TNR, bypassed while editing. **Delivery checklist step 1 now
+  covers both: un-bypass the CAM 5 NR node (TNR + UltraNR) before any RiP or delivery render**, and budget about 9×
+  render time on drum shots. Face lift final: 83 cuts, drum cuts capped at +1.5 stop.
+- **v4 angles switched by Dean and verified (2026-10-15 evening):** all 1,323 coloured V1 pieces read the right angle by
+  `GetName()` (Purple 193 Stage Right, Green 276 Desk Tracking, Yellow 325 Photo Pit, Pink 185 Drum, Blue 344 Static Desk),
+  0 wrong. Colours cleared (0 left), saved. `ClearClipColor` over all of V1 timed out at 60 s on the first call (108 done)
+  while Resolve was busy, then cleared the remaining 1,215 in 22 s: loop with a time budget and re-read.
+- **"Hidden-dark" cuts are lighting cues, not exposure (2026-10-15 evening).** The recipe's hidden-dark flag fires on a dark
+  run inside a cut ("rules fire on the state, not the cut"), so a per-cut LUT can't fix it and the API can't keyframe.
+  Frame by frame on the graded look-off render (top-20 % luma per frame, run = < 0.8× the cut median for ≥ 10 frames;
+  `face_meter/hidden_dark_dips.json`): 266 head 2.8 s −1.1 stop on the lights but frame median unchanged; 231 two
+  flickers of 0.4–0.7 s; 353 none; **268 opens on a 2.5 s blackout (−4.7 stop, to 02:28:26:09)**; **153 ends on a 1.6 s
+  dip (−2.2, from 02:19:39:22)**; **269 ends on a 1.6 s dip (−1.3, from 02:28:32:19)**. No grade; offered Dean editorial
+  trims for 268/153/269. My earlier "lift them with a LUT" offer was wrong, because I hadn't read what the flag measures.
+- **Dehaze haze colours (2026-10-15):** `face_meter/haze-colour-picks.html` + `haze_colours.json`, 18 veiled cuts. Veil
+  colour = median RGB of smooth, unclipped pixels at the 75–95th luma percentile of the stage region (4–55 % down, 5 % side
+  margins) over 5 frames of the graded look-off render. The 40–80th percentile first try landed on dark walls and corners.
+  Picks: all coloured except cut 85 (#CDCED9) and 2 (#A08DA8). On 87, 173 and 341 the ring lands on the projection screen,
+  so sample the smoke beside it. A colour-normalised dark-channel transmission was meaningless here (negative, or 1.0)
+  because the veils have a channel at 0; rank strength by the recipe's score instead. Dehaze remains a UI move.
+- **Haze colour must be measured at the frame Dean is looking at (Dean, 2026-10-15: "There isn't magenta smoke only white
+  smoke at 2:14:00:14").** Cut 91 opens on a red/magenta wash for about a second, then white smoke; my 5-frame median gave
+  #E02CCD. At the parked frame it is #D2D2E4–#DCDDEE. 13 of the 18 veiled cuts change lighting inside the cut (hue spread
+  > 0.25). Use `face_meter/haze_colours_v2_atpark.json` (measured at the cut middle where I park the playhead) and tell
+  > Dean when the lighting changes. Dehaze settings log: `face_meter/dehaze_log.json` (85: #CDCED9 at 0.3, "doesn't really
+  > improve after that").
+- **Dean's Dehaze method (2026-10-15): "I think I get the best results from that adjustment plus white haze, at least on
+  these few cuts."** The adjustment is shaping the depth map with Shadow/Highlight (Display Depth on: stage and band
+  dark/mid = far = more dehaze; crowd light = near = protected), plus Haze Color white. So my measured-colour advice lost to
+  white on the first cuts he tried (85, 91, 87). Default to white + depth shaping; offer the measured colour only if white
+  leaves a cast.
+- **Dehaze pass done (Dean, 2026-10-15 evening):** all 18 recipe-ranked veiled cuts read back with `OFX: Dehaze` on clip node 2
+  (node-1 LUTs intact), white haze + Shadow/Highlight depth shaping, values set by eye and not reported (cut 85 started at
+  Strength 0.3). Driven one cut at a time by parking the playhead mid-cut (`SetCurrentTimecode`, then
+  `GetCurrentVideoItem().GetStart()` to confirm the cut). Dynamic-zoom cuts 170, 226, 109 and 139 carry an AI depth estimate,
+  so they belong in the RiP set and need their edges checked after it. Log: `face_meter/dehaze_log.json`.
+- **Output gamut mapping can't be set by API on this project (2026-10-15).** `SetSetting("colorSpaceOutputGamutMapping",
+"Saturation Mapping")` returns False and reads back "None". The 21.1.1 stub lists 'None', 'Saturation Mapping', 'RED IPP2
+  Gamut Mapping'; the manual's "Saturation Compression" is not a valid value. It is also refused with output tone mapping
+  set to DaVinci (tested, then restored to None, read back). The knee is refused while mapping is None. So it's a UI move:
+  Project Settings → Color Management → Output → Gamut Mapping Method. Control render for A/B:
+  `checks/gamut_A_none_lookon_021325_v1.mov` (200129–201128, look on, 1080p ProRes HQ, 58 s).
+- **Correction (Dean, 2026-10-15: "These are the options in color management, did you check the manual?").** In 21.1 RCM
+  the panel has **Input DRT / Output DRT** (this project: both **DaVinci**) and "Limit output gamut to" (Output color
+  space). There is no Gamut Mapping Method in the panel. The live API keys are **`inputDRT` / `outputDRT`**;
+  `colorSpaceOutputToneMapping` and `colorSpaceOutputGamutMapping` are legacy keys that read "None" and change nothing.
+  My earlier notes saying "output tone mapping None" were wrong: the output DRT is DaVinci, which is the highlight shoulder
+  measured in "Resolve's Rec.709 output is not a 2.4 gamma". (My Set "DaVinci"/"None" on the legacy key had no visible
+  effect; Dean's screenshot after it shows the DRTs as they were.) Read manual ch. 9 pp. 239–240 for colour management,
+  not the Fusion or Resolve FX copies of the same words. Gamut compression on 21 = a node: a CST pair on the timeline
+  graph before the FLC (DWG/DI → Rec.709 with Gamut Mapping: Saturation Mapping, then Rec.709 → DWG/DI).
+- **Look change (Dean, 2026-10-15 ~19:00), FLC on the rough cut v3 timeline node:** Exposure raised to **0.1**; **Split Tone
+  ON, Mode Strong, Amount 0.300, Hue Angle 35.0, Pivot 0.450** (amber highlights, teal shadows). Dean: "barely any
+  difference" in Natural even at Amount 1. On this footage the tint shows only on near-neutrals (white smoke, skin), so
+  judge it on the vectorscope or on smoke. The hue slider runs 0 red / ~90 yellow / ~180 blue-green on Dean's screen, so
+  amber is 35–45.
+- **Drum "clipping" Dean saw (2026-10-15 ~19:30) is gamut, made in Resolve, not in the camera.** Ungraded look-off render
+  (with group pre-clips), one mid-frame per cut: **white clipping (all channels ≥ 250) is 0 % on every drum cut**; single-channel
+  clipping (max ≥ 250, min < 200) is p90 **22 %** on Drum, 16 % Stage Right, 9 % Pit, 7 % Static Desk, 0.1 % Desk Tracking.
+  The old grade and the face lift barely move it (cut 29 25.9 → 27.5 %; `face_meter/drum_clip_lookoff.json`). **Source C1364
+  (`/Volumes/BOTTB SYD26/DRUM CAM/`, frame = record − 182620) never nears the S-Log3 ceiling:** p99.9 max-channel code 102–225
+  of 255, 0 % of pixels ≥ 235, on the cuts that clip 16–29 % in the render. Cause: saturated blue/magenta pushed out of
+  Rec.709 by the CAM 5 +1.25 st and clipped at output. Fix: the CST gamut-compression pair (or a drum-only CST in the CAM 5
+  group), not less exposure.
+- **Look-on check after Dean's split tone (2026-10-15 ~19:40; `Renders/lookon_Canvanauts_Syd26_splittone_check_v1.mov`, full set
+  1080p ProRes LT, 33 min, 39,325 frames; `face_meter/lookon_check_v1.json`).**
+  - **Split tone works as intended but is small:** on near-neutral pixels against the pre-change control
+    `gamut_A_none_lookon_021325_v1.mov`, highlights moved toward hue 150° (Cb/Cr atan2; amber), +0.014 chroma, +0.007 Y;
+    shadows toward 330° (teal-blue), +0.010 chroma.
+  - **Faces look-on still sit at hue 78–85° against the ~123° skin line** (≤ 2 % within ±20°), red-magenta. The split tone
+    doesn't move them meaningfully.
+  - **Clipping with the look on is rare on mid-frames** (single-channel p90 ≤ 0.5 % every angle, 0 white). The FLC/DRT tames
+    most of what the look-off render showed. **But 7 drum cuts under red floods pin the red channel at their worst moments,
+    21–32 % of the frame:** 202 (02:23:14:13), 304, 172, 72, 245, 340, 315. Scan bug to avoid: with `select=not(mod(n,5))`,
+    `-frames:v` counts _output_ frames, so pass ceil(n/5) or the scan runs into the next cuts.
+  - **Those reds are out of gamut AND bright** (DWG/DI measurement render: 40–86 % of pixels have a negative Rec.709
+    channel; red reaches 8–11 scene-linear). An RGC-style gamut compression folded into the cuts' LUTs (ACES defaults,
+    into Rec.709; `scratchpad/rgc_lut.py`, `LUT/BOTTB_Syd26/gamut_test/`) helped only a little: worst red clip 33.5 → 30.4 %
+    (202), 26.7 → 20.1 % (304), 23.0 → 22.3 % (245). The picture went pinker and lighter (sat 0.35 → 0.27), with skin less red.
+    Original LUTs restored and read back; test renders `checks/gamut_rgc_lookon_c202/304/245_v1.mov`. Gamut compression
+    alone won't fix the red floods; they also need less level (or a highlight roll-off) on those drum cuts.
+  - Dehaze: no edge strips on the four zoomed cuts (start/end frames). No pre-Dehaze render exists, so crush can't be
+    attributed; near-black share on the Dehaze cuts is 17–56 %, mostly crowd silhouettes.
+- **Red-flood drum fix applied (Dean: "Yep do it", 2026-10-15 ~20:00).** 7 drum cuts (202, 304, 172, 72, 245, 340, 315) now
+  carry `BOTTB_Syd26/redfix/redfix_A_cNNN.cube` = their previous LUT followed by a **hue-preserving max-RGB shoulder in
+  Rec.709 scene-linear (knee 1.0, asymptote 3.0)** (`face_meter/redfix_lut.py`; rollback `face_meter/redfix_rollback.json`).
+  Look-on renders `checks/redfix_{A,B}_lookon_cNNN_v1.mov`, sheet `face_meter/drum-redfix-sheet.html`: **worst red-channel
+  clip 21–33 % → 0.4–3.6 %**, faces unchanged (±0.01), frame median −0.00…−0.03. Variant B (shoulder + RGC) reached 0 % but
+  washed the frame to salmon (median 0.31 → 0.42) and lifted faces; not used. The shoulder works where the gamut
+  compression alone didn't (33 → 30 %), because these reds are mainly over-bright (red at 8–11 scene-linear).
+- **Beams in haze (2026-10-15 evening).** Dean: FLC Highlights, Bloom, Halation and a Glow at threshold 0.6 did little. Measured
+  (DWG/DI render, scene-linear): on the wide at 02:24:57:17 only 1.9 % of the frame is above 1.0 and 0.2 % above 2.0; **the beams
+  sit 1.5–2 st over mid grey (0.4–0.65 linear = DI 0.42–0.47; grey 0.34, white 0.51, 2.0 → 0.59)**, so highlight effects only
+  catch fixtures, and a node-space threshold of 0.6 selects ~0.2 %. FLC Exposure now **0.2** (Dean). A curve can't be set by
+  API, so I built it as a LUT for a timeline node after the FLC (`scratchpad/curve_lut.py`: display-space luma curve via the
+  fitted T/Ti, hue-preserving; points 0.10→0.08, 0.30→0.22, 0.50→0.46, 0.60→0.60, 0.80→0.80; the first build lifted 0.8 →
+  0.83 until a hold point was added; the variable `C` collided with the DI constant, so name it CURVE) →
+  `LUT/BOTTB_Syd26/look/beam_gap_curve_v1.cube` on **timeline node 2** (Dean added the empty node). Cut 226 look-on, node on vs
+  off (`checks/beamcurve_{ON,OFF}_c226_v1.mov`): beam cores 0.845 → 0.845, haze gaps 0.375 → 0.338, **beam/gap 2.25 → 2.50**.
+  Node 2 has no window yet, so the band darkens with the haze. `SetNodeEnabled` on the timeline graph returned `{"error": ""}`;
+  the API has no GetNodeEnabled, so state was confirmed by a 2-frame render matching the ON clip (mean |d| 0.000 vs 5.9 OFF).
+- **Noise on cut 144 (02:18:35:04, Dean "looks completely borked") is source noise lifted, not the LUT method:** flat-area noise
+  ungraded → graded ×1.81 / ×2.48 / ×2.19 on three frames against the grade's slope at that level ×2.09 / ×2.23 / ×2.10. LUT
+  roughness (mean |2nd diff|) 0.00784 against 0.00778 for a smooth model LUT of the same CDL. The cut's base grade is a big
+  recipe exposure lift (Slope 1.6–1.69, Power 0.85), so the cure is less lift or NR.
+- **Cut 144 lift pulled down (Dean, 2026-10-15: "I added nr, its not quite enough, probably needs the lift pulled down a
+  little").** Dean's OFX Noise Reduction is clip node 2 (after the LUT). Node 1 changed `canv26_c144.cube` →
+  **`canv26_c144_lower.cube`**: same CDL with Slope/Offset × 2^(−0.5/2.4) (−0.5 stop) and Power 0.848 → 0.90 (the power < 1
+  is what steepens the shadows). Predicted noise gain ×2.0 → ×1.5 in shadows. Rendered with NR on (`checks/c144_NR_{oldlift,
+lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, face still readable. Script
+  `scratchpad/c144_lower.py`. Rollback: SetLUT(1, "BOTTB_Syd26/canv26/canv26_c144.cube").
+- **The LUT method had real defects (Dean, 2026-10-15 ~21:00: "I am dubious of this LUT approach … I feel like this is what has
+  made this problem worse"; "obvious pixels the same color next to obvious pixels of a very contrasting color").**
+  1. **The fitted display→DI inverse `Ti` jumped.** HY (per-channel display curve) was made monotone by
+     `maximum.accumulate` + 1e-7 steps, so it has plateaus; `np.interp` inverting a plateau leaps (up to 0.085 DI for a
+     0.00005 change, at display ≈ 0.07/0.17/0.21/0.38), and the inverse is flat below the curve's floor (0.03–0.11).
+     Every LUT used `Ti`, so neighbouring pixels could split wherever the grade moved a colour across a jump.
+  2. **A smooth monotone inverse is worse, not better** (16,628 vs 3,919 near-identical real colour pairs landing > 0.05 DI
+     apart): the real transform is flat where Resolve compresses (toe, saturated channels pinned at 0), so ANY inverse is
+     steep there. A damped least-squares inverse "hit" display targets by moving the hidden (pinned) channel, which the look
+     then shows. **Don't build grades by inverting a look-off display model on this footage.**
+  3. **The red-fix shoulder divided by the max channel with a 1e-9 floor**, so near-black pixels whose max 709-linear
+     channel is negative exploded to bright grey. Live on the 7 red-fix drum cuts until replaced.
+  4. **The beam-gap curve LUT on timeline node 2** inherited (1) show-wide. Removed (`SetLUT(2, "")`), node left empty.
+  - **Fix: parametric scene-linear grades fitted through the forward model only** (`scratchpad/plut.py`): per-channel
+    gain + offset in 709 linear, hue-preserving luminance gamma with a toe (0.02), saturation, optional max-channel shoulder
+    (above knee only); 8 numbers per cut, fitted by least squares so `T2(grade(v))` hits the approved display target on 4
+    of the cut's DWG/DI frames. Continuous and order-preserving by construction. Near-identical pair test (150k real
+    colours, σ 0.003): c144 452 → 5 jumps, face c140 283 → 0, base c001 38 → 0, red fix 0 (after fix 3). Cost: fit error
+    median 0.003–0.006 on base grades, ~0.02 on strong face lifts.
+  - **Audit that did NOT find it, recorded so it isn't trusted again:** "LUT vs a Gaussian-smoothed copy of itself" flags any
+    curved LUT (a smooth model LUT scored as badly). And on the 19:05 look-on render, stray-pixel counts per cut were the same
+    with and without my LUTs angle by angle. The worst cuts were drum shots with **no** LUT, so the drum source (8-bit H.264,
+    +1.25 st group) carries its own speckle. Both can be true.
+  - Third time today a library constant was overwritten by a script variable (`C`, `A`, `B_` in `dicdl_lut2.py`). Load the
+    colour maths as a module namespace, or never use single-letter names in scripts that `exec` it.
+- **v3 parametric LUTs live on all 203 Canvanauts cuts (2026-10-15 ~22:00; Dean: "just fix everything").** Built by
+  `scratchpad/build_param_all.py` → `LUT/BOTTB_Syd26/v3/<same basename>` (map + fitted parameters
+  `face_meter/lut_v3_param_map.json`; old→new plan `face_meter/apply_v3_plan.json`; the inventory of the old LUTs is the
+  rollback: `face_meter/lut_inventory_20261015.json`). Applied in 4 batches with read-back (each checked the expected old LUT
+  first); families now v3 203 / none 151. Cut 144 uses the non-crushing variant (offset/2, power 0.88). The red-fix shoulder
+  bug (fix 3 above) is gone in v3.
+  - **Verify** (`Renders/verify_Canvanauts_Syd26_v3param_lookoff_v1.mp4`, 370 s, 39,325 frames; `face_meter/verify_v3_param.json`,
+    one mid-frame per cut at 960 px). Model-free accuracy (render against the approved display grade applied to the ungraded
+    render's own pixels): **base grades median 0.0097 (p90 0.013), face lifts 0.0145 (p90 0.025)**, worst 0.042. Cuts with
+    Dehaze/NR nodes are excluded, because node 2 changes them. Ungraded single-node cuts unchanged (max 0.008). Stray
+    contrasting pixels (|x − 3×3 median| > 0.2 with < 0.1 brightness change): ungraded 0.0008 % mean, old LUTs 0.0010 %,
+    v3 0.0010 %, and 0 cuts where either adds > 0.01 pct-pt over ungraded. So at look-off neither LUT set adds stray pixels
+    at that level. What Dean saw is look-on, where the hidden-channel/inverse effects would show. v3 removes the
+    mechanism by construction (no inverse). Look state after verify: FLC re-enabled, checked on pixels (2-frame look-on render
+    vs look-off, mean |d| 13.3); cut 144 look-on is clean, without the crush.
+- **Beam curve v2 (no inversion; Dean: "1. Yes let's do that", 2026-10-15 ~22:30).** `scratchpad/beam_v2.py`: knots placed on
+  the neutral axis through the forward model T2 only (display 0.10→0.08, 0.30→0.22, 0.50→0.46, 0.60/0.80 held = DI 0.128→0.111,
+  0.284→0.237, 0.389→0.369), PCHIP in DI on 709-linear luminance, hue preserving. Greys land exactly; pair-jump test 0.
+  `LUT/BOTTB_Syd26/look/beam_gap_curve_v2.cube` on **timeline node 2** (read back). Cut 226 look-on vs curve off
+  (`checks/beamcurve2_ON_c226_v1.mov` vs `beamcurve_OFF_c226_v1.mov`): beams 0.845 → 0.845, gaps 0.375 → 0.353, **beam/gap
+  2.25 → 2.39** (v1 gave 2.50 via the faulty inverse); band zone 0.275 → 0.236 without a window, so Dean adds a top gradient
+  window. No trim/roll-edit call exists in the 21.1.1 API (only delete + append, which resets the multicam angle and drops
+  the grade), so the 3 blackout trims are Dean's UI roll edits.
+- **Skin hero list** (`face_meter/skin_hero_magenta.json`): YuNet faces ≥ 28 px at 480 wide, ≥ 2 s, look-on render. Most
+  big-face cuts are under blue light (hue 300–340°): that's lighting, so leave it. The fixable set is lit faces (Y > 0.08)
+  leaning magenta (hue 40–115° against the 123° skin line): 37 cuts, top: 02:11:47:13, 02:10:57:12, 02:19:30:16,
+  02:23:09:24, 02:15:57:17, 02:29:37:14, 02:09:55:24, 02:10:29:22, 02:07:48:00, 02:07:55:06.
+- **Correction (Dean, 2026-10-15: "First one is dark not a blackout").** Cut 268's opening 2.5 s: the brightest 20 % of the
+  frame drops 4.7 stops, but the frame median only 0.47 stop. That's a dark lighting state, not a blackout. My dip metric
+  (top-20 % luma) overstates darkness; describe dips by the frame median as well. No trim needed. The other two (153 end:
+  lights −2.2, frame −1.05 st; 269 end: lights −1.3, frame −1.07 st) are for Dean's eye.
+- **"Is the set too dark?" (Dean, 2026-10-15 ~23:00; "or is it going to hold up on tvs and phones and computers").** 40 s
+  look-on window (02:13:25–02:14:05) across states: frame mean 0.296 (18:47) / 0.298 (19:05) / 0.288 (21:30) / 0.310 (now);
+  near-black (< 0.06) 34.8 / 36.2 / 37.9 / 33.6 %; **faces 0.226 / 0.219 / 0.157 / 0.171**. The set wasn't darker; the faces
+  were, because the windowless beam curve darkened mids. Rule of thumb given: faces 0.25–0.30 look-on for online delivery
+  (phones in lit rooms and YouTube compression lose detail near black; Macs show 2.4 files a bit lighter). Dean's CST pair
+  (gamut compression) is now timeline nodes 1–2, FLC is node 3, node 4 is empty.
+- **Beam curve removed; face target +1/3 stop (Dean: "Yes").** `SetLUT(4,"")`. A window can't fix the beam curve: on
+  close-ups the faces sit in the top of frame. Face plan v5 (`face_meter/face_plan_v5_target_up_third.json`): graded face
+  target 0.198 → 0.218 (×2^(1/7.2)), lift only, 70 %, cap 2 st (drum 1.5): **98 cuts** (15 new, kept ones +0.23 st median);
+  cut 144 excluded (noise-limited, keeps `v3/canv26_c144_lower`). LUTs `v4/facev5_cNNN.cube` (parametric, jump pairs 10
+  total), applied over v3 with read-back; rollback `face_meter/facev5_rollback.json`. Verify look-off (CSTs on):
+  median +0.02 st, but 17 cuts > 0.3 st off (cut 34 +1.75). **One closed-loop pass** (`face_plan_v5_cl1.json`,
+  `v4/facev5_cNNN_cl1.cube`): **median −0.00 st, p90 0.22, max 0.43**, 2 cuts > 0.3. Renders
+  `Renders/verify_Canvanauts_Syd26_facev5{,cl}_lookoff_v1.mp4`.
+- **Before any Canvanauts delivery or RiP (Dean, 2026-10-15 night: "Remember to do it for later plus the zoom rips"):**
+  1. CAM 5 group pre-clip NR node (TNR + UltraNR Luma 0.041/Chroma 0.016) un-bypassed (Open in Timeline on the multicam).
+  2. RiP the zoomed cuts, including the four dynamic-zoom Dehaze cuts (170, 226, 109, 139), and check the edges after.
+  3. Main bus limiter about −1 dBTP (about 11 songs peak above 0 dBTP on the clip-gain mix).
+  4. Halation is on (Dean). Look state: CST pair + FLC (Exposure 0.2, Split Tone Strong 0.3/35/0.45, vignette off).
+- **Black Parade 4K preview (Dean, 2026-10-15 ~23:00: "run a full render of welcome to the black parade in 4k for me to
+  preview, and then you can close davinci down"; drum NR off for this pass, OK'd).**
+  `Renders/preview_BlackParade_Canvanauts_Syd26_4K_v1.mp4`: 222366–230317 (song markers 222416 / END 230267, ±2 s), 3840×2160
+  H.264 60 Mb/s + AAC from A4 (whole-show clip-gain mix), look on (CST pair + FLC), v3/v4 LUTs, Dehaze nodes, no RiP,
+  drum NR bypassed. 513 s render. render-qc PASS (7,952 frames; video 318.08 s / audio 318.14 s; tail not silent;
+  60.1 Mb/s); look on confirmed on pixels (vs look-off verify mean |d| 11.5); −16.1 LUFS, true peak −1.6 dBFS. Not
+  watched by me. `render-qc.sh` is zsh (`print`): run it with `zsh`, not `bash`. Project saved, In/Out cleared, Resolve quit,
+  memreg cleared.
