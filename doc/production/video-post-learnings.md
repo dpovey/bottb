@@ -2838,3 +2838,18 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   60.1 Mb/s); look on confirmed on pixels (vs look-off verify mean |d| 11.5); −16.1 LUFS, true peak −1.6 dBFS. Not
   watched by me. `render-qc.sh` is zsh (`print`): run it with `zsh`, not `bash`. Project saved, In/Out cleared, Resolve quit,
   memreg cleared.
+- **Housekeeping (Dean, 2026-10-15 ~23:30: "Do the housekeeping").**
+  - Deleted 56 superseded test and verify renders of mine (`video/checks/` 14–15 Oct tests; `Renders/` look-on check and
+    5 older verifies): BOTTB +37 GB. Kept: `measure_*` (pipeline data), `verify_..._facev5cl_lookoff_v1.mp4`, the Black
+    Parade preview, the NR result clip, 13 Oct evidence clips.
+  - Moved the superseded LUT sets (`canv26`, `canv26f`, `redfix`, `gamut_test`, `look`, `stage0*`) from Resolve's LUT library
+    to `/Volumes/BOTTB/Sydney - 2026/video/lut_archive_superseded_20261015/` (README there), verified file-by-file first.
+    `Project.db` showed no plain-text references to them; grades may be stored compressed, so this is a move, not a delete.
+    Resolve's library keeps `BOTTB_Syd26/v3` and `v4` (2.2 GB). The exFAT drive adds `._` files, so compare with `-x '._*'`.
+    Claude Code refuses `rm -rf "$L/$d"`; write `"${L:?}/${d:?}"`.
+  - Grading scripts saved to gigstills `scripts/sydney26_grade/` (README: which method stands) and their data to
+    `runs/sydney26_canvanauts_grade/grade_data/` (150 MB, untracked).
+  - Commits (not pushed): bottb `docs/sydney26-multicam` 061506b (runbook) + 7315bc2 (multicam sync, songmap scripts);
+    gigstills `feat/log-source-input` 2ce27a1 (first-pass cut, 276 tests pass) and `main` b1c4bb3 (grade scripts). Left
+    alone: gigstills main's older uncommitted cut-recipe/darktable edits from other sessions (8 Oct, 28 Sep).
+  - Not done: Resolve's render queue still holds ~40 of my old test jobs (Resolve is closed; clear them next session).
