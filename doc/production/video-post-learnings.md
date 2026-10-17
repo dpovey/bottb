@@ -1198,7 +1198,10 @@ what differs.
   ×0.72 elsewhere), and Dean confirmed on the matte (Shift+H, Isolate Specific Depth on) that the clipped
   band matches the pan. The depth analysis does not follow the edit-page transform. **Fix: Render in Place**
   (Video Effects ON, Color Grading OFF) bakes the transform, so the live clip nodes key the framed picture.
-  So any transformed clip (pan, zoom, dynamic zoom) carrying a depth/AI key goes in the RiP set.
+  Measured on a Pan only. **Correction (Dean, 2026-10-16: "the zoom does not seem to affect them"):** on the Canvanauts
+  dynamic-zoom cuts with a depth key he saw no unkeyed edge, so the strip comes from a Pan (offset), not from zoom. A panned
+  clip with a depth/AI key goes in the RiP set; a zoomed one is in the RiP set anyway for Super Scale, and the key
+  recomputes on the baked picture. Check edges after the RiP either way.
 - **A stills-camera insert with Super Scale goes in the RiP set too.** `superscale.py VALUE=1` resets every
   `.MP4`, including the Canon `MVI_*`, which is not behind a multicam. RiP it at Super Scale 2 first, or it
   ships at Super Scale 1. Canvanauts RiP set: Wide 3164, 3357, 4027, 4388, Chase 3751, Canon on V2.
@@ -2853,3 +2856,163 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
     gigstills `feat/log-source-input` 2ce27a1 (first-pass cut, 276 tests pass) and `main` b1c4bb3 (grade scripts). Left
     alone: gigstills main's older uncommitted cut-recipe/darktable edits from other sessions (8 Oct, 28 Sep).
   - Not done: Resolve's render queue still holds ~40 of my old test jobs (Resolve is closed; clear them next session).
+- **Song duration markers cover the viewer (Dean, 2026-10-16: "Can I hide the note box on the color page, it's covering a
+  lot of the frame").** The Green song markers span each whole song (e.g. "Thnks fr th Mmrs", 5034 frames), so their long
+  note shows on every paused frame of the song, on the Color page too. Hide it in the Edit page Timeline Viewer's options menu
+  (the "…" at the viewer's top right) > untick Show Marker Overlays; tick it again for marker work. Keep song-marker notes
+  short, or put the detail in customData, so the overlay stays small.
+- **Dark close-ups: a depth-keyed lift beats Face Refinement and whole-frame lifts (Dean, 2026-10-16: "Depth map +1
+  again, this seems to be a generally better fix").** After the facev5 lift hit its caps (2 st, drum 1.5), the dark Pit/Drum
+  cuts were lifted by hand: Depth Map node (Isolation on the subject, Preview off, Use OFX Alpha) → serial node fed its key
+  (blue) and picture (green) → HDR Global Exposure. Dean's values: +1 on most, +3 on 02:13:33:05 (guitarist), +1 global
+  then +1 keyed on 02:11:12:06. Face Refinement was offered first; Dean used it once (02:13:22:01). Dean skipped the
+  washed-out cuts (raised black floor, p10 ≥ 0.05) and kept to frames with a true black floor. My "short by" stops underestimate
+  a keyed lift (soft key). Pick candidates by frame darkness, not face shortfall alone, and include close-ups where YuNet found no
+  face (dark faces aren't detected). Log: gigstills `face_meter/faceref_log.json`. A panned cut with a Depth Map key
+  must be in the RiP set (zoom alone doesn't break the key, Dean 2026-10-16); none of these were zoomed.
+  **Measured (4K ProRes look-off per-cut checks `video/checks/darkface_cNNN_lookoff_4K_v{1,2}.mov`, ~70 s per render;
+  `face_meter/verify_darkface_v{1,2}.json`, script gigstills `scripts/sydney26_grade/verify_darkface.py`):** Face Refinement on
+  02:13:22:01 moved the face +0.00 st; swapped to a depth key at +2 (Black Offset 0.1) → +0.31 st, still −0.62 under target.
+  Depth key +3 on 02:13:33:05 → face +0.56 st (−0.34); depth key on 02:27:13:01 → +0.56 st, widening the key added nothing
+  (−0.61; Dean accepted it). A soft depth key passes only a fraction of the HDR exposure to the face. Whole-frame Global Exposure
+  on 02:20:56:11 → face +0.96 st, on target. **Exposure also raises a black floor that isn't zero** (v1 p10): 02:11:12:06
+  0.022 → 0.066, 02:13:08:23 0.043 → 0.054, 02:26:24:02 0.032 → 0.050. Dean's v2 fixes: Lift −0.05 on the global node of
+  02:11:12:06 → p10 0.010, frame mean 0.058 (below the unlifted 0.067: background darker, keyed subject lifted); Lift −0.04
+  on 02:13:08:23 → p10 0.043, back to the original floor; Lift −0.04 / Blue Lift −0.07 on 02:26:24:02 → p10 0.050 → 0.049.
+  **Lift in a keyed node acts only inside the key**: on 02:26:24:02 only 3 % of pixels moved by more than 0.01. To pull a
+  greyed background down, use an unkeyed node.
+- **A check that lied: measure levels on the same decode path as the baseline (2026-10-16).** `verify_darkface.py` first read
+  the 4K ProRes as rgb48 and box-averaged to 480 wide, while the "before" numbers came from rgb24 area-scaled frames
+  (`verify_face_render.py`). The rgb48 path read p10 about 0.007–0.01 high and faces about 0.05 st high (e.g. Face Refinement
+  +0.08 st that was really +0.00), so a re-render seemed not to change the floor. The script now measures levels via the rgb24
+  area-scale path and uses 4K only for noise. Before comparing a "before" and an "after", check per frame on one or two frames
+  that both use the same decode.
+- **Dean's depth-map pass (2026-10-16 morning).** Read back afterwards: Depth Map → External Key + HDR (often with Primary
+  Balance) on 46 Canvanauts cuts. Apart from the 8 checked cuts, all of them run from 02:27:13 to the end of the set. All
+  212 base LUTs (v3/v4/redfix) are still on their cuts; the depth cuts with no LUT never had one. 9 of them are dynamic
+  zooms (starts 219576, 221093, 225026, 226358, 226498, 227639, 227812, 228879, 229423). I first said the depth key forced
+  them into the RiP set; Dean corrected that the zoom doesn't affect the key (the strip finding was a Pan). They are in the
+  zoom RiP set anyway; check the edges after.
+- **Depth pass, earlier songs (Dean, 2026-10-16: "Okay this is all done").** Read back: 57 cuts before 02:27:13 now carry
+  a Depth Map key + lift (about 95 for the set). 30 of my 60 rule candidates (`face_meter/depth_candidates_v1.json`), 27 Dean
+  picked himself; he left 33 candidates alone. So the frame-darkness rule finds about half of Dean's picks: use it as a starting
+  list, not as his criterion. All 212 base LUTs read back intact afterwards.
+- **Full-set look-off check of the depth pass (2026-10-16).** 1080p H.264 look-off render of the whole Canvanauts set (FLC
+  node 3 disabled, no audio): 2 h 33 min with about 95 Depth Map cuts while the Mac was paging (7.7 of 8 GB swap). Let the
+  memreg TTL cover that: a 60 m TTL lapsed mid-render. Measured with `verify_face_render.py` against `verify_face5cl`
+  (same frames, boxes and rgb24/area decode). Control: the 292 untouched cuts moved a median +0.000 st (max 0.10). The
+  lifted faces gained a median +0.27 st (p10 +0.10, p90 +0.46) and 50 of 59 landed within ±0.6 st of the look-off target. The
+  frame-median "changed" test missed 23 cuts whose faces gained > 0.1 st with the frame barely moving (that's what a depth
+  key does), so judge a depth pass on the face, not on the frame. Flags: greyed blacks (p10 to ≥ 0.05) on 6 cuts, mostly
+  lit Tracking shots that started near 0.04; faces +0.6 to +0.8 st over target on about 10. Ignore Static Desk "faces"
+  (false detections).
+- **What the Sydney 2026 Canvanauts look does to levels (measured 2026-10-16).** Last night's look-on 4K Black Parade preview
+  against today's look-off check render, on the untouched cuts only (572 sample frames, alignment corr 0.977 at 0 vs 0.57 at
+  ±5 frames): p10 0.040 → 0.013 (−1.7 st), p50 0.168 → 0.143 (−0.20 st), p90 0.431 → 0.498 (+0.18 st), faces 0.221 → 0.212
+  (−0.12 st, n=208). The look is an S-curve that comes out slightly darker overall. It pulls look-off "greyed blacks" at
+  p10 0.05–0.06 back down to about 0.02, so judge raised blacks with the look on.
+- **`SetNodeEnabled` on a timeline node can lie in both directions (2026-10-16).** After the full-set look-off render,
+  `GetNodeGraph().SetNodeEnabled(3, True)` returned True, yet Dean found the FLC still off; a second call also returned True,
+  and Dean then confirmed it on. There is no `GetNodeEnabled` read-back. After any look-off render, ask Dean to confirm the
+  FLC is on, or prove it with a two-frame look-on render, before anyone grades or renders.
+- **Midtone lift after the look (Dean, 2026-10-16: timeline node 4 after the FLC, "02").** Four look-on 4K samples in Black
+  Parade (`video/checks/midlift_[A-D]_lookon_4K_v1.mp4`, untouched cuts 277/314/329–332/339) against last night's look-on
+  preview, at the same frames: midtones +0.2 to +0.25 st on pit/tracking cuts (+0.1 on a bright drum shot, +0.4 on a dark
+  wide), faces +0.23 to +0.33 st, p10 up only 0.004–0.009, p90 up 0.03–0.06, pixels at 254+ 0.04 % → 0.08 % at worst (drum).
+  So 0.02 more than cancels the look's −0.12 st on faces and −0.2 st on mids; about 0.01 would just restore look-off levels.
+  Dean's call: **0.01** (2026-10-16, ".01 it is"). That's the timeline node 4 midtone lift for the Canvanauts look from now on.
+- **Black Parade final mix v1 placed (2026-10-17, mix-assist-4a; Dean: "logic is shut so you are good to open resolve").**
+  `Canvanauts_S3_Black-Parade_v1_at_02-28-08-00.wav` (Extreme SSD `02_Production/Canvanauts/bounces/`, 48 k/24-bit stereo,
+  324.0 s, BWF 426624000 = Logic TC 02:28:08:00 = timeline frame 222200 exactly, since show TC = Logic TC on the edit
+  timeline). mix-assist QC: −13.6 LUFS-I, −1.00 dBTP. **`align-mix --band 300 3000` against the +16 dB desk scratch
+  refused** (onset match only 1.21× the runner-up, which is a crowd-in-sound bounce against an unmixed sum). Direct NCC in 300–3000 Hz,
+  30 s windows at 5 points (`scratchpad/bp_sync.py`): +7.5 ms at 150/240/285 s (ncc 0.17–0.23 against runner-up ≤ 0.07),
+  +6.9 ms at 5 s, +24 ms at 60 s (weak, ncc 0.15 against 0.135); wrong-region control 0.027. That is the known ~7.6 ms
+  mixed-vs-unmixed offset (Beggin' pilot), so it was placed at its stamp. New track **A5 "Black Parade mix v1 (final)"**,
+  222200–230300, left offset 0. The overlapping A4 whole-show pieces 221733–222366 and 222366–230318 are disabled
+  (clip-level, read back). In/out fades wait on Dean's in point (stick hit 02:28:06:18 lies before the file; first piano at
+  about 02:28:11) and out (about 02:33:30:13).
+- **Canvanauts cards (2026-10-17; Dean said "Yes" to the adjustment-clip plan).** Resolve 21.1 has no per-clip bypass of the timeline grade (manual
+  searched), so the look moves to an Adjustment Clip on V2 and the cards go on V3. Tracks added: V2 "Adjustment", V3 "Titles"
+  (the timeline had only V1). `generate-song-overlays.ts --event sydney --band canvanauts --out <Sydney 02_Production>` → 6 PNGs,
+  DB order = played order (matches the Green song markers). Movies in `/Volumes/BOTTB/TitleCards/Sydney2026/canvanauts_syd26_NN-<song>_card.mov`
+  (ProRes 4444, 125 f, alpha fades in 12 / out 22, read back: alpha max 0/128/255/255/175/12 at f0/6/12/60/110/124; 1.27 GB
+  peak each at -threads 2, run one at a time). Placed on V3 at the song-map start (`video/song_maps/songs.json`) +32: 191505, 199735, 205498, 210213,
+  216549, 222448; no audio items added. Black Parade: the bounce's clear first note is 02:28:16:16 (+26 dB out of a −55 dB gap),
+  = song-map start; the sound at 02:28:10–11 sits on crowd level. Smooth Criminal's map start is the grid downbeat; an instrument onset
+  is 14 s earlier (5049.40 REF ≈ 216165), so check the card there.
+- **Sydney 2026 look moved to the Adjustment Clip (Dean, 2026-10-17).** Dean copied the four timeline nodes one by one (CST1,
+  CST2, FLC, 0.01 midtone) onto an Adjustment Clip on V2 spanning the whole timeline (79500–360347), then disabled the timeline
+  nodes. Check: 2-frame 4K renders at 7 frames, X = timeline look with V2 off (confirmed to carry the 0.01 look: exactly halfway
+  between the preview and the 0.02 samples), Y = adjustment clip only. **5 of 7 frames bit-identical** (this FLC has no
+  per-instance grain, unlike Brisbane's); 212500 and 223820 differ slightly (mean |Δ| 1.7 and 0.9 /255, blurred 0.7 and 0.3,
+  signed ≤ 0.24). Control Z = V2 off with the timeline nodes off: |Z−X| 24 /255, near the look-off render, so the look now lives
+  only on the adjustment clip. Bit-identical X and Y alone cannot prove the move, because "timeline on, adjustment clip empty"
+  gives the same result, so always render the V2-off control.
+- **Canvanauts Sydney 2026 RiP: Dean chose "Include Color Grading Effects" ON for all 102 orange cuts (2026-10-17).** This is the first RiP
+  on this RCM multicam project. 102 = every `DynamicZoomEnabled OR ZoomX ≥ 1.299` V1 cut in 191405–230729 (25 in Black Parade);
+  none had Face Refinement, and no panned-only cut carried a depth key. Super Scale 2 on the 24 camera `.MP4` sources. CAM 5 NR (TNR +
+  UltraNR) re-enabled by Dean in the multicam first: the drum reference frames took 7.5 s for 3 frames against 1.3 s on the wide. Pre-RiP references
+  (look on, ProRes 422 HQ, 3 frames): `checks/ripcheck_drum_207230_preRiP_v1.mov` (cut 207189–207270), `ripcheck_wide_192980_preRiP_v1.mov`
+  (192861–193095). Open questions the post-RiP check answers: is the clip grade cleared or applied again on top of the bake, and
+  what colour space is the baked file tagged with?
+- **Answer (2026-10-17, post-RiP check): with Color Grading ON under RCM, the grade bakes once but goes through the output
+  transform.** All 102 became `Video` items in `/Volumes/BOTTB/Renders` (`Sydney 2026 Multicam - <angle> Render N.mov`, ProRes 422
+  HQ 10-bit, 3840×2160, 30 GB total). Each has one empty node and no colour group, so there is no double grade (clip LUT, CDL and the group Pre-Clip
+  are all in the file). The tag reads `Input Color Space` "Rec.709 (Scene)" plus `Input Gamma` "Gamma 2.4": in this split
+  gamut/gamma RCM, "Input Color Space" is only the gamut field, so the tag matches the output space and is not the bug.
+  `SetClipProperty("Input Color Space", "Rec.709 Gamma 2.4")` returns False, as do other spellings; "Rec.709" returns True and
+  changes nothing. **The cost:** the bake runs DWG → Rec.709/Gamma 2.4 with the DaVinci output DRT, so highlights and saturated
+  reds are tone-mapped and clipped into the file before the adjustment-clip look sees them. Measured on the post-RiP renders
+  against the pre-RiP references (look on, middle frame): mean |Δ| 0.020 drum / 0.018 wide; signed R −0.029/−0.025, G −0.007/−0.011, B −0.011/−0.008;
+  luma p50 0.230→0.227 / 0.056→0.061 (unchanged); **p90 0.549→0.508 / 0.652→0.588**. Side by side: slightly less pink and flatter
+  highlights on the wall and screen. So the Brisbane rule stands for an RCM project: RiP with grading OFF keeps the grade live in
+  timeline space. Grading ON is only safe on a non-managed (YRGB) project, or when the shift is accepted.
+- **Grading OFF does not avoid it either (2026-10-17, Black Parade's 25 cuts, Dean: "decompose everything, but redo only black
+  parade").** Decompose to Original (UI) brought all 102 back as multicam items with their grades (49 LUTs matched the
+  record, the other 53 had none). The 25 Black Parade cuts were recoloured Yellow so that Timeline > Select Clips By Clip Color picks only
+  them, then RiP'd with Video Effects ON and Color Grading OFF. The clip grades stayed live (10 LUTs) and the cuts left their groups;
+  re-assigned by angle, all 25 read back. Pixels against new pre-RiP references (`checks/ripcheck_{sr15_226700,deskdz_226050}_{pre,post}RiP_v2.mov`):
+  still off, **p90 0.613→0.558 and 0.799→0.698**, blue −0.026/−0.039, p50 unchanged. The RiP file itself is display-referred
+  Rec.709 (10-bit Y 64…876; a C-Log3 source never reaches 64), so **under RCM, RiP always renders through the project
+  output transform** (input CST → DWG → DaVinci DRT → Rec.709/Gamma 2.4), whatever the grading checkbox says. The clip
+  LUTs and the look then work on tone-mapped, gamut-clipped data. The fix to try is to set the project output colour space to
+  DaVinci WG/Intermediate for the RiP, so the file holds timeline-space data, then restore Rec.709/Gamma 2.4.
+- **Fix confirmed: RiP with the project output set to DaVinci WG / DaVinci Intermediate (2026-10-17).** `SetSetting("colorSpaceOutput",
+"DaVinci WG")` and `SetSetting("colorSpaceOutputGamma", "DaVinci Intermediate")` both work through the API and read back. Dean
+  decomposed the 25 Yellow cuts and RiP'd them again (Video Effects ON, Color Grading OFF). **Resolve tagged the new files
+  "DaVinci WG/Intermediate" / "DaVinci Intermediate" by itself**, so no clip-property change was needed (the API refuses most
+  Input Color Space strings anyway). Then: output restored to Rec.709 / Gamma 2.4 (read back), the cuts re-assigned to their camera groups
+  by angle (25/25), and Super Scale set back to 1 on the 24 sources. Pixels against the pre-RiP references (`…_postRiP_v3.mov`): mean |Δ| 0.006/0.007
+  (it was 0.025/0.032 with the output transform baked), blurred 0.003/0.006, p50 unchanged, **p90 0.613→0.606, 0.799→0.787**,
+  signed ≤ −0.006, noise unchanged. The residual is 10-bit 4:2:2 log storage of a resampled zoom. **RiP recipe on an RCM
+  project: output → DWG/Intermediate, RiP with grading OFF, output back, re-assign groups, verify on pixels.**
+- **Check renders left the timeline In/Out on the test frames (2026-10-17).** The 3-frame ripcheck jobs passed `MarkIn`/`MarkOut` to
+  `SetRenderSettings` (allowed only while no Dean In/Out exists), and that wrote the timeline In/Out (read back later as 226050–226052).
+  Nothing was lost, because the release In/Out was set afterwards, but **clear or restore the In/Out from the RELEASE marker after every check render**.
+  The same day, a peer's "the mix on your timeline predates the vocal finalisation" turned out to be wrong: **check the file's own mtime
+  and lineage before passing on a peer's claim about which mix is placed.** Also, `TitleCards/EndCard_2x.mov` is 1920×1080 (98 f, yuva444p12le,
+  fades baked into RGB), so on a 4K timeline Resolve scales it up. It was not in the Sydney media pool and had to be imported.
+- **Black Parade 4K v1 (2026-10-17 16:02):** `Renders/Canvanauts_BlackParade_Sydney2026_4K_v1.mp4`, 1,774,889,480 B, 7833 frames
+  (222416–230248), render-qc PASS (45.0 Mb/s, audio 313.39 s vs video 313.32 s, tail fading to −40 dB), −13.5 LUFS. **True peak −0.1 dBTP
+  after AAC (the bounce reads −1.0)**: the encode adds about 0.9 dB, so a −1 dBTP bounce does not leave a −1 dBTP master. The last frame is black (Y 16) and the end card
+  shows at −2 s. Render time **50 min 47 s** (9.7× real time: 4K with FLC, halation, CST and 25 RiPs) on a paging machine.
+- **`derive-1080-ig.sh` is only on `.worktrees/nok-delivery-notes`**, not on main or this branch. **Its fixed 8 Mb/s IG rate
+  overflows the 300 MB cap on any song over ~4:50** (5:13 → ~326 MB with 320 kb/s audio). Black Parade used a scratch copy at 7 Mb/s.
+  Fix the script to compute the IG rate from duration (target ≤ 290 MB) when that branch is next touched.
+- **Black Parade post-delivery (2026-10-17):** 109 completed jobs cleared (gigstills' checks as well as mine; all were
+  Complete). Render name reset to the timeline name. The first `SetRenderSettings({"CustomName": …})` returned
+  `{"error": ""}` and the retry returned True. **Read the name back by `AddRenderJob()` and checking the job's
+  `OutputFilename`** (it read `BOTTB Sydney 2026 - rough cut v3.mp4`), then delete that job: there is still no
+  `GetRenderSettings`. 25 Yellow cleared, 77 Orange kept for the other Canvanauts songs. CAM 5 pre-clip node 2
+  (OFX Noise Reduction) set off; node 1 (HDR) is part of the grade and stays on. No read-back exists, so Dean confirms
+  it in the UI. Super Scale 1 on 24 sources, In/Out = RELEASE, saved. The mix on A5 is the delivered MIXv8 trim.
+  Left for Dean: halation off.
+- **CAM 5 NR off confirmed by Dean (2026-10-17).** He had to open the multicam to see it: on the main timeline only RiP'd
+  items carry a colour group, and none of Black Parade's RiPs is a drum shot. To check a group pre-clip node, open the
+  multicam from a cut of that angle, and close it again before any script runs.
+- **Timeline renamed (2026-10-17, Dean): "BOTTB Sydney 2026 - rough cut v3" is now "BOTTB Sydney 2026 - final cut"**, the
+  Sydney 2026 show's working timeline from here on. Entries above that say "rough cut v3" mean this timeline. The render
+  name was reset to the new name (job read-back: `BOTTB Sydney 2026 - final cut.mp4`). The two "rough cut v3 (…)" backup
+  timelines keep their names. Saved.
+- **Halation off (Dean, 2026-10-17).** Post-delivery for Black Parade is complete.
