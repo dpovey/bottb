@@ -733,6 +733,12 @@ and `_resolve/Resolve Projects`). **T7 Shield wiped** with Dean's yes: erased as
 there (Sydney 2025 also still on Extreme SSD). exFAT to match BOTTB and Extreme SSD; no journal, so
 eject cleanly rather than pulling it.
 
+**Cleanup 2026-10-08 (Dean's OK):** deleted `/Volumes/BOTTB/_OUA_TRIM` (186 G) and `_JUMBO_TRIM2` (183 G),
+so `JUMBO FINAL` is now offline and any Melbourne rebuild starts from the Drive raw (1.2 T download).
+Also deleted: the stale Extreme cache `events/2026/Brisbane/03_Cache/CacheClip` (39 G), `_BRAWTEST`,
+QC renders (`measure_/verify_/review_/lookon_*`) and superseded delivery versions in `BOTTB/Renders`,
+and the ShipRex CoveredInChrome master `.mov` + YT4K. BOTTB 282 → 716 GiB free, Extreme 190 → 224 GiB.
+
 ---
 
 ## SOLVED: the rebuilt timeline renders darker/redder — missing per-cut clip grades (2026-09-23)
