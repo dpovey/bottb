@@ -3016,3 +3016,109 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   name was reset to the new name (job read-back: `BOTTB Sydney 2026 - final cut.mp4`). The two "rough cut v3 (…)" backup
   timelines keep their names. Saved.
 - **Halation off (Dean, 2026-10-17).** Post-delivery for Black Parade is complete.
+- **Amakazaam "Under Pressure" final mix v1 placed (2026-10-18, handed over by mix-assist-21 "Mix under pressure"; Dean
+  had asked it to hand over).** `Amakazaam_S4_Under-Pressure_v1_at_02-50-51-21.wav` (Extreme SSD `02_Production/Amakazaam/`,
+  48 k/24-bit stereo, 233.375 s, BWF 492090000 = 02:50:51 + 21.875 frames; −13.5 LUFS-I, −1.0 dBTP measured here). **The stamp
+  is not on a frame:** the filename rounds down to :21 (35 ms early). Placed at the nearest frame, **256297 = 02:50:51:22**
+  (5 ms late), startFrame 0, endFrame 5834, on new track **A6 "Under Pressure mix v1 (final)"** (256297–262131, left
+  offset 0). Sync against the desk scratch (`scratchpad/up_sync.py`, the bp_sync recipe): +7.0 ms at all five points
+  (t = 20/60/120/170/200 s, NCC 0.19–0.32 against a runner-up ≤ 0.13), wrong-region control 0.018. That is the known mixed-vs-unmixed
+  offset, so the stamp holds (0.34 GB, 2 min). A4 pieces wholly inside the song (256652–261919, 261919–262106) are
+  disabled. **The two partial pieces are still on:** 250158–256652 doubles the first 14 s of the mix and 262106–267606 its
+  last frame. Blade A4 at 02:50:51:22 and 02:54:45:06 before a render (the API cannot blade). `AddTrack` returned
+  `{"error": ""}` and had worked: list the tracks before retrying.
+- **Under Pressure 4K check render (2026-10-18; Dean: "Halation is on paging for 38 minutes is fine").** Dean's range is the
+  audio In/Out from his Logic cycle (02:50:51:21–02:54:45:06 = 256296–262131), **not the green song marker** (02:51:08:02–
+  02:54:34:18). The timeline In/Out read empty when he asked, so it was set from that range and a Cyan `RELEASE: Under Pressure`
+  marker was added at relative 176796, duration 5836. His A4 blades did not show through the API: A4 had no edit at :22 or :06.
+  So for the render the two partial A4 pieces (250158–256652, 262106–267606) are **temporarily disabled; re-enable them after**.
+  Job 622cbd5a, `Renders/preview_UnderPressure_Amakazaam_Syd26_4K_v1.mp4`, H.264 45 Mb/s, single pass. CAM 5 NR off, look on
+  (V2). memcheck at 6 GB: COMFORT ask, Dean OK'd it. Peers holding.
+- **Black Parade published 17 Oct (bottb-17, from its relay):** YouTube https://youtu.be/AT4kyKuBRlQ, FB reel 1084809634321382,
+  IG reel DelnQL4CaWJ, LinkedIn activity 7517132058419175424, TikTok 7697543006886333748; ledger group
+  `sydney-2026-canvanauts-blackparade`. **Live thumbnail checked here (2026-10-18)** from the plain `maxresdefault.jpg`
+  (1280×720): Canva logo, "My Chemical Romance / Welcome to the Black Parade", BotTB logo, no year on it.
+  **Result:** Complete in **6 min 48 s** (Black Parade's graded 4K took 50 min; the Amakazaam set is ungraded and CAM 5 NR is off),
+  1,324,172,826 B, render-qc PASS (5836 frames, video 233.44 s / audio 233.51 s, 45.1 Mb/s, tail fading to −37.5 dB),
+  −13.6 LUFS, true peak −0.6 dBFS after AAC (the bounce reads −1.0). The A4 partial pieces were re-enabled after the render;
+  In/Out survived it this time. Saved.
+- **The 77 Canvanauts RiPs went before the setup (2026-10-18).** Dean read "77 RiP clips, when they are done tidy up" as RiP now,
+  and I read it as RiP after I had prepared. While the RiP dialog was open the API misbehaved: `GetCurrentPage()` None,
+  `GetToolsInNode` None, and Super Scale read-back failing on all 24 sources (nothing changed). That is the sign the dialog is
+  open, so stop calling. Result: 77 files in 4 min (18:56–19:00), 25 GB, **ProRes 422 Standard, Rec.709 tagged, written to the
+  Resolve project's default `Extreme SSD/…/2026/Brisbane/02_Production/BOTTB Sydney 2026 Full Show/Renders/`** (not BOTTB),
+  output still Rec.709, Super Scale 1 and CAM 5 NR off. Grading was OFF (clip LUTs still live, no groups). So these carry the
+  output-transform shift and need Decompose to Original plus a redo with the recipe. **Before any RiP request, give Dean the
+  setup first and say "wait for my go" in the same message.**
+- **The 77 Canvanauts cuts RiP'd with the recipe (2026-10-18, Dean away: "tidy up and do any checks, then move on to grading").**
+  Dean decomposed the first (early) RiP, then 39 LUTs were back on 77 multicam items. CAM 5 NR on (proved by render time:
+  drum 3 frames 7.2 s against wide 1.3 s), Super Scale 2, pre-RiP references `checks/ripcheck_{drum_207230,wide_192980}_preRiP_v4.mov`,
+  output DWG/Intermediate. Dean RiP'd to `/Volumes/BOTTB/Renders`, ProRes 422 HQ, Video Effects ON, Grading OFF: 77 files, 19:07–19:23
+  (15 min, **slower than the Extreme SSD run's 4 min**, which was 422 Standard at Super Scale 1), 37 GB. Waited without API calls
+  (`scratchpad/wait_rip.sh`: 77 new files, none modified for 90 s, then `GetCurrentPage()` not None). All 77 read back
+  as Video items tagged DaVinci WG/Intermediate, 39 LUTs live. Then output Rec.709/Gamma 2.4, 77 re-assigned by angle
+  (29 CAM 1, 21 CAM 2, 17 CAM 3, 7 CAM 4, 3 CAM 5; 0 mismatches), Super Scale 1 (24). **Pixels, post vs pre (middle frame,
+  look on): drum mean |Δ| 0.0056, p90 0.504→0.505, noise σ equal; wide 0.0037, p90 0.666→0.658.** Orange cleared (0 left),
+  5 jobs cleared, render name reset, saved. **Trap, twice now: the first `SetMarkInOut` after a render returns `{"error": ""}`
+  and sets only the In (out = in); the second call sets both.** Always read it back. Canvanauts now has every zoomed
+  cut RiP'd. The first-attempt RiPs on the Extreme SSD (25 GB, `…/2026/Brisbane/02_Production/BOTTB Sydney 2026 Full Show/Renders/`)
+  and the older ones on BOTTB are unused. Deleting them is Dean's call.
+- **Under Pressure grade applied (2026-10-18, Dean away).** Grade agent (`gigstills/runs/sydney26_amakazaam_underpressure/`,
+  REPORT.md): 27 apply (26 base Dean option + 1 face lift, cut 53), 16 held for Dean (big blue lifts on drums/Pit: wash or
+  lighting is his call), 13 identity. **The Canvanauts forward model T2 failed here** (median 0.056 vs 0.020) on out-of-Rec.709
+  blue/cyan, so it was refit with both sets (T2b; Amakazaam held-out 0.043 → 0.027). `RefreshLUTList()`, then
+  `GetNodeGraph().SetLUT(1, "BOTTB_Syd26/amkup/amkup_cNNN.cube")` on 27 V1 items (two calls of 14/13), and all 27 read
+  back by name. Verify render `Renders/verify_UnderPressure_Amakazaam_Syd26_lut_lookoff_v1.mp4` (look off, 5836 frames, 4 min 11 s).
+  Look back on, and the look-on control is framemd5-identical again. In/Out restored, saved. The subagent was blocked from writing
+  .md files; the editor saved its REPORT.md. The agent's 2.76 GB refit ran unregistered: say "register before running" in
+  grade briefs.
+  **Verify (grade agent, on the real render):** the 27 applied cuts land on prediction (rendered − predicted median ≤ 0.0017 at
+  every percentile, worst 0.0075). Model-free error against the approved display grade median 0.0086, p90 0.0150, worst 0.0175
+  (Canvanauts v3: 0.0097/0.013/0.042). The 29 cuts without a LUT are unchanged: 17 byte-identical, 12 within H.264 noise
+  (median ≤ 2/255). Stray pixels 0.0019 % → 0.0022 % (intended 0.0028 %). Pair jumps above the control on 6 cuts are
+  codec splits at the threshold: the same pairs through the LUT files differ by ≤ 0.016. Cut 53 face 0.135 → 0.186 against
+  0.189 (−0.05 st), so no closed-loop pass is needed. Files: `REPORT_verify.json`, `verify_render.json`, `verify_pairs.json`.
+- **Under Pressure held cuts approved (2026-10-18).** Review page instead of a contact sheet: one card per held cut with
+  1080p look-on frames rendered from Resolve (before, then with the held LUT applied for the render and removed again), a wipe
+  slider, and Approve/Reject buttons writing to the page's db (`decisions/c###`), read back with ArtifactData `list`. Dean asked
+  for this over the JPG sheet ("add buttons so I can approve or reject … use higher res shots"). Dean approved all 16 (note on
+  cut 25: "Very little difference"). Applied with `SetLUT(1, …)`, guarded by timeline name and `IsRenderingInProgress()`:
+  16/16 read back by name; the song now has 43 LUT cuts of 56 V1 cuts (13 identity). Saved. The pixels Dean approved are the
+  render of these exact LUTs, so no second verify render.
+- **Unused RiPs deleted, CAM 5 NR off, Resolve closed (2026-10-18 night, Dean: "Remove the unused rip files … Disable nr
+  for me and then shutdown davinci").** Before deleting, re-ran the usage check on all 7 timelines and every video track
+  (media pool item `File Path`): none of the 204 listed files was used, and no other unused RiP was missing from the list.
+  `rm` of the 204 (64 GB: BOTTB 462 → 497 GB free, Extreme SSD 170 → 194 GB); then the 204 offline media-pool items removed
+  with `MediaPool.DeleteClips` (0 left), saved. **CAM 5 NR can be set from the API, without opening the multicam:**
+  `GetColorGroupsList()` → "CAM 5 Drum (S-Log3 8-bit)" → `GetPreClipNodeGraph()`: node 1 `HDR`, node 2
+  `OFX: Noise Reduction` → `SetNodeEnabled(2, False)`. Proved by render time, since there is no read-back: 3 frames of drum cut
+  257947 (4K ProRes HQ, `checks/nrcheck_drum_257977_off_v1.mov`) took 0.8 s, against 7.2 s with NR on. Job deleted, In/Out
+  restored to 176796–182631, render name reset, saved, then `resolve.Quit()`. Under Pressure's A4 cuts aren't done yet (Dean).
+- **Extending the Resolve MCP: static study (2026-10-18 night, subagent, Resolve closed).** Full report:
+  `scratchpad/resolve_extend/REPORT.txt` in the editor session (44b6c74e), with scripts and the extracted schemas
+  alongside. **ResolveMCP is a signed launcher around readable Python** (an embedded `.pyz` run by `ResolvePython`; the
+  `pylauncher` processes are live sessions' MCP servers). It has no plugin mechanism, so extending means our own MCP
+  server next to it. **The real gain is reading state back from `Project.db`:** grades are stored as 0x81 + zstd + protobuf, and
+  the `.proto` schemas ship inside the Resolve binary. From a read-only copy it already reads each node's enabled flag
+  (param `0xC0000001`, field 2: 2 = on, 0 = off; the meaning is inferred from data), every FLC parameter by name including
+  `halationIsEnable`, keyframes, Input Sizing and Dynamic Zoom rectangles. Spot-checked by the editor: CAM 5 pre-clip node 2
+  NR = OFF (matches tonight's render-time proof), final-cut timeline CST1/CST2/FLC/node 4 = OFF. It reads the state at the
+  last save, so the order is: save, copy with `sqlite3 -readonly`, decode. **Never write to Project.db.** Not yet tested
+  live: a toggle, save, read-back loop (E1); a halation on/off DRX swap with `ApplyGradeFromDRX` on a scratch copy (E2); the
+  undocumented methods `Graph.SetNodeActive/SetNodeLocked/ResetNode`. **Never call `DeactivateLicense`** (it deactivates
+  the licence and force-quits) or `TriggerCtrKTest`, both found in the binary's docstrings. RiP and Decompose have no API path
+  (context menu only), so they need UI automation or a render-and-overlay stand-in. A Ghidra pass over the 511 MB arm64 slice
+  would probably exceed 6 GB and take hours; it queues behind the mix session's REA/Ghidra work and needs Dean's OK.
+- **Installing REA is blocked for agents even with Dean's OK in the chat (2026-10-18).** The auto-mode classifier refused
+  `npm install --prefix /Volumes/Supp1Tb/ai-models/rea --ignore-scripts rea-agents@6.7.0` (and the mix session's earlier
+  attempt, as "external code"), and also refused a peer message announcing the install. Dean runs it himself or adds a Bash
+  permission rule; agents don't retry it another way.
+- **REA toolchain installed by Dean (2026-10-18), all on Supp1Tb:** REA 6.7.0 at
+  `/Volumes/Supp1Tb/ai-models/rea/node_modules/.bin/rea` (no `rea setup`, no agent config changed), Ghidra 12.1.4 at
+  `/Volumes/Supp1Tb/ai-models/ghidra_12.1.4_PUBLIC` and Temurin JDK 21.0.12.1 at `…/jdk-21.0.12.1+1/Contents/Home`, both
+  checksums OK. Set per command: `JAVA_HOME=… GHIDRA_INSTALL_DIR=…` (not in the shell profile). `rea doctor` passes Ghidra,
+  its headless mode and the JDK. **Trap: the Ghidra release has no macOS natives** (only Linux and Windows x86_64), so the
+  decompiler is missing until `support/gradle/./gradlew buildNatives` runs. That command downloads Gradle 9.7.1; put
+  `GRADLE_USER_HOME` on Supp1Tb and treat the build as a heavy job.
+  **Natives built (Dean, 2026-10-18):** `buildNatives` took 1 min 34 s. The decompiler, sleigh, demanglers and lzfse land in
+  each module's `build/os/mac_arm_64/`, not `os/`, and `rea doctor` now passes `ghidra-native_decompiler`.
