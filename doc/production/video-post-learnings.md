@@ -3063,6 +3063,14 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   and sets only the In (out = in); the second call sets both.** Always read it back. Canvanauts now has every zoomed
   cut RiP'd. The first-attempt RiPs on the Extreme SSD (25 GB, `…/2026/Brisbane/02_Production/BOTTB Sydney 2026 Full Show/Renders/`)
   and the older ones on BOTTB are unused. Deleting them is Dean's call.
+- **Under Pressure measurement (2026-10-18, Dean away; comfort: idle-ok, idle 18 min).** Cut list: 56 V1 multicam items, all five
+  angles, 21 zoomed, no grades (`gigstills/runs/sydney26_amakazaam_underpressure/cut_list.json`, written with the outside-MCP
+  fusionscript connection, as `wait_render.py` does). Look-on control `checks/up_lookon_F259100_v1.mp4`. V2 (look) and V3 (titles) off:
+  **the render had left Resolve on the Deliver page, where `SetTrackEnable` returned True and read back True (still on).**
+  `OpenPage("edit")` first, then it worked. Renders `Renders/measure_UnderPressure_Amakazaam_Syd26_lookoff_v1.mp4` (1080p H.264,
+  Rec.709, 5836 frames, 4 min 34 s) and `…_lookoff_DWGDI_v1.mov` (ProRes LT, output DWG/DI for the render only, 4 min 11 s).
+  Output restored; V2/V3 on; the restored look-on control is framemd5-identical to the first one, and the look-off frame differs.
+  In/Out restored (the renders moved it to 179600–179601), saved. Grade agent (Opus) briefed via `BRIEF.md` in that run dir.
 - **Under Pressure grade applied (2026-10-18, Dean away).** Grade agent (`gigstills/runs/sydney26_amakazaam_underpressure/`,
   REPORT.md): 27 apply (26 base Dean option + 1 face lift, cut 53), 16 held for Dean (big blue lifts on drums/Pit: wash or
   lighting is his call), 13 identity. **The Canvanauts forward model T2 failed here** (median 0.056 vs 0.020) on out-of-Rec.709
