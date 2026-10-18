@@ -3103,8 +3103,8 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   257947 (4K ProRes HQ, `checks/nrcheck_drum_257977_off_v1.mov`) took 0.8 s, against 7.2 s with NR on. Job deleted, In/Out
   restored to 176796–182631, render name reset, saved, then `resolve.Quit()`. Under Pressure's A4 cuts aren't done yet (Dean).
 - **Extending the Resolve MCP: static study (2026-10-18 night, subagent, Resolve closed).** Full report:
-  `scratchpad/resolve_extend/REPORT.txt` in the editor session (44b6c74e), with scripts and the extracted schemas
-  alongside. **ResolveMCP is a signed launcher around readable Python** (an embedded `.pyz` run by `ResolvePython`; the
+  the private repo `~/src/personal/resolve-lab` (`docs/feasibility-2026-10-18.md`, decoders in `scripts/`;
+  GitHub `dpovey/resolve-lab`). The editor's grading scratch is in gigstills `scripts/sydney26_grade/editor_scratch/`. **ResolveMCP is a signed launcher around readable Python** (an embedded `.pyz` run by `ResolvePython`; the
   `pylauncher` processes are live sessions' MCP servers). It has no plugin mechanism, so extending means our own MCP
   server next to it. **The real gain is reading state back from `Project.db`:** grades are stored as 0x81 + zstd + protobuf, and
   the `.proto` schemas ship inside the Resolve binary. From a read-only copy it already reads each node's enabled flag
