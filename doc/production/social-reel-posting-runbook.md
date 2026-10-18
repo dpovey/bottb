@@ -44,7 +44,8 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    `share_to_feed=true`, `collaborators=["handle1","handle2"]` (max 3; each account gets an accept
    prompt). Poll container `status_code` until `FINISHED` (~1–2 min). Collaborators are creation-time
    only: to change them on a pending post, recreate the container; on a **published** post the API
-   can do nothing — invite via the IG app (Edit → Invite collaborator; app allows ~5 vs the API's 3).
+   can do nothing — invite via instagram.com in Chrome or the IG app (Edit → Add collaborators; see
+   "Add collaborators after publish" under Photo posts). API and web cap at 3; the app took a 4th on 13 Oct 2026.
    Standing crew for Brisbane: videographers @quirkylikethat + @kurtboldy on every video post, so the
    3-cap list is [band company, @quirkylikethat, @kurtboldy]; if the band's company has no IG,
    use @youngcareoz as the third — NOT @thetriffid (they never accept collaborator invites). **IG cannot pre-schedule** —
@@ -418,6 +419,12 @@ timescale: for new TikTok posts, get the link from Dean's app from the start.)
 
 ### TikTok photo posts
 
+**12 Oct 2026 (four photo posts scheduled):** tiktok.com/explore → Upload now opens a small menu
+(Videos / Photos); click Photos. Title and description typed straight after the upload finishes can
+silently not land (both counters 0): wait ~8 s, click the fields by coordinate, and re-read the counters
+before scheduling. The time wheel moves one step per click and ignores a second click within ~1 s: click,
+wait 2 s, zoom, repeat. The picker is in the Mac's zone (Brisbane on 12 Oct), so 19:00 Sydney = 18:00.
+
 TikTok Studio has a **Photos** tab beside Videos (`/tiktokstudio/upload?tab=photo`). Same
 `file_upload` route; the first image becomes the Cover. Title is capped at 90 chars, description 4000. Typing `#tag` opens a suggestion dropdown — **never press Enter**, click a neutral area to
 dismiss it, or you will insert the wrong tag. Set Location to The Triffid. Posting redirects to
@@ -477,6 +484,12 @@ after setting it.**
   and click the coordinates it reports. The date field is separate and does take a calendar click.
 - **LinkedIn** — the friendliest: type `08:00 AM` and a suggestion appears below; click it. The
   dialog header restates the full local time, so read that back before hitting Next.
+  **12 Oct 2026:** the dialog works in the _browser's_ zone and names it ("Australian Eastern Standard
+  Time" while the Mac was on Brisbane time), so an 08:00 Sydney slot in October is typed as 7:00 AM.
+  Typing the date opens a calendar that hides the time field: click the day in the calendar. The dialog
+  shrinks after the time is picked, so re-find Next (a click on the old spot lands outside and raises
+  the save-draft prompt; close that with its X). Check the result from an empty composer: clock icon →
+  "View all scheduled posts" (there is no Scheduled tab under Page posts).
 
 ## Scheduling doctrine (AU)
 
@@ -536,20 +549,23 @@ values too: Jumbo Interactive Limited is `1517297`, Youngcare is `307122`, For T
 
 ## Handles / tags (verified Aug 2026)
 
-| Who                         | LinkedIn page                        | Instagram                  | Facebook             | Notes                                                                                      |
-| --------------------------- | ------------------------------------ | -------------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
-| BotTB                       | battle-of-the-tech-bands             | @battleofthetechbands      | page 207312765803305 | TikTok @bottb0, YouTube @battleofthetechbands                                              |
-| Jumbo Interactive (sponsor) | jumbo-interactive-limited            | — none                     | /JumboInteractive    | name-only on IG/TikTok                                                                     |
-| Youngcare                   | youngcareoz                          | @youngcareoz               | /YoungcareOz         | YouTube @YoungcareOz; no TikTok → use #youngcare                                           |
-| Rex Software                | rex-software                         | @rex_software              | /rexsoftware         |                                                                                            |
-| URBAN X                     | urbanx                               | @urbanx.io                 | /URBANX.IO           |                                                                                            |
-| Epsilon                     | epsilon                              | @epsilonmarketing (global) | /EpsilonMarketing    |                                                                                            |
-| Suncorp                     | suncorp ("Suncorp Group")            | @suncorp                   | /suncorpAUNZ         | /SunCorp is someone else                                                                   |
-| For The Record              | ftr-limited ("For The Record (FTR)") | — none                     | — none found         | LinkedIn only                                                                              |
-| The Triffid                 | —                                    | @thetriffid                | /thetriffid          | TikTok location yes; **do NOT use as IG collaborator — they never accept invites**         |
-| Amy Corrie (photographer)   | —                                    | @amyjuliaaaaa              | —                    | Brisbane 2026 stills. Credit "Photos by Amy Corrie"; IG collaborator (Dean approved 7 Sep) |
-| Aaron Griffiths (video)     | —                                    | @quirkylikethat            | —                    | Videographer — video posts only, never photo posts                                         |
-| Kurt Boldy (video)          | —                                    | @kurtboldy                 | —                    | Videographer — video posts only, never photo posts                                         |
+| Who                         | LinkedIn page                        | Instagram                  | Facebook             | Notes                                                                                                                                                                                                                                                             |
+| --------------------------- | ------------------------------------ | -------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BotTB                       | battle-of-the-tech-bands             | @battleofthetechbands      | page 207312765803305 | TikTok @bottb0, YouTube @battleofthetechbands                                                                                                                                                                                                                     |
+| Jumbo Interactive (sponsor) | jumbo-interactive-limited            | — none                     | /JumboInteractive    | name-only on IG/TikTok                                                                                                                                                                                                                                            |
+| Youngcare                   | youngcareoz                          | @youngcareoz               | /YoungcareOz         | YouTube @YoungcareOz; no TikTok → use #youngcare                                                                                                                                                                                                                  |
+| Rex Software                | rex-software                         | @rex_software              | /rexsoftware         |                                                                                                                                                                                                                                                                   |
+| URBAN X                     | urbanx                               | @urbanx.io                 | /URBANX.IO           |                                                                                                                                                                                                                                                                   |
+| Epsilon                     | epsilon                              | @epsilonmarketing (global) | /EpsilonMarketing    |                                                                                                                                                                                                                                                                   |
+| Suncorp                     | suncorp ("Suncorp Group")            | @suncorp                   | /suncorpAUNZ         | /SunCorp is someone else                                                                                                                                                                                                                                          |
+| For The Record              | ftr-limited ("For The Record (FTR)") | — none                     | — none found         | LinkedIn only                                                                                                                                                                                                                                                     |
+| The Triffid                 | —                                    | @thetriffid                | /thetriffid          | TikTok location yes; **do NOT use as IG collaborator — they never accept invites**                                                                                                                                                                                |
+| Amy Corrie (photographer)   | —                                    | @amyjuliaaaaa              | —                    | Brisbane 2026 stills. Credit "Photos by Amy Corrie"; IG collaborator (Dean approved 7 Sep)                                                                                                                                                                        |
+| Aaron Griffiths (video)     | —                                    | @quirkylikethat            | —                    | Videographer — video posts only, never photo posts                                                                                                                                                                                                                |
+| Kurt Boldy (video)          | —                                    | @kurtboldy                 | —                    | Videographer — video posts only, never photo posts                                                                                                                                                                                                                |
+| Nicole Ainsworth (video)    | —                                    | @sailornicole              | —                    | YouTube @sailornicole (name matches). Sydney 2026 camera operator. IG collaborator + credit on every Sydney video (Dean, 13 Oct); credit line lists names without roles                                                                                           |
+| Adam Davis-Powell (video)   | —                                    | @demonrace                 | —                    | YouTube: @ghostchant23 is his active channel (named Adam Davis-Powell, "DemonRaceProductions"); @demonrace exists but is empty. Sydney 2026 camera operator. IG collaborator + credit on every Sydney video (Dean, 13 Oct); credit line lists names without roles |
+| Rory Maclean (video)        | —                                    | @sinnerxszn                | —                    | No YouTube channel found (13 Oct). Shot and cut the Sydney 2026 highlights reel. Credit him **only on that reel**, not on other Sydney video posts (Dean, 13 Oct)                                                                                                 |
 
 **LinkedIn mentions: use the company's FULL registered name.** The typeahead matches on the name as
 LinkedIn holds it, so a partial name silently returns nothing:
@@ -584,6 +600,10 @@ with the choice/freedom/dignity line. Hashtag base: `#BattleOfTheTechBands #BotT
   "it's not X it's Y", no emoji bookends, first-person "we", lead with a detail someone in the room
   would recognise. Don't invent crowd reactions ("got its own cheer") — Dean cut every one; stick to
   facts and structure ("built around", "closed on").
+- **Crowd vote counts are vote rows, not voters (12 Oct 2026).** Sydney 2026 Canvanauts: 168 approved
+  rows from ~110 devices (109 FingerprintJS ids, 111 IPs); one iPhone fingerprint alone had 29 rows.
+  Dean: "The number of votes does not look right". Don't quote raw vote counts in copy; say who topped
+  the crowd vote, or check `count(distinct fingerprintjs_visitor_id)` and ask Dean first.
 - Get Dean to fact-check themes/instruments per band (pirates/erhu, Severance, monks in LED masks,
   70s theme (NOT 60s — got this wrong once), Gen-X backdrops, guest sets, youngest-performer) — none of that is in the DB.
 
@@ -636,6 +656,15 @@ Rather than driving the browser tool, run the layout offline:
   `src/app/admin/thumbnails/compose.ts` (`composeYouTube`) plus the `src/lib/canvas.ts` helpers
   (`drawCover`, `drawLogoRow`, `trimTransparent`, `wrapLines`) and `video-safe-area.ts` constants.
   If the in-app layout changes, re-port it.
+- **10 Oct 2026:** YouTube and LinkedIn thumbnails carry the song text (Dean: "we didn't put text on the
+  thumbnails for youtube and linkedin"). When Dean supplies a finished frame (BoTTB square already
+  top-right), feed it straight to `render.mjs` as the still: at 1920x1080 the crop is identity and the
+  square lands on the same pixels. Run it **from the repo root** (`@napi-rs/canvas` is in the repo's
+  `node_modules` now; no scratch install). The company SVG from `companies.logo_url` loads directly via
+  `loadImage`; rasterise to a wide PNG first so `trimTransparent` works. Keep Dean's plain frames as
+  `<slug>-<platform>-notext.jpg`. LinkedIn: swap the thumbnail **before** Post (Edit media preview →
+  Video thumbnail → Remove → upload → Update); YouTube: video edit page, `#file-loader`, Save, then check
+  `i.ytimg.com/vi/<id>/maxresdefault.jpg`.
 - `doc/production/scripts/thumbnail/render.mjs` — CLI wrapper. Run it from a scratch dir that has
   `npm i @napi-rs/canvas` (prebuilt binary, no compile; it reads the repo's
   `public/fonts/jost-latin.woff2` straight as woff2).
@@ -723,10 +752,34 @@ prepared by the `cut-recipe-colour-correction` session under
   IG scheduling API, and session cron jobs die with the session); this session schedules the
   **Facebook** side via the API. Each folder therefore needs the final caption as a plain `.txt`
   Dean can paste, not just a JSON field.
+- **12 Oct 2026: Claude can schedule an IG photo carousel in Business Suite itself** (Dean: "Can't you
+  automate it in Business suite?"). `business.facebook.com/latest/composer` → Post to: untick the Facebook
+  Page so only `battleofthetechbands` is ticked (FB is already scheduled by API) → patch
+  `HTMLInputElement.prototype.click` for file inputs, click "Add photo/video", `file_upload` the 1080
+  crops to the captured input (photos only; reels still need Dean's drag) → type the caption in the Text
+  box → Schedule toggle "Set date and time" → date via the calendar, time via the three spinbuttons
+  (hours, minutes, meridiem: type into each) → Schedule → "Maybe later" on the boost offer. Times are in
+  the **browser's zone** (Brisbane on 12 Oct, so a 09:00 Sydney slot is 08:00 AM). Check it in Planner
+  (`/latest/content_calendar`). The per-photo tag button offers only "Tag people", **no collaborator
+  invite**, so collaborators must be added after the post publishes (instagram.com Edit works, see below).
+  Same day, three more: (a) clicking outside the caption box while the hashtag suggester is open
+  **dropped the last hashtag** (Bandlassian lost #Atlassian) — end the caption with a trailing space and
+  blur by clicking the "Post details" heading, then read the tail back; (b) `cmd+ArrowDown` does not move
+  the caret to the end of the box, so to fix a caption select-all, Delete and retype; (c) the date field
+  takes typed `mm/dd/yyyy`.
 - **IG collaborators do not survive scheduling.** Business Suite has Tag People -> Invite
   Collaborator, but it is reported not to carry on a _scheduled_ post — the invite has to be added
   after it publishes (open post -> Edit -> Invite collaborator). Verify on the first post before
   queuing the rest. (Reported, not yet confirmed by us.)
+- **Add collaborators after publish from instagram.com in Chrome (13 Oct 2026, Amakazaam!).** No app
+  needed: open `instagram.com/p/<shortcode>/` (logged in as battleofthetechbands) → `⋯` → Edit → "Add
+  collaborators" → type the handle → tick the row → repeat → the panel's Done → the dialog's Done (top
+  right). The caption counter reads "0/2,200" in that dialog but the caption is intact; read the
+  `contenteditable` length before saving. **Decoy: `eddyhill_.gigphotography` (fan page) sits right under
+  the verified `eddyhill_gigphotography`** — zoom and pick the blue tick. **The web caps a post at 3
+  collaborators** (a 4th search returns nothing); the IG app took a 4th (@youngcareoz on the Sydney highlights
+  reel, 13 Oct 2026), so ask Dean to add any beyond three in the app. Verify with Graph
+  `GET /{ig-media-id}/collaborators` (shows each `invite_status`) and re-read the caption length.
 - **Credit the photographer** the way videos credit the videographers: "Photos by Amy Corrie",
   handle `@amyjuliaaaaa`, in the collaborator slot. The videographers do NOT go on photo posts.
   Dean confirmed 7 Sep 2026: Amy goes on as an IG collaborator on all six Brisbane photo posts.
@@ -830,6 +883,14 @@ Find the input with `find` ("file input for uploading images"), then `file_uploa
 in one call. Dragging is only needed for video.
 
 ### Verify LinkedIn mention chips by `data-entity-urn` before clicking Post
+
+**12 Oct 2026:** look the company up in the handles registry first: `pnpm bottb handles --platform
+linkedin` (table `social_handles`, `external_id` = the company urn). Sydney 2026 parties were missing
+until 12 Oct (Dean: "Don't you have those recorded in the db somewhere?"); every new company or
+photographer gets `bottb party add` + `handles set` the first time it is tagged. Two "V2 AI" pages
+exist: the right one is 81854932 (/company/v2ai, IT Services and IT Consulting). **Never press Escape in the
+LinkedIn composer** to close a hashtag dropdown: it opens "Save this post as a draft?" (Discard / Save as
+draft). Close that dialog with its X and the composer, chips and images survive.
 
 **Never click a typeahead row by coordinate.** The list re-renders between reading it and clicking,
 so the click lands on a different row. On 24 Sep that produced three wrong mentions in one caption —
@@ -953,6 +1014,11 @@ assumed it had. Always read the log for `BLOB_URL` before moving on.
 Verified 7 Sep 2026: uploads return `HTTP 200` with `access-control-allow-origin: *`, which is what
 makes the YouTube Studio cross-origin fetch-inject work. Use `multipart: true` for the big masters.
 Delete throwaway blobs with `del(url, {token})` — they are public until you do.
+
+**10 Oct 2026, measured:** `blob-upload.mjs` on a 236.6 MB file (multipart) took 58 s, peak footprint 0.38 GB
+(`/usr/bin/time -l`). Bounded memory on >1 GB is still unproven. When FB/IG use the 1080p IG file and only YouTube
+needs the 4K, Dean drags the 4K into Studio and only the IG file goes to Blob (his 3 Oct rule, applied to
+Jumbo "Say It Ain't So").
 
 ## Verify, don't assume
 
@@ -1227,6 +1293,26 @@ node doc/production/scripts/collect-social-metrics.mjs
 
 It upserts `posts` by `(platform, external_id)` and appends a `post_metrics` capture. Re-running is
 safe: existing posts are skipped and the unique `(post_id, captured_at)` stops duplicate captures.
+
+**Fixed 13 Oct 2026** (it had not been trusted since 22 Sep):
+
+- Ledger match now tries every id a post can carry (FB page-post id and attachment video id, IG
+  container id or shortcode) and the permalink's id. Before this, 17 already-ledgered posts showed as
+  new because the posting route stored a different id than the read API returns.
+- New rows take the event of the **first** city the caption names (Brisbane posts end "Sydney is
+  next"); no city gives NULL. YouTube hidden counts are NULL, not 0. FB `shares` stays `?? 0` because
+  Graph omits the field when a post has none.
+- `--since <date>` (default: last 30 days); `source` is `collect-social-metrics`; `--dry` prints `NEW`
+  for each post it would insert.
+
+**Weekly job (13 Oct 2026, Dean: "Yes"):** launch agent
+`~/Library/LaunchAgents/com.deapovey.bottb-social-metrics.plist` runs the collector Mondays 09:07
+local (catches up on wake), logging to `~/Library/Logs/bottb-social-metrics.log`. FB/IG/YouTube only.
+**LinkedIn and TikTok still need a session to scrape** them into `post_metrics` (source
+`linkedin-scrape`, `tiktok-studio-scrape`; the `source` column is varchar(20)). TikTok ids encode the
+creation time, not the publish time of a scheduled post: take `posted_at` from Studio's date column.
+LinkedIn's Content engagement table ignores Next/page-2 clicks (13 Oct): read page 1, then narrow the
+date range for older posts.
 
 ### Snapshots, not current values
 
