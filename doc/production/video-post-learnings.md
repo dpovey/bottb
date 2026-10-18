@@ -3130,3 +3130,26 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   `GRADLE_USER_HOME` on Supp1Tb and treat the build as a heavy job.
   **Natives built (Dean, 2026-10-18):** `buildNatives` took 1 min 34 s. The decompiler, sleigh, demanglers and lzfse land in
   each module's `build/os/mac_arm_64/`, not `os/`, and `rea doctor` now passes `ghidra-native_decompiler`.
+- **Resolve read-back and UI-automation checks (2026-10-19 ~00:25, Dean: "start resolve to do this when nothing heavy is
+  left").** Comfort gate "ask" (8 GB against 7.3), passed by the idle exception (idle 31 min, memreg empty, heavy.lock not
+  held). Resolve was registered critical while open and removed after.
+  - **`launch_resolve` can lie after a quit.** After `resolve.Quit()` it answered "DaVinci Resolve is running" without
+    launching, because the MCP keeps the stale connection (`_handle_launch_resolve`: `self._resolve is not None`). The next
+    `run_script` failed and cleared it, then a second `launch_resolve` started Resolve (10 s). Check `pgrep -x Resolve` after
+    launching. Resolve opened on "Untitled Project": `LoadProject("BOTTB Sydney 2026 Full Show")`.
+  - **E1 passed: Project.db is a working read-back for node enable.** Steps: CAM 5 group pre-clip node 2 (NR)
+    `SetNodeEnabled(2, True)`, then `SaveProject()`, `sqlite3 -readonly .backup` and `resolve-lab/scripts/nodestate.py`: ON.
+    Then `False`, save, read: OFF (left as found). Field `0xC0000001` = node enabled is now confirmed both ways. This proves
+    the API call reached the saved project; the render-time check proves the render.
+  - **UI automation can reach the menus only.** REA's `observe-native-ui` refuses Resolve ("target-limit: running
+    executable exceeds the 256 MiB identity-check budget"). Read directly (`resolve-lab/tools/axdump`, `axhit`):
+    - Resolve's Qt UI exposes **only the menu bar** (about 1,450 items, each pressable).
+    - `AXWindows`, `AXFocusedWindow` and hit-tests inside the window all return the application element, so the timeline,
+      panels, right-click menus and the FLC "Enable Halation" checkbox are invisible to accessibility.
+    - **Render in Place is in no main menu.**
+    - The main menus do have **Clip › Decompose in Place** (it may be the compound-clip one, not RiP's "Decompose to
+      Original": check with Dean), "Select All Clips Under Playhead", "Select Clips", "Bypass All Grades",
+      "Enable/Disable All Nodes" and "Keyboard Customization…".
+    - **Possible RiP path, untested:** Dean assigns a keyboard shortcut to Render in Place, if Keyboard Customization lists
+      it. Then: set the playhead by API, press "Select All Clips Under Playhead" by AX, send the shortcut, and press Return
+      in the dialog (which keeps its last settings). Verify by API afterwards: the item has become a `.mov` Video item.
