@@ -3160,3 +3160,11 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   lives on BOTTB, not in a repo). Movies `TitleCards/Sydney2026/amakazaam_syd26_NN-<song>_card.mov` with the Canvanauts ffmpeg recipe:
   125 f, alpha 0/128/255/255/175/12 read back, 1.27 GB peak each. V3 placement = song-map `start_frame` + 32: 244444, 250240,
   256734, 262189, 267746, 275765.
+- **Scripting refused because a print service held Resolve's port (2026-10-19).** After launch, `launch_resolve` timed out and
+  `dvr.scriptapp("Resolve")` returned None in 0.07 s, with a project open, no dialog, and External scripting = Local. `lsof`
+  showed Resolve/`fuscript` listening on `*:49153`, while **LRS Personal Print Manager** (`LRS.PersonalPrint.Service user service`)
+  held **`127.0.0.1:49153`** and `[::1]:49153`. The more specific bind wins, so local script connections reached the print service.
+  Resolve picks this port at launch, so the clash is intermittent. Fix (Dean: "kill it"): `kill` the user-service pid. launchd
+  restarted it on another port, and scripting connected at once, with no Resolve restart. **Check:** `lsof -nP -iTCP:<port> -sTCP:LISTEN`
+  on Resolve's listening port whenever the connection fails instantly. Also seen: after a quit, Resolve can reopen on the Project
+  Manager (scripting is unavailable until a project is open), so Dean double-clicks the project.
