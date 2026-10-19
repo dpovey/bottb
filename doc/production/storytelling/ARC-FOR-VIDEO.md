@@ -182,3 +182,14 @@ This overrides the concert-film advice to save crowd shots for the end (Demme, S
 - If no unique roving shot exists for a moment, stay on the band.
 
 **Correction (Dean, same day): "Don't only use those, still be sparing."** Crowd shots stay sparing overall. Prefer unique reactions on the roving cameras, but they are not the only crowd shots allowed. Use other crowd shots occasionally where they serve the moment, and keep the band the main subject.
+
+## Answered: zoom direction and Stage Right framing (video editor, 2026-10-19)
+
+Read by eye from the delivered 1080p master (first and last frames of each shot):
+
+- **Shots 20, 35 and 52 (Static Desk, Dynamic Zoom) all zoom OUT.** Each starts tighter on the band and ends on the full stage
+  with more crowd in frame. So the release reading of Dean's pattern holds in his own UP cut: three of the four peak onsets
+  land on a close Photo Pit shot, then open out to the Static Desk wide with a zoom-out 0.5–2.1 s later.
+- **Stage Right is a reverse angle**: from upstage, behind the band, looking out over a guitarist's shoulder at the crowd and the
+  lights (medium-wide at native size, 1.3–1.5× in this cut). It shows the band and the crowd together, so it can serve as a crowd
+  moment that keeps the band in frame.
