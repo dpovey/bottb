@@ -3198,3 +3198,12 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   `halationIsEnable` = 0, so the decoder tells the two apart. The final cut's own timeline FLC node is OFF, which is right: the look is on the
   Adjustment Clip. **New rule: before any delivery render, save, copy and run `flcstate.py`; report halation from it. Ask Dean
   only when the decode can't find the node.** This replaces "ask Dean to confirm Enable Halation" from NOK 2026-10-06.
+- **Under Pressure delivered (2026-10-19).** Job 9a2051e4 → `Renders/Amakazaam_UnderPressure_Sydney2026_4K_v1.mp4`, 1,320,524,166 B, **10 min 28 s**
+  (NR on, 43 LUTs, 21 RiPs, halation; machine paging with swap at 10 GB, Dean: "Go, paging is fine"). render-qc PASS (5836 frames, 44.9 Mb/s,
+  audio 233.51 s vs video 233.44 s), −13.5 LUFS, TP −0.6 dBFS, last frame Y 16, the end card visible over the fade, the song card at
+  +18 s. 1080p 351,586,441 B (11.7 Mb/s) and IG 237,256,281 B (7.8 Mb/s, 226.3 MiB) by `derive-1080-ig.sh`, both PASS, 1.01 GB peak,
+  6 and 5 min. **`render-qc.sh` is zsh: `bash render-qc.sh` fails with "print: command not found"**, so run it with `zsh`.
+  Post-delivery: A4 pieces back on, CAM 5 NR off (Project.db: OFF), the job cleared, the render name reset (job read-back
+  `BOTTB Sydney 2026 - final cut.mp4`), 21 Orange cleared, In/Out = RELEASE, saved; halation still on (Project.db). Dean "yes" (13:27)
+  to "good to go out" and to `_superseded`: preview/measure/verify renders moved to `Renders/_superseded/` (the gigstills run dir still
+  names their old paths). Handed to bottb-17 with the thumbnail not yet made.
