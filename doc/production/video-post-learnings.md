@@ -3168,3 +3168,11 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   restarted it on another port, and scripting connected at once, with no Resolve restart. **Check:** `lsof -nP -iTCP:<port> -sTCP:LISTEN`
   on Resolve's listening port whenever the connection fails instantly. Also seen: after a quit, Resolve can reopen on the Project
   Manager (scripting is unavailable until a project is open), so Dean double-clicks the project.
+- **Black Parade's clip fades now read 0 (2026-10-19).** On 2026-10-17 `SetFades({"FadeOut": 98})` on the last V1 cut (230143–230249) and on
+  the A5 mix read back `FadeOut 98.0`, and the 4K render's last frame was black. After a quit and reopen, `GetFades()` on both
+  reads `{'FadeIn': 0.0, 'FadeOut': 0.0}`. Not yet known: whether the fades were really lost (on save, on reopen, or by a later edit) or
+  `GetFades` reads wrong after a reload. Until that's settled, set the fades in the same session as the render, read them back right
+  before `StartRendering`, and check the last frame is black on the render itself.
+- **There is no trim or blade in the 21.1.1 API** (the stub has no SetStart/SetEnd/SetDuration/trim on TimelineItem; only
+  `GetLeftOffset`/`GetRightOffset`). Shortening a cut means either Dean in the UI, or `DeleteClips` (no ripple, leaves a gap) plus a
+  re-append of the pool item with new source in/out, which for a multicam item also means choosing the angle.
