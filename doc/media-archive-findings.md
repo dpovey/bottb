@@ -739,6 +739,12 @@ Also deleted: the stale Extreme cache `events/2026/Brisbane/03_Cache/CacheClip` 
 QC renders (`measure_/verify_/review_/lookon_*`) and superseded delivery versions in `BOTTB/Renders`,
 and the ShipRex CoveredInChrome master `.mov` + YT4K. BOTTB 282 → 716 GiB free, Extreme 190 → 224 GiB.
 
+**Sydney 2026 backup started 2026-10-19 12:40** (`05-sydney-2026.txt`): the `BOTTB SYD26` travel disk
+(5 camera folders, 24 MP4s, 456 G) → `events/2026/Sydney/01_Media/Video`, then `/Volumes/BOTTB/Sydney - 2026`
+(Logic multitrack `Project.logicx` 58 G plus mix/repitch/crowd/video work, 128 G) →
+`events/2026/Sydney/01_Media/Audio`. The audio folder is still being edited by other sessions, so a
+CHECK FAILED there can just mean a file changed mid-run; re-run the job to pick it up.
+
 ---
 
 ## SOLVED: the rebuilt timeline renders darker/redder — missing per-cut clip grades (2026-09-23)
