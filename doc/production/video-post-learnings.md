@@ -3191,3 +3191,10 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   Photo Pit 261989–262125 → 261989–262132, drum 262125 → 262132, every other track unchanged, In/Out intact. **This is the first
   timeline edit made by UI automation.** The same pattern should give a blade (`Timeline › Razor` at the playhead) and Fade Out to
   Playhead. Then the Photo Pit took FadeOut 98 and the A6 mix FadeOut 98 (both read back), with the end card at 262034–262131 Add.
+- **Halation can be read, not asked (2026-10-19, Dean: "Shouldn't you have been able to read the halation with your new tools?").**
+  I asked Dean to confirm Enable Halation before the Under Pressure render, when the Project.db decoder could already read it.
+  `resolve-lab/scripts/flcstate.py <copy.db>` after `SaveProject()` and `sqlite3 -readonly .backup`: **Adjustment Clip@79500 FLC node ON,
+  `halationIsEnable` = 1, `bloomIsEnable` = 1** (13:00 save, minutes before the render). Control: a backup timeline's FLC reads
+  `halationIsEnable` = 0, so the decoder tells the two apart. The final cut's own timeline FLC node is OFF, which is right: the look is on the
+  Adjustment Clip. **New rule: before any delivery render, save, copy and run `flcstate.py`; report halation from it. Ask Dean
+  only when the decode can't find the node.** This replaces "ask Dean to confirm Enable Halation" from NOK 2026-10-06.
