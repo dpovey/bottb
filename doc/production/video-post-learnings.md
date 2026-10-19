@@ -2071,3 +2071,87 @@ time_reference=172800000`), 10 s, 9 MB peak. Bit-exact against BotB-001 ch1/2 at
 - **Published (bottb-5b, 2026-10-06 ~11:00):** YouTube https://youtu.be/E2yeRiHRUlw (4K v2), FB + IG reels from Blob
   `release/brisbane-2026/Epsonics_NoOneKnows_1080p_IG_v2.mp4` (259,904,881 B verified), LinkedIn + TikTok from 1080p_v2 (Dean dragged).
   Live YouTube thumbnail checked from `maxresdefault.jpg`: Dean's custom art, no year on it. Copy: `doc/production/epsonics-noone-knows-copy.md`.
+
+## Brisbane: Jumbo "Say It Ain't So" placement (2026-10-06, bottb-af)
+
+- **The per-song picture check found a different offset from Bring Me to Life: +23.5 ms, not +56.5 ms** on the same Logic mapping
+  (bar 1 = 02:02:49:06). `align-mix --ref-tc 00:00:00:00 --band 300 3000 --search-s 12000` against `BOTTB_reference_48k.wav`
+  (24 s, 0.32 GB RSS): bounce sample 0 = 8921.2635 s vs bext 8921.240; placed, coarse ratio 6.42, 5/5 fine windows within 0.85 ms
+  across 10–228 s, 3/5 resolved. So never carry one Jumbo song's offset to another: the rule in "Jumbo audio anchor" stands, measured.
+- **Sub-frame landing by front trim, lossless:** 8921.2635 s = frame 223031.59, so `P = corrected − S0` with S0 = 223032 → −16.48 ms =
+  791 samples. `ffmpeg -af atrim=start_sample=791 -c:a pcm_s24le -write_bext 1 -metadata time_reference=<S0·1920>` wrote
+  `Jumbo_S5_Say_It_Aint_So_v1_at_02-28-41-07.wav`; checked bit-identical to the source from sample 791 by comparing the RIFF `data`
+  chunks (not by a second ffmpeg pass, which would share the filter). Resolve's pool reads Start TC 02:28:41:07 from the new bext.
+- Placing a mix on the show timeline because a **peer** asked was blocked by the permission classifier: get Dean's go for timeline
+  edits that a peer requested; measurement, import and the empty named track went ahead.
+- **Placed on Dean's go:** A13 "Jumbo S5 Say It Aint So MIX", 223032–228668 (02:28:41:07–02:32:26:18), FadeIn 0 (Dean: no fade-in),
+  FadeOut 125 (stem 1772.5–1777.5 s, read back). The append cleared In/Out again; restored NOK's from its RELEASE marker.
+- **24 Orange marks were still on V1 (Dean: reset them):** 23 RiP'd cuts in OTR "It's All Coming Back to Me Now" (00:17:28–00:21:30)
+  and NOK's CAM C Render 80 just past its Out (00:55:22:23). The post-delivery "clear Orange" step had missed the OTR song entirely
+  and the one NOK RiP outside the release range: clear by colour across the whole timeline, not only inside the In/Out. All 24 cleared, 0 left.
+- **v2 "with the missing start" (Dean, 2026-10-06):** 14 s longer at the front, same end. Bounce vs bounce `align-mix` put v1 at exactly
+  +14.000 s inside v2 (0 ms spread), so v1's picture offset and its 791-sample trim carried over. ~~It read `different_version`
+  (−2.3 dB residual), so a re-bounce can change the mix as well as the length~~ — CORRECTED same day (mix session): v2 − v1 is within
+  ±0.1 dB in every section and band (40 Hz–12 kHz), L−R identical; Dean only added the start. The waveform residual came from plug-ins
+  that do not render identically twice (adaptive RX, Exciter, reverb/modulation state at a different render start). **`align-mix`'s
+  `reading` cannot judge a re-bounce through such a chain: ask the mix session for a per-band/per-section level diff before calling
+  it a changed mix.**
+  A13 now holds `…_v2_at_02-28-27-07.wav`, 222682–228668, FadeOut 125.
+- **`ImportMedia` hung for 30 s and imported nothing while Dean was playing back, though read-only calls a moment later worked.** A
+  timeout with no output = go and look (read-only); if the page changed under you, ask whether he is playing before retrying.
+- **Dean's request IS the go for the heavy job it needs (Dean, 2026-10-06: "thats what I said").** He said "can you get gigstills to
+  grade cuts now"; memcheck read COMFORT ask (cheap 3.2 GB) and I asked him again before the measurement render. CLAUDE.md already
+  says an explicit instruction is the OK for the jobs it names: say the numbers in the status line and run it.
+- **`SetTrackEnable("video", n, True)` on the Deliver page returns True and changes nothing** (read back False twice right after a
+  render, which leaves Resolve on Deliver). `resolve.OpenPage("edit")` first, then enable and read back: worked. The disable before
+  the render, issued from the Edit page, had taken.
+- **Measurement render `measure_SIAS.mp4`:** 222263–228797 (whole cuts), 1080p H.264 single pass, audio on, V2 Adjustment + V3 Titles
+  off, timeline nodes 1–2 set disabled (no read-back exists; documented state), 41 s, 393 MB. `render-qc.sh` is a **zsh** script
+  (`print`): run it with zsh or directly, never `bash`. Its tail check FAILs whenever the range runs past the mix's end (here 5 s of
+  silence after the A13 fade): expected on a whole-cut measurement range, not a fault.
+- **Chapter marker on Dean's In:** the Mint "CH Jumbo 5 Say It Ain't So" sits at 222764, so `AddMarker` there returned False; the Cyan
+  RELEASE marker went at In+1 (222765, duration 5904) with In/Out in its name, as on NOK. Note the chapter (02:28:30:14) is 12 s
+  before the song-start table's 02:28:42:06.
+- **Dean disabled the Film Look Creator on the V2 adjustment clip (2026-10-06, during the Say It Ain't So grade).** Any render after
+  this has no FLC unless he turns it back on: ask before a delivery render, and before re-rendering a published song.
+  (Updated same night: Dean turned the FLC back on, "FLC is back on in the adjustment clip". Still ask him to confirm the look
+  state before any delivery render, since it can be toggled by hand with no API read.)
+- **Beige clip colour = unknown historical mark, cleared for Jumbo (Dean, 2026-10-06: "maybe from the initial pass to find good
+  takes. Clean them up now").** 432 Beige V1 cuts show-wide (OTR 00:00–00:40, Jumbo 02:11–02:38, Total Loss 02:50–03:30; none in
+  Epsonics/ShipRex). Cleared the 154 in Jumbo (02:00–02:45), then on Dean's "yep clean them up" the other 278 (OTR + Total Loss): 0 Beige left show-wide. Beige carries no meaning in this
+  runbook: don't read it as a RiP or zoom mark.
+- **Dehaze review loop: Dean's Clips-strip click landed one CAM D wide late twice (2026-10-08).** With the playhead mid-cut on 1039,
+  his Dehaze went onto 1042; on 1033 it went onto 1035 (the next CAM D cut each time). Read back the node graph of the cut he was meant
+  to be on after every "done" (scan the range for `GetNumNodes() > 1` to find where it went). ~~`SetCurrentTimecode` makes the V1 cut
+  current~~ (corrected same session: it only read V1 because Dean had just clicked it; on a fresh move it read the Adjustment Clip).
+  Disabling V2 + moving makes V1 current, but re-enabling V2 hands the selection straight back to the Adjustment Clip.
+- **`GetToolsInNode` reports a `SetCDL` node as `['Primary Balance', 'Saturation, Hue & Lum Mix']` (2026-10-08).** An identity/unset
+  node reads None. So the tool list cannot tell Dean's own primaries from an applied CDL: I wrongly told him he had hand-adjusted 1016.
+  To know whether Dean touched a CDL'd cut, ask him or compare pixels against the CDL's prediction.
+- **Pre-RiP prep (2026-10-08):** Deflicker/NR ON in the 6 group pre-clip nodes (CAM A n2 Deflicker; CAM B/C n2 Deflicker + n3 NR;
+  CAM D n2 NR), one `SetNodeEnabled` call each, **proved on pixels** with a look-off check render 223250–224720 against the verify
+  render: 4.3× real time (vs 0.3× with them off) and 1.6–2.5 codes mean change on CAM A/B/C; CAM D (NR only) 0.9 codes with
+  high-frequency energy −4.5 %. The render left Resolve on Deliver again: `OpenPage("edit")` before re-enabling V2/V3. Then
+  `mark_zoomed.py` (22 Orange: 16 Dynamic Zoom + 6 static ≥ 1.3, read back), no Face Refinement/depth/mask tools on them,
+  Super Scale 2 on 33 sources (read back). Empty `{"error": ""}` from `run_script` happened 4× this session on simple calls whose
+  edits had taken: read back before retrying.
+- **"do it" is not the halation answer (Dean, 2026-10-08).** I asked "is Enable Halation on? say yes and I'll start", took his "do it"
+  as the confirmation and began announcing/registering; he rejected the calls and said "stop", then "halation on go". Wait for
+  an explicit halation answer before the delivery render; a general go does not cover it.
+- **Blade by script (no UI):** last V1 cut was a RiP'd `.mov` with left offset 0 → `DeleteClips([item], False)`, re-`AppendToTimeline`
+  the same pool item as two pieces (startFrame 0–52 at the cut start, 52–181 at Out+1, mediaType 1), then re-`SetCDL`, re-
+  `AssignToColorGroup`, re-colour both. `SetFades({"FadeOut": 52})` on a 52-frame item read back 51 (capped at length − 1).
+  End card `EndCard_2x.mov` on V3 Titles 228571–228668, Add read back 1. 4K job: H.264 3840×2160, VideoQuality 45000, single pass.
+- **4K v1 rendered (2026-10-08):** `/Volumes/BOTTB/Renders/BOTTB_Jumbo_SayItAintSo_4K_v1.mp4`, 1,329,406,086 B, 21 min 12 s,
+  render-qc PASS (5905 frames, 44.7 Mb/s), −14.6 LUFS, −0.8 dBTP, mix at +3.280 s = exactly In − mix start (82 frames), same_mix
+  residual −33.4 dB. New tool `scripts/derive-1080-ig.sh <4K> <in> <out>` (NOK's ffmpeg settings, sequential, render-qc each).
+  First run: 1080p encoded 349 s at 1.01 GB peak, then no file, because **both external drives unmounted mid-job**; the script's
+  `| grep` had swallowed ffmpeg's error, so the failure was silent. Fixed: stderr to a log, printed on failure. 
+  The "finished" 1080p it left was **truncated (no moov atom)**: moved to `Renders/_superseded/…TRUNCATED-no-moov.mp4`. Script now
+  QCs an existing output and stops if it is broken. **Proven 2026-10-10:** 1080p 351,401,632 B (11.6 Mb/s, 354 s, 1.02 GB peak) and
+  IG 236,615,593 B = 225.7 MiB (7.7 Mb/s, 298 s, 1.03 GB), render-qc PASS on both (5905 frames).
+- **Social handover: the agent's name changed and the song was already live (2026-10-12).** bottb-21 took the handover on
+  2026-10-10, and the song was live on all five platforms between 14:06 and 14:12 that day (per bottb-17). By 10-12 the Social agent was bottb-17 and bottb-21 was gone, so I
+  re-sent the whole handover, and it wasn't needed. **Before re-sending, ask the new Social agent whether the ledger has the song.
+  A missing name isn't a missing post.** Also check this session's own name in `ListAgents` before signing messages: it had
+  drifted (bottb-af → bottb-3c).
