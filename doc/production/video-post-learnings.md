@@ -3153,3 +3153,10 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
     - **Possible RiP path, untested:** Dean assigns a keyboard shortcut to Render in Place, if Keyboard Customization lists
       it. Then: set the playhead by API, press "Select All Clips Under Playhead" by AX, send the shortcut, and press Return
       in the dialog (which keeps its last settings). Verify by API afterwards: the item has become a `.mov` Video item.
+- **Amakazaam cards (2026-10-19, Dean: "the set needs song cards, the song needs an end card").** `generate-song-overlays.ts
+  --event sydney --band amakazaam` wrote to **`02_Production/Amakazaam!/Overlays/`**: the folder takes the band's DB name, `!`
+  included, so it was moved to `Amakazaam/Overlays/`. 6 PNGs in played order (Valerie, Superstition, Under Pressure, Are You Gonna Go
+  My Way, You Oughta Know, Killing in the Name), matching `/Volumes/BOTTB/Sydney - 2026/video/song_maps/songs.json` (the song map
+  lives on BOTTB, not in a repo). Movies `TitleCards/Sydney2026/amakazaam_syd26_NN-<song>_card.mov` with the Canvanauts ffmpeg recipe:
+  125 f, alpha 0/128/255/255/175/12 read back, 1.27 GB peak each. V3 placement = song-map `start_frame` + 32: 244444, 250240,
+  256734, 262189, 267746, 275765.
