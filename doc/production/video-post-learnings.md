@@ -3176,3 +3176,18 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
 - **There is no trim or blade in the 21.1.1 API** (the stub has no SetStart/SetEnd/SetDuration/trim on TimelineItem; only
   `GetLeftOffset`/`GetRightOffset`). Shortening a cut means either Dean in the UI, or `DeleteClips` (no ripple, leaves a gap) plus a
   re-append of the pool item with new source in/out, which for a multicam item also means choosing the angle.
+- **Under Pressure RiP (2026-10-19), the recipe run end to end.** CAM 5 NR on (Project.db read-back: ON), 21 cuts Orange (14 Static Desk,
+  5 Stage Right, 2 Desk Tracking; no drum, no Face Refinement), Super Scale 2 on 24 sources, output DWG/Intermediate, pre-RiP refs
+  `checks/ripcheck_up_{sr15_257363,deskdz_260141}_preRiP_v1.mov`. **Dean RiP'd to the Extreme SSD** (`…/2026/Brisbane/02_Production/BOTTB
+  Sydney 2026 Full Show/Renders/`, "much faster"): 21 ProRes 422 HQ files, 7.9 GB, the first file landing at 12:37:36 and the last at 12:41:12. A
+  waiter watching `/Volumes/BOTTB/Renders` would have missed them, so ask where the RiP is going. Read back: 21 Video items tagged DaVinci
+  WG/Intermediate, 43 LUT cuts still live; output back to Rec.709/Gamma 2.4; 21/21 re-assigned by angle; Super Scale 1 (24). Pixels
+  post vs pre (look on, middle frame): desk DZ mean |Δ| 0.0059, p90 0.831→0.820; Stage Right 1.5× mean |Δ| 0.0133, uniformly darker
+  (signed RGB −0.012/−0.011/−0.015, p50 0.625→0.613). Dean may move the RiPs to BOTTB for archive: relink after the move.
+- **A roll edit from a script works through the menu bar (2026-10-19, Dean: "can you just roll the edit out").** The API can't trim, but
+  `resolve-lab/tools/axpress <pid> "Trim" "Select Nearest Edit To" "Roll"` and `axpress … "Trim" "Extend Edit"` can. Steps:
+  the Edit page (on Color, Select Nearest Edit To is disabled); `SetCurrentTimecode` on the edit (02:54:45:00); `Edit › Deselect All`;
+  `Trim › Select Nearest Edit To › Roll`; `SetCurrentTimecode` one frame past the Out (02:54:45:07); `Trim › Extend Edit`. Read back:
+  Photo Pit 261989–262125 → 261989–262132, drum 262125 → 262132, every other track unchanged, In/Out intact. **This is the first
+  timeline edit made by UI automation.** The same pattern should give a blade (`Timeline › Razor` at the playhead) and Fade Out to
+  Playhead. Then the Photo Pit took FadeOut 98 and the A6 mix FadeOut 98 (both read back), with the end card at 262034–262131 Add.
