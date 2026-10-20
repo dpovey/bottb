@@ -745,6 +745,12 @@ and the ShipRex CoveredInChrome master `.mov` + YT4K. BOTTB 282 → 716 GiB free
 `events/2026/Sydney/01_Media/Audio`. The audio folder is still being edited by other sessions, so a
 CHECK FAILED there can just mean a file changed mid-run; re-run the job to pick it up.
 
+**Status 2026-10-20:** both MD5-verified on Drive — video 24/24 files (01:45), audio 7,592 files
+(20:55, resumed via `05b-sydney-2026-audio-resume.txt` after a drive detach). Sydney 2026 now has two
+copies. Two pytest `…current` symlinks under `repitch/*/work/tmp` are skipped (exFAT, harmless).
+The original wrapper died mid-job on 2026-10-19 for an unknown reason (not mem-guard) while its rclone
+carried on; if `status` says "not running" during a job, check `pgrep -fl rclone` before restarting.
+
 ---
 
 ## SOLVED: the rebuilt timeline renders darker/redder — missing per-cut clip grades (2026-09-23)
