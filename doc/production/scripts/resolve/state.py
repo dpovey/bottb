@@ -1,7 +1,7 @@
 # READ-ONLY pre/post-flight report. Paste into run_script (sandboxed is fine; < 10 s).
 # Edit IN/OUT to the song's range (record frames) or leave None to use the timeline In/Out.
 # Every line it prints is a checklist item in video-post-learnings.md "Delivery render checklist".
-IN, OUT = None, None
+IN, OUT = None, None  # absolute record frames, as items and render jobs report them
 MAIN_TIMELINE = "BOTTB Brisbane 2026"
 import DaVinciResolveScript as dvr
 resolve = dvr.scriptapp("Resolve"); proj = resolve.GetProjectManager().GetCurrentProject()
@@ -17,7 +17,10 @@ print("timeline      %s%s" % (name, "" if name == MAIN_TIMELINE else
 print("page          %s" % resolve.GetCurrentPage())
 print("resolution    %sx%s" % (tl.GetSetting("timelineResolutionWidth"), tl.GetSetting("timelineResolutionHeight")))
 mio = tl.GetMarkInOut() or {}
-v = mio.get("video", {})
+v = dict(mio.get("video", {}))
+# GetMarkInOut counts from the timeline start; items, markers+start and render jobs are absolute (runbook 2026-10-14).
+for k in ("in", "out"):
+    if k in v: v[k] += tl.GetStartFrame()
 print("In/Out        %s" % ("%s-%s  (%s-%s, %d frames)" % (v["in"], v["out"], tc(v["in"]), tc(v["out"]), v["out"]-v["in"]+1)
                             if "in" in v and "out" in v else "none"))
 for f, m in sorted((tl.GetMarkers() or {}).items()):

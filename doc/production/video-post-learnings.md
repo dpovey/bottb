@@ -3207,3 +3207,40 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   `BOTTB Sydney 2026 - final cut.mp4`), 21 Orange cleared, In/Out = RELEASE, saved; halation still on (Project.db). Dean "yes" (13:27)
   to "good to go out" and to `_superseded`: preview/measure/verify renders moved to `Renders/_superseded/` (the gigstills run dir still
   names their old paths). Handed to bottb-17 with the thumbnail not yet made.
+- **ShipReX "Mustang Sally" rough mix MIXv1 (2026-10-22, from "Mix under pressure" on Dean's request; for picture, not the master).**
+  `02_Production/ShipReX/MIXv1_bwf.wav` (48 k/24-bit stereo, 326.0 s, BWF 233385477 stamped by mix-assist; `MIXv1.wav` has no bext).
+  Sync against the desk scratch (`ms_sync.py`, the up_sync recipe): **+7.0 ms at all five points** (t = 20/80/150/220/280 s, NCC
+  0.53–0.65 against a runner-up ≤ 0.18), wrong-region control 0.029, 0.32 GB, 2 min. The stamp holds. **My slip: I worked out
+  stamp ÷ 1920 by hand as 121555.98 and placed it at 121556; it is 121554.94, so the right frame is 121555 = 01:21:02:05 (stamp 2.6 ms
+  before the frame).** The import's `Start TC` read 01:21:02:04 (Resolve floors the stamp to a frame), which gave it away. **Rule:
+  compute the frame in code (`round(stamp/1920)`) and check it against the imported clip's `Start TC` (floor) before appending.**
+  The `davinci-resolve` MCP failed to connect at session start, and the direct `DaVinciResolveScript` route (as in `wait_render.py`)
+  worked for reads, `AddTrack`, `ImportMedia`, `AppendToTimeline` and `DeleteClips`. After that, the auto-mode classifier blocked the
+  re-append; Dean: "You need to place it." Placed on A7 "Mustang Sally MIXv1 (rough)" at 121555–129705 (startFrame 0, endFrame 8150, left offset 0, read back), saved. A4 pieces overlapping 121555–129705:
+  117270–121615 (starts long before the mix, overlaps its first 60 frames), 121615–122268 (inside), 122268–129868 (runs 163 frames past the end).
+- **Direct `DaVinciResolveScript` from `/usr/bin/python3` segfaults on exit (2026-10-22): Dean got "Python quit unexpectedly".**
+  Two of my runs left `Python-2026-10-22-2309*.ips` / `-2315*.ips`: SIGSEGV in `fusionscript.so`
+  `Fusion::RemoteApp::FindLocalObject` on its own thread during interpreter teardown, after the script had done its work and
+  printed. Resolve and the MCP's `ResolvePython` helpers were unaffected. **Fix: first line of any direct script,
+  `atexit.register(lambda: (sys.stdout.flush(), os._exit(0)))`**, so teardown never runs. `wait_render.py` has the same exposure.
+- **Mustang Sally 4K preview with MIXv1 (2026-10-22; Dean: "bounce a 4k copy of mustang sally and upload to youtube with this audio";
+  he muted A4 himself; picked mix-extent range, as-is preview, "Go, paging is fine").** In/Out 121555–129704 (01:21:02:05–01:26:28:04, the
+  bounce's extent; the green marker is 01:21:32:18–01:26:36:18), Cyan `RELEASE: Mustang Sally` at relative 42055, dur 8150. **The first job
+  read MarkIn 201055: I passed absolute frames to `SetMarkInOut` (the 2026-10-14 trap above).** Deleted unstarted, re-marked 42055–50204,
+  re-queued, read back 121555–129704. Job c1d8ab8a → `Renders/preview_MustangSally_ShipReX_Syd26_4K_v1.mp4`, H.264 45 Mb/s single pass,
+  set ungraded (V2 look only), 1 dynamic-zoom cut rendered live, no cards. **8 min 51 s**, 1,848,743,770 B, render-qc PASS (8150 frames,
+  video 326.00 / audio 326.08 s, 45.0 Mb/s), −13.8 LUFS-I, −0.7 dBTP after AAC (bounce −1.0). In/Out survived the render. Job cleared,
+  render name reset to the timeline name (no read-back exists), saved. **The project library is now Blackmagic Cloud (PostgreSQL,
+  ap-southeast-2) since 22:13 (deapovey-57); `GetCurrentDatabase()` reads it.** `state.py` fixed to add `GetStartFrame()` to the In/Out.
+- **New tool `scripts/bwf-sync-check.py` (2026-10-22), replacing the scratchpad bp_sync/up_sync/ms_sync copies.** `venv/bin/python -I
+  bwf-sync-check.py <bounce.wav>` reads the BWF stamp with ffprobe, prints the frame to place at (`round(stamp/1920)`) and its TC, then
+  the five-point NCC vs the desk scratch and a wrong-region control. Proven on MIXv1_bwf.wav (+7.0 ms ×5, control 0.032, same as
+  ms_sync) and on a stamp-less copy (refused, exit 1).
+- **~~Logic bounces carry no bext~~ CORRECTED 2026-10-22: Dean's Logic 12.2 bounce `ShipReX/MIXv1.wav` carries one.** ffprobe:
+  `encoded_by=Logic Pro`, `time_reference=233385475`, a umid. mix-assist's restamped `MIXv1_bwf.wav` says 233385477, 2 samples
+  later. Both land on frame 121555. The mix session believed the bounce had no bext. Read the stamp with ffprobe before restamping,
+  and still check it with `bwf-sync-check.py`.
+- **Direct scripting when the MCP is down (2026-10-22).** `davinci-resolve` MCP timed out at start-up. `DaVinciResolveScript` from
+  `/usr/bin/python3` (the `wait_render.py` header) did reads, AddTrack, ImportMedia, AppendToTimeline, DeleteClips, SetMarkInOut,
+  AddMarker, render setup/start and SaveProject. Add the `atexit … os._exit(0)` line (entry above) or Dean gets a crash dialog per run.
+  Unlisted YouTube upload of the preview: https://youtu.be/hjiTbqrFazc (social session, Dean drag + Studio).
