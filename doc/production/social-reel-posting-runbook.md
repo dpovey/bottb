@@ -153,8 +153,16 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
        if a video ever carries a cloned voice or generated realistic footage.
      - **Allow embedding: ON.** The site embeds every video from the `videos` table, so this is load-bearing.
      - Tags: band, company, songs, "Battle of the Tech Bands", city + year.
-       Check the field names in Studio the first time (this list was written from Dean's report, not a walk-through) and
-       correct this entry. For videos already up, the same fields are on each video's edit page; backfill them.
+       ~~Check the field names in Studio the first time~~ Checked by name 2026-10-22 (Mustang Sally preview, `hjiTbqrFazc`):
+       Details → **Show more** (`#toggle-button`) → **AI use** radios "Yes, AI was used" / "No, AI wasn't used"; **Tags** (type
+       them comma-separated, each comma makes a chip); **Video language** and **Category** came pre-set (English, Music: channel
+       defaults, read them anyway); **Recording date** opens a calendar (click the day); **Video location** is a typeahead: type
+       "Manning Bar", pick "Manning Bar Hideout at Manning, Manning Road, Camperdown NSW" (decoys: Mannings BBQ, Manning's Sports
+       Bar). **Allow embedding** is a checkbox under Licence (was already on). Audience: `tp-yt-paper-radio-button[name=
+       VIDEO_MADE_FOR_KIDS_NOT_MFK]`. Read-back that worked: every `[role=radio][aria-checked=true]` innerText, the location
+       input's value, the tags' `ytcp-chip` texts. **Save while still uploading is fine:** Studio says "will be unlisted once
+       uploading and processing have finished. Keep this browser tab open". For videos already up, the same fields are on each
+       video's edit page; backfill them.
    - **Title cap is 100 characters, hard.** The house format
      `{artist} - {song} (Live Cover) - {company} - Brisbane Battle of the Tech Bands {year}` came to
      104 for Bring Me to Life and would not have fitted. Shorten the event, not the sponsor:
