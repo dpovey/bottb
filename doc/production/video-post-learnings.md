@@ -3244,3 +3244,23 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   `/usr/bin/python3` (the `wait_render.py` header) did reads, AddTrack, ImportMedia, AppendToTimeline, DeleteClips, SetMarkInOut,
   AddMarker, render setup/start and SaveProject. Add the `atexit … os._exit(0)` line (entry above) or Dean gets a crash dialog per run.
   Unlisted YouTube upload of the preview: https://youtu.be/hjiTbqrFazc (social session, Dean drag + Studio).
+- **V2 Voyagers "Starships / UFO" (S5) master v1 placed (2026-10-28, bottb-8f; from mix-assist-d5).** `Extreme SSD/…/02_Production/V2Voyagers/
+  V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medley_logic_r16_master.wav` byte for byte, sha256 5b921d12…;
+  339.000 s, 24-bit/48 k; BWF 617385475; mix-assist QC −14.57 LUFS-I, −1.00 dBTP). `bwf-sync-check.py` (run from the branch with
+  mix-assist's `uv run python`, because main has no scripts venv): +7.0 ms at all 5 points, ncc 0.55–0.67, control 0.015, so the stamp holds.
+  mix-assist's align-mix against SYDNEY26_full.wav refused twice (1.06×/1.04×). **Placed on new A8 "V2 Medley S5 master v1" at 321555–330030
+  (03:34:22:05–03:40:01:05)**, left offset 0, read back, saved. The import's Start TC read 03:34:22:04 (floor), as the 2026-10-22 rule predicts.
+  The A4 pieces 321538–321766, 321766–329886 and 329886–330230 are clip-disabled; the A4 track was already off. **vs r14** (`align-mix
+  --bounce v1 --ref r14 --ref-bext`): v1 starts **150 frames (6.000 s) earlier**, 5/5 windows, measured − bext 0.0 frames, residual −7.75 dB
+  (different version). `AppendToTimeline` left the playhead at the item's end (03:40:01:05).
+  The bounce starts in crowd noise (Logic's full cycle), so it needs crossfades into the show audio at both ends; those wait on Dean's In/Out.
+- **A brief's "current mix on the timeline" was wrong (2026-10-28).** The job said r14 (`V2Medley_fullmix_r14_master_ceiling-3.0_24bit_20261022.wav`)
+  was the medley audio on the full-show timeline. It was on none of the 7 timelines and not in the media pool. mix-assist had read its own
+  "r14 shipped" as "placed", although its board still had "Davinci handoff" OPEN. Rule (skill, step 2): find the "current" file by path
+  on the timeline before planning a replacement around it.
+- **Medley In/Out and fades (2026-10-28; Dean via mix-assist-d5: "Start with the in out set to the audio"; Dean here: "Fades on the clip").**
+  In/Out 321555–330029 (relative 242055–250529, read back); Cyan `RELEASE: Starships / UFO 03:34:22:05-03:40:01:04` at relative 242055,
+  dur 8475; A8 `SetFades` FadeIn 25 / FadeOut 98 (read back); saved. The A4 track is off, so these are fades from and to silence, not a
+  crossfade. Dean plans to recut the medley's picture; the audio placement doesn't depend on the cut. Check `GetFades()` again before any render:
+  Black Parade's fades read 0 after a reopen (2026-10-19 entry above). A read-only script hung with no output while Dean was playing
+  and finished by itself once playback stopped: wait for it, don't kill it.
