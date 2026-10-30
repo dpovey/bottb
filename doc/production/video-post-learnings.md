@@ -3542,3 +3542,10 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   name (probe job read `BOTTB Sydney 2026 - final cut.mov`, deleted), saved. **The 13:37 `nrcheck_*_before/after` refs were rendered
   look-off** (mean 0.29 vs 0.30–0.31 now): compare an NR re-check against a frame cut from the delivered master, not those.
   Halation left ON until Dean says.
+- **Tools promoted from the scratchpad (2026-10-30, Dean: "consider what you learnt… what improvements, skills or tools"):**
+  `scripts/resolve/rr.sh` (runner + hang guard), `render_range.py`, `post_delivery.py`, `last_fade.py`, `open_project.py`,
+  `wait_render.py` hang guard, `scripts/derive-1080-ig.sh` (IG rate from duration, parallel; now on this branch) and
+  `scripts/handover.py`. Each was proven on the V2 medley: a 3-frame render through render_range → wait_render → post_delivery
+  (job deleted, In/Out back, name read back), the hang guard with a sleeping script (rc 142), derive's rate/QC path on the
+  existing files. **derive's own encode branch hasn't run from the script yet** (same ffmpeg command as the proven parallel run).
+  Lesson: the medley ran ~40 helpers from `/tmp`; promote on the second run.
