@@ -7,6 +7,21 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
 `scripts/social-fbig.mjs` (run from repo root: `S=<state dir> node scripts/social-fbig.mjs <postKey>
 <video path> <ISO time> <collab1,collab2>`; it reads captions from `posts.json` in `$S`).
 
+## Per-platform files
+
+Platform mechanics were split out of this runbook on 2026-10-30. Read the one file for the platform you are posting to; shared rules (copy, handles, scheduling, ledger) stay here.
+
+- [`social/youtube.md`](social/youtube.md): YouTube via Studio, thumbnails, deleting a replaced video
+- [`social/linkedin.md`](social/linkedin.md): LinkedIn composer, mandatory mentions, chips, photos
+- [`social/tiktok.md`](social/tiktok.md): TikTok Studio, caption check, photo posts
+- [`social/facebook-instagram.md`](social/facebook-instagram.md): Blob, Facebook and Instagram Graph API, Meta app publishing
+- [`social/browser.md`](social/browser.md): Chrome extension quirks, thumbnails and covers, time pickers
+
+For a video post, `scripts/publish-video.mjs <post.json> <command>` drives the API half from one
+`post.json` (Blob uploads, Facebook, Instagram, every ledger row, the website `videos` row, the WhatsApp
+text) and lints captions; YouTube, LinkedIn and TikTok are still posted in Chrome and then recorded with
+`record youtube|linkedin|tiktok <id>`. Example: `v2-voyagers-starships-ufo/post.json` (30 Oct 2026).
+
 ## The pipeline per reel
 
 1. **Brand the video** (ffmpeg): additive-blend the white-on-black `End Card.mov` logo over the first
@@ -14,251 +29,12 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    Gotcha: `pad` silently clamps a y-offset that would overflow the frame — crop the logo canvas to fit
    _before_ padding, or the logo lands mid-frame. Keep output 1080×1920 H.264 + AAC, `+faststart`.
    On busy bright shots the additive logo washes out; acceptable, but check a frame.
-2. **Upload the branded file to Vercel Blob** (`@vercel/blob` `put`, `social/<event>/<file>`,
-   public, `allowOverwrite`). This URL feeds Facebook and the YouTube browser trick.
-   **Instagram needs a second, 1080p upload — the 4K master does not work there** (see step 4).
-   Upload both up front on a 4K job; the 1080p is already rendered beside the master in
-   `TO_POST_<song>/` because LinkedIn and TikTok want it too.
-3. **Facebook Reel via Graph API** (page token `META_PAGE_ACCESS_TOKEN`): `POST /{page}/video_reels`
-   `upload_phase=start` → `POST rupload.facebook.com/video-upload/v21.0/{video_id}` with header
-   `file_url: <blob url>` (no binary upload needed) → poll `{video_id}?fields=status` until
-   `uploading_phase.status=complete` → `upload_phase=finish` with `video_state=SCHEDULED`,
-   `scheduled_publish_time=<epoch>`, `description`. Permalink is `facebook.com/reel/{video_id}`
-   immediately. **`copyright_check_status` is NOT a top-level field** — asking for
-   `?fields=copyright_check_status` returns `(#100) Tried accessing nonexisting field`. It is nested
-   under `status`, so query `?fields=status` and read `status.copyright_check_status`, which sits
-   alongside `uploading_phase`, `processing_phase` and `publishing_phase`. (Confirmed 21 Sep 2026;
-   the earlier wording here implied a top-level field.)
-
-   **`GET /{page}/scheduled_posts` lags the video object — do not use it as an emptiness check
-   while a reel is still processing.** A reel scheduled at 12:02 read `published=false`,
-   `scheduled_publish_time` correct and `length` correct on its own object, while the page's
-   `scheduled_posts` edge returned an empty list for minutes afterwards, because the video was still
-   `processing`. Read the video by id for the authoritative answer; the sweep is only trustworthy
-   once `status.video_status` is `ready`. (21 Sep 2026 — the empty sweep briefly looked like the
-   schedule had failed, and on a different day could just as easily look like nothing is scheduled
-   when something is.) FB captions: names only — the API cannot @-tag other Pages.
-
-4. **Instagram Reel via Graph API** (same token; IG business id `17841461862790198`):
-   `POST /{ig}/media` with `media_type=REELS`, `video_url=<1080p blob url>`, `caption`,
-   `share_to_feed=true`, `collaborators=["handle1","handle2"]` (max 3; each account gets an accept
-   prompt). Poll container `status_code` until `FINISHED` (~1–2 min). Collaborators are creation-time
-   only: to change them on a pending post, recreate the container; on a **published** post the API
-   can do nothing — invite via instagram.com in Chrome or the IG app (Edit → Add collaborators; see
-   "Add collaborators after publish" under Photo posts). API and web cap at 3; the app took a 4th on 13 Oct 2026.
-   Standing crew for Brisbane: videographers @quirkylikethat + @kurtboldy on every video post, so the
-   3-cap list is [band company, @quirkylikethat, @kurtboldy]; if the band's company has no IG,
-   use @youngcareoz as the third — NOT @thetriffid (they never accept collaborator invites). **IG cannot pre-schedule** —
-   run `media_publish` with `creation_id` at post time from a scheduled job. **A session cron does
-   not give you the time you asked for.** Jobs fire only while the session's REPL is idle, with
-   jitter on top, so the real behaviour is "whenever the session is next free". Sultans of Swing was
-   set for 17:28 AEST on 16 Sep and published at 21:27:58 — four hours late, into the tail of the IG
-   evening peak instead of its middle. Nothing looked broken and nobody noticed for five days. So:
-   record the scheduled time AND the actual time in the ledger for anything published from a session
-   cron, treat a gap as a defect rather than a success, and tell Dean in plain words that IG is the
-   one platform whose slot cannot be guaranteed. **Containers expire in
-   ~24 h and in practice every pre-built one died before its slot** (errors: subcode 2207032 "Cannot
-   Create Media" / 2207020 "Expired Media"). Don't pre-build a week of containers — have the daily
-   job build the container from the Blob URL and publish it in one go (~1–2 min), or at minimum keep
-   the recreate-from-blob fallback that every Brisbane job ended up using. Business-discovery handle lookup is not permitted on this token.
-
-   **Do not "verify" a handle by loading instagram.com/<handle>** — this runbook said to and it
-   proves nothing. Logged out, Instagram serves the same gated page for every path: a handle
-   invented on the spot returns HTTP 200 with `<title>Instagram</title>`, exactly like a real one.
-   The Graph API's own validation is the only check that works. If a container is refused with
-   code 210 / subcode 2207066 ("The user <handle> cannot be tagged on this media"), the error names
-   only the first bad handle, so **probe each one alone** — build a throwaway container per handle
-   and see which come back with an id. Throwaway containers cost nothing; they expire unused.
-
-   Known: **`jumbointeractive` is NOT taggable** (refused 14 Sep 2026), so a Jumbo Band post's three
-   slots are @quirkylikethat, @kurtboldy, @youngcareoz. When a company cannot be tagged, also strip
-   the `@` from its mentions in the caption body and write the name in full — an `@` that resolves
-   to nothing reads worse than plain text.
-   **Instagram's real limits, from the `POST /{ig-user-id}/media` reference — not inferred:**
-
-   |               |                                                                                 |
-   | ------------- | ------------------------------------------------------------------------------- |
-   | Duration      | **15 min max**, 3 s min                                                         |
-   | **File size** | **300 MB max**                                                                  |
-   | Resolution    | 1080x1920 recommended, 540x960 min                                              |
-   | `cover_url`   | JPEG, **8 MB max**, 9:16 recommended; **overrides `thumb_offset`** if both sent |
-
-   **The 300 MB cap is the one that bites, and this runbook previously said 1 GB — which was wrong
-   and cost an evening.** That figure was inferred from a 4K rejection rather than read from the
-   reference. Sultans of Swing (1080p, 517 MB, 5:55) was refused three times with
-   `"Media upload has failed with error code 2207053"` — with a cover, with a corrected cover, and
-   with no cover at all — while the identical bytes sat published on Facebook. A 300 MB-compliant
-   re-encode at 6.3 Mb/s fixed it with no edit to the cut.
-
-   Two traps in diagnosing this:
-   - **Size and duration move together** on our ~12 Mb/s encodes, so a size limit looks exactly like
-     a duration limit. Our post history brackets "works at 4:59, fails at 5:55" — which is true and
-     entirely misleading. Check bytes against 300 MB before theorising.
-   - **Enforcement is soft near the line.** 337 MB and ~430 MB files have gone through; 517 MB does
-     not. Do not treat a past success slightly over the cap as proof the cap is not real.
-
-   **A 4K master is refused separately**, with `2207076` after ~50 s. Same shape of generic message,
-   different code. The same master uploads to YouTube and Facebook without complaint, so either code
-   on a file those two accepted means "re-encode for Instagram", not "the file is broken".
-
-   **Meta's own Reels spec page says "3 to 90 seconds" and is wrong by a factor of ten** — we have
-   published 3:51 and 4:59 reels to Instagram and 5:55 to Facebook. Use the `ig-user/media`
-   reference above, not the spec page.
-
-5. **YouTube via Studio in Chrome** (the API key is read-only; no upload OAuth exists):
-   - Channel: Battle of the Tech Bands `UCJVbMoGFRdQxVgHvW1heYCg` — Studio opens on Dean's personal
-     channel by default; always navigate to
-     `studio.youtube.com/channel/UCJVbMoGFRdQxVgHvW1heYCg/videos/upload?d=ud`.
-   - Studio's CSP allows `fetch()` of the Blob URL, so inject the file with JS: fetch → `new File`
-     → `DataTransfer` → set `input[name=Filedata].files` → dispatch `change`.
-   - **Size is not the constraint people assume.** This has carried a 1.69 GB master (The Chain,
-     7 Sep) and a 1.30 GB master (Bring Me to Life, 13 Sep — 1,299,723,260 bytes, fetched in 37.7 s).
-     An earlier note here said "works for ~90 MB files" and led to telling Dean that YouTube needed a
-     manual upload; that was wrong by more than an order of magnitude. **The 10 MB cap is on the
-     Chrome extension's own `file_upload` tool, NOT on the fetch-inject.** Only LinkedIn and TikTok
-     genuinely need Dean, because their CSP blocks the fetch.
-   - Run the fetch **asynchronously** and poll a `window.__inj` state object — a 1.3 GB fetch will
-     outlast the JS tool's own timeout if you await it inline.
-   - Memory: the naive version holds the response buffer plus the `File` copy, so budget ~2x the
-     file size as a transient Chrome peak (~2.6 GB for a 1.3 GB master). **Use `response.blob()`,
-     not `response.arrayBuffer()`** — Blobs spill to disk, which held Chrome's peak to ~0.45 GB on
-     a 1.19 GB master (measured 20 Sep 2026) instead of ~2x. Check available RAM first on this
-     machine either way; Chrome is exempt from mem-guard, so nothing will stop it if it goes wrong.
-   - **localhost HTTP is not a shortcut for getting a file into the page.** Chrome blocks the
-     request from an HTTPS page before it leaves, so the local server's log stays empty and it looks
-     like the page never tried. The Vercel Blob hop is load-bearing, not a convenience.
-   - **Wait for the dialog to actually render before typing title/description** — typing right after
-     inject reliably vanishes; retype and verify.
-   - Next ×3 → Visibility → Schedule. The date field is a text+calendar hybrid; click the calendar
-     day (typing dates half-works), then the time field: End, backspace ×6, type `17:00`, **Tab**
-     (Enter clears it). Time zone defaults to GMT+10 local. The shorts link
-     (`youtube.com/shorts/<id>`) exists as soon as the upload starts — capture it then.
-     **6 Oct 2026:** triple-click + type left the field on 00:00 ("Select a time in the future"); a single click, cmd+a,
-     type `14:00`, then click the matching `tp-yt-paper-item` worked. The open list is fixed-position, so `offsetParent`
-     is null for every option: find the visible one by `getBoundingClientRect().width > 0`, not `offsetParent`.
-   - Covers trigger "Claimed content found" (Content ID). Posts still publish on schedule; revenue
-     routes to rights holders. Glance at Studio → Content detection after uploading.
-   - **Fill the "Show more" settings on every upload (Dean, 2026-10-05: "youtube have a lot of other settings like
-     recording data and location we have not been setting").** Before Visibility, open **Show more** on the Details step and set:
-     - **Recording date** = the show date from the DB (`events.date` in the event's timezone), not the upload date.
-       Sydney 2025 = 23 Oct 2025 (DB 2025-10-23 18:30 Australia/Sydney; camera files `*_20251023_*`).
-     - **Video location** = the venue as Google Maps names it (Sydney 2025: The Factory Theatre, Marrickville; Sydney 2026:
-       Manning Bar). Take the venue from `events.location`.
-     - **Category: Music. Language: English.** **Made for kids: No** (Audience step).
-     - **Altered or synthetic content ("AI use"): No** on every live-performance upload (Dean, 2026-10-05). YouTube's
-       help page (support.google.com/youtube/answer/14328491, checked 5 Oct) exempts colour/lighting adjustment, beauty
-       and effects filters and production assistance; disclosure is for AI that makes a real person appear to say or do
-       something they didn't, alters footage of a real event, or generates a realistic scene. Our grade, Face Refinement,
-       Super Scale, stem-split remix and pitch correction of the band's own performance are enhancement. Answer Yes only
-       if a video ever carries a cloned voice or generated realistic footage.
-     - **Allow embedding: ON.** The site embeds every video from the `videos` table, so this is load-bearing.
-     - Tags: band, company, songs, "Battle of the Tech Bands", city + year.
-       ~~Check the field names in Studio the first time~~ Checked by name 2026-10-22 (Mustang Sally preview, `hjiTbqrFazc`):
-       Details → **Show more** (`#toggle-button`) → **AI use** radios "Yes, AI was used" / "No, AI wasn't used"; **Tags** (type
-       them comma-separated, each comma makes a chip); **Video language** and **Category** came pre-set (English, Music: channel
-       defaults, read them anyway); **Recording date** opens a calendar (click the day); **Video location** is a typeahead: type
-       "Manning Bar", pick "Manning Bar Hideout at Manning, Manning Road, Camperdown NSW" (decoys: Mannings BBQ, Manning's Sports
-       Bar). **Allow embedding** is a checkbox under Licence (was already on). Audience: `tp-yt-paper-radio-button[name=
-       VIDEO_MADE_FOR_KIDS_NOT_MFK]`. Read-back that worked: every `[role=radio][aria-checked=true]` innerText, the location
-       input's value, the tags' `ytcp-chip` texts. **Save while still uploading is fine:** Studio says "will be unlisted once
-       uploading and processing have finished. Keep this browser tab open". For videos already up, the same fields are on each
-       video's edit page; backfill them.
-   - **Title cap is 100 characters, hard.** The house format
-     `{artist} - {song} (Live Cover) - {company} - Brisbane Battle of the Tech Bands {year}` came to
-     104 for Bring Me to Life and would not have fitted. Shorten the event, not the sponsor:
-     `... - Jumbo Interactive - BoTTB Brisbane 2026` is 85 and "BoTTB" already has precedent in the
-     ShipReX title. Check the length before typing it.
-   - **The thumbnail library** lives at `/Volumes/BOTTB/Renders/Thumbnails/<SongInCamelCase>/`,
-     named `<band-slug>-<song-slug>-<platform>.jpg`, one per platform: `youtube` and `linkedin` at
-     1920x1080, `instagram` at 1080x1920. Dean exports them to `~/Downloads`; file them here and
-     clear Downloads. Reusable art such as `thumbnail-overlay-4k.png` goes in `_templates/`, never
-     under a song. Drop an `UPLOAD_NOTES.txt` beside the images carrying the file paths, title,
-     description and the after-publish steps — it makes the upload self-serve and outlives the
-     session that wrote it.
-   - **Thumbnail cap is 2 MB.** A 1920x1080 PNG export runs 2.5–3 MB and is rejected at upload.
-     Convert to JPEG q92: ~0.36 MB, still 1920x1080, no visible artefacts on logo or type.
-   - **External links in descriptions are not clickable until the channel completes a one-off
-     verification.** Studio says so under the description box. Until that is done, every URL we put
-     in a description renders as plain text, which defeats the point of putting a gallery link there.
-6. **LinkedIn via the page composer in Chrome** (no LinkedIn OAuth token is connected; the site has
-   the connect flow but it needs an admin session, and the API can't schedule anyway):
-   - The page admin is reached by numeric id, not slug: `linkedin.com/company/104393733/admin/page-posts/published/?share=true`
-     opens the composer (the slug URL says "This LinkedIn Page isn't available", 1 Oct 2026).
-   - After Dean's drag the Editor opens on **Add captions** with auto captions ON: switch it off
-     **6 Oct 2026:** after Post on a 385 MB video, the post took ~2 min to appear in the page feed and the tab
-     raised "Leave site?" the whole time (the upload is still running in that tab). Check from a second tab;
-     never force-navigate the posting tab. Auto captions came up ON again on this video (OFF on a 27 MB one).
-     for sung vocals, Apply, Next. No video-title field was offered in the page composer on 1 Oct.
-   - The Chrome extension's `file_upload` tool caps at **10 MB** and LinkedIn/TikTok CSP blocks the
-     fetch-inject trick, so **Dean drags the video into the composer manually**; the agent does copy,
-     mentions and scheduling. (A ~9 MB 720p re-encode technically fits the tool but looks soft —
-     don't.)
-   - Mentions — the composer (Quill) fights automation; this exact loop is the only thing that
-     worked. For each mention:
-     1. In one `type` action, type text that **ends with** `@Page Name` (dropdown search tolerates
-        the full display name).
-     2. Wait ~3 s for the dropdown, then **Down, Return**. Return alone does NOT select — with no
-        highlighted row it just inserts a newline into the post (first attempt produced five stray
-        blank lines this way). Down first, always.
-     3. After the chip inserts, the caret is inert: continuing to type in the same flow lands text
-        in the wrong place and the next `@` never triggers the dropdown. **Right arrow does not fix
-        it.** The only reliable reset: click on line 1 of the post, then **cmd+Down** to jump to the
-        end, then continue typing.
-        Known failure modes, all observed:
-     - Typing `, @Name` straight after a chip → dropdown never appears (caret state, not the comma).
-     - Backspacing near a chip is unpredictable — it can eat the chip or neighbouring characters
-       (one attempt turned "Ten people" into "n people"). Prefer click + End/Home to reposition and
-       retype small spans; avoid long backspace runs across chip boundaries.
-     - `@Youngcare` resolved but left a literal `@` immediately before the chip once, and another
-       time inserted a paragraph break mid-sentence — always run the JS check below and eyeball the
-       rendered text before scheduling.
-     - **Clicking outside the composer** also opens "Save this post as a draft?" (30 Oct 2026: a "click
-       line 1" aimed from a 0.6-scale screenshot landed left of the dialog; the typed body went nowhere).
-       Take line 1's coordinates from a full-scale screenshot, and check `.ql-editor` text after typing.
-     - Escape (e.g. to close a hashtag dropdown) opens the "Save this post as a draft?" dialog;
-       dismiss with its X, never Discard. Coordinates also shift as the post grows and as toasts
-       appear — re-find buttons rather than reusing coordinates.
-       Verify before scheduling with JS on the dialog: `[...ed.querySelectorAll('a.ql-mention')]`
-       lists the chips in order (compare against the intended tag list), `ed.innerHTML.match(/@<a/g)`
-       catches stray `@`s, and mapping `p.innerText.length` over paragraphs catches stray blank lines
-       (pattern: text,1,text,1,… — any run of 1s means extra empties to remove).
-   - - **LinkedIn rewrites URLs to its own shortener on save.** A caption containing
-       `https://youtu.be/<id>` reads back as `https://lnkd.in/<hash>` after the post is saved, so
-       verifying a link by substring-matching the original URL returns false and looks exactly like a
-       failed edit. It is not. Check for `lnkd.in`, or follow the shortened link, rather than grepping
-       for the URL you typed (21 Sep 2026).
-   - **Posts are editable after publishing**, which is the escape hatch when a link did not exist at
-     compose time. Verify mention chips survived the edit **after a full page reload**, not from the
-     edit dialog.
-     Schedule: clock icon → date (calendar click) → time (type `4:30 PM`, click the suggestion
-     option) → Next → Schedule. Scheduled posts have **no permalink until they publish**.
-7. **TikTok via TikTok Studio in Chrome** (Content Posting API needs app review — not worth it):
-   - Account: **@bottb0**. Direct navigation to `/upload` or `/tiktokstudio/*` hits a "Please wait…"
-     bot check that never resolves; **navigate to tiktok.com/explore, then click Upload in the
-     sidebar**. Same for getting back after posting: Home → Upload.
-   - Dean uploads the file manually (same 10 MB extension cap). Then: caption (plain text; the
-     `#`/`@` pickers exist but plain hashtags in text work), Location chip "The Triffid", Schedule
-     radio → date via calendar → **time via the two scroll columns — CLICK, never scroll or drag.**
-     The wheel ignores mouse-wheel events and drag entirely; it only moves when you **click a
-     value**, which re-centres the list on that value and reveals three more either side. So to
-     reach 09:00 from a default of 23:15 you click the topmost visible hour repeatedly (23 → 20 →
-     17 → 14 → 11 → 08) until the hour you want is on screen, then click it, then click the minute.
-     Roughly five clicks, not a scroll. **A wheel that will not scroll is not a wheel that is
-     restricted to the hours it is showing** — that misreading cost a long detour on 27 Sep, where
-     only 20–23 were visible and it looked like TikTok had capped the schedule window. Verify the
-     final value with a `zoom` on the two columns before submitting. Allows scheduling ≤10 days out.
-   - After Schedule it lands on /tiktokstudio/content — the new post can take a reload to appear;
-     don't panic and don't double-post. **Getting permalinks: never map video ids from the Studio
-     list's anchors or profile-grid tile order — both burned us with swapped links.** The reliable
-     check ~~is~~ was TikTok's oEmbed — CORRECTED 30 Oct 2026: oEmbed now returns no `title` (caption) at all,
-     even for a known published post (control 7698221262266453254), so it can no longer match captions.
-     Use the id instead: `id >> 32` is the post's Unix time (V2 Starships/UFO 7702340811786259732 decoded to
-     06:16:08Z, the minute it was posted), plus "not already in `posts`". Old method, for reference: `curl
-"https://www.tiktok.com/oembed?url=https://www.tiktok.com/@bottb0/video/<id>"` returns the
-     caption for published videos (400 while still scheduled) — match the caption before sharing a
-     link. Scheduled posts have pre-assigned ids that appear in page HTML before publish, which is
-     why an unverified link can point at a not-yet-public post. Web sessions also log out
-     spontaneously after a few days; scheduled posts still publish server-side.
+2. **Upload the branded file to Vercel Blob**: Moved to `social/facebook-instagram.md` (2026-10-30).
+3. **Facebook Reel via Graph API**: Moved to `social/facebook-instagram.md` (2026-10-30).
+4. **Instagram Reel via Graph API**: Moved to `social/facebook-instagram.md` (2026-10-30).
+5. **YouTube via Studio in Chrome**: Moved to `social/youtube.md` (2026-10-30).
+6. **LinkedIn via the page composer in Chrome**: Moved to `social/linkedin.md` (2026-10-30).
+7. **TikTok via TikTok Studio in Chrome**: Moved to `social/tiktok.md` (2026-10-30).
 
 ## Domains (get this right)
 
@@ -285,166 +61,19 @@ cast ints (`$5::int`). Ready-made script: session scratchpad `insert-video-http.
 
 ## Chrome extension quirks (apply to every browser platform above)
 
-- **Site access is per-domain** and granted from the page side: if navigation to a domain is
-  refused, have Dean open the site and click the Claude extension icon there once (that's how
-  tiktok.com got unlocked; there's no obvious allowlist UI). battleofthetechbands.com itself was never granted,
-  so OAuth connect flows on our own admin can't be driven by the agent — Dean clicks those.
-- **Work only in the session's own "Claude" tab group.** Dean once uploaded a video in a second
-  Claude tab group from another session; those tabs are invisible to this session and Chrome refused
-  to drag the tab across groups. Rule: Dean does manual uploads in the tabs this session opened
-  (they're grouped together, next to the LinkedIn tab), never in a fresh window.
-- **Spurious "Navigation to this domain is not allowed"** occasionally appears for a domain that
-  worked minutes earlier (hit it with studio.youtube.com after a TikTok visit in the same tab).
-  Don't debug it — create a new tab and navigate there.
-- **JS results containing URLs/query strings can come back `[BLOCKED: Cookie/query string data]`** —
-  have injected scripts return short plain strings (counts, booleans, text slices), not full hrefs.
-- **YouTube's confirmation toast lies**: a scheduled Short can pop "Video published". Trust the
-  "Video scheduled — public on <date> at <time>" dialog, or reopen the video's Visibility.
-
-- **oEmbed CANNOT tell public from unlisted — do not use it as a visibility check.** It returns
-  HTTP 200 with the correct title for BOTH. Proven 21 Sep 2026 with a control, which is the only way
-  this kind of claim should be made:
-
-  | video                   | actual   | oEmbed  | Data API `status.privacyStatus` |
-  | ----------------------- | -------- | ------- | ------------------------------- |
-  | `8YIPtpb5-0s` (Sultans) | public   | **200** | `public`                        |
-  | `zgtbqLOIOBU`           | unlisted | **200** | `unlisted`                      |
-  | `Fof1cfAv_g0`           | deleted  | 404     | no item                         |
-
-  oEmbed only separates _exists_ from _deleted_. **The authoritative check is the Data API with the
-  read-only key**, which needs no OAuth:
-
-  ```bash
-  K=$(grep '^YOUTUBE_API_KEY=' .env.local | cut -d= -f2- | tr -d '"')
-  curl -s "https://www.googleapis.com/youtube/v3/videos?part=status&id=<ID>&key=$K"
-  ```
-
-  `privacyStatus` is `public` / `unlisted` / `private`; **no item at all** means deleted or private.
-  This matters because an unlisted id in a caption is a link the public cannot open — the same
-  user-visible failure as a dead one, and it passes a naive oEmbed gate silently. An earlier note
-  here and in the Sultans ledger entry said "oEmbed 200 with the right title confirms public". That
-  was wrong, and a rebuild script was briefly gated on it.
-
-  **`privacyStatus: public` is not the same as watchable.** Public describes the video's visibility
-  setting, not a viewer's ability to play it: a public video can still be region-blocked. Every song
-  we post is a cover, so this is the normal case rather than an edge case.
-
-  **`contentDetails.regionRestriction` DOES surface region blocks on the read-only key** — verified
-  21 Sep 2026 against a blocked video and a clean control, which is the only way this should be
-  claimed:
-
-  | video                          | privacyStatus | `regionRestriction`   |                                     |
-  | ------------------------------ | ------------- | --------------------- | ----------------------------------- |
-  | `2t0zoh-ZJO4` (Jumbo full set) | public        | `{"blocked": ["RU"]}` | reads "Partially blocked" in Studio |
-  | `8YIPtpb5-0s` (Sultans)        | public        | absent                | control                             |
-  | `zgtbqLOIOBU`                  | unlisted      | absent                | control                             |
-
-  So the full gate is: **refuse unless `privacyStatus == "public"` AND (`regionRestriction` is absent
-  OR its `blocked` list excludes `AU` OR its `allowed` list includes `AU`)**. Handle `allowed` as
-  well as `blocked` — an allow-list that omits AU is a block by another name.
-
-  **Scope limit, deliberately not overstated:** this is verified for _region_ blocks only. A full
-  Content ID takedown or a forced mute may present differently and there is no control to test that
-  with, so do not read a clean `regionRestriction` as "no copyright problem". For that, still glance
-  at Studio → Content detection. The RU block above affects none of our audience; what it proves is
-  the mechanism, not a live problem.
-
-- TikTok's caption box: after typing, press Escape only to close its own hashtag dropdown — on
-  LinkedIn Escape means "discard?", and a triple-click on some fields triggers macOS's dictionary
-  "No definition found" popover; both are harmless but occlude clicks, so re-screenshot after.
+Moved to `social/browser.md` (2026-10-30).
 
 ### LinkedIn composer — the caret trap (learned the hard way, 7 Sep 2026)
 
-Inserting a mention chip moves the caret to **immediately after the chip**, and it _snaps back
-there_ after any non-typing action (a screenshot, a key press). So a later `type` call lands its
-text in the middle of the sentence, and a `BackSpace` eats the chip instead of the character you
-meant. This is what produced "Rex Software Limited are your..." mid-post.
-
-**SUPERSEDED — do not follow this.** An earlier version of this section said "type the whole caption
-in ONE `type` action with plain company names". That was a workaround written before the caret
-behaviour was understood, and following it on 8 Sep shipped a LinkedIn post with the major sponsor
-in plain text. **The mandatory method is in "HARD RULE — LinkedIn mentions are mandatory" above:**
-build the caption forward, chip by chip, typing the remainder immediately after taking each chip.
-A proven fix supersedes the workaround it replaced; if these two sections ever disagree again, the
-hard rule wins.
-
-Other composer facts, verified:
-
-- The file input does not exist until the media button is clicked, and clicking it opens a **native
-  file dialog that blocks CDP entirely**. Patch it out first:
-  `HTMLInputElement.prototype.click` → capture `this` and return, for `type === 'file'`.
-- Do NOT fetch images from Vercel Blob inside the LinkedIn page: its CSP blocks the request
-  ("Failed to fetch"), regardless of the blob's CORS headers.
-- Use the extension's `file_upload` tool with the input's ref instead. It only accepts paths the
-  session may read, so **copy the files into the session scratchpad first** — a path under
-  `~/src/...` is rejected. 9 x 250 KB was fine; the cap is 10 MB per call.
-- `cmd+a` then `Delete` in the composer clears the text but **leaves the attached images**, so a
-  botched caption is cheap to redo.
+Moved to `social/linkedin.md` (2026-10-30).
 
 ### TikTok — confirm the caption before you Post
 
-**On 10 Sep a post published with NO title and NO description.** The fields looked filled; the text
-never landed. The tell was the content list showing "No description" — **not** the "Only me /
-Content under review" state, which is normal for any new post and clears within a day. TikTok allows
-**one caption edit per day, within 7 days of posting**, so there is exactly one chance to fix it.
-
-**Before clicking Post or Schedule, confirm the character counters.** `51/90` on the title and
-`424/4000` on the description are computed from TikTok's own state, so they are real evidence the
-value is registered. The rendered text alone is not — on the photo-post page the title lives in a
-non-editable `div.title` that a naive `input`/`textarea` sweep misses entirely.
-
-Video uploads have a single Description field (no separate title); photo posts have both.
-
-**Scheduled TikTok posts are IMMUTABLE.** The Studio says "Scheduled posts cannot be edited" — the
-time cannot be changed without deleting and rebuilding the entire post, which means a fresh upload
-of the full file and a fresh copyright check. On a cover that already reads clean, rebuilding to
-move the slot an hour is a bad trade. **Get the time right first go** (Dean, 21 Sep 2026, choosing
-to leave a post at 20:00 rather than rebuild it to 19:00).
-
-**The TikTok precedent is 19:00, not 20:00.** Sultans of Swing went at 19:00; a later slot was once
-inferred from "Instagram peaks 5-10pm and TikTok later still" and landed an hour off. Read the
-posts list for the actual shipped time rather than reasoning from the audience-peak note.
-
-**TikTok schedules natively** — a "Schedule" radio beside "Now" in Settings, with separate time and
-date pickers. The hour column needs scrolling to reach times below 19:00. **Music copyright check and Content check lite are ON by default** (Dean, 21 Sep 2026 — both
-toggles were already enabled and green at page load). An earlier version of this line said to "turn
-on" the music check, which sends you hunting for a switch that is already thrown. The action is
-reading the **result**, not enabling the feature: for covers, confirm both show "No issues found"
-before scheduling. It takes a few seconds and tells you whether the video will be muted, which
-matters far more than the delay. Both it and Content check lite returned "No issues
-found" for Bring Me to Life.
-
-**The "Video published" toast also appears when you SCHEDULE** (1 Oct 2026). Clicking Schedule
-landed on `/tiktokstudio/content` with a "Video published" toast; after a reload the row read
-"Oct 2, 7:00 PM" with a clock icon, i.e. scheduled. Trust the row, not the toast.
-
-**Finding a fresh post's id (2 Oct 2026).** The Studio content list has no `/video/` anchors, the
-profile page rendered no grid ids, and a direct `/@bottb0/video/<id>` load hits the "Please wait…"
-wall. What worked: on `/tiktokstudio/content`, scan `document.documentElement.innerHTML` for
-`\b7\d{18}\b` and decode each (`BigInt(id) >> 32n` = unix s); ids minted when you staged the post
-are the candidates, in staging order. Then confirm by oEmbed caption. On 2 Oct oEmbed returned 429
-for both fresh ids for 30+ min while a months-old control returned 200, so a 429 on a new post is
-"not yet", not "wrong id": retry later rather than recording an unconfirmed link. (Corrected 3 Oct:
-at 09:17 the control returned 429 too, so the limit is on our IP, not the post. Repeated retries
-make it worse; after two failures ask Dean to copy the link from the app, Share → Copy link.
-At 19:23 the same day the control was back to 200 while both fresh posts (Fri and Sat) still
-returned 429 — 24 h after publishing. So oEmbed cannot confirm a fresh post on any useful
-timescale: for new TikTok posts, get the link from Dean's app from the start.)
+Moved to `social/tiktok.md` (2026-10-30).
 
 ### TikTok photo posts
 
-**12 Oct 2026 (four photo posts scheduled):** tiktok.com/explore → Upload now opens a small menu
-(Videos / Photos); click Photos. Title and description typed straight after the upload finishes can
-silently not land (both counters 0): wait ~8 s, click the fields by coordinate, and re-read the counters
-before scheduling. The time wheel moves one step per click and ignores a second click within ~1 s: click,
-wait 2 s, zoom, repeat. The picker is in the Mac's zone (Brisbane on 12 Oct), so 19:00 Sydney = 18:00.
-
-TikTok Studio has a **Photos** tab beside Videos (`/tiktokstudio/upload?tab=photo`). Same
-`file_upload` route; the first image becomes the Cover. Title is capped at 90 chars, description 4000. Typing `#tag` opens a suggestion dropdown — **never press Enter**, click a neutral area to
-dismiss it, or you will insert the wrong tag. Set Location to The Triffid. Posting redirects to
-`/tiktokstudio/content`; get the permalink from that list, then **confirm it with oEmbed**
-(`https://www.tiktok.com/oembed?url=...`) before sending it to anyone — list order has mismatched
-before. A just-posted item returns an empty oEmbed title until it finishes processing.
+Moved to `social/tiktok.md` (2026-10-30).
 
 ### WhatsApp summaries — give them as plain text
 
@@ -455,55 +84,11 @@ platform for that item is up.
 
 ## Setting thumbnails and covers without freezing the session
 
-**The extension's `file_upload` tool works for thumbnails.** Its 10 MB cap is irrelevant here — a
-1920x1080 JPEG runs 0.2-0.3 MB. What you must NOT do is click the visible "Upload file" / "Upload
-cover" button: that opens a native file dialog the extension cannot see or dismiss, and the session
-stops responding until somebody clears it by hand.
-
-Instead, find the hidden `input[type=file]` and upload straight to it:
-
-```js
-;[...document.querySelectorAll('input[type=file]')]
-  .map((e, i) => `${i} accept="${e.accept}" id="${e.id}"`)
-  .join(' || ')
-```
-
-then `find` that element and pass its ref to `file_upload`. Confirmed working on **YouTube**
-(`id="file-loader"`, `ytcp-thumbnail-uploader`) and **TikTok** (inside the Edit cover dialog).
-
-Two constraints:
-
-- **`file_upload` only accepts paths inside the session's own directories.** Copy the file into the
-  scratchpad first; a path on /Volumes is rejected outright.
-- **LinkedIn is the exception.** Its video-thumbnail input does not exist in the DOM until the click
-  that opens the native dialog, so there is nothing to target. That one genuinely needs Dean — it is
-  the image icon in the Editor toolbar, beside **T** and **CC**, reached by going Back from the
-  composer.
+Moved to `social/browser.md` (2026-10-30).
 
 ## Time pickers: three platforms, three different lies
 
-Every one of these silently reverts if you type into it and walk away. **Always re-read the field
-after setting it.**
-
-- **TikTok** — the hour column advances exactly one step per scroll gesture no matter what
-  `scroll_amount` says, so reaching 19:00 from 00:00 is 19 round trips. Typing is rejected. What
-  works: locate the two scrollable columns, set `scrollTop = index * 32` on each, dispatch a
-  `scroll` event, **then click the centred value in each column** — scrollTop alone moves the wheel
-  without committing the value.
-- **YouTube** — "End, backspace x6, type, Tab" is in this runbook and it does not work; the field
-  reverts to 00:00 and the Schedule button stays disabled with "Select a time in the future". It is
-  a combobox: type the value, then **click the matching option in the dropdown**. The options are
-  virtualised and absent from the accessibility tree, so find them with
-  `[...document.querySelectorAll('tp-yt-paper-item')].filter(e => e.textContent.trim() === '07:30')`
-  and click the coordinates it reports. The date field is separate and does take a calendar click.
-- **LinkedIn** — the friendliest: type `08:00 AM` and a suggestion appears below; click it. The
-  dialog header restates the full local time, so read that back before hitting Next.
-  **12 Oct 2026:** the dialog works in the _browser's_ zone and names it ("Australian Eastern Standard
-  Time" while the Mac was on Brisbane time), so an 08:00 Sydney slot in October is typed as 7:00 AM.
-  Typing the date opens a calendar that hides the time field: click the day in the calendar. The dialog
-  shrinks after the time is picked, so re-find Next (a click on the old spot lands outside and raises
-  the save-draft prompt; close that with its X). Check the result from an empty composer: clock icon →
-  "View all scheduled posts" (there is no Scheduled tab under Page posts).
+Moved to `social/browser.md` (2026-10-30).
 
 ## Scheduling doctrine (AU)
 
@@ -514,52 +99,11 @@ Night-highlights first, then bands in winning order. Sources and per-platform re
 
 ## HARD RULE — LinkedIn mentions are mandatory, not optional
 
-**Every LinkedIn post MUST @mention Jumbo Interactive Limited.** They are the major sponsor and
-plain text does not credit them. This is not a nice-to-have and not something to skip because the
-composer is awkward. Dean called this out on 8 Sep 2026 after I shipped a post with plain names.
-
-**Before posting to LinkedIn, review the caption and mention every entity that has a page:**
-Jumbo Interactive Limited (ALWAYS), the band's company (Epsilon / Rex Software / URBAN X /
-Suncorp Group / For The Record (FTR)), and Youngcare. Check the draft for any company named in
-plain text that should be a chip.
+Moved to `social/linkedin.md` (2026-10-30).
 
 ### The technique that works (corrected 11 Sep 2026 — read this, not the old advice)
 
-**Type a SHORT query, then pick from the dropdown with a MOUSE CLICK.**
-
-1. Type the caption up to and including a short `@Query` — `@Jumbo`, `@Youngcare`, `@For The Record`.
-2. Screenshot, confirm the right entry, and **click it with the mouse**.
-3. Press **`cmd+Down` then `End`**.
-4. Type the remainder.
-
-Three corrections to what this section used to say, each of which cost real time:
-
-- **The FULL registered name is WRONG.** The old advice was "use the company's full registered name,
-  a partial name returns nothing". The opposite is true in this composer: `@Jumbo Interactive Limited`
-  and `@Youngcare` returned **no dropdown at all**, while `@Jumbo` and `@Youngcare` typed
-  incrementally both returned it immediately. Long queries appear to return nothing rather than a
-  narrowed list. Short query, then disambiguate by eye — `@Jumbo` offers Jumbo Supermarkten, Jumbo
-  Interactive Limited and Jumbo (Retail Groceries), and only one is ours.
-- **Down+Return did not take the chip.** It inserted the name as plain text and left the remainder
-  to be appended later in the wrong place. Mouse click on the dropdown row works every time.
-- **`cmd+Down End` after every chip is mandatory.** The caret lands _inside_ the chip, not after it,
-  so the very next keystroke splits it — "For The Record (FTR)" became "For The Record." with
-  "(FTR)" appearing three paragraphs later. `cmd+Down End` moves to the true end of the document
-  first.
-
-**Never screenshot or run JS between taking a chip and the next keystroke.** The caret snaps back to
-the chip and a `BackSpace` then eats the chip instead of the character you meant. This happened on
-11 Sep and destroyed a chip that had taken correctly.
-
-If a dropdown does not appear for a query you believe is right, **do not BackSpace blindly** — press
-`cmd+Down End` first, then edit. Deleting a few characters to shorten the query (`@Youngcare` →
-`@Young`, then retyping `care`) reliably re-triggers it.
-
-**Verify before clicking Post or Schedule:**
-`document.querySelector('.ql-editor').querySelectorAll('[data-entity-urn]').length` — must equal the
-number of mentions you intended, and the text must contain no stray `@`. Read the `data-entity-urn`
-values too: Jumbo Interactive Limited is `1517297`, Youngcare is `307122`, For The Record (FTR) is
-`81140`. A chip with the wrong urn looks identical in the composer.
+Moved to `social/linkedin.md` (2026-10-30).
 
 ## Handles / tags (verified Aug 2026)
 
@@ -660,46 +204,7 @@ with the choice/freedom/dignity line. Hashtag base: `#BattleOfTheTechBands #BotT
 
 ## YouTube thumbnails (offline generator)
 
-Full-song videos get a custom thumbnail in the same house layout as the in-app generator
-(`/admin/thumbnails`): frame + top/bottom scrims, company logo one top corner, BoTTB square the
-other (default `top-right`), artist bold + song under it bottom-left in Jost.
-
-Rather than driving the browser tool, run the layout offline:
-
-- `doc/production/scripts/thumbnail/compose.mjs` — a direct port of
-  `src/app/admin/thumbnails/compose.ts` (`composeYouTube`) plus the `src/lib/canvas.ts` helpers
-  (`drawCover`, `drawLogoRow`, `trimTransparent`, `wrapLines`) and `video-safe-area.ts` constants.
-  If the in-app layout changes, re-port it.
-- **10 Oct 2026:** YouTube and LinkedIn thumbnails carry the song text (Dean: "we didn't put text on the
-  thumbnails for youtube and linkedin"). When Dean supplies a finished frame (BoTTB square already
-  top-right), feed it straight to `render.mjs` as the still: at 1920x1080 the crop is identity and the
-  square lands on the same pixels. Run it **from the repo root** (`@napi-rs/canvas` is in the repo's
-  `node_modules` now; no scratch install). The company SVG from `companies.logo_url` loads directly via
-  `loadImage`; rasterise to a wide PNG first so `trimTransparent` works. Keep Dean's plain frames as
-  `<slug>-<platform>-notext.jpg`. LinkedIn: swap the thumbnail **before** Post (Edit media preview →
-  Video thumbnail → Remove → upload → Update); YouTube: video edit page, `#file-loader`, Save, then check
-  `i.ytimg.com/vi/<id>/maxresdefault.jpg`.
-- `doc/production/scripts/thumbnail/render.mjs` — CLI wrapper. Run it from a scratch dir that has
-  `npm i @napi-rs/canvas` (prebuilt binary, no compile; it reads the repo's
-  `public/fonts/jost-latin.woff2` straight as woff2).
-
-Picking the still:
-
-1. gigstills already has Dean's selects — `~/src/personal/gigstills/runs/bottb_camA/state.json`,
-   `candidates[]` with `band`, `selected`, `rank` (lower is better), `keywords`
-   (`keys`/`drummer`/`guitarist`/`crowd`/`wide`), `show_clock` and `t` (seconds into the clip).
-2. Narrow to the song by time: the band's set ends at the last candidate's `show_time`, and the
-   song length comes from `runs/bottb-cut/cut_list.json` (`record_in`/`record_out` at 25 fps).
-   Sanity-check by extracting the matching frame from the delivered render and eyeballing it.
-3. Extract at full 4K from the camera master, not the graded JPEG proxies:
-   `ffmpeg -ss <t> -i "/Volumes/BOTTB/Footage/CAM A (Roaming)/<clip>.MP4" -frames:v 1 -q:v 2 out.jpg`
-4. Offer Dean a spread of shots (lead vocal, keys, guitarist, drummer, crowd, band-wide) — he picks.
-   Contact sheet: `ffmpeg -pattern_type glob -i '*.jpg' -filter_complex "scale=960:540,tile=2x4:padding=8" -frames:v 1 _contact-sheet.jpg`
-
-Company logo comes from the DB (`companies.logo_url`, a Vercel Blob URL) — `curl` it down and let
-`trimTransparent` crop the baked-in padding. Finals live in
-`/Volumes/BOTTB/Renders/Thumbnails/<Song>/`. YouTube caps thumbnails at 2 MB; the CLI steps the
-JPEG quality down until it fits.
+Moved to `social/youtube.md` (2026-10-30).
 
 ## What a render handover from the editor session must contain (28 Sep 2026)
 
@@ -848,35 +353,11 @@ montage out/*.png -tile 5x -geometry +6+6 -background black sheet.jpg
 
 ### Deleting a video when another carries the same title (27 Sep 2026)
 
-Replacing a video means two items with **identical titles** sit in the Studio list at once, so
-choosing the delete target from that list is a coin flip on destroying the replacement. The sequence
-that is safe:
-
-1. **Upload the replacement first**, and wait until the Data API reports `uploadStatus: processed`
-   with a real `duration` — not merely `uploaded`, which is true while it is still transcoding.
-   Never delete the thing being replaced until the replacement is confirmed complete.
-2. Navigate to `studio.youtube.com/video/<id>/edit` so **the id is in the URL**. Do not click a row.
-3. Cross-check a second, independent signal on the page — the **Filename** panel names the source
-   file, which differs between versions even when titles do not.
-4. Re-read `location.href` **immediately before** the irreversible click.
-5. Verify afterwards by Data API: the deleted id returns **no item**, and the survivor still reads
-   as expected. Query both ids in one call so there is no chance of reading a stale answer for one.
-
-Encode the expected byte count into the injector too — `blob.size === <bytes>` before injecting
-catches a stale file by name, which matters when two versions differ by ~15 KB in 1.6 GB.
+Moved to `social/youtube.md` (2026-10-30).
 
 ### A disabled button eats the click and reports nothing
 
-The delete confirmation checkbox did not register when clicked by accessibility ref. The dialog
-stayed open with the box unticked, "Delete forever" stayed greyed out, and the click on the disabled
-button **returned success and did nothing**. The tool reports the click, not the effect.
-
-Nothing revealed this except the Data API still returning the supposedly-deleted video. Without that
-check the report would have been "deleted" when nothing had happened.
-
-**So: for any gated control, confirm the gate is actually open before clicking through** — read the
-checkbox state back, or screenshot and look — and always verify the outcome through a different
-instrument than the one that performed the action.
+Moved to `social/browser.md` (2026-10-30).
 
 ### A peer's state report is a fact about when it was written
 
@@ -888,75 +369,15 @@ the moment they were taken, and treat one as evidence about that moment only.
 
 ### LinkedIn photos do NOT need dragging — only video does
 
-Correcting a standing assumption. The CSP problem is specific to the **fetch-inject** route, where
-the page itself fetches a Blob URL; `file_upload` sets files on the input directly and is
-unaffected. The 10 MB limit is **per call**, so a downscaled photo set sails through where a video
-cannot: 13 JPEGs at 2048 long edge came to 6.5 MB and went in one call on 24 Sep.
-
-Find the input with `find` ("file input for uploading images"), then `file_upload` with every path
-in one call. Dragging is only needed for video.
+Moved to `social/linkedin.md` (2026-10-30).
 
 ### Verify LinkedIn mention chips by `data-entity-urn` before clicking Post
 
-**12 Oct 2026:** look the company up in the handles registry first: `pnpm bottb handles --platform
-linkedin` (table `social_handles`, `external_id` = the company urn). Sydney 2026 parties were missing
-until 12 Oct (Dean: "Don't you have those recorded in the db somewhere?"); every new company or
-photographer gets `bottb party add` + `handles set` the first time it is tagged. Two "V2 AI" pages
-exist: the right one is 81854932 (/company/v2ai, IT Services and IT Consulting). **Never press Escape in the
-LinkedIn composer** to close a hashtag dropdown: it opens "Save this post as a draft?" (Discard / Save as
-draft). Close that dialog with its X and the composer, chips and images survive.
-
-**Never click a typeahead row by coordinate.** The list re-renders between reading it and clicking,
-so the click lands on a different row. On 24 Sep that produced three wrong mentions in one caption —
-"Big Rex Software" for Rex Software, "URBAN-X" (a US venture capital firm) for URBAN X, and **Jumbo
-Interactive Limited left as plain text**, which would have broken the mandatory sponsor mention. The
-rest of the caption was silently swallowed too. A screenshot shows none of this: the text reads
-correctly either way.
-
-The procedure that works:
-
-1. Type `@<full registered name>`.
-2. Press `ArrowDown`.
-3. Read back `aria-selected="true"` and **confirm it names the company you meant**.
-4. `Return`.
-
-Then, before Post, read the editor and check every chip:
-
-```js
-const ed = document.querySelector(
-  '.ql-editor, [contenteditable="true"][role="textbox"]'
-)
-Array.from(ed.querySelectorAll('[data-entity-urn]')).map((e) => ({
-  t: e.innerText,
-  u: e.getAttribute('data-entity-urn'),
-}))
-```
-
-Known-good URNs: Rex Software `1985577`, URBAN X `2758387`, Jumbo Interactive Limited `1517297`.
-Also confirm the hashtags are present — a swallowed tail is the other half of this failure.
-
-`cmd+a` then `Delete` clears the composer **only with focus inside the editor**; click into it
-first and read `innerText` back to confirm. Images survive the clear.
+Moved to `social/linkedin.md` (2026-10-30).
 
 ### A caption can be fixed after publishing; the images cannot
 
-`POST /{page-post-id}` with `message=` rewrites a live Facebook post's text and returns
-`{"success":true}`. Read it back with `?fields=message,updated_time` to confirm. **There is no
-equivalent for the attached photos** — changing those means deleting and reposting, which loses the
-URL and any engagement.
-
-Instagram has no caption-edit endpoint at all, so an IG caption must be right at `media_publish`.
-
-Consequence for ordering: when a fact is still outstanding (a credit, a link), **ship the platform
-whose text you can edit first, and hold the one you cannot.** On 24 Sep the CAM A operator's name
-landed one minute after the Facebook post went out; the FB caption was edited in place and Instagram
-then published correct the first time.
-
-### Do not put a full stop immediately after an @handle
-
-Instagram usernames may legally contain periods (`@urbanx.io`), so `@kurtboldy.` is ambiguous in a
-way `@kurtboldy,` is not. Rephrase so the handle is not sentence-final, or end the line without
-punctuation. The same care applies to a handle followed by `'s`.
+Moved to `social/facebook-instagram.md` (2026-10-30).
 
 ## Photo visibility — the manual step that gets forgotten
 
@@ -1018,21 +439,7 @@ into the scratchpad at the start of a run. Web sessions also expire: TikTok logg
 
 ## Blob uploads (the public URL every API post needs)
 
-`doc/production/scripts/blob-upload.mjs <file> [blob-path]` — prints `BLOB_URL`.
-
-**Run it with the repo root as cwd.** It resolves `@vercel/blob` and `.env.local` from there; a copy
-run out of the scratchpad dies with `ERR_MODULE_NOT_FOUND` in under a second. On 7 Sep that failure
-was invisible because the job was detached — the log said the upload never happened while the plan
-assumed it had. Always read the log for `BLOB_URL` before moving on.
-
-Verified 7 Sep 2026: uploads return `HTTP 200` with `access-control-allow-origin: *`, which is what
-makes the YouTube Studio cross-origin fetch-inject work. Use `multipart: true` for the big masters.
-Delete throwaway blobs with `del(url, {token})` — they are public until you do.
-
-**10 Oct 2026, measured:** `blob-upload.mjs` on a 236.6 MB file (multipart) took 58 s, peak footprint 0.38 GB
-(`/usr/bin/time -l`). Bounded memory on >1 GB is still unproven. When FB/IG use the 1080p IG file and only YouTube
-needs the 4K, Dean drags the 4K into Studio and only the IG file goes to Blob (his 3 Oct rule, applied to
-Jumbo "Say It Ain't So").
+Moved to `social/facebook-instagram.md` (2026-10-30).
 
 ## Verify, don't assume
 
@@ -1241,48 +648,7 @@ and a correction can overshoot as easily as the error it corrects.
 
 ## The app must be Published, or nothing you post is visible to anyone else
 
-**Symptom:** you can see every post; nobody else can. An outsider following a link gets
-_"This content isn't available at the moment — when this happens, it's usually because the owner
-only shared it with a small group of people or changed who can see it, or it's been deleted."_
-Views sit near zero. Everything looks perfect from the admin account, and the Graph API reports the
-post `published: true`, privacy `EVERYONE`, `embeddable: true`, `video_status: ready`.
-
-**Cause:** a Meta app in Development mode ("Unpublished") only shows the content it creates to
-people who hold a role on that app. Hand-posted content is unaffected, which is what makes it so
-confusing — the page looks half-working.
-
-Found 14 Sep 2026 after For The Record reported it. The split was total and had run for two weeks:
-
-| Posted                     | How       | Public?     |
-| -------------------------- | --------- | ----------- |
-| 22 Jun – 20 Aug (21 reels) | by hand   | all fine    |
-| 30 Aug – 14 Sep (9 reels)  | Graph API | all blocked |
-
-The schedule log starts 30 Aug, exactly when the API pipeline began. Every Brisbane 2026 reel — the
-whole band-by-band rollout and the Jumbo Band launch — was invisible to everyone but us.
-
-**Fix:** App Dashboard → App settings → Basic → set a Privacy policy URL
-(`https://www.battleofthetechbands.com/privacy`) → **Save Changes at the very bottom of the page**,
-below the Data Protection Officer block. The field silently reverts if you don't scroll down to it.
-Then Publish → Publish. **Visibility is restored retroactively** — all 30 reels went public the
-moment the app flipped, with no re-posting. The page token and its 7 scopes keep working.
-
-**How to check this in 10 seconds, any time:**
-
-```sh
-curl -s -A "Mozilla/5.0" "https://www.facebook.com/battleofthetechbands/videos/<video_id>" \
-  | grep -c "isn't available"     # 0 = public, 1 = blocked
-```
-
-Use the `/{page}/videos/{id}` form — it is the only Facebook URL shape that serves an
-unauthenticated client. `/reel/{id}` and `/{page}/posts/{id}` return a 1,542-byte error page for
-_everything_, including the page's own root and made-up ids, so they cannot tell a live link from a
-dead one. Two things that also look decisive and are not: the embed plugin
-(`/plugins/video.php`) cleared posts that were actually blocked, and the Sharing Debugger refuses
-outright with "Facebook URLs cannot be crawled".
-
-**The tell that cracked it:** a working post shows a _login prompt_ to a logged-out viewer; a
-blocked one shows the _error_. Treating those two as the same failure hid the problem for a week.
+Moved to `social/facebook-instagram.md` (2026-10-30).
 
 ## Recording performance in the database
 
@@ -1479,19 +845,7 @@ the window before it, or exactly by `utm_content` when that matches a post.
 
 ## Choosing a thumbnail frame
 
-Offer a **spread, not single frames**. Nine frames at half-second steps across ±2 s of a candidate
-moment, as a contact sheet, reading chronologically — name the files so a glob sorts in time order,
-or the sheet reads in alphabetical nonsense.
-
-This is not fussiness. On 13 Sep the frame picked as "the strongest portrait by a distance" turned
-out to be the **worst** in its own group: a haze blast washed it out, and half a second later it
-cleared completely. Two frames after that, the sponsor's logo became readable on the singer's robe.
-A single frame hides all of that.
-
-Pull the frames from the **delivered render** with `ffmpeg -ss <t> -i <render> -frames:v 1 -q:v 2`,
-not from the camera masters — the render carries the grade. Watch for a ±2 s window that spans a
-camera cut or crops a subject at the frame edge; both happened and both are invisible until you see
-the spread.
+Moved to `social/youtube.md` (2026-10-30).
 
 ## Improvements for next time
 
