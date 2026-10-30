@@ -212,6 +212,9 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
      - `@Youngcare` resolved but left a literal `@` immediately before the chip once, and another
        time inserted a paragraph break mid-sentence — always run the JS check below and eyeball the
        rendered text before scheduling.
+     - **Clicking outside the composer** also opens "Save this post as a draft?" (30 Oct 2026: a "click
+       line 1" aimed from a 0.6-scale screenshot landed left of the dialog; the typed body went nowhere).
+       Take line 1's coordinates from a full-scale screenshot, and check `.ql-editor` text after typing.
      - Escape (e.g. to close a hashtag dropdown) opens the "Save this post as a draft?" dialog;
        dismiss with its X, never Discard. Coordinates also shift as the post grows and as toasts
        appear — re-find buttons rather than reusing coordinates.
@@ -247,7 +250,10 @@ Copy + schedule for the Brisbane run: `brisbane-2026-reel-posts.md` and
    - After Schedule it lands on /tiktokstudio/content — the new post can take a reload to appear;
      don't panic and don't double-post. **Getting permalinks: never map video ids from the Studio
      list's anchors or profile-grid tile order — both burned us with swapped links.** The reliable
-     check is TikTok's oEmbed (no login needed): `curl
+     check ~~is~~ was TikTok's oEmbed — CORRECTED 30 Oct 2026: oEmbed now returns no `title` (caption) at all,
+     even for a known published post (control 7698221262266453254), so it can no longer match captions.
+     Use the id instead: `id >> 32` is the post's Unix time (V2 Starships/UFO 7702340811786259732 decoded to
+     06:16:08Z, the minute it was posted), plus "not already in `posts`". Old method, for reference: `curl
 "https://www.tiktok.com/oembed?url=https://www.tiktok.com/@bottb0/video/<id>"` returns the
      caption for published videos (400 while still scheduled) — match the caption before sharing a
      link. Scheduled posts have pre-assigned ids that appear in page HTML before publish, which is
