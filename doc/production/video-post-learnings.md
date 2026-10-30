@@ -3557,3 +3557,8 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   Measure p1/p5/p10 before a global crush (most green cuts were already at black). Strobing: cut 51 goes 0–82 % green between
   samples, so **3-frame-per-cut scans (my look_ab_scan) mislead**; gigstills `look_check.py` (every 5th frame, one pass per render)
   replaces it and ab_measure/ab_levels/green_floor. `key_noise.py` checks blocky keys on node-off/on clip renders.
+- **"Was X in the render?" answered from exports (2026-10-30):** `resolve-lab/scripts/drp_nodes.py <export.drp> "bear look"` lists
+  the look version's nodes with a per-node hash. The 13:52 pre-render export already had Dean's Hue vs Hue node ("Green Correct",
+  after Amber; he set it with gigstills, not via me), and it hashed identical in a 16:50 export, so the shipped V2 v1 includes it.
+  The unlabelled corrector (node 4) and the FLC (halation off) changed after 13:52. Take an export right before every delivery
+  render: it's the only record of what the look was.
