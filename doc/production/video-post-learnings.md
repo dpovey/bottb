@@ -3516,6 +3516,8 @@ V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medle
   outside the sandbox, so menu-bar edits (roll, Extend Edit) went to Dean. The medley's last cut (329934–330077) ran 47 frames past the
   Out (330029), so a FadeOut on it would not reach black at the Out: roll its end edit back to 330030 before setting the fade. Build
   the tools from `resolve-lab/tools/*.swift` with `swiftc`; trust is granted in System Settings › Privacy › Accessibility (Dean's call).
+  **Granted for iTerm later the same day:** `AXIsProcessTrusted` True from the Claude Code shell, and System Events listed Resolve's
+  menu bar (Trim, Timeline, Clip, Mark…). axpress itself is not built yet (only `axdump`/`axhit` binaries exist): build it on first use.
 - **V2 medley end and render setup (2026-10-30).** Dean rolled the last cut's end edit to 330030 (read back: 329934–330030, next V1 item
   starts 330030, audio unchanged). EndCard_2x on V3 329932–330030 (endFrame 98 exclusive), CompositeMode ADD read back 1. **The last cut is
   only 96 frames, so `SetFades({"FadeOut": 98})` returned False** (fade longer than the item); 96 was accepted and **reads back 95**.
@@ -3567,6 +3569,6 @@ V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medle
   https://claude.ai/artifact/MBF8N435MkMzYpjjevbqNk (data: gigstills `runs/sydney26_look_bear/data/look_check_shipped_20261030/`).
   Node 4: Dean, 2026-10-30: "I think I did tweak node 4" (when, relative to the ~13:55–14:14 render, is not known), so the
   shipped file may or may not carry it. The 7 cuts that went further toward yellow (4, 17, 28, 45, 59, 60, 76): Dean said no to
-  chasing them ("No to the other check"); v1 stands. Still to do when asked: the rollback
-  strip list for Bear-only clip fixes (qualifier/curve nodes on cuts 18, 74, 75, 76, 78, 81, 91; keyframes on 73 and 13);
-  Accessibility permission for Dean's terminal (axpress trims); merging `docs/sydney26-multicam` to main (not yet asked).
+  chasing them ("No to the other check"); v1 stands. **The Bear look is the show look for good** (Dean, 2026-10-30: "let's keep
+  the Bear look"), so no rollback strip list is needed; the Look v1 export stays only as an archive. Accessibility: granted (entry
+  above). `docs/sydney26-multicam` merged to main 2026-10-30 (cf19918). Nothing is open from this session.
