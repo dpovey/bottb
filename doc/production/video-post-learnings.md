@@ -3549,3 +3549,11 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   (job deleted, In/Out back, name read back), the hang guard with a sleeping script (rc 142), derive's rate/QC path on the
   existing files. **derive's own encode branch hasn't run from the script yet** (same ffmpeg command as the proven parallel run).
   Lesson: the medley ran ~40 helpers from `/tmp`; promote on the second run.
+- **gigstills' Resolve colour facts (2026-10-30, each one first given as wrong advice; recorded from gigstills-ce, not re-measured here):**
+  HDR wheel X/Y minimum magnitude 0.01; go lower with node Key Output Gain (0.5 halves it). **Hue vs Hue: a NEGATIVE Hue Rotate moves a
+  hue rightward on the strip** (green toward cyan); anchor yellow and skin at 0. Qualifier hue bar: Resolve Hue = DI hexcone hue / 3.6
+  + 31.8; skin ≈ 23–40. Get the Highlight/mask view before advising on a qualifier: a key edge across noisy darks flips compression
+  noise in and out (cut 11's blocks); soften that edge side, widen past the noise or add Clean Black, keep Blur and Pre-Filter.
+  Measure p1/p5/p10 before a global crush (most green cuts were already at black). Strobing: cut 51 goes 0–82 % green between
+  samples, so **3-frame-per-cut scans (my look_ab_scan) mislead**; gigstills `look_check.py` (every 5th frame, one pass per render)
+  replaces it and ab_measure/ab_levels/green_floor. `key_noise.py` checks blocky keys on node-off/on clip renders.
