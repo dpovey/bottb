@@ -3156,7 +3156,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
       it. Then: set the playhead by API, press "Select All Clips Under Playhead" by AX, send the shortcut, and press Return
       in the dialog (which keeps its last settings). Verify by API afterwards: the item has become a `.mov` Video item.
 - **Amakazaam cards (2026-10-19, Dean: "the set needs song cards, the song needs an end card").** `generate-song-overlays.ts
-  --event sydney --band amakazaam` wrote to **`02_Production/Amakazaam!/Overlays/`**: the folder takes the band's DB name, `!`
+--event sydney --band amakazaam` wrote to **`02_Production/Amakazaam!/Overlays/`**: the folder takes the band's DB name, `!`
   included, so it was moved to `Amakazaam/Overlays/`. 6 PNGs in played order (Valerie, Superstition, Under Pressure, Are You Gonna Go
   My Way, You Oughta Know, Killing in the Name), matching `/Volumes/BOTTB/Sydney - 2026/video/song_maps/songs.json` (the song map
   lives on BOTTB, not in a repo). Movies `TitleCards/Sydney2026/amakazaam_syd26_NN-<song>_card.mov` with the Canvanauts ffmpeg recipe:
@@ -3181,7 +3181,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
 - **Under Pressure RiP (2026-10-19), the recipe run end to end.** CAM 5 NR on (Project.db read-back: ON), 21 cuts Orange (14 Static Desk,
   5 Stage Right, 2 Desk Tracking; no drum, no Face Refinement), Super Scale 2 on 24 sources, output DWG/Intermediate, pre-RiP refs
   `checks/ripcheck_up_{sr15_257363,deskdz_260141}_preRiP_v1.mov`. **Dean RiP'd to the Extreme SSD** (`…/2026/Brisbane/02_Production/BOTTB
-  Sydney 2026 Full Show/Renders/`, "much faster"): 21 ProRes 422 HQ files, 7.9 GB, the first file landing at 12:37:36 and the last at 12:41:12. A
+Sydney 2026 Full Show/Renders/`, "much faster"): 21 ProRes 422 HQ files, 7.9 GB, the first file landing at 12:37:36 and the last at 12:41:12. A
   waiter watching `/Volumes/BOTTB/Renders` would have missed them, so ask where the RiP is going. Read back: 21 Video items tagged DaVinci
   WG/Intermediate, 43 LUT cuts still live; output back to Rec.709/Gamma 2.4; 21/21 re-assigned by angle; Super Scale 1 (24). Pixels
   post vs pre (look on, middle frame): desk DZ mean |Δ| 0.0059, p90 0.831→0.820; Stage Right 1.5× mean |Δ| 0.0133, uniformly darker
@@ -3235,7 +3235,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   render name reset to the timeline name (no read-back exists), saved. **The project library is now Blackmagic Cloud (PostgreSQL,
   ap-southeast-2) since 22:13 (deapovey-57); `GetCurrentDatabase()` reads it.** `state.py` fixed to add `GetStartFrame()` to the In/Out.
 - **New tool `scripts/bwf-sync-check.py` (2026-10-22), replacing the scratchpad bp_sync/up_sync/ms_sync copies.** `venv/bin/python -I
-  bwf-sync-check.py <bounce.wav>` reads the BWF stamp with ffprobe, prints the frame to place at (`round(stamp/1920)`) and its TC, then
+bwf-sync-check.py <bounce.wav>` reads the BWF stamp with ffprobe, prints the frame to place at (`round(stamp/1920)`) and its TC, then
   the five-point NCC vs the desk scratch and a wrong-region control. Proven on MIXv1_bwf.wav (+7.0 ms ×5, control 0.032, same as
   ms_sync) and on a stamp-less copy (refused, exit 1).
 - **~~Logic bounces carry no bext~~ CORRECTED 2026-10-22: Dean's Logic 12.2 bounce `ShipReX/MIXv1.wav` carries one.** ffprobe:
@@ -3247,13 +3247,13 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   AddMarker, render setup/start and SaveProject. Add the `atexit … os._exit(0)` line (entry above) or Dean gets a crash dialog per run.
   Unlisted YouTube upload of the preview: https://youtu.be/hjiTbqrFazc (social session, Dean drag + Studio).
 - **V2 Voyagers "Starships / UFO" (S5) master v1 placed (2026-10-28, bottb-8f; from mix-assist-d5).** `Extreme SSD/…/02_Production/V2Voyagers/
-  V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medley_logic_r16_master.wav` byte for byte, sha256 5b921d12…;
+V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medley_logic_r16_master.wav` byte for byte, sha256 5b921d12…;
   339.000 s, 24-bit/48 k; BWF 617385475; mix-assist QC −14.57 LUFS-I, −1.00 dBTP). `bwf-sync-check.py` (run from the branch with
   mix-assist's `uv run python`, because main has no scripts venv): +7.0 ms at all 5 points, ncc 0.55–0.67, control 0.015, so the stamp holds.
   mix-assist's align-mix against SYDNEY26_full.wav refused twice (1.06×/1.04×). **Placed on new A8 "V2 Medley S5 master v1" at 321555–330030
   (03:34:22:05–03:40:01:05)**, left offset 0, read back, saved. The import's Start TC read 03:34:22:04 (floor), as the 2026-10-22 rule predicts.
   The A4 pieces 321538–321766, 321766–329886 and 329886–330230 are clip-disabled; the A4 track was already off. **vs r14** (`align-mix
-  --bounce v1 --ref r14 --ref-bext`): v1 starts **150 frames (6.000 s) earlier**, 5/5 windows, measured − bext 0.0 frames, residual −7.75 dB
+--bounce v1 --ref r14 --ref-bext`): v1 starts **150 frames (6.000 s) earlier**, 5/5 windows, measured − bext 0.0 frames, residual −7.75 dB
   (different version). `AppendToTimeline` left the playhead at the item's end (03:40:01:05).
   The bounce starts in crowd noise (Logic's full cycle), so it needs crossfades into the show audio at both ends; those wait on Dean's In/Out.
 - **A brief's "current mix on the timeline" was wrong (2026-10-28).** The job said r14 (`V2Medley_fullmix_r14_master_ceiling-3.0_24bit_20261022.wav`)
@@ -3271,8 +3271,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   there. Green song starts moved to 5 f before the first note, ends kept: Venus 297464, Cosmic Girl 301585, Drops of Jupiter 307851,
   All Star 315739, Starships / UFO 321836; Red `END: Venus` 301584 (segue). Old markers backed up to the session scratchpad first,
   all read back, saved. Cards (`generate-song-overlays.ts --event sydney --band "v2 voyagers"` → `02_Production/V2Voyagers/Overlays/`,
-  movies `TitleCards/Sydney2026/v2voyagers_syd26_NN-<song>_card.mov`) on V3 at first note +32: 297501, 301622, 307888, 315776,
-  321873. In/Out and playhead saved before ImportMedia/AppendToTimeline and restored (read back). The DB medley card reads
+  movies `TitleCards/Sydney2026/v2voyagers_syd26_NN-<song>_card.mov`) on V3 at first note +32: 297501, 301622, 307888, 315776, 321873. In/Out and playhead saved before ImportMedia/AppendToTimeline and restored (read back). The DB medley card reads
   "Nicki Minaj / with UFO (Sneaky Sound System) / Starships". UFO enters at the song map's "bridge" section, REF 9362.26 ≈ 323986
   (03:35:59:11): no marker or card there yet.
   - **The first-note detector fires on the wrong thing in a live set; read the 100 ms trace before using it.** New
@@ -3336,11 +3335,11 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   `Renders/verify_StarshipsUFO_V2Voyagers_Syd26_lut_lookoff_v1.mp4` (look off, 46 s, render-qc PASS): cut 2 mean Y 37.6 → 44.4, cut 13
   (no LUT) 20.0 → 20.0. Keyframe plans for cuts 73 and 13 (static keyframes, HDR Global Exp on a serial node) go to Dean: UI-only.
 - **V2 medley held-grade review page (2026-10-29, Dean: "Can we make a review sheet?").** Under Pressure's format: 18 cards (17 held
-  + cut 36, flagged by gigstills' verify for rollback), 1080p look-on frames rendered from Resolve at each cut's middle frame (V3 off),
-  "Original" = no LUT, "Graded" = with it. Done as: 36's LUT off → 18 two-frame ProRes HQ jobs started by id together (`rbatch.py`) →
-  all 18 LUTs on → 18 more → held LUTs off, 36 back on; each step read back 18/18; tracks/In/Out/playhead restored; jobs deleted.
-  Mean |before − after| 2.6–33.6 levels per pair. Page https://claude.ai/artifact/BQtqUALQN6mCYxfvLYoK8M, `db` decisions/c### =
-  {cut, decision: graded|original, note}; frames in gigstills `runs/sydney26_v2voyagers_medley/review/`.
+  - cut 36, flagged by gigstills' verify for rollback), 1080p look-on frames rendered from Resolve at each cut's middle frame (V3 off),
+    "Original" = no LUT, "Graded" = with it. Done as: 36's LUT off → 18 two-frame ProRes HQ jobs started by id together (`rbatch.py`) →
+    all 18 LUTs on → 18 more → held LUTs off, 36 back on; each step read back 18/18; tracks/In/Out/playhead restored; jobs deleted.
+    Mean |before − after| 2.6–33.6 levels per pair. Page https://claude.ai/artifact/BQtqUALQN6mCYxfvLYoK8M, `db` decisions/c### =
+    {cut, decision: graded|original, note}; frames in gigstills `runs/sydney26_v2voyagers_medley/review/`.
 - **Bear-inspired teal/amber look: handed back from gigstills (2026-10-29).** Dean had given it to gigstills-ce and asked me to take
   it back. Its study is in gigstills `runs/sydney26_look_bear/RECOMMENDATION.md` (FLC Split Tone already on and measured tiny; on this
   footage 77–85 % of mid-zone pixels are saturated LED wash; faces sit at −2.2 st with the violet shadows; proposes qualified HDR nodes
@@ -3348,7 +3347,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   (79500–360347), so any change to it also changes the already delivered songs on re-render.**
 - **Held grades decided (2026-10-29, review page, 17 of 18).** Applied full: 9, 18, 27, 43, 49, 70, 82, 86, 96–99 (12/12 read back).
   Half strength (Dean: 24 "Maybe half way, main concern is the amount of noise"; 88 "Halfway?"): gigstills scaled the fitted grade
-  until the *visible* change was half (halving the parameters gave only 0.67 of 2.24 st on 24: gamma and display curve interact);
+  until the _visible_ change was half (halving the parameters gave only 0.67 of 2.24 st on 24: gamma and display curve interact);
   `v2med_c024_half.cube` (face +1.12 st, noise ×1.7 vs now, full was ×2.5) and `v2med_c088_half.cube` applied, read back. Kept
   original: 11, 12. **Cut 36 rolled back** (`SetLUT(1, "")`). Undecided: 66. Medley now: 48 + 14 + 2 − 1 = 34 + 13 = 47 LUT cuts of 99.
 - **Rollback for the show look (Dean: "I want it for the whole show, but I want to be able to roll back to the old look").**
@@ -3357,9 +3356,9 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
      it shows **Resolve is now 21.1.2**).
   2. Adjustment Clip local versions (API works on it): `RenameVersionByName("Version 1", "Look v1 (17 Oct)", 0)`,
      `AddVersion("Bear look", 0)` (becomes current, copies the 4 nodes), `LoadVersionByName(name, 0)` switches.
-  **Proven on pixels** (2-frame look-on controls at 325000/300000/230000, framemd5): v1 = Bear copy = v1 reloaded; a test LUT on
-  Bear's node 4 changed 325000 while loading v1 gave the original hash; removing it restored the hash. "Bear look" is left active,
-  so Dean's look edits can't touch v1. The HDR/qualifier nodes are UI-only; the A/B render waits on Dean building them.
+     **Proven on pixels** (2-frame look-on controls at 325000/300000/230000, framemd5): v1 = Bear copy = v1 reloaded; a test LUT on
+     Bear's node 4 changed 325000 while loading v1 gave the original hash; removing it restored the hash. "Bear look" is left active,
+     so Dean's look edits can't touch v1. The HDR/qualifier nodes are UI-only; the A/B render waits on Dean building them.
 - **Bear look v1, Dean's settings (2026-10-29/30, "Bear look" local version on the Adjustment Clip).** Two corrector nodes, "Teal" and
   "Amber", between CST2 and the FLC (node ids 5 and 6; the .drp lists nodes by id, so their place in the graph isn't read back).
   FLC Split Tone OFF in Bear (`splitIsEnable` 0; Amount 0.3 kept), ON in Look v1. HDR palette colour balance (X / Y):
@@ -3381,7 +3380,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   the sqlite step of the halation rule for cloud projects.**
   - **Bear look reads more saturated (Dean: "it looks a bit more saturated … Was split tone doing something else?"; then "I don't
     mind that look").** Decoded Look v1's FLC split tone: Strong, Amount 0.3, Angle 35°, Pivot 0.45, **`splitIsProtectNeutrals` 1**.
-    With neutrals protected it acts on the *coloured* pixels, pulling the violet/blue wash toward amber (nearly opposite), which
+    With neutrals protected it acts on the _coloured_ pixels, pulling the violet/blue wash toward amber (nearly opposite), which
     mutes it; the 2026-10-15 check measured near-neutrals only, so it saw "barely any difference". Turning it off in Bear gives that
     chroma back; the Teal/Amber tints add chroma on neutrals and skin by design. Confirm the split on the A/B render (gigstills).
 - **Bear A/B renders + the amber leak (2026-10-30, Dean at bed time: "on the big white shots, there was a noticeable pixel boundary
@@ -3449,7 +3448,7 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
     (json + `sheet_green.jpg`, `sheet_neutral.jpg`). **The cost is the green wash, not the smoke:** green pixels move −7…−10° toward
     yellow on every green-lit cut (cuts 21, 33, 45, 51, 54, 76, 78, 91 with green over 30 % of frame: −7.3…−13.7°). Clearest by eye:
     **cut 51, 03:37:34:21**, where the grey-blue projection screen turns yellow-green. Bright near-neutrals (smoke, silver suits) only
-    +1…+3 b* (finale smoke cuts 96–98: +0.2…+2.0), hard to see side by side. Skin-ish pixels +5…+18° toward yellow. Dean asked
+    +1…+3 b\* (finale smoke cuts 96–98: +0.2…+2.0), hard to see side by side. Skin-ish pixels +5…+18° toward yellow. Dean asked
     about a Highlight move: not for warmth (the amber already peaks in display 0.47–0.69 and the smoke and suits are where a
     Highlight push lands; gigstills §3).
   - **Comparisons need a page (Dean, 2026-10-30: "I need a page, gigstills produced us a nice page. We always want that when comparing
@@ -3552,11 +3551,11 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
 - **gigstills' Resolve colour facts (2026-10-30, each one first given as wrong advice; recorded from gigstills-ce, not re-measured here):**
   HDR wheel X/Y minimum magnitude 0.01; go lower with node Key Output Gain (0.5 halves it). **Hue vs Hue: a NEGATIVE Hue Rotate moves a
   hue rightward on the strip** (green toward cyan); anchor yellow and skin at 0. Qualifier hue bar: Resolve Hue = DI hexcone hue / 3.6
-  + 31.8; skin ≈ 23–40. Get the Highlight/mask view before advising on a qualifier: a key edge across noisy darks flips compression
-  noise in and out (cut 11's blocks); soften that edge side, widen past the noise or add Clean Black, keep Blur and Pre-Filter.
-  Measure p1/p5/p10 before a global crush (most green cuts were already at black). Strobing: cut 51 goes 0–82 % green between
-  samples, so **3-frame-per-cut scans (my look_ab_scan) mislead**; gigstills `look_check.py` (every 5th frame, one pass per render)
-  replaces it and ab_measure/ab_levels/green_floor. `key_noise.py` checks blocky keys on node-off/on clip renders.
+  - 31.8; skin ≈ 23–40. Get the Highlight/mask view before advising on a qualifier: a key edge across noisy darks flips compression
+    noise in and out (cut 11's blocks); soften that edge side, widen past the noise or add Clean Black, keep Blur and Pre-Filter.
+    Measure p1/p5/p10 before a global crush (most green cuts were already at black). Strobing: cut 51 goes 0–82 % green between
+    samples, so **3-frame-per-cut scans (my look_ab_scan) mislead**; gigstills `look_check.py` (every 5th frame, one pass per render)
+    replaces it and ab_measure/ab_levels/green_floor. `key_noise.py` checks blocky keys on node-off/on clip renders.
 - **"Was X in the render?" answered from exports (2026-10-30):** `resolve-lab/scripts/drp_nodes.py <export.drp> "bear look"` lists
   the look version's nodes with a per-node hash. The 13:52 pre-render export already had Dean's Hue vs Hue node ("Green Correct",
   after Amber; he set it with gigstills, not via me), and it hashed identical in a 16:50 export, so the shipped V2 v1 includes it.
