@@ -3562,3 +3562,12 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   after Amber; he set it with gigstills, not via me), and it hashed identical in a 16:50 export, so the shipped V2 v1 includes it.
   The unlabelled corrector (node 4) and the FLC (halation off) changed after 13:52. Take an export right before every delivery
   render: it's the only record of what the look was.
+- **Open at the end of the V2 medley session (2026-10-30; the next context starts here):**
+  V2 Voyagers Starships/UFO v1 shipped and handed to the Social agent (4K/1080p/IG in `/Volumes/BOTTB/Renders/`, thumbnails in
+  `Thumbnails/StarshipsUFO/`). gigstills' look_check of the shipped file vs Look v1 and Bear v3:
+  https://claude.ai/artifact/MBF8N435MkMzYpjjevbqNk (data: gigstills `runs/sydney26_look_bear/data/look_check_shipped_20261030/`).
+  Node 4: Dean, 2026-10-30: "I think I did tweak node 4" (when, relative to the ~13:55–14:14 render, is not known), so the
+  shipped file may or may not carry it. The 7 cuts that went further toward yellow (4, 17, 28, 45, 59, 60, 76): Dean said no to
+  chasing them ("No to the other check"); v1 stands. Still to do when asked: the rollback
+  strip list for Bear-only clip fixes (qualifier/curve nodes on cuts 18, 74, 75, 76, 78, 81, 91; keyframes on 73 and 13);
+  Accessibility permission for Dean's terminal (axpress trims); merging `docs/sydney26-multicam` to main (not yet asked).
