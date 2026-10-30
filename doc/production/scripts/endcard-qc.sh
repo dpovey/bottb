@@ -16,8 +16,8 @@ F="$1"; SHEET="${2:-${F%.mp4}.tail.png}"
 echo "=== streams ==="
 ffprobe -v error -show_entries stream=codec_type,width,height,duration,nb_frames -of csv=p=0 "$F"
 
-V=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$F")
-A=$(ffprobe -v error -select_streams a:0 -show_entries stream=duration -of csv=p=0 "$F")
+V=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$F" | grep . | head -n1)
+A=$(ffprobe -v error -select_streams a:0 -show_entries stream=duration -of csv=p=0 "$F" | grep . | head -n1)
 python3 -c "
 import sys
 v,a=float('$V'),float('$A')

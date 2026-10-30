@@ -17,7 +17,7 @@ SRC="$1"; W="$2"; OFF="$3"; OUT="$4"; FADE="${5:-0}"
 [[ -f "$SRC" && -f "$W" ]] || { echo "usage: splice-mix.sh <video.mp4> <mix.wav> <wav_offset_s> <out.mp4> [fade_len_s]"; exit 2; }
 [[ "$SRC" != "$OUT" ]] || { echo "refusing to overwrite the source"; exit 2; }
 
-D=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$SRC")
+D=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$SRC" | grep . | head -n1)
 AF="anull"
 if [[ "$FADE" != "0" ]]; then
   ST=$(python3 -c "print(round(float('$D') - float('$FADE'), 3))")

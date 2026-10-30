@@ -20,7 +20,7 @@ SR = 48000
 def load(path, start, dur, pan="0.5*c0+0.5*c1"):
     ch = int(subprocess.check_output(
         ["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", path]
-    ).decode().strip().split(",")[0])
+    ).decode().split()[0].split(",")[0])
     af = f"pan=mono|c0={pan}" if ch > 1 else "aformat=channel_layouts=mono"
     cmd = ["ffmpeg", "-v", "error", "-ss", str(start), "-t", str(dur), "-i", path,
            "-af", af, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"]
@@ -192,7 +192,7 @@ def analyse(d, start, dur, label):
             continue
         ch = int(subprocess.check_output(
             ["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", p]
-        ).decode().strip().split(",")[0])
+        ).decode().split()[0].split(",")[0])
         if ch < 2:
             r["width"][nm] = {"channels": ch, "note": "mono file"}
             continue

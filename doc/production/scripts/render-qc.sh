@@ -24,14 +24,14 @@ fail=0
 note() { print -r -- "$*"; }
 
 # 1. frames — count packets, which is exact and needs no decode
-N=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "$F")
+N=$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "$F" | grep . | head -n1)  # ffprobe 9 repeats stream entries in a stream_group section
 WANT=$(( OUT - IN + 1 ))
 if [[ "$N" == "$WANT" ]]; then note "frames   OK   $N (= $OUT - $IN + 1)"
 else note "frames   FAIL $N, expected $WANT"; fail=1; fi
 
 # 2. stream durations
-V=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$F")
-A=$(ffprobe -v error -select_streams a:0 -show_entries stream=duration -of csv=p=0 "$F")
+V=$(ffprobe -v error -select_streams v:0 -show_entries stream=duration -of csv=p=0 "$F" | grep . | head -n1)  # ffprobe 9 repeats stream entries in a stream_group section
+A=$(ffprobe -v error -select_streams a:0 -show_entries stream=duration -of csv=p=0 "$F" | grep . | head -n1)  # ffprobe 9 repeats stream entries in a stream_group section
 if [[ -z "$A" ]]; then note "audio    FAIL no audio stream"; fail=1
 else
   if python3 -c "import sys; sys.exit(0 if abs(float('$V')-float('$A'))<=0.2 else 1)"; then
@@ -59,7 +59,7 @@ print(1 if any(float(x)>-70 for x in v) else 0)" "${levels[@]}")
 fi
 
 # 4. bitrate
-BR=$(ffprobe -v error -select_streams v:0 -show_entries stream=bit_rate -of csv=p=0 "$F")
+BR=$(ffprobe -v error -select_streams v:0 -show_entries stream=bit_rate -of csv=p=0 "$F" | grep . | head -n1)  # ffprobe 9 repeats stream entries in a stream_group section
 MB=$(python3 -c "print(round(int('${BR:-0}' or 0)/1e6,1))")
 if python3 -c "import sys; sys.exit(0 if float('$MB')>=float('$MIN_MBPS') else 1)"; then
   note "bitrate  OK   ${MB} Mb/s"

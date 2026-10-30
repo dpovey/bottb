@@ -56,7 +56,7 @@ done
 [ -f "$SRC" ] || { echo "STOP: no such source $SRC"; exit 1; }
 [ -f "$CARD" ] || { echo "STOP: end card not found at $CARD"; exit 1; }
 
-dur () { ffprobe -v error -select_streams "$1":0 -show_entries stream=duration -of csv=p=0 "$2"; }
+dur () { ffprobe -v error -select_streams "$1":0 -show_entries stream=duration -of csv=p=0 "$2" | grep . | head -n1; }
 
 V=$(dur v "$SRC"); A=$(dur a "$SRC")
 

@@ -21,7 +21,7 @@ def bp(x, sr, lo=100, hi=1500):
     return sosfiltfilt(butter(4, [lo, hi], btype="band", fs=sr, output="sos"), x)
 
 def nsamples(path):
-    return int(run(["ffprobe", "-v", "error", "-show_entries", "stream=duration_ts", "-of", "csv=p=0", path]).decode().strip().split(",")[0])
+    return int(run(["ffprobe", "-v", "error", "-show_entries", "stream=duration_ts", "-of", "csv=p=0", path]).decode().split()[0].split(",")[0])
 
 def clean(name):
     name = name.strip()

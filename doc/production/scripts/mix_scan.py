@@ -51,7 +51,7 @@ def stem_key(path):
 def probe(path):
     out = subprocess.check_output(
         ["ffprobe", "-v", "error", "-show_entries",
-         "stream=sample_rate,channels,duration_ts", "-of", "csv=p=0", path]).decode().strip()
+         "stream=sample_rate,channels,duration_ts", "-of", "csv=p=0", path]).decode().split()[0]
     sr, ch, dts = out.split(",")[:3]
     return int(sr), int(ch), int(dts)
 

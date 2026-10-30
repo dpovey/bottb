@@ -356,7 +356,9 @@ than reporting a mismatch — Claude Code just times out at 30 s. `--dump-tools`
   _Convert Timelines to Multicam Clips_ dance.)
 - **`TimelineItem.SetFades({FadeIn, FadeOut})`** — clip fades ARE settable now. The title-card
   pipeline's baked-in-alpha fades (ffmpeg `fade=alpha=1`) were a workaround for this and are
-  no longer necessary for new cards. Note this does NOT retroactively fix
+  no longer necessary for new cards (corrected 2026-10-29: settable, but API-set fades read 0 after a reopen on Black Parade
+  2026-10-19 and on the V2 medley master 2026-10-29, so a fade set by API is not proven to persist; baked alpha fades can't be
+  lost, which is why the Sydney 2026 cards stay movies). Note this does NOT retroactively fix
   `EndCard_2x.mov`, whose fades are baked into RGB (still needs Additive blend).
 - `TimelineItem.AddTransition`, `Get/SetProperty` for native audio properties and enabled
   states, `Timeline.NormalizeAudioLevel`, `MediaPoolItem.GetTranscription`,
@@ -3264,3 +3266,279 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   crossfade. Dean plans to recut the medley's picture; the audio placement doesn't depend on the cut. Check `GetFades()` again before any render:
   Black Parade's fades read 0 after a reopen (2026-10-19 entry above). A read-only script hung with no output while Dean was playing
   and finished by itself once playback stopped: wait for it, don't kill it.
+- **V2 Voyagers song markers and cards (2026-10-29, bottb-8a; Dean: "adjust the song markers and add the titles (you can do it
+  for the whole v2 voyagers set)").** Dean's medley In/Out now **321816–330030** (03:34:32:16–03:40:01:05, 8215 f). Cyan RELEASE moved
+  there. Green song starts moved to 5 f before the first note, ends kept: Venus 297464, Cosmic Girl 301585, Drops of Jupiter 307851,
+  All Star 315739, Starships / UFO 321836; Red `END: Venus` 301584 (segue). Old markers backed up to the session scratchpad first,
+  all read back, saved. Cards (`generate-song-overlays.ts --event sydney --band "v2 voyagers"` → `02_Production/V2Voyagers/Overlays/`,
+  movies `TitleCards/Sydney2026/v2voyagers_syd26_NN-<song>_card.mov`) on V3 at first note +32: 297501, 301622, 307888, 315776,
+  321873. In/Out and playhead saved before ImportMedia/AppendToTimeline and restored (read back). The DB medley card reads
+  "Nicki Minaj / with UFO (Sneaky Sound System) / Starships". UFO enters at the song map's "bridge" section, REF 9362.26 ≈ 323986
+  (03:35:59:11): no marker or card there yet.
+  - **The first-note detector fires on the wrong thing in a live set; read the 100 ms trace before using it.** New
+    `scripts/transient_marker.py` (the Canvanauts-2025 rule as a tool; proven on a synthetic decaying hit + sustained entry, and a
+    flat control). On `SYDNEY26_full.wav` it caught **All Star's four stick clicks** (315690, 0.54 s apart; band at 315744) and
+    **Venus's walk-on backing track** (297420; band at 297469). It agreed within a frame with the song map on Drops of Jupiter and on
+    Starships (321841 on both the master v1 and the full mix). Cosmic Girl is a segue: the intro rises at 301590, 2.4 s before the grid's
+    first downbeat, after ~2 s at −37 dB. The 2025 Canvanauts master could not serve as ground truth: its place on that timeline
+    matched neither runbook start, so prove against a synthetic case instead.
+  - **Card alpha read-back: never downscale before taking the max.** New `scripts/song-card-movs.sh` (PNG dir → 125-frame
+    ProRes 4444, alpha fades in 12 / out 22, read back at f0/6/12/60/110/124, never overwrites). With `scale=64` in the check, the
+    known-good Amakazaam card read 136/187 and the new ones 143/196 (scaler overshoot depends on the artwork); at full resolution
+    both read 0/128/255/255/175/12, the runbook values. Frame-based (`s/n`) and time-based (`st/d`) fades gave identical files.
+  - **A8's fades read 0 again** (`GetFades()` {0, 0} on the medley master, set to 25/98 and read back 2026-10-28): the Black Parade
+    trap a second time, after Dean's session. Re-set the Out fade once the Out is final, read back right before the render.
+  - `AppendToTimeline` with `endFrame` 124 gave 124-frame card items (297501–297625), where the Canvanauts/Amakazaam cards are 125.
+    The dropped frame has alpha 12/255 here; pass `endFrame` 125 next time if the item must be 125.
+  - **Medley card and Out, same day (Dean: "Maybe medley should be Nicki Minaj / Sneaky Sound System with song Starships / UFO on
+    the bottom line? Make my out where the frame audio ends, the medley audio does fade out … maybe not to zero though").**
+    Card re-rendered with artist "Nicki Minaj / Sneaky Sound System", title "Starships / UFO", no qualifier line (a scratchpad copy
+    of the generator with a one-song override; run from the repo root with `NODE_PATH=<repo>/node_modules`, because packages
+    resolve from the script's own folder). The shared `songCredit()` medley rule ("with X (Artist)") is unchanged.
+    `MediaPoolItem.ReplaceClip()` swapped `…_05-starships-ufo_card.mov` into the V3 item (321873, position kept); old PNG and movie
+    in `_superseded/`. Out = A8's last frame **330029** (03:40:01:04; In/Out 321816–330029, 8214 f, RELEASE marker updated). The
+    bounce's tail: crowd at about −20 dB until 03:40:00:05, then its own fade, −44 dB at 330010 and −89 dBFS on the last frame: it
+    does reach silence, but in about 1 s.
+- **V2 medley grade handover (2026-10-29; Dean: "Okay talk to the gigstills agent to do grades … it might need some keyframes
+  particularly a few cloud shots and one of the bass player around 03:38:39:20").** gigstills-ce briefed through
+  `gigstills/runs/sydney26_v2voyagers_medley/BRIEF.md`; cut list written by the new read-only `scripts/resolve/cut_list.py`
+  (99 cuts, 321816–330029; the bass player is cut 73, Photo Pit 327951–327999). gigstills asked for a **look-ON** 1080p render as well
+  (Dean judges "darker" with the look on, so the keyframe lifts should be measured in what he sees). Render jobs queued by a
+  scratchpad `rjob.py` (SetMarkInOut, then one job, its MarkIn/MarkOut read back, `StartRendering([jid])`).
+  - **`SetRenderSettings` refuses the whole dict when one key is refused.** With ProRes 422 LT (`mov`), `SelectAllFrames: False`
+    and `MultiPassEncode: False` each return False (21.1.1), and a dict containing either fails. Send `MultiPassEncode` only for
+    H.264/H.265 and leave `SelectAllFrames` out: the job's MarkIn/MarkOut read-back checks the range. The format name is `mov`, not `ProRes`.
+    A failed setup had already moved the In/Out (SetMarkInOut runs first), so restore it from the RELEASE marker either way.
+  - **Renders (2026-10-29, M5 Pro / 64 GB):** look-on 1080p H.264 of the medley (8214 f) **7 min 7 s**; look-off Rec.709 **45 s**;
+    look-off DWG/DI ProRes LT **47 s** (3.32 GB). The Film Look Creator is ~90 % of a look-on render. All render-qc PASS; look-on ≠
+    look-off (F325000 mean Y 15.6 vs 21.9); a 2-frame look-on control at 325000 framemd5-identical before and after. Restored:
+    output Rec.709/G2.4, V2/V3 on, In/Out from the RELEASE marker, playhead, 5 jobs cleared, saved.
+  - **Resolve's Preferences window blocks scripting:** while Dean had it open, `GetCurrentPage()` read None, `SetTrackEnable`
+    did nothing and `SetCurrentRenderFormatAndCodec` returned False. Page None with a project open = a modal window; ask, don't retry.
+  - **`render-qc.sh` broke on ffprobe 9.0.2** (and so would any `-show_entries stream=… -of csv=p=0` read): ffprobe 9 repeats
+    stream entries under a `stream_group` section, so each value came back twice with a newline and the Python checks crashed into
+    FAIL. Fixed with `| grep . | head -n1` on the four reads; proven PASS on the look-on render and FAIL on a wrong range.
+    Trigger: Resolve renders (timecode track → a stream group; 2–3 copies); WAVs and ffmpeg-made files read once. `-of json` is safe
+    (stream_groups is a separate key). Same day: `splice-mix.sh`, `endcard-qc.sh`, `endcard-treat.sh`, `song-card-movs.sh` fixed the
+    same way, and `build_media.py`, `drum_scan.py`, `desk_project.py`, `desk_compare.py`, `mix_scan.py` now take the first non-empty
+    line (they read WAVs, so they weren't failing yet). gigstills `drum_noise.py`/`noise4k.py` flagged to gigstills (their repo).
+    mix-assist's library uses JSON; its plain-text callers are one-off research/repitch scripts on WAVs.
+  - **Machine (Dean, 2026-10-29: "I have a chunky machine now … take advantage of it where possible"):** M5 Pro, 64 GB, 18 CPU /
+    20 GPU cores. The finished look-on render went to gigstills while Resolve rendered the look-off ones. Agent file and skill
+    updated: parallel when headroom allows (CLAUDE.md 2026-10-27), not "one at a time across all sessions".
+- **`memreg` retired (2026-10-29; Dean, relayed by gigstills-ce: "we aren't using it any more").** `~/bin/memreg` no longer exists.
+  Earlier entries that register jobs with it, or use its comfort gate and TTLs, are history: size jobs from `vm_stat` headroom
+  (CLAUDE.md 2026-10-27) and don't put memreg in briefs.
+- **V2 medley grade applied (2026-10-29).** gigstills-ce (`runs/sydney26_v2voyagers_medley/REPORT.md`): 51 LUTs built; **34 applied**
+  (24 base, 10 face lift; faces targeted at this song's own median after Dean's "I want things darker generally, but these are
+  pretty dark shots"), 17 held for Dean, 48 no LUT. Pre-check (dry run): all 34 rows matched a current V1 item, 1 node, no LUT;
+  `RefreshLUTList()`, `SetLUT(1, …)`, 34/34 read back; rollback `rollback_editor_20261029.json`. Verify render
+  `Renders/verify_StarshipsUFO_V2Voyagers_Syd26_lut_lookoff_v1.mp4` (look off, 46 s, render-qc PASS): cut 2 mean Y 37.6 → 44.4, cut 13
+  (no LUT) 20.0 → 20.0. Keyframe plans for cuts 73 and 13 (static keyframes, HDR Global Exp on a serial node) go to Dean: UI-only.
+- **V2 medley held-grade review page (2026-10-29, Dean: "Can we make a review sheet?").** Under Pressure's format: 18 cards (17 held
+  + cut 36, flagged by gigstills' verify for rollback), 1080p look-on frames rendered from Resolve at each cut's middle frame (V3 off),
+  "Original" = no LUT, "Graded" = with it. Done as: 36's LUT off → 18 two-frame ProRes HQ jobs started by id together (`rbatch.py`) →
+  all 18 LUTs on → 18 more → held LUTs off, 36 back on; each step read back 18/18; tracks/In/Out/playhead restored; jobs deleted.
+  Mean |before − after| 2.6–33.6 levels per pair. Page https://claude.ai/artifact/BQtqUALQN6mCYxfvLYoK8M, `db` decisions/c### =
+  {cut, decision: graded|original, note}; frames in gigstills `runs/sydney26_v2voyagers_medley/review/`.
+- **Bear-inspired teal/amber look: handed back from gigstills (2026-10-29).** Dean had given it to gigstills-ce and asked me to take
+  it back. Its study is in gigstills `runs/sydney26_look_bear/RECOMMENDATION.md` (FLC Split Tone already on and measured tiny; on this
+  footage 77–85 % of mid-zone pixels are saturated LED wash; faces sit at −2.2 st with the violet shadows; proposes qualified HDR nodes
+  between the CST pair and the FLC, A/B on Local Versions). **The look lives on one Adjustment Clip spanning the whole show
+  (79500–360347), so any change to it also changes the already delivered songs on re-render.**
+- **Held grades decided (2026-10-29, review page, 17 of 18).** Applied full: 9, 18, 27, 43, 49, 70, 82, 86, 96–99 (12/12 read back).
+  Half strength (Dean: 24 "Maybe half way, main concern is the amount of noise"; 88 "Halfway?"): gigstills scaled the fitted grade
+  until the *visible* change was half (halving the parameters gave only 0.67 of 2.24 st on 24: gamma and display curve interact);
+  `v2med_c024_half.cube` (face +1.12 st, noise ×1.7 vs now, full was ×2.5) and `v2med_c088_half.cube` applied, read back. Kept
+  original: 11, 12. **Cut 36 rolled back** (`SetLUT(1, "")`). Undecided: 66. Medley now: 48 + 14 + 2 − 1 = 34 + 13 = 47 LUT cuts of 99.
+- **Rollback for the show look (Dean: "I want it for the whole show, but I want to be able to roll back to the old look").**
+  1. Project export `/Volumes/BOTTB/Sydney - 2026/video/project_backups/BOTTB_Sydney_2026_Full_Show_pre-bear-look_20261029.drp`
+     (`ProjectManager.ExportProject(name, path, True)` on the open cloud project, 6 s, 2.26 MB zip / 15.7 MB, 7 SeqContainers;
+     it shows **Resolve is now 21.1.2**).
+  2. Adjustment Clip local versions (API works on it): `RenameVersionByName("Version 1", "Look v1 (17 Oct)", 0)`,
+     `AddVersion("Bear look", 0)` (becomes current, copies the 4 nodes), `LoadVersionByName(name, 0)` switches.
+  **Proven on pixels** (2-frame look-on controls at 325000/300000/230000, framemd5): v1 = Bear copy = v1 reloaded; a test LUT on
+  Bear's node 4 changed 325000 while loading v1 gave the original hash; removing it restored the hash. "Bear look" is left active,
+  so Dean's look edits can't touch v1. The HDR/qualifier nodes are UI-only; the A/B render waits on Dean building them.
+- **Bear look v1, Dean's settings (2026-10-29/30, "Bear look" local version on the Adjustment Clip).** Two corrector nodes, "Teal" and
+  "Amber", between CST2 and the FLC (node ids 5 and 6; the .drp lists nodes by id, so their place in the graph isn't read back).
+  FLC Split Tone OFF in Bear (`splitIsEnable` 0; Amount 0.3 kept), ON in Look v1. HDR palette colour balance (X / Y):
+  **Teal: Dark 0.05 / −0.05, Shadow 0.002 / −0.02** (as Dean gave it; 0.002 may be 0.02); **Amber: Light −0.03 / +0.03.**
+  First values were Amber 0.02, Teal Dark 0.04 / Shadow 0.02, then "increased the strengths a bit".
+  - **Keys:** Teal = HSL Sat 0–30 (High Soft ~15) AND Hue = skin + 50 (wide, ~60–70), Lum off; Amber = skin key (picker on the
+    white-lit hand, Lum off). **Dean first set Amber as the inverse of Teal: wrong**, since the inverse of "low-sat AND not-skin" is
+    "saturated OR skin", which puts amber on the LED wash. Sampling skin on a violet-lit face (03:37:50:02) put the "skin" gap on
+    magenta, so real skin (the hand) stayed in the teal key; sample skin under white light. In Resolve's default highlight view
+    (Shift-H), **grey = NOT selected**, original colour = selected (I first wrote "white", which is Highlight B/W mode).
+    Invert lives in the Key palette (Qualifier Invert, Output Invert) as well as the Qualifier palette.
+  - **HDR Mode on these nodes: no.** The project has `useColorSpaceAwareGradingTools` 1; the manual (p.242) says not to use node HDR
+    Mode with colour-space-aware tools; it is for HDR output.
+- **Halation read-back now works on the cloud library: `resolve-lab/scripts/drp_flcstate.py` (2026-10-30).** Since 10-22 the
+  project lives in Blackmagic Cloud, so there is no local Project.db for `flcstate.py`. `SaveProject()`, then
+  `ProjectManager.ExportProject(name, path, True)` (6 s), then `python3.14 -I drp_flcstate.py <file.drp> [names]`: each
+  `<ListMgt::LmVersion>` in the export carries its grade as hex `<Body>` (0x81 + zstd), the same blob. Read: final cut, both Look v1 and
+  Bear look FLC ON, `halationIsEnable` 1, `bloomIsEnable` 1; control: a media-pool grade reads `halationIsEnable` 0. **This replaces
+  the sqlite step of the halation rule for cloud projects.**
+  - **Bear look reads more saturated (Dean: "it looks a bit more saturated … Was split tone doing something else?"; then "I don't
+    mind that look").** Decoded Look v1's FLC split tone: Strong, Amount 0.3, Angle 35°, Pivot 0.45, **`splitIsProtectNeutrals` 1**.
+    With neutrals protected it acts on the *coloured* pixels, pulling the violet/blue wash toward amber (nearly opposite), which
+    mutes it; the 2026-10-15 check measured near-neutrals only, so it saw "barely any difference". Turning it off in Bear gives that
+    chroma back; the Teal/Amber tints add chroma on neutrals and skin by design. Confirm the split on the A/B render (gigstills).
+- **Bear A/B renders + the amber leak (2026-10-30, Dean at bed time: "on the big white shots, there was a noticeable pixel boundary
+  where it turned yellow … maybe diagnose?").** `Renders/ab_StarshipsUFO_Syd26_look-{bear,v1}.mp4` (whole medley, look on, V3 off,
+  8 min 2 s each; render-qc PASS), done by a scratchpad `ab.sh` that loads each version, renders, then restores "Bear look", V3,
+  In/Out, playhead and clears the jobs. Three-way at 03:39:48:12 (look-on before grades / v1 / Bear): clean, clean, **blocky orange
+  patch** → the Bear nodes, not the cut-97 LUT; Teal can't make orange, so **the Amber key leaks**. Bear vs v1 elsewhere: green haze
+  goes yellow (03:38:47:10, orange added to green), pale projection screen goes orange (03:39:15:00), finale smoke and silver suits
+  orange/copper (03:39:41:24–end, up to 39 % of the frame). Scan: gigstills `runs/sydney26_look_bear/editor/orange_scan.py` (+ json).
+  The blocky edges are the camera's compression blocks flipping in and out of a hue key on near-neutral pixels. The puck hue is
+  fine (orange); the key is too wide (hue range includes pale yellow/green, Sat Low too low, Lum uncapped). gigstills asked for
+  measured qualifier numbers that separate faces from the leaks. **While the v1 render ran, "Look v1" was the active version: any
+  UI change then would have gone into v1. Tell Dean before an A/B that renders the old version.**
+  - **Qualifier numbers in the look nodes don't map to the display hue bar (2026-10-30).** Dean's first Amber key (picker on a
+    white-lit hand): Hue 32.1 / Width 40.8 / Soft 10, **Sat 0–3.6**, Lum off (sampled 49.9–60.3). It keyed near-neutral smoke,
+    screens and silver with a slight yellow cast (Dean: "It seems that key is picking up yellow not skin tone"). My placeholder fix
+    (Hue ~28, Width ~16, Sat Low ~2, Lum 30–65) left amber "almost never" active except on yellow objects. Reason: the Teal/Amber
+    nodes sit after CST2, i.e. on DWG/Intermediate values, where skin reads Sat < ~2–4 on the qualifier scale. **Don't guess
+    qualifier numbers in DWG/DI nodes from the display bar: measure faces vs leaks on the DWG/DI render first** (asked of
+    gigstills, `runs/sydney26_look_bear/RECOMMENDATION_amber_key.md`). Fallback: no qualifier, a much smaller Light-zone amber.
+  - **Amber changed to option B (Dean, 2026-10-30: "Should the amber qualifier apply to skin tones? … we are making only skin tones
+    more amber?", then "Lets do more of B").** Options put to him: A skin-only amber (needs a DWG/DI-measured key), **B warm highlights
+    everywhere: Amber node with no qualifier and a much smaller Light-zone amber**, C no amber (FLC Skin Bias 0.7 already warms skin).
+    Steps given: all three qualifier switches off (check Shift-H shows the whole frame), Light about −0.01/+0.01 (a third of −0.03/+0.03),
+    check the smoke at 03:39:48:12 / 03:39:55:00, and if it goes cream a small opposite Highlight push (~+0.005/−0.005). gigstills
+    switched from the key analysis to a measured Light strength for B. Re-render Bear for its A/B after Dean sets it.
+  - **gigstills on option B (2026-10-30, `runs/sydney26_look_bear/RECOMMENDATION_amber_key.md`):** unkeyed Amber Light
+    **−0.005/+0.005** (wash hue shift median 3.4°, worst 4.2°; smoke +1.7 Lab chroma; −0.004 if 96–97 smoke reads warm); no
+    Highlight/Specular counter-push (the amber peaks at display 0.47–0.69, where the orange smoke sat). **Bear as rendered is
+    brighter in darks/mids** (p50 up on 12 of 15 test cuts, +54 % cut 2, +59 % cut 25; dark faces ~+30 %), not from amber:
+    Teal node or split tone off. Asked Dean to check Teal's Dark/Shadow Exp and try Dark Exp −0.1…−0.2. Key study, for the record:
+    **Resolve qualifier Hue = DI hue/3.6 + 31.8** (Width = full width at 50 %, Soft = total ramp); Resolve Sat is compressed (skin < 2);
+    the best DI key kept 81 % of skin and caught 3–20 % of the leaks, so no clean skin key exists here.
+  - **Bear look v2 settled by Dean (2026-10-30: "Okay I am happy with this setting").** Amber node rebuilt with no qualifier (deleting
+    the node was simpler than finding the switch: Dean "I can't work out how to disable the qualifier"), Light −0.005/+0.005 per
+    gigstills (corrected 2026-10-30: the HDR X/Y fields step in 0.01, so Dean's node most likely holds −0.01/+0.01, twice that). **Node order IS readable through the live API**: `GetNodeGraph()` index order with `GetToolsInNode(i)` read 1 CST1,
+    2 CST2, 3 Teal [HSL Qualifier, HDR], 4 Amber [HDR], 5 FLC, 6 Primary Balance (the .drp lists by node id instead, which misled
+    me earlier). Export check: halation ON in both versions, split tone OFF in Bear / ON in v1. Bear re-render
+    `Renders/ab_StarshipsUFO_Syd26_look-bear_v2.mp4` for gigstills' A/B (tag bear_ab_v2). Teal Exp not confirmed by Dean.
+  - **Dean changed the grade during my render** (Teal Dark Exp −0.01 while `bear_v2` rendered). A render taken across a grade change
+    is mixed, so I stopped my own job (`StopRendering()` only after checking the queue held just that job id; it read 11 %), moved
+    the partial to `_superseded/`, deleted the job and re-rendered as `ab_StarshipsUFO_Syd26_look-bear_v3.mp4`. **Say "don't change
+    the grade until I say the render is done" when starting a render while Dean is grading.** −0.01 Exp is ~0.01 stop; gigstills'
+    brightening was ~0.6 stop on p50 in some cuts.
+  - **Bear v3 render (unkeyed Amber as set by Dean, recorded as −0.005/+0.005 but probably −0.01/+0.01, Teal Dark Exp −0.01; render-qc PASS) vs v1:** the orange blotches are gone
+    (03:39:48:12 smoke clean, slightly cooler than v1). The orange scan's "R−B up" now reads median 1.0 %, peaks 66–77 % on the
+    **green-lit drum cuts** (03:39:22–25, 03:38:46–48, 03:35:45, 03:36:48): the green wash moves evenly toward yellow-green (amber
+    plus no split-tone pull), with no patches. The scan no longer separates leaks from intended warmth once the key is gone; use
+    gigstills' wash-hue measure (ab_measure, tag bear_ab_v2 on the v3 file) for the verdict.
+  - **gigstills on Bear v3 vs v1 (2026-10-30, RECOMMENDATION_amber_key.md §7):** leaks gone; **darks still brighter**: display luma
+    ratio p5 ×1.28, p25 ×1.19, p50 ×1.08, faces ×1.09 (≈0.25 st at p5); 38 of 99 cuts p25 > +15 %, worst dark cuts 50 ×2.4, 28/14 ×2.0.
+    Uniform across hue/sat, so not the Teal key; most likely FLC split tone off (v1's Strong split held shadows down). Teal Dark Exp
+    −0.01 had no measurable effect. **Unkeyed amber came out ~2× the linear model's prediction**: green wash −7…−9° (cut 96 −14.3°),
+    fails < 5°; smoke +3.7–4.0 Lab warm; violet unchanged; faces toward skin as with the keyed 0.03. Options put to Dean: toggle split
+    tone on cut 25 (03:36:10:00) to confirm, then Teal Dark/Shadow Exp −0.2/−0.1 or split tone back on at a lower amount; Amber
+    −0.0025/+0.0025 if greens/smoke read too warm. (My orange scan is not a leak detector for an unkeyed node: gigstills agrees.)
+  - **HDR palette X/Y can't go below 0.01 (Dean, 2026-10-30: "Amber is the smallest possible move you can't do less than 0.01").**
+    I wrote gigstills' −0.005/+0.005 down as Dean's setting without asking what the field read. The node most likely holds
+    −0.01/+0.01, which accounts for the amber measuring ~2× the prediction: it is 2×. **For anything finer than a 0.01 step,
+    set the smallest step and scale the whole node with Key palette → Key Output → Gain** (1.00 = full; on an unkeyed node the key
+    is solid white, so Gain works as node opacity): 0.50 gives gigstills' −0.005, 0.25 gives −0.0025. Record what the field reads, not
+    the number that was recommended.
+  - **Where the amber shows, per cut (2026-10-30, new `scripts/look_ab_scan.py`, v1 against Bear v3, 99 cuts, 46 s with 5 workers;
+    control v1 against v1 reads 0.0 everywhere).** Output: gigstills `runs/sydney26_look_bear/editor/abscan_v1_bearv3_20261030/`
+    (json + `sheet_green.jpg`, `sheet_neutral.jpg`). **The cost is the green wash, not the smoke:** green pixels move −7…−10° toward
+    yellow on every green-lit cut (cuts 21, 33, 45, 51, 54, 76, 78, 91 with green over 30 % of frame: −7.3…−13.7°). Clearest by eye:
+    **cut 51, 03:37:34:21**, where the grey-blue projection screen turns yellow-green. Bright near-neutrals (smoke, silver suits) only
+    +1…+3 b* (finale smoke cuts 96–98: +0.2…+2.0), hard to see side by side. Skin-ish pixels +5…+18° toward yellow. Dean asked
+    about a Highlight move: not for warmth (the amber already peaks in display 0.47–0.69 and the smoke and suits are where a
+    Highlight push lands; gigstills §3).
+  - **Comparisons need a page (Dean, 2026-10-30: "I need a page, gigstills produced us a nice page. We always want that when comparing
+    shots").** My look_ab_scan sheets (two 1920×4360 JPGs) were not enough. Asked gigstills to put the comparison page into a skill
+    and regenerate it for v1 vs Bear v3 from the scan json plus its §7 levels. Rule now in the live-video-editor skill.
+  - **Dean's picks on the v1 vs Bear v3 page (2026-10-30, 32 shots, read from gigstills `data/compare_v1_bearv3_choices_20261030/`).**
+    Greens: v1 on 9 of 11, so fix the green shift (Bear kept only on cuts 45, 76). Amber: Bear on all 9, but on cut 97 smoke
+    (03:39:48:02) "probably half as much". Darks: Bear on 7 of 8; cut 17 (03:35:42:13) "maybe halfway towards bear". Faces: Bear on all 4.
+    Cut 11 (03:35:23:01): "distinct pixel edges of the teal due to camera compression" (the Teal qualifier keying on blocks).
+    **The look is one adjustment clip for the whole show, so per-cut fixes (17, 97, 11) can't go on its nodes:** they go on the V1 clip
+    grades, which carry into the Look v1 rollback too. Record which clips carry Bear-only fixes so a rollback can strip them.
+  - **gigstills' colour checks, what to ask for after a look render (gigstills 2026-10-30; scripts in
+    `runs/sydney26_look_bear/scripts`, run with `../../.venv/bin/python`).** `ab_measure.py` (15 focus cuts: wash hue, neutrals, faces,
+    floors, clipping; pass = wash |dH| < 5°, faces not further from skin, p0.1/p5 unchanged, no new clipping; ~4 min); `ab_levels.py`
+    (whole-song luma ratios p5–p90 + faces; ~3 min); `green_floor.py` (per-cut p1/p5 floor and darkest-quarter colour: finds washed-out
+    cuts; ~3 min); my `look_ab_scan.py`; qualifier B−A shift maps (key edges, compression blocking); the shot-compare page (Dean's picks
+    read back with ArtifactData). After a look change ask for: ab_measure + ab_levels + look_ab_scan + a compare page.
+  - **Dean set Hue vs Hue −13 on greens (per gigstills, 2026-10-30; not yet confirmed to me).** He is considering crushing the washed-out
+    green shots. gigstills' green_floor (Bear v3 vs v1): most green cuts already sit at p1 = 0, so crushing would only clip. Raised
+    floors: 18 03:35:46:01 p5 0.49 (all green, no blacks), 88 03:39:23:24 0.23, 43 03:37:05:24 0.13, 89 03:39:25:22 0.11,
+    46 03:37:14:22 0.065, 74 03:38:40:21 0.056, 49 03:37:23:11 0.052 (v3 roughly doubled 43/46/49). Advice: a node on each cut's own
+    V1 clip grade after its LUT, Dark/Shadow Exp down, no qualifier (a green key on an all-green frame selects everything and adds
+    edges in noisy darks, as on cut 11). Those are Bear-only fixes: add them to the rollback strip list.
+  - **Washed-out green shots are a squeezed green channel, not raised blacks (Dean, 2026-10-30, scopes at 03:39:32:07, cut 91: "it
+    might be that there are no midtones").** Measured (10-bit, p5/p25/p50/p75/p95): G look-off 249/469/658/722/786; v1 221/501/726/794/850;
+    Bear v3 241/509/722/786/842, with 36–39 % of pixels above 760 in the output roll-off. R is 0 on a quarter of the frame. The dark areas
+    are green haze (G ~230–500), mids and lights by luminance, so **HDR Dark/Shadow Exp barely touches them** and a crush would only clip R.
+    Bear also lifts R mids (p50 245 → 373): that's the yellowing. Fix is a green-only curve on the clip grade (pull the green
+    lower-mids down, keep the top), like Dean's red-wash toe rule. Scratch measurer: per-channel percentiles from look-off, v1, Bear.
+  - **A green-only curve shifts everything else toward magenta (cut 91, 03:39:29:02, 2026-10-30).** Dean put a Custom Curves node
+    (green only) on the V1 clip (it had no LUT). Measured with `clip_ab.sh` (scratch: render the clip with the node on, toggle it off
+    with `SetNodeEnabled`, render, re-enable, render again; on and on2 framemd5 identical, so the toggle round-trips): greens −14 chroma
+    as intended, but the skin, orange and red pixels −39° hue, blue/violet +39° toward purple, near-neutrals +3 chroma (pink on the silver suit and
+    wig). The curve takes green out of every pixel. Limit it with a soft green hue qualifier, or use Hue vs Lum on greens.
+    Page: https://claude.ai/artifact/38UbJTnjZEMDym96Wv3L1n (built with gigstills' shot-compare `build_page.py`; Artifact publish needs
+    the page copied under the scratchpad or cwd).
+  - **Washed-green shots across the medley (2026-10-30, `editor/greenwash.py` on Bear v3, every 5th frame, frames with > 50 % green).**
+    The drum camera is far worse than cut 91: G p5 560–780 (cut 91: 252), so there are no shadows at all. Cuts 74 03:38:41:01 (worst),
+    88, 31, 49, 18, 36, 43, 39, plus 82 (Photo Pit). About as flat as 91: 76, 45, 78, 87, 33, 89. Most strobe green/dark, so the fix is the
+    cut 91 one (curve + green Hue qualifier, no keyframes). Page: https://claude.ai/artifact/VcknwAGBsRzu35xK52XEfB (gigstills
+    shot-compare build_page.py, Look v1 vs Bear v3).
+- **V2 medley pre-RiP (2026-10-30, Dean: "I am happy let's move on to finalising, denoise and scaling etc and get ready to ship it").**
+  state.py: final cut, 3840×2160, In/Out = RELEASE 321816–330029, queue empty. 25 cuts Orange (18 Dynamic Zoom + 7 static ≥ 1.3; state.py's
+  "19 dynamic + 7" double-counts one), none with Face Refinement or a depth key; cut 91 (03:39:29:02, DZ) carries Dean's green HSL qualifier
+  node, which keys per pixel and stays live on the bake. Pre-RiP refs (look on, ProRes 422 HQ, **1080p** because rjob.py forces 1920):
+  `checks/ripcheck_v2med_{sr18_327270,c91dz_329305}_preRiP_v1.mov`. Super Scale 2 on 24 sources; output DWG / Intermediate (read back).
+  Dean's clip-grade fixes with qualifiers (not zoomed, not RiP'd): cuts 18, 74, 75, 76, 78, 81, 91; keyframes on 73 and 13.
+  zsh does not word-split `set -- $r`: use `${=r}` (a loop ran rjob.py with one argument; it failed before touching Resolve).
+- **Denoise is mine to switch, not Dean's (2026-10-30, Dean: "You can do 1 I think?", then "Make sure you remember this").** CAM 5 Drum
+  (S-Log3 8-bit) group Pre-Clip = node 1 HDR, node 2 `OFX: Noise Reduction` (the other four groups have one empty pre-clip node).
+  `scripts/resolve/grpnode.py "CAM 5 Drum (S-Log3 8-bit)" 2 1` (via the atexit wrapper) switches it; no read-back exists, so prove it on
+  pixels: 3 frames of a drum cut at 4K before and after (`checks/nrcheck_v2med_drum_324100_{before,after}_v1.mov`), then
+  `scripts/nr_check.py`: spatial HF sd 0.0192 → 0.0094, frame-to-frame 0.0440 → 0.0335, mean unchanged, and the render time 1.5 s → 15.3 s.
+  Opening the multicam to do it by hand is no longer needed. After delivery: `grpnode.py … 2 0` and the same check the other way.
+- **Render in Place reuses file names and overwrites (2026-10-30, V2 medley RiP to `/Volumes/BOTTB/Renders`).** The 25 new files are named
+  `Sydney 2026 Multicam - <angle> Render[ N].mov`, numbered from scratch for each RiP, and the folder went from 117 to 127 such files:
+  about 15 Canvanauts files were overwritten in place. They were orphans (decomposed 2026-10-17), and a scan of every timeline found no
+  item outside the medley using any of the 25 paths, so nothing broke. **Give every RiP its own empty folder**
+  (e.g. `Renders/RiP/<song>/`), and run the path-user scan (`pathusers.py`: every timeline's items vs the new paths) after any RiP into a shared folder.
+- **V2 medley RiP done (2026-10-30, Dean, to `/Volumes/BOTTB/Renders`).** 25 Video items tagged DaVinci WG/Intermediate, 6 LUTs still live,
+  cut 91's qualifier node live; output back to Rec.709 / Gamma 2.4 (read back); 25/25 re-assigned to CAM groups by angle; Super Scale 1 (24).
+  Pixels post vs pre (look on, 1080p, middle frame): Stage Right 1.8× mean |Δ| 0.023 but blurred 1.8/255 (signed ≤ −0.005, p50 0.356→0.354):
+  the difference is texture, visibly sharper from Super Scale; cut 91 DZ 0.0073, blurred 1.3/255. CAM 5 NR ON (grpnode.py, pixel-proven).
+- **axpress needs Accessibility trust, and this session had none (2026-10-30).** `axtrusted` printed `AXIsProcessTrusted: false`, inside and
+  outside the sandbox, so menu-bar edits (roll, Extend Edit) went to Dean. The medley's last cut (329934–330077) ran 47 frames past the
+  Out (330029), so a FadeOut on it would not reach black at the Out: roll its end edit back to 330030 before setting the fade. Build
+  the tools from `resolve-lab/tools/*.swift` with `swiftc`; trust is granted in System Settings › Privacy › Accessibility (Dean's call).
+- **V2 medley end and render setup (2026-10-30).** Dean rolled the last cut's end edit to 330030 (read back: 329934–330030, next V1 item
+  starts 330030, audio unchanged). EndCard_2x on V3 329932–330030 (endFrame 98 exclusive), CompositeMode ADD read back 1. **The last cut is
+  only 96 frames, so `SetFades({"FadeOut": 98})` returned False** (fade longer than the item); 96 was accepted and **reads back 95**.
+  A8 left without a fade (Dean: the bounce fades itself). Halation from `ExportProject` + drp_flcstate: Bear look FLC ON, halationIsEnable 1
+  (Dean confirmed too). Export kept: `project_backups/BOTTB_Sydney_2026_Full_Show_pre-medley-render_20261030.drp`. 4K job 2118eab9:
+  321816–330029, 3840, H.264 45 Mb/s, MultiPassEncode False, audio on → `Renders/V2Voyagers_StarshipsUFO_Sydney2026_4K_v1.mp4`.
+- **V2 medley delivered (2026-10-30 ~15:45):** 4K v1 1,862,415,927 B; 1080p v1 496,769,382 B (11.8 Mb/s); IG v1 274,535,567 B
+  (6.5 Mb/s target → 6.4, 261.8 MiB; 8 Mb/s would have been ~342 MB on 328.6 s). Both derived **in parallel** with `-threads 6`:
+  ~1.15 GB peak each, 4.5/5.7 min, render-qc PASS on all three (8214 frames). −14.6 LUFS, −0.7 dBTP, LRA 6.9; last frame Y=16, end
+  card visible. **After the render the Resolve bridge stayed blocked** (master finished 14:14; at 15:28 `wait_render.py` was still
+  alive and a one-line job-status read hung 120 s, Resolve at 3 % CPU, so not rendering; probably playback or a dialog). The master
+  was QC'd from the file (ffprobe duration + render-qc) instead of waiting. Thumbnails filed in `Renders/Thumbnails/StarshipsUFO/`;
+  handed to bottb-e8 (the session holding the V2 copy) in one message per the contract.
+- **Same day, ~15:50: Dean force-quit Resolve** (it had stopped answering him too; the blocked bridge above was Resolve hung, not
+  playback). Deliverables were already on disk and QC'd. Cleanup (NR off, Orange clear, In/Out, render name) waits for a relaunch;
+  on reopening, run `state.py` and compare against the 13:52 export (`pre-medley-render_20261030.drp`: end card, fades, roll, NR on)
+  to see what the force quit lost. Anything changed after 13:52 and not saved is gone and was not in the render either.
+- **After the force quit (2026-10-30 ~16:30):** Resolve reopened with no project; I loaded "BOTTB Sydney 2026 Full Show" by
+  script (`LoadProject`, cloud DB, no prompt). **What survived:** end card + Add, Dean's roll, 25 Orange, A8, Bear look version.
+  **Lost:** the last cut's FadeOut (read 0; re-set 96 → reads 95). So a force quit can drop the last unsaved edit: after one, re-read
+  every pre-render change, not just the big ones. Post-delivery done and read back: CAM 5 NR off (`grpnode.py … 2 0`; 3-frame
+  render 0.9 s vs 15.3 s with NR, HF sd 0.0265 vs 0.0094 on), Orange 25 → 0, jobs cleared, In/Out = RELEASE, render name = timeline
+  name (probe job read `BOTTB Sydney 2026 - final cut.mov`, deleted), saved. **The 13:37 `nrcheck_*_before/after` refs were rendered
+  look-off** (mean 0.29 vs 0.30–0.31 now): compare an NR re-check against a frame cut from the delivered master, not those.
+  Halation left ON until Dean says.

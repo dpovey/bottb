@@ -52,7 +52,7 @@ def smap(d):
 def load(path, start, dur):
     ch = int(subprocess.check_output(
         ["ffprobe", "-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", path]
-    ).decode().strip().split(",")[0])
+    ).decode().split()[0].split(",")[0])
     af = "pan=mono|c0=0.5*c0+0.5*c1" if ch > 1 else "aformat=channel_layouts=mono"
     raw = subprocess.check_output(
         ["ffmpeg", "-v", "error", "-ss", str(start), "-t", str(dur), "-i", path,
