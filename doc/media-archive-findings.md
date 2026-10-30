@@ -733,6 +733,24 @@ and `_resolve/Resolve Projects`). **T7 Shield wiped** with Dean's yes: erased as
 there (Sydney 2025 also still on Extreme SSD). exFAT to match BOTTB and Extreme SSD; no journal, so
 eject cleanly rather than pulling it.
 
+**Cleanup 2026-10-08 (Dean's OK):** deleted `/Volumes/BOTTB/_OUA_TRIM` (186 G) and `_JUMBO_TRIM2` (183 G),
+so `JUMBO FINAL` is now offline and any Melbourne rebuild starts from the Drive raw (1.2 T download).
+Also deleted: the stale Extreme cache `events/2026/Brisbane/03_Cache/CacheClip` (39 G), `_BRAWTEST`,
+QC renders (`measure_/verify_/review_/lookon_*`) and superseded delivery versions in `BOTTB/Renders`,
+and the ShipRex CoveredInChrome master `.mov` + YT4K. BOTTB 282 → 716 GiB free, Extreme 190 → 224 GiB.
+
+**Sydney 2026 backup started 2026-10-19 12:40** (`05-sydney-2026.txt`): the `BOTTB SYD26` travel disk
+(5 camera folders, 24 MP4s, 456 G) → `events/2026/Sydney/01_Media/Video`, then `/Volumes/BOTTB/Sydney - 2026`
+(Logic multitrack `Project.logicx` 58 G plus mix/repitch/crowd/video work, 128 G) →
+`events/2026/Sydney/01_Media/Audio`. The audio folder is still being edited by other sessions, so a
+CHECK FAILED there can just mean a file changed mid-run; re-run the job to pick it up.
+
+**Status 2026-10-20:** both MD5-verified on Drive — video 24/24 files (01:45), audio 7,592 files
+(20:55, resumed via `05b-sydney-2026-audio-resume.txt` after a drive detach). Sydney 2026 now has two
+copies. Two pytest `…current` symlinks under `repitch/*/work/tmp` are skipped (exFAT, harmless).
+The original wrapper died mid-job on 2026-10-19 for an unknown reason (not mem-guard) while its rclone
+carried on; if `status` says "not running" during a job, check `pgrep -fl rclone` before restarting.
+
 ---
 
 ## SOLVED: the rebuilt timeline renders darker/redder — missing per-cut clip grades (2026-09-23)

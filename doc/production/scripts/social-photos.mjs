@@ -46,9 +46,11 @@ if (!folder) {
 }
 
 const post = JSON.parse(fs.readFileSync(path.join(folder, 'post.json'), 'utf8'))
-const caption = fs
-  .readFileSync(path.join(folder, 'caption.fb.txt'), 'utf8')
-  .trim()
+// caption.fb.txt is only needed for the Facebook leg; an --ig-only folder has caption.ig.txt.
+const fbCaptionPath = path.join(folder, 'caption.fb.txt')
+const caption = fs.existsSync(fbCaptionPath)
+  ? fs.readFileSync(fbCaptionPath, 'utf8').trim()
+  : fs.readFileSync(path.join(folder, 'caption.ig.txt'), 'utf8').trim()
 
 const j = async (u, o) => {
   const r = await fetch(u, o)
@@ -74,7 +76,7 @@ const urls = []
 for (const im of post.images) {
   const local = path.join(folder, im.file)
   const up = await put(
-    `social/brisbane-2026/photos/${post.post}/${im.file}`,
+    `social/${post.event || 'brisbane-2026'}/photos/${post.post}/${im.file}`,
     fs.readFileSync(local),
     {
       access: 'public',

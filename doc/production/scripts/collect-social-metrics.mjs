@@ -3,7 +3,9 @@
  * Collect social performance into `posts` + `post_metrics`.
  *
  *   node doc/production/scripts/collect-social-metrics.mjs --dry
- *   node doc/production/scripts/collect-social-metrics.mjs
+ *   node doc/production/scripts/collect-social-metrics.mjs [--since 2026-09-28]
+ *
+ * Default window is the last 30 days of posts. Every run adds a new snapshot row per post.
  *
  * MUST run with the repo root as cwd — it reads .env.local from there.
  *
@@ -43,7 +45,11 @@ const G = 'https://graph.facebook.com/v21.0'
 const PG = env.POSTGRES_URL,
   HOST = PG.match(/@([^/]+)\//)[1]
 const DRY = process.argv.includes('--dry')
-const SINCE = new Date(Date.now() - 14 * 864e5)
+const sinceArg = process.argv.indexOf('--since')
+const SINCE =
+  sinceArg > -1
+    ? new Date(process.argv[sinceArg + 1])
+    : new Date(Date.now() - 30 * 864e5)
 const get = async (u) => (await fetch(u)).json()
 const sql = async (query, params = []) => {
   const r = await fetch(`https://${HOST}/sql`, {
@@ -58,8 +64,22 @@ const sql = async (query, params = []) => {
   if (d.message || d.error) throw new Error(JSON.stringify(d).slice(0, 300))
   return d.rows
 }
-const evOf = (c) =>
-  /SYDNEY BAND ANNOUNCEMENT/i.test(c || '') ? 'sydney-2026' : 'brisbane-2026'
+// Only used for posts the ledger does not have yet. Ledger rows carry the event the content shows,
+// and Brisbane posts end with "Sydney is next", so the FIRST city named wins, not any mention.
+// No city means no guess: NULL, fixed by hand.
+const CITY = [
+  [/sydney|manning bar|factory theatre/i, 'sydney-2026'],
+  [/brisbane|triffid/i, 'brisbane-2026'],
+  [/melbourne|howler/i, 'melbourne-2026'],
+]
+const evOf = (c) => {
+  let best = null
+  for (const [re, ev] of CITY) {
+    const i = (c || '').search(re)
+    if (i > -1 && (!best || i < best.i)) best = { i, ev }
+  }
+  return best?.ev ?? null
+}
 const CAP = new Date().toISOString()
 const items = []
 
@@ -87,6 +107,7 @@ for (const p of fbPosts.data || []) {
     caption: p.message || '',
     event_id: evOf(p.message),
     metrics: {
+      // Graph omits `shares` when a post has none, so absent really is zero here.
       shares: (p.shares || {}).count ?? 0,
       views: isVid && viewsById[tgt] != null ? viewsById[tgt] : null,
       likes: null,
@@ -147,9 +168,11 @@ if (ids.length) {
       caption: v.snippet.title,
       event_id: evOf(v.snippet.title),
       metrics: {
-        views: +v.statistics.viewCount || 0,
-        likes: +v.statistics.likeCount || 0,
-        comments: +v.statistics.commentCount || 0,
+        // Hidden or disabled counts are absent, not zero.
+        views: v.statistics.viewCount != null ? +v.statistics.viewCount : null,
+        likes: v.statistics.likeCount != null ? +v.statistics.likeCount : null,
+        comments:
+          v.statistics.commentCount != null ? +v.statistics.commentCount : null,
         shares: null,
       },
       raw: { privacy: v.status.privacyStatus },
@@ -163,26 +186,37 @@ console.log(
 if (DRY) {
   for (const i of items)
     console.log(
-      `  ${i.platform.padEnd(10)} ${i.posted_at.slice(0, 16)} ${JSON.stringify(i.metrics)} ${i.caption.slice(0, 40).replace(/\n/g, ' ')}`
+      `  ${i.platform.padEnd(10)} ${i.posted_at.slice(0, 16)} ${String(i.event_id).padEnd(14)} ${JSON.stringify(i.metrics)} ${i.caption.slice(0, 40).replace(/\n/g, ' ')}`
     )
 }
 let newPosts = 0,
   newMetrics = 0,
   skipped = 0
 for (const it of items) {
+  // The ledger stores whatever id the posting route returned: a FB video id or page-post id, an IG
+  // container id or shortcode. Match on any of them, and on the permalink's id, before inserting.
+  const ids = [it.external_id, it.raw.video_id].filter(Boolean)
+  const token = (it.permalink || '').match(
+    /\/(?:p|reel|reels|videos|posts)\/([^/?]+)/
+  )?.[1]
+  if (token) ids.push(token)
+  const likes = ids.map((i) => `%/${i}%`)
   const ex = await sql(
-    'SELECT id FROM posts WHERE platform=$1 AND external_id=$2',
-    [it.platform, it.external_id]
+    'SELECT id FROM posts WHERE platform=$1 AND (external_id = ANY($2) OR permalink LIKE ANY($3)) ORDER BY created_at LIMIT 1',
+    [it.platform, ids, likes]
   )
   let pid = ex[0]?.id
   if (!pid) {
     if (DRY) {
+      console.log(
+        `  NEW ${it.platform.padEnd(10)} ${it.posted_at.slice(0, 16)} ${String(it.event_id).padEnd(14)} ${it.caption.slice(0, 50).replace(/\n/g, ' ')}`
+      )
       newPosts++
       continue
     }
     const r = await sql(
       `INSERT INTO posts (platform,external_id,permalink,status,content_type,event_id,caption,posted_at,posted_via,source,metadata)
-       VALUES ($1,$2,$3,'published',$4,$5,$6,$7,'api','backfill-2026-09-22',$8::jsonb) RETURNING id`,
+       VALUES ($1,$2,$3,'published',$4,$5,$6,$7,'api','collect-social-metrics',$8::jsonb) RETURNING id`,
       [
         it.platform,
         it.external_id,

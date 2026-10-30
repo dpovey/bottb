@@ -1,0 +1,43 @@
+{
+  "group": "sydney-2026-v2-voyagers-starships-ufo",
+  "event": "sydney-2026",
+  "band": "v2-voyagers-sydney-2026",
+  "title": "V2 Voyagers - Starships / UFO (Nicki Minaj & Sneaky Sound System Cover) - BotTB Sydney 2026",
+  "copy": "doc/production/v2-voyagers-starships-ufo-copy.md",
+  "files": {
+    "ig": "/Volumes/BOTTB/Renders/V2Voyagers_StarshipsUFO_Sydney2026_1080p_IG_v1.mp4",
+    "master": "/Volumes/BOTTB/Renders/V2Voyagers_StarshipsUFO_Sydney2026_4K_v1.mp4",
+    "ig_cover": "/Volumes/BOTTB/Renders/Thumbnails/StarshipsUFO/v2-voyagers-starships-ufo-instagram.jpg"
+  },
+  "blob_prefix": "release/sydney-2026/",
+  "collaborators": ["sailornicole", "demonrace", "youngcareoz"],
+  "results": {
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/V2Voyagers_StarshipsUFO_Sydney2026_1080p_IG_v1.mp4",
+        "bytes": 274535567
+      },
+      "master": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/V2Voyagers_StarshipsUFO_Sydney2026_4K_v1.mp4",
+        "bytes": 1862415927
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/v2-voyagers-starships-ufo-ig-cover_v1.jpg",
+        "bytes": 302582
+      }
+    },
+    "facebook": {
+      "id": "1395781299210374",
+      "permalink": "https://www.facebook.com/reel/1395781299210374"
+    },
+    "instagram": {
+      "id": "DfG3KB5D0du",
+      "permalink": "https://www.instagram.com/reel/DfG3KB5D0du/",
+      "posted_at": "2026-10-30T05:46:38+0000"
+    },
+    "youtube": {
+      "id": "4UhnRsKcvKc",
+      "permalink": "https://youtu.be/4UhnRsKcvKc"
+    }
+  }
+}
