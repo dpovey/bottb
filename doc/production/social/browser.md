@@ -123,6 +123,8 @@ after setting it.**
   shrinks after the time is picked, so re-find Next (a click on the old spot lands outside and raises
   the save-draft prompt; close that with its X). Check the result from an empty composer: clock icon →
   "View all scheduled posts" (there is no Scheduled tab under Page posts).
+  **3 Nov 2026:** only quarter-hours are offered. `6:40 AM` produced no suggestion at all (the header kept the old
+  time); `6:45 AM` offered one option, and clicking it updated the header. Pick slots on :00/:15/:30/:45.
 
 ## A disabled button eats the click and reports nothing
 
@@ -136,3 +138,18 @@ check the report would have been "deleted" when nothing had happened.
 **So: for any gated control, confirm the gate is actually open before clicking through** — read the
 checkbox state back, or screenshot and look — and always verify the outcome through a different
 instrument than the one that performed the action.
+
+## T3 Code's built-in preview browser as a stand-in for Claude in Chrome (2 Nov 2026)
+
+When a session has no `mcp__claude-in-chrome__*` tools (T3 Code sessions can start without them, and reconnecting the
+extension does not add them mid-session), the T3 `preview_*` tools with profile **"Dean (personal)"** were signed in to
+YouTube Studio (BotTB manager), LinkedIn page admin and TikTok @bottb0 (good 4 u, 2 Nov).
+
+- `preview_act action=upload` sets a file input from an absolute path, but **caps at 50 MB** ("Cannot transfer files
+  larger than 50Mb to a browser not co-located with the server"). Thumbnails and photos go straight in; videos don't.
+- YouTube Studio fetch-inject from Blob works exactly as in Chrome (1.05 GB in 45 s, `blob.size` guard).
+- LinkedIn and TikTok block the Blob `fetch` here too ("Failed to fetch"), so their videos still need Dean's drag.
+- `preview_act type` into the Studio description left a stray "ng" at the start (carried from the title field); read the
+  textbox back and delete via a JS-selected range + Delete. Commas in the Tags field don't split until Enter.
+- The LinkedIn tab fell to the authwall after ~20 min idle in this browser; check sign-in right before using it.
+- `preview_evaluate` times out at 15 s: start long work async and poll a `window.__inj` object.

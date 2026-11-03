@@ -1,0 +1,71 @@
+{
+  "group": "sydney-2026-bandlassian-good4u",
+  "event": "sydney-2026",
+  "band": "bandlassian-sydney-2026",
+  "title": "Bandlassian - good 4 u (Olivia Rodrigo Cover) - BotTB Sydney 2026",
+  "copy": "doc/production/bandlassian-good4u-copy.md",
+  "files": {
+    "ig": "/Volumes/BOTTB/Renders/Bandlassian_good4u_Sydney2026_1080p_IG_v1.mp4",
+    "master": "/Volumes/BOTTB/Renders/Bandlassian_good4u_Sydney2026_4K_v1.mp4",
+    "ig_cover": "/Volumes/BOTTB/Renders/Thumbnails/Good4U/bandlassian-good-4-u-instagram.jpg"
+  },
+  "blob_prefix": "release/sydney-2026/",
+  "collaborators": [
+    "sailornicole",
+    "demonrace",
+    "youngcareoz"
+  ],
+  "results": {
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/Bandlassian_good4u_Sydney2026_1080p_IG_v1.mp4",
+        "bytes": 188387328
+      },
+      "master": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/Bandlassian_good4u_Sydney2026_4K_v1.mp4",
+        "bytes": 1051654876
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/bandlassian-good4u-ig-cover_v1.jpg",
+        "bytes": 134980
+      }
+    },
+    "instagram": {
+      "id": "DfPcL7Vgv5Z",
+      "permalink": "https://www.instagram.com/reel/DfPcL7Vgv5Z/",
+      "posted_at": "2026-11-02T13:43:57+0000"
+    },
+    "youtube": {
+      "id": "yUPYr-OgmzI",
+      "permalink": "https://youtu.be/yUPYr-OgmzI",
+      "scheduled_for": "2026-11-03T06:00:00+10:00",
+      "posted_at": "2026-11-02T20:00:27Z"
+    },
+    "facebook": {
+      "id": "2495692854295012",
+      "permalink": "https://www.facebook.com/reel/2495692854295012",
+      "scheduled_for": "2026-11-03T06:30:00+10:00",
+      "posted_at": "2026-11-02T13:50:53+0000"
+    },
+    "linkedin": {
+      "scheduled_for": "2026-11-03T06:45:00+10:00",
+      "status": "scheduled",
+      "note": "Scheduled in the page composer 3 Nov ~00:20 AEST; read back in View all scheduled posts. No id until it publishes: run record linkedin <urn> after 06:45.",
+      "id": "urn:li:activity:7523123025982951424",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7523123025982951424/",
+      "posted_at": "2026-11-02T20:45:02.261Z"
+    },
+    "tiktok": {
+      "candidate_id": "7703576854480915718",
+      "scheduled_for": "2026-11-03T06:50:00+10:00",
+      "status": "scheduled",
+      "note": "Studio row reads Nov 3, 6:50 AM (GMT+10). Candidate id from the content page HTML (id time 2026-11-02T14:12:37Z = staging); confirm from the app after 06:50, then record tiktok <id>.",
+      "id": "7703576854480915718",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7703576854480915718",
+      "posted_at": "2026-11-02T14:12:37.000Z"
+    }
+  },
+  "facebook": {
+    "scheduled_for": "2026-11-03T06:30:00+10:00"
+  }
+}

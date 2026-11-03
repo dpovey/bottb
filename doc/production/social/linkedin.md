@@ -54,6 +54,10 @@ Split out of social-reel-posting-runbook.md on 2026-10-30; shared rules (copy, h
    - **Posts are editable after publishing**, which is the escape hatch when a link did not exist at
      compose time. Verify mention chips survived the edit **after a full page reload**, not from the
      edit dialog.
+   - **3 Nov 2026 (good 4 u):** the admin URL landed on LinkedIn's "Welcome back" login with a Google one-tap
+     "Signing you in" toast; a few seconds later the tab was on the page admin without anyone touching the form. Wait
+     and re-screenshot before asking Dean to sign in. Auto captions came up ON (280 MB file) and went off with one
+     click on the toggle; "Review captions" greys out once auto captions are off.
      Schedule: clock icon → date (calendar click) → time (type `4:30 PM`, click the suggestion
      option) → Next → Schedule. Scheduled posts have **no permalink until they publish**.
 
@@ -185,3 +189,10 @@ Also confirm the hashtags are present — a swallowed tail is the other half of 
 
 `cmd+a` then `Delete` clears the composer **only with focus inside the editor**; click into it
 first and read `innerText` back to confirm. Images survive the clear.
+
+## Finding a published post's URN without a signed-in browser (3 Nov 2026)
+
+The preview browser's LinkedIn session drops to the authwall, but the public company page still lists recent posts.
+`curl -sL -A '<desktop Chrome UA>' https://www.linkedin.com/company/battle-of-the-tech-bands | grep -oE 'urn:li:activity:[0-9]{19}'`,
+decode each id's time (`id >> 22` = Unix ms), take the one at the scheduled slot, then confirm by fetching
+`/feed/update/<urn>/` and grepping for a phrase from the caption. Then `record linkedin <urn>`.
