@@ -1033,8 +1033,10 @@ what differs.
 
 - **A reel is its own Resolve project** (`Canvanauts - Anti-hero - Reel`), timeline
   `Canvanauts Anti-hero`, **2160×3840 vertical 25p**, cut from a multicam `Canvanauts` (starts
-  01:00:00:00). `state.py`'s `MAIN_TIMELINE` check assumes the Brisbane show timeline and will
-  flag a reel as "NOT the show timeline"; set `MAIN_TIMELINE` to the reel's timeline name.
+  01:00:00:00). `state.py` treats any timeline named "BOTTB ..." (not a multicam view) as the show
+  timeline, so a reel like this is flagged "NOT the show timeline"; set `MAIN_TIMELINE` to the
+  reel's timeline name. (2026-11-01: the check was a hardcoded "BOTTB Brisbane 2026" until then and
+  wrongly flagged "BOTTB Sydney 2026 - final cut".)
 - **Sydney 2025 cameras** (embedded Sony XML checked per the "Cameras and formats" method): Wide
   = A7S III `luca_2_*` (H.264 4:2:2 10-bit), Audience = A7S III `luca_1_*` (**H.264 4:2:0,
   8-bit**), Chase = FX6 `LUK-fx6-*.MXF` (XAVC). All three are genuinely `rec709`, not log, so

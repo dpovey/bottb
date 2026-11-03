@@ -2,7 +2,11 @@
 # Edit IN/OUT to the song's range (record frames) or leave None to use the timeline In/Out.
 # Every line it prints is a checklist item in video-post-learnings.md "Delivery render checklist".
 IN, OUT = None, None  # absolute record frames, as items and render jobs report them
-MAIN_TIMELINE = "BOTTB Brisbane 2026"
+# The show timeline: None = any timeline named "BOTTB ..." (e.g. "BOTTB Brisbane 2026",
+# "BOTTB Sydney 2026 - final cut") that is not a multicam's Open in Timeline view (which can be
+# named "BOTTB Multicam"); set an exact name to check one (a reel, a festival cut).
+MAIN_TIMELINE = None
+SHOW_PREFIX = "BOTTB "
 import DaVinciResolveScript as dvr
 resolve = dvr.scriptapp("Resolve"); proj = resolve.GetProjectManager().GetCurrentProject()
 if proj.IsRenderingInProgress():  # 21.1.1: every GetProperty/GetProperties read is empty during
@@ -12,8 +16,11 @@ tl = proj.GetCurrentTimeline()
 def tc(f):
     f = int(f); return "%02d:%02d:%02d:%02d" % (f//90000, f//1500 % 60, f//25 % 60, f % 25)
 name = tl.GetName()
-print("timeline      %s%s" % (name, "" if name == MAIN_TIMELINE else
-      "   <-- NOT the show timeline: a multicam opened in the timeline makes reads wrong and writes refused"))
+is_show = (name == MAIN_TIMELINE if MAIN_TIMELINE
+           else name.startswith(SHOW_PREFIX) and "multicam" not in name.lower())
+print("timeline      %s%s" % (name, "" if is_show else
+      "   <-- NOT the show timeline (%s): a multicam opened in the timeline makes reads wrong and writes refused"
+      % ("expected %r" % MAIN_TIMELINE if MAIN_TIMELINE else "not %r..., or a multicam" % SHOW_PREFIX)))
 print("page          %s" % resolve.GetCurrentPage())
 print("resolution    %sx%s" % (tl.GetSetting("timelineResolutionWidth"), tl.GetSetting("timelineResolutionHeight")))
 mio = tl.GetMarkInOut() or {}
