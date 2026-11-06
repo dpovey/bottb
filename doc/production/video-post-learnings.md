@@ -282,9 +282,11 @@ pre-clip is `["Primary Balance"]`, `["OFX: Deflicker"]`, `["OFX: Noise Reduction
 Windows"]`. Grade structure can now be audited programmatically, which is worth doing in release
 QC.
 
-**Still true, and still the trap:** there is **no `GetNodeEnabled`**. You can set state, you can
+~~**Still true, and still the trap:** there is **no `GetNodeEnabled`**. You can set state, you can
 never read it back. So: set it explicitly before every render rather than assuming, and never
-toggle a node whose original state you did not record — you cannot restore what you cannot read.
+toggle a node whose original state you did not record — you cannot restore what you cannot read.~~
+— CORRECTED 2026-11-06: 21.2 adds `GetNodeEnabled`, checked against pixels (see "Resolve 21.2 upgrade"). Read the state,
+record it, restore it.
 
 Original 21.0.4 finding, kept for context: `SetNodeEnabled(i, True)` returned True for every node
 but had no effect on rendered output (release flicker amplitude ≈ deflicker-bypassed measure
@@ -296,7 +298,7 @@ the no-op — it was wrong. **`GetCurrentClipThumbnailImage` returns a per-clip 
 the current frame**: moving the playhead a full second within one clip gives a byte-identical
 image, while moving between clips gives different ones. It cannot detect a grade change on the
 same clip and is useless for this kind of verification. Use `GrabStill` + `ExportStills`, a
-measure render, or a human looking at the node graph.
+measure render, or a human looking at the node graph. (2026-11-06: on 21.2 use `ExportFrame` for this; see "Resolve 21.2 upgrade".)
 
 ## Render jobs bind to the multicam when its Open-in-Timeline view is active (2026-09-07, caught by Dean)
 
@@ -423,7 +425,7 @@ Re-tested the "Can't" list above against the live 21.1 API rather than the chang
 | **Add OpenFX (Deflicker, Film Look Creator)** | **Still not possible.** `InsertOFXGeneratorIntoTimeline` inserts a generator _clip_, not an effect on a node. Fusion comps are scriptable (`AddFusionComp`) but that is the Fusion page, not Colour-page OFX |
 | Generate proxies / optimized media            | Still can't trigger generation — but `LinkProxyMedia` / `UnlinkProxyMedia` / `LinkFullResolutionMedia` let you attach externally generated proxies (Blackmagic Proxy Generator or ffmpeg, then Link)         |
 | Set proxy format / location                   | **Partly** — `perfProxyMediaMode`, `perfProxyResolutionRatio`, `perfOptimisedCodec`, `perfOptimizedResolutionRatio` all read/write. Generation _location_ still not exposed                                  |
-| Read node enable/bypass state                 | **Still not possible** — no `GetNodeEnabled`                                                                                                                                                                 |
+| Read node enable/bypass state                 | ~~Still not possible~~ — CORRECTED 2026-11-06: `GetNodeEnabled` in 21.2                                                                                                                                                                 |
 | Select items in the UI                        | **Partly** — `MediaPool.SetSelectedClip` exists; still no setter for timeline items                                                                                                                          |
 | Clip fades                                    | **Now possible** — `TimelineItem.SetFades({FadeIn, FadeOut})`                                                                                                                                                |
 | Dynamic Zoom on/off                           | **Now possible** — `DynamicZoomEnabled`. Start/end rectangles still inaccessible, and there is no general sizing-keyframe API, so camera _moves_ remain manual                                               |
@@ -485,7 +487,7 @@ look and the black anchor, keep Group Pre-Clip — no longer needs a human.
 Verified on pixels rather than on the return value: bypassing changed **97.9 % of pixels**
 (mean |Δ| 9.7/255, R +9.3 / G −3.4 — the FLC's shaping), and restoring afterwards reproduced the
 same frame **byte-identically** (mean |Δ| 0.0000, max 0). Given `SetNodeEnabled` returned `True`
-while doing nothing in 21.0.4, and there is still **no `GetNodeEnabled`**, the rule stands:
+while doing nothing in 21.0.4, and there is ~~still **no `GetNodeEnabled`**~~ (CORRECTED 2026-11-06: added in 21.2), the rule stands:
 **set state explicitly, verify on a grabbed still, and never toggle a node whose original state
 you did not record.** Dean confirmed "FLC enabled as is the primary balance" before the run;
 without that there would have been nothing to restore to.
@@ -626,13 +628,16 @@ appear in any node-toggle result, and has to be done by hand in the FLC panel:
   Radius 4.00, Saturation 1.000, Hue 0.500).
 - **Post-render:** untick it before handing the timeline back for cutting.
 
-Because there is no `GetNodeEnabled` **and** no parameter read-back, nothing can verify this
+~~Because there is no `GetNodeEnabled` **and** no parameter read-back, nothing can verify this
 one from the outside — not even on a grabbed still, since at Amount 0.250 on this footage the
 difference is inside H.264 noise on most frames. It is a checklist item, and the only defence
-is doing it in a fixed order every time.
+is doing it in a fixed order every time.~~ — CORRECTED 2026-11-06: the switch is readable from the
+project (`resolve-lab/scripts/flcstate.py`, or `drp_flcstate.py` on an export for a cloud project).
+`GetNodeEnabled` does not help: the switch is a parameter inside the FLC node, not a node's state.
 
-**Before any render, all of the above go back ON.** There is still no `GetNodeEnabled`, so
-nothing can read the state back — it has to be set explicitly and verified on a grabbed still.
+**Before any render, all of the above go back ON.** ~~There is still no `GetNodeEnabled`, so
+nothing can read the state back — it has to be set explicitly and verified on a grabbed still.~~
+CORRECTED 2026-11-06: set it, then read each node back with `GetNodeEnabled` (21.2).
 The seven nodes are: timeline Film Look Creator; CAM A Deflicker; CAM B Deflicker + NR;
 CAM C Deflicker + NR; CAM D NR.
 
@@ -976,7 +981,8 @@ Three grabs, the album count rising 48 → 49 → 50, and all three exports iden
 all named `..._1.1.3.png`, including a control grabbed from a different song entirely. The last
 element of `GetStills()` is not the newest still. This is separate from the settle-time problem
 above, and a comparison built on it is worse than none. Use a short render instead: it is the
-only still-grab route here whose provenance can be checked.
+only still-grab route here whose provenance can be checked. (2026-11-06: `ExportFrame` writes the
+file you name, followed node changes byte for byte and matched a TIFF render to under 1 level; see "Frame exports against renders".)
 
 **Playback blocks the scripting bridge; do not kill `ResolvePython` helpers to fix it.** With
 the timeline playing, even `GetCurrentPage()` timed out. Each timed-out call left a
@@ -2111,7 +2117,7 @@ Sony XML (`strings` on the last 4 MB), not from the folder names.
 Project `BOTTB Sydney 2026 Full Show`: DaVinci YRGB Color Managed v2, separate colour space and gamma, timeline
 **`DaVinci WG` / `DaVinci Intermediate`** (the string "DaVinci Wide Gamut" is refused; "DaVinci WG" takes), output
 Rec.709 / Gamma 2.4, input and output DRT `DaVinci`, colour-space-aware tools on, 3840×2160 25p. Cache on
-`/Volumes/BOTTB/Sydney - 2026/video/CacheClip`, Optimized Media off. `timelinePlaybackFrameRate` refuses "25" (reads 24).
+`/Volumes/BOTTB/Sydney - 2026/video/CacheClip`, Optimized Media off. `timelinePlaybackFrameRate` refuses "25" (reads 24). (2026-11-06: reads 25 in the 21.2 lab, but setting 25 returned False, so the changelog's "settable" isn't shown.)
 
 - **Per-clip `SetClipProperty("Input Color Space", …)` prefix-matches and can pick the wrong preset.** "Canon Cinema
   Gamut" returned True and set **"Canon Cinema Gamut/Canon Log 2"**. Every spelling of the Log 3 preset was refused, as was
@@ -2917,8 +2923,9 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   p10 0.05–0.06 back down to about 0.02, so judge raised blacks with the look on.
 - **`SetNodeEnabled` on a timeline node can lie in both directions (2026-10-16).** After the full-set look-off render,
   `GetNodeGraph().SetNodeEnabled(3, True)` returned True, yet Dean found the FLC still off; a second call also returned True,
-  and Dean then confirmed it on. There is no `GetNodeEnabled` read-back. After any look-off render, ask Dean to confirm the
-  FLC is on, or prove it with a two-frame look-on render, before anyone grades or renders.
+  and Dean then confirmed it on. ~~There is no `GetNodeEnabled` read-back. After any look-off render, ask Dean to confirm the
+  FLC is on, or prove it with a two-frame look-on render, before anyone grades or renders.~~ CORRECTED 2026-11-06: read it with
+  `GetNodeEnabled` (21.2) after any look-off render. This lie has not been reproduced on 21.2, so keep a pixel check if a read looks wrong.
 - **Midtone lift after the look (Dean, 2026-10-16: timeline node 4 after the FLC, "02").** Four look-on 4K samples in Black
   Parade (`video/checks/midlift_[A-D]_lookon_4K_v1.mp4`, untouched cuts 277/314/329–332/339) against last night's look-on
   preview, at the same frames: midtones +0.2 to +0.25 st on pit/tracking cuts (+0.1 on a bright drum shot, +0.4 on a dark
@@ -3177,6 +3184,8 @@ lowerlift}_v1.mov`): **flat-area noise −21 %, frame median 0.124 → 0.091**, 
   reads `{'FadeIn': 0.0, 'FadeOut': 0.0}`. Not yet known: whether the fades were really lost (on save, on reopen, or by a later edit) or
   `GetFades` reads wrong after a reload. Until that's settled, set the fades in the same session as the render, read them back right
   before `StartRendering`, and check the last frame is black on the render itself.
+  **Settled 2026-11-06: they are really lost.** See "Frame exports against renders".
+- (2026-11-06: 21.1.2 added `SetLeftOffset`, `SetRightOffset`, `SetPosition` and `MoveItems`. `resolve/roll.py` rolls a cut with them, on multicam items too, read back. No blade yet.)
 - **There is no trim or blade in the 21.1.1 API** (the stub has no SetStart/SetEnd/SetDuration/trim on TimelineItem; only
   `GetLeftOffset`/`GetRightOffset`). Shortening a cut means either Dean in the UI, or `DeleteClips` (no ripple, leaves a gap) plus a
   re-append of the pool item with new source in/out, which for a multicam item also means choosing the angle.
@@ -3574,3 +3583,41 @@ V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medle
   chasing them ("No to the other check"); v1 stands. **The Bear look is the show look for good** (Dean, 2026-10-30: "let's keep
   the Bear look"), so no rollback strip list is needed; the Look v1 export stays only as an archive. Accessibility: granted (entry
   above). `docs/sydney26-multicam` merged to main 2026-10-30 (cf19918). Nothing is open from this session.
+
+## Resolve 21.2 upgrade (2026-11-06)
+
+Studio 21.2.0.5 installed over 21.1.2. Tested on a `.drp` import of Sydney in the Local Database; the cloud project was not opened
+in 21.2 for these tests. Full record: `~/src/personal/resolve-21.2-upgrade/notes/findings.md`.
+
+- **`GetNodeEnabled` reads the truth** on clip, group and timeline graphs. On CAM 5 Pre-Clip (2 nodes) and the timeline graph (4 nodes)
+  every flip changed the `ExportFrame` hash and every restore matched byte for byte. CAM 5 NR read off, as the 11-05 post-delivery left it.
+- **`ExportFrame` is the quick state check:** graded frame to a named file, about 2 s at UHD; a 30% x 30% region crop at native resolution
+  in about 0.2 s (one sample each). `ExportThumbnails`: a labelled graded grid at about 1 s per frame. Playhead did not move. Timeline
+  offsets count from the timeline start: subtract `GetStartFrame()`. Matched against renders: see "Frame exports against renders" below.
+- **`GetCDL`** reads back a non-identity CDL exactly (one clip node). `ApplyAutoColor` lifted the shadows on the one gig frame tried: not a grade tool here.
+- **MCP:** 18 tools. New `describe_grade` (used), `get_image`, `get_thumbnails` (not exercised). `update_dctl`, `delete_dctl`, `list_dctls`,
+  `delete_lut` are replaced by `write_dctl`, `read_dctl`, `list_luts`, `delete_lut_file`.
+- **Decoders still work on 21.2 exports:** `dzedit` 177 blobs with 0 round-trip mismatches; `drp_cutlist` 1743 items, matching the API.
+- **Never script `SetCurrentDatabase` away from the cloud library.** It can't come back: not in `GetDatabaseList()`, and `SetCurrentDatabase`
+  returned False three ways. Dean has to switch in Project Manager.
+- **Still no API:** adding colour nodes, Render in Place, sizing keyframes, Dynamic Zoom rectangles, selecting timeline items, the FLC halation switch.
+- **Unproven:** render match with 21.1.2, and "Multicam clips now open as source clips in source timelines" against the multicam traps above.
+
+### Frame exports against renders (2026-11-06)
+
+Lab on a `.drp` import of Sydney, Local Database, media drives off: real look clip v3, FLC, groups and timeline nodes over a plain clip of real gig pixels. Record:
+`~/src/personal/resolve-21.2-upgrade/notes/lab-2026-11-06.md`.
+
+- **`Timeline.ExportFrame` equals the render** to under 1 level (mean 0.21-0.35, max 0.9) against a 16-bit TIFF on dark, bright, mid-fade and panned frames. It replaces a 2-frame TIFF or
+  ProRes proof of what the grade does. It doesn't check a codec: H.264 differs by mean 2.0, max 64.
+- **`TimelineItem.ExportFrame` is the look-off picture without touching a track:** identical to the timeline frame with the look off, within 0.9 of a look-off TIFF. It includes clip grade, group Pre-Clip, sizing **and
+  timeline nodes**, and excludes fades and tracks above. About 0.2 s at UHD. Proved on a plain clip: run `resolve/calibrate_frames.py` once on a real song before trusting it on live multicam or RiP'd cuts.
+- **Both return success on offline media** (a graded "Media Offline" slate) **and None during a render.**
+- **API-set fades are really lost on save and reload.** `GetFades` reads 0 and the frame changes, on a plain clip and a multicam item. So set fades in the render's session and check the last frame: `preflight.py` does.
+- **`SetTrackEnable` on Deliver returns True, changes nothing and reads back as if nothing happened.** Open Edit first. `track_enable.py` already refuses other pages.
+- **`SetRightOffset` alone isn't a roll.** Extending eats the next clip's head, shortening leaves a gap, and putting it back doesn't return what it ate. Use `roll.py`.
+- **`AnalyzeAudioLevels` matches ffmpeg** on real stereo over the item's range (-10.6 against -10.7 LUFS, one 40 s sample, 0.1 s). Mono reads 3 LU high.
+- **A render job's range isn't safe unread:** a one-frame In/Out and a wrong format name started a whole-timeline H.264 render in the lab. `render_range.py` has the read-back.
+- **Untested:** what `GetEffects` shows for a really missing plugin (`/Library/OFX/Plugins` needs admin). Offline detection on a flat red wash could false-alarm.
+
+**Tools:** `preflight.py` (before every render), `edge_scan_live.py`, `frames.py`, `sheet_live.py`, `input_proof.py`, `fx_scan.py`, `cdl_read.py`, `roll.py`, `calibrate_frames.py`, shared `pix.py`. All in `scripts/resolve/`; usage in each header.
