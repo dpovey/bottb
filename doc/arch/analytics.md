@@ -40,6 +40,14 @@ Both receive same events via unified `trackEvent()` utility.
 | --------------------- | ------------------- |
 | `social:link_clicked` | Social icon clicked |
 
+### Reel Link Events
+
+Sent from the server by `/go/[video]/[placement]`, the tracked links in social posts. It has no cookies or person profile, and the visitor's IP isn't sent. Preview bots and prefetches aren't counted, but treat the count as an upper bound.
+
+| Event               | Description                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `reel:link_clicked` | Link clicked on its way to YouTube. Properties: `video`, `placement`, `environment`. |
+
 ## Environment Metadata
 
 All events include:
