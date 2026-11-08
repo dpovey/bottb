@@ -8,7 +8,7 @@
  *
  * Usage: pnpm tsx src/scripts/generate-descriptions-local.ts
  *
- * Outputs: /tmp/artist-descriptions.json for review before import
+ * Outputs: <temp dir>/artist-descriptions.json (BOTTB_TMP_DIR) for review before import
  */
 
 import { config } from 'dotenv'
@@ -19,6 +19,8 @@ config({ path: '.env.local' })
 // Import after dotenv config
 import { sql } from '@vercel/postgres'
 import { writeFileSync } from 'fs'
+import { join } from 'path'
+import { scratchDir } from './paths'
 
 interface Performance {
   event_id: string
@@ -245,7 +247,7 @@ async function main() {
   }
 
   // Save to file
-  const outputPath = '/tmp/artist-descriptions.json'
+  const outputPath = join(scratchDir(), 'artist-descriptions.json')
   writeFileSync(outputPath, JSON.stringify(results, null, 2))
   console.log('='.repeat(50))
   console.log(`✅ Saved ${results.length} descriptions to ${outputPath}`)

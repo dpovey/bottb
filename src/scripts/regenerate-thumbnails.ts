@@ -5,7 +5,7 @@
  * Regenerates all photo thumbnails to preserve aspect ratio.
  * Features:
  * - Checkpointing: saves progress to resume if interrupted
- * - Local caching: processes images to /tmp before uploading
+ * - Local caching: processes images to the temp dir (BOTTB_TMP_DIR) before uploading
  * - Batch uploads: uploads in batches for efficiency
  *
  * Usage:
@@ -28,14 +28,18 @@ import { join, basename, extname } from 'path'
 import sharp from 'sharp'
 import { put } from '@vercel/blob'
 import { sql } from '@vercel/postgres'
+import { googlePhotosBasePath, scratchDir } from './paths'
 
 // Load environment variables
 config({ path: '.env.local' })
 
 // Paths
-const CHECKPOINT_FILE = '/tmp/regenerate-thumbnails-checkpoint.json'
-const CACHE_DIR = '/tmp/regenerate-thumbnails-cache'
-let PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Google Photos'
+const CHECKPOINT_FILE = join(
+  scratchDir(),
+  'regenerate-thumbnails-checkpoint.json'
+)
+const CACHE_DIR = join(scratchDir(), 'regenerate-thumbnails-cache')
+let PHOTOS_BASE_PATH = googlePhotosBasePath()
 
 interface PhotoRecord {
   id: string

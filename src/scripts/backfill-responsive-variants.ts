@@ -29,12 +29,13 @@ import { join } from 'path'
 import { existsSync } from 'fs'
 import sharp from 'sharp'
 import { processImage } from '../lib/image-processor'
+import { photosBasePath } from './paths'
 
 // Load environment variables
 config({ path: '.env.local' })
 
 // Default photos path - can be overridden with --photos-path
-let PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
+let PHOTOS_BASE_PATH = photosBasePath()
 
 interface PhotoRecord {
   id: string
