@@ -3,12 +3,15 @@
  *
  * Every default can be overridden with an environment variable (or the
  * script's own CLI flag where it has one). Defaults are the current external
- * drive path or the platform temp dir, never a user home directory.
+ * drive path or /tmp, never a user home directory.
  */
-import { tmpdir } from 'os'
 import { join } from 'path'
 
 const DEFAULT_VOLUME = '/Volumes/Extreme SSD'
+// /tmp, not os.tmpdir(): on macOS that is a per-shell $TMPDIR (a session scratchpad
+// in agent shells), so a resume from another shell would miss a checkpoint and
+// redo its uploads.
+const DEFAULT_TMP = '/tmp'
 
 type Env = Record<string, string | undefined>
 
@@ -35,7 +38,7 @@ export function productionOutBase(env: Env = process.env): string {
   )
 }
 
-/** Scratch dir for script temp files. Override with BOTTB_TMP_DIR. */
+/** Dir for script checkpoints and temp files. Override with BOTTB_TMP_DIR. */
 export function scratchDir(env: Env = process.env): string {
-  return env.BOTTB_TMP_DIR || tmpdir()
+  return env.BOTTB_TMP_DIR || DEFAULT_TMP
 }

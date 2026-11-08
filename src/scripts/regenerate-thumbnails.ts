@@ -427,6 +427,7 @@ async function main() {
   }
 
   console.log('🔄 Regenerate Thumbnails Script (with checkpointing)\n')
+  console.log(`📍 Checkpoint: ${CHECKPOINT_FILE} (BOTTB_TMP_DIR overrides)\n`)
 
   if (isDryRun) {
     console.log('🧪 DRY RUN MODE - No changes will be made\n')

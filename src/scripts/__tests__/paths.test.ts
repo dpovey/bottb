@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'fs'
-import { tmpdir } from 'os'
 import { join } from 'path'
 import {
   photosBasePath,
@@ -16,7 +15,7 @@ describe('script path defaults', () => {
     expect(productionOutBase({})).toBe(
       '/Volumes/Extreme SSD/bottb/events/2026/Brisbane/02_Production'
     )
-    expect(scratchDir({})).toBe(tmpdir())
+    expect(scratchDir({})).toBe('/tmp')
   })
 
   it('can be overridden by environment variables', () => {

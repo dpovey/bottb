@@ -8,7 +8,7 @@
  *
  * Usage: pnpm tsx src/scripts/generate-descriptions-local.ts
  *
- * Outputs: <temp dir>/artist-descriptions.json (BOTTB_TMP_DIR) for review before import
+ * Outputs: /tmp/artist-descriptions.json (BOTTB_TMP_DIR overrides) for review before import
  */
 
 import { config } from 'dotenv'
