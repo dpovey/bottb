@@ -8,8 +8,8 @@ services:
       dockerfile: Dockerfile
     image: bottb-photo-intelligence:latest
     volumes:
-      # Mount photo directory (adjust path as needed)
-      - /Volumes/Extreme SSD/Photos:/photos:ro
+      # Mount photo directory (set BOTTB_PHOTOS_DIR to override)
+      - ${BOTTB_PHOTOS_DIR:-/Volumes/Extreme SSD/Photos}:/photos:ro
       # Mount output directory
       - ./output:/app/output
     environment:
