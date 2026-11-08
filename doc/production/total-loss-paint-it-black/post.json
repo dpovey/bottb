@@ -1,0 +1,52 @@
+{
+  "group": "brisbane-2026-total-loss-paint-it-black",
+  "event": "brisbane-2026",
+  "band": "total-loss-brisbane-2026",
+  "title": "Total Loss - Paint It Black (The Rolling Stones Cover) - BotTB Brisbane 2026",
+  "copy": "doc/production/total-loss-paint-it-black-copy.md",
+  "files": {
+    "ig": "/Volumes/BOTTB/Renders/BOTTB_TotalLoss_PaintItBlack_1080p_IG_v1.mp4",
+    "master": "/Volumes/BOTTB/Renders/BOTTB_TotalLoss_PaintItBlack_4K_v1.mp4",
+    "ig_cover": "/Users/dean/src/personal/production-control/releases/total-loss-paint-it-black-brisbane-2026/social/thumbnails/total-loss-paint-it-black-instagram.jpg"
+  },
+  "blob_prefix": "release/brisbane-2026/",
+  "collaborators": ["quirkylikethat", "kurtboldy", "youngcareoz"],
+  "results": {
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/brisbane-2026/BOTTB_TotalLoss_PaintItBlack_1080p_IG_v1.mp4",
+        "bytes": 234626217
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/brisbane-2026/total-loss-paint-it-black-instagram.jpg",
+        "bytes": 279896
+      }
+    },
+    "facebook": {
+      "id": "1081648571539636",
+      "permalink": "https://www.facebook.com/reel/1081648571539636",
+      "scheduled_for": null,
+      "posted_at": "2026-11-08T08:22:42+0000"
+    },
+    "instagram": {
+      "id": "DfeUeAeFQLv",
+      "permalink": "https://www.instagram.com/reel/DfeUeAeFQLv/",
+      "posted_at": "2026-11-08T08:25:01+0000"
+    },
+    "youtube": {
+      "id": "6OpNQg7kLjI",
+      "permalink": "https://youtu.be/6OpNQg7kLjI",
+      "posted_at": "2026-11-08T08:34:06Z"
+    },
+    "linkedin": {
+      "id": "urn:li:activity:7525114352471998464",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7525114352471998464/",
+      "posted_at": "2026-11-08T08:37:51.493Z"
+    },
+    "tiktok": {
+      "id": "7705713382292213013",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7705713382292213013",
+      "posted_at": "2026-11-08T08:23:26.000Z"
+    }
+  }
+}

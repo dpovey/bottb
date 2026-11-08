@@ -157,3 +157,13 @@ Pull the frames from the **delivered render** with `ffmpeg -ss <t> -i <render> -
 not from the camera masters — the render carries the grade. Watch for a ±2 s window that spans a
 camera cut or crops a subject at the frame edge; both happened and both are invisible until you see
 the spread.
+
+## Custom thumbnail in the T3 browser, and reading ids (8 Nov 2026, Paint It Black)
+
+In the upload dialog, during upload, neither `preview_act upload` on the hidden `image/jpeg,image/png` input nor a Blob fetch-inject
+into it set the thumbnail, and "Upload file" opened nothing. After processing, the same fetch-inject on the edit page
+(`studio.youtube.com/video/<id>/edit`) took at once: data: previews appeared, Save enabled, "Changes saved", and
+`i.ytimg.com/vi/<id>/maxresdefault.jpg` showed it. So set the thumbnail on the edit page, not in the dialog.
+Take the video id from the Data API or a `ytimg` URL, never from a screenshot: the dialog's link read `6OpNQg7kLjl`; the id is `6OpNQg7kLjI`.
+Recording date: typing `27 Aug 2026` into the calendar's own text box plus Enter worked and read back. Tags typed with
+`preview_act type` stayed as text until an Enter turned them into chips.
