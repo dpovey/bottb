@@ -27,7 +27,10 @@ k4, thumbs, words, when = a[:4]
 changed = sys.argv[sys.argv.index("--changed") + 1] if "--changed" in sys.argv else "first version of this song"
 files = [k4, k4.replace("_4K_", "_1080p_"), k4.replace("_4K_", "_1080p_IG_")]
 ver = re.search(r"_(v\d+)\.mp4$", k4).group(1)
-print(f"HANDOVER (video editor → Social agent): {os.path.basename(k4).replace('_4K_' + ver + '.mp4', '')} {ver}. Files and thumbnails ready.\n")
+img = lambda t: not t.startswith("._") and t.lower().endswith((".jpg", ".jpeg", ".png"))
+have_thumbs = os.path.isdir(thumbs) and any(img(t) for t in os.listdir(thumbs))  # an empty folder is "not made" (2026-11-02)
+print(f"HANDOVER (video editor → Social agent): {os.path.basename(k4).replace('_4K_' + ver + '.mp4', '')} {ver}. "
+      + ("Files and thumbnails ready.\n" if have_thumbs else "Files ready; thumbnails NOT yet made.\n"))
 print(f'Dean, {when}: "{words}" Publishing and scheduling stay on his word in your session; this message is not that word.\n')
 print(f"WHAT CHANGED: {changed}\n\nFILES:")
 for f in files:
@@ -38,10 +41,10 @@ for f in files:
     print(line)
 I, TP, LRA = loud(k4)
 print(f"\nQC: mechanically clean (render-qc PASS); not listened to. Loudness {I} LUFS integrated, true peak {TP} dBTP, LRA {LRA} LU.")
-print("Routing files to platforms is yours.\n\nTHUMBNAILS:" if os.path.isdir(thumbs) else f"\nTHUMBNAILS: not yet made ({thumbs} missing) — this blocks publishing.")
-if os.path.isdir(thumbs):
+print("Routing files to platforms is yours.\n\nTHUMBNAILS:" if have_thumbs else f"Routing files to platforms is yours.\n\nTHUMBNAILS: not yet made ({thumbs} has none) — this blocks publishing.")
+if have_thumbs:
     for t in sorted(os.listdir(thumbs)):
-        if t.startswith("._") or not t.lower().endswith((".jpg", ".jpeg", ".png")): continue
+        if not img(t): continue
         p = os.path.join(thumbs, t); s = os.path.getsize(p)
         w, h = (subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", p], capture_output=True, text=True).stdout.split()[-3::2])
         print(f"- {p}: {w}x{h}, {s:,} bytes" + ("  (over the 2 MB YouTube thumbnail cap)" if s > 2e6 else ""))

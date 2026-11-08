@@ -3582,7 +3582,527 @@ V2Voyagers_S5_Starships-UFO_v1_at_03-34-22-05.wav` (Dean's Logic bounce `V2Medle
   shipped file may or may not carry it. The 7 cuts that went further toward yellow (4, 17, 28, 45, 59, 60, 76): Dean said no to
   chasing them ("No to the other check"); v1 stands. **The Bear look is the show look for good** (Dean, 2026-10-30: "let's keep
   the Bear look"), so no rollback strip list is needed; the Look v1 export stays only as an archive. Accessibility: granted (entry
-  above). `docs/sydney26-multicam` merged to main 2026-10-30 (cf19918). Nothing is open from this session.
+  above). ~~`docs/sydney26-multicam` merged to main 2026-10-30 (cf19918).~~ (corrected 2026-10-31: cf19918 is on the branch only; main has neither the Sydney 2026 sections nor the newer tools; landed on main 2026-11-08.) Nothing is open from this session.
+- **good 4 u (Bandlassian song 1) started (2026-10-31).** Dean's In/Out = the song markers, 151330–155969 (01:40:53:05–01:43:58:19,
+  set with the new `scripts/resolve/set_inout.py`; cuts not final yet, so no RELEASE marker). mix-assist's subagent placed
+  `Bandlassian_S2_good-4-u_v1_at_01-40-43-04.wav` (on **Extreme SSD**, which has to be mounted for the render) on new A9 "good 4 u mix
+  v1 (final)" at 151080–156105, left 0 (stamp 290073475 → frame 151079.935 → 151080; bwf-sync-check +7.0 ms at 5 points). A4's
+  in-song piece 151279–156019 is off and the A4 track is off; cut A4 at 151080/156105 before ever re-enabling it. Read back here with
+  the new `scripts/resolve/audio_ls.py 151080 156105` (A9 is the only enabled audio over the song). **mix-assist reported restoring
+  In/Out to the Starships range, but the read-back afterwards showed good 4 u's 151330–155969: trust the read-back, not a peer's
+  account of what Resolve holds.** `state.py` now treats any "BOTTB ..." timeline that is not a multicam view as the show timeline (mix-assist's fix, 2026-11-01; it had flagged the Sydney final cut).
+- **What lifts good 4 u's highlights: the FLC node (2026-11-01, Dean: "more in the highlights than the shadows").** Node-off test on the
+  "Bear FLC test" version (copy of Bear), 4 × 25-frame look-on 1080p ProRes samples per state (`scripts/resolve/adj_node.py` +
+  `render_batch.py`, ~12 s per state; levels by `scripts/look_levels.py`; renders in `Renders/checks/g4u_nodes_20261101/`). All on, then
+  each look node off and back on; base and base2 decode md5-identical, so every node was restored. good 4 u, FLC off vs on: Y p25 ×0.78,
+  p50 ×0.82, p90 ×0.89, Y > 0.85 18.1 % → 4.5 % (any channel > 0.95: 11.6 % → 47.7 %). The 0.01 Primary Balance node: p25 ×0.95,
+  p50 ×0.97. Teal, Green Correct: 0; Amber: ~1 %. **V2 samples, FLC off: p50 ×0.99, p75–p95 ×0.89–0.91, Y > 0.85 4.0 → 1.7 %**, so the
+  FLC lifts good 4 u about twice as much. Why, by eye (152800): good 4 u is haze under a saturated violet wash; the FLC turns the
+  near-clip violet into near-white haze (fewer clipped channels, much higher luma). FLC Exposure 0.2 → 0.1 had no visible effect
+  (Dean). Split tone off is the only FLC difference between Bear and Look v1.
+  - **Dean's FLC tweaks on "Bear FLC test" (2026-11-01), measured on the same samples.** Film Look Blend 0.9, Highlight Rolloff 0.6,
+    Highlight Threshold 0.55, Contrast changed (value not decoded), then Subtractive Sat 1.2 → 1.3. good 4 u: p50 ×0.94, Y > 0.85
+    18.1 → 7.6 %, clipped channels 11.6 → 0.2 %, chroma (max−min) 0.205 → 0.215 (FLC off reads 0.352: on this song the FLC takes ~40 %
+    of the chroma, on V2 ~24 %). V2: p50 ×0.94, p90 ×0.95, chroma 0.188 → 0.189. The FLC UI has no Lum vs Sat: `lumVsSat` in the
+    blob is one of the baked base-look parameters (manual, Film Look Creator). I first told Dean Subtractive Sat was at its default
+    because my guessed parameter name didn't decode; check names with the blob's string list before saying "default".
+  - **Renamed (Dean, 2026-11-01: "Let's not call this Bear … v3 of the Sydney look"):** the Adjustment Clip version "Bear FLC test" is
+    now **"Sydney look v3"** and is the active version (`look_version.py rename`, read back). "Bear look" (shipped on V2 Voyagers) and
+    "Look v1 (17 Oct)" are kept unchanged for rollback.
+
+## Paired grade controls must preserve adjustment-clip geometry (2026-11-01, good 4 u)
+
+The look-off controls bypassed V2 entirely; look-on controls enabled it. All four jobs
+used the same 151330–155969 range, 1920×1080, 25 fps, pixel aspect 1.0, but the current
+whole-show Adjustment Clip reports DynamicZoomEnabled=True (static ZoomX/Y=1, no crops).
+SIFT/RANSAC at 640 px wide found OFF→ON scales 1.34729 (cut 1 midpoint) and 1.33779
+(cut 60 midpoint); ON MP4→MOV scales 1.00003 and 1.00007 (319/280 inliers).
+The adjustment clip's Dynamic Zoom is the likely cause, not a codec-specific sizing
+difference; this cause has not yet been isolated with a test render, and Dean's intent
+for the whole-show zoom is unverified. No Resolve state was changed for this check.
+Rule: bypass colour nodes while preserving adjustment-clip geometry for paired controls;
+check image registration before fitting a colour model. Registered existing controls may
+be used only after alignment/residual validation; do not treat a geometry error as colour.
+
+- **Adjustment Dynamic Zoom corrected (2026-11-01):** Dean: "No that seems like a mistake."
+  Disabled only DynamicZoomEnabled on the whole-show V2 adjustment clip; read back True→False,
+  saved. Per-cut V1 zooms untouched. Old look-on_v3_v1 controls retain the unwanted crop.
+- **Atlassian overlay SVG dimensions (2026-11-01):** the company SVG uses width="187px",
+  height="100%", viewBox="0 0 297 48". The headless overlay generator produced an empty
+  company-logo region. Fixed SVG raster dimensions from viewBox and replaced percentage
+  dimensions with explicit pixels; regenerated PNG has visible logo bounds (230,276)–(1228,393).
+  Cards from the first generation are unused; corrected movies use bandlassian_syd26_v2 prefix.
+
+- **Bandlassian song cards placed (2026-11-01, Dean: "We also need song title cards for atlassian").**
+  Generated all five DB setlist cards with Atlassian/BOTTB logos; corrected movies
+  `TitleCards/Sydney2026/bandlassian_syd26_v2_NN-*_card.mov`, all 125 frames, alpha checks
+  0/128/255/255/175/12 passed. V3 starts (existing Green marker +32): good 4 u 151362,
+  Still into You 156904, Life Is a Highway 162814, I'm a Believer 169572, Pokémon Theme174822.
+  Each end read back start+125. `AppendToTimeline` source endFrame=125 with startFrame=0
+  gives 125 frames here; endFrame=124 gave 124, caught and the one new item replaced.
+  In/Out restored151330–155969, playhead01:40:53:05, Edit page, saved. No clip grades applied.
+  Corrected no-adjustment-DZ look-on control rendered before title placement:
+  `measure_good4u_Bandlassian_Syd26_lookon_v3_noAdjDZ_v2.mov`, 4640 frames,185.600s.
+  Geometry vs OFF matches (cut1/60 scales0.999923/0.999843), confirming adjustment DZ cause.
+  Released to gigstills; future measurement renders must bypass V3 titles independently.
+
+- **good 4 u approved v1 applied (2026-11-01):** Dean in gigstills: "They all seem tiny.
+  Make these moves. Overall comment is too washed out and brigh", then "too much haze"
+  and "I'm going to bed, so do what you can". Frozen `apply_approved_v1.json` approved61
+  rows; cut62 identity remains held. Matched all62 clipped record ranges and angles,
+  audited each node graph (one unlabeled node, no LUT/tools) and exported project backup
+  before application.61 SetLUT paths read back exactly; no mismatches/intervening grades.
+  Recovery records/scripts in gigstills `runs/sydney26_bandlassian_good4u/editor/`.
+  Verification render is look-on, Rec709/Gamma2.4, adjustment Dynamic Zoom off, V3 titles
+  disabled in a separate call. Next step is actual pixel verification, then reversible
+  darker/less-haze v2 pilot on cuts1 and32, retaining cut12 as the approved-v1 control.
+
+- **Actual v1 and reversible v2 pilot verified (2026-11-01):** full v1 control
+  `Renders/verify_good4u_Bandlassian_Syd26_grade_v1_lookon_noAdjDZ.mov` completed278491ms,
+  4640f/185.600s,1080p ProRes422LT,Rec709/G2.4,title-free. At62 matched midpoints,61
+  LUT cuts changed(mean absRGB median0.009398);held62 pixel-identical. Actual median
+  Y[p0.1,p5,p10,p50,p90]:[.006949,.054464,.139524,.577923,.795289]→
+  [.008018,.049049,.145265,.586309,.799264]. Chroma median +1.19%.
+  This confirms application, not taste approval or full-motion/noise clearance.
+  Actual v2 pilot `Renders/checks/g4u_v2pilot_c001/c012/c032.mov`:70/139/60frames,
+  frame0=151330/152072/153565. Only1and32 used v2;12 stayed v1 and is pixel-identical.
+  Pilot midpoint p50 v1→v2:cut1 .5231→.4226,cut32 .7980→.6660;both visibly darker.
+  Hard blue/magenta contour in cut1 right haze is already visible in the original
+  look-on control as well as v1/v2; do not attribute it to the new LUT without checking.
+  Restored1and32 to exact v1 LUTs in separate calls,then V3titles separately ON.
+  Final read-back61v1 LUTs,62no LUT,lookv3ON,adjDZOFF,Edit,In/Out151330–155969,
+  playhead01:40:53:05,saved. Gigstills received both released controls for actualQC.
+  `approved_v1_applied.drp` plus pre-grade backup retained in run editor/ directory.
+  No rollout of the35 full-v2 candidates; pending gigstills actualpilot evaluation.
+
+## good 4 u reversible darker v2 trial (2026-11-02)
+
+Gigstills cleared a35-cut full-song trial after actual three-cut pilot and70-frame
+right-haze contour/motion check. The pre-existing contour remained; on that ROI
+spatial Lab edge-step ratio vs original was0.971 and temporal colour-change ratio
+0.911 forv2. This diagnostic does not clear the whole song or prove no artefacts.
+Frozen `apply_v2_trial_frozen.json` supplies35 rows with expectedv1/restore LUTs and
+SHA256. Editor rechecked62 ranges/angles,all61v1 filehashes unchanged,and35 distinct
+v2files. Resolve preflight confirmed35 expectedv1 LUTs with no added primary tools.
+Fresh `editor/before_v2_fulltrial.drp` saved,then35 LUTs applied/read back exactly;
+`trial_v2_apply.jsonl` is the per-write record. Fulltitle-free ProResLT1080p trial
+started with Sydneyv3ON,adjustmentDZOFF,Rec709/G2.4,151330–155969 inclusive.
+Restore all35 to v1 after completion,then restore titles/navigation separately.
+The full-song file is a trial for QC; no retainedv2 revision is selected yet.
+
+Trial completed in 268.218 s: `verify_good4u_Bandlassian_Syd26_grade_v2_trial_lookon_noAdjDZ.mov`,
+4640 frames, 185.600 s. All 35 trial LUTs restored to v1 in a separate call with exact
+readbacks; titles restored in another call, then navigation restored and project saved.
+Fresh state confirmed 61 approved v1 LUTs, cut 62 no LUT, Sydney v3 on, adjustment DZ off,
+Edit page, In/Out 151330–155969, playhead 01:40:53:05. The 62-midpoint actual pixel check
+found all 35 intended cuts changed and all 27 preserved cuts pixel-identical to v1.
+Across 35 changed midpoints p0.1/p5/p10/p50/p90 moved from
+.107905/.197741/.295977/.634466/.821685 to .039331/.125480/.162036/.508436/.741522.
+This is a sampled application check, not final motion/noise acceptance. Released to
+gigstills for full-song QC; v1 remains retained. Audits: run `editor/trial_v2_release.json`,
+`trial_v2_apply.jsonl`, `trial_v2_restore.jsonl`, and `verify_pixels_v2_trial.json`.
+
+## Bandlassian v5 handback and zoom calibration (2026-11-02)
+
+The first-pass build session handed the set back after Dean switched every angle and
+checked sync. Authoritative v5: gigstills `runs/sydney26_firstpass/cut_full/bandlassian/
+cutlist_bandlassian_v5.json`, 304 shots over [150780,180030). The previous good 4 u
+61-row grade manifests refer to the earlier cut; do not apply them by index to v5.
+Rematch record range, source/angle and existing grades before any grade transfer.
+
+Calibration made by the build session on 2026-11-01, recorded in
+`bandlassian/v5_layin/scripts/apply_zooms.py` and retained evidence in
+`bandlassian/v5_layin/data/pancal_frames/` and `dzprobe_frames/`:
+
+- At 3840×2160 and Zoom 1.4, Pan 400 shifted the picture +530 px, Pan 580 shifted
+  it +769.7 px: 1.326 px per Pan unit. Positive Pan moves the picture right,
+  therefore the crop centre left. Only Zoom 1.4 was calibrated; do not generalise
+  this factor to other zooms. For desired normalised crop centre cx at this zoom,
+  the build used Pan = 1.4×3840×(0.5−cx)/(769.7/580).
+- Enabling Resolve's default Dynamic Zoom produced a centred zoom OUT, approximately
+  1.25× to 1.0×. This describes those measured defaults, not all existing clips'
+  custom rectangles. The start/end rectangles remain unavailable through the API.
+- Raw Dynamic Zoom grade export: `data/dzprobe_default_20261101.drp`; pixel
+  comparison tool: `scripts/pair_scale.py` (ORB + RANSAC, reports shifts at 4K).
+
+Rollback project: `/Volumes/BOTTB/Sydney - 2026/video/project_backups/
+BOTTB_Sydney_2026_Full_Show_pre-bandlassian-v5_20261101.drp`; before-state and
+v5/v4 diff live beside the v5 cutlist. Evidence stays retained; no cleanup performed.
+
+**Live-state correction to the handback (2026-11-02):** Resolve was closed at handoff
+processing. Reopened the Sydney project, then audited before any timeline changes.
+The live set has 305 shots, not 304, and still carries the 61 approved good 4 u v1
+LUTs. There are 288 exact common v5 ranges/angles, 5 changed common starts,
+12 additional starts and 11 missing v5 starts, around good 4 u. Treat the handback
+as a historical build snapshot; preserve the current cut and grades.
+Live zooms: 25 static >=1.3, 22 Dynamic Zoom, 46 in their union (14 Stage Right
+static crops). `mark_zoomed.py` applied Orange over [150780,180030), 46 readbacks
+passed, zero failures. Good 4 u In/Out was already 151330–155969, so left it alone.
+Render name/folder reset to current timeline name and `/Volumes/BOTTB/Renders`;
+a disposable queued job reads the settings back and is removed without rendering.
+Audit files are under `bandlassian/editor_handoff/`; no shot or grade replacement.
+
+## good 4 u darker v2 approved for retention (2026-11-02)
+
+Dean approved the actual-render v2 choices for all 35 trial cuts, including six
+unmarked shots and cut 13 after an initial Equal mark; motion page verdict: "Motion
+looks fine". Gigstills updated `apply_final.json`: 35 `partial-floor-darker` v2 rows
+approved 2026-11-02, 26 retained v1 rows, cut 62 still identity/held with no LUT.
+The 35 paths and SHA256s match the frozen reversible-trial manifest exactly.
+Editor checked expected v1 node-1 LUTs, record ranges/angles/IDs, absent added primary
+tools, and file hashes; exported `editor/before_v2_final.drp`, then applied/read back
+all 35 v2 paths and saved. Journal: `editor/final_v2_apply.jsonl`.
+Final title-free control renders Sydney look v3 ON, accidental whole-show adjustment
+Dynamic Zoom OFF, existing individual shot zooms unchanged, Rec.709/Gamma 2.4,
+151330–155969 inclusive, 1080p ProRes422LT. v2 is retained after this approval;
+the earlier instruction to restore v1 after a trial no longer applies to this pass.
+
+Retained v2 verification completed in 281.907 s:
+`Renders/verify_good4u_Bandlassian_Syd26_grade_v2_final_lookon_noAdjDZ.mov`,
+4640 frames, 185.600 s, 1920×1080 ProRes422LT / yuv422p10le, video only.
+MD5 of every native-resolution decoded frame matches the accepted v2 trial exactly:
+2465 frames across 35 v2 cuts match trial; 2175 frames across the 27 preserved cuts
+match v1 exactly. Evidence: `editor/verify_final_v2_frames.json` and `.framemd5`
+references, frozen applied manifest `apply_retained_v2_20261102.json`, and
+`retained_v2_release.json`. This proves reproduction of Dean's approved trial.
+Fresh read-back: 35 v2 +26 v1 node-1 LUTs, cut62 no LUT; Sydney v3 on, whole-show
+adjustment DZ off, titles on, Edit page, In/Out151330–155969, playhead01:40:53:05.
+Saved. Render name/folder reset to timeline name and `/Volumes/BOTTB/Renders`,
+verified via disposable queued probe then removed. Gigstills received final path.
+
+## good 4 u gigsteady placement planning (2026-11-02; read-only)
+
+Matched all 36 gigsteady SD/PP output shot-list IDs, full record ranges and angles to
+live V1. All have a single clip LUT node, mixing retained v1 and approved v2. Transfer
+the current original clip grade by CopyGrades and verify node LUT/tools; do not use
+old indices. CopyGrades does not establish camera input interpretation or group
+processing equivalence: prove the raw-Log replacement colour chain independently.
+
+Installed Resolve scripting stub documents `TimelineItem.SetPosition` and
+`Timeline.MoveItems` with a position dict containing trackIndex; both are callable
+on this Resolve. Their move behaviour has NOT been tested in this show. A route for
+a duplicate-timeline pilot is append an empty V4, move all V3 title/end-card items
+to V4 without linked audio, then V2 adjustment to V3, leaving V2 for stabilised
+overlays above original V1 and below the look/titles. These moves touch existing
+items and exceed gigsteady's append-only Place contract; no master changes until
+Dean agrees and the duplicate preserves a pixel-identical pre-overlay render.
+
+Seven eligible Static Desk cuts have Dynamic Zoom:151966,152595,153318,154042,
+154874,155577,155859. Copying static Zoom/Pan/Tilt alone loses those moves.
+CopyAttributes scaleX/scaleY documentation does not explicitly promise copying
+Dynamic Zoom rectangles. Prove rectangle/timing preservation, never substitute
+the default move. SD angle1.05/+0.7deg and outer clip transforms are separate
+stages; do not overwrite/naively merge their properties on a flat replacement.
+Stabiliser crop is already baked and must act once. Editor owns transform and
+colour/placement QC. Review all36 original/stabilised motion pairs first; Dean
+selects replacements. Master untouched during this planning; gigsteady asked for
+external review assets and true per-output handle offsets/crop metadata.
+
+## gigsteady duplicate QC: track-state and colour-pipeline faults (2026-11-02)
+
+The 29-clip placement duplicate was handed back; seven Static Desk Dynamic Zoom
+items were left on their originals. Current duplicate showed V1/V2 enabled but
+V3 Adjustment and V4 Titles disabled. Master, read while current, had all three
+video tracks enabled. **GetIsTrackEnabled/GetIsTrackLocked return False on a
+non-current timeline in 21.1**: the placer copied those false values and verified
+against the same invalid read. Gigsteady acknowledged and fixed its caller in
+bbeeec9. Read state on the current timeline on BOTH sides of any copy/check.
+
+Source HEVC tags: pc/full, bt709. The old ProRes stabilised outputs: tv/video,
+bt709. The range-tag difference alone does not prove a levels error. Both original
+and derivative MediaPool items read Input Color Space Project, Input Gamma Rec.709;
+project input is Canon Cinema Gamut/Canon Log3. The standalone gamma property
+is not enough to infer the effective Project interpretation.
+
+Exact no-stabilisation five-frame controls, using the old gigsteady RGB48→ProRes
+writer, showed a real colour change before placement: at960px PP mean 8-bit RGB
+delta[-1.280,+2.666,+2.382], SD[-.269,+1.186,+.851]. Gigsteady identified the cause:
+RGB→YUV used default BT.601 while source decode/output tags used BT.709; its v2
+pipeline explicitly specifies matrix and range. Preserve the old identity controls
+as negative controls, not replacement media. Evidence: gigsteady good4u_v1
+`editor_qc/raw_identity_compare.json` and `identity_controls.json`; control movies
+in `/Volumes/BOTTB/Renders/checks/gigsteady_good4u_qc/`.
+
+The known-bad v1 stabilised full render had not started, so it was skipped. Master
+4K ProRes422HQ control is rendering first, 151330–155969 inclusive (4640frames).
+Do not pass155970: render_range.py takes an INCLUSIVE out, unlike shot manifests.
+Only correct the duplicate and re-render after gigsteady's v2 media swap; master
+source clips, grades and transforms remain untouched.
+
+Positive v2 identity controls independently checked using RGB conversion BEFORE
+resize (`format=gbrp16le,scale=960:540,format=rgb48le`). PP mean 8-bit RGB deltas
+[+.01894,+.00486,−.00124], SD[+.01479,+.01096,+.02015]; no systematic old matrix
+shift remains. Gigsteady notes that a YUV-first resize can create a common levels
+bias; keep conversion order explicit in colour comparisons. Evidence:
+`editor_qc/rgb_first_identity_compare.json`. This tests encoding, not the complete
+Resolve replacement colour/geometry chain.
+Master 4K HQ control completed366.171s,4640frames/185.600s:
+`/Volumes/BOTTB SYD26/gigsteady/good4u_v1/check/master_g4u.mov`,noaudio,look/titlesON.
+Duplicate V3Adjustment and V4Titles were corrected ON and read back while current.
+Master selection, In/Out and playhead restored; render format/control settings and
+name/folder reset. Resolve handed back to gigsteady for the 29 v2 ReplaceClip
+operations; editor must make no Resolve writes until that handback returns.
+
+Gigsteady swapped all36 derivative MediaPool clips to `good4u_v2/outputs/` using
+ReplaceClip after v0.1.1 matrix/range fix. Editor independently selected the duplicate
+and verified all29 placed paths, exact original ranges, left offsets25 and matching
+live clip LUTs; all four video tracks enabled. Corrected duplicate 4K HQ control
+`good4u_v1/check/stab_g4u_v2.mov` started over151330–155969 inclusive, no audio.
+Master control remains `good4u_v1/check/master_g4u.mov` at identical settings.
+Rotation composition and per-cut framing remain provisional pending the requested
+paired render comparison; input encoding identity tests alone do not clear them.
+
+Corrected stabilised duplicate control completed254.862s; both requested files
+released to gigsteady for cut-by-cut comparison:
+
+- master_g4u.mov:17,466,743,277bytes; master job366.171s.
+- stab_g4u_v2.mov:17,420,374,333bytes; corrected29-overlay duplicate.
+  Both `good4u_v1/check/` files:ProRes422HQ3840×2160,25fps,4640frames,185.600s,
+  noaudio;frame0=151330,last155969inclusive. Packetcounts,codec/dimensions/fps
+  and absent audio checked. `editor_qc/paired_render_release.json` records results.
+  Normal render settings restored (mov/ProRes422LT,singleclip,1080p video-only
+  control,name mastertimeline,target `/Volumes/BOTTB/Renders`), disposable probe
+  removed. Master current,Edit,playhead01:40:53:05,In/Out71830–76469relative,saved.
+  No fixes to provisional SD rotation/composed transforms were made before this
+  comparison; those and actual Resolve colour/levels remain pending gigsteady QC.
+  Seven Dynamic Zoom originals remain visible. No master item was edited.
+
+## SD_rec154336 nested-transform QC fallback (2026-11-02)
+
+Gigsteady's v2 paired-render check found all33 unchanged cuts bit-identical and
+all29 placed cuts frame-exact. It flagged SD154336's flat Zoom1.575/Rotation0.7/
+Pan−927.957/Tilt5.127 versus the nested original. Do not blindly increase to1.598:
+SIFT on the same midpoint measured1.01138 while dense ECC's cut median was0.9966.
+Registration methods disagree here. A temporary full-length un-stabilised source
+control isolated placement geometry from stabiliser motion; finite-difference
+zoom/rotation/pan/tilt calibration improved median agreement but did not fit all
+three sampled frames consistently. No guessed calibration was retained.
+
+Selected gigsteady's offered safe alternative: restore the real v2 source and ALL
+original transform properties exactly, then disable ONLY that duplicate V2 overlay.
+Its underlying V1 original is visible. A full89-frame4K ProResHQ control at154336–
+154424 was rendered and every native decoded frame MD5 matches master (0differences).
+Evidence in `good4u_v1/editor_qc/sd_original_fallback_proof.json`,
+`sd_geometry_decision.json`, sample/calibration JSONs, and `sd_original_fallback.mov`.
+The overlay remains in undo inventory; duplicate now28 enabled stabilised overlays,
+34 original-control cuts (including seven Dynamic Zoom originals and this SD cut).
+Gigsteady added disabled-state swap readback and `--unchanged SD_rec154336` in6668e2a.
+Master restored current/Edit/InOut/playhead, normal render settings restored, saved.
+Resolve handed back for v3 exact-matrix/range media swap; no editor writes until
+that handback returns. Only18 editor-created Completed samplejobs were removed;
+evidence files remain. No master clip or grade changed.
+
+## gigsteady v3 paired control released (2026-11-02)
+
+Gigsteady's v0.1.2 exact numpy BT.709 conversions replace the residual ffmpeg
+0–1020-style range arithmetic exposed after grading in v2. All36 bin files were
+swapped to `good4u_v3/outputs/`; editor independently verified29 placed source
+paths, positions, left offsets25, matching current LUTs and enabled flags:28on,
+SD154336off. AllfourduplicatevideotracksON.
+`good4u_v1/check/stab_g4u_v3.mov` completed255.715s,17,423,243,725bytes;
+ProRes422HQ3840×2160,25fps,4640frames,185.600s,noaudio,frame0=151330,last155969.
+Packetcount/codec/profile/dimensions/fps/noaudio checked. Master control unchanged.
+Pair metadata:`editor_qc/paired_render_v3_release.json`. Released to gigsteady for
+finaldiff with `--unchanged SD_rec154336` (34originalcontrols/28placed).
+Master restoredcurrent/Edit/01:40:53:05/InOut71830–76469relative,saved;normal
+render format/settings/name/folder restored,temporaryprobe removed. No master
+clip changes. Actual final colour/geometry acceptance awaits that comparison.
+
+## gigsteady v3 clean graded identity isolates remaining tint (2026-11-02)
+
+Gigsteady's full-song final diff reports 34/34 unchanged cuts bit-identical,
+28 placed cuts frame-exact; crop error -0.43% to +0.11%. Large rotation readings
+agree with the stabiliser's own roll. Colour is improved but not exactly matched.
+Editor ran a clean no-stabilisation control: five native4K frames per camera,
+direct raw camera versus v0.1.2 read*rgb48/ProResWriter identity, same live clip
+LUT and Sydney look, zero transforms, no warp or scaling. Native RGB-first mean
+RGB deltas (8-bit codes) are PP [-0.192,+0.767,+0.675], SD
+[-0.196,+0.055,-0.111]. Old wrong-matrix negative controls fail strongly:
+PP [-8.128,+5.679,+2.918], SD [-1.128,+2.025,+0.707]. PP therefore retains a
+small G/B shift without stabilisation; do not attribute all remaining actual
+render difference to Lanczos/deblur or add a compensating artistic grade.
+Evidence: `/Volumes/BOTTB SYD26/gigsteady/good4u_v1/editor_qc/graded_identity_result.json`
+and six `graded_identity*{raw|negative|v3}\_{camera}.mov`files. Sent to gigsteady
+for pipeline interpretation before more swaps/renders. No final colour clearance.
+Temporary QC timeline/bin/six completed jobs removed and verified absent. Cleanup
+initially stopped after deleting its timeline; completed idempotently by GUID with`finish_identity_cleanup.py`. Do not infer rr success from exit code alone: a
+Traceback can still exit0. Preserve state until each cleanup artifact is checked.
+
+## gigsteady chroma alternatives do not remove residual (2026-11-02)
+
+Repeated the same five-frame native4K graded identity test on gigsteady's offered
+ProRes4444 (baked co-sited chroma upsample) and 422HQ decimated-chroma variants.
+PP mean dRGB,8-bit codes:444 [-0.153,+0.770,+0.679];422dec
+[-0.204,+0.769,+0.661], compared with existing v3 [-0.192,+0.767,+0.675].
+SD:444 [-0.201,+0.053,-0.118];422dec [-0.188,+0.060,-0.110].
+Neither alternative reduces PP's residual, so these tests provide no reason to
+change the encoder or increase delivery size to4444. They do not uniquely prove
+Resolve's HEVC decoder is the cause. Editor accepts current v3 with the measured
+small colour tolerance documented, rather than claiming exact pixel colour
+identity. No compensating grade, more36-file rerenders, swaps or full-song renders.
+Timing/geometry acceptance uses gigsteady's finaldiff; SD154336 fallback retained.
+Evidence:`good4u_v1/editor_qc/chroma_identity/graded_identity_result.json` plus
+six raw/444/422dec graded controls. Temporary timeline/bin/six own completed
+jobs verified removed; normal render settings restored. Shared findings with
+gigsteady. Working duplicate retained, master content untouched, no publishing.
+
+## good 4 u: Dynamic Zoom cuts stabilised; clip colours cleared (2026-11-02)
+
+- **Clip colours cleared** (Dean: "need to clean the leftover clip colors"): every V1 item over the Bandlassian set
+  150780–180030 on both the master and the stabilised duplicate (305 each, all coloured from the v5 angle switch and the Orange
+  zoom marks). Before-states saved to `data/clipcolours_{master,dup}_bandlassian_20261102.json` (new `scripts/resolve/clear_colors.py`).
+  Flags are separate: gigsteady's Yellow flags sit on the shared multicam media-pool clip, so every multicam cut reads Yellow.
+- **Dynamic Zoom cuts** (Dean: "I want you to do it"). New `scripts/resolve/place_dz.py` appends the gigsteady v3 clip on V2 at the
+  original's range (handle 25), CopyGrades (LUT read back), sets the SD angle transform 1.05 / 0.7°, then DynamicZoomEnabled +
+  the original's DynamicZoomEase. **A new Dynamic Zoom gets Resolve's default rectangles; the API cannot set them**, so only
+  originals whose rectangles equal the default can be matched. Decoded from the export (`scripts/dz_compare.py`, group 118
+  params 59–61; 61 = scale keyframes at 0 and 1000, 60 = position): 152595, 154042, 154874, 155577 are the default 0.8 → 1.0
+  centred and now match **byte for byte**. Pixel check on 152595 (pair_scale, master vs duplicate): scale ratio 1.025 at start,
+  middle and end (the stabiliser's crop, as on the other SD placements), centre within ~1 px. 155859: same end points, but
+  the original has a custom ease curve (148-byte keyframe blob with handles -0.5 / 2.0 / 250); the overlay's ratio drifts
+  0.996–1.019 against the expected constant 1.01 mid-move (timing differs, framing at start/end matches). Not placed:
+  151966 (0.8 → 0.910, eased) and 153318 (1.0 → 0.8, a zoom-in = default swapped): no API route to those rectangles.
+- **good 4 u delivery prep on the stabilised duplicate (2026-11-02; Dean: "1. a 2. keep", leave 151966/153318 unstabilised, keep
+  155859).** Delivery timeline = "BOTTB Sydney 2026 - final cut - gigsteady good4u v1". Cyan RELEASE at 151331 (the Green song
+  marker holds 151330; one marker per frame), named "RELEASE: good 4 u 01:40:53:05-01:43:58:19"; `post_delivery.py` now takes the
+  range from the name's two timecodes when present. gigsteady's two Rose "Needs dynamic zoom" markers deleted (decision made).
+  New `scripts/resolve/rip_set.py`: RiP set aware of V2 overlays = visible V1 zoomed cuts + enabled V2 overlays with DZ or
+  Zoom ≥ 1.3 → 23 (17 V1, 6 V2), Orange read back 23/23, no Orange elsewhere on the timeline. Super Scale 2 on 24 camera
+  sources (`superscale.py`) + the 6 overlay .movs (`rip_set.py … superscale 2`; superscale.py skips .mov). CAM 5 NR on, proven by
+  a 4K 3-frame off/on/on render: off ≠ on, on = on2, HF sd 0.0130 → 0.0106, render 3.1 → 7.1 s (smaller effect than V2's
+  drum shot). Output DWG / DaVinci Intermediate for the RiP. Empty RiP folder `/Volumes/BOTTB/Renders/RiP/good4u/`.
+  `render_batch.py` takes RB_WIDTH=3840 for 4K checks.
+- **good 4 u RiP, end and render setup (2026-11-02).** Dean's RiP (Video Effects on, Color Grading off, output DWG/DI) wrote 23
+  files to `/Volumes/BOTTB/Renders/good4u/`, not the empty `RiP/good4u` (all 23 new, timestamps 23:01–23:04; nothing overwritten).
+  Files tagged DaVinci WG / Intermediate, LUTs live. Output back to Rec.709/G2.4; 17 V1 RiPs re-assigned to CAM groups by angle
+  (new `scripts/resolve/regroup_rip.py`; CAM 1–4 group nodes are empty anyway); Super Scale 1 on 24 camera sources
+  (`superscale.py 1`, now takes the value) and the 6 overlay .movs. **The RiP darkened the RiP'd cuts 2–5 % in mids and highlights,
+  blacks unchanged** (1080p samples vs pre-RiP `stab_g4u_v3.mov`, new `scripts/rip_check.py`): Stage Right Z 1.4 p50 139 → 132,
+  p99 225 → 214; Desk Tracking p50 146 → 144; DZ overlays −1.5 %. Non-RiP controls match within 0.3 levels (blurred). Cause not
+  found (not groups, not tagging); V2's RiP measured ~0.6 %. **Dean: "1. Accept it".** Out moved to **155963** (song END, last frame
+  before the Stage Right cut at 155964; Dean "Yes fix the out"); RELEASE re-made "…-01:43:58:13" dur 4633. EndCard_2x on V4
+  155866–155963, Add (new `scripts/resolve/end_card.py`); FadeOut 98 on BOTH the V2 overlay and the V1 original of the last cut
+  (`last_fade.py … 98 2` and `… 1`), or the original shows through the fading overlay. Audio fade to be done by `splice-mix.sh` from
+  the mix WAV (A9 runs on into the post-talk). Halation from the pre-render export: the duplicate's "Sydney look v3" FLC ON; the
+  master's copy reads OFF (a duplicate has its own Adjustment Clip versions). 4K job 72fb0d50 → `Renders/Bandlassian_good4u_Sydney2026_4K_v1.mp4`.
+- **Stabilised duplicate promoted to the main timeline (Dean, 2026-11-02: "Yes").** New `scripts/compare_timelines.py` (video tracks
+  matched by name, audio by index, items and markers outside a skipped range): master vs duplicate outside 151080–156110 →
+  1675 items identical, audio and markers identical; only difference the "gigsteady" track. Renamed: master → "BOTTB Sydney 2026 -
+  final cut (pre-stabilisation, 2026-11-02)" (rollback), duplicate → **"BOTTB Sydney 2026 - final cut"**. Layout from now on: V1
+  cut, V2 "gigsteady" overlays, V3 Adjustment (Sydney look v3, halation ON), V4 Titles. `adj_node.py`/`look_version.py` find the
+  Adjustment Clip by name on any track; `place_dz.py`/`rip_set.py` key on a V2 track named "gigsteady". gigsteady told (its undo
+  deleted the duplicate by name = now the main timeline). Evidence `data/compare_master_vs_dup_20261102.json`.
+- **good 4 u 4K v1 (2026-11-02):** Resolve render 72fb0d50 (render-qc PASS, 4634 f) kept as
+  `Renders/checks/g4u_pre_splice/..._resolveaudio.mp4`; `splice-mix.sh` with the mix WAV at offset 10.0 s ((151330 − 151080)/25)
+  and a 3.92 s fade → `Renders/Bandlassian_good4u_Sydney2026_4K_v1.mp4`: video framemd5 identical to the Resolve render, audio lag
+  0 samples vs Resolve's mix, render-qc PASS, −14.6 LUFS-I, −2.4 dBFS peak, LRA 3.5.
+- **good 4 u handover and post-delivery (2026-11-02).** derive-1080-ig.sh: 1080p 279,791,668 B, IG 188,387,328 B (188.4 MB /
+  179.7 MiB, 8000k), render-qc PASS on all three. Handover to the new Social session (thread "Social: publish Bandlassian good 4 u")
+  by `scripts/handover.py`, which now says "thumbnails NOT yet made" for an empty thumbnail folder (it said "ready"). post_delivery
+  "good 4 u": In/Out 151330–155963, Orange 17 → 0, render name reset, saved; all Complete jobs cleared (queue empty). CAM 5 NR off:
+  render 3.3 s (on 7.1), HF sd 0.0135 (on 0.0106); not md5-equal to the earlier NR-off control because Super Scale was 2 then.
+  Halation left ON. **The site's /admin/thumbnails page showed black frames for the ffmpeg-rewritten files** (splice and derive both
+  remux; ffmpeg writes a tmcd track with handler "VideoHandler" and moov first), while the files decode fine (luma 63–133 at 0/10/60/180 s).
+  A video-only 1080p copy (`-map 0:v:0 -an -dn -c copy -write_tmcd 0 -map_metadata -1`) loaded fine (Dean). Which of the two
+  differences breaks the page is not isolated. Give the thumbnail page that copy. Dean used the Social agent's suggested still.
+  Console CSP warnings there (LinkedIn li_sync img, Meta Pixel form post to facebook.com/tr/) are the site's analytics tags, unrelated.
+
+## ShipReX set recut to v5; Bandlassian V2 Orange cleared (2026-11-03)
+
+- **Dean: "recut all of the shiprex set based on v5".** Before touching V1 the whole set 101705–143555 was exported
+  (`cut_list.py`) and compared with `cut_full/shiprex/cutlist_shiprex_v4.json`: 378/378 identical, so no hand edits were at
+  risk. Rollback `.drp`: `/Volumes/BOTTB/Sydney - 2026/video/project_backups/BOTTB_Sydney_2026_Full_Show_pre-shiprex-v5_20261103.drp`.
+  Lay-in with the Bandlassian v5 scripts (gigstills `cut_full/bandlassian/v5_layin/scripts/`, unchanged), each read back:
+  `delete_range` 378 → `append_cutlist` 375/375 (ranges match) → `colour_by_angle` 375 (Yellow 135 / Blue 99 / Green 66 /
+  Purple 39 / Pink 36) → `markers pitdel` 75 Sand removed, `pitadd` 104, `zoom` 27 Lavender → `apply_zooms` static 100
+  props (47 × 1.4, 3 × 1.15), pan 11 (all at Z 1.4), dzon 22, dzease 22. After-export: 375 items, 69 zoomed, every piece on the
+  default angle (Static Desk) as always: **Dean switches angles by colour** (Timeline > Select Clips By Clip Color →
+  Switch Multicam Clip Angle). v5 list: `cut_full/v5_calibration/runs/shiprex/v5/cutlist_shiprex.json`; before/after exports
+  in `~/src/personal/production-control/releases/shiprex-mustang-sally-sydney-2026/video/data/`. The Mustang Sally
+  RELEASE marker and the A7 MIXv1 placement were untouched (read back).
+- **Dean: "some orange clips to cleanup from bandlassian".** They were not on V1 (`clear_colors.py` had done V1 on 11-02) but
+  the six **V2 gigsteady overlays** in the good 4 u range (152595, 153565, 154042, 154874, 155577, 155859), Orange from the RiP
+  marking. Cleared with a V2 variant (`clear_orange_v2.py` in the release `video/scripts/`; before-state
+  `video/data/clipcolours_V2_bandlassian_before_2026-11-03.json`), read back 0 coloured. `state.py` counts every video track in
+  range, so its "Orange 6" on good 4 u was V2, not V1: say the track when reporting Orange.
+- **In/Out read "none" after the lay-in chain** (it was 151330–155963 at session start; cause not isolated: Dean was in the UI,
+  and `AppendToTimeline` is known to move the playhead). Restored with `set_inout.py 151330 155963`, read back, saved.
+  Rule: read In/Out before and after any append/delete run and restore it, as after a render.
+- **ShipReX angles switched by Dean, colours cleared (2026-11-03).** Read-back by item name: 375/375 pieces on their v5 target
+  angle (Photo Pit 135, Static Desk 99, Desk Tracking 66, Stage Right 39, Drum 36), then `clear_colors.py 101705 143555`
+  (before-state in the release `video/data/`), 0 coloured left, saved.
+
+## Mustang Sally finish step 1: final mix placed, exports for gigsteady/grade (2026-11-05)
+
+- Resolve relaunched; `open_project.py` loaded the cloud project by name. Backup `.drp` `…pre-mustang-finish_20261105.drp`.
+- **MIXv2_bwf.wav replaced MIXv1 on A7 at 121555** (release `video/scripts/replace_a7_mix.py`: find/import by path, delete the old
+  item, `AppendToTimeline` mediaType 2 trackIndex 7, read back path/range/offset, rename the track). `bwf-sync-check.py` on MIXv2
+  (mix-assist `.venv` python, the scripts venv is absent on this worktree): +7.0 ms ×5, control 0.032, 157 s, 0.31 GB peak.
+- **`Timeline.Export(path, EXPORT_FCPXML_1_10)` writes a bundle directory** `<name>.fcpxml/Info.fcpxml` (632 KB, 5 angles, 1579
+  mc-clips), not a file: `cat` on the path fails with "Is a directory".
+- **In/Out read empty right after the audio delete/append** (second time: also on 11-03 after the V1 lay-in). Append/delete clears
+  it. Read In/Out before, set it again after from the RELEASE marker.
+- Dean's Mustang Sally cut: 71 cuts, 46 identical to the v5 first pass, 9 zoomed, no grades/RiP. Cut list, FCPXML and gigsteady
+  items in the release dir `video/data/`.
+
+## "GPU processing on the current clip failed" = a missing OpenFX plugin on a cut (2026-11-05, Mustang Sally)
+
+- A render that dies at the same frame every time with "GPU processing on the current clip failed because of an error" is not GPU
+  memory: read `~/Library/Application Support/Blackmagic Design/DaVinci Resolve/logs/davinci_resolve.log`. Here it said
+  `Plugin [com.dpovey.gigsteady] is not available!!!!` then `Missing Open FX plugin`: the Photo Pit cut 127533-127636 carries the
+  gigsteady OFX effect (applied 11-03 while that plugin id existed; the rebuilt bundle registers only `.probe`/`.preview`). The
+  reported frame (5935 ≈ record 127490) is a pipeline look-ahead of ~40 frames before the cut, so bisect by test renders that END
+  before vs AFTER the suspect cut, not by the reported frame. ~~The API cannot list or remove a clip's effects (no RemoveEffect).~~
+  CORRECTED 2026-11-06: `TimelineItem.GetEffects` and `DeleteEffects` have been in the stub since 21.1.2. Whether they see an effect whose plugin is missing is untested.
+- **A render leaves Resolve on the Deliver page**, where `SetTrackEnable` is refused by `track_enable.py`: `OpenPage("edit")` (returns
+  True, takes ~2 s) before any track toggle after a render. My first render-1 attempt ran with every track on because of this: cancelled.
+- **`StopRendering()` returns None by design**; `DeleteRenderJob` on a running job returns None. Stop, then delete in a second call.
+- Never `rm` a render's output while its job is still Rendering (the file is unlinked under Resolve): stop and confirm `Cancelled` first.
+
+## Mustang Sally gigsteady placement (2026-11-05)
+
+- `resolve_place.py` (gigsteady 4d38098) placed 36/40 in 11 s onto the duplicate "… - final cut - gigsteady mustang v1"; it skips DZ
+  originals, so `place_dz.py <name> <manifest> 1.05 0.7` did the four. All four DZ originals were the v5 lay-in's default move, and
+  `dz_compare.py` on the export reads the overlay keyframes identical. **A second "gigsteady" track**: the placer always inserts a new
+  V2 and shifts the rest up, so the duplicate now has V2 (Mustang) and V3 (good 4 u). Editor-placed items are recorded in
+  `place_state.json` under `placed_by_editor` so `--replace` sees them.
+- The cropped SD cuts compose flat (1.6×1.05 = 1.68, 1.4×1.05 = 1.47, rot 0.7°, Pan kept): unproven until a render; good 4 u's
+  SD_rec154336 precedent says expect a mismatch and disable the overlay rather than guess.
+- **First `AddRenderJob` after `SetCurrentTimeline` to the duplicate returned an id that was not in `GetRenderJobList()`** (twice today,
+  2026-11-05); the second attempt queued normally. After switching timelines, expect one failed queue and retry once before digging.
+- Keep one job-name prefix list for every cleanup/stop script and add the prefix the moment a new render name is coined: the verify
+  render's missing prefix aborted the restore half of its chain (tracks were left off until a manual restore).
+- **`SetLUT(1, "")` clears a clip LUT and `GetLUT(1)` reads back ""** (2026-11-05, Mustang Sally noise windows): a clean way to get a
+  "no LUT" side on the same timeline; restore with the path and read back. NR state proven by render time (CAM 5 pre-clip NR on 24 s vs
+  off 3.8 s for 42 4K frames) and by the export decode (`drp_nodes.py <drp> ""`, the project.xml `Version 1_pre` entry).
+
+## Mustang Sally adopt/RiP day: project output DWG/DI changes the viewer for everyone (2026-11-05)
+
+- **Setting the project output to DWG/DI for the RiP changes Dean's viewer project-wide for as long as it is set.** He saw "very
+  saturated"/"weird" colour during the ~40 min it was on, edited the look v3 nodes by hand while it was on, and the RiP happened in that
+  state (correct for the bake). Rule: set DWG/DI only in the minutes he is actually RiPping, tell him the viewer will look wrong meanwhile,
+  switch back the moment the files exist. Evidence trail: exports before/after + `drp_nodes.py` per-node md5 (CSTs unchanged, the five
+  creative nodes changed after the reopen) and 2-frame Rec.709 controls (`ms_ctrl4/5/6`).
+- Dean's RiP wrote to `/Volumes/BOTTB/Renders/mustang/` (Resolve's own choice), not the prepared `RiP/mustang/` folder, as on good 4 u.
+- `Project.GetSetting()` with no key dumps all 159 project settings (saved to the release `video/data/`); viewer/monitor LUT and display
+  profile are app preferences and are not in it.
+- A stabilised overlay has a different framing (1.1× track crop) from its original, so whole-frame Y/SAT averages are not comparable
+  across V2-on/V2-off renders of the same record frame; compare overlay with overlay (paired renders) or switch V2 off for both sides.
+
+## Mustang Sally delivered (2026-11-05): short last cut → end fade as a black alpha-ramp clip; cover-version card
+
+- **When the last cut is shorter than the 98-frame end fade** (Dean's Out on a 26-frame Drum cut), a FadeOut on the last cut cannot
+  reproduce the delivered look (the previous cut would go to black and the last cut pop back). Used instead: a 98-frame black ProRes
+  4444 clip whose alpha ramps 0→1 (`TitleCards/black_fade_98f_4k.mov`, ffmpeg `color=black…,fade=t=in:alpha=1`, alpha reads 16→235 on
+  the limited scale) on the Titles track under the end card, with the end card moved to a new top track (`AddTrack` + `MoveItems`,
+  both read back). Everything under it (look, overlays, RiP clips) fades; the card stays on top. Viewed frames: start full, mid half-dark
+  with the card, last black (Y 16). Reversible; Dean's cut and Out untouched. Script: release `video/scripts/endfade_build.py`.
+- **Cover-of-a-version title card**: the site's `songCredit` rule puts the original artist as the headline and "<cover_artist> version"
+  as the small line ("Wilson Pickett / The Commitments version / Mustang Sally"). Set `cover_artist` in the admin setlist and regenerate;
+  no override needed. A transition row renders "Muse / opening with Careless Whisper (George Michael) / Uprising"; a "Careless Whisper /
+  Uprising" title has no rule yet (card 01 held).
+- Check the card TEXT against Dean's intent before the 4K, not after: a wrong credit cost a full 4K + derivatives (25 min).
+- `post_delivery.py` leaves Resolve on the Deliver page (render-name probe); say so in the handover.
 
 ## Resolve 21.2 upgrade (2026-11-06)
 
@@ -3621,6 +4141,15 @@ Lab on a `.drp` import of Sydney, Local Database, media drives off: real look cl
 - **Untested:** what `GetEffects` shows for a really missing plugin (`/Library/OFX/Plugins` needs admin). Offline detection on a flat red wash could false-alarm.
 
 **Tools:** `preflight.py` (before every render), `release_inout.py`, `clip_colours.py`, `edge_scan_live.py`, `frames.py`, `sheet_live.py`, `input_proof.py`, `fx_scan.py`, `cdl_read.py`, `roll.py`, `calibrate_frames.py`, shared `pix.py`. All in `scripts/resolve/`; usage in each header.
+
+## rr.sh now propagates the script's exit code (2026-11-05)
+
+- Until today `rr.sh` always exited 0: the `atexit … os._exit(0)` guard (needed so fusionscript does not segfault on teardown)
+  swallowed every failure, so `rr.sh step.py || exit 1` in a chain never fired. On the Mustang Sally measure renders the three
+  `track_enable.py` calls failed (Deliver page) and the look-off render ran with every track on. Fixed: the wrapper now runs the
+  script in try/except and `os._exit`s with the real code (SystemExit's code, 1 on any exception). Proven: SystemExit("boom") → 1,
+  AssertionError → 1, a passing script → 0, `probe_render.py` → 0. Chains should still check read-back text: a script that prints
+  a wrong value without raising still exits 0.
 
 ## Reading a closed project's export, and measuring a released zoom from the picture (2026-11-06, Paint It Black)
 

@@ -41,18 +41,29 @@ async function loadSharp(src: string) {
     : fs.readFileSync(src, 'utf8')
   const scaled = text.replace(/<svg\b[^>]*>/i, (tag) => {
     if (!/viewBox=/i.test(tag)) return tag
-    const num = (k: string) =>
-      parseFloat(new RegExp(`(?<![-\\w])${k}="([\\d.]+)`).exec(tag)?.[1] ?? '')
-    const w = num('width')
-    const h = num('height')
+    // SVG dimensions may be percentages (Atlassian uses height="100%").
+    // Use the viewBox aspect ratio and give the rasteriser explicit pixel sizes.
+    const box = /viewBox=(["'])([^"']+)\1/i
+      .exec(tag)?.[2]
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+    const w = box?.[2]
+    const h = box?.[3]
     if (!w || !h) return tag
     const k = 2400 / Math.max(w, h)
-    return tag
-      .replace(/(?<![-\w])width="[\d.]+(px)?"/, `width="${Math.round(w * k)}"`)
-      .replace(
-        /(?<![-\w])height="[\d.]+(px)?"/,
-        `height="${Math.round(h * k)}"`
-      )
+    // Replace width/height in either quote style, or add them when the tag has none.
+    const size = (tagIn: string, attr: string, px: number) => {
+      const re = new RegExp(`(?<![-\\w])${attr}=(["'])[^"']*\\1`)
+      return re.test(tagIn)
+        ? tagIn.replace(re, `${attr}="${px}"`)
+        : tagIn.replace(/<svg\b/i, `<svg ${attr}="${px}"`)
+    }
+    return size(
+      size(tag, 'width', Math.round(w * k)),
+      'height',
+      Math.round(h * k)
+    )
   })
   return napiLoad(Buffer.from(scaled))
 }

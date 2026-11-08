@@ -1,0 +1,1839 @@
+{
+"timeline": "BOTTB Sydney 2026 - final cut - gigsteady good4u v1",
+"range": [
+150780,
+180030
+],
+"items": [
+{
+"start": 150780,
+"end": 150963,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 150963,
+"end": 151092,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 151092,
+"end": 151212,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 151212,
+"end": 151400,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 151400,
+"end": 151469,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 151469,
+"end": 151540,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 151540,
+"end": 151584,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 151584,
+"end": 151717,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 151717,
+"end": 151797,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 151797,
+"end": 151860,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 151860,
+"end": 151922,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 151922,
+"end": 151966,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 151966,
+"end": 152019,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 152019,
+"end": 152072,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 152072,
+"end": 152211,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 152211,
+"end": 152263,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 152263,
+"end": 152332,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 152332,
+"end": 152383,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 152383,
+"end": 152487,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 152487,
+"end": 152595,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 152595,
+"end": 152703,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 152703,
+"end": 152755,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 152755,
+"end": 152845,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 152845,
+"end": 152943,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 152943,
+"end": 152993,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 152993,
+"end": 153029,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 153029,
+"end": 153128,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 153128,
+"end": 153189,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 153189,
+"end": 153258,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 153258,
+"end": 153318,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 153318,
+"end": 153401,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 153401,
+"end": 153455,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 153455,
+"end": 153502,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 153502,
+"end": 153565,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 153565,
+"end": 153625,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Orange"
+},
+{
+"start": 153625,
+"end": 153722,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 153722,
+"end": 153812,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 153812,
+"end": 153930,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Orange"
+},
+{
+"start": 153930,
+"end": 153977,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 153977,
+"end": 154042,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 154042,
+"end": 154191,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 154191,
+"end": 154265,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 154265,
+"end": 154336,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 154336,
+"end": 154425,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 154425,
+"end": 154512,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 154512,
+"end": 154556,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 154556,
+"end": 154610,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 154610,
+"end": 154680,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 154680,
+"end": 154794,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 154794,
+"end": 154874,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 154874,
+"end": 154982,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 154982,
+"end": 155036,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 155036,
+"end": 155088,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 155088,
+"end": 155141,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 155141,
+"end": 155220,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 155220,
+"end": 155274,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 155274,
+"end": 155381,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 155381,
+"end": 155433,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 155433,
+"end": 155506,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 155506,
+"end": 155577,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 155577,
+"end": 155683,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 155683,
+"end": 155748,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 155748,
+"end": 155859,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 155859,
+"end": 155964,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 155964,
+"end": 156060,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 156060,
+"end": 156156,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 156156,
+"end": 156271,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 156271,
+"end": 156372,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 156372,
+"end": 156488,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 156488,
+"end": 156612,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 156612,
+"end": 156744,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 156744,
+"end": 156871,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 156871,
+"end": 156915,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 156915,
+"end": 157000,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 157000,
+"end": 157084,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 157084,
+"end": 157116,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 157116,
+"end": 157189,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 157189,
+"end": 157231,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 157231,
+"end": 157295,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 157295,
+"end": 157464,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 157464,
+"end": 157548,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 157548,
+"end": 157590,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 157590,
+"end": 157800,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 157800,
+"end": 157886,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 157886,
+"end": 157929,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 157929,
+"end": 158006,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 158006,
+"end": 158102,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 158102,
+"end": 158135,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 158135,
+"end": 158233,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 158233,
+"end": 158403,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 158403,
+"end": 158488,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 158488,
+"end": 158553,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 158553,
+"end": 158649,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 158649,
+"end": 158702,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 158702,
+"end": 158787,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 158787,
+"end": 158830,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 158830,
+"end": 158959,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 158959,
+"end": 159195,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 159195,
+"end": 159347,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 159347,
+"end": 159379,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 159379,
+"end": 159454,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 159454,
+"end": 159518,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 159518,
+"end": 159562,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 159562,
+"end": 159660,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 159660,
+"end": 159725,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 159725,
+"end": 159758,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 159758,
+"end": 159866,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 159866,
+"end": 159952,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 159952,
+"end": 160049,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 160049,
+"end": 160123,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 160123,
+"end": 160166,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 160166,
+"end": 160340,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 160340,
+"end": 160427,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 160427,
+"end": 160524,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 160524,
+"end": 160621,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 160621,
+"end": 160687,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 160687,
+"end": 160764,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 160764,
+"end": 160819,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 160819,
+"end": 160905,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 160905,
+"end": 160968,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 160968,
+"end": 161021,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 161021,
+"end": 161075,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 161075,
+"end": 161204,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 161204,
+"end": 161335,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 161335,
+"end": 161379,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 161379,
+"end": 161509,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 161509,
+"end": 161596,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 161596,
+"end": 161682,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 161682,
+"end": 161769,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 161769,
+"end": 162012,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 162012,
+"end": 162162,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 162162,
+"end": 162336,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 162336,
+"end": 162480,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 162480,
+"end": 162601,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 162601,
+"end": 162863,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 162863,
+"end": 162890,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 162890,
+"end": 163038,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 163038,
+"end": 163066,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 163066,
+"end": 163220,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 163220,
+"end": 163361,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 163361,
+"end": 163389,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 163389,
+"end": 163472,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 163472,
+"end": 163554,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 163554,
+"end": 163745,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 163745,
+"end": 163801,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 163801,
+"end": 163886,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 163886,
+"end": 163914,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 163914,
+"end": 164040,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 164040,
+"end": 164111,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 164111,
+"end": 164169,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 164169,
+"end": 164297,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 164297,
+"end": 164426,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 164426,
+"end": 164553,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 164553,
+"end": 164652,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 164652,
+"end": 164722,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 164722,
+"end": 165072,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 165072,
+"end": 165240,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 165240,
+"end": 165298,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 165298,
+"end": 165711,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 165711,
+"end": 165826,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 165826,
+"end": 165984,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 165984,
+"end": 166155,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 166155,
+"end": 166270,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 166270,
+"end": 166497,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 166497,
+"end": 166566,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 166566,
+"end": 166675,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 166675,
+"end": 166772,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 166772,
+"end": 166942,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 166942,
+"end": 166999,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 166999,
+"end": 167111,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 167111,
+"end": 167195,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 167195,
+"end": 167390,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 167390,
+"end": 167476,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 167476,
+"end": 167631,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 167631,
+"end": 167788,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 167788,
+"end": 167844,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 167844,
+"end": 167956,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 167956,
+"end": 168068,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 168068,
+"end": 168235,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 168235,
+"end": 168320,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 168320,
+"end": 168404,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 168404,
+"end": 168460,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 168460,
+"end": 168586,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 168586,
+"end": 168669,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 168669,
+"end": 168819,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 168819,
+"end": 168911,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 168911,
+"end": 169008,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 169008,
+"end": 169152,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 169152,
+"end": 169548,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 169548,
+"end": 169574,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 169574,
+"end": 169875,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 169875,
+"end": 169951,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 169951,
+"end": 170065,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 170065,
+"end": 170104,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 170104,
+"end": 170295,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 170295,
+"end": 170405,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 170405,
+"end": 170588,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 170588,
+"end": 170643,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 170643,
+"end": 170718,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 170718,
+"end": 170873,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 170873,
+"end": 170955,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 170955,
+"end": 170992,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 170992,
+"end": 171083,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 171083,
+"end": 171209,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 171209,
+"end": 171246,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 171246,
+"end": 171523,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 171523,
+"end": 171553,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 171553,
+"end": 171681,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 171681,
+"end": 171744,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 171744,
+"end": 171826,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 171826,
+"end": 172044,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 172044,
+"end": 172080,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 172080,
+"end": 172154,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 172154,
+"end": 172208,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 172208,
+"end": 172264,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 172264,
+"end": 172318,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 172318,
+"end": 172372,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 172372,
+"end": 172507,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 172507,
+"end": 172561,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 172561,
+"end": 172616,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 172616,
+"end": 172644,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 172644,
+"end": 172763,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 172763,
+"end": 172819,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 172819,
+"end": 172911,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 172911,
+"end": 172966,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 172966,
+"end": 173068,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 173068,
+"end": 173179,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 173179,
+"end": 173227,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 173227,
+"end": 173310,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 173310,
+"end": 173366,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 173366,
+"end": 173440,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 173440,
+"end": 173522,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 173522,
+"end": 173603,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 173603,
+"end": 173631,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 173631,
+"end": 173715,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 173715,
+"end": 173755,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 173755,
+"end": 173812,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 173812,
+"end": 173940,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 173940,
+"end": 174077,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 174077,
+"end": 174153,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 174153,
+"end": 174283,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 174283,
+"end": 174419,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 174419,
+"end": 174501,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 174501,
+"end": 174629,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 174629,
+"end": 174760,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 174760,
+"end": 174869,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 174869,
+"end": 174948,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 174948,
+"end": 175067,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 175067,
+"end": 175117,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 175117,
+"end": 175316,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 175316,
+"end": 175345,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 175345,
+"end": 175543,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 175543,
+"end": 175623,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 175623,
+"end": 175714,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 175714,
+"end": 175804,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 175804,
+"end": 175865,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 175865,
+"end": 175927,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 175927,
+"end": 176019,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 176019,
+"end": 176059,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 176059,
+"end": 176120,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 176120,
+"end": 176180,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 176180,
+"end": 176257,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 176257,
+"end": 176297,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 176297,
+"end": 176419,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 176419,
+"end": 176469,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 176469,
+"end": 176580,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 176580,
+"end": 176700,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 176700,
+"end": 176782,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 176782,
+"end": 176903,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 176903,
+"end": 177051,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 177051,
+"end": 177082,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 177082,
+"end": 177162,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 177162,
+"end": 177223,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 177223,
+"end": 177305,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 177305,
+"end": 177357,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 177357,
+"end": 177449,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 177449,
+"end": 177541,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 177541,
+"end": 177621,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 177621,
+"end": 177746,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 177746,
+"end": 177777,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 177777,
+"end": 177998,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 177998,
+"end": 178058,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 178058,
+"end": 178118,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 178118,
+"end": 178179,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Orange"
+},
+{
+"start": 178179,
+"end": 178238,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 178238,
+"end": 178297,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 178297,
+"end": 178336,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 178336,
+"end": 178465,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 178465,
+"end": 178563,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 178563,
+"end": 178634,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 178634,
+"end": 178664,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 178664,
+"end": 178723,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Orange"
+},
+{
+"start": 178723,
+"end": 178886,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 178886,
+"end": 178967,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 178967,
+"end": 179040,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 179040,
+"end": 179070,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 179070,
+"end": 179243,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 179243,
+"end": 179322,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 179322,
+"end": 179349,
+"name": "Sydney 2026 Multicam - Drum",
+"color": "Pink"
+},
+{
+"start": 179349,
+"end": 179431,
+"name": "Sydney 2026 Multicam - Photo Pit",
+"color": "Yellow"
+},
+{
+"start": 179431,
+"end": 179544,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 179544,
+"end": 179633,
+"name": "Sydney 2026 Multicam - Stage Right",
+"color": "Purple"
+},
+{
+"start": 179633,
+"end": 179758,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+},
+{
+"start": 179758,
+"end": 179884,
+"name": "Sydney 2026 Multicam - Static Desk",
+"color": "Blue"
+},
+{
+"start": 179884,
+"end": 180030,
+"name": "Sydney 2026 Multicam - Desk Tracking",
+"color": "Green"
+}
+]
+}

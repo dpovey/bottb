@@ -1,0 +1,22 @@
+{
+ "A": "BOTTB Sydney 2026 - final cut",
+ "B": "BOTTB Sydney 2026 - final cut - gigsteady good4u v1",
+ "skip": [
+  151080,
+  156110
+ ],
+ "diffs": [
+  [
+   "video",
+   "gigsteady",
+   null,
+   0
+  ],
+  [
+   "video",
+   "gigsteady (enabled)",
+   null,
+   true
+  ]
+ ]
+}

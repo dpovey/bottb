@@ -4,7 +4,7 @@
 # VALUE = 2 before the RiP, 1 after. It MUST be an int: "2" as a string returns False and silently
 # does nothing. Never on the multicam item (one item backs every cut in the show). Reads back.
 # If it times out (run_script 10 s), re-run: it is idempotent. Treat no output as unknown state.
-VALUE = 2
+VALUE = int(__import__("sys").argv[1]) if len(__import__("sys").argv) > 1 else 2  # rr.sh superscale.py 1 after the RiP
 CAMERA_EXT = (".MP4", ".MXF")
 import DaVinciResolveScript as dvr
 resolve = dvr.scriptapp("Resolve"); mp = resolve.GetProjectManager().GetCurrentProject().GetMediaPool()
