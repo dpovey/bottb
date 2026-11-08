@@ -22,10 +22,11 @@ import { promisify } from 'util'
 import { existsSync, mkdirSync } from 'fs'
 import { join, resolve } from 'path'
 import { parseArgs } from 'util'
+import { photosBasePath } from '../paths'
 
 const execAsync = promisify(exec)
 
-const PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
+const PHOTOS_BASE_PATH = photosBasePath()
 const PIPELINE_SCRIPT = join(
   __dirname,
   '../../../scripts/photo-intelligence/pipeline.py'

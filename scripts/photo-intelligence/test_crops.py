@@ -93,7 +93,7 @@ def test_image(image_path: str):
 
 if __name__ == "__main__":
     # Test images
-    base_path = "/Volumes/Extreme SSD/Photos"
+    base_path = os.environ.get("BOTTB_PHOTOS_DIR", "/Volumes/Extreme SSD/Photos")
     test_images = [
         "BOTBEHP19.jpg",
         "BOTBEHP20.jpg",

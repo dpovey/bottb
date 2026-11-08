@@ -30,6 +30,7 @@ GlobalFonts.registerFromPath(
 import { composeOverlay, OV_W, OV_H } from '../app/admin/thumbnails/compose'
 import { songCredit } from '../app/admin/thumbnails/setlist-artist'
 import { trimTransparent } from '../lib/canvas'
+import { productionOutBase } from './paths'
 
 // SVG logos rasterise at their declared width/height: Canva's logo.svg declares 80x30, so it came
 // out pixelated on 4K cards (Canvanauts full set, 2026-10-04). Scale the declared size up first,
@@ -75,8 +76,7 @@ const get = (k: string) => {
 }
 const eventQ = (get('event') ?? 'brisbane').toLowerCase()
 const bandQ = get('band')?.toLowerCase()
-const outBase =
-  get('out') ?? '/Volumes/Extreme SSD/bottb/events/2026/Brisbane/02_Production'
+const outBase = get('out') ?? productionOutBase()
 
 const slug = (s: string) =>
   s

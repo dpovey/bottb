@@ -24,12 +24,13 @@ import { readFile, readdir } from 'fs/promises'
 import { join, basename, extname } from 'path'
 import { existsSync } from 'fs'
 import { parseArgs } from 'util'
+import { photosBasePath } from './paths'
 import sharp from 'sharp'
 
 // Load environment variables
 config({ path: '.env.local' })
 
-const PHOTOS_BASE_PATH = '/Volumes/Extreme SSD/Photos'
+const PHOTOS_BASE_PATH = photosBasePath()
 
 interface PhotoRecord {
   id: string
