@@ -30,10 +30,15 @@ for k in ("in", "out"):
     if k in v: v[k] += tl.GetStartFrame()
 print("In/Out        %s" % ("%s-%s  (%s-%s, %d frames)" % (v["in"], v["out"], tc(v["in"]), tc(v["out"]), v["out"]-v["in"]+1)
                             if "in" in v and "out" in v else "none"))
+import re  # the range rule of pix.marker_range, inlined so this file still pastes into run_script: the name's range wins (In+1 markers)
 for f, m in sorted((tl.GetMarkers() or {}).items()):
     if str(m.get("name", "")).upper().startswith("RELEASE"):
-        s = tl.GetStartFrame() + f
-        print("RELEASE mark  %s dur %s  %s  -> implies %d-%d" % (tc(s), m.get("duration"), m.get("name"), s, s + int(m.get("duration", 1)) - 1))
+        s = tl.GetStartFrame() + f; a, b = s, s + int(m.get("duration", 1)) - 1
+        fr = re.search(r"\(In (\d+), Out (\d+)\)", m["name"])
+        tcs = re.findall(r"(\d\d):(\d\d):(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d):(\d\d):(\d\d)", m["name"] + " " + (m.get("note") or ""))
+        if fr: a, b = int(fr.group(1)), int(fr.group(2))
+        elif tcs: x = list(map(int, tcs[0])); a, b = ((x[0]*60+x[1])*60+x[2])*25+x[3], ((x[4]*60+x[5])*60+x[6])*25+x[7]
+        print("RELEASE mark  %s dur %s  %s  -> implies %d-%d" % (tc(s), m.get("duration"), m.get("name"), a, b))
 lo = IN if IN is not None else v.get("in"); hi = OUT if OUT is not None else v.get("out")
 # hasattr() is True for ANY name on a Resolve object (the attribute is None), so test callable().
 # GetRenderSettings does not exist on 21.1/21.1.1; this prints None until it does.

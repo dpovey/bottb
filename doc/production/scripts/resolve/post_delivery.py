@@ -11,13 +11,10 @@ import os, sys, DaVinciResolveScript as dvr
 pm = dvr.scriptapp("Resolve").GetProjectManager(); p = pm.GetCurrentProject(); tl = p.GetCurrentTimeline()
 assert not p.IsRenderingInProgress(), "a render is running"
 st = tl.GetStartFrame(); key = sys.argv[1]
-rel = [(f, m) for f, m in tl.GetMarkers().items() if m["name"].startswith("RELEASE") and key.lower() in m["name"].lower()]
-assert len(rel) == 1, "need exactly one RELEASE marker matching %r: %s" % (key, [m["name"] for _, m in rel])
-f0, m = rel[0]; IN, OUT = st + int(f0), st + int(f0) + int(m["duration"]) - 1
-print("RELEASE", m["name"], IN, OUT)
-for _ in range(3):
-    tl.SetMarkInOut(IN - st, OUT - st, "all")
-    if tl.GetMarkInOut().get("video") == {"in": IN - st, "out": OUT - st}: break
+sys.path.insert(0, os.path.dirname(os.path.abspath(sys.argv[0]))); import pix
+IN, OUT, name = pix.release_range(tl, key)  # "(In N, Out M)" in the name wins: those markers sit on In+1 (2026-11-08)
+print("RELEASE", name, IN, OUT)
+pix.set_inout(tl, IN, OUT)
 print("1 in/out", tl.GetMarkInOut().get("video"))
 xs = [x for x in tl.GetItemListInTrack("video", 1) if x.GetEnd() > IN and x.GetStart() <= OUT and x.GetClipColor() == "Orange"]
 for x in xs: x.ClearClipColor()

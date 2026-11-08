@@ -119,11 +119,21 @@ if FLC:
     at = [k for k, l in enumerate(lines) if "version %r" % ver in l]  # the decoder only prints grades holding an FLC node, whatever its label
     if err: fail("couldn't read halation: %s" % err)
     elif not at: fail("no Film Look Creator decoded for look version %r, so halation isn't checked" % ver)
-    for k in at[:1]:
+    # The look is an Adjustment Clip, an item grade (SeqContainer/*.xml in the .drt). MpFolder.xml holds the timeline's own grade, which
+    # can keep an old, disabled FLC under the same version name (Brisbane, 2026-11-08: a false "halation OFF"). Read item grades only; if several
+    # look clips share the version name and disagree, fail, because the decoder can't say which item each grade belongs to.
+    items_at = [k for k in at if not lines[k].startswith("MpFolder.xml")]
+    if at and not items_at: fail("look version %r: the only FLC decoded is the timeline's own grade, not the look clip's" % ver)
+    states = []
+    for k in items_at:
         hal = next((l for l in lines[k + 1:k + 3] if "halationIsEnable" in l), ""); node_on = lines[k].rstrip().endswith("ON"); h_on = "\\x18\\x00" not in hal
-        if not hal: fail("look version %r: no halation switch decoded" % ver); continue
+        states.append((node_on, h_on, bool(hal)))
+    if states:
+        node_on, h_on, has = states[0]
         m = "look version %r: FLC node %s, halation %s (decoded from an export)" % (ver, "on" if node_on else "OFF", "on" if h_on else "OFF")
-        (ok if node_on and h_on != HAL_OFF else fail)(m)
+        if not has: fail("look version %r: no halation switch decoded" % ver)
+        elif len(set(states)) > 1: fail("%d look-clip FLC grades named %r disagree, and the export can't tell which is this song's; check its look clip in the UI" % (len(states), ver))
+        else: (ok if node_on and h_on != HAL_OFF else fail)(m)
 print("%s  %d fails, %d warnings, %.0f s" % ("FAIL" if fails else "PASS", len(fails), len(warns), time.time() - T0))
 json.dump(dict(range=[IN, OUT], look=LOOK, fails=fails, warns=warns), open(D + "/preflight.json", "w"), indent=1)
 raise SystemExit(1 if fails else 0)

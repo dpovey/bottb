@@ -79,3 +79,38 @@ def camera(i):  # a colour group's name, or for a live multicam clip (which read
 
 def tc(f):
     f = int(f); return "%02d:%02d:%02d:%02d" % (f // 90000, f // 1500 % 60, f // 25 % 60, f % 25)
+
+
+
+def marker_range(f, m, st):
+    """(IN, OUT) a RELEASE marker records, absolute record frames. The name wins when it carries the range, because a chapter
+    marker can hold the In frame and push the RELEASE marker to In+1 (No One Knows, Say It Ain't So): "(In 76611, Out 82928)",
+    or a "HH:MM:SS:FF - HH:MM:SS:FF" range in the name or the note (Everlong, Covered in Chrome). Else start .. start+duration-1.
+    Timecodes are read at 25 fps, like tc(): every BotTB show timeline is 25p. state.py keeps an inline copy of this rule."""
+    import re
+    IN, OUT = st + int(f), st + int(f) + int(m.get("duration", 1)) - 1
+    fr = re.search(r"\(In (\d+), Out (\d+)\)", m["name"])
+    tcs = re.findall(r"(\d\d):(\d\d):(\d\d):(\d\d)\s*-\s*(\d\d):(\d\d):(\d\d):(\d\d)", m["name"] + " " + (m.get("note") or ""))
+    if fr: return int(fr.group(1)), int(fr.group(2))
+    if tcs:
+        x = list(map(int, tcs[0])); return ((x[0] * 60 + x[1]) * 60 + x[2]) * 25 + x[3], ((x[4] * 60 + x[5]) * 60 + x[6]) * 25 + x[7]
+    return IN, OUT
+
+
+def release_range(tl, key):
+    """(IN, OUT, name) from the one Cyan "RELEASE: ..." marker whose name contains key (case-insensitive). 25p timelines only."""
+    fps = float(tl.GetSetting("timelineFrameRate") or 25)
+    if abs(fps - 25) > 0.01: raise SystemExit("release_range reads timecodes at 25 fps; this timeline is %s fps" % fps)
+    rel = [(f, m) for f, m in (tl.GetMarkers() or {}).items() if m["name"].startswith("RELEASE") and key.lower() in m["name"].lower()]
+    if len(rel) != 1: raise SystemExit("need exactly one RELEASE marker matching %r: %s" % (key, [m["name"] for _, m in rel]))
+    f0, m = rel[0]; IN, OUT = marker_range(f0, m, tl.GetStartFrame())
+    return IN, OUT, m["name"]
+
+
+def set_inout(tl, IN, OUT):
+    """Timeline In/Out from absolute frames (SetMarkInOut counts from the timeline start), retried and read back."""
+    st = tl.GetStartFrame()
+    for _ in range(3):
+        tl.SetMarkInOut(IN - st, OUT - st, "all")
+        if tl.GetMarkInOut().get("video") == {"in": IN - st, "out": OUT - st}: return True
+    return False

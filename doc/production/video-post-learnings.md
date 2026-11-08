@@ -425,7 +425,7 @@ Re-tested the "Can't" list above against the live 21.1 API rather than the chang
 | **Add OpenFX (Deflicker, Film Look Creator)** | **Still not possible.** `InsertOFXGeneratorIntoTimeline` inserts a generator _clip_, not an effect on a node. Fusion comps are scriptable (`AddFusionComp`) but that is the Fusion page, not Colour-page OFX |
 | Generate proxies / optimized media            | Still can't trigger generation — but `LinkProxyMedia` / `UnlinkProxyMedia` / `LinkFullResolutionMedia` let you attach externally generated proxies (Blackmagic Proxy Generator or ffmpeg, then Link)         |
 | Set proxy format / location                   | **Partly** — `perfProxyMediaMode`, `perfProxyResolutionRatio`, `perfOptimisedCodec`, `perfOptimizedResolutionRatio` all read/write. Generation _location_ still not exposed                                  |
-| Read node enable/bypass state                 | ~~Still not possible~~ — CORRECTED 2026-11-06: `GetNodeEnabled` in 21.2                                                                                                                                                                 |
+| Read node enable/bypass state                 | ~~Still not possible~~ — CORRECTED 2026-11-06: `GetNodeEnabled` in 21.2                                                                                                                                      |
 | Select items in the UI                        | **Partly** — `MediaPool.SetSelectedClip` exists; still no setter for timeline items                                                                                                                          |
 | Clip fades                                    | **Now possible** — `TimelineItem.SetFades({FadeIn, FadeOut})`                                                                                                                                                |
 | Dynamic Zoom on/off                           | **Now possible** — `DynamicZoomEnabled`. Start/end rectangles still inaccessible, and there is no general sizing-keyframe API, so camera _moves_ remain manual                                               |
@@ -3620,4 +3620,44 @@ Lab on a `.drp` import of Sydney, Local Database, media drives off: real look cl
 - **A render job's range isn't safe unread:** a one-frame In/Out and a wrong format name started a whole-timeline H.264 render in the lab. `render_range.py` has the read-back.
 - **Untested:** what `GetEffects` shows for a really missing plugin (`/Library/OFX/Plugins` needs admin). Offline detection on a flat red wash could false-alarm.
 
-**Tools:** `preflight.py` (before every render), `edge_scan_live.py`, `frames.py`, `sheet_live.py`, `input_proof.py`, `fx_scan.py`, `cdl_read.py`, `roll.py`, `calibrate_frames.py`, shared `pix.py`. All in `scripts/resolve/`; usage in each header.
+**Tools:** `preflight.py` (before every render), `release_inout.py`, `clip_colours.py`, `edge_scan_live.py`, `frames.py`, `sheet_live.py`, `input_proof.py`, `fx_scan.py`, `cdl_read.py`, `roll.py`, `calibrate_frames.py`, shared `pix.py`. All in `scripts/resolve/`; usage in each header.
+
+## Reading a closed project's export, and measuring a released zoom from the picture (2026-11-06, Paint It Black)
+
+- **Timeline markers are in the export.** `project.xml`, `Sm2SequenceLockableBlob` whose `BlobOwner` is the timeline's sequence id, `FieldsBlob` zstd. The stored frame is a zigzag varint: **stored value / 2 = record frame** (589700 = 294850, Dean's Paint It Black mark). Script: release `total-loss-paint-it-black-brisbane-2026/video/scripts/markers_decode.py`.
+- **Audio track mute looks like `Sm2TiTrack` Flags bit 2 (inferred, not proven by an API read).** A1-A5 read 2 and the song mixes 0 on `BOTTB Brisbane 2026`. It fits Dean's A5 mute on No One Knows and the 09-12 backup, where A5 and the ShipRex and Epsonics mixes carry it and the Jumbo mix does not. Bit 32 is unknown. Confirm with `audio_ls.py` or the mute buttons when the project is open.
+- **In/Out and the render queue were not found in a `.drp`.** A search of the export found neither, so they still need the project open (`state.py`).
+- **The export keeps zoom values for Render-in-Placed items** on `OriginalClip` (Sultans: 41 of 41 RiP'd cuts), but not on every song: It's All Coming Back reads 0 zoomed despite 21 RiPs. A blank is not proof of no zoom.
+- **Solve a released framing from the picture:** one released frame and one source frame at the same record position, SIFT + RANSAC similarity (`estimateAffinePartial2D`), gives zoom and centre. On Sultans, 90 cuts at 3 positions, it read exact values (1.5, 1.8, the 1.0 to 1.25 ramps) and matched the export on every cut but one: 285851 CAM A released at 1.10 and the export now reads 1.0. 120 s, 1.3 GB peak. Script: release `video/zooms/scripts/sultans_measure.py`.
+- **dzedit's y sign is settled: its centre y is inverted.** dzedit `centre` y = 1 - image y, measured on 291292 (decoded 0.4644, picture 0.5355) and 287381 (decoded 0.5498, picture 0.4508). x is direct. Note for `dzedit.py`, whose header says y is assumed + = down; that file is in resolve-lab and was not changed.
+- **Static crop values as the export stores them:** Pan = (0.5 - cx) x zoom and Tilt = (cy - 0.5) x zoom, in frame widths and heights (293565: 1.8 at 0.5225, 0.5302 stores -0.0407, 0.0548). The API and Inspector units were not checked.
+
+## Paint It Black delivered (2026-11-08, Brisbane)
+
+- **A skipped post-delivery checklist made Brisbane playback crawl.** Say It Ain't So's post-delivery never ran. Its 23 Orange clips
+  were still marked, and Deflicker and NR were still on in all four camera groups, live on every multicam cut of the show. That's about
+  10× per frame at 4K, with no render cache. Switching the six group nodes off fixed playback. **Run `post_delivery.py` and the node,
+  halation and Super Scale steps before closing any song**, and check `grpnode.py --list` when a show feels slow.
+- **The API can't switch a multicam angle (21.2 too).** Decide the switches, mark the targets by clip colour (Purple for CAM B,
+  Green for CAM C, never Orange), and have Dean use Timeline > Select Clips By Clip Color, then Switch Multicam Clip Angle. Verify by
+  item name (`"<multicam> - <angle>"`), then clear the marks.
+- **RELEASE markers and the In:** a song's In/Out lives in a Cyan RELEASE duration marker. Where the chapter marker holds the In, the
+  RELEASE marker sits on In+1. The real range is then in the name, "(In 76611, Out 82928)", or as "HH:MM:SS:FF - HH:MM:SS:FF" in the
+  note (Everlong, Covered in Chrome). `post_delivery.py` used the marker's start, one frame late on those four songs. It now uses
+  `pix.release_range`, which reads the name and then the note. `release_inout.py mark|restore` writes and restores these markers.
+  Brisbane has no Green song markers.
+- **`preflight.py --flc` read the wrong Film Look.** In a `.drt`, `MpFolder.xml` holds the timeline's own grade and `SeqContainer`
+  holds item grades. Brisbane keeps an old, disabled timeline FLC under the look clip's version name ("Version 1"), so preflight
+  reported halation OFF while the live adjustment-clip FLC had it on. Fixed: preflight reads item grades only, and fails if several
+  look clips with that version name disagree.
+- **Clip colours outside a song** (left over from another delivery): back them up, clear them and restore them with `clip_colours.py`.
+  `post_delivery.py` only clears Orange inside one song's range.
+- **Out by audio:** the talk after the song started at 300740 (the mix jumped from -42 to -21 dB). Out 300739 puts the 98-frame fade
+  4 frames before the last hit, at -0.4 dB. The last two cuts (78 and 9 frames) are shorter than the fade, so the Mustang Sally black
+  alpha-ramp clip went on V3, with the end card on a new V4 "End card".
+- **Numbers:**
+  - 4K: 18.8 min for 232.8 s; 44.8 Mb/s; -13.6 LUFS; -2.1 dBTP.
+  - Audio null against the mix WAV: lag 0, r 0.99976, residual -33 dB, flat.
+  - 1080p and IG in parallel: 4.8 min, 1.15 GB peak each; IG 234 MB.
+  - Render in Place: 16 cuts, 6.0 GB, to /Volumes/BOTTB/RiP/paint_it_black. All 35 CDLs survived it (`cdl_read.py`).
+  - Release records: `production-control/releases/total-loss-paint-it-black-brisbane-2026/video-result.md`.
