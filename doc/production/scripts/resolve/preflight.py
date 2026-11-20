@@ -1,6 +1,6 @@
 # Pre-render check of a song range: seconds, read-only, no track toggled, no render. Run after state.py, right before StartRendering. Exit 1 on any FAIL.
 # Catches: a render set off with the look in the wrong state (Mustang Sally 2026-11-05), a missed fade (API fades are lost on reopen), offline media, black pan bands,
-# a disabled track or look node, a missing plugin, an In/Out off the song. It prints the sheet path: read the card credit on it, because no check can.
+# a disabled track or look node, a missing plugin, a clip LUT whose file is gone, an In/Out off the song. It prints the sheet path: read the card credit on it, because no check can.
 # Halation is the exception: the API can't read that switch, so --flc exports the timeline and decodes it.
 # Usage: RR_TIMEOUT=300 rr.sh resolve/preflight.py <in_abs> <out_abs> <outdir> [--look on|off] [--open-end] [--no-scan] [--flc] [--halation-off]
 #   --look off for a measuring render; --open-end when the song doesn't fade to black; --no-scan skips the frame per cut; --halation-off when Dean wants it off.
@@ -56,6 +56,13 @@ for t in range(1, tl.GetTrackCount("video") + 1):
             if inf.get("id") not in known: miss.append((t, i.GetName(), i.GetStart(), inf.get("id")))
 if miss: fail("%d effects aren't installed: %s" % (len(miss), miss[:5]))
 else: ok("%d clip OFX effects, all installed" % fx)
+# clip LUTs: every node LUT on every video item in range must exist on disk (amkup was missing for weeks and Under Pressure carried
+# 43 dangling paths with no warning). GetLUT gives a path relative to the LUT library
+# (absolute ones are checked as they are); symlinked folders count when the link resolves (2026-11-20 symlink test).
+luts = pix.lut_refs(tl, IN, OUT)
+gone = [x[:5] for x in luts if not x[5]]
+if gone: fail("%d of %d clip LUT refs are missing under %s (%d distinct files): %s" % (len(gone), len(luts), pix.LUT_ROOT, len({x[4] for x in gone}), gone[:5]))
+else: ok("%d clip LUT refs (%d files), all present" % (len(luts), len({x[4] for x in luts})))
 # colour groups (RiP'd clip out of its group)
 cuts = pix.v1_cuts(tl, IN, OUT); ng = [(i.GetName(), i.GetStart()) for i in cuts if pix.src_type(i) != "Multicam" and not i.GetColorGroup()]  # a live multicam clip's group sits on its source, so it reads none here
 if ng: warn("%d of %d cuts are RiP'd or plain clips with no colour group: %s" % (len(ng), len(cuts), ng[:4]))

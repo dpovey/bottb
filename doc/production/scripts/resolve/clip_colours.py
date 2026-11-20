@@ -1,11 +1,14 @@
 # Back up, clear and restore clip colours on the current timeline, by colour and record range, every change read back.
 # usage (via rr.sh):
 #   clip_colours.py backup <in_abs> <out_abs> <colour|all> <backup.json>   read-only: track, start, end, name, colour of the matches
-#   clip_colours.py clear <backup.json>                                    clear exactly the items in the backup (matched by track,
-#                                                                          start and name, and only if they still hold that colour)
+#   clip_colours.py clear <backup.json>                                    clear exactly the items in the backup (matched by track
+#                                                                          index, start and end, and only if they still hold that colour)
 #   clip_colours.py restore <backup.json>                                  put each item's colour back, unless it has been
 #                                                                          given another colour since
 # Made for the Say It Ain't So Orange leftovers (2026-11-08): post_delivery.py clears Orange in one song's range only.
+# Items are matched by position, not name (2026-11-21): Render in Place renames every item it bakes, so on You Oughta Know a
+# name match found 0 of 19. The name is kept in the backup only to report what was renamed. Tracks are keyed by index (V3),
+# never by track name, because several tracks can share a name ("gigsteady").
 import json, sys, DaVinciResolveScript as dvr
 a = sys.argv[1:]; tl = dvr.scriptapp("Resolve").GetProjectManager().GetCurrentProject().GetCurrentTimeline()
 def items():
@@ -20,11 +23,12 @@ if a[0] == "backup":
     print("backed up %d items to %s" % (len(rows), path))
 elif a[0] in ("clear", "restore"):
     B = json.load(open(a[1])); assert B["timeline"] == tl.GetName(), (B["timeline"], tl.GetName())
-    want = {(r["track"], r["start"], r["name"]): r["color"] for r in B["items"]}; done = bad = skipped = found = 0
+    want = {(r["track"], r["start"], r["end"]): r for r in B["items"]}; done = bad = skipped = found = renamed = 0
     for t, it in items():
-        c = want.get((t, it.GetStart(), it.GetName()))
-        if c is None: continue
-        found += 1
+        r = want.get((t, it.GetStart(), it.GetEnd()))
+        if r is None: continue
+        found += 1; c = r["color"]
+        if it.GetName() != r["name"]: renamed += 1; print("renamed since the backup:", t, it.GetStart(), repr(r["name"]), "->", repr(it.GetName()))
         if a[0] == "clear":
             if (it.GetClipColor() or "") != c: print("skip, colour changed:", t, it.GetStart(), it.GetClipColor()); skipped += 1; continue
             it.ClearClipColor(); good = (it.GetClipColor() or "") == ""
@@ -32,5 +36,6 @@ elif a[0] in ("clear", "restore"):
             if (it.GetClipColor() or "") not in ("", c): print("skip, coloured since:", t, it.GetStart(), it.GetClipColor()); skipped += 1; continue
             it.SetClipColor(c); good = it.GetClipColor() == c
         done += good; bad += not good
-    print("%s %d, failed %d, skipped %d, not found %d" % (a[0], done, bad, skipped, len(want) - found))
+    print("%s %d, failed %d, skipped %d, not found %d, renamed %d" % (a[0], done, bad, skipped, len(want) - found, renamed))
+    if bad or len(want) != found: raise SystemExit(1)  # a failed write or an item that moved: look before going on
 else: raise SystemExit("backup | clear | restore")
