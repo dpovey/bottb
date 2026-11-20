@@ -4212,14 +4212,15 @@ discover -s doc/production/scripts/tests` (a fake Resolve module) and `zsh doc/p
   missed for five days.
 - **`compare_timelines.py` keys tracks by index**, and compares track names and enables. Three "gigsteady" tracks collided
   when tracks were keyed by name. For a duplicate with one inserted video track, pass `--insert N`. Exits 1 on any difference.
-- **`preflight.py` fails on a missing clip LUT**: any node LUT on a video item in In–Out whose file isn't under the LUT library
-  (symlinked folders count when the link resolves). Install or relink the LUT folder, then rerun. Amkup was missing for
+- **`preflight.py` fails on a missing clip LUT**: any node LUT on a video item in In–Out whose file isn't in the system or user LUT
+  library (symlinked folders count when the link resolves). Install or relink the LUT folder, then rerun. Amkup was missing for
   weeks, and Under Pressure carried 43 dangling paths, with no warning.
 - **`resolve/apply_diff.py`** applies a revised gigstills apply list and treats a `held: true` row as no LUT, even when it
   keeps its `lut` path.
 - **`bwf-sync-check.py` runs with `~/src/personal/mix-assist/.venv/bin/python -I`.** This folder has no venv, and the
   gigstills `.venv` lacks soundfile.
-- **Social snippets** in `scripts/browser/`: `attach-pieces.js` with `split-for-browser.sh` (the no-Blob chunked upload), and
+- **Social snippets** in `scripts/browser/`: `attach-pieces.js` with `split-for-browser.sh` (the no-Blob chunked upload, checked piece by piece
+  against the hashes the split prints), and
   `linkedin-caption.js` (mention chips, the caret by Range, a read-back check). Tests: `node scripts/tests/test_browser_snippets.cjs`.
 - **Live checks still owed** (not run against Resolve or the live sites): `clear_jobs.py`; a runner built from the template;
   `post_delivery.py`, `clip_colours.py` and `compare_timelines.py` on a real timeline after a RiP; the preflight LUT check on

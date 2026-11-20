@@ -21,5 +21,9 @@ case_ "ok passes on zero"                     0 yes 'ok -s "VERDICT" zsh -c "ech
 case_ "started_job reads the JOB id"          0 yes 'j=$(started_job "$(print -l "job x" "JOB abc123 range")"); [[ $j == abc123 ]]'
 case_ "started_job aborts with no JOB"        1 no  'j=$(started_job "nothing"); echo got'
 case_ "informational grep needs || true"      0 yes 'echo foo | grep bar || true'
+case_ "Error inside a name is not an error"   0 yes 'must "PASS" print -l "ok output ErrorBudget_v1.mp4" "PASS 0 fails"'
+case_ "an exception line is an error"         1 no  'must "PASS" print -l "ValueError: bad" "PASS"'
+case_ "VERDICT FAIL is an error"              1 no  'must "VERDICT" echo "VERDICT FAIL x.mp4"'
+case_ "0 fails is not FAIL"                   0 yes 'must "PASS" echo "PASS  0 fails, 2 warnings"'
 case_ "big output with -q match (no SIGPIPE)" 0 yes 'must "^line 1$" seq -f "line %g" 1 200000'
 print "$pass passed, $fail failed"; exit $(( fail > 0 ))

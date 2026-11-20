@@ -2,7 +2,8 @@
 # Split a video into browser-upload pieces for attach-pieces.js and print what the page should rebuild.
 #   split-for-browser.sh <file> [outdir] [piece_mb=45]
 # outdir defaults to a new folder in $TMPDIR (use the session scratchpad: preview uploads take paths the session may read).
-# Prints each piece path in upload order, the file's sha256, and a check that the pieces join back to the same hash.
+# Prints each piece path in upload order, the rebuild() call with each piece's sha256, the file's sha256, and a check that
+# the pieces join back to the same hash.
 # Exit 1 if they don't. Delete the outdir after the attach.
 set -eu -o pipefail
 F=${1:?usage: split-for-browser.sh <file> [outdir] [piece_mb=45]}
@@ -15,5 +16,7 @@ SHA=$(shasum -a 256 "$F" | cut -d' ' -f1)
 JOIN=$(cat "$OUT"/part_* | shasum -a 256 | cut -d' ' -f1)
 print "pieces (upload in this order):"; ls -1 "$OUT"/part_* | sed 's/^/  /'
 print "count $(ls -1 "$OUT"/part_* | wc -l | tr -d ' ')  bytes $(stat -f %z "$F")"
-print "rebuild: await bottbAttach.rebuild('${F:t}', '$SHA')"
+PIECES=$(for p in "$OUT"/part_*; do print -n "'$(shasum -a 256 "$p" | cut -d' ' -f1)',"; done)
+print "rebuild: await bottbAttach.rebuild('${F:t}', [${PIECES%,}])"
+print "whole-file sha256 (render-qc / render-verify): $SHA"
 if [[ "$JOIN" == "$SHA" ]]; then print "JOIN OK $SHA"; else print "JOIN FAIL $JOIN != $SHA"; exit 1; fi

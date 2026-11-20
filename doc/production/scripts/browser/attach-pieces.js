@@ -1,10 +1,10 @@
 // attach-pieces.js: attach a large local video to a site's file input in the T3 preview browser without a public Blob.
 // Paste the whole file into preview_evaluate once per page load; it defines window.bottbAttach and returns its version.
 // Method (social retro, You Oughta Know 2026-11-20/21; used 3 times: YouTube 4K 33 x 45 MB, LinkedIn and TikTok 1080p 9 pieces):
-//   0. split-for-browser.sh <file>                 pieces of 45 MB (under the 50 MB per-upload cap) + the expected sha256
+//   0. split-for-browser.sh <file>                 pieces of 45 MB (under the 50 MB per-upload cap) + each piece's sha256
 //   1. bottbAttach.install()                       adds a hidden <input type=file id=bottb-part>; each change pushes files[0]
 //   2. preview_act upload, one call per piece, on #bottb-part, in split order (part_aa, part_ab, ...)
-//   3. await bottbAttach.rebuild(name, sha256)     joins the pieces into one File, hashes it in the page, refuses on a mismatch
+//   3. await bottbAttach.rebuild(name, [sha...])   joins the pieces into one File, hashes each piece in the page, refuses on a mismatch
 //   4. bottbAttach.inject(selectorOrInput)         DataTransfer onto the site's real input, then input + change events (bubbles)
 // Site notes:
 //   - YouTube: attach the pieces BEFORE Studio's modal upload dialog opens; with it open, upload timed out even on 1 KB.
@@ -53,12 +53,19 @@
       b.toString(16).padStart(2, '0')
     ).join('')
 
-  // Join the pieces in name order (split's aa, ab, ... sort correctly) and check the hash before anything is attached.
-  A.rebuild = async (name, sha256, type = 'video/mp4') => {
+  const sha = async (blob) =>
+    hex(await crypto.subtle.digest('SHA-256', await blob.arrayBuffer()))
+
+  // Join the pieces in name order (split's aa, ab, ... sort correctly) and check hashes before anything is attached.
+  // expected: an ARRAY of per-piece sha256s in piece order (split-for-browser.sh prints it; hashes one 45 MB piece at a time),
+  // or the whole file's sha256 as a string (loads the whole file into page memory once; refused above 1.6 GB).
+  A.rebuild = async (name, expected, type = 'video/mp4') => {
     if (!A.parts.length)
       throw new Error(
         'no pieces: install(), then upload each piece to #bottb-part'
       )
+    if (!expected)
+      throw new Error('give the expected hashes: nothing unchecked is attached')
     const names = A.parts.map((f) => f.name)
     if (new Set(names).size !== names.length)
       throw new Error('a piece was uploaded twice: ' + names.join(','))
@@ -66,16 +73,34 @@
       a.name < b.name ? -1 : a.name > b.name ? 1 : 0
     )
     const file = new File(parts, name, { type })
-    const got = hex(
-      await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
-    )
-    const ok = !sha256 || got === String(sha256).toLowerCase()
-    if (!ok)
-      throw new Error(
-        `sha256 mismatch: got ${got}, expected ${sha256}; reset() and upload the pieces again`
-      )
+    let got
+    if (Array.isArray(expected)) {
+      if (expected.length !== parts.length)
+        throw new Error(
+          `${parts.length} pieces uploaded, ${expected.length} expected`
+        )
+      got = []
+      for (const [k, p] of parts.entries()) {
+        const h = await sha(p)
+        if (h !== String(expected[k]).toLowerCase())
+          throw new Error(
+            `piece ${p.name} sha256 mismatch: got ${h}, expected ${expected[k]}; reset() and upload again`
+          )
+        got.push(h)
+      }
+    } else {
+      if (file.size > 1.6e9)
+        throw new Error(
+          'file over 1.6 GB: pass the per-piece hash array instead of one hash'
+        )
+      got = await sha(file)
+      if (got !== String(expected).toLowerCase())
+        throw new Error(
+          `sha256 mismatch: got ${got}, expected ${expected}; reset() and upload the pieces again`
+        )
+    }
     A.file = file
-    return { name, size: file.size, parts: parts.length, sha256: got, ok }
+    return { name, size: file.size, parts: parts.length, sha256: got, ok: true }
   }
 
   A.inject = (target) => {

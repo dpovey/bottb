@@ -22,7 +22,8 @@ for t in sorted(set(b["tracks"]) | set(c["tracks"]), key=lambda k: (k[0] != "V",
     xi, yi = [i for i in x["items"] if not edited(i)], [i for i in y["items"] if not edited(i)]
     if xi != yi:
         key = lambda i: json.dumps(i, sort_keys=True, default=str)
-        gone, new = [i for i in xi if key(i) not in set(map(key, yi))], [i for i in yi if key(i) not in set(map(key, xi))]
+        kx, ky = set(map(key, xi)), set(map(key, yi))
+        gone, new = [i for i in xi if key(i) not in ky], [i for i in yi if key(i) not in kx]
         bad.append("ITEMS %s %s: %d -> %d, %d changed or gone, %d changed or new" % (t, x["name"], len(xi), len(yi), len(gone), len(new)))
         for g in gone[:2]: print("  before", t, g)
         for n in new[:2]: print("  after ", t, n)

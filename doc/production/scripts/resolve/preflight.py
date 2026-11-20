@@ -61,7 +61,7 @@ else: ok("%d clip OFX effects, all installed" % fx)
 # (absolute ones are checked as they are); symlinked folders count when the link resolves (2026-11-20 symlink test).
 luts = pix.lut_refs(tl, IN, OUT)
 gone = [x[:5] for x in luts if not x[5]]
-if gone: fail("%d of %d clip LUT refs are missing under %s (%d distinct files): %s" % (len(gone), len(luts), pix.LUT_ROOT, len({x[4] for x in gone}), gone[:5]))
+if gone: fail("%d of %d clip LUT refs are missing under %s (%d distinct files): %s" % (len(gone), len(luts), " or ".join(pix.lut_roots()), len({x[4] for x in gone}), gone[:5]))
 else: ok("%d clip LUT refs (%d files), all present" % (len(luts), len({x[4] for x in luts})))
 # colour groups (RiP'd clip out of its group)
 cuts = pix.v1_cuts(tl, IN, OUT); ng = [(i.GetName(), i.GetStart()) for i in cuts if pix.src_type(i) != "Multicam" and not i.GetColorGroup()]  # a live multicam clip's group sits on its source, so it reads none here

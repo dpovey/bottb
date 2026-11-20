@@ -11,7 +11,7 @@
 #   rr <script.py> [args]                 rr.sh with RR_TIMEOUT=${RRT:-120}; exit code propagates (rr.sh, 2026-11-05)
 #   must [-s <show-regex>] <pattern> <cmd> [args]
 #                                         run cmd; print its output (only lines matching -s, if given); ABORT the run if it
-#                                         exits non-zero, prints Traceback/Error/HUNG/FAIL/ABORT, or prints nothing matching <pattern>
+#                                         exits non-zero, prints error text ($RUNNER_ERR), or prints nothing matching <pattern>
 #   ok [-s <show-regex>] <cmd> [args]     run cmd; print (filtered) output; ABORT the run if it exits non-zero
 #   started_job <render_range output>     the JOB id it printed (ABORT if none). Clear it after QC with
 #                                         `must "page edit" rr resolve/clear_jobs.py <id>...` (by id, not by name prefix)
@@ -22,6 +22,10 @@
 # Wait on the render process id (wait_render.py), never a log string; this file doesn't change that.
 setopt err_exit pipe_fail no_unset
 RUNNER_DIR=${0:A:h}
+# error text that fails a must: a traceback, HUNG/ABORT at a line start, the word FAIL anywhere (preflight's "FAIL  …",
+# render-qc's "VERDICT FAIL"), or an exception name at a line start. A bare "Error" inside a name doesn't count.
+RUNNER_ERR='^(Traceback|HUNG|ABORT)|(^|[^A-Za-z])FAIL([^A-Za-z]|$)|^[A-Za-z_.]*(Error|Exception):'
+
 export RESOLVE_SCRIPT_LIB="/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
 TRAPZERR() { print -r -- "RUNNER ABORT: a command failed (exit $?) near line ${funcfiletrace[1]:-?}" >&2; }
 
@@ -42,7 +46,7 @@ must() {
   out=$("$@" 2>&1) || rc=$?
   _runner_show "$show" "$out"
   if (( rc != 0 )); then abort "exit $rc from: $*"; fi
-  if grep -q -E "Traceback|Error|HUNG|FAIL|ABORT" <<< "$out"; then abort "error text from: $*"; fi
+  if grep -q -E "$RUNNER_ERR" <<< "$out"; then abort "error text from: $*"; fi
   if ! grep -q -E -- "$pat" <<< "$out"; then abort "expected /$pat/ from: $*"; fi
   return 0
 }

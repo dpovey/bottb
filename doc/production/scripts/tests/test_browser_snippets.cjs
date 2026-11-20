@@ -50,11 +50,25 @@ test('attach: pieces rebuild in name order, hash checked, injected with change',
   const A = w.bottbAttach
   A.install()
   assert.ok(w.document.getElementById('bottb-part'))
-  const data = Buffer.from('0123456789abcdefghij'.repeat(100))
+  const data = crypto.randomBytes(2000)
   const sha = crypto.createHash('sha256').update(data).digest('hex')
   // simulate preview_act upload out of order: ab arrives before aa
   A.parts.push(new w.File([data.subarray(1000)], 'part_ab'))
   A.parts.push(new w.File([data.subarray(0, 1000)], 'part_aa'))
+  const h = (b) => crypto.createHash('sha256').update(b).digest('hex')
+  const perPiece = await A.rebuild('song.mp4', [
+    h(data.subarray(0, 1000)),
+    h(data.subarray(1000)),
+  ])
+  assert.strictEqual(perPiece.ok, true)
+  await assert.rejects(
+    A.rebuild('song.mp4', [h(data.subarray(1000)), h(data.subarray(0, 1000))]),
+    /piece part_aa sha256 mismatch/
+  )
+  await assert.rejects(
+    A.rebuild('song.mp4', [h(data)]),
+    /2 pieces uploaded, 1 expected/
+  )
   const r = await A.rebuild('song.mp4', sha)
   assert.strictEqual(r.ok, true)
   assert.strictEqual(r.size, data.length)
@@ -83,7 +97,8 @@ test('attach: a wrong hash or a duplicate piece refuses', async () => {
   await assert.rejects(A.rebuild('x.mp4', '00'), /sha256 mismatch/)
   assert.throws(() => A.inject('#nope'), /rebuild/)
   A.parts.push(new w.File(['abc'], 'part_aa'))
-  await assert.rejects(A.rebuild('x.mp4'), /twice/)
+  await assert.rejects(A.rebuild('x.mp4', '00'), /twice/)
+  await assert.rejects(A.rebuild('x.mp4'), /expected hashes/)
   assert.strictEqual(A.reset().parts, 0)
 })
 
@@ -187,7 +202,6 @@ test('linkedin: selected() reads the highlighted option', () => {
     { text: 'Jumbo Interactive Limited', urn: 'urn:li:organization:1' }
   )
 })
-
 ;(async () => {
   for (const [name, fn] of tests) {
     try {

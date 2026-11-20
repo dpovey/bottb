@@ -40,18 +40,22 @@ def measure(path, keys):
     return got
 
 
+def usage(msg): print(msg, file=sys.stderr); sys.exit(2)
+
+
 def parse_expect(s):
-    if s is None: return {}
+    if s is None: return None   # no --expect: record mode
     if os.path.isfile(s):
         d = json.load(open(s))
     else:
         d = {}
         for part in filter(None, s.split(",")):
             k, sep, v = part.partition("=")
-            if not sep: sys.exit("bad --expect item %r: use key=value" % part)
+            if not sep: usage("bad --expect item %r: use key=value" % part)
             d[k.strip()] = v.strip()
     bad = set(d) - set(KEYS)
-    if bad: print("bad --expect keys %s: use %s" % (sorted(bad), ",".join(KEYS)), file=sys.stderr); sys.exit(2)
+    if bad: usage("bad --expect keys %s: use %s" % (sorted(bad), ",".join(KEYS)))
+    if not d: usage("--expect %r holds no expectations: nothing would be checked" % s)
     out = {}
     for k, v in d.items():
         out[k] = int(v) if k in ("bytes", "frames") else float(v) if k == "duration" else str(v).lower()
@@ -64,7 +68,7 @@ def main():
     a = ap.parse_args()
     if not os.path.isfile(a.file): print("no such file: %s" % a.file, file=sys.stderr); sys.exit(2)
     want = parse_expect(a.expect)
-    if not want:
+    if want is None:
         print(json.dumps(measure(a.file, KEYS))); return
     got = measure(a.file, want); fail = False
     for k in KEYS:

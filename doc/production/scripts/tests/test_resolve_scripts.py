@@ -113,7 +113,7 @@ class LutRefs(unittest.TestCase):
         v = [("Video 1", True, [I(0, 100, "a", luts=["amk/here.cube"]), I(100, 200, "b", luts=["", "amk/gone.cube"]),
                                 I(300, 400, "out of range", luts=["amk/gone.cube"])]),
              ("overlay", True, [I(150, 160, "o", luts=["linked/here.cube"])])]
-        refs = pix.lut_refs(fake.Timeline("T", video=v), 0, 199, root=root)
+        refs = pix.lut_refs(fake.Timeline("T", video=v), 0, 199, roots=[root])
         self.assertEqual([(r[0], r[1], r[3], r[4], r[5]) for r in refs],
                          [(1, 0, 1, "amk/here.cube", True), (1, 100, 2, "amk/gone.cube", False), (2, 150, 1, "linked/here.cube", True)])
 
@@ -160,6 +160,11 @@ class ApplyDiff(unittest.TestCase):
             self.assertEqual(code, 0, out)
             self.assertEqual([i.graph.luts[0] for i in v1], ["c1.cube", "", ""])
             self.assertIn("READBACK 3 cuts: with LUT 1, none 2, mismatches 0", out)
+            v1[0].graph.luts = ["", "extra"]  # a hand-added node on a cut that needs a change: refuse, write nothing
+            v1[2].graph.luts = ["", "extra"]  # and on an unchanged cut: only a note
+            code, out = run("resolve/apply_diff.py", [tmp("apply.json"), "T", tmp("before.json")], p)
+            self.assertEqual(code, 1, out); self.assertIn("REFUSED row 1: expected 1 node", out)
+            self.assertIn("note: row 3 unchanged", out); self.assertEqual(v1[0].graph.luts, ["", "extra"])
         finally:
             del os.environ["BOTTB_LUT_ROOT"]
 
