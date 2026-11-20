@@ -4207,8 +4207,8 @@ discover -s doc/production/scripts/tests` (a fake Resolve module) and `zsh doc/p
   pipe. Clear the run's jobs by id with `resolve/clear_jobs.py <id>`, never by an output-name prefix list (the YOK list missed
   the delivery name). Template: `scripts/runner-template.zsh`.
 - **"Every track identical" includes track enables.** `resolve/snapshot.py` before and after, then
-  `resolve/diff_snapshots.py before.json after.json [--edit IN OUT V1]`. It prints each enable change on its own line and exits
-  1. On the YOK files it reports `TRACK ENABLE A2 Desk scratch +16 dB stereo off -> on`, which the 11-15 post-upgrade check
+  `resolve/diff_snapshots.py before.json after.json [--edit IN OUT V1]`. It prints each enable change on its own line and fails
+  the run. On the YOK files it reports `TRACK ENABLE A2 Desk scratch +16 dB stereo off -> on`, which the 11-15 post-upgrade check
   missed for five days.
 - **`compare_timelines.py` keys tracks by index**, and compares track names and enables. Three "gigsteady" tracks collided
   when tracks were keyed by name. For a duplicate with one inserted video track, pass `--insert N`. Exits 1 on any difference.
