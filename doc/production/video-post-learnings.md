@@ -908,7 +908,10 @@ more than once.
    clock) and is safe because Super Scale only acts during a RiP of a clip that uses it.
 4. **Decompose any already-RiP'd cut that needs Super Scale** before re-RiPping it; decomposing
    clears its clip colour, so re-mark it, **and drops its clip grade, so re-apply the CDL** (NOK, 2026-10-06).
-5. **Render in Place the orange cuts**: Include Video Effects **ON** (bakes Dynamic Zoom),
+5. **Count Orange on the whole timeline first**, every video track (`clip_colours.py backup <start> <end> Orange <json>`
+   over the whole timeline). Select Clips By Clip Color takes every Orange clip, including another song's leftovers on an
+   overlay track (You Oughta Know found four Mustang Sally RiPs still Orange on V3). Clear those before Dean selects.
+   **Render in Place the orange cuts**: Include Video Effects **ON** (bakes Dynamic Zoom),
    colour grading **OFF** (the clip node and timeline node stay live on top of the bake — the
    CDLs apply once, not twice).
 6. **Super Scale back to 1** on every source clip, verified by read-back. Left at 2, any later
@@ -931,7 +934,8 @@ more than once.
 - QC: frame count = `out − in + 1`; **audio stream** duration vs video within 0.2 s; last 5 s of
   audio non-zero; achieved bitrate by `ffprobe`.
   `scripts/render-qc.sh <mp4> <in> <out> [fps] [min_mbps]` runs all four (proved on the Everlong
-  4K master, and fails a wrong range). Late mix: `scripts/splice-mix.sh`. Resolve state before and
+  4K master, and fails a wrong range). `scripts/render-verify <file> --expect bytes=…,sha256=…,frames=…,duration=…`
+  checks a finished or copied file against recorded values. Late mix: `scripts/splice-mix.sh`. Resolve state before and
   after: `scripts/resolve/state.py`. The editor role that uses these is the `live-video-editor`
   skill in `~/.claude/skills/`.
 
@@ -949,7 +953,8 @@ more than once.
 5. **Clear completed render jobs**, keeping anything not `Complete`.
 6. **Reset the render custom name** to the timeline name (an empty `CustomName` is rejected).
    Otherwise the next render reuses the last delivery's filename.
-7. Clear the song's clip colours.
+7. Clear the song's clip colours on **every video track**: `post_delivery.py` clears Orange in the song range on all of them
+   and reports Orange left outside the song. A RiP renames the items it bakes, so `clip_colours.py` matches by track, start and end, not by name.
 8. **Close any multicam opened in the timeline before scripting.** With it open, the API
    addresses the multicam's internal timeline: reads return plausible but wrong values (A11 read
    _disabled_ when it was enabled) and every write is refused.
@@ -4190,3 +4195,33 @@ Lab on a `.drp` import of Sydney, Local Database, media drives off: real look cl
   - 1080p and IG in parallel: 4.8 min, 1.15 GB peak each; IG 234 MB.
   - Render in Place: 16 cuts, 6.0 GB, to /Volumes/BOTTB/RiP/paint_it_black. All 35 CDLs survived it (`cdl_read.py`).
   - Release records: `production-control/releases/total-loss-paint-it-black-brisbane-2026/video-result.md`.
+
+## Tool fixes from the You Oughta Know retro (2026-11-21)
+
+From `production-control/releases/amakazaam-you-oughta-know-sydney-2026/retro-video.md`. Offline tests: `python3 -I -m unittest
+discover -s doc/production/scripts/tests` (a fake Resolve module) and `zsh doc/production/scripts/tests/test_runner.zsh`.
+
+- **Release runners fail closed: source `scripts/resolve/runner.zsh`.** In `deliver_4k.sh`, `must … | tail -1` printed ABORT
+  and the run went on, because `exit` in a pipeline ends only that subshell. The job stayed queued and Resolve sat on Deliver.
+  `runner.zsh` sets `err_exit` and `pipe_fail`, and its `must`/`ok` filter their own output (`-s <regex>`), so no check sits in a
+  pipe. Clear the run's jobs by id with `resolve/clear_jobs.py <id>`, never by an output-name prefix list (the YOK list missed
+  the delivery name). Template: `scripts/runner-template.zsh`.
+- **"Every track identical" includes track enables.** `resolve/snapshot.py` before and after, then
+  `resolve/diff_snapshots.py before.json after.json [--edit IN OUT V1]`. It prints each enable change on its own line and fails
+  the run. On the YOK files it reports `TRACK ENABLE A2 Desk scratch +16 dB stereo off -> on`, which the 11-15 post-upgrade check
+  missed for five days.
+- **`compare_timelines.py` keys tracks by index**, and compares track names and enables. Three "gigsteady" tracks collided
+  when tracks were keyed by name. For a duplicate with one inserted video track, pass `--insert N`. Exits 1 on any difference.
+- **`preflight.py` fails on a missing clip LUT**: any node LUT on a video item in In–Out whose file isn't in the system or user LUT
+  library (symlinked folders count when the link resolves). Install or relink the LUT folder, then rerun. Amkup was missing for
+  weeks, and Under Pressure carried 43 dangling paths, with no warning.
+- **`resolve/apply_diff.py`** applies a revised gigstills apply list and treats a `held: true` row as no LUT, even when it
+  keeps its `lut` path.
+- **`bwf-sync-check.py` runs with `~/src/personal/mix-assist/.venv/bin/python -I`.** This folder has no venv, and the
+  gigstills `.venv` lacks soundfile.
+- **Social snippets** in `scripts/browser/`: `attach-pieces.js` with `split-for-browser.sh` (the no-Blob chunked upload, checked piece by piece
+  against the hashes the split prints), and
+  `linkedin-caption.js` (mention chips, the caret by Range, a read-back check). Tests: `node scripts/tests/test_browser_snippets.cjs`.
+- **Live checks still owed** (not run against Resolve or the live sites): `clear_jobs.py`; a runner built from the template;
+  `post_delivery.py`, `clip_colours.py` and `compare_timelines.py` on a real timeline after a RiP; the preflight LUT check on
+  a song with a LUT folder unlinked; the LinkedIn chip and option selectors.

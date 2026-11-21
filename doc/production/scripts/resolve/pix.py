@@ -114,3 +114,29 @@ def set_inout(tl, IN, OUT):
         tl.SetMarkInOut(IN - st, OUT - st, "all")
         if tl.GetMarkInOut().get("video") == {"in": IN - st, "out": OUT - st}: return True
     return False
+
+
+def lut_roots():
+    """Where Resolve looks for LUTs: the system library, then the user's. BOTTB_LUT_ROOT (colon-separated) replaces both."""
+    env = os.environ.get("BOTTB_LUT_ROOT")
+    return env.split(":") if env else ["/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT",
+                                       os.path.expanduser("~/Library/Application Support/Blackmagic Design/DaVinci Resolve/LUT")]
+
+def lut_file(l, roots=None):
+    """The file a GetLUT path names: absolute as it is, else the first library root that has it (symlinks followed). None if gone."""
+    for r in ([""] if os.path.isabs(l) else roots or lut_roots()):
+        f = os.path.join(r, l)
+        if os.path.isfile(f): return f
+    return None
+
+def lut_refs(tl, lo, hi, roots=None):
+    """Every clip-node LUT on video items overlapping [lo, hi]: (track, start, item name, node, path, file exists)."""
+    out = []
+    for t in range(1, tl.GetTrackCount("video") + 1):
+        for i in tl.GetItemListInTrack("video", t) or []:
+            if i.GetEnd() <= lo or i.GetStart() > hi: continue
+            g = i.GetNodeGraph()
+            for n in range(1, ((g.GetNumNodes() or 0) if g else 0) + 1):
+                l = g.GetLUT(n)
+                if l: out.append((t, i.GetStart(), i.GetName(), n, l, lut_file(l, roots) is not None))
+    return out

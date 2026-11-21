@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+"""Check a rendered or copied file against what it should be: bytes, sha256, video frames, duration.
+
+    render-verify <file> --expect bytes=123,sha256=ab12…,frames=6756,duration=270.24 [--tol 0.05]
+    render-verify <file> --expect expect.json        (a JSON object with any of those keys)
+    render-verify <file>                             (no expectations: print the four values, as JSON, to record)
+
+Prints one line per check and a last line "VERIFY PASS <file>" or "VERIFY FAIL <file>"; exit 0 only on PASS (2 on bad
+usage). Only the keys given are checked. frames counts video packets (exact, no decode); duration is the container's,
+within --tol seconds. sha256 streams the file in 8 MB blocks, so memory stays flat. stdlib + ffprobe only.
+For hand checks of renders, copies and uploads (You Oughta Know, 2026-11-20/21: done by hand several times).
+"""
+import argparse, hashlib, json, os, subprocess, sys
+
+KEYS = ("bytes", "sha256", "frames", "duration")
+
+
+def probe(path, entries, count=False):
+    cmd = ["ffprobe", "-v", "error", "-select_streams", "v:0"] + (["-count_packets"] if count else []) + \
+          ["-show_entries", entries, "-of", "json", path]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        raise RuntimeError("ffprobe failed: %s" % r.stderr.strip()[-200:])
+    return json.loads(r.stdout)
+
+
+def measure(path, keys):
+    got = {}
+    if "bytes" in keys: got["bytes"] = os.path.getsize(path)
+    if "sha256" in keys:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for b in iter(lambda: f.read(8 << 20), b""): h.update(b)
+        got["sha256"] = h.hexdigest()
+    if "frames" in keys:
+        st = probe(path, "stream=nb_read_packets", count=True).get("streams") or []
+        got["frames"] = int(st[0]["nb_read_packets"]) if st else None   # first entry only: ffprobe 9 repeats streams in a stream_group
+    if "duration" in keys:
+        got["duration"] = float(probe(path, "format=duration")["format"]["duration"])
+    return got
+
+
+def usage(msg): print(msg, file=sys.stderr); sys.exit(2)
+
+
+def parse_expect(s):
+    if s is None: return None   # no --expect: record mode
+    if os.path.isfile(s):
+        d = json.load(open(s))
+    else:
+        d = {}
+        for part in filter(None, s.split(",")):
+            k, sep, v = part.partition("=")
+            if not sep: usage("bad --expect item %r: use key=value" % part)
+            d[k.strip()] = v.strip()
+    bad = set(d) - set(KEYS)
+    if bad: usage("bad --expect keys %s: use %s" % (sorted(bad), ",".join(KEYS)))
+    if not d: usage("--expect %r holds no expectations: nothing would be checked" % s)
+    out = {}
+    for k, v in d.items():
+        out[k] = int(v) if k in ("bytes", "frames") else float(v) if k == "duration" else str(v).lower()
+    return out
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("file"); ap.add_argument("--expect"); ap.add_argument("--tol", type=float, default=0.05)
+    a = ap.parse_args()
+    if not os.path.isfile(a.file): print("no such file: %s" % a.file, file=sys.stderr); sys.exit(2)
+    want = parse_expect(a.expect)
+    if want is None:
+        print(json.dumps(measure(a.file, KEYS))); return
+    got = measure(a.file, want); fail = False
+    for k in KEYS:
+        if k not in want: continue
+        g, w = got[k], want[k]
+        good = g is not None and (abs(g - w) <= a.tol if k == "duration" else g == w)
+        fail |= not good
+        print("%-8s %-4s %s%s" % (k, "OK" if good else "FAIL", g, "" if good else " (expected %s)" % w))
+    print("VERIFY %s %s" % ("FAIL" if fail else "PASS", a.file))
+    sys.exit(1 if fail else 0)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Check a BWF-stamped Sydney 2026 bounce against the desk scratch (the bp/up/ms_sync recipe, 2026-10-17..22).
 
-Usage (bottb scripts venv):
-  venv/bin/python -I bwf-sync-check.py <bounce.wav> [--ref <scratch.wav>] [--ref-zero N] [--points 20,80,...]
+Usage: needs numpy, scipy and soundfile. There is no venv in this folder by default and the gigstills .venv lacks
+soundfile; the mix-assist .venv has all three (used for You Oughta Know r9 and r10, 2026-11-20):
+  ~/src/personal/mix-assist/.venv/bin/python -I bwf-sync-check.py <bounce.wav> [--ref <scratch.wav>] [--ref-zero N] [--points 20,80,...]
+Or make one here (README.md): python3 -m venv venv && venv/bin/pip install numpy scipy soundfile
 
 For each point: 30 s of the bounce, 300-3000 Hz, FFT NCC against the scratch +/-10 s around where the
 stamp says it is. Prints the lag vs the stamp (ms and frames), NCC and the runner-up outside +/-50 ms,
@@ -15,8 +17,11 @@ Proven on Mustang Sally MIXv1 (+7.0 ms x5, control 0.029) and, as up_sync.py, Un
 Peak ~0.32 GB, ~2 min for five points.
 """
 import argparse, json, subprocess, sys
-import numpy as np, soundfile as sf
-from scipy.signal import butter, sosfiltfilt
+try:
+    import numpy as np, soundfile as sf
+    from scipy.signal import butter, sosfiltfilt
+except ImportError as e:
+    sys.exit("%s: run with ~/src/personal/mix-assist/.venv/bin/python -I (see the header)" % e)
 
 SCRATCH = "/Volumes/BOTTB/Sydney - 2026/video/DESK_SCRATCH_sum_stereo_plus16dB_48k.wav"
 REF_ZERO = 172800000 - 134523   # Logic sample that is scratch sample 0 (runbook 2026-10-14 REF mapping)
