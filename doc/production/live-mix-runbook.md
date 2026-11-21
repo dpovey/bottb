@@ -173,8 +173,9 @@ Nothing global after this without re-branching unmixed alternatives.
    intros), set locators **marker −5 bars → next marker +5 bars** (overlaps land in applause;
    never end a bounce inside the next song's music).
 2. Static tweaks for the song → rides (lead vocal Latch; crowd up in gaps, ducked −8 for
-   speech; mutes on silent instruments; keys/erhu lifts where they carry a part).
-3. Ozone on; chorus short-term ≈ **−12 LUFS**, integrated lands ~−14.5; TP −1.0.
+   speech, per mix-assist `doc/mixing-runbook.md` stage 12; mutes on silent instruments; keys/erhu lifts where they carry a part).
+3. Ozone on; chorus short-term ≈ **−12 LUFS**, integrated lands ~−14.5; true-peak ceiling by the codec gate
+   (≤ −0.5 dBTP after both encodes; mix-assist `doc/mixing-runbook.md` stage 13).
    **Master Assistant's Loudness target (measured, Google Sydney full set, 2026-10-02).** The
    Assistant measures the integrated loudness of whatever plays during analysis and sets **one
    Maximizer gain for the whole file** (Ozone 11 manual, Master Assistant › Loudness; Ozone 12's

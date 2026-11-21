@@ -195,6 +195,10 @@ front, compression plus makeup mostly raises the bleed between hits.
 
 ## 10. Crowd and ambience
 
+> **Current rules live in `~/src/personal/mix-assist/doc/mixing-runbook.md` stage 12** (Dean's rulings of 2026-11-21: keep a little in always;
+> a compressor keyed from the band mix for the in-song duck plus hand rides; align every layer, Room included).
+> Where this section differs, the runbook wins.
+
 - Real audience mics beat anything; align them to the band (bleed means they'll be a few ms
   late — check transients against the OH) or leave them late for depth, but not both across
   different songs.
@@ -232,7 +236,8 @@ Then:
   part of what reads as "big". It also means the recipe interacts with the crowd rides in the
   runbook's per-song step (crowd up in gaps, ducked −8 for speech): set the compressor first, then
   the rides against it.
-- **Do not time-align the room to the band** for this — its delay _is_ the depth (§4).
+- ~~**Do not time-align the room to the band** for this — its delay _is_ the depth (§4).~~ Superseded
+  2026-11-21: Dean ruled to align every layer, Room included (mixing runbook stage 12).
 
 ## 11. Stereo image
 
@@ -273,7 +278,8 @@ It does nothing while a strip is mono, which is its own trap — see §5 and the
 ## 12. Deliverable for video
 
 - Rough bounce early, no master limiter, so the editor's levels are representative.
-- Final: −14 LUFS integrated (YouTube), true peak ≤ −1 dBTP; a limiter (Adaptive Limiter /
+- Final: −14 LUFS integrated (YouTube), true peak set by the codec gate (worst peak after both AAC
+  encodes ≤ −0.5 dBTP, Dean 2026-10-20; mixing runbook stage 13); a limiter (Adaptive Limiter /
   Ozone Maximizer) as the _last_ step, doing ≤ 2–3 dB. Louder concert masters are legitimate
   — say so in the filename.
 - Verify offline: `ffprobe` (48 k / 24-bit / exact length) and
