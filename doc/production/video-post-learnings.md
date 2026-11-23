@@ -914,6 +914,22 @@ more than once.
    **Render in Place the orange cuts**: Include Video Effects **ON** (bakes Dynamic Zoom),
    colour grading **OFF** (the clip node and timeline node stay live on top of the bake — the
    CDLs apply once, not twice).
+   **Gate the batch on one clip first (Drops of Jupiter, 2026-11-23).** Before Dean commits the rest of the Orange set,
+   he renders one zoomed clip in place, and these three checks pass:
+   - **Output path:** the new `.mov` is in the song's folder on BOTTB (e.g. `/Volumes/BOTTB/Renders/RiP/<song>/`), not
+     the project default. The RiP dialog's folder does not stick: on DoJ all 15 files went to the default folder on the
+     boot disk, about 5.9 GB, after the handoff had named the BOTTB folder.
+   - **Input interpretation:** the baked clip's input colour space and gamma read back as what the bake wrote (DaVinci WG /
+     DaVinci Intermediate when the project output was set to `output_space.py dwg`). DoJ's 15 bakes read back as Rec.709
+     (Scene) / Gamma 2.4, and Resolve refused to change the interpretation through the API.
+   - **Matched frames:** `frames.py tl` at that clip's pre-RiP reference positions (three per clip) matches the pre-RiP
+     export. DoJ reached 20.79 mean absolute RGB code values of difference on one sample.
+
+   If any check fails, stop the batch. The recovery that worked on DoJ: export the pre-RiP timeline as a `.drt` before the
+   RiP, and if the bake is wrong, import that `.drt` as a new delivery timeline and reinstate titles, ramp and end card.
+   It matched all 47 pre-RiP reference frames exactly. That timeline carries no bake, so its zoomed cuts render without
+   Super Scale; compare frames before trusting it.
+
 6. **Super Scale back to 1** on every source clip, verified by read-back. Left at 2, any later
    RiP anywhere in the show silently picks it up.
 7. **Halation ON**, highlights only, threshold above the haze so the sources bloom and the air
@@ -929,6 +945,10 @@ more than once.
   In/Out marks. Set the range with `SetMarkInOut`, and record the release range in a Cyan
   `RELEASE:` marker whose duration spans In→Out, so it can be restored if anything clobbers it.
 - Start only your job id; there were 28 completed jobs in the queue on Everlong.
+- **Check that the job id `AddRenderJob` returns is in the queue.** On Drops of Jupiter (2026-11-21) it returned an id with
+  nothing queued; the same call a minute later worked. `render_range.py` exits 3 with `NOJOB` and starts nothing, and
+  `runner.zsh`'s `queue_render` waits 30 s and retries once, only when `queue_empty.py` finds no job waiting (finished jobs
+  don't count). After the retry it checks again that no waiting job is left beside the new one.
 - **Wait on `IsRenderingInProgress()`, not the file.** A file-size watcher declared the Everlong
   render stable at 99% while Resolve was still finalising.
 - QC: frame count = `out − in + 1`; **audio stream** duration vs video within 0.2 s; last 5 s of

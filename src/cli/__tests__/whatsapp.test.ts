@@ -105,7 +105,33 @@ describe('whatsappText', () => {
     expect(text).toContain('Instagram: scheduled 2026-09-09 09:00')
   })
 
+  it('shows a scheduled time that arrives as a Date in the post zone', () => {
+    const text = whatsappText([
+      post({
+        platform: 'facebook',
+        status: 'scheduled',
+        // the Postgres driver returns timestamptz as a Date
+        scheduled_for: new Date('2026-12-04T09:00:00Z') as unknown as string,
+        posted_tz: 'Australia/Brisbane',
+      }),
+    ])
+    expect(text).toContain('Facebook: scheduled 2026-12-04 19:00')
+  })
+
   it('says so plainly when there is nothing', () => {
     expect(whatsappText([])).toBe('Nothing recorded for that group yet.')
+  })
+
+  it('ends the link list with the band page when the posts carry a band', () => {
+    const text = whatsappText([
+      post({
+        platform: 'youtube',
+        permalink: 'https://youtu.be/x',
+        band_id: 'v2-voyagers-sydney-2026',
+      }),
+    ])
+    expect(text.split('\n').at(-1)).toBe(
+      'Site: https://battleofthetechbands.com/band/v2-voyagers-sydney-2026'
+    )
   })
 })

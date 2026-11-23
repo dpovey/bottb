@@ -20,6 +20,29 @@ const PLATFORM_LABELS: Record<string, string> = {
   threads: 'Threads',
 }
 
+const SITE = 'https://battleofthetechbands.com'
+
+/**
+ * The slot as people read it, to the minute. The Postgres driver hands back
+ * timestamptz as a Date (db-types says string), which crashed `.slice` here;
+ * a Date is shown in the post's own zone, a string keeps its own offset.
+ */
+function localMinute(value: unknown, tz: string | null): string {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return ''
+    return new Intl.DateTimeFormat('sv-SE', {
+      timeZone: tz ?? 'Australia/Brisbane',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(value)
+  }
+  return typeof value === 'string' ? value.slice(0, 16).replace('T', ' ') : ''
+}
+
 export function platformLabel(platform: string): string {
   return PLATFORM_LABELS[platform] ?? platform
 }
@@ -35,12 +58,16 @@ export function whatsappText(posts: Post[]): string {
     if (p.permalink) {
       lines.push(`${label}: ${p.permalink}`)
     } else if (p.status === 'scheduled') {
-      const when = (p.scheduled_for ?? '').slice(0, 16).replace('T', ' ')
+      const when = localMinute(p.scheduled_for, p.posted_tz)
       lines.push(`${label}: scheduled ${when}`.trimEnd())
     } else {
       lines.push(`${label}: ${p.status}, no link recorded`)
     }
   }
+
+  // The band's page on the site, which holds the YouTube video once it is inserted.
+  const band = posts.find((p) => p.band_id)?.band_id
+  if (band) lines.push(`Site: ${SITE}/band/${band}`)
 
   const missing = posts.filter((p) => p.status === 'published' && !p.permalink)
   if (missing.length > 0) {

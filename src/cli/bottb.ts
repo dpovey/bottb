@@ -26,6 +26,7 @@ import {
   emitJsonError,
   isJson,
   log,
+  minuteCell,
   out,
   setJsonMode,
   setQuiet,
@@ -607,7 +608,7 @@ async function cmdPostList(values: Options, transport: TransportInfo) {
     table(
       ['when', 'est', 'platform', 'status', 'group', 'link'],
       posts.map((p) => [
-        (p.posted_at ?? p.scheduled_for ?? '').slice(0, 16) || null,
+        minuteCell(p.posted_at ?? p.scheduled_for),
         p.posted_at_estimated ? '~' : '',
         p.platform,
         p.status,
@@ -782,7 +783,7 @@ function renderBackfill(
         p.group_key,
         p.platform,
         p.status,
-        (p.posted_at ?? p.scheduled_for ?? '').slice(0, 16) || null,
+        minuteCell(p.posted_at ?? p.scheduled_for),
         p.posted_at_estimated ? '~' : '',
         p.external_id,
       ])

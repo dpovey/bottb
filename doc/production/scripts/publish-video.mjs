@@ -15,6 +15,8 @@
  *                         youtube <id> also inserts the website `videos` row once the video is public;
  *                         tiktok <id> and linkedin <activity-urn> take their time from the id itself
  *   whatsapp              the plain-text summary for Dean to paste
+ *   hashes                at release close: sha256 and bytes of the vocal, the mix master and every upload file,
+ *                         written together to results.hashes; run again, it re-hashes and fails on any change
  *
  * MUST be run from the repo root (reads .env.local, runs the sibling scripts and `pnpm bottb`).
  * Built 30 Oct 2026 after the V2 Voyagers post took ~15 hand-run steps, two of which tripped on zsh
@@ -27,7 +29,8 @@
  *     "copy": "doc/production/v2-voyagers-starships-ufo-copy.md",   // captions = first ``` block
  *                                                                   // under "## Facebook" etc.
  *     "files": { "ig": "<1080p_IG mp4, <= 300 MB>", "master": "<4K mp4 for YouTube>",
- *                "ig_cover": "<1080x1920 jpg>" },
+ *                "ig_cover": "<1080x1920 jpg>",
+ *                "vocal": "<the shipped vocal wav>", "mix_master": "<the shipped mix master wav>" },
  *     "blob_prefix": "release/sydney-2026/",
  *     "collaborators": ["sailornicole", "demonrace", "youngcareoz"],
  *     "facebook": { "scheduled_for": "2026-11-01T09:00:00+11:00" }  // optional; omit to post now
@@ -36,6 +39,7 @@
 import fs from 'fs'
 import path from 'path'
 import { spawnSync } from 'child_process'
+import crypto from 'crypto'
 
 const env = Object.fromEntries(
   fs
@@ -62,7 +66,7 @@ const DRY = argv.includes('--dry')
 const [postPath, cmd = 'check', ...rest] = argv.filter((a) => a !== '--dry')
 if (!postPath) {
   console.error(
-    'usage: publish-video.mjs <post.json> <check|upload|fb|ig|record|whatsapp> [args] [--dry]'
+    'usage: publish-video.mjs <post.json> <check|upload|fb|ig|record|whatsapp|hashes> [args] [--dry]'
   )
   process.exit(2)
 }
@@ -468,11 +472,60 @@ async function record(platform, id) {
   console.log(`website: videos row ${row[0].id}`)
 }
 
+/* Release close (Drops of Jupiter retro, 2026-11-23): the vocal, the mix master and the files that were uploaded
+ * are hashed in one pass and recorded side by side, so a later question about which mix or vocal shipped is answered
+ * from post.json and not from several sessions' notes. Files are streamed; the 4K master is over 1 GB. */
+const UPLOAD_KEYS = ['ig', 'master', 'ig_cover']
+const sha256 = (f) =>
+  new Promise((resolve, reject) => {
+    const h = crypto.createHash('sha256')
+    fs.createReadStream(f)
+      .on('error', reject)
+      .on('data', (d) => h.update(d))
+      .on('end', () => resolve(h.digest('hex')))
+  })
+
+async function hashes() {
+  const files = post.files ?? {}
+  for (const k of ['vocal', 'mix_master'])
+    if (!files[k]) die(`post.json files needs ${k} for the release hashes`)
+  const uploads = UPLOAD_KEYS.filter((k) => files[k])
+  if (!uploads.length) die('post.json files has no upload file (ig, master)')
+  const got = {}
+  for (const k of ['vocal', 'mix_master', ...uploads]) {
+    const f = files[k]
+    if (!fs.existsSync(f)) die(`${k}: missing ${f}`)
+    got[k] = { path: f, bytes: fs.statSync(f).size, sha256: await sha256(f) }
+    console.log(`${k}: ${got[k].sha256}  ${got[k].bytes} bytes  ${f}`)
+    const up = post.results.blob?.[k]
+    if (up && up.bytes !== got[k].bytes)
+      die(`${k}: ${got[k].bytes} bytes here, ${up.bytes} uploaded`)
+  }
+  const prev = post.results.hashes
+  if (prev) {
+    const changed = Object.keys(got).filter(
+      (k) => prev.files?.[k] && prev.files[k].sha256 !== got[k].sha256
+    )
+    if (changed.length)
+      die(`changed since ${prev.at}: ${changed.join(', ')}; not overwriting`)
+    const added = Object.keys(got).filter((k) => !prev.files?.[k])
+    if (!added.length) return console.log(`matches the record of ${prev.at}`)
+    console.log(`matches the record of ${prev.at}; adding ${added.join(', ')}`)
+  }
+  if (DRY) return console.log('dry run: not written')
+  post.results.hashes = {
+    at: new Date().toISOString(),
+    files: { ...(prev?.files ?? {}), ...got },
+  }
+  save()
+}
+
 if (cmd === 'check') await check()
 else if (cmd === 'upload') await upload()
 else if (cmd === 'fb') await fb()
 else if (cmd === 'ig') await ig()
 else if (cmd === 'record') await record(rest[0], rest[1])
+else if (cmd === 'hashes') await hashes()
 else if (cmd === 'whatsapp')
   run(['pnpm', '-s', 'bottb', 'post', 'whatsapp', '--group', post.group])
 else die(`unknown command ${cmd}`)
