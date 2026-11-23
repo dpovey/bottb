@@ -3,7 +3,7 @@
 #   width 3840 → 3840x2160, 1920 → 1920x1080.  e.g. 4K delivery: ... mp4 H264 1 3840 45000 ; pixel check: ... mov ProRes422HQ 0 3840
 # Sets In/Out with SetMarkInOut (timeline-relative; never MarkIn/MarkOut in SetRenderSettings), single pass for mp4,
 # starts only this job id, appends the id to $MYJOBS (default ~/.cache/bottb/resolve_jobs.txt) for post_delivery.py.
-# Prints "JOB <id>". Then wait with: python3 wait_render.py <id> (run_in_background). Replaces scratch rjob.py/rjob4k.py
+# Prints "JOB <id>", or "NOJOB" and exits 3 when the returned id is not in the queue. Then wait with: python3 wait_render.py <id> (run_in_background). Replaces scratch rjob.py/rjob4k.py
 # (2026-10-30, used ~30 times on the V2 medley).
 import os, sys, DaVinciResolveScript as dvr
 a = sys.argv[1:]
@@ -23,7 +23,14 @@ if FMT == "mp4": s["MultiPassEncode"] = False  # refused for ProRes
 if len(a) > 8: s["VideoQuality"] = int(a[8])  # Kb/s
 assert p.SetRenderSettings(s), s
 jid = p.AddRenderJob()
-j = [x for x in p.GetRenderJobList() if x["JobId"] == jid][0]
+# AddRenderJob can return an id that is not in the queue, with nothing queued (Drops of Jupiter, 2026-11-21; the same call a
+# minute later worked). Say so with exit 3 and start nothing: runner.zsh's queue_render retries once, only on a confirmed empty queue.
+jobs = p.GetRenderJobList() or []
+match = [x for x in jobs if jid and x["JobId"] == jid]
+if not match:
+    print("NOJOB %r not in the queue (%d jobs queued); nothing started" % (jid, len(jobs)))
+    raise SystemExit(3)
+j = match[0]
 print("job", tl.GetName(), j["MarkIn"], j["MarkOut"], j.get("TargetDir"), j.get("OutputFilename"), j.get("FormatWidth"), j.get("MultiPassEncode"))
 if j["MarkIn"] != IN or j["MarkOut"] != OUT:
     p.DeleteRenderJob(jid); raise SystemExit("job range %s-%s != %s-%s; deleted" % (j["MarkIn"], j["MarkOut"], IN, OUT))

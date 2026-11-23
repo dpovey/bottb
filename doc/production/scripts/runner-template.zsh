@@ -17,7 +17,7 @@ must -s "In/Out" "In/Out $IN $OUT" rr resolve/release_inout.py restore "$SONG"
 print "=== $(date +%T) preflight"; mkdir -p $D/checks/preflight_deliver
 RRT=600 must -s "^(ok|FAIL|WARN|PASS)" "^PASS" rr resolve/preflight.py $IN $OUT $D/checks/preflight_deliver --flc
 print "=== $(date +%T) render"
-out=$(rr resolve/render_range.py $IN $OUT $D $PRE mp4 H264 1 3840 45000 2>&1) || { print -r -- "$out"; abort "render_range failed"; }
+out=$(queue_render $IN $OUT $D $PRE mp4 H264 1 3840 45000)   # one retry if AddRenderJob's id isn't queued (runner.zsh)
 print -r -- "$out"
 jid=$(started_job "$out")
 must -s "DONE|HUNG|real" "^DONE .*'JobStatus': 'Complete'" /usr/bin/time -l /usr/bin/python3 resolve/wait_render.py $jid 30 900   # DONE prints for Failed/Cancelled too

@@ -929,6 +929,9 @@ more than once.
   In/Out marks. Set the range with `SetMarkInOut`, and record the release range in a Cyan
   `RELEASE:` marker whose duration spans In→Out, so it can be restored if anything clobbers it.
 - Start only your job id; there were 28 completed jobs in the queue on Everlong.
+- **Check that the job id `AddRenderJob` returns is in the queue.** On Drops of Jupiter (2026-11-21) it returned an id with
+  nothing queued; the same call a minute later worked. `render_range.py` exits 3 with `NOJOB` and starts nothing, and
+  `runner.zsh`'s `queue_render` retries once, only after `queue_empty.py` confirms the queue is empty.
 - **Wait on `IsRenderingInProgress()`, not the file.** A file-size watcher declared the Everlong
   render stable at 99% while Resolve was still finalising.
 - QC: frame count = `out − in + 1`; **audio stream** duration vs video within 0.2 s; last 5 s of

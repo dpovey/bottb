@@ -13,6 +13,11 @@
 #                                         run cmd; print its output (only lines matching -s, if given); ABORT the run if it
 #                                         exits non-zero, prints error text ($RUNNER_ERR), or prints nothing matching <pattern>
 #   ok [-s <show-regex>] <cmd> [args]     run cmd; print (filtered) output; ABORT the run if it exits non-zero
+#   queue_render <render_range args>      run render_range.py and print its output. When AddRenderJob returned an id that isn't
+#                                         in the queue (render_range exits 3, "NOJOB"), retry ONCE, and only after queue_empty.py
+#                                         confirms the queue is empty, so a job can't be queued twice (Drops of Jupiter,
+#                                         2026-11-21). Any other failure, a non-empty queue or a second failure ABORTs.
+#                                         Use as: out=$(queue_render <args>); jid=$(started_job "$out")
 #   started_job <render_range output>     the JOB id it printed (ABORT if none). Clear it after QC with
 #                                         `must "page edit" rr resolve/clear_jobs.py <id>...` (by id, not by name prefix)
 #   abort <message>                       print ABORT and end the run
@@ -64,4 +69,19 @@ started_job() {
   local jid; jid=$(awk '/^JOB/ {print $2; exit}' <<< "$1")
   [[ -n "$jid" ]] || abort "render_range printed no JOB id"
   print -r -- "$jid"
+}
+
+queue_render() {
+  local out rc=0
+  out=$(rr "$RUNNER_DIR/render_range.py" "$@" 2>&1) || rc=$?
+  print -r -- "$out"
+  (( rc == 0 )) && return 0
+  (( rc == 3 )) || abort "render_range failed (exit $rc): $*"
+  print -r -- "render_range: the job id is not in the queue; checking the queue is empty before one retry"
+  must "^queue empty" rr "$RUNNER_DIR/queue_empty.py"
+  sleep ${RUNNER_RETRY_WAIT:-5}
+  rc=0; out=$(rr "$RUNNER_DIR/render_range.py" "$@" 2>&1) || rc=$?
+  print -r -- "$out"
+  (( rc == 0 )) || abort "render_range failed again after the retry (exit $rc): $*"
+  return 0
 }

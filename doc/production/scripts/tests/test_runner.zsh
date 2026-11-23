@@ -26,4 +26,18 @@ case_ "an exception line is an error"         1 no  'must "PASS" print -l "Value
 case_ "VERDICT FAIL is an error"              1 no  'must "VERDICT" echo "VERDICT FAIL x.mp4"'
 case_ "0 fails is not FAIL"                   0 yes 'must "PASS" echo "PASS  0 fails, 2 warnings"'
 case_ "big output with -q match (no SIGPIPE)" 0 yes 'must "^line 1$" seq -f "line %g" 1 200000'
+# queue_render with a stubbed rr: RR_SEQ is the exit code of each render_range attempt in turn, Q_RC the queue check's.
+# A counter file keeps the attempt number across the $(...) subshells; each attempt prints "attempt N".
+STUB='CNT=$(mktemp); RUNNER_RETRY_WAIT=0
+rr() { case $1 in
+  *render_range.py) local n=$(( $(cat $CNT 2>/dev/null || echo 0) + 1 )); print $n > $CNT; print "attempt $n"
+    local rc=${${(s:,:)RR_SEQ}[$n]:-0}; (( rc == 0 )) && print "JOB job$n"; (( rc == 3 )) && print "NOJOB x"; return $rc ;;
+  *queue_empty.py) (( Q_RC == 0 )) && print "queue empty" || print "queue holds [x]"; return $Q_RC ;;
+esac }'
+case_ "queue_render: first try works"         0 yes "$STUB; RR_SEQ=0 Q_RC=0; out=\$(queue_render 1 2); [[ \$(started_job \"\$out\") == job1 ]]"
+case_ "queue_render: NOJOB, empty, retry ok"  0 yes "$STUB; RR_SEQ=3,0 Q_RC=0; out=\$(queue_render 1 2); [[ \$(started_job \"\$out\") == job2 ]]"
+case_ "queue_render: NOJOB, queue not empty"  1 no  "$STUB; RR_SEQ=3,0 Q_RC=1; out=\$(queue_render 1 2)"
+case_ "queue_render: NOJOB twice aborts"      1 no  "$STUB; RR_SEQ=3,3 Q_RC=0; out=\$(queue_render 1 2)"
+case_ "queue_render: other failure, no retry" 1 no  "$STUB; RR_SEQ=1,0 Q_RC=0; out=\$(queue_render 1 2)"
+case_ "queue_render: retries at most once"    0 yes "$STUB; RR_SEQ=3,0 Q_RC=0; out=\$(queue_render 1 2); [[ \$(cat \$CNT) == 2 ]]"
 print "$pass passed, $fail failed"; exit $(( fail > 0 ))
