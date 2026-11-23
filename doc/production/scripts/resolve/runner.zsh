@@ -14,9 +14,10 @@
 #                                         exits non-zero, prints error text ($RUNNER_ERR), or prints nothing matching <pattern>
 #   ok [-s <show-regex>] <cmd> [args]     run cmd; print (filtered) output; ABORT the run if it exits non-zero
 #   queue_render <render_range args>      run render_range.py and print its output. When AddRenderJob returned an id that isn't
-#                                         in the queue (render_range exits 3, "NOJOB"), retry ONCE, and only after queue_empty.py
-#                                         confirms the queue is empty, so a job can't be queued twice (Drops of Jupiter,
-#                                         2026-11-21). Any other failure, a non-empty queue or a second failure ABORTs.
+#                                         in the queue (render_range exits 3, "NOJOB"), retry ONCE after $RUNNER_RETRY_WAIT s
+#                                         (default 30), and only when queue_empty.py finds no job waiting (finished jobs don't
+#                                         count); after the retry, no waiting job but the new one may remain (Drops of Jupiter,
+#                                         2026-11-21). Any other failure, a waiting job or a second failure ABORTs.
 #                                         Use as: out=$(queue_render <args>); jid=$(started_job "$out")
 #   started_job <render_range output>     the JOB id it printed (ABORT if none). Clear it after QC with
 #                                         `must "page edit" rr resolve/clear_jobs.py <id>...` (by id, not by name prefix)
@@ -71,17 +72,21 @@ started_job() {
   print -r -- "$jid"
 }
 
-queue_render() {
-  local out rc=0
+queue_render() {  # stdout carries only a successful attempt's output (for started_job); diagnostics go to stderr, so an abort
+                  # inside out=$(queue_render ...) still shows the traceback, NOJOB line and queue list
+  local out rc=0 jid
   out=$(rr "$RUNNER_DIR/render_range.py" "$@" 2>&1) || rc=$?
-  print -r -- "$out"
-  (( rc == 0 )) && return 0
+  if (( rc == 0 )); then print -r -- "$out"; return 0; fi
+  print -r -- "$out" >&2
   (( rc == 3 )) || abort "render_range failed (exit $rc): $*"
-  print -r -- "render_range: the job id is not in the queue; checking the queue is empty before one retry"
-  must "^queue empty" rr "$RUNNER_DIR/queue_empty.py"
-  sleep ${RUNNER_RETRY_WAIT:-5}
+  print -r -- "render_range: the job id is not in the queue; checking no job is waiting before one retry" >&2
+  must "^queue empty" rr "$RUNNER_DIR/queue_empty.py" >&2
+  sleep ${RUNNER_RETRY_WAIT:-30}
   rc=0; out=$(rr "$RUNNER_DIR/render_range.py" "$@" 2>&1) || rc=$?
+  if (( rc != 0 )); then print -r -- "$out" >&2; abort "render_range failed again after the retry (exit $rc): $*"; fi
+  # If the first job turned up late it would sit unstarted next to the retry's: no waiting job may remain but the new one.
+  jid=$(started_job "$out")
+  must "^queue empty" rr "$RUNNER_DIR/queue_empty.py" "$jid" >&2
   print -r -- "$out"
-  (( rc == 0 )) || abort "render_range failed again after the retry (exit $rc): $*"
   return 0
 }
