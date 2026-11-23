@@ -96,3 +96,8 @@ dismiss it, or you will insert the wrong tag. Set Location to The Triffid. Posti
 `/tiktokstudio/content`; get the permalink from that list, then **confirm it with oEmbed**
 (`https://www.tiktok.com/oembed?url=...`) before sending it to anyone — list order has mismatched
 before. A just-posted item returns an empty oEmbed title until it finishes processing.
+
+**22 Nov 2026 (Drops of Jupiter, Dean's Chrome):** location is set from the Location box ("Manning Bar" was the first chip).
+The checks first said "about 30 seconds" (content check lite) and "about 10 minutes" (music copyright). Both read "No
+issues found" before Post was clicked (upload 331 MB). The post was in the content list straight after Post was clicked. The video id came from the Studio content
+row's link through the Accessibility helper (`browser.md`, "When T3 Preview uploads time out").
