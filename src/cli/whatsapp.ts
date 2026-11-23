@@ -20,6 +20,8 @@ const PLATFORM_LABELS: Record<string, string> = {
   threads: 'Threads',
 }
 
+const SITE = 'https://battleofthetechbands.com'
+
 export function platformLabel(platform: string): string {
   return PLATFORM_LABELS[platform] ?? platform
 }
@@ -41,6 +43,10 @@ export function whatsappText(posts: Post[]): string {
       lines.push(`${label}: ${p.status}, no link recorded`)
     }
   }
+
+  // The band's page on the site, which holds the YouTube video once it is inserted.
+  const band = posts.find((p) => p.band_id)?.band_id
+  if (band) lines.push(`Site: ${SITE}/band/${band}`)
 
   const missing = posts.filter((p) => p.status === 'published' && !p.permalink)
   if (missing.length > 0) {

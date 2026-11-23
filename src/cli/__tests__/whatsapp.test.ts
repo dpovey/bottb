@@ -108,4 +108,13 @@ describe('whatsappText', () => {
   it('says so plainly when there is nothing', () => {
     expect(whatsappText([])).toBe('Nothing recorded for that group yet.')
   })
+
+  it('ends the link list with the band page when the posts carry a band', () => {
+    const text = whatsappText([
+      post({ platform: 'youtube', permalink: 'https://youtu.be/x', band_id: 'v2-voyagers-sydney-2026' }),
+    ])
+    expect(text.split('\n').at(-1)).toBe(
+      'Site: https://battleofthetechbands.com/band/v2-voyagers-sydney-2026'
+    )
+  })
 })
