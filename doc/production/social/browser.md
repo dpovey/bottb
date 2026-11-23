@@ -153,3 +153,21 @@ YouTube Studio (BotTB manager), LinkedIn page admin and TikTok @bottb0 (good 4 u
   textbox back and delete via a JS-selected range + Delete. Commas in the Tags field don't split until Enter.
 - The LinkedIn tab fell to the authwall after ~20 min idle in this browser; check sign-in right before using it.
 - `preview_evaluate` times out at 15 s: start long work async and poll a `window.__inj` object.
+
+## When T3 Preview uploads time out: drive Dean's real Chrome through macOS Accessibility (22 Nov 2026)
+
+On Drops of Jupiter the T3 Preview upload timed out for the LinkedIn and TikTok attachments, even with a 1.1 MB test file.
+Dean attached the 1080p file in his own Chrome, and two small Swift helpers drove the rest of the post in that window. The
+sources are in `scripts/macos/`; build them with `swiftc -O <file>.swift -o <name>`.
+
+- `chrome-accessibility '<window title part>' [text ...]` prints the AX elements that match (role, title, value, URL), so
+  you can read state without a screenshot. Add `--click <exact label>` to send a real mouse click to the centre of the one
+  matching element (Chrome must be frontmost), or `--press <label>` to send AXPress. `--click-link` is the same click
+  restricted to links. When no element or more than one matches, it stops rather than guessing.
+- `chrome-paste '<text>'` pastes text through the pasteboard with cmd+V into the focused field, then restores the
+  clipboard. Use it for captions where typed text would trigger mention pickers.
+- `--click` fails with "No target position" when the element is scrolled off screen. Press Page Down (key code 121) in
+  the window, then click again. That is how TikTok's Post button was reached.
+- The AX URL attribute carries link targets. In TikTok Studio's content list,
+  `chrome-accessibility 'TikTok Studio' '<first words of caption>'` prints `https://www.tiktok.com/@bottb0/video/<id>`,
+  which is the 19-digit id that `publish-video.mjs record tiktok` needs.
