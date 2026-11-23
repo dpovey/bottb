@@ -69,6 +69,22 @@ export function isJson() {
   return jsonMode
 }
 
+/**
+ * A timestamp cut to the minute for a table cell. Postgres drivers hand back
+ * timestamptz columns as Date objects even though db-types says string, so
+ * `.slice` on them threw ("slice is not a function", `post list`, 16 Nov 2026).
+ * A Date prints in UTC with a Z; a string keeps its own offset and is cut as is.
+ */
+export function minuteCell(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? null
+      : `${value.toISOString().slice(0, 16)}Z`
+  }
+  return String(value).slice(0, 16)
+}
+
 /** A minimal aligned table. No dependency, no box drawing, pipe-friendly. */
 export function table(headers: string[], rows: (string | null)[][]): string {
   const cells = rows.map((r) => r.map((c) => (c === null ? '-' : String(c))))
