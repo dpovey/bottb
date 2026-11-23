@@ -929,6 +929,7 @@ more than once.
    RiP, and if the bake is wrong, import that `.drt` as a new delivery timeline and reinstate titles, ramp and end card.
    It matched all 47 pre-RiP reference frames exactly. That timeline carries no bake, so its zoomed cuts render without
    Super Scale; compare frames before trusting it.
+
 6. **Super Scale back to 1** on every source clip, verified by read-back. Left at 2, any later
    RiP anywhere in the show silently picks it up.
 7. **Halation ON**, highlights only, threshold above the haze so the sources bloom and the air
