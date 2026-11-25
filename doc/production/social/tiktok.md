@@ -32,6 +32,16 @@ Split out of social-reel-posting-runbook.md on 2026-10-30; shared rules (copy, h
      why an unverified link can point at a not-yet-public post. Web sessions also log out
      spontaneously after a few days; scheduled posts still publish server-side.
 
+**5 Nov 2026 (Mustang Sally):** the upload fills Description with the filename: click in, cmd+a, Delete, then type. Edit cover has a
+hidden `image/jpeg` input, so `file_upload` takes a 1080x1920 image without touching "Upload cover". The schedule wheel moves in
+5-minute steps and shows three values either side, so 00:05 to 06:50 took two hour clicks and three minute clicks, with a 2 s wait
+between them. Content check lite finished about 4 min after the upload; both checks read "No issues found" before Schedule. The new
+row appeared with its clock badge after one reload.
+
+**A scheduled post's id decodes to when it was staged, not when it went live** (6 Nov 2026: id time 23:48:37, slot 06:50). `publish-video.mjs record tiktok`
+takes `posted_at` from the id, so after recording a scheduled post, set `posted_at` in `posts` and `results.tiktok.posted_at` in `post.json` to the slot read
+from the Studio row (good 4 u's row holds its slot too). The id still sits near the caption in `/tiktokstudio/content`'s HTML as `item_id=`, inside that row's play URL.
+
 ## TikTok — confirm the caption before you Post
 
 **On 10 Sep a post published with NO title and NO description.** The fields looked filled; the text
@@ -97,7 +107,26 @@ dismiss it, or you will insert the wrong tag. Set Location to The Triffid. Posti
 (`https://www.tiktok.com/oembed?url=...`) before sending it to anyone — list order has mismatched
 before. A just-posted item returns an empty oEmbed title until it finishes processing.
 
+**7 Nov 2026 (Canvanauts, no drag):** in the T3 preview browser the agent attaches the file itself; method in `reels-schedule/README.md` ("Attaching video without a drag"). Type the caption as real keystrokes with `preview_act type` and no locator, after click, cmd+a, Delete. `execCommand` or a `type` with a locator leaves stale text in Draft.js: the counter reads right while the box shows the hashtags twice, so compare the box's text as well as the counter. If that happens, close the tab and start again (Discard the "wasn't saved" prompt). Time items are `.TimePicker__item`; the list opens late, and selected sits at the panel's middle with three either side.
+
+**11 Nov 2026 (V2 Voyagers):** wait on the "Content check lite" block's own text, not a count of "No issues found" on the page: the result reads "No issues found." with a full stop and other matches exist, so a page-wide match passed while the check still read "Checking in progress" (it finished about 8 minutes after attaching). The sidebar Upload link has a zero-size twin; click the visible button by position. A scheduled post's id>>32 is the staging time, not the publish time.
+
+**14 Nov 2026 (Amakazaam):** `preview_evaluate` times out at 15 s, so a polling loop inside one evaluate fails. Wait between short reads with `preview_wait_for` on a text that never appears (`timeoutMs` 60000), then re-read the check blocks. Content check lite finished about 6 minutes after attaching.
+
 **22 Nov 2026 (Drops of Jupiter, Dean's Chrome):** location is set from the Location box ("Manning Bar" was the first chip).
 The checks first said "about 30 seconds" (content check lite) and "about 10 minutes" (music copyright). Both read "No
 issues found" before Post was clicked (upload 331 MB). The post was in the content list straight after Post was clicked. The video id came from the Studio content
 row's link through the Accessibility helper (`browser.md`, "When T3 Preview uploads time out").
+
+**23 Nov 2026 (So Easy, T3 browser):** the time picker's items are all in the DOM (`.TimePicker__item`, one column per x position);
+a locator click on the hour item ("08") then the minute item ("00") set 08:00 directly, with no stepping. The date opens a
+`DatePicker__day` grid. Description typed with `preview_act type` read back exactly (416/4000), and location chip "Manning Bar" set the
+location input's value.
+
+**25 Nov 2026 (Barracuda): the location is pre-filled from the last post.** The Barracuda post went live tagged Manning Bar, Sydney (the
+previous post, So Easy, used Manning Bar). Typing "The Triffid" and clicking the first `.suggest-item` by position did not change it, and a
+read-back that looked for any element containing "The Triffid" passed on the suggestion row itself. Pick the row by its text, then read
+`input[placeholder="Search locations"].value` and `.suggest-item-active` before Post. **The location can be edited after posting:** on
+`/tiktokstudio/content`, the first action icon on the post's row opens `/tiktokstudio/upload/post/<id>`. Pick the right row by its text, then Save.
+The caption is untouched. Read it back from the public video page HTML (`"poi":{"name":"The Triffid",…,"city":"Brisbane"}`; curl with a
+browser user agent worked).

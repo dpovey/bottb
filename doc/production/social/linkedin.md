@@ -61,6 +61,20 @@ Split out of social-reel-posting-runbook.md on 2026-10-30; shared rules (copy, h
      Schedule: clock icon → date (calendar click) → time (type `4:30 PM`, click the suggestion
      option) → Next → Schedule. Scheduled posts have **no permalink until they publish**.
 
+   - **5 Nov 2026 (Mustang Sally): which file did Dean drag?** The Editor's preview is a `blob:` video, so
+     `(await (await fetch(document.querySelector('video').src)).blob()).size` returns the dragged file's exact bytes, which
+     separates `_1080p_v1` from the lookalike `_1080p_IG_v1`. Also: full-name mention + Down + read `aria-selected` + Return +
+     cmd+Down + End + type the rest in the same batch took all five chips first time. The thumbnail input can be found with
+     `find` ("Add video thumbnail", `type=file`) without clicking anything.
+
+   - **21 Nov 2026 (You Oughta Know, T3 browser): reset the caret by script, not by clicking line 1.** With a long first
+     paragraph, the click landed mid-paragraph and cmd+Down did not move to the end, so the next text went in after "You " and
+     split the caption. What worked for all four chips: after each chip's Return, run
+     `ed.focus(); r=document.createRange(); r.selectNodeContents(ed.lastElementChild); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r)`
+     on `[role=dialog] .ql-editor`, then type. Paragraph breaks: two `Enter` presses (reads back as text,1,text,…). Video went in by
+     the pieces method; auto captions toggled off with a real click on the switch (a label click toggled it back on); the post
+     appeared in the feed about 2 min after Post with no "Leave site?" dialog.
+
 ## LinkedIn composer — the caret trap (learned the hard way, 7 Sep 2026)
 
 Inserting a mention chip moves the caret to **immediately after the chip**, and it _snaps back
@@ -196,3 +210,26 @@ The preview browser's LinkedIn session drops to the authwall, but the public com
 `curl -sL -A '<desktop Chrome UA>' https://www.linkedin.com/company/battle-of-the-tech-bands | grep -oE 'urn:li:activity:[0-9]{19}'`,
 decode each id's time (`id >> 22` = Unix ms), take the one at the scheduled slot, then confirm by fetching
 `/feed/update/<urn>/` and grepping for a phrase from the caption. Then `record linkedin <urn>`.
+
+**7 Nov 2026 (Canvanauts, no drag):** the agent attaches the file itself (`reels-schedule/README.md`, "Attaching video without a drag"): click Add media with `HTMLInputElement.prototype.click` hooked, then fill `#media-editor-file-selector__file-input`. Thumbnail goes directly to `#media-editor-video-thumbnail-selector__file-input`. After a mention chip or a typed newline, `getSelection()` can go null and keys are silently dropped: `ed.focus(); s.selectAllChildren(ed); s.collapseToEnd()` then `selectionchange` restores the end of the post (cmd+Down through the tool did not work). Type each `@Name` in a single `type` with no newlines, or the dropdown doesn't open. Two "V2 AI" pages exist: the first is the right one (81854932). Canva is 2850862. "View all scheduled posts" in the Schedule dialog is the read-back; the URL `page-posts/scheduled` redirects to the dashboard.
+
+Known-good URNs added 7 Nov 2026: Epsilon `3776` ("Company • Advertising Services"), Amazon `1586` (plain "Amazon", Company • Software Development), Suncorp Group `166197` (first row, "Company • Insurance"; second "SUNCORP GROUP" page is a decoy), For The Record (FTR) `81140`, Canva `2850862`.
+
+**9 Nov 2026 (Canvanauts first comment):** on `admin/page-posts/published/` the post's comment box already reads "Comment as Battle of the Tech Bands" (identity menu shows the page logo), so no switch was needed. Submit is `button.comments-comment-box__submit-button--cr` inside the post's `[data-urn]`. Read the comment back on `/feed/update/<urn>/`, where it shows under the page name with "Author".
+
+**13 Nov 2026:** the public company page now returns HTTP 403 to curl, so the method above fails. Use the signed-in admin list instead: open `company/104393733/admin/page-posts/published/` in the T3 "Dean (personal)" profile, collect `urn:li:activity:\d{19}` from the page HTML, decode `id >> 22` to the time, and confirm the caption next to it.
+
+**16 Nov 2026 (No One Knows first comment):** `pnpm -s bottb post list` in text mode fails with "(p.posted_at ?? p.scheduled_for ?? "").slice is not a function" (src/cli/bottb.ts:610 and :785). `--json` works: `pnpm -s bottb --json post list --group <group>` gives the row ids for `post update --id`. `post whatsapp` is unaffected.
+
+**18 Nov 2026 (Sultans of Swing first comment):** once text is typed the "Comment as …" placeholder disappears; confirm the identity from the post's button labelled "Open menu for switching identity when interacting with this post", whose img alt reads "Battle of the Tech Bands logo".
+
+**23 Nov 2026 (So Easy):** after Schedule, navigating the same tab failed with ERR_ABORTED. Leave that tab and read back from a new
+tab ("View all scheduled posts"). The scheduled item shows a `dms.licdn.com/playlist/vid` poster when the video is attached. The
+captions panel has its own Apply button; the Video thumbnail panel's input `#media-editor-video-thumbnail-selector__file-input`
+appears only after that panel is opened.
+
+**25 Nov 2026 (Barracuda, T3 browser):** `@Jumbo Interactive Limited` typed in full raised no dropdown again; Alt+Backspace back to
+`@Jumbo` raised the list, where Jumbo Interactive Limited was the **second** row (Jumbo Supermarkten first): ArrowDown twice, read
+`aria-selected`, Return. `@For The Record (FTR)` and `@Youngcare` worked typed in full (first row). The 391 MB 1080p went straight into
+`#media-editor-file-selector__file-input` with `preview_act upload` (no pieces); auto captions went off by `input.click()` on the
+`adToggle_*` checkbox (a Playwright click timed out). The post was in the feed about 1 min after Post.

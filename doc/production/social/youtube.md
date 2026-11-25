@@ -123,6 +123,14 @@ Company logo comes from the DB (`companies.logo_url`, a Vercel Blob URL) — `cu
 `/Volumes/BOTTB/Renders/Thumbnails/<Song>/`. YouTube caps thumbnails at 2 MB; the CLI steps the
 JPEG quality down until it fits.
 
+## Studio's red Description box is not a save failure (6 Nov 2026)
+
+On a video's edit page the Description can show a red outline and counter (`#description-textarea.invalid === true`) with no message
+and Save disabled. Mustang Sally `nNGYLWXWjl4` showed it with the full text saved, and so did the already-public good 4 u
+`yUPYr-OgmzI`, so it isn't specific to one upload. Cause not established; it isn't blocking schedule or publish. A Data API read of a
+scheduled video returns no item, because it's private until its slot: read the time from Studio instead. The content list shows the
+date only; the upload dialog gives the time.
+
 ## Deleting a video when another carries the same title (27 Sep 2026)
 
 Replacing a video means two items with **identical titles** sit in the Studio list at once, so
@@ -158,6 +166,22 @@ not from the camera masters — the render carries the grade. Watch for a ±2 s 
 camera cut or crops a subject at the frame edge; both happened and both are invisible until you see
 the spread.
 
+## Shorts: full-song links go in Related video (7 Nov 2026)
+
+URLs in Shorts descriptions and comments are not clickable (YouTube Help, answer 13748639), so a "Full song: <url>" line there does nothing. The clickable route is Studio, Content, the Short, **Related video** (answer 14075157); it shows under the channel name, needs advanced feature access, and the target must be public or unlisted. Not yet tried on our channel, and whether it can be set before the Short is public is unknown: check on the first Short.
+
+Channel identity (7 Nov 2026): Dean's Google account manages the BotTB channel, so Studio may open as his personal channel (`UC9C0DzFMnKFTCxdxvKmUGxg`). Check the URL shows `UCJVbMoGFRdQxVgHvW1heYCg` and the header says "You're a manager" before any upload; switch from the avatar menu, Switch account. Related video shows on Shorts in the details side panel; advanced features read "Eligible", and setting the field is still untried.
+
+Fetch-inject works in the T3 browser too (7 Nov 2026): a 316 MB 2160x3840 Short went up from Blob with no drag. Studio blocks **Related video** for managers: "Only channel owner can gain access. If you share a channel, ask the primary channel owner to complete the verification process". Until the owner verifies, don't write "tap the link under our channel name" in a Short's description without checking the link exists.
+
+Dean dropped Related video for the 2026 reels (7 Nov 2026): Shorts carry "Full song on our channel". If it comes back, only the channel's primary owner can verify (help answer 9891124).
+
+Scheduling trap (7 Nov 2026): Studio can show the typed time in the box yet keep 00:00 if Schedule is clicked straight after picking the option; No One Knows was saved at 00:00 while the box read 17:00. Pick the time with a real click, wait, and after scheduling reload the edit page and read the time back (Visibility panel). Also, `preview_navigate` can leave Studio on its current page: open a new tab for each read-back.
+
+Daily upload limit (7 Nov 2026): Studio stopped at the 11th attempt in a day, after 10 uploads, including one abandoned draft: "Daily upload limit reached. Upload more videos daily after a one-time verification or wait 24 hours." The file injects and the dialog opens but the link stays on "Creating link…"; check for that line before filling a dialog in. The "Show more" toggle stays closed in that state, so #recorded-date is missing. Plan batches of about 10 a day until the primary owner verifies.
+
+The limit is still on at 12:20 the next day (8 Nov 2026), so it seems to be a rolling 24 hours from the last uploads (7 Nov, until about 19:40), not a reset at midnight. Closing the dialog in that state leaves no draft behind.
+
 ## Custom thumbnail in the T3 browser, and reading ids (8 Nov 2026, Paint It Black)
 
 In the upload dialog, during upload, neither `preview_act upload` on the hidden `image/jpeg,image/png` input nor a Blob fetch-inject
@@ -167,3 +191,29 @@ into it set the thumbnail, and "Upload file" opened nothing. After processing, t
 Take the video id from the Data API or a `ytimg` URL, never from a screenshot: the dialog's link read `6OpNQg7kLjl`; the id is `6OpNQg7kLjI`.
 Recording date: typing `27 Aug 2026` into the calendar's own text box plus Enter worked and read back. Tags typed with
 `preview_act type` stayed as text until an Enter turned them into chips.
+
+Limit cleared by 20:30 on 8 Nov (last uploads 7 Nov about 19:40), so a rolling 24 hours holds. In the upload dialog the recording-date and schedule-date calendars each open their own text box (a fresh `#input-N`); type `27 Aug 2026` there and press Enter. The time list's 17:00/18:00 items sit below the fold of the fixed `tp-yt-paper-dialog`: scroll that dialog to the item, then real-click it.
+
+## Full-song upload without Blob in the T3 browser (20 Nov 2026, You Oughta Know)
+
+An unreleased cut can't go on public Blob, so the 1.53 GB 4K master went in as pieces: `split -b 45m`, a helper
+`<input type=file id=bottb-part>` pushing each `files[0]` to `window.__parts`, `preview_act upload` per piece (each took a few
+seconds), then `new File(parts, name, {type:'video/mp4'})`, SHA-256 checked in the page (`crypto.subtle.digest` on the rebuilt
+File matched the render), then `DataTransfer` onto `input[name=Filedata]` + `change`. Private preview `vJjjFS8RFY4`.
+
+- **Attach the pieces before Studio's upload dialog is open.** With the dialog open (modal), `upload` on the helper input timed
+  out even for a 1 KB file, and one attempt dropped the T3 connection and the tab. On a fresh load of `/videos/upload?d=ud`,
+  before the dialog rendered, the same call took at once.
+- The "still uploading" dialog after Save is not `tp-yt-paper-dialog[opened]`; poll `ytcp-video-upload-progress` text for
+  "Upload complete". Navigating the tab away mid-upload fails with ERR_ABORTED, which protects the upload.
+- On the edit page the Visibility card reads "Pending" while processing even when Private was saved.
+
+## Direct upload in the T3 browser (25 Nov 2026, Barracuda)
+
+`preview_act upload` took the 1.48 GB 4K in one call into a helper `<input type=file>` added to the Studio upload page before the dialog
+opened. Then Create → Upload videos, and the file went from the helper onto `input[name=Filedata]` with `DataTransfer` + `change`. Size
+and the SHA-256 of the first and last 8 MB matched the render. No pieces and no Blob. The video id came from the dialog's `youtu.be` href.
+Thumbnail: on the edit page, `preview_act upload` straight into `#file-loader` (`image/jpeg,image/png`), Save went disabled, and
+`maxresdefault.jpg` showed it 1 min later. Recording date: opening the dropdown fills in today; type the show date (`27 Aug 2026`) into the
+date picker's own text box (tag it by its value property first: an attribute selector timed out), press Enter, read it back. Location
+typeahead "The Triffid" → "The Triffid Stratton Street, Newstead QLD"; Data API `recordingDetails` confirmed it.

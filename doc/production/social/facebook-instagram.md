@@ -95,6 +95,10 @@ Split out of social-reel-posting-runbook.md on 2026-10-30; shared rules (copy, h
    published 3:51 and 4:59 reels to Instagram and 5:55 to Facebook. Use the `ig-user/media`
    reference above, not the spec page.
 
+## Business Suite has the data the token can't read (7 Nov 2026)
+
+`business.facebook.com/latest/insights/content` (Last 90 days via the date button) gives per-post **views, reach, viewers, shares, saves, follows and watch time for both Instagram and Facebook**. The token returns error 10 or 200 for all of these. Rows are virtualised: scroll the inner container and accumulate. `people` gives Instagram age and city (Facebook needs 100 followers). Times are in the browser's zone. In the Planner, **dashed items with a sparkle icon are Meta's suggested times, not queued posts**; clicking one opens an empty composer. The composer's Schedule panel lists Facebook and Instagram "Active times". `latest/reels_composer` has a "Customize post for Facebook and Instagram" switch; scheduling and collaborators there are still unverified.
+
 ## A caption can be fixed after publishing; the images cannot
 
 `POST /{page-post-id}` with `message=` rewrites a live Facebook post's text and returns
@@ -177,3 +181,35 @@ outright with "Facebook URLs cannot be crawled".
 
 **The tell that cracked it:** a working post shows a _login prompt_ to a logged-out viewer; a
 blocked one shows the _error_. Treating those two as the same failure hid the problem for a week.
+
+## Links in Reels (7 Nov 2026)
+
+A URL in a Facebook Reel caption is clickable on the web (checked on a past reel; the app wasn't checked) but sits behind "See more" at about 150 characters, so it goes on line 2. Every Facebook video since 14 Sep has a link, so we can't compare with and without. The ledger's `caption` is blank on most rows: use the Graph API (`reels-schedule/scripts/fb_captions.mjs`) for what a post really said. Instagram and TikTok captions aren't clickable: the full songs are native on both, so write "Full song on our page".
+
+## Reels in Business Suite without a drag (7 Nov 2026)
+
+`latest/reels_composer` schedules Facebook and Instagram together, with separate captions under "Customize post". The agent attaches the file (`reels-schedule/README.md`, "Attaching video without a drag"); the input is detached, and the change only took after a further event (`input` on the thumbnail; for the video, `input` plus synthetic drag events, and which one counted wasn't isolated). Thumbnail: the switch "Upload image", then the second "Upload image" with the click hook. The Share step **defaults to Share now**: press Schedule first and check the bottom button reads Schedule. Its zone label is Antarctica/DumontDUrville, which is UTC+10. Set time fields with single-key `press`; `type` does nothing there. Story share is on by default (off asks "Don't share this post", which only affects this post) and auto captions are on by default. Read-back: Planner, whose tiles carry each caption in the accessibility tree. The API returns the Facebook caption at once but `scheduled_publish_time` was null while processing. Instagram's collaborators are still added after publish.
+
+Video attach in that composer: `change` then `input` on the captured input shows the file row every time (ten reels, 7 Nov); no drag events are needed. Story share stays on for reels from good 4 u onward (Dean, 7 Nov).
+
+## After a scheduled reel publishes (10 Nov 2026)
+
+The Facebook id Business Suite gives at scheduling is not the published reel's id (Canvanauts: 1128132919615704 at scheduling, 1661824532326734 live; the old one returns error 100/33). Re-read `/{page}/video_reels` after the slot and record the live id and permalink. The Instagram reel id comes from `/{ig}/media`. Before the browser collaborator step, check that instagram.com is signed in in the T3 "Dean (personal)" profile: on 10 Nov it showed "Log In / Continue with Facebook".
+
+**11 Nov 2026 (collaborators on published reels, web):** at a 1280-wide window, open `/p/<shortcode>/`, More options (⋯), Edit. "Add collaborators" is an input under Add location: click it, type the handle, tick the exact one (verified badge; lookalikes like `_sailor_nicole_` follow), repeat, then the blue Done in the panel and Done in the header. The caption counter reads 0/2,200 while the box holds the caption; it saves unchanged. Read back with Graph `/{media}?fields=collaborators{username},caption`. A narrow T3 pane gives the mobile layout, so resize first.
+
+**16 Nov 2026:** in the T3 browser, locator clicks on the ⋯ menu and the Edit item time out; read each target's centre with `getBoundingClientRect` in `preview_evaluate` and click by x/y. The collaborator search rows are leaf divs whose text is exactly the handle. `bottb post list` needs `--json` while any row in the group is still scheduled (it crashes otherwise).
+
+**23 Nov 2026 (So Easy, T3 browser): scheduling a reel in Business Suite.**
+- While the attached video uploads, the "Reel details" block (captions switch, caption box) can disappear from the Create step. A
+  caption typed then is lost. Wait for 100%, or go Next and back to Create; the block returns.
+- The caption box takes a synthetic `paste` (a `ClipboardEvent` with a `DataTransfer` holding `text/plain`); `execCommand
+  insertParagraph` broke it. Read each tab (Facebook, Instagram) back after switching.
+- Schedule step: click the "Schedule" segment (aria-pressed), then for each platform click the date field and the day cell, then
+  click each `[role=spinbutton]` (hours, minutes, meridiem) and press single keys (`0`,`7` / `3`,`0` / `a`). Read the block's text
+  back ("07 : 30 AM", zone Antarctica/DumontDUrville = UTC+10). Dialog after Schedule: "Reel scheduled".
+- Read-back: Graph `/{page}/scheduled_posts` returned nothing for scheduled reels (also empty for reels booked days ahead), so it is
+  not evidence either way. Use the Planner: the tile's time is a sibling leaf ("7:30 AM") in that day's column; clicking a tile shows
+  a Business Suite post id that the Graph API does not resolve.
+
+**23 Nov 2026:** the web cap of 3 collaborators holds on Edit too: with 3 on the post, ticking a 4th closes the list and nothing is added. A 4th needs the IG app, or remove one first.

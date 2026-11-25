@@ -162,6 +162,11 @@ with the choice/freedom/dignity line. Hashtag base: `#BattleOfTheTechBands #BotT
   rows from ~110 devices (109 FingerprintJS ids, 111 IPs); one iPhone fingerprint alone had 29 rows.
   Dean: "The number of votes does not look right". Don't quote raw vote counts in copy; say who topped
   the crowd vote, or check `count(distinct fingerprintjs_visitor_id)` and ask Dean first.
+- **Stage talk is on the recording, usually outside the release range (5 Nov 2026).** To check something a band "said", run ASR on the
+  bounce's pre-song talk or the desk scratch (`DESK_SCRATCH...wav`; scratch s = 1265 + (frame - 121555) / 25 on the Sydney clock). Mustang
+  Sally: "we've only rehearsed it once" found in minutes, 5 s before Dean's In point. Script: production-control release
+  `social/scripts/transcribe_stage_talk.py` (whisper-small.en in the pitch-torch venv, 2.5 GB). Compare vocal stem levels for the speaker;
+  have Dean confirm by ear before quoting. `pnpm bottb handles --event sydney-2026` printed no rows; use `--platform`.
 - Get Dean to fact-check themes/instruments per band (pirates/erhu, Severance, monks in LED masks,
   70s theme (NOT 60s — got this wrong once), Gen-X backdrops, guest sets, youngest-performer) — none of that is in the DB.
 
@@ -225,6 +230,10 @@ Expect every one of these, and **chase the missing ones before scheduling anythi
   superseded cut.
 - Whether a **thumbnail exists yet** — not the editor's job, but it is the thing that blocks
   publishing.
+- **"final: yes" or "re-render possible because …"** (23 Nov 2026). Upload YouTube Private and stage
+  every platform, but set no public time until the handover says final: So Easy v1 was set to go
+  public at 07:00 in the upload dialog while Video was still deciding on a re-render, and only the
+  coordinator's hold about 5 minutes later stopped it.
 - **Dean's instruction quoted verbatim, with a timestamp on the quote.** A relayed instruction can
   go stale between him saying it and us reading it; that happened twice in one week.
 - Superseded renders **moved to `_superseded/`**. Everlong left two 1080p files at an identical
@@ -693,6 +702,8 @@ local (catches up on wake), logging to `~/Library/Logs/bottb-social-metrics.log`
 creation time, not the publish time of a scheduled post: take `posted_at` from Studio's date column.
 LinkedIn's Content engagement table ignores Next/page-2 clicks (13 Oct): read page 1, then narrow the
 date range for older posts.
+
+**7 Nov 2026:** the launch agent's last run exited 1 (`UND_ERR_HEADERS_TIMEOUT`, a 300 s fetch timeout with no retry), so the newest capture was 27 Oct. A manual run 7 Nov worked in about 8 s. Check `launchctl list | grep bottb` for a non-zero status before quoting metrics. For views on Instagram and reach, use Business Suite (`social/facebook-instagram.md`); evidence for slots is in `reels-schedule/`.
 
 ### Snapshots, not current values
 

@@ -72,6 +72,9 @@ Split out of social-reel-posting-runbook.md on 2026-10-30; shared rules (copy, h
   LinkedIn Escape means "discard?", and a triple-click on some fields triggers macOS's dictionary
   "No definition found" popover; both are harmless but occlude clicks, so re-screenshot after.
 
+- **JS coordinates aren't screenshot coordinates (5 Nov 2026).** On a Chrome window where `innerWidth` was 1920, screenshots came back
+  1568 wide, so `getBoundingClientRect()` values land in the wrong place. Click from a screenshot, or multiply by the ratio.
+
 ## Setting thumbnails and covers without freezing the session
 
 **The extension's `file_upload` tool works for thumbnails.** Its 10 MB cap is irrelevant here — a

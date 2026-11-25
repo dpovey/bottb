@@ -1,0 +1,62 @@
+{
+  "group": "brisbane-2026-off-the-record-barracuda",
+  "event": "brisbane-2026",
+  "band": "off-the-record-brisbane-2026",
+  "title": "Off the Record - Barracuda (Heart Cover) - BotTB Brisbane 2026",
+  "copy": "doc/production/otr-barracuda-copy.md",
+  "files": {
+    "master": null,
+    "ig": "/Volumes/BOTTB/Renders/OffTheRecord_Barracuda_Brisbane2026_1080p_IG_v1.mp4",
+    "hd": "/Volumes/BOTTB/Renders/OffTheRecord_Barracuda_Brisbane2026_1080p_v1.mp4",
+    "ig_cover": "/Users/dean/src/personal/production-control/releases/off-the-record-barracuda-brisbane-2026/social/thumbnails/off-the-record-barracuda-instagram.jpg",
+    "mix_master": "/Volumes/BOTTB/Brisbane - 2026/mix/barracuda/renders/r28/master/Barracuda_r28_upward_master_24bit-tpdf.wav",
+    "master_4k_youtube_only": "/Volumes/BOTTB/Renders/OffTheRecord_Barracuda_Brisbane2026_4K_v1.mp4"
+  },
+  "blob_prefix": "release/brisbane-2026/",
+  "collaborators": [
+    "quirkylikethat",
+    "kurtboldy",
+    "youngcareoz"
+  ],
+  "planned_slots": "Option A (Dean, 25 Nov 2026): each platform as soon as staged, YouTube first",
+  "results": {
+    "youtube": {
+      "id": "Lm4RPj-2RZk",
+      "permalink": "https://youtu.be/Lm4RPj-2RZk",
+      "status": "published",
+      "posted_at": "2026-11-24T23:27:03Z",
+      "note": "published from the upload dialog; posted_at is YouTube's own time read back by publish-video record"
+    },
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/brisbane-2026/OffTheRecord_Barracuda_Brisbane2026_1080p_IG_v1.mp4",
+        "bytes": 263063164
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/brisbane-2026/off-the-record-barracuda-instagram.jpg",
+        "bytes": 216797
+      }
+    },
+    "facebook": {
+      "id": "29368971159434005",
+      "permalink": "https://www.facebook.com/reel/29368971159434005",
+      "scheduled_for": null,
+      "posted_at": "2026-11-24T23:29:23+0000"
+    },
+    "instagram": {
+      "id": "DgJI7gEKv9n",
+      "permalink": "https://www.instagram.com/reel/DgJI7gEKv9n/",
+      "posted_at": "2026-11-24T23:31:57+0000"
+    },
+    "linkedin": {
+      "id": "urn:li:activity:7531139013093720064",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7531139013093720064/",
+      "posted_at": "2026-11-24T23:37:42.518Z"
+    },
+    "tiktok": {
+      "id": "7711886533443341588",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7711886533443341588",
+      "posted_at": "2026-11-24T23:38:25.000Z"
+    }
+  }
+}
