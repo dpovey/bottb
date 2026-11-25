@@ -1,0 +1,56 @@
+{
+  "group": "sydney-2026-amakazaam-yououghtaknow",
+  "event": "sydney-2026",
+  "band": "amakazaam-sydney-2026",
+  "title": "Amakazaam! - You Oughta Know (Alanis Morissette Cover) - BotTB Sydney 2026",
+  "copy": "doc/production/amakazaam-yououghtaknow-copy.md",
+  "files": {
+    "ig": "/Volumes/BOTTB/Renders/Amakazaam_YouOughtaKnow_Sydney2026_1080p_IG_v1.mp4",
+    "ig_cover": "/Users/dean/src/personal/production-control/releases/amakazaam-you-oughta-know-sydney-2026/social/thumbnails/amakazaam-you-oughta-know-instagram.jpg"
+  },
+  "blob_prefix": "release/sydney-2026/",
+  "collaborators": [
+    "sailornicole",
+    "demonrace",
+    "youngcareoz"
+  ],
+  "planned_slots": "Dean 21 Nov 08:10 AEST: each platform as soon as it is ready (YouTube, Facebook, Instagram, LinkedIn, TikTok)",
+  "results": {
+    "youtube": {
+      "id": "vJjjFS8RFY4",
+      "permalink": "https://youtu.be/vJjjFS8RFY4",
+      "posted_at": "2026-11-20T22:25:02Z"
+    },
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/Amakazaam_YouOughtaKnow_Sydney2026_1080p_IG_v1.mp4",
+        "bytes": 274603390
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/amakazaam-you-oughta-know-instagram.jpg",
+        "bytes": 260379
+      }
+    },
+    "facebook": {
+      "id": "1049425324852636",
+      "permalink": "https://www.facebook.com/reel/1049425324852636",
+      "scheduled_for": null,
+      "posted_at": "2026-11-20T22:28:00+0000"
+    },
+    "instagram": {
+      "id": "Df-uvQ4oWb3",
+      "permalink": "https://www.instagram.com/reel/Df-uvQ4oWb3/",
+      "posted_at": "2026-11-20T22:30:25+0000"
+    },
+    "linkedin": {
+      "id": "urn:li:activity:7529673895889797120",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7529673895889797120/",
+      "posted_at": "2026-11-20T22:35:51.356Z"
+    },
+    "tiktok": {
+      "id": "7710386554979503380",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7710386554979503380",
+      "posted_at": "2026-11-20T22:37:44.000Z"
+    }
+  }
+}

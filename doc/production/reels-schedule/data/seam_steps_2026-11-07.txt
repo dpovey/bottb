@@ -1,0 +1,11 @@
+canvanauts  rotated  sample step 0.297: p99.9 0.262 max 0.732, 0.061% of steps bigger | 10 ms level change 0.8 dB: p99 7.2 max 13.1 dB, 70.95% bigger
+amakazaam   rotated  sample step 0.021: p99.9 0.230 max 0.555, 49.503% of steps bigger | 10 ms level change 1.9 dB: p99 6.2 max 13.2 dB, 25.90% bigger
+v2voyagers  rotated  sample step 0.048: p99.9 0.303 max 1.024, 23.408% of steps bigger | 10 ms level change 2.8 dB: p99 8.0 max 16.2 dB, 22.52% bigger
+g4u         straight sample step 0.010: p99.9 0.133 max 0.414, 68.999% of steps bigger | 10 ms level change 3.8 dB: p99 7.3 max 13.3 dB, 9.83% bigger
+chain       straight sample step 0.011: p99.9 0.205 max 0.736, 74.718% of steps bigger | 10 ms level change 6.7 dB: p99 7.4 max 11.6 dB, 1.92% bigger
+nok         rotated  sample step 0.051: p99.9 0.139 max 0.688, 5.444% of steps bigger | 10 ms level change 5.7 dB: p99 8.2 max 15.8 dB, 4.21% bigger
+sias        straight sample step 0.008: p99.9 0.200 max 0.488, 79.208% of steps bigger | 10 ms level change 8.3 dB: p99 8.4 max 23.7 dB, 1.04% bigger
+otr         rotated  sample step 0.073: p99.9 0.186 max 0.344, 10.420% of steps bigger | 10 ms level change 0.3 dB: p99 6.4 max 12.1 dB, 81.49% bigger
+everlong    rotated  sample step 0.053: p99.9 0.207 max 0.462, 20.562% of steps bigger | 10 ms level change 0.9 dB: p99 6.6 max 12.1 dB, 57.74% bigger
+sos         rotated  sample step 0.477: p99.9 0.256 max 0.688, 0.001% of steps bigger | 10 ms level change 12.1 dB: p99 9.8 max 18.4 dB, 0.33% bigger
+cic         straight sample step 0.001: p99.9 0.206 max 0.724, 96.825% of steps bigger | 10 ms level change 1.4 dB: p99 7.6 max 12.4 dB, 47.54% bigger

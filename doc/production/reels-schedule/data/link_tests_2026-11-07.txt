@@ -1,0 +1,49 @@
+== Facebook video, since 14 Sep (Meta app published)
+views: with link median 142.5 (n=8), without 87 (n=9), p=0.27
+  09-14 18:00 video link 20 Jumbo Band — Jumbo Interactive's house band —
+  09-16 09:00 video link 206 Total Loss — Suncorp's band — play Dire Strai
+  09-21 18:00 video link 168 Off the Record — For The Record's house band 
+  09-24 09:00 video link 142 Jumbo — Jumbo Interactive's house band — play
+  09-28 09:00 reel - 305 ShipReX — Everlong (Foo Fighters)
+  10-02 09:00 reel - 78 Bandlassian - Rosanna (Sydney 2025 throwback)
+  10-03 09:00 reel - 83 Jamazon - Alexa intro (Sydney 2025 throwback)
+  10-04 08:00 reel - 87 
+  10-05 08:00 video - 56 
+  10-06 08:00 reel - 82 
+  10-10 13:06 video link 211 Jumbo Band - Say It Ain't So
+  10-13 16:30 reel link 132 What an amazing night! It was great to be bac
+  10-17 17:50 video - 196 
+  10-19 13:39 video - 259 Amakazaam! - Under Pressure (Queen & David Bo
+  10-30 15:44 video - 134 V2 Voyagers - Starships / UFO (Nicki Minaj & 
+  11-03 06:30 video link 89 Bandlassian - good 4 u (Olivia Rodrigo Cover)
+  11-06 00:11 video link 143 ShipReX - Mustang Sally (The Commitments Cove
+== LinkedIn, every post with impressions
+  09-11 Fri 12:00 photo - imp 383 views None clicks 117 likes 6 The other half of the night
+  09-12 Sat 12:00 photo - imp 315 views None clicks 135 likes 7 Five bands, one night. Every photo
+  09-13 Sun 12:00 photo - imp 55 views None clicks 2 likes 3 Free double pass + a shirt, Sydney
+  09-14 Mon 12:00 video - imp 514 views 190 clicks 28 likes 8 Jumbo Band — Bring Me to Life
+  09-14 Mon 12:00 photo - imp 243 views None clicks 11 likes 23 SYDNEY BAND ANNOUNCEMENT: THE CANVANAUTS
+  09-15 Tue 12:00 video - imp 1261 views 512 clicks 101 likes 40 Total Loss — Sultans of Swing
+  09-15 Tue 12:00 photo - imp 330 views None clicks 13 likes 35 SYDNEY BAND ANNOUNCEMENT: V2 VOYAGERS
+  09-16 Wed 12:00 photo - imp 276 views None clicks 15 likes 21 SYDNEY BAND ANNOUNCEMENT: AMAKAZAAM
+  09-17 Thu 12:00 photo - imp 297 views None clicks 27 likes 14 SYDNEY BAND ANNOUNCEMENT: BANDLASSIAN
+  09-21 Mon 12:00 video - imp 217 views 130 clicks 19 likes 10 Off the Record — Celine Dion
+  10-08 Thu 20:13 photo - imp 427 views None clicks 26 likes 10 
+  10-09 Fri 13:58 photo - imp 1495 views None clicks 127 likes 43 
+  10-10 Sat 13:12 video - imp 399 views 171 clicks 25 likes 6 Jumbo Band - Say It Ain't So
+  10-12 Mon 15:28 photo - imp 195 views None clicks 151 likes 9 Canvanauts - Sydney 2026 winners photos
+  10-13 Tue 07:00 photo - imp 218 views None clicks 183 likes 9 Amakazaam! - Sydney 2026 runners-up phot
+  10-13 Tue 16:01 video - imp 25 views 7 clicks 1 likes 0 
+impressions, all: with link median None (n=0), without 306.0 (n=16)
+impressions, video: with link median None (n=0), without 399 (n=5)
+median impressions video 399 photo/carousel 297
+newest LinkedIn metric 2026-10-13 07:45:00+00
+LinkedIn posts by year-month without impressions 28
+== Facebook link posts per month, last 6 months
+[('2025-08', 1), ('2025-10', 2), ('2026-06', 1), ('2026-07', 5), ('2026-08', 6), ('2026-09', 11), ('2026-10', 2), ('2026-11', 2)]
+== Checks on the ledger's captions
+facebook video rows 36 blank caption 20 with link 10
+linkedin video rows 23 blank caption 18 with link 2
+== Facebook, comparing like with like: captions present, by length of clip (from the Business Suite labels)
+  ('full', True) median 169.0 n 6 ['Bandlassian good 4 u', 'Jumbo Say It Aint So', 'Jumbo Darkness', 'OTR Its All Coming Back', 'Total Loss Sultans', 'Jumbo Band Bring Me to Life']
+  ('mid', True) median 132 n 1 ['Sydney 2026 highlights']

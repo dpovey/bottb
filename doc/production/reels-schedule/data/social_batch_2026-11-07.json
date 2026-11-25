@@ -1,0 +1,576 @@
+[
+ {
+  "key": "g4u",
+  "band": "Bandlassian",
+  "song": "good 4 u",
+  "city": "Sydney",
+  "date": "2026-11-11",
+  "weekday": "Wed",
+  "event": "sydney-2026",
+  "band_slug": "bandlassian-sydney-2026",
+  "group": "sydney-2026-bandlassian-good-4-u-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/Bandlassian_Good4U_Sydney2026_reel_auto_v1.mp4",
+  "bytes": 83947582,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/g4u.jpg",
+  "tiktok_location": "Manning Bar",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-11T09:00:00+11:00",
+   "linkedin": "2026-11-11T13:00:00+11:00",
+   "facebook": "2026-11-11T20:00:00+11:00",
+   "instagram": "2026-11-11T20:00:00+11:00"
+  },
+  "li_arm": "post",
+  "tt": "Bandlassian opened their Sydney set to a loud and energetic crowd, with their take on Olivia Rodrigo's \"good 4 u\" at the Manning Bar 🎸. Full song on our page. Video shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #sydneymusic #livemusicsydney #Atlassian #OliviaRodrigo #good4u",
+  "fb": "Bandlassian opened their Sydney set to a loud and energetic crowd, with their take on Olivia Rodrigo's \"good 4 u\" at the Manning Bar.\nFull song: https://www.battleofthetechbands.com/go/yUPYr-OgmzI/fb-caption\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Atlassian #OliviaRodrigo",
+  "ig": "Bandlassian opened their Sydney set to a loud and energetic crowd, with their take on Olivia Rodrigo's \"good 4 u\" at the Manning Bar.\n\nFull song on our page.\n\nVideo shot by @sailornicole and @demonrace, photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Atlassian #OliviaRodrigo",
+  "li": "Bandlassian opened their Sydney set to a loud and energetic crowd, with their take on Olivia Rodrigo's \"good 4 u\" at the Manning Bar.\n\nFull song: https://www.battleofthetechbands.com/go/yUPYr-OgmzI/li-post\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by @V2 AI.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Atlassian #OliviaRodrigo",
+  "li_chunks": [
+   {
+    "type": "Bandlassian opened their Sydney set to a loud and energetic crowd, with their take on Olivia Rodrigo's \"good 4 u\" at the Manning Bar.\n\nFull song: https://www.battleofthetechbands.com/go/yUPYr-OgmzI/li-post\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by "
+   },
+   {
+    "mention": "V2 AI"
+   },
+   {
+    "type": ".\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Atlassian #OliviaRodrigo"
+   }
+  ],
+  "li_comment": null
+ },
+ {
+  "key": "otr",
+  "band": "Off the Record",
+  "song": "It's All Coming Back to Me Now",
+  "city": "Brisbane",
+  "date": "2026-11-13",
+  "weekday": "Fri",
+  "event": "brisbane-2026",
+  "band_slug": "off-the-record-brisbane-2026",
+  "group": "brisbane-2026-off-the-record-all-coming-back-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/OffTheRecord_AllComingBackToMeNow_Brisbane2026_reel_auto_v1.mp4",
+  "bytes": 81787602,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/otr.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-13T09:00:00+11:00",
+   "linkedin": "2026-11-13T13:00:00+11:00",
+   "facebook": "2026-11-13T20:00:00+11:00",
+   "instagram": "2026-11-13T20:00:00+11:00"
+  },
+  "li_arm": "post",
+  "tt": "Off the Record's performance of Celine Dion's \"It's All Coming Back to Me Now\" at The Triffid 🎤. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #ForTheRecord #CelineDion",
+  "fb": "Off the Record's performance of Celine Dion's \"It's All Coming Back to Me Now\".\nFull song: https://www.battleofthetechbands.com/go/AUjRxVFrMnc/fb-caption\n\nLead singer Fay's first time in front of a large crowd, she was understandably nervous about taking on such a big number. We think you'll agree, she absolutely killed it.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #CelineDion",
+  "ig": "Off the Record's performance of Celine Dion's \"It's All Coming Back to Me Now\". Lead singer Fay's first time in front of a large crowd, she was understandably nervous about taking on such a big number. We think you'll agree, she absolutely killed it.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #CelineDion",
+  "li": "Off the Record's (from @For The Record (FTR)) performance of Celine Dion's \"It's All Coming Back to Me Now\". Lead singer Fay's first time in front of a large crowd, she was understandably nervous about taking on such a big number. We think you'll agree, she absolutely killed it.\n\nFull song: https://www.battleofthetechbands.com/go/AUjRxVFrMnc/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #CelineDion",
+  "li_chunks": [
+   {
+    "type": "Off the Record's (from "
+   },
+   {
+    "mention": "For The Record (FTR)"
+   },
+   {
+    "type": ") performance of Celine Dion's \"It's All Coming Back to Me Now\". Lead singer Fay's first time in front of a large crowd, she was understandably nervous about taking on such a big number. We think you'll agree, she absolutely killed it.\n\nFull song: https://www.battleofthetechbands.com/go/AUjRxVFrMnc/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #CelineDion"
+   }
+  ],
+  "li_comment": null
+ },
+ {
+  "key": "nok",
+  "band": "Epsonics",
+  "song": "No One Knows",
+  "city": "Brisbane",
+  "date": "2026-11-16",
+  "weekday": "Mon",
+  "event": "brisbane-2026",
+  "band_slug": "epsonics-brisbane-2026",
+  "group": "brisbane-2026-epsonics-no-one-knows-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/Epsonics_NoOneKnows_Brisbane2026_reel_auto_v2.mp4",
+  "bytes": 74326926,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/nok.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "6:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-16T09:00:00+11:00",
+   "linkedin": "2026-11-16T13:00:00+11:00",
+   "facebook": "2026-11-16T19:00:00+11:00",
+   "instagram": "2026-11-16T19:00:00+11:00"
+  },
+  "li_arm": "comment",
+  "tt": "The Epsonics opened their Brisbane set with this early 2000s banger. Epsilon's band donned their best business attire, to rock out with this version of Queens of the Stone Age's \"No One Knows\" at The Triffid. Highest judges' score of the night, second overall. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #Epsilon #QueensOfTheStoneAge #NoOneKnows",
+  "fb": "The Epsonics opened their Brisbane set with this early 2000s banger.\nFull song: https://www.battleofthetechbands.com/go/E2yeRiHRUlw/fb-caption\n\nEpsilon's band donned their best business attire, to rock out with this version of Queens of the Stone Age's \"No One Knows\" at The Triffid. Highest judges' score of the night, second overall.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Epsilon #QueensOfTheStoneAge",
+  "ig": "The Epsonics opened their Brisbane set with this early 2000s banger. Epsilon's band donned their best business attire, to rock out with this version of Queens of the Stone Age's \"No One Knows\" at The Triffid. Highest judges' score of the night, second overall.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Epsilon #QueensOfTheStoneAge",
+  "li": "The Epsonics opened their Brisbane set with this early 2000s banger. @Epsilon's band donned their best business attire, to rock out with this version of Queens of the Stone Age's \"No One Knows\" at The Triffid. Highest judges' score of the night, second overall.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #QueensOfTheStoneAge",
+  "li_chunks": [
+   {
+    "type": "The Epsonics opened their Brisbane set with this early 2000s banger. "
+   },
+   {
+    "mention": "Epsilon"
+   },
+   {
+    "type": "'s band donned their best business attire, to rock out with this version of Queens of the Stone Age's \"No One Knows\" at The Triffid. Highest judges' score of the night, second overall.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #QueensOfTheStoneAge"
+   }
+  ],
+  "li_comment": "Full song: https://www.battleofthetechbands.com/go/E2yeRiHRUlw/li-comment"
+ },
+ {
+  "key": "sos",
+  "band": "Total Loss",
+  "song": "Sultans of Swing",
+  "city": "Brisbane",
+  "date": "2026-11-18",
+  "weekday": "Wed",
+  "event": "brisbane-2026",
+  "band_slug": "total-loss-brisbane-2026",
+  "group": "brisbane-2026-total-loss-sultans-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/TotalLoss_SultansOfSwing_Brisbane2026_reel_auto_v2.mp4",
+  "bytes": 98787659,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/sos.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-18T09:00:00+11:00",
+   "linkedin": "2026-11-18T13:00:00+11:00",
+   "facebook": "2026-11-18T20:00:00+11:00",
+   "instagram": "2026-11-18T20:00:00+11:00"
+  },
+  "li_arm": "comment",
+  "tt": "The closing guitar run of \"Sultans of Swing\" 🎸 Total Loss from Suncorp at The Triffid. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #Suncorp #DireStraits #SultansOfSwing",
+  "fb": "The closing guitar run of \"Sultans of Swing\".\nFull song: https://www.battleofthetechbands.com/go/8YIPtpb5-0s/fb-caption\n\nTotal Loss from Suncorp take Dire Straits home at The Triffid, red Strat out front. They'd been playing together for 12 years, and this was their first Battle of the Tech Bands.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Suncorp #DireStraits",
+  "ig": "The closing guitar run of \"Sultans of Swing\". Total Loss from Suncorp take Dire Straits home at The Triffid, red Strat out front. They'd been playing together for 12 years, and this was their first Battle of the Tech Bands.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Suncorp #DireStraits",
+  "li": "The closing guitar run of \"Sultans of Swing\". Total Loss from @Suncorp Group take Dire Straits home at The Triffid, red Strat out front. They'd been playing together for 12 years, and this was their first Battle of the Tech Bands.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #DireStraits",
+  "li_chunks": [
+   {
+    "type": "The closing guitar run of \"Sultans of Swing\". Total Loss from "
+   },
+   {
+    "mention": "Suncorp Group"
+   },
+   {
+    "type": " take Dire Straits home at The Triffid, red Strat out front. They'd been playing together for 12 years, and this was their first Battle of the Tech Bands.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #DireStraits"
+   }
+  ],
+  "li_comment": "Full song: https://www.battleofthetechbands.com/go/8YIPtpb5-0s/li-comment"
+ },
+ {
+  "key": "v2voyagers",
+  "band": "V2 Voyagers",
+  "song": "Starships / UFO",
+  "city": "Sydney",
+  "date": "2026-11-20",
+  "weekday": "Fri",
+  "event": "sydney-2026",
+  "band_slug": "v2-voyagers-sydney-2026",
+  "group": "sydney-2026-v2-voyagers-starships-ufo-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/V2Voyagers_StarshipsUFO_Sydney2026_reel_auto_v4.mp4",
+  "bytes": 93293375,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/v2voyagers.jpg",
+  "tiktok_location": "Manning Bar",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-20T09:00:00+11:00",
+   "linkedin": "2026-11-20T13:00:00+11:00",
+   "facebook": "2026-11-20T20:00:00+11:00",
+   "instagram": "2026-11-20T20:00:00+11:00"
+  },
+  "li_arm": "post",
+  "tt": "Silver spacesuits on stage and VOYAGERS across the kick drum 🚀 V2 Voyagers from V2 AI with their \"Starships\" and \"UFO\" medley. Third place and best Crowd Vibe. Full song on our page. Video shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #sydneymusic #livemusicsydney #V2AI #NickiMinaj #SneakySoundSystem #Starships",
+  "fb": "Silver spacesuits on stage and VOYAGERS across the kick drum.\nFull song: https://www.battleofthetechbands.com/go/4UhnRsKcvKc/fb-caption\n\nFifty seconds of V2 Voyagers from V2 AI in their medley of Nicki Minaj's \"Starships\" and Sneaky Sound System's \"UFO\" at the Manning Bar. Third place and best Crowd Vibe at Sydney 2026.\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #V2AI #NickiMinaj #SneakySoundSystem",
+  "ig": "Silver spacesuits on stage and VOYAGERS across the kick drum. Fifty seconds of V2 Voyagers from V2 AI in their medley of Nicki Minaj's \"Starships\" and Sneaky Sound System's \"UFO\" at the Manning Bar. Third place and best Crowd Vibe at Sydney 2026.\n\nFull song on our page.\n\nVideo shot by @sailornicole and @demonrace, photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #V2AI #NickiMinaj #SneakySoundSystem",
+  "li": "Silver spacesuits on stage and VOYAGERS across the kick drum. Fifty seconds of V2 Voyagers from @V2 AI in their medley of Nicki Minaj's \"Starships\" and Sneaky Sound System's \"UFO\" at the Manning Bar. Third place and best Crowd Vibe at Sydney 2026.\n\nFull song: https://www.battleofthetechbands.com/go/4UhnRsKcvKc/li-post\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by @V2 AI.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #V2AI #NickiMinaj #SneakySoundSystem",
+  "li_chunks": [
+   {
+    "type": "Silver spacesuits on stage and VOYAGERS across the kick drum. Fifty seconds of V2 Voyagers from "
+   },
+   {
+    "mention": "V2 AI"
+   },
+   {
+    "type": " in their medley of Nicki Minaj's \"Starships\" and Sneaky Sound System's \"UFO\" at the Manning Bar. Third place and best Crowd Vibe at Sydney 2026.\n\nFull song: https://www.battleofthetechbands.com/go/4UhnRsKcvKc/li-post\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by "
+   },
+   {
+    "mention": "V2 AI"
+   },
+   {
+    "type": ".\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #V2AI #NickiMinaj #SneakySoundSystem"
+   }
+  ],
+  "li_comment": null
+ },
+ {
+  "key": "amakazaam",
+  "band": "Amakazaam!",
+  "song": "Under Pressure",
+  "city": "Sydney",
+  "date": "2026-11-23",
+  "weekday": "Mon",
+  "event": "sydney-2026",
+  "band_slug": "amakazaam-sydney-2026",
+  "group": "sydney-2026-amakazaam-under-pressure-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/Amakazaam_UnderPressure_Sydney2026_reel_auto_v5.mp4",
+  "bytes": 99426491,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/amakazaam.jpg",
+  "tiktok_location": "Manning Bar",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "6:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-23T09:00:00+11:00",
+   "linkedin": "2026-11-23T13:00:00+11:00",
+   "facebook": "2026-11-23T19:00:00+11:00",
+   "instagram": "2026-11-23T19:00:00+11:00"
+  },
+  "li_arm": "comment",
+  "tt": "One minute of the vocal that won Amakazaam! from Amazon judges' choice of the night 🎤 \"Under Pressure\" at the Manning Bar. Full song on our page. Video shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #sydneymusic #livemusicsydney #Amazon #Queen #DavidBowie #UnderPressure",
+  "fb": "One minute of the vocal that won Amakazaam! from Amazon judges' choice of the night at Sydney 2026.\nFull song: https://www.battleofthetechbands.com/go/kLqqB-fR9yU/fb-caption\n\nQueen and David Bowie's \"Under Pressure\" at the Manning Bar, from the breakdown up into the big run.\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Amazon #Queen #DavidBowie",
+  "ig": "One minute of the vocal that won Amakazaam! from Amazon judges' choice of the night at Sydney 2026. Queen and David Bowie's \"Under Pressure\" at the Manning Bar, from the breakdown up into the big run.\n\nFull song on our page.\n\nVideo shot by @sailornicole and @demonrace, photos and video sponsored by V2 AI.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Amazon #Queen #DavidBowie",
+  "li": "One minute of the vocal that won Amakazaam! from @Amazon judges' choice of the night at Sydney 2026. Queen and David Bowie's \"Under Pressure\" at the Manning Bar, from the breakdown up into the big run.\n\nFull song in the first comment.\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by @V2 AI.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Amazon #Queen #DavidBowie",
+  "li_chunks": [
+   {
+    "type": "One minute of the vocal that won Amakazaam! from "
+   },
+   {
+    "mention": "Amazon"
+   },
+   {
+    "type": " judges' choice of the night at Sydney 2026. Queen and David Bowie's \"Under Pressure\" at the Manning Bar, from the breakdown up into the big run.\n\nFull song in the first comment.\n\nVideo shot by Nicole Ainsworth and Adam Davis-Powell. Photos and video sponsored by "
+   },
+   {
+    "mention": "V2 AI"
+   },
+   {
+    "type": ".\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #sydneymusic #livemusicsydney #Amazon #Queen #DavidBowie"
+   }
+  ],
+  "li_comment": "Full song: https://www.battleofthetechbands.com/go/kLqqB-fR9yU/li-comment"
+ },
+ {
+  "key": "chain",
+  "band": "Epsonics",
+  "song": "The Chain",
+  "city": "Brisbane",
+  "date": "2026-11-25",
+  "weekday": "Wed",
+  "event": "brisbane-2026",
+  "band_slug": "epsonics-brisbane-2026",
+  "group": "brisbane-2026-epsonics-the-chain-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/Epsonics_TheChain_Brisbane2026_reel_auto_v4.mp4",
+  "bytes": 79806284,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/chain.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-25T09:00:00+11:00",
+   "linkedin": "2026-11-25T13:00:00+11:00",
+   "facebook": "2026-11-25T20:00:00+11:00",
+   "instagram": "2026-11-25T20:00:00+11:00"
+  },
+  "li_arm": "post",
+  "tt": "Epsonics saved \"The Chain\" for last ⛓️ Epsilon's band with the Fleetwood Mac run-out at The Triffid. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #Epsilon #FleetwoodMac #TheChain",
+  "fb": "Epsonics saved \"The Chain\" for last.\nFull song: https://www.battleofthetechbands.com/go/wM7hSnZJn0A/fb-caption\n\nA high energy finish from Epsilon's band at The Triffid, suits on and Fleetwood Mac's harmonies stacked across three voices. They finished second overall.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Epsilon #FleetwoodMac",
+  "ig": "Epsonics saved \"The Chain\" for last. A high energy finish from Epsilon's band at The Triffid, suits on and Fleetwood Mac's harmonies stacked across three voices. They finished second overall.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Epsilon #FleetwoodMac",
+  "li": "Epsonics saved \"The Chain\" for last. A high energy finish from @Epsilon's band at The Triffid, suits on and Fleetwood Mac's harmonies stacked across three voices. They finished second overall.\n\nFull song: https://www.battleofthetechbands.com/go/wM7hSnZJn0A/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #FleetwoodMac",
+  "li_chunks": [
+   {
+    "type": "Epsonics saved \"The Chain\" for last. A high energy finish from "
+   },
+   {
+    "mention": "Epsilon"
+   },
+   {
+    "type": "'s band at The Triffid, suits on and Fleetwood Mac's harmonies stacked across three voices. They finished second overall.\n\nFull song: https://www.battleofthetechbands.com/go/wM7hSnZJn0A/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #FleetwoodMac"
+   }
+  ],
+  "li_comment": null
+ },
+ {
+  "key": "everlong",
+  "band": "ShipReX",
+  "song": "Everlong",
+  "city": "Brisbane",
+  "date": "2026-11-27",
+  "weekday": "Fri",
+  "event": "brisbane-2026",
+  "band_slug": "the-shiprex-brisbane-2026",
+  "group": "brisbane-2026-shiprex-everlong-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/ShipReX_Everlong_Brisbane2026_reel_auto_v2.mp4",
+  "bytes": 78159882,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/everlong.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-27T09:00:00+11:00",
+   "linkedin": "2026-11-27T13:00:00+11:00",
+   "facebook": "2026-11-27T20:00:00+11:00",
+   "instagram": "2026-11-27T20:00:00+11:00"
+  },
+  "li_arm": "comment",
+  "tt": "Fifty seconds of \"Everlong\" from the pirates who won Brisbane 2026 🏴‍☠️ ShipReX from Rex Software and URBAN X at The Triffid. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #ShipReX #FooFighters #Everlong",
+  "fb": "Fifty seconds of \"Everlong\" from the pirates who won Brisbane 2026.\nFull song: https://www.battleofthetechbands.com/go/gzcyKjD8IJA/fb-caption\n\nShipReX, the crew from Rex Software and URBAN X, head for the end of the Foo Fighters song at The Triffid.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ShipReX #FooFighters",
+  "ig": "Fifty seconds of \"Everlong\" from the pirates who won Brisbane 2026. ShipReX, the crew from @rex_software and @urbanx.io, head for the end of the Foo Fighters song at The Triffid.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ShipReX #FooFighters",
+  "li": "Fifty seconds of \"Everlong\" from the pirates who won Brisbane 2026. ShipReX, the crew from @Rex Software and @URBAN X, head for the end of the Foo Fighters song at The Triffid.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #FooFighters",
+  "li_chunks": [
+   {
+    "type": "Fifty seconds of \"Everlong\" from the pirates who won Brisbane 2026. ShipReX, the crew from "
+   },
+   {
+    "mention": "Rex Software"
+   },
+   {
+    "type": " and "
+   },
+   {
+    "mention": "URBAN X"
+   },
+   {
+    "type": ", head for the end of the Foo Fighters song at The Triffid.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #FooFighters"
+   }
+  ],
+  "li_comment": "Full song: https://www.battleofthetechbands.com/go/gzcyKjD8IJA/li-comment"
+ },
+ {
+  "key": "sias",
+  "band": "Jumbo Band",
+  "song": "Say It Ain't So",
+  "city": "Brisbane",
+  "date": "2026-11-30",
+  "weekday": "Mon",
+  "event": "brisbane-2026",
+  "band_slug": "jumbo-band-brisbane-2026",
+  "group": "brisbane-2026-jumbo-say-it-aint-so-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/Jumbo_SayItAintSo_Brisbane2026_reel_auto_v1.mp4",
+  "bytes": 81023069,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/sias.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "6:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-11-30T09:00:00+11:00",
+   "linkedin": "2026-11-30T13:00:00+11:00",
+   "facebook": "2026-11-30T19:00:00+11:00",
+   "instagram": "2026-11-30T19:00:00+11:00"
+  },
+  "li_arm": "post",
+  "tt": "Jumbo Band, monks' robes still on, five songs into their Brisbane set 🎤 Weezer's \"Say It Ain't So\" at The Triffid. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #JumboInteractive #Weezer #SayItAintSo",
+  "fb": "Jumbo Band, monks' robes still on, five songs into their Brisbane set.\nFull song: https://www.battleofthetechbands.com/go/cPSjftEzPFI/fb-caption\n\nA minute of Weezer's \"Say It Ain't So\" at The Triffid from the band at Jumbo Interactive, who finished third with the judges' highest performance score of the night.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Weezer",
+  "ig": "Jumbo Band, monks' robes still on, five songs into their Brisbane set. A minute of Weezer's \"Say It Ain't So\" at The Triffid from the band at Jumbo Interactive, who finished third with the judges' highest performance score of the night.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Weezer",
+  "li": "Jumbo Band, monks' robes still on, five songs into their Brisbane set. A minute of Weezer's \"Say It Ain't So\" at The Triffid from the band at @Jumbo Interactive Limited, who finished third with the judges' highest performance score of the night.\n\nFull song: https://www.battleofthetechbands.com/go/cPSjftEzPFI/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Weezer",
+  "li_chunks": [
+   {
+    "type": "Jumbo Band, monks' robes still on, five songs into their Brisbane set. A minute of Weezer's \"Say It Ain't So\" at The Triffid from the band at "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ", who finished third with the judges' highest performance score of the night.\n\nFull song: https://www.battleofthetechbands.com/go/cPSjftEzPFI/li-post\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #Weezer"
+   }
+  ],
+  "li_comment": null
+ },
+ {
+  "key": "cic",
+  "band": "ShipReX",
+  "song": "Covered in Chrome",
+  "city": "Brisbane",
+  "date": "2026-12-04",
+  "weekday": "Fri",
+  "event": "brisbane-2026",
+  "band_slug": "the-shiprex-brisbane-2026",
+  "group": "brisbane-2026-shiprex-covered-in-chrome-reel",
+  "file": "/Users/dean/src/personal/gigstills/runs/sydney26_reels/report/ShipReX_CoveredInChrome_Brisbane2026_reel_auto_v8.mp4",
+  "bytes": 120470582,
+  "cover": "/Users/dean/src/personal/bottb/doc/production/reels-schedule/report/covers/cic.jpg",
+  "tiktok_location": "The Triffid",
+  "slots_brisbane_picker": {
+   "tiktok": "08:00",
+   "linkedin": "12:00 PM",
+   "facebook_instagram": "7:00 PM"
+  },
+  "slots_sydney_iso": {
+   "tiktok": "2026-12-04T09:00:00+11:00",
+   "linkedin": "2026-12-04T13:00:00+11:00",
+   "facebook": "2026-12-04T20:00:00+11:00",
+   "instagram": "2026-12-04T20:00:00+11:00"
+  },
+  "li_arm": "comment",
+  "tt": "ShipReX closed their winning Brisbane set with a Brisbane song 🏴‍☠️ Violent Soho's \"Covered in Chrome\" at The Triffid. Full song on our page. Video shot by Aaron Griffiths and Kurt Boldy. All proceeds to Youngcare. #BattleOfTheTechBands #BotTB26 #brisbanemusic #livemusic #techbands #ShipReX #ViolentSoho #CoveredInChrome",
+  "fb": "ShipReX closed their winning Brisbane set with a Brisbane song.\nFull song: https://www.battleofthetechbands.com/go/rPeTKW3QWQo/fb-caption\n\nThe pirates from Rex Software and URBAN X take on Violent Soho's \"Covered in Chrome\" at The Triffid.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ShipReX #ViolentSoho",
+  "ig": "ShipReX closed their winning Brisbane set with a Brisbane song. The pirates from @rex_software and @urbanx.io take on Violent Soho's \"Covered in Chrome\" at The Triffid.\n\nFull song on our page.\n\nVideo shot by @quirkylikethat and @kurtboldy, live audio by Nick Forrester.\n\nProudly powered by Jumbo Interactive. All proceeds to @youngcareoz, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ShipReX #ViolentSoho",
+  "li": "ShipReX closed their winning Brisbane set with a Brisbane song. The pirates from @Rex Software and @URBAN X take on Violent Soho's \"Covered in Chrome\" at The Triffid.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by @Jumbo Interactive Limited. All proceeds to @Youngcare, supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ViolentSoho",
+  "li_chunks": [
+   {
+    "type": "ShipReX closed their winning Brisbane set with a Brisbane song. The pirates from "
+   },
+   {
+    "mention": "Rex Software"
+   },
+   {
+    "type": " and "
+   },
+   {
+    "mention": "URBAN X"
+   },
+   {
+    "type": " take on Violent Soho's \"Covered in Chrome\" at The Triffid.\n\nFull song in the first comment.\n\nVideo shot by Aaron Griffiths and Kurt Boldy. Live audio by Nick Forrester.\n\nProudly powered by "
+   },
+   {
+    "mention": "Jumbo Interactive Limited"
+   },
+   {
+    "type": ". All proceeds to "
+   },
+   {
+    "mention": "Youngcare"
+   },
+   {
+    "type": ", supporting young Australians with high care needs to live with more choice, freedom and dignity.\n\n#BattleOfTheTechBands #BotTB26 #BotTB #Youngcare #LiveMusicBrisbane #TheTriffid #ViolentSoho"
+   }
+  ],
+  "li_comment": "Full song: https://www.battleofthetechbands.com/go/rPeTKW3QWQo/li-comment"
+ }
+]

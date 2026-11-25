@@ -1,0 +1,353 @@
+{
+ "tasks": [
+  "scheduled-task:5846ee9c-295e-4494-8db8-766e49e7c614 (BotTB reels: midday jobs, 12:20)",
+  "scheduled-task:b1b12df2-6ffc-42f2-95e3-2e53e43f3948 (BotTB reels: evening jobs, 20:30)"
+ ],
+ "jobs": [
+  {
+   "type": "linkedin_book",
+   "key": "otr",
+   "not_before": "2026-11-08 20:00",
+   "note": "Being booked by a helper on 7 Nov. Before doing this, check the scheduled list: if the post is there, just mark it done.",
+   "done": true
+  },
+  {
+   "type": "youtube",
+   "key": "sias",
+   "slot": "2026-11-30T18:00:00+11:00",
+   "not_before": "2026-11-08 12:00",
+   "done": true,
+   "id": "bysnBSFmNLk",
+   "note": "Uploaded 8 Nov 20:40; read back 30 Nov 17:00 GMT+10"
+  },
+  {
+   "type": "youtube",
+   "key": "cic",
+   "slot": "2026-12-04T19:00:00+11:00",
+   "not_before": "2026-11-08 12:00",
+   "done": true,
+   "id": "jRwjjYg-kXQ",
+   "note": "Uploaded 8 Nov 20:50; read back 4 Dec 18:00 GMT+10"
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "canvanauts",
+   "not_before": "2026-11-09 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/AT4kyKuBRlQ/li-comment",
+   "done": true,
+   "note": "Commented as page 9 Nov 12:2x on urn:li:activity:7525376645181112320"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "canvanauts",
+   "not_before": "2026-11-09 18:20",
+   "collaborators": [
+    "@canva",
+    "@sailornicole",
+    "@demonrace"
+   ],
+   "done": true,
+   "note": "Added 11 Nov ~21:3x after Dean signed in; Graph API reads back all three; caption unchanged"
+  },
+  {
+   "type": "whatsapp",
+   "key": "canvanauts",
+   "group": "sydney-2026-canvanauts-black-parade-reel",
+   "not_before": "2026-11-09 18:20",
+   "done": true,
+   "note": "Built 10 Nov 20:5x; all five live; ledger rows set published"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "g4u",
+   "not_before": "2026-11-11 19:20",
+   "collaborators": [
+    "@sailornicole",
+    "@demonrace",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 11 Nov ~21:3x after Dean signed in; Graph API reads back all three; caption unchanged"
+  },
+  {
+   "type": "whatsapp",
+   "key": "g4u",
+   "group": "sydney-2026-bandlassian-good-4-u-reel",
+   "not_before": "2026-11-11 19:20",
+   "done": true,
+   "note": "Built 11 Nov 20:4x; all five live; ledger rows set published (FB id re-read 1116774871079579)"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "otr",
+   "not_before": "2026-11-13 19:20",
+   "collaborators": [
+    "@quirkylikethat",
+    "@kurtboldy",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 13 Nov 20:4x on DfrQqxoEZ6C; Graph API reads back all three; caption unchanged (610)"
+  },
+  {
+   "type": "whatsapp",
+   "key": "otr",
+   "group": "brisbane-2026-off-the-record-all-coming-back-reel",
+   "not_before": "2026-11-13 19:20",
+   "done": true,
+   "note": "Built 13 Nov 20:5x; all five live; ledger rows set published (FB id re-read 1482110926719325)"
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "nok",
+   "not_before": "2026-11-16 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/E2yeRiHRUlw/li-comment",
+   "done": true,
+   "note": "Commented as page 16 Nov 12:2x on urn:li:activity:7527913338077593600; read back as page (Author); ledger row 2f86e949 published with permalink"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "nok",
+   "not_before": "2026-11-16 18:20",
+   "collaborators": [
+    "@quirkylikethat",
+    "@kurtboldy",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 16 Nov 20:4x on Dfy4Lmmge8V; Graph API reads back all three; caption unchanged (638)"
+  },
+  {
+   "type": "whatsapp",
+   "key": "nok",
+   "group": "brisbane-2026-epsonics-no-one-knows-reel",
+   "not_before": "2026-11-16 18:20",
+   "done": true,
+   "note": "Built 16 Nov 20:5x; all five live; ledger rows set published (FB id re-read 1068691622895022)"
+  },
+  {
+   "type": "tiktok",
+   "key": "sos",
+   "not_before": "2026-11-09 12:00",
+   "slot_picker": "2026-11-18 08:00",
+   "done": true,
+   "note": "Scheduled 9 Nov 13:0x; read back Nov 18 8:00 AM GMT+10; both checks clean",
+   "id": "7706001620772900114"
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "sos",
+   "not_before": "2026-11-18 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/8YIPtpb5-0s/li-comment",
+   "done": true,
+   "note": "Commented as page 18 Nov 12:2x on urn:li:activity:7528638126865612800; read back as page (Author); ledger row 3115dfaf published with permalink"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "sos",
+   "not_before": "2026-11-18 19:20",
+   "collaborators": [
+    "@quirkylikethat",
+    "@kurtboldy",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 18 Nov 20:4x on Df4InDKB2r6; Graph API reads back all three; caption unchanged (593)"
+  },
+  {
+   "type": "whatsapp",
+   "key": "sos",
+   "group": "brisbane-2026-total-loss-sultans-reel",
+   "not_before": "2026-11-18 19:20",
+   "done": true,
+   "note": "Built 18 Nov 20:5x; all five live; ledger rows set published (FB id re-read 1685198579913053)"
+  },
+  {
+   "type": "tiktok",
+   "key": "v2voyagers",
+   "not_before": "2026-11-11 12:00",
+   "slot_picker": "2026-11-20 08:00",
+   "done": true,
+   "id": "7706863009494355221",
+   "note": "Scheduled 11 Nov 20:4x (evening run); read back Nov 20 8:00 AM GMT+10; both checks clean"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "v2voyagers",
+   "not_before": "2026-11-20 19:20",
+   "collaborators": [
+    "@sailornicole",
+    "@demonrace",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 20 Nov 20:4x on Df9SQaMw5SW; Graph API reads back all three; caption unchanged (635)"
+  },
+  {
+   "type": "whatsapp",
+   "key": "v2voyagers",
+   "group": "sydney-2026-v2-voyagers-starships-ufo-reel",
+   "not_before": "2026-11-20 19:20",
+   "done": true,
+   "note": "Built 20 Nov 21:0x; all five live; ledger rows set published (FB id re-read 1164269376122902)"
+  },
+  {
+   "type": "tiktok",
+   "key": "amakazaam",
+   "not_before": "2026-11-14 12:00",
+   "slot_picker": "2026-11-23 08:00",
+   "done": true,
+   "note": "Scheduled 14 Nov 12:2x; read back Nov 23 8:00 AM GMT+10; both checks clean",
+   "id": "7707848007047236884"
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "amakazaam",
+   "not_before": "2026-11-23 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/kLqqB-fR9yU/li-comment",
+   "done": true,
+   "note": "Posted 23 Nov as Battle of the Tech Bands, verified on the permalink and recorded in the ledger",
+   "id": "7530450064624852996"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "amakazaam",
+   "not_before": "2026-11-23 18:20",
+   "collaborators": [
+    "@sailornicole",
+    "@demonrace",
+    "@youngcareoz"
+   ],
+   "done": true,
+   "note": "Added 23 Nov 20:3x on DgE5wR9JIct; Graph API reads back all three; caption unchanged (579)"
+  },
+  {
+   "type": "whatsapp",
+   "key": "amakazaam",
+   "group": "sydney-2026-amakazaam-under-pressure-reel",
+   "not_before": "2026-11-23 18:20",
+   "done": true,
+   "note": "Built 23 Nov 20:4x; all five live; ledger rows set published (FB id re-read 2096158964409443)"
+  },
+  {
+   "type": "tiktok",
+   "key": "chain",
+   "not_before": "2026-11-16 12:00",
+   "slot_picker": "2026-11-25 08:00",
+   "done": true,
+   "note": "Scheduled 16 Nov 12:3x; read back Nov 25 8:00 AM GMT+10; both checks clean",
+   "id": "7708589638461443329"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "chain",
+   "not_before": "2026-11-25 19:20",
+   "collaborators": [
+    "@quirkylikethat",
+    "@kurtboldy",
+    "@youngcareoz"
+   ],
+   "done": false
+  },
+  {
+   "type": "whatsapp",
+   "key": "chain",
+   "group": "brisbane-2026-epsonics-the-chain-reel",
+   "not_before": "2026-11-25 19:20",
+   "done": false
+  },
+  {
+   "type": "tiktok",
+   "key": "everlong",
+   "not_before": "2026-11-18 12:00",
+   "slot_picker": "2026-11-27 08:00",
+   "done": true,
+   "note": "Scheduled 18 Nov 12:3x; read back Nov 27 8:00 AM GMT+10; both checks clean",
+   "id": "7709331533395479816"
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "everlong",
+   "not_before": "2026-11-27 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/gzcyKjD8IJA/li-comment",
+   "done": false
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "everlong",
+   "not_before": "2026-11-27 19:20",
+   "collaborators": [
+    "@rex_software",
+    "@urbanx.io",
+    "@quirkylikethat"
+   ],
+   "done": false
+  },
+  {
+   "type": "whatsapp",
+   "key": "everlong",
+   "group": "brisbane-2026-shiprex-everlong-reel",
+   "not_before": "2026-11-27 19:20",
+   "done": false
+  },
+  {
+   "type": "tiktok",
+   "key": "sias",
+   "not_before": "2026-11-21 12:00",
+   "slot_picker": "2026-11-30 08:00",
+   "done": true,
+   "note": "Scheduled 21 Nov 12:3x; read back Nov 30 8:00 AM GMT+10; both checks clean",
+   "id": "7710444583137660180"
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "sias",
+   "not_before": "2026-11-30 18:20",
+   "collaborators": [
+    "@quirkylikethat",
+    "@kurtboldy",
+    "@youngcareoz"
+   ],
+   "done": false
+  },
+  {
+   "type": "whatsapp",
+   "key": "sias",
+   "group": "brisbane-2026-jumbo-say-it-aint-so-reel",
+   "not_before": "2026-11-30 18:20",
+   "done": false
+  },
+  {
+   "type": "tiktok",
+   "key": "cic",
+   "not_before": "2026-11-25 12:00",
+   "slot_picker": "2026-12-04 08:00",
+   "done": false
+  },
+  {
+   "type": "linkedin_comment",
+   "key": "cic",
+   "not_before": "2026-12-04 12:10",
+   "li_comment": "Full song: https://www.battleofthetechbands.com/go/rPeTKW3QWQo/li-comment",
+   "done": false
+  },
+  {
+   "type": "ig_collaborators",
+   "key": "cic",
+   "not_before": "2026-12-04 19:20",
+   "collaborators": [
+    "@rex_software",
+    "@urbanx.io",
+    "@quirkylikethat"
+   ],
+   "done": false
+  },
+  {
+   "type": "whatsapp",
+   "key": "cic",
+   "group": "brisbane-2026-shiprex-covered-in-chrome-reel",
+   "not_before": "2026-12-04 19:20",
+   "done": false
+  }
+ ]
+}

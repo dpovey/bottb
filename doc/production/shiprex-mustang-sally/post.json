@@ -1,0 +1,70 @@
+{
+  "group": "sydney-2026-shiprex-mustang-sally",
+  "event": "sydney-2026",
+  "band": "shiprex-sydney-2026",
+  "title": "ShipReX - Mustang Sally (The Commitments Cover) - BotTB Sydney 2026",
+  "copy": "doc/production/shiprex-mustang-sally-copy.md",
+  "files": {
+    "ig": "/Volumes/BOTTB/Renders/ShipReX_MustangSally_Sydney2026_1080p_IG_v1.mp4",
+    "master": "/Volumes/BOTTB/Renders/ShipReX_MustangSally_Sydney2026_4K_v1.mp4",
+    "ig_cover": "/Users/dean/src/personal/production-control/releases/shiprex-mustang-sally-sydney-2026/social/thumbnails/shiprex-mustang-sally-instagram.jpg"
+  },
+  "blob_prefix": "release/sydney-2026/",
+  "collaborators": [
+    "sailornicole",
+    "demonrace",
+    "youngcareoz"
+  ],
+  "facebook": {
+    "scheduled_for": "2026-11-06T06:30:00+10:00"
+  },
+  "planned_slots": {
+    "youtube": "2026-11-06T06:00:00+10:00",
+    "facebook": "2026-11-06T06:30:00+10:00",
+    "linkedin": "2026-11-06T06:45:00+10:00",
+    "tiktok": "2026-11-06T06:50:00+10:00",
+    "instagram": "at Dean's go"
+  },
+  "results": {
+    "blob": {
+      "ig": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/ShipReX_MustangSally_Sydney2026_1080p_IG_v1.mp4",
+        "bytes": 258519906
+      },
+      "master": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/ShipReX_MustangSally_Sydney2026_4K_v1.mp4",
+        "bytes": 1450862720
+      },
+      "ig_cover": {
+        "url": "https://0qipqwe5exqqyona.public.blob.vercel-storage.com/release/sydney-2026/shiprex-mustang-sally-instagram.jpg",
+        "bytes": 264884
+      }
+    },
+    "facebook": {
+      "id": "1500308535489495",
+      "permalink": "https://www.facebook.com/reel/1500308535489495",
+      "scheduled_for": "2026-11-06T06:30:00+10:00",
+      "posted_at": "2026-11-05T14:11:14+0000"
+    },
+    "instagram": {
+      "id": "DfXN9UGnD5m",
+      "permalink": "https://www.instagram.com/reel/DfXN9UGnD5m/",
+      "posted_at": "2026-11-05T14:13:48+0000"
+    },
+    "youtube": {
+      "id": "nNGYLWXWjl4",
+      "permalink": "https://youtu.be/nNGYLWXWjl4",
+      "posted_at": "2026-11-05T20:00:16Z"
+    },
+    "linkedin": {
+      "id": "urn:li:activity:7524210205648371712",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7524210205648371712/",
+      "posted_at": "2026-11-05T20:45:06.092Z"
+    },
+    "tiktok": {
+      "id": "7704683924668058901",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7704683924668058901",
+      "posted_at": "2026-11-05T20:50:00.000Z"
+    }
+  }
+}

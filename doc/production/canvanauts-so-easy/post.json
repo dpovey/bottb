@@ -1,0 +1,73 @@
+{
+  "group": "sydney-2026-canvanauts-soeasy",
+  "event": "sydney-2026",
+  "band": "canvanauts-sydney-2026",
+  "title": "Canvanauts - So Easy (To Fall in Love) (Olivia Dean Cover) - BotTB Sydney 2026",
+  "copy": "doc/production/canvanauts-soeasy-copy.md",
+  "files": {
+    "master": "/Volumes/BOTTB/Renders/Canvanauts_SoEasy_Sydney2026_4K_v2.mp4",
+    "ig": "/Volumes/BOTTB/Renders/Canvanauts_SoEasy_Sydney2026_1080p_IG_v2.mp4",
+    "hd": "/Volumes/BOTTB/Renders/Canvanauts_SoEasy_Sydney2026_1080p_v2.mp4",
+    "ig_cover": "/Users/dean/src/personal/production-control/releases/canvanauts-so-easy-sydney-2026/social/thumbnails/canvanauts-so-easy-to-fall-in-love-instagram.jpg",
+    "mix_master": "/Volumes/BOTTB/Sydney - 2026/mix/so_easy/delivery/Canvanauts_S3_So_Easy_v1_at_02-16-48-00.wav"
+  },
+  "blob_prefix": "release/sydney-2026/",
+  "collaborators": [
+    "sailornicole",
+    "demonrace",
+    "canva"
+  ],
+  "planned_slots": "Tue 24 Nov 2026 AEST: YouTube 07:00, FB+IG 07:30 (Business Suite), LinkedIn 07:45, TikTok 08:00; all scheduled in-platform 23 Nov",
+  "results": {
+    "youtube": {
+      "id": "_aU0bnbSF_0",
+      "permalink": "https://youtu.be/_aU0bnbSF_0",
+      "scheduled_for": "2026-11-23T21:00:00Z",
+      "status": "published",
+      "posted_at": "2026-11-23T21:00:37Z",
+      "videos_row": "c310bc05-d558-42e6-85ad-7c54977d4d8f"
+    },
+    "facebook": {
+      "business_suite_post_id": "1502934938383767",
+      "scheduled_for": "2026-11-23T21:30:00Z",
+      "status": "published",
+      "note": "live reel id differs from the scheduling id; re-read /{page}/video_reels after the slot",
+      "id": "1882444096405151",
+      "permalink": "https://www.facebook.com/reel/1882444096405151",
+      "posted_at": "2026-11-23T21:30:55Z"
+    },
+    "instagram": {
+      "scheduled_for": "2026-11-23T21:30:00Z",
+      "status": "published",
+      "note": "id from /{ig}/media after publish; collaborators added after publish",
+      "id": "17935189161167280",
+      "permalink": "https://www.instagram.com/reel/DgGWe62TyUj/",
+      "posted_at": "2026-11-23T21:32:02Z",
+      "collaborators_added": [
+        "canva",
+        "sailornicole",
+        "demonrace"
+      ]
+    },
+    "linkedin": {
+      "scheduled_for": "2026-11-23T21:45:00Z",
+      "status": "published",
+      "note": "no permalink until it publishes",
+      "id": "urn:li:activity:7530748355988049920",
+      "permalink": "https://www.linkedin.com/feed/update/urn:li:activity:7530748355988049920/",
+      "posted_at": "2026-11-23T21:45:22.606Z"
+    },
+    "tiktok": {
+      "id": "7711349833180646676",
+      "permalink": "https://www.tiktok.com/@bottb0/video/7711349833180646676",
+      "scheduled_for": "2026-11-23T22:00:00Z",
+      "status": "published",
+      "posted_at": "2026-11-23T22:00:00Z"
+    },
+    "upload_sha256": {
+      "youtube_4k_v2": "6011e0976277960378c812ddd2467e6f1bcedaf771f3ca77792577f5144786ee",
+      "linkedin_tiktok_1080p_v2": "9311e588f824f8612b3a58a28005cece84514632e607ce383303eb3d73efe007",
+      "fb_ig_1080p_IG_v2": "a2a6892f73dc97c380ba01950b4190a13da300e752de302cb5da9ff3e67522a4"
+    }
+  }
+}

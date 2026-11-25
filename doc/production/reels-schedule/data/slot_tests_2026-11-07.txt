@@ -1,0 +1,42 @@
+Instagram, views by Brisbane hour (rows at least 7 days old)
+  08-12                  n= 9 median    466  range 303-1912
+  13-17 (to 16:59)       n= 7 median    867  range 423-1416
+  17-19                  n= 9 median    704  range 186-2070
+  21-01                  n= 2 median    646  range 415-877
+  too young to compare: [('ShipReX Mustang Sally', 470, '1 d'), ('Bandlassian good 4 u', 321, '4 d')]
+  afternoon+evening (13-19) vs morning (08-12): 794 vs 466, ratio 1.70, 90% interval (1.2561425061425062, 3.025147928994083), permutation p=0.077, n=16 and 9
+  same, without the Jamazon outlier: morning median 436, p=0.051
+  IG short vs full: 644 (n=14) vs 694 (n=12)
+  IG shorts only: 18:00 week after a show [704, 589, 700, 1302, 950] ; 08-09 countdown [466, 303, 310, 1912, 814, 405]
+Instagram, by weekday (13-19 only, to hold the hour still)
+  Mon n=6 [186, 653, 667, 950, 1178, 1313]
+  Tue n=3 [423, 1302, 1352]
+  Wed n=1 [700]
+  Thu n=1 [589]
+  Fri n=3 [704, 867, 1416]
+  Sat n=2 [722, 2070]
+Instagram, spacing: days since the previous video on IG (feed order)
+  under 1.5 d  n=12 median 575 [303, 310, 423, 466, 490, 561, 589, 700, 704, 1302, 1313, 1912]
+  1.5-4 d      n= 8 median 846 [415, 653, 722, 814, 877, 950, 1178, 1352]
+  4 d or more  n= 6 median 767 [186, 338, 667, 867, 1416, 2070]
+  same-day runs: [('ShipReX Covered in Chrome', 1313, 0.03), ('Two sleeps', 490, 0.07), ('Canvanauts have landed', 423, 0.18)]
+Facebook, views by Brisbane hour (from 14 Sep; app was unpublished before)
+  08-12                  n= 9 median     88  range 57-318
+  13-17 (to 16:59)       n= 5 median    134  range 103-259
+  17-19                  n= 3 median    185  range 25-196
+  young: [('ShipReX Mustang Sally', 143, '1 d'), ('Bandlassian good 4 u', 89, '4 d')]
+Facebook vs Instagram, same posts from 14 Sep: FB median 134 IG median 667
+TikTok
+  up to 60 s             n=22 median    268  range 131-687
+  3 min or more          n=27 median    696  range 212-1131
+  p=0.0000
+  share of posts reaching 600 views: up to 60 s 7 of 22 ; 3 min or more 20 of 27
+  under 60 s, by hour:
+   07-10: n=3 median 656 [602, 656, 684]
+   11-16: n=5 median 248 [152, 179, 248, 464, 687]
+   17-20: n=14 median 262 [131, 177, 197, 238, 238, 250, 260, 265, 271, 288, 343, 647, 650, 677]
+  3 min or more, by hour:
+   07-10: n=13 median 696 [225, 523, 635, 676, 686, 694, 696, 705, 719, 721, 731, 736, 861]
+   11-16: n=7 median 712 [212, 277, 500, 712, 718, 738, 1131]
+   17-20: n=7 median 681 [319, 548, 650, 681, 713, 729, 729]
+  young: [('Mustang Sally', 199, '1 d'), ('good 4 u', 256, '4 d')]

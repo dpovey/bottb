@@ -1,0 +1,22 @@
+09-14 18:00 full 25 link Jumbo Band Bring Me to Life gap 0 min
+09-16 09:00 full 217 link Total Loss Sultans gap 0 min
+09-21 18:00 full 185 link OTR Its All Coming Back gap 0 min
+09-24 09:00 full 153 link Jumbo Darkness gap 0 min
+09-28 09:00 full 318 link ShipReX Everlong gap 0 min
+10-02 09:00 short 79 link Six days Bandlassian Rosanna gap 0 min
+10-03 09:00 short 85 link Five days Jamazon Alexa intro gap 0 min
+10-04 08:00 short 88 link Four days gap 0 min
+10-05 08:00 short 57 link Three days gap 0 min
+10-06 08:00 short 86 link Two days gap 0 min
+10-06 09:49 full 201 link Two sleeps gap 1 min
+10-06 14:00 short 103 link Canvanauts have landed gap 0 min
+10-10 13:07 full 211 link Jumbo Say It Aint So gap 2 min
+10-13 16:30 mid 132 link Sydney 2026 highlights gap 0 min
+10-17 17:51 full 196 link Canvanauts Black Parade gap 2 min
+10-19 13:39 full 259 link Amakazaam Under Pressure gap 2 min
+10-30 15:45 full 134 link V2 Voyagers Starships UFO gap 2 min
+11-03 06:30 full 89 link Bandlassian good 4 u gap 0 min
+11-06 06:30 full 143 link ShipReX Mustang Sally gap 0 min
+full link 190.5 12 no link None 0 
+short link 85.5 6 no link None 0 
+all link 134 19 no link None 0 
