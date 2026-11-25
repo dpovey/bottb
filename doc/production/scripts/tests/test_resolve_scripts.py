@@ -171,3 +171,24 @@ class ApplyDiff(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LookTransformTest(unittest.TestCase):
+    """pix.look_transform: the preflight check that caught nothing on Barracuda v1, whose look clip had Dynamic Zoom on."""
+    def setUp(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "resolve"))
+
+    def test_identity_look_clip_passes(self):
+        import pix
+        it = fake.Item(310, 328519, "Adjustment Clip", props={"ZoomX": 1.0, "ZoomY": 1.0, "Pan": 0.0, "DynamicZoomEnabled": False, "Opacity": 100.0})
+        self.assertEqual(pix.look_transform(it), {})
+
+    def test_dynamic_zoom_on_look_clip_is_flagged(self):
+        import pix
+        it = fake.Item(310, 328519, "Adjustment Clip", props={"ZoomX": 1.0, "DynamicZoomEnabled": True})
+        self.assertEqual(pix.look_transform(it), {"DynamicZoomEnabled": True})
+
+    def test_zoom_and_crop_are_flagged_and_missing_keys_skipped(self):
+        import pix
+        it = fake.Item(310, 328519, "Adjustment Clip", props={"ZoomX": 1.2, "CropLeft": 12.0})
+        self.assertEqual(pix.look_transform(it), {"ZoomX": 1.2, "CropLeft": 12.0})

@@ -48,7 +48,8 @@ def mono(path, start, n):
 def ncc_best(b, r):
     N = 1 << int(np.ceil(np.log2(len(r) + len(b))))
     c = np.fft.irfft(np.fft.rfft(r, N) * np.conj(np.fft.rfft(b, N)), N)[:len(r) - len(b) + 1]
-    e = np.sqrt(np.convolve(r * r, np.ones(len(b), np.float32), "valid")) * np.sqrt((b * b).sum()) + 1e-9
+    cs = np.concatenate([[0.0], np.cumsum(r.astype(np.float64) ** 2)])  # sliding energy by cumulative sum: np.convolve with a
+    e = np.sqrt(np.maximum(cs[len(b):] - cs[:-len(b)], 0)) * np.sqrt((b * b).sum()) + 1e-9  # 1.44 M-tap window ran >6 min a point (Barracuda, 2026-11-23)
     c = c / e; k = int(np.argmax(c)); m = c.copy(); m[max(0, k - 2400):k + 2400] = -1
     return k, float(c[k]), float(m.max())
 

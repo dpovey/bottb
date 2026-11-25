@@ -42,6 +42,9 @@ elif it0:
     off = [x for x in ns if not x[2]]
     print("      look version %s, %d nodes, off: %s" % ((it0.GetCurrentVersion() or {}).get("versionName"), len(ns), off))
     if off and LOOK == "on": warn("look nodes off: %s" % off)
+    lx = pix.look_transform(it0)  # Barracuda v1 (2026-11-25): Dynamic Zoom on the look clip cropped every cut x1.218
+    if lx: fail("look clip %s carries a transform (it scales or moves every cut): %s" % (it0.GetName(), lx))
+    else: ok("look clip transform at identity (no Dynamic Zoom, zoom, pan, crop)")
 tg = tl.GetNodeGraph()
 if tg:
     on = [(n, tg.GetNodeLabel(n)) for n in range(1, tg.GetNumNodes() + 1) if tg.GetNodeEnabled(n)]

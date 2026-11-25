@@ -58,6 +58,23 @@ def look_item(tl, rec):  # the Adjustment Clip over rec, on any track (the look 
         for i in tl.GetItemListInTrack("video", t) or []:
             if i.GetName() == "Adjustment Clip" and i.GetStart() <= rec < i.GetEnd(): return i
 
+# Transform keys an Adjustment (look) clip should leave at identity: it sits over every cut, so any of these scales or moves the whole
+# picture. Barracuda v1 (2026-11-25) shipped with Dynamic Zoom on the whole-show look clip, 0.8 -> 1.0 over the show: x1.218 there.
+LOOK_IDENTITY = {"DynamicZoomEnabled": False, "ZoomX": 1.0, "ZoomY": 1.0, "Pan": 0.0, "Tilt": 0.0, "RotationAngle": 0.0,
+                 "CropLeft": 0.0, "CropRight": 0.0, "CropTop": 0.0, "CropBottom": 0.0, "FlipX": False, "FlipY": False}
+
+
+def look_transform(it):  # {key: value} of every look-clip transform property that isn't at identity (None reads are skipped)
+    out = {}
+    for k, want in LOOK_IDENTITY.items():
+        v = it.GetProperty(k)
+        if v is None: continue
+        if isinstance(want, bool):
+            if bool(v) != want: out[k] = v
+        elif abs(float(v) - want) > 1e-6: out[k] = v
+    return out
+
+
 def look_track(tl, rec):
     i = look_item(tl, rec); return i.GetTrackTypeAndIndex()[1] if i else None
 

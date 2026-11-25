@@ -571,6 +571,11 @@ apply?" needs all four. Measured on a RiP'd Bring Me to Life clip (`CAM C Render
 | ------------------------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------------------- |
 | source, edit-page zoom/transform, Super Scale                | **baked**                      | the point of the exercise                                                          |
 | group pre-clip — camera correction, Deflicker, NR            | **baked, no longer reachable** | 0.000 change vs 7.593 / 88.6 % on a multicam control                               |
+
+~~"baked" covers everything upstream of the clip grade~~ — CORRECTED 2026-11-25 (Barracuda): with Include Color Grading OFF, a RiP of a
+**multicam** cut does NOT bake the grade on the angle clip inside the multicam (the camera-match corrector each Brisbane angle carries).
+The CAM D RiPs decoded like the raw camera (blue ×1.10–1.17 against the pre-RiP picture). Use Grading ON after a decompose; see
+"Barracuda delivered (2026-11-25)" at the end.
 | **clip node 1 — the gigstills CDLs**                         | **still live**                 | identity vs applied: 5.692 mean, **96.0 %** of pixels; black floor 0.0006 → 0.0065 |
 | timeline node — Film Look Creator (+ halation), black anchor | **still live**                 | bypass: 11.544 mean, **98.7 %** of pixels                                          |
 
@@ -4245,3 +4250,36 @@ discover -s doc/production/scripts/tests` (a fake Resolve module) and `zsh doc/p
 - **Live checks still owed** (not run against Resolve or the live sites): `clear_jobs.py`; a runner built from the template;
   `post_delivery.py`, `clip_colours.py` and `compare_timelines.py` on a real timeline after a RiP; the preflight LUT check on
   a song with a LUT folder unlinked; the LinkedIn chip and option selectors.
+
+## Barracuda delivered (2026-11-25, Brisbane)
+
+Off the Record, 34350–40899 on `BOTTB Brisbane 2026` (now the adopted gigsteady copy, id 2ed8a0bc…; old main kept as
+"BOTTB Brisbane 2026 (pre-Barracuda gigsteady, 2026-11-25)"). Work dir `/Volumes/BOTTB/Brisbane - 2026/video/barracuda`
+(findings F-1..F-25); retro `production-control/releases/off-the-record-barracuda-brisbane-2026/retro-video.md`.
+
+- **RiP of multicam cuts: Include Color Grading ON, not OFF.** Every angle clip inside "BOTTB Multicam" carries a corrector
+  (camera match; read with resolve-lab `drp_item_grades.py` on the multicam sequence). Grading OFF leaves it out: 9–12 codes off
+  on CAM D. Grading ON bakes the inner grade, the group Pre-Clip (Deflicker, NR, CAM A Offset, CAM B Balance) and the clip CDL
+  once. So: decompose (it drops clip colour and grade), re-mark, RiP with Grading ON, and re-apply nothing and re-group nothing
+  afterwards. Proof: `percut-compare.py` before/after (25 CAM B/C/D clips within 1.4 codes) and 9 pre-RiP reference frames
+  within 0.2–0.7 codes. A plain-clip overlay in a group (gigsteady) also bakes its group with Grading ON.
+- **The RiP folder doesn't stick, again.** Dean chose `/Volumes/BOTTB/RiP/barracuda_v2`; the redo wrote into the first folder.
+  Sort by mtime to tell runs apart; check each item's file path before trusting a run.
+- **Decompose first.** A RiP started on already-RiP'd clips renders "<x> Render.mov Render.mov" from the baked files, fast. Stop,
+  decompose, re-RiP. Check names and mtimes of what the timeline plays.
+- **gigsteady overlay zoom = max(editor ÷ stab_zoom, (1920 + |Pan|)/1920, (1080 + |Tilt|)/1080)** at UHD. `place.py` put the
+  editor's zoom on top of the stabiliser's crop (≈10 % too tight); dividing alone left 190–225 px black bands where the editor
+  had a large pan, because the stabilised file has no picture outside its crop. Set this before marking for RiP: a RiP bakes the
+  band (three overlays went back to their source clips without Super Scale). `preflight.py`'s edge scan caught it.
+- **Look clip transform.** Dynamic Zoom was on the whole-show Adjustment clip (0.8 → 1.0 over the show) from Dean's 24 Nov
+  re-cut: Barracuda v1 shipped ×1.218 tighter. `preflight.py` now fails on any look-clip transform (`pix.look_transform`).
+  Don't trust a "non-default" filter on `GetProperty()`: True == 1 hides `DynamicZoomEnabled`.
+- **Scripts and the UI don't mix.** A script call hung while Dean played back (Resolve 72 % CPU); the write hadn't landed. Read
+  state back before retrying, and tell the coordinator before Dean clicks in Resolve.
+- **Adopting a copy: diff by API, not by export bytes.** Every item blob in a `.drp` carries a per-timeline id, so a byte diff
+  flags everything. `resolve/adopt_diff.py <main_id> <copy_id> <lo> <hi> <out.json>` compares positions, media, offsets,
+  transforms, clip colour and every grade node's tools/LUT/CDL outside the song, plus track enables and markers (45 s).
+  Renaming keeps a timeline's id.
+- **`bwf-sync-check.py`** computes its NCC energy by cumulative sum (np.convolve with a 1.44 M-tap window took >6 min a point;
+  now 3.4 s, same lags). On Brisbane: `--ref /Volumes/BOTTB/Audio/BOTTB_reference_48k.wav --ref-zero 0` (reference starts at
+  frame 0, stamp/1920 = record frame); the reference lags the mix by about 17 ms.
