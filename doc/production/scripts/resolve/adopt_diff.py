@@ -15,19 +15,21 @@ PROPS = ("ZoomX", "ZoomY", "Pan", "Tilt", "RotationAngle", "AnchorPointX", "Anch
          "CropLeft", "CropRight", "CropTop", "CropBottom", "Opacity", "CompositeMode", "DynamicZoomEnabled", "DynamicZoomEase",
          "RetimeProcess", "Scaling", "ResizeFilter")
 def grade(it):
+    assert callable(getattr(it, "GetCDL", None)), "TimelineItem.GetCDL missing: CDLs would compare equal silently"
     g = it.GetNodeGraph()
     if not g: return None
     out = []
     for n in range(1, (g.GetNumNodes() or 0) + 1):
-        c = it.GetCDL(n) if callable(getattr(it, "GetCDL", None)) else None
+        c = it.GetCDL(n)
         out.append((n, g.GetNodeEnabled(n), g.GetToolsInNode(n), g.GetLUT(n), c))
     return out
 def read(tl):
     p.SetCurrentTimeline(tl); assert p.GetCurrentTimeline().GetUniqueId() == tl.GetUniqueId()
     res = {"tracks": {}, "markers": {str(k): v for k, v in (tl.GetMarkers() or {}).items()}, "start": tl.GetStartFrame()}
     for kind in ("video", "audio"):
-        for t in range(1, tl.GetTrackCount(kind) + 1):
-            name = tl.GetTrackName(kind, t); rows = []
+        seen = {}  # tracks keyed by name + occurrence: an inserted track (gigsteady) must not shift the others, and two
+        for t in range(1, tl.GetTrackCount(kind) + 1):  # same-named tracks must not overwrite each other
+            name = tl.GetTrackName(kind, t); rows = []; seen[name] = seen.get(name, 0) + 1
             for it in tl.GetItemListInTrack(kind, t) or []:
                 st, en = it.GetStart(), it.GetEnd()
                 for a, b in ((-10**9, LO), (HI, 10**9)):
@@ -35,10 +37,10 @@ def read(tl):
                     if s >= e: continue
                     mp = it.GetMediaPoolItem(); path = mp.GetClipProperty("File Path") if mp else ""
                     pr = it.GetProperty() or {} if kind == "video" else {}
-                    rows.append({"s": s, "e": e, "name": it.GetName(), "path": path, "src": (it.GetLeftOffset() or 0) + (s - st),
+                    rows.append({"s": s, "e": e, "name": it.GetName(), "path": path, "src": (it.GetLeftOffset() or 0) + (s - st), "src_end": (it.GetRightOffset() or 0) + (en - e),
                                  "props": {k: pr.get(k) for k in PROPS if k in pr}, "enabled": it.GetClipEnabled(),
                                  "colour": it.GetClipColor(), "grade": grade(it) if kind == "video" else None})
-            res["tracks"]["%s:%s" % (kind, name)] = {"enabled": tl.GetIsTrackEnabled(kind, t), "items": rows}
+            res["tracks"]["%s:%s#%d" % (kind, name, seen[name])] = {"enabled": tl.GetIsTrackEnabled(kind, t), "items": rows}
     return res
 a, b = read(tls[MAIN]), read(tls[COPY])
 p.SetCurrentTimeline(tls[COPY])
@@ -54,7 +56,8 @@ for k in sorted(set(a["tracks"]) | set(b["tracks"])):
         ra, rb = ka.get(key), kb.get(key)
         if ra != rb:
             diffs.append({"track": k, "range": key, "main": ra, "copy": rb})
-ma = {k: v for k, v in a["markers"].items() if not LO <= int(float(k)) < HI}; mb = {k: v for k, v in b["markers"].items() if not LO <= int(float(k)) < HI}
+ma = {k: v for k, v in a["markers"].items() if not LO <= int(float(k)) + a["start"] < HI}  # marker keys count from the timeline start
+mb = {k: v for k, v in b["markers"].items() if not LO <= int(float(k)) + b["start"] < HI}
 if ma != mb: diffs.append({"markers": {"main_only": sorted(set(ma) - set(mb)), "copy_only": sorted(set(mb) - set(ma)),
                                        "changed": sorted(k for k in set(ma) & set(mb) if ma[k] != mb[k])}})
 json.dump({"diffs": diffs, "counts": {k: len(v["items"]) for k, v in a["tracks"].items()}}, open(OUT, "w"), indent=1, default=str)

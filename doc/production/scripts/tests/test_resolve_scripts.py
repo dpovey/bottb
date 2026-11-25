@@ -168,11 +168,6 @@ class ApplyDiff(unittest.TestCase):
         finally:
             del os.environ["BOTTB_LUT_ROOT"]
 
-
-if __name__ == "__main__":
-    unittest.main()
-
-
 class LookTransformTest(unittest.TestCase):
     """pix.look_transform: the preflight check that caught nothing on Barracuda v1, whose look clip had Dynamic Zoom on."""
     def setUp(self):
@@ -192,3 +187,8 @@ class LookTransformTest(unittest.TestCase):
         import pix
         it = fake.Item(310, 328519, "Adjustment Clip", props={"ZoomX": 1.2, "CropLeft": 12.0})
         self.assertEqual(pix.look_transform(it), {"ZoomX": 1.2, "CropLeft": 12.0})
+
+
+
+if __name__ == "__main__":
+    unittest.main()
